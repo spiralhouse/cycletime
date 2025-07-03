@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "linear": {
+      "type": "sse",
+      "url": "https://mcp.linear.app/sse"
+    },
+    "context7": {
+      "type": "sse",
+      "url": "https://mcp.context7.com/sse"
+    }
+  }
+}
