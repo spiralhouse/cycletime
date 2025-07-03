@@ -5,8 +5,15 @@
 ### Work Management
 - **Only work on tasks that are defined in GitHub Issues**
 - **All GitHub Issues must be created in the CycleTime Scrum project**
+- **Maintain project board status**: Move issues through columns (Todo → In Progress → Review → Done)
 - Use GitHub Issues to drive what we should be working on next
 - Plan features only after foundational architecture is agreed upon
+
+#### Project Board Workflow
+- **Todo**: Issues ready to be worked on
+- **In Progress**: Issues currently being worked on (move here when starting work)
+- **Review**: Issues with PRs awaiting review/merge
+- **Done**: Completed and merged issues
 
 ### Development Practices
 - **Follow Test-Driven Development (TDD)**
