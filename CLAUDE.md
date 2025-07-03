@@ -4,6 +4,7 @@
 
 ### Work Management
 - **Only work on tasks that are defined in GitHub Issues**
+- **All GitHub Issues must be created in the CycleTime Scrum project**
 - Use GitHub Issues to drive what we should be working on next
 - Plan features only after foundational architecture is agreed upon
 
