@@ -3,11 +3,11 @@
 ## Development Rules
 
 ### Work Management
-- **Only work on tasks that are defined in GitHub Issues**
-- **All GitHub Issues must be created in the CycleTime Scrum project**
+- **Only work on tasks that are defined in Linear Issues**
+- **All Linear Issues must be created in the CycleTime Scrum project**
 - **Maintain project board status**: Move issues through columns (Todo → In Progress → Review → Done)
 - **Keep task dependencies up-to-date**: Use the "Depends on" custom field to track issue dependencies
-- Use GitHub Issues to drive what we should be working on next
+- Use Linear Issues to drive what we should be working on next
 - Plan features only after foundational architecture is agreed upon
 
 #### Project Board Workflow
@@ -17,9 +17,11 @@
 - **Done**: Completed and merged issues
 
 #### Project Information
-- **Project ID**: `PVT_kwDOACaD4c4A9DD8`
+- **Team ID**: `03ee7cf5-773e-4f53-bc0d-2e5e4d3bc3bc`
+- **Team Name**: Spiral House
+- **Project ID**: `9e221bf0-680d-4ad1-98b2-b24998fdf92e`
 - **Project Name**: CycleTime Scrum
-- **URL**: https://github.com/orgs/spiralhouse/projects/3
+- **URL**: https://linear.app/spiral-house/project/cycletime-scrum-89fc2f60a36f
 
 ### Development Practices
 - **Follow Test-Driven Development (TDD)**
@@ -69,7 +71,7 @@ git commit -m "feat: add feature description"
 git push origin feature/issue-number-description
 
 # Create PR via GitHub CLI
-gh pr create --title "feat: description" --body "Closes #issue-number"
+gh pr create --title "feat: description" --body "Closes linear-issue-identifier"
 ```
 
 ## Project Structure
@@ -87,4 +89,4 @@ gh pr create --title "feat: description" --body "Closes #issue-number"
 ## Notes
 - This file helps Claude understand our development workflow
 - Update this file as our practices evolve
-- Always refer to GitHub Issues for current work priorities
+- Always refer to Linear Issues for current work priorities
