@@ -6,6 +6,7 @@
 - **Only work on tasks that are defined in GitHub Issues**
 - **All GitHub Issues must be created in the CycleTime Scrum project**
 - **Maintain project board status**: Move issues through columns (Todo → In Progress → Review → Done)
+- **Keep task dependencies up-to-date**: Use the "Depends on" custom field to track issue dependencies
 - Use GitHub Issues to drive what we should be working on next
 - Plan features only after foundational architecture is agreed upon
 
@@ -14,6 +15,11 @@
 - **In Progress**: Issues currently being worked on (move here when starting work)
 - **Review**: Issues with PRs awaiting review/merge
 - **Done**: Completed and merged issues
+
+#### Project Information
+- **Project ID**: `PVT_kwDOACaD4c4A9DD8`
+- **Project Name**: CycleTime Scrum
+- **URL**: https://github.com/orgs/spiralhouse/projects/3
 
 ### Development Practices
 - **Follow Test-Driven Development (TDD)**
