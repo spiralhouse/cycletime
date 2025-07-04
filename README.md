@@ -86,6 +86,24 @@ CycleTime automates the transformation of PRDs into structured development plans
 - **Task Service**: `localhost:8004`
   - Linear and GitHub integration
 
+#### Development Tools
+- **Adminer**: `localhost:8080`
+  - PostgreSQL database administration
+  - **Auto-configured** - `npm run adminer:web` opens with login pre-filled
+  - Manual connection details if needed:
+    - Server: `postgres` (or `localhost:5432` from host)
+    - Username: `cycletime`
+    - Password: `development_password`
+    - Database: `cycletime_dev`
+  
+- **Redis Insight**: `localhost:8081`
+  - Redis management and monitoring
+  - **Auto-configured** - CycleTime Redis connection pre-configured
+  - Manual connection details if needed:
+    - Host: `localhost` (or `redis` from container)
+    - Port: `6379`
+    - No authentication required
+
 ### Development Scripts
 
 ```bash
@@ -103,6 +121,8 @@ npm run db:connect:test    # Connect to test database
 # Other utilities
 npm run redis:cli          # Connect to Redis CLI
 npm run minio:web          # Open MinIO console
+npm run adminer:web        # Open Adminer database admin
+npm run redis-insight:web  # Open Redis Insight
 ```
 
 ### Project Structure

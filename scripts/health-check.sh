@@ -35,6 +35,15 @@ check_service "Task Service" "http://localhost:8004/health"
 
 echo ""
 
+# Development Tools
+echo "Development Tools:"
+echo "=================="
+
+check_service "Adminer" "http://localhost:8080"
+check_service "Redis Insight" "http://localhost:8081"
+
+echo ""
+
 # Infrastructure services
 echo "Infrastructure Services:"
 echo "========================"
@@ -74,6 +83,10 @@ if $all_healthy; then
     echo "Application URLs:"
     echo "- Web Dashboard: http://localhost:3001"
     echo "- API Gateway: http://localhost:8000"
+    echo ""
+    echo "Development Tools:"
+    echo "- Adminer (DB Admin): http://localhost:8080"
+    echo "- Redis Insight: http://localhost:8081"
     echo "- MinIO Console: http://localhost:9001"
     exit 0
 else
