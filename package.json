@@ -1,0 +1,43 @@
+{
+  "name": "cycletime",
+  "version": "0.1.0",
+  "description": "CycleTime - Intelligent Project Orchestration Platform with MCP Integration",
+  "main": "index.js",
+  "scripts": {
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:restart": "docker compose restart",
+    "docker:logs": "docker compose logs -f",
+    "docker:logs:postgres": "docker compose logs -f postgres",
+    "docker:logs:redis": "docker compose logs -f redis",
+    "docker:logs:minio": "docker compose logs -f minio",
+    "docker:status": "docker compose ps",
+    "docker:clean": "docker compose down -v --remove-orphans",
+    "docker:rebuild": "docker compose down && docker compose up -d --build",
+    "db:connect": "docker compose exec postgres psql -U cycletime -d cycletime_dev",
+    "db:connect:test": "docker compose exec postgres psql -U cycletime -d cycletime_test",
+    "db:migrate": "echo 'Database migrations not yet implemented'",
+    "db:seed": "echo 'Database seeding not yet implemented'",
+    "redis:cli": "docker compose exec redis redis-cli",
+    "minio:web": "open http://localhost:9001",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "echo \"Linting not yet configured\" && exit 1",
+    "typecheck": "echo \"Type checking not yet configured\" && exit 1"
+  },
+  "keywords": [
+    "project-management",
+    "ai-orchestration",
+    "mcp",
+    "documentation",
+    "claude",
+    "intelligent-planning"
+  ],
+  "author": "Spiral House",
+  "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
