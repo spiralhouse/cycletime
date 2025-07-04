@@ -36,7 +36,7 @@ CycleTime is an intelligent project orchestration platform that automates the tr
 - **Quality**: 95%+ user satisfaction with generated plans after human review
 - **AI Efficiency**: 90%+ optimal model selection for task-specific requirements
 - **Productivity**: 40% faster time-to-first-commit on new projects
-- **Retention**: 80%+ of teams continue using CycleTime after 3 months
+- **Retention**: 80%+ of teams continue using CycleTime after 3 months.
 
 ### 2.3 Non-Goals
 
@@ -82,41 +82,142 @@ CycleTime is an intelligent project orchestration platform that automates the tr
 - **Main Flow**:
 1. PM commits PRD.md to repository in `/docs/requirements/` directory
 1. PM triggers CycleTime analysis via repository integration or web interface
-1. AI analyzes Markdown PRD and generates suggested development plan
-1. System creates additional Markdown documents: `project-plan.md`, `milestones.md`, `architecture.md`
+1. CycleTime AI analyzes Markdown PRD and generates suggested development plan
+1. CycleTime creates additional Markdown documents: `project-plan.md`, `milestones.md`, `architecture.md`
 1. PM and EM review generated documents, make edits directly in repository
 1. Upon approval, CycleTime creates issues in tracking system with links to repository documentation
 1. All project documentation remains version-controlled and accessible to team
 - **Expected Outcome**: Structured development plan with living documentation maintained in repository
-- **Alternative Flows**: If PRD has gaps, AI creates `requirements-review.md` highlighting missing information
+- **Alternative Flows**: If PRD has gaps, CycleTime AI creates `requirements-review.md` highlighting missing information
 
-#### Use Case 2: Living Technical Documentation
+```mermaid
+sequenceDiagram
+    participant PM as Product Manager
+    participant EM as Engineering Manager
+    participant CT as CycleTime
+    participant AI as CycleTime AI
+    participant REPO as Git Repository
+    participant LINEAR as Linear
+    
+    PM->>REPO: Commit PRD.md to /docs/requirements/
+    PM->>CT: Trigger analysis via web interface
+    CT->>AI: Analyze PRD with Claude 4
+    AI->>REPO: Read PRD.md
+    AI->>AI: Generate development plan
+    AI->>REPO: Create project-plan.md, milestones.md, architecture.md
+    CT->>PM: Notify documents ready for review
+    CT->>EM: Notify documents ready for review
+    PM->>REPO: Review generated documents
+    EM->>REPO: Review and edit documents
+    
+    alt Documents approved
+        PM->>CT: Approve plan
+        CT->>LINEAR: Create issues with doc links
+        LINEAR->>CT: Confirm issues created
+        CT->>PM: Notify issues created successfully
+        CT->>EM: Notify issues created successfully
+    else PRD has gaps
+        AI->>REPO: Create requirements-review.md
+        CT->>PM: Notify PRD gaps found - review needed
+    end
+```
+
+#### Use Case 2: Hybrid Technical Documentation Workflow
 
 - **Actor**: Senior Developer + Engineering Manager
 - **Preconditions**: Feature issues exist with approved requirements, repository documentation structure established
 - **Main Flow**:
 1. Developer selects feature for technical design and creates branch
-1. AI analyzes requirements from repository docs and existing codebase
-1. System generates technical design template in `/docs/technical-designs/[feature-name].md`
-1. Developer edits Markdown document with technical specifications
+1. CycleTime AI analyzes requirements from repository docs and existing codebase
+1. CycleTime generates technical design template in `/docs/technical-designs/[feature-name].md`
+1. CycleTime notifies developer that technical design template is ready
+1. Developer edits Markdown document with architectural decisions and high-level design
 1. EM reviews design document via pull request process
-1. Upon approval, CycleTime automatically breaks down design into subtasks
-1. Technical design remains linked to issues and updated as implementation progresses
-- **Expected Outcome**: Living technical documentation that evolves with the codebase
+1. Upon approval, developer creates detailed subtasks in Linear using CycleTime AI-suggested breakdown
+1. CycleTime notifies team when subtasks are created successfully
+1. Implementation details captured in code comments and PR descriptions
+1. Technical design remains linked to issues and updated for architectural changes only
+- **Expected Outcome**: Right-sized documentation with architectural decisions in repository and implementation details in workflow
 
-#### Use Case 3: Living Technical Documentation
+```mermaid
+sequenceDiagram
+    participant DEV as Senior Developer
+    participant EM as Engineering Manager
+    participant CT as CycleTime
+    participant AI as CycleTime AI
+    participant REPO as Git Repository
+    participant LINEAR as Linear
+    
+    DEV->>REPO: Create feature branch
+    DEV->>CT: Request technical design template
+    CT->>AI: Analyze requirements and codebase
+    AI->>REPO: Read requirements docs and existing code
+    AI->>REPO: Generate technical design template
+    CT->>DEV: Notify technical design template ready
+    
+    DEV->>REPO: Edit design with architectural decisions
+    DEV->>REPO: Create pull request for design
+    EM->>REPO: Review technical design
+    
+    alt Design approved
+        EM->>REPO: Approve PR
+        DEV->>CT: Request task breakdown
+        CT->>AI: Generate subtask suggestions
+        AI->>DEV: Provide breakdown with estimates
+        DEV->>LINEAR: Create refined subtasks
+        LINEAR->>REPO: Link issues to technical design
+        CT->>DEV: Notify subtasks created successfully
+        CT->>EM: Notify subtasks created for review
+    else Design needs changes
+        EM->>REPO: Request changes
+        CT->>DEV: Notify design changes requested
+        DEV->>REPO: Update design
+    end
+```
+
+#### Use Case 3: AI-Assisted Task Breakdown
 
 - **Actor**: Senior Developer + Engineering Manager
-- **Preconditions**: Feature issues exist with approved requirements, repository documentation structure established
+- **Preconditions**: Epic-level issues exist with approved requirements, feature complexity templates available
 - **Main Flow**:
-1. Developer selects feature for technical design and creates branch
-1. AI analyzes requirements from repository docs and existing codebase
-1. System generates technical design template in `/docs/technical-designs/[feature-name].md`
-1. Developer edits Markdown document with technical specifications
-1. EM reviews design document via pull request process
-1. Upon approval, CycleTime automatically breaks down design into subtasks
-1. Technical design remains linked to issues and updated as implementation progresses
-- **Expected Outcome**: Living technical documentation that evolves with the codebase
+1. Developer selects complex feature requiring breakdown
+1. CycleTime AI analyzes feature requirements and suggests subtask breakdown using appropriate templates
+1. CycleTime provides breakdown suggestions with effort estimates and dependencies
+1. Developer reviews, refines, and approves suggested subtasks
+1. CycleTime creates Linear issues with proper linking and context
+1. CycleTime notifies developer and manager when tasks are created successfully
+1. Breakdown rationale captured in issue description for future reference
+1. Review process applied for high-risk features based on complexity scoring
+- **Expected Outcome**: Consistent task breakdown quality with engineer ownership and AI assistance
+
+```mermaid
+sequenceDiagram
+    participant DEV as Senior Developer
+    participant EM as Engineering Manager
+    participant CT as CycleTime
+    participant AI as CycleTime AI
+    participant TMPL as Template Engine
+    participant LINEAR as Linear
+    
+    DEV->>CT: Select complex feature for breakdown
+    CT->>AI: Analyze feature complexity
+    AI->>TMPL: Select appropriate template
+    AI->>AI: Generate breakdown suggestions
+    AI->>DEV: Provide tasks with estimates & dependencies
+    
+    DEV->>DEV: Review and refine suggestions
+    
+    alt High-risk feature
+        DEV->>EM: Request breakdown review
+        EM->>DEV: Approve with modifications
+    end
+    
+    DEV->>CT: Approve final breakdown
+    CT->>LINEAR: Create issues with context links
+    LINEAR->>CT: Confirm creation
+    CT->>DEV: Notify tasks created successfully with issue links
+    CT->>EM: Notify new tasks ready for assignment
+```
 
 #### Use Case 4: End-to-End Workflow Example - 3-Engineer Team with Linear
 
@@ -144,27 +245,28 @@ CycleTime is an intelligent project orchestration platform that automates the tr
 
 **Week 2: Technical Design**
 7. **Jordan (Senior Dev)** selects AUTH-1 epic, creates feature branch `feature/google-oauth`
-8. **Jordan** uses MCP tool: `get-documentation` to review requirements and architecture
+8. **Jordan** uses Local AI with MCP tool: `get-documentation` to review requirements and architecture
 9. **CycleTime** routes technical analysis to Claude 4 for architectural reasoning
-10. **CycleTime** generates `/docs/technical-designs/google-oauth-integration.md` with:
+10. **CycleTime AI** generates `/docs/technical-designs/google-oauth-integration.md` with:
 - API endpoint specifications
 - Database schema changes
 - Security considerations
 - Frontend integration points
 11. **Jordan** refines design, adds implementation details and testing strategy
 12. **Alex** reviews technical design via PR, approves with minor security suggestions
-13. **CycleTime** automatically breaks down design into implementable tasks:
-- `AUTH-1-1: Create OAuth service class`
-- `AUTH-1-2: Add Google OAuth endpoints`
-- `AUTH-1-3: Update user model for OAuth data`
-- `AUTH-1-4: Frontend OAuth button component`
-- `AUTH-1-5: Integration tests`
+13. **Jordan** uses CycleTime AI-assisted breakdown tool to create implementable tasks:
+- `AUTH-1-1: Create OAuth service class` (Backend, 3 story points)
+- `AUTH-1-2: Add Google OAuth endpoints` (Backend, 5 story points)
+- `AUTH-1-3: Update user model for OAuth data` (Backend, 2 story points)
+- `AUTH-1-4: Frontend OAuth button component` (Frontend, 3 story points)
+- `AUTH-1-5: Integration tests` (QA, 2 story points)
+14. **CycleTime** creates Linear issues with proper dependencies and context links
 
 **Week 3-4: Implementation**
-14. **Taylor (Backend)** claims `AUTH-1-1` and `AUTH-1-2`, uses MCP assistant:
+14. **Taylor (Backend)** claims `AUTH-1-1` and `AUTH-1-2`, uses Local AI with MCP assistant:
 `CycleTime.getTaskContext({ task_id: "AUTH-1-1", include_code_context: true })`
-15. **CycleTime** routes coding assistance to GitHub Copilot for implementation guidance
-16. **Casey (Frontend)** claims `AUTH-1-4`, gets React component suggestions from Claude 3.5 Sonnet
+15. **CycleTime** routes coding assistance to specialized models for implementation guidance
+16. **Casey (Frontend)** claims `AUTH-1-4`, gets React component suggestions from Local AI (Claude 3.5 Sonnet)
 17. **Jordan** monitors progress, claims `AUTH-1-5` for testing
 18. As each task completes, **CycleTime** updates project status documents automatically
 19. **Linear** shows progress with direct links to technical design documentation
@@ -179,7 +281,7 @@ CycleTime is an intelligent project orchestration platform that automates the tr
 **Key Benefits Demonstrated**:
 
 - **Documentation stays current**: All project context lives in repository with code
-- **Optimal AI assistance**: Different models used for planning vs. coding vs. architecture
+- **Optimal AI assistance**: CycleTime AI for planning and architecture, Local AI for coding assistance
 - **Seamless tool integration**: Linear issues link directly to repository documentation
 - **Human oversight**: All AI suggestions reviewed and approved by appropriate team members
 - **Cost optimization**: Intelligent routing saves ~40% on AI costs vs. using premium models for everything
@@ -190,6 +292,68 @@ CycleTime is an intelligent project orchestration platform that automates the tr
 **Time savings**: 40-50% reduction in planning and coordination overhead
 
 - **Expected Outcome**: Faster development cycles with better documentation and team coordination
+
+```mermaid
+sequenceDiagram
+    participant Sarah as PM (Sarah)
+    participant Alex as EM (Alex)
+    participant Jordan as Senior Dev (Jordan)
+    participant Casey as Frontend Dev (Casey)
+    participant Taylor as Backend Dev (Taylor)
+    participant CT as CycleTime
+    participant AI as CycleTime AI
+    participant LocalAI as Local AI
+    participant REPO as Git Repository
+    participant LINEAR as Linear
+    
+    Note over Sarah,LINEAR: Week 1: Planning Phase
+    Sarah->>REPO: Commit PRD-oauth-enhancement.md
+    Sarah->>CT: Trigger analysis
+    CT->>AI: Analyze PRD with Claude 4
+    AI->>REPO: Generate project-plan.md, milestones.md, architecture.md
+    CT->>Sarah: Notify planning documents ready for review
+    CT->>Alex: Notify planning documents ready for review
+    Alex->>REPO: Review and adjust timeline
+    Sarah->>Alex: Approve plan via PR
+    CT->>LINEAR: Create AUTH-1, AUTH-2, AUTH-3, AUTH-4 epics
+    CT->>Sarah: Notify epics created successfully
+    CT->>Alex: Notify epics created successfully
+    
+    Note over Sarah,LINEAR: Week 2: Technical Design
+    Jordan->>REPO: Create feature/google-oauth branch
+    Jordan->>LocalAI: get-documentation for requirements
+    LocalAI->>CT: Request context via MCP
+    CT->>AI: Route to Claude 4 for architecture
+    AI->>REPO: Generate google-oauth-integration.md template
+    CT->>Jordan: Notify technical design template ready
+    Jordan->>REPO: Refine design with implementation details
+    Alex->>REPO: Review and approve via PR
+    Jordan->>CT: Request task breakdown
+    CT->>AI: Generate subtask breakdown
+    AI->>Jordan: Provide breakdown with estimates
+    Jordan->>LINEAR: Create AUTH-1-1 through AUTH-1-5
+    CT->>Jordan: Notify subtasks created successfully
+    CT->>Alex: Notify new subtasks ready for assignment
+    
+    Note over Sarah,LINEAR: Week 3-4: Implementation
+    Taylor->>LINEAR: Claim AUTH-1-1, AUTH-1-2
+    Taylor->>LocalAI: Request context via MCP
+    LocalAI->>CT: getTaskContext with code context
+    CT->>Taylor: Provide implementation guidance
+    Casey->>LINEAR: Claim AUTH-1-4
+    Casey->>LocalAI: Request React component suggestions
+    Jordan->>LINEAR: Claim AUTH-1-5 for testing
+    
+    Note over Sarah,LINEAR: Week 5: Integration
+    Jordan->>REPO: Create PR with updated design
+    CT->>Alex: Flag architecture changes for review
+    Alex->>REPO: Review code and documentation
+    Alex->>REPO: Merge feature
+    CT->>REPO: Update milestone progress
+    CT->>Sarah: Notify milestone progress updated
+    CT->>Alex: Notify milestone progress updated
+    Sarah->>REPO: Review updated project-plan.md
+```
 
 ## 4. Product Requirements
 
@@ -224,17 +388,18 @@ CycleTime is an intelligent project orchestration platform that automates the tr
 
 #### Feature 3: Adaptive Technical Design System
 
-- **Description**: Generate technical design documents using specialized coding models and evolve them with the codebase
+- **Description**: Generate technical design documents focused on architectural decisions with AI-assisted task breakdown for implementation
 - **User Story**: “As a Senior Developer, I want technical designs created with the most appropriate AI model for architectural planning so that I get consistent, high-quality specifications”
 - **Acceptance Criteria**:
-  - Route design tasks to models specialized for technical analysis (Claude 4 for architecture, coding-specific models for implementation details)
-  - Generate technical design templates in `/docs/technical-designs/` directory
-  - Analyze existing codebase using appropriate models for code understanding
-  - Create design documents with embedded code examples and API specifications
-  - Automatically detect when code changes affect documented designs using monitoring models
-  - Support model configuration for different design complexity levels
+  - Route design tasks to models specialized for technical analysis (Claude 4 for architecture, coding-specific models for task breakdown)
+  - Generate technical design templates in `/docs/technical-designs/` directory focusing on architectural decisions
+  - Provide AI-assisted task breakdown using feature complexity templates
+  - Create design documents with high-level specifications and decision rationale
+  - Support lightweight templates for common feature types
+  - Enable breakdown review process for high-risk features
+  - Automatically detect when code changes affect architectural decisions using monitoring models
   - Enable collaborative editing through standard Git workflow with AI assistance
-- **Implementation**: Multi-model orchestration, Git integration, AST analysis for code understanding, Markdown template system
+- **Implementation**: Multi-model orchestration, Git integration, template system, task breakdown algorithms, complexity scoring
 
 #### Feature 4: Repository-Synced Progress Tracking
 
@@ -338,16 +503,16 @@ CycleTime is an intelligent project orchestration platform that automates the tr
 
 **MCP Tools**:
 
-- **get-documentation**: Retrieve specific documentation sections from repository
-- **analyze-requirements**: Get AI analysis of requirements using optimal models with document references
-- **suggest-implementation**: Receive implementation suggestions from coding-specialized models based on technical designs
-- **review-technical-design**: Get AI feedback on design documents using architectural reasoning models
+- **get-documentation**: Retrieve specific documentation sections from repository for Local AI context
+- **analyze-requirements**: Get CycleTime AI analysis of requirements using optimal models with document references
+- **suggest-implementation**: Receive implementation suggestions from Local AI with CycleTime-provided context and technical designs
+- **review-technical-design**: Get CycleTime AI feedback on design documents using architectural reasoning models
 - **check-dependencies**: Analyze dependencies from documentation structure
 - **update-documentation**: Create or update documentation files in repository
 - **cross-reference-docs**: Find related information across different documentation types
 - **validate-documentation**: Check documentation consistency and completeness
 - **configure-models**: Set model preferences and routing policies for specific tasks
-- **get-model-recommendations**: Receive suggestions for optimal model selection based on task complexity
+- **get-model-recommendations**: Receive CycleTime suggestions for optimal model selection based on task complexity
 
 ### 5.4 Non-Functional Requirements
 
