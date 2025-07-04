@@ -7,7 +7,7 @@
 
 ## Overview
 
-This document outlines the MVP project plan for CycleTime - an intelligent project orchestration platform. The MVP focuses on local Docker deployment with GitHub and Linear integration only, targeting single-user use cases.
+This document outlines the MVP project plan for CycleTime - an intelligent project orchestration platform. The MVP focuses on local Docker deployment with GitHub and Linear integration only, targeting single-user use cases. **Scope Update**: Limited to Anthropic's Claude 4 Sonnet for all AI tasks to reduce complexity and accelerate development.
 
 ## Linear Project Structure
 
@@ -59,25 +59,22 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
 
 ### Milestone 2: AI Integration (Week 2)
 
-**SPI-14: AI Orchestration Service**
-- **Description**: Build foundational AI service with provider management
-- **Sub-issues**:
-  - `SPI-12-DESIGN`: Technical design for AI orchestration
-  - `SPI-12-1`: Service architecture with OpenAI/Anthropic integration
-  - `SPI-12-2`: Request/response logging and error handling
-  - `SPI-12-3`: Provider health checking and retry mechanisms
-
-**SPI-15: Model Selection Logic**
-- **Description**: Implement intelligent routing for optimal model selection
+**SPI-14: Claude AI Service** 
+- **Description**: Build foundational AI service with Anthropic Claude 4 Sonnet integration
 - **Sub-issues**: Sub-issues will be created after technical design is approved
+- **Scope**: Direct Anthropic API integration only, simplified error handling
 
-**SPI-16: Cost Tracking System**
-- **Description**: Implement cost tracking and optimization
-- **Sub-issues**: Sub-issues will be created after technical design is approved
+**SPI-16: Anthropic Usage Tracking**
+- **Description**: Implement usage tracking and basic cost monitoring for Anthropic API
+- **Sub-issues**: Sub-issues will be created after technical design is approved  
+- **Scope**: Single-provider usage analytics, budget alerts
 
 **SPI-17: PRD Analysis Engine**
-- **Description**: Build core PRD analysis and document generation
+- **Description**: Build core PRD analysis and document generation using Claude 4 Sonnet
 - **Sub-issues**: Sub-issues will be created after technical design is approved
+- **Scope**: PRD analysis, project plan generation, template creation
+
+**~~SPI-15: Model Selection Logic~~** *(Eliminated - not needed for single-model approach)*
 
 ### Milestone 3: Repository Integration (Week 3)
 
@@ -113,11 +110,8 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
 
 **SPI-22: Configuration Management**
 - **Description**: Build interface for API keys and settings
-- **Sub-issues**:
-  - `SPI-22-DESIGN`: Technical design for configuration management
-  - `SPI-22-1`: API key management interface (OpenAI, Anthropic, GitHub, Linear)
-  - `SPI-22-2`: Repository and workspace selection
-  - `SPI-22-3`: User preferences and system settings
+- **Sub-issues**: Sub-issues will be created after technical design is approved
+- **Scope**: API key management (Anthropic, GitHub, Linear), repository/workspace selection, basic preferences
 
 **SPI-23: Issue Creation Workflow**
 - **Description**: Interface for Linear issue creation and management
@@ -147,11 +141,8 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
 
 **SPI-26: Local AI Integration**
 - **Description**: Enable integration with Claude/Copilot
-- **Sub-issues**:
-  - `SPI-26-DESIGN`: Technical design for Local AI integration
-  - `SPI-26-1`: MCP tools for task context and specifications
-  - `SPI-26-2`: Implementation suggestions and design feedback
-  - `SPI-26-3`: Model routing recommendations
+- **Sub-issues**: Sub-issues will be created after technical design is approved
+- **Scope**: MCP tools for task context, implementation suggestions, design feedback (no model routing needed)
 
 **SPI-27: CLI Tool**
 - **Description**: Command-line interface for project management
@@ -227,7 +218,7 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
 - [ ] All services run in Docker containers
 - [ ] GitHub OAuth authentication works
 - [ ] Linear API integration creates issues successfully
-- [ ] AI model selection works (OpenAI/Anthropic)
+- [ ] Claude 4 Sonnet integration works reliably (95%+ success rate)
 - [ ] MCP server integrates with Claude/Copilot
 
 ### Quality Requirements
@@ -240,7 +231,7 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
 ## Risk Mitigation
 
 ### Technical Risks
-- **AI Model Dependencies**: Use fallback mechanisms and multiple providers
+- **Claude API Dependencies**: Implement robust error handling, retry logic, and backup plans
 - **Integration Complexity**: Start with simple implementations, iterate
 - **Local Environment Issues**: Comprehensive Docker setup and documentation
 
@@ -251,8 +242,8 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
 
 ## Resource Requirements
 - **Development**: 1-2 senior developers
-- **Timeline**: 6 weeks (30 working days)
-- **External APIs**: OpenAI, Anthropic, GitHub, Linear API access
+- **Timeline**: 6 weeks (30 working days)  
+- **External APIs**: Anthropic Claude 4 Sonnet, GitHub, Linear API access
 - **Infrastructure**: Local Docker environment only
 
 ## Created Linear Issues
@@ -265,11 +256,11 @@ The following Linear issues have been created in the CycleTime Scrum project:
 - **SPI-12**: API Gateway & Authentication
 - **SPI-13**: CI/CD Pipeline Setup
 
-### Milestone 2: AI Integration
-- **SPI-14**: AI Orchestration Service
-- **SPI-15**: Model Selection Logic
-- **SPI-16**: Cost Tracking System
-- **SPI-17**: PRD Analysis Engine
+### Milestone 2: AI Integration  
+- **SPI-14**: Claude AI Service *(simplified from AI Orchestration Service)*
+- **~~SPI-15~~**: ~~Model Selection Logic~~ *(eliminated)*
+- **SPI-16**: Anthropic Usage Tracking *(simplified from Cost Tracking System)*
+- **SPI-17**: PRD Analysis Engine *(scope clarified for Claude 4 Sonnet only)*
 
 ### Milestone 3: Repository Integration
 - **SPI-18**: GitHub Integration
@@ -285,8 +276,15 @@ The following Linear issues have been created in the CycleTime Scrum project:
 ### Milestone 6: Testing & Polish
 - **SPI-23**: MVP Testing & Polish
 
-**Total Issues Created**: 14 core issues
+**Total Issues Created**: 13 core issues *(SPI-15 eliminated for single-model approach)*
 **Next Steps**: Create technical design sub-issues as each issue is started
+
+### **Scope Reduction Benefits**
+- **Simplified architecture**: Direct Claude API integration instead of orchestration layer
+- **Reduced complexity**: Single provider eliminates model routing complexity  
+- **Faster development**: Fewer abstraction layers and configuration options
+- **Lower risk**: Fewer external dependencies and failure points
+- **Easier maintenance**: Simpler codebase with single AI provider integration
 
 ---
 
