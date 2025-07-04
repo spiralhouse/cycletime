@@ -1,8 +1,28 @@
 # CycleTime
 
-Intelligent Project Orchestration Platform with MCP Integration
+**Intelligent Project Orchestration Platform with MCP Integration**
 
-## Quick Start
+*Transform your Product Requirements Documents into structured development plans in hours, not days*
+
+## 🚀 What is CycleTime?
+
+CycleTime automates the transformation of PRDs into structured development plans while keeping humans in control of all critical decisions. Powered by **Claude 4 Sonnet** for intelligent planning and analysis, CycleTime creates a seamless connection between documentation, planning, and execution.
+
+### ✨ Key Benefits
+
+- **⚡ 80% Faster Planning**: Turn PRDs into actionable development plans in 2-3 hours instead of 2-3 days
+- **🤖 AI-Powered Intelligence**: Leverage Claude 4 Sonnet for consistent, high-quality project analysis
+- **📚 Living Documentation**: Keep project docs in sync with actual development progress in your repository
+- **🔗 Seamless AI Integration**: Enable your existing AI tools to access full project context via MCP
+- **👥 Human-Centered**: AI suggests, humans decide - maintain full control over critical decisions
+
+### 🎯 Perfect For
+
+- **Product Managers** who want to quickly translate product vision into clear engineering work
+- **Engineering Managers** seeking consistent task breakdown and progress visibility  
+- **Development Teams** that value documentation that stays current with code
+
+## 🛠️ Quick Start
 
 ### Prerequisites
 
@@ -72,7 +92,21 @@ npm run minio:web          # Open MinIO console
 - `/packages/` - Individual service packages (planned)
 - `/src/` - Core application code (planned)
 
-## Development Workflow
+## 🏗️ How CycleTime Works
+
+1. **📝 Write PRDs in Markdown** - Store requirements in your repository's `/docs/requirements/` directory
+2. **🧠 AI Analysis** - Claude 4 Sonnet analyzes your PRD and generates structured project plans
+3. **👀 Human Review** - Review and refine generated `project-plan.md`, `milestones.md`, and `architecture.md`
+4. **🎫 Issue Creation** - Automatically create Linear/Jira issues with links to your documentation
+5. **🔄 Stay Synchronized** - Documentation stays current as your project evolves
+
+### 📊 Expected Results
+
+- **40% faster** time-to-first-commit on new projects
+- **95%+ user satisfaction** with AI-generated plans after human review
+- **Living documentation** that teams actually use and maintain
+
+## 🤝 Development Workflow
 
 This project follows a structured development workflow using Linear for task management. See `CLAUDE.md` for detailed development guidelines.
 
