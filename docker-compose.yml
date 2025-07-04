@@ -59,6 +59,170 @@ services:
       retries: 3
     restart: unless-stopped
 
+  # Application Services
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile.dev
+    container_name: cycletime-api
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cycletime}:${POSTGRES_PASSWORD:-development_password}@postgres:5432/${POSTGRES_DB:-cycletime_dev}
+      REDIS_URL: redis://redis:6379
+      API_PORT: ${API_PORT:-8000}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+    volumes:
+      - ./:/app
+      - cycletime_node_modules:/app/node_modules
+      - cycletime_logs:/app/logs
+    ports:
+      - "${API_PORT:-8000}:8000"
+    networks:
+      - cycletime-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  web-dashboard:
+    build:
+      context: .
+      dockerfile: services/web-dashboard/Dockerfile.dev
+    container_name: cycletime-web
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-8000}
+      WEB_PORT: ${WEB_PORT:-3001}
+    volumes:
+      - ./:/app
+      - cycletime_node_modules:/app/node_modules
+    ports:
+      - "${WEB_PORT:-3001}:3001"
+    networks:
+      - cycletime-network
+    depends_on:
+      - api-gateway
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-server:
+    build:
+      context: .
+      dockerfile: services/mcp-server/Dockerfile.dev
+    container_name: cycletime-mcp
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      API_URL: http://api-gateway:8000
+      MCP_PORT: ${MCP_PORT:-8001}
+    volumes:
+      - ./:/app
+      - cycletime_node_modules:/app/node_modules
+    ports:
+      - "${MCP_PORT:-8001}:8001"
+    networks:
+      - cycletime-network
+    depends_on:
+      - api-gateway
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  claude-service:
+    build:
+      context: .
+      dockerfile: services/claude-service/Dockerfile.dev
+    container_name: cycletime-claude
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      API_URL: http://api-gateway:8000
+      CLAUDE_SERVICE_PORT: ${CLAUDE_SERVICE_PORT:-8002}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-dev_key_replace_me}
+    volumes:
+      - ./:/app
+      - cycletime_node_modules:/app/node_modules
+    ports:
+      - "${CLAUDE_SERVICE_PORT:-8002}:8002"
+    networks:
+      - cycletime-network
+    depends_on:
+      - api-gateway
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  document-service:
+    build:
+      context: .
+      dockerfile: services/document-service/Dockerfile.dev
+    container_name: cycletime-documents
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      API_URL: http://api-gateway:8000
+      DOCUMENT_SERVICE_PORT: ${DOCUMENT_SERVICE_PORT:-8003}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    volumes:
+      - ./:/app
+      - cycletime_node_modules:/app/node_modules
+    ports:
+      - "${DOCUMENT_SERVICE_PORT:-8003}:8003"
+    networks:
+      - cycletime-network
+    depends_on:
+      - api-gateway
+      - minio
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  task-service:
+    build:
+      context: .
+      dockerfile: services/task-service/Dockerfile.dev
+    container_name: cycletime-tasks
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      API_URL: http://api-gateway:8000
+      TASK_SERVICE_PORT: ${TASK_SERVICE_PORT:-8004}
+      LINEAR_API_KEY: ${LINEAR_API_KEY:-dev_key_replace_me}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-dev_token_replace_me}
+    volumes:
+      - ./:/app
+      - cycletime_node_modules:/app/node_modules
+    ports:
+      - "${TASK_SERVICE_PORT:-8004}:8004"
+    networks:
+      - cycletime-network
+    depends_on:
+      - api-gateway
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
 volumes:
   cycletime_postgres_data:
     name: cycletime_postgres_data
@@ -66,6 +230,10 @@ volumes:
     name: cycletime_redis_data
   cycletime_minio_data:
     name: cycletime_minio_data
+  cycletime_node_modules:
+    name: cycletime_node_modules
+  cycletime_logs:
+    name: cycletime_logs
 
 networks:
   cycletime-network:
