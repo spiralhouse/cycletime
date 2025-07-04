@@ -41,7 +41,25 @@
   - Never skip the refactor step - clean code is maintainable code
 
 ### Git Workflow
-- **Use Conventional Commits** (feat, fix, chore, etc.)
+- **Use Conventional Commits with specific types**:
+  - `feat:` - New features or functionality
+  - `fix:` - Bug fixes
+  - `docs:` - Documentation changes only
+  - `test:` - Adding or updating tests
+  - `refactor:` - Code refactoring without changing functionality
+  - `chore:` - Build process, dependencies, tooling
+  - `style:` - Code formatting, whitespace (no logic changes)
+  - `perf:` - Performance improvements
+  - `ci:` - CI/CD pipeline changes
+
+- **Keep commits focused and atomic**:
+  - **NEVER mix different types** in a single commit
+  - Documentation updates = separate `docs:` commit
+  - Test additions = separate `test:` commit  
+  - Refactoring = separate `refactor:` commit
+  - Bug fixes = separate `fix:` commit
+  - Each commit should have one clear purpose
+
 - **Follow trunk-based development**
   - Use short-lived feature branches
   - Avoid committing directly to main
