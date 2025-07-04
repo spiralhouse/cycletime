@@ -6,7 +6,7 @@
 - **Only work on tasks that are defined in Linear Issues**
 - **All Linear Issues must be created in the CycleTime Scrum project**
 - **Maintain project board status**: Move issues through columns (Todo → In Progress → Review → Done)
-- **Keep task dependencies up-to-date**: Use the "Depends on" custom field to track issue dependencies
+- **Keep task dependencies up-to-date**: Use Linear issue relations to track dependencies (Blocked by/Blocks relationships)
 - Use Linear Issues to drive what we should be working on next
 - Plan features only after foundational architecture is agreed upon
 
