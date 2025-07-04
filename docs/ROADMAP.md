@@ -136,29 +136,28 @@ Our Minimum Viable Product focuses on **Claude 4 Sonnet integration** to deliver
 
 ## 📅 Tentative Timeline
 
-### 2025 Q1: MVP Development
-- **Jan-Feb**: Core infrastructure and Claude integration
-- **Mar**: Issue management and technical design system
-- **Apr**: Beta testing with pilot teams
+### 2025 Q3: MVP Development (Current)
+- **Jul**: Core infrastructure and Claude integration *(In Progress)*
+- **Aug**: Issue management and technical design system
+- **Sep**: Progress tracking and beta testing with pilot teams
 
-### 2025 Q2: MVP Refinement
-- **May**: Progress tracking and documentation sync
-- **Jun**: Performance optimization and reliability improvements
-- **Jul**: Public beta launch
+### 2025 Q4: MVP Refinement
+- **Oct**: Performance optimization and reliability improvements
+- **Nov**: Documentation sync and workflow polish
+- **Dec**: Public beta launch
 
-### 2025 Q3: Advanced AI Features
-- **Aug-Sep**: Multi-model orchestration system
-- **Oct**: Dynamic model selection and cost optimization
+### 2026 Q1: Advanced AI Features
+- **Jan-Feb**: Multi-model orchestration system
+- **Mar**: Dynamic model selection and cost optimization
 
-### 2025 Q4: Platform Expansion
-- **Nov**: GitLab and additional issue tracker support
-- **Dec**: Advanced analytics and team insights
+### 2026 Q2: Platform Expansion
+- **Apr**: GitLab and additional issue tracker support
+- **May**: Advanced analytics and team insights
+- **Jun**: Enterprise security foundations
 
-### 2026: Enterprise & Scale
-- **Q1**: Multi-project portfolio management
-- **Q2**: Enterprise security and compliance features
-- **Q3**: International expansion and localization
-- **Q4**: Custom deployment and white-label options
+### 2026 Q3-Q4: Enterprise & Scale
+- **Q3**: Multi-project portfolio management and compliance features
+- **Q4**: International expansion, localization, and custom deployment options
 
 ---
 
@@ -180,7 +179,7 @@ We're building CycleTime with our users. Here's how you can influence our roadma
 
 ---
 
-*Last Updated: 2025-01-04*  
-*Next Update: 2025-02-01*
+*Last Updated: 2025-07-03*  
+*Next Update: 2025-08-01*
 
 For the latest updates and discussions, visit our [GitHub repository](https://github.com/spiralhouse/cycletime) or join our community channels.
