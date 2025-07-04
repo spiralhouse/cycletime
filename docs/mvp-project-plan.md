@@ -25,41 +25,41 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
 
 ### Milestone 1: Foundation & Infrastructure (Week 1)
 
-**SPI-8: Docker Development Environment**
+**SPI-10: Docker Development Environment**
 - **Description**: Set up complete local development environment with Docker
 - **Sub-issues**:
-  - `SPI-8-DESIGN`: Technical design for development environment
-  - `SPI-8-1`: Docker compose setup with PostgreSQL, Redis, core services
-  - `SPI-8-2`: Environment configuration management system
-  - `SPI-8-3`: Local service orchestration with health checks
+  - `SPI-10-DESIGN`: Technical design for development environment
+  - `SPI-10-1`: Docker compose setup with PostgreSQL, Redis, core services
+  - `SPI-10-2`: Environment configuration management system
+  - `SPI-10-3`: Local service orchestration with health checks
 
-**SPI-9: Core Database Schema**
+**SPI-11: Core Database Schema**
 - **Description**: Design and implement foundational database schemas
 - **Sub-issues**:
-  - `SPI-9-DESIGN`: Technical design for database schema
-  - `SPI-9-1`: Prisma schema for core entities (projects, users, documents, tasks)
-  - `SPI-9-2`: Database migration system and seed data
-  - `SPI-9-3`: Connection pooling and backup procedures
+  - `SPI-11-DESIGN`: Technical design for database schema
+  - `SPI-11-1`: Prisma schema for core entities (projects, users, documents, tasks)
+  - `SPI-11-2`: Database migration system and seed data
+  - `SPI-11-3`: Connection pooling and backup procedures
 
-**SPI-10: API Gateway & Authentication**
+**SPI-12: API Gateway & Authentication**
 - **Description**: Implement central API gateway with GitHub OAuth
 - **Sub-issues**:
-  - `SPI-10-DESIGN`: Technical design for API gateway and auth
-  - `SPI-10-1`: Express/Fastify API gateway with routing
-  - `SPI-10-2`: GitHub OAuth integration and JWT management
-  - `SPI-10-3`: Rate limiting, validation, and RBAC foundation
+  - `SPI-12-DESIGN`: Technical design for API gateway and auth
+  - `SPI-12-1`: Express/Fastify API gateway with routing
+  - `SPI-12-2`: GitHub OAuth integration and JWT management
+  - `SPI-12-3`: Rate limiting, validation, and RBAC foundation
 
-**SPI-11: CI/CD Pipeline Setup**
+**SPI-13: CI/CD Pipeline Setup**
 - **Description**: Establish automated testing and deployment pipeline
 - **Sub-issues**:
-  - `SPI-11-DESIGN`: Technical design for CI/CD pipeline
-  - `SPI-11-1`: GitHub Actions workflow for testing and quality checks
-  - `SPI-11-2`: Docker image building and automated deployment
-  - `SPI-11-3`: Security scanning and test coverage reporting
+  - `SPI-13-DESIGN`: Technical design for CI/CD pipeline
+  - `SPI-13-1`: GitHub Actions workflow for testing and quality checks
+  - `SPI-13-2`: Docker image building and automated deployment
+  - `SPI-13-3`: Security scanning and test coverage reporting
 
 ### Milestone 2: AI Integration (Week 2)
 
-**SPI-12: AI Orchestration Service**
+**SPI-14: AI Orchestration Service**
 - **Description**: Build foundational AI service with provider management
 - **Sub-issues**:
   - `SPI-12-DESIGN`: Technical design for AI orchestration
@@ -67,67 +67,35 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
   - `SPI-12-2`: Request/response logging and error handling
   - `SPI-12-3`: Provider health checking and retry mechanisms
 
-**SPI-13: Model Selection Logic**
+**SPI-15: Model Selection Logic**
 - **Description**: Implement intelligent routing for optimal model selection
-- **Sub-issues**:
-  - `SPI-13-DESIGN`: Technical design for model routing
-  - `SPI-13-1`: Task classification system (planning, coding, documentation)
-  - `SPI-13-2`: Model selection algorithm based on complexity
-  - `SPI-13-3`: Fallback mechanisms and manual override capabilities
+- **Sub-issues**: Sub-issues will be created after technical design is approved
 
-**SPI-14: Cost Tracking System**
+**SPI-16: Cost Tracking System**
 - **Description**: Implement cost tracking and optimization
-- **Sub-issues**:
-  - `SPI-14-DESIGN`: Technical design for cost optimization
-  - `SPI-14-1`: Real-time cost tracking per request
-  - `SPI-14-2`: Budget management and alerting system
-  - `SPI-14-3`: Usage analytics and cost forecasting
+- **Sub-issues**: Sub-issues will be created after technical design is approved
 
-**SPI-15: PRD Analysis Engine**
+**SPI-17: PRD Analysis Engine**
 - **Description**: Build core PRD analysis and document generation
-- **Sub-issues**:
-  - `SPI-15-DESIGN`: Technical design for PRD analysis
-  - `SPI-15-1`: Markdown parsing and PRD analysis with AI
-  - `SPI-15-2`: Project plan and documentation generation
-  - `SPI-15-3`: Template system and validation
+- **Sub-issues**: Sub-issues will be created after technical design is approved
 
 ### Milestone 3: Repository Integration (Week 3)
 
-**SPI-16: GitHub Integration**
+**SPI-18: GitHub Integration**
 - **Description**: Implement Git repository operations and webhooks
-- **Sub-issues**:
-  - `SPI-16-DESIGN`: Technical design for GitHub integration
-  - `SPI-16-1`: Repository cloning and file operations
-  - `SPI-16-2`: Webhook processing and branch management
-  - `SPI-16-3`: Repository health monitoring and cleanup
+- **Sub-issues**: Sub-issues will be created after technical design is approved
 
-**SPI-17: Document Processing**
+**SPI-19: Document Processing**
 - **Description**: Build Markdown document parsing and analysis
-- **Sub-issues**:
-  - `SPI-17-DESIGN`: Technical design for document processing
-  - `SPI-17-1`: Markdown parsing with frontmatter support
-  - `SPI-17-2`: Document structure validation and cross-references
-  - `SPI-17-3`: Version tracking and Mermaid diagram support
+- **Sub-issues**: Sub-issues will be created after technical design is approved
 
-**SPI-18: Template Generation**
-- **Description**: Create system for generating documentation templates
-- **Sub-issues**:
-  - `SPI-18-DESIGN`: Technical design for template generation
-  - `SPI-18-1`: Template engine for different document types
-  - `SPI-18-2`: AI-assisted template generation
-  - `SPI-18-3`: Template validation and versioning
-
-**SPI-19: Linear API Integration**
+**SPI-20: Linear API Integration**
 - **Description**: Connect with Linear for issue management
-- **Sub-issues**:
-  - `SPI-19-DESIGN`: Technical design for Linear integration
-  - `SPI-19-1`: Linear workspace connection and authentication
-  - `SPI-19-2`: Issue creation with documentation links
-  - `SPI-19-3`: Bidirectional sync and status tracking
+- **Sub-issues**: Sub-issues will be created after technical design is approved
 
 ### Milestone 4: Web Interface (Week 4)
 
-**SPI-20: Basic Web Dashboard**
+**SPI-21: Web Dashboard**
 - **Description**: Build React-based user interface
 - **Sub-issues**:
   - `SPI-20-DESIGN`: Technical design for web dashboard
@@ -161,7 +129,7 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
 
 ### Milestone 5: MCP Server (Week 5)
 
-**SPI-24: MCP Server Core**
+**SPI-22: MCP Server**
 - **Description**: Implement MCP server for Local AI integration
 - **Sub-issues**:
   - `SPI-24-DESIGN`: Technical design for MCP server
@@ -195,7 +163,7 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
 
 ### Milestone 6: Polish & Testing (Week 6)
 
-**SPI-28: Comprehensive Testing**
+**SPI-23: MVP Testing & Polish**
 - **Description**: Build complete test suite for all components
 - **Sub-issues**:
   - `SPI-28-DESIGN`: Technical design for testing strategy
@@ -286,6 +254,39 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
 - **Timeline**: 6 weeks (30 working days)
 - **External APIs**: OpenAI, Anthropic, GitHub, Linear API access
 - **Infrastructure**: Local Docker environment only
+
+## Created Linear Issues
+
+The following Linear issues have been created in the CycleTime Scrum project:
+
+### Milestone 1: Foundation & Infrastructure
+- **SPI-10**: Docker Development Environment
+- **SPI-11**: Core Database Schema  
+- **SPI-12**: API Gateway & Authentication
+- **SPI-13**: CI/CD Pipeline Setup
+
+### Milestone 2: AI Integration
+- **SPI-14**: AI Orchestration Service
+- **SPI-15**: Model Selection Logic
+- **SPI-16**: Cost Tracking System
+- **SPI-17**: PRD Analysis Engine
+
+### Milestone 3: Repository Integration
+- **SPI-18**: GitHub Integration
+- **SPI-19**: Document Processing
+- **SPI-20**: Linear API Integration
+
+### Milestone 4: Web Interface
+- **SPI-21**: Web Dashboard
+
+### Milestone 5: MCP Server
+- **SPI-22**: MCP Server
+
+### Milestone 6: Testing & Polish
+- **SPI-23**: MVP Testing & Polish
+
+**Total Issues Created**: 14 core issues
+**Next Steps**: Create technical design sub-issues as each issue is started
 
 ---
 
