@@ -1,0 +1,287 @@
+// Prisma Schema for CycleTime Core Database
+// PostgreSQL 17 with UUID primary keys and performance optimization
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Core Enums
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum DocumentType {
+  README
+  TECHNICAL_SPEC
+  USER_GUIDE
+  API_DOCS
+  CHANGELOG
+  ISSUE_TEMPLATE
+  PR_TEMPLATE
+  OTHER
+}
+
+enum DocumentStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AiRequestType {
+  DOCUMENTATION
+  CODE_REVIEW
+  PLANNING
+  TASK_ANALYSIS
+  GENERAL
+}
+
+enum AiRequestStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// === CORE ENTITIES ===
+
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String    @unique
+  github_id       Int       @unique
+  github_username String    @unique
+  name            String
+  avatar_url      String?
+  bio             String?
+  company         String?
+  location        String?
+  timezone        String    @default("UTC")
+  locale          String    @default("en")
+  first_login_at  DateTime?
+  last_login_at   DateTime?
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  // Relations
+  user_sessions    UserSession[]
+  api_keys         ApiKey[]
+  project_members  ProjectMember[]
+  documents        Document[]
+  document_versions DocumentVersion[]
+  ai_requests      AiRequest[]
+
+  @@map("users")
+}
+
+model UserSession {
+  id            String    @id @default(uuid()) @db.Uuid
+  user_id       String    @db.Uuid
+  session_id    String    @unique
+  access_token  String
+  refresh_token String?
+  expires_at    DateTime
+  ip_address    String?
+  user_agent    String?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+model ApiKey {
+  id          String    @id @default(uuid()) @db.Uuid
+  user_id     String    @db.Uuid
+  name        String
+  key_hash    String    @unique
+  permissions Json      @default("[]")
+  last_used_at DateTime?
+  expires_at  DateTime?
+  is_active   Boolean   @default(true)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+model Project {
+  id            String        @id @default(uuid()) @db.Uuid
+  name          String
+  description   String?
+  status        ProjectStatus @default(DRAFT)
+  repository_id String?       @unique @db.Uuid
+  settings      Json          @default("{}")
+  ai_model      String        @default("claude-4-sonnet")
+  ai_budget     Decimal?      @db.Decimal(10, 2)
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+
+  // Relations
+  repository      Repository?     @relation(fields: [repository_id], references: [id], onDelete: SetNull)
+  project_members ProjectMember[]
+  documents       Document[]
+  ai_requests     AiRequest[]
+
+  @@map("projects")
+}
+
+model ProjectMember {
+  id         String     @id @default(uuid()) @db.Uuid
+  project_id String     @db.Uuid
+  user_id    String     @db.Uuid
+  role       MemberRole @default(MEMBER)
+  joined_at  DateTime   @default(now())
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+
+  // Relations
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([project_id, user_id])
+  @@map("project_members")
+}
+
+model Repository {
+  id             String    @id @default(uuid()) @db.Uuid
+  github_id      Int       @unique
+  full_name      String    @unique
+  name           String
+  owner          String
+  description    String?
+  clone_url      String
+  ssh_url        String
+  default_branch String    @default("main")
+  is_private     Boolean   @default(false)
+  webhook_id     Int?
+  webhook_secret String?
+  last_sync_at   DateTime?
+  sync_status    String?   @default("pending")
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  // Relations
+  project Project?
+
+  @@map("repositories")
+}
+
+// === DOCUMENT MANAGEMENT ===
+
+model Document {
+  id          String         @id @default(uuid()) @db.Uuid
+  project_id  String         @db.Uuid
+  title       String
+  description String?
+  type        DocumentType
+  status      DocumentStatus @default(DRAFT)
+  file_path   String?
+  metadata    Json           @default("{}")
+  created_by  String         @db.Uuid
+  created_at  DateTime       @default(now())
+  updated_at  DateTime       @updatedAt
+
+  // Relations
+  project  Project           @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  creator  User              @relation(fields: [created_by], references: [id])
+  versions DocumentVersion[]
+
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id          String   @id @default(uuid()) @db.Uuid
+  document_id String   @db.Uuid
+  version     Int
+  content     String
+  diff_from_previous String?
+  commit_hash String?
+  created_by  String   @db.Uuid
+  created_at  DateTime @default(now())
+
+  // Relations
+  document Document @relation(fields: [document_id], references: [id], onDelete: Cascade)
+  creator  User     @relation(fields: [created_by], references: [id])
+
+  @@unique([document_id, version])
+  @@map("document_versions")
+}
+
+// === AI INTEGRATION ===
+
+model AiRequest {
+  id         String          @id @default(uuid()) @db.Uuid
+  project_id String?         @db.Uuid
+  user_id    String          @db.Uuid
+  type       AiRequestType
+  status     AiRequestStatus @default(PENDING)
+  prompt     String
+  context    Json            @default("{}")
+  model      String          @default("claude-4-sonnet")
+  created_at DateTime        @default(now())
+  updated_at DateTime        @updatedAt
+
+  // Relations
+  project     Project?    @relation(fields: [project_id], references: [id], onDelete: SetNull)
+  user        User        @relation(fields: [user_id], references: [id])
+  responses   AiResponse[]
+  usage       UsageTracking[]
+
+  @@map("ai_requests")
+}
+
+model AiResponse {
+  id           String   @id @default(uuid()) @db.Uuid
+  request_id   String   @db.Uuid
+  content      String
+  tokens_used  Int
+  model        String
+  finish_reason String?
+  metadata     Json     @default("{}")
+  created_at   DateTime @default(now())
+
+  // Relations
+  request AiRequest @relation(fields: [request_id], references: [id], onDelete: Cascade)
+
+  @@map("ai_responses")
+}
+
+model UsageTracking {
+  id            String   @id @default(uuid()) @db.Uuid
+  request_id    String   @db.Uuid
+  model         String
+  prompt_tokens Int
+  completion_tokens Int
+  total_tokens  Int
+  cost_estimate Decimal? @db.Decimal(10, 4)
+  created_at    DateTime @default(now())
+
+  // Relations
+  request AiRequest @relation(fields: [request_id], references: [id], onDelete: Cascade)
+
+  @@map("usage_tracking")
+}

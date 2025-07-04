@@ -33,7 +33,12 @@
     "db:setup": "./scripts/db-setup.sh",
     "db:connect": "docker compose exec postgres psql -U cycletime -d cycletime_dev",
     "db:connect:test": "docker compose exec postgres psql -U cycletime -d cycletime_test",
-    "db:migrate": "./scripts/db-migrate.sh",
+    "db:migrate": "npx prisma migrate dev",
+    "db:migrate:deploy": "npx prisma migrate deploy",
+    "db:generate": "npx prisma generate",
+    "db:push": "npx prisma db push",
+    "db:studio": "npx prisma studio",
+    "db:test": "node prisma/test-connection.js",
     "db:seed": "./scripts/db-seed.sh",
     "db:reset": "docker compose down postgres && docker volume rm cycletime_postgres_data && npm run infrastructure:up",
     "db:backup": "./scripts/db-backup.sh",
@@ -89,6 +94,8 @@
     "node": ">=22.0.0",
     "npm": ">=10.0.0"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "@prisma/client": "^6.11.1",
+    "prisma": "^6.11.1"
+  }
 }
