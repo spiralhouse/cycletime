@@ -42,6 +42,80 @@ This document outlines the technical design for CycleTime's core database schema
 - **Connection Pooling**: PgBouncer (future)
 - **Backup**: pg_dump with continuous WAL archiving
 
+### 3.2 Technology Selection Rationale
+
+#### 3.2.1 PostgreSQL 17 Selection
+**Why PostgreSQL over alternatives (MySQL, MongoDB, etc.)?**
+
+- **ACID Compliance**: Critical for financial data (AI usage costs) and audit trails
+- **Advanced JSON Support**: Native JSONB for flexible metadata without sacrificing performance
+- **Full-Text Search**: Built-in FTS capabilities eliminate need for separate search infrastructure
+- **UUID Support**: Native UUID type with optimal indexing for distributed systems
+- **Extensibility**: Rich ecosystem of extensions (uuid-ossp, pg_trgm for fuzzy search)
+- **Mature Ecosystem**: 30+ years of development, battle-tested in production environments
+- **Row-Level Security**: Built-in multi-tenant data isolation without application-level complexity
+- **Advanced Indexing**: GIN, GiST indexes for complex queries on JSONB and arrays
+- **Streaming Replication**: Built-in high availability and read scaling capabilities
+- **Version 17 Benefits**: Improved performance, better JSONB operations, enhanced security features
+
+**PostgreSQL vs. Alternatives:**
+- **vs MySQL**: Superior JSON support, better complex query performance, more advanced features
+- **vs MongoDB**: ACID guarantees, better consistency, SQL familiarity, mature tooling
+- **vs SQLite**: Multi-user concurrency, better scalability, advanced features
+- **vs Cloud Databases**: Cost control, data sovereignty, consistent performance
+
+#### 3.2.2 Prisma ORM Selection
+**Why Prisma over alternatives (TypeORM, Sequelize, Drizzle)?**
+
+- **Type Safety**: Generate TypeScript types from schema, eliminating runtime type errors
+- **Developer Experience**: Intuitive API with excellent IntelliSense and auto-completion
+- **Migration System**: Robust, reversible migrations with automatic diff generation
+- **Query Performance**: Optimized query generation with automatic JOIN optimization
+- **Schema-First Approach**: Single source of truth for database structure
+- **Modern Architecture**: Built for modern Node.js with async/await throughout
+- **Introspection**: Can generate schema from existing databases for gradual adoption
+- **Database Agnostic**: Easy switching between PostgreSQL, MySQL, SQLite in development
+- **Active Development**: Rapidly evolving with strong community and commercial backing
+- **Prisma Studio**: Built-in database GUI for development and debugging
+
+**Prisma vs. Alternatives:**
+- **vs TypeORM**: Better TypeScript integration, simpler syntax, more reliable migrations
+- **vs Sequelize**: Modern architecture, better performance, superior TypeScript support
+- **vs Drizzle**: More mature ecosystem, better tooling, established migration patterns
+- **vs Raw SQL**: Type safety, reduced boilerplate, automatic query optimization
+
+#### 3.2.3 PgBouncer Selection
+**Why PgBouncer for connection pooling?**
+
+- **Lightweight**: Minimal memory footprint (<10MB) compared to application-level pooling
+- **Battle-Tested**: Industry standard used by major platforms (Heroku, DigitalOcean, etc.)
+- **Connection Modes**: Session, transaction, and statement-level pooling options
+- **PostgreSQL Optimized**: Built specifically for PostgreSQL, understands protocol nuances
+- **Transparent**: Zero application code changes required
+- **Monitoring**: Built-in statistics and monitoring capabilities
+- **High Performance**: Written in C, minimal overhead compared to Node.js pools
+- **Production Ready**: Handles thousands of concurrent connections efficiently
+- **Auth Support**: Multiple authentication methods including SCRAM-SHA-256
+- **Load Balancing**: Can distribute connections across multiple PostgreSQL instances
+
+**PgBouncer vs. Alternatives:**
+- **vs pgpool-II**: Simpler configuration, better performance for connection pooling use case
+- **vs Application-level pools**: Better resource utilization, reduced memory usage per connection
+- **vs Cloud poolers**: Cost control, consistent performance, no vendor lock-in
+- **vs HAProxy**: PostgreSQL-specific features, protocol awareness, simpler setup
+
+### 3.3 Architecture Justification
+
+This technology stack provides:
+
+1. **Performance**: PostgreSQL + PgBouncer handle 10,000+ concurrent connections efficiently
+2. **Developer Productivity**: Prisma eliminates 80% of database boilerplate code
+3. **Type Safety**: End-to-end TypeScript integration prevents runtime database errors
+4. **Scalability**: Connection pooling and query optimization support high-load scenarios
+5. **Maintainability**: Schema-driven development with automatic migrations
+6. **Cost Efficiency**: Open-source stack with predictable operational costs
+7. **Future-Proof**: Modern tools with active development and strong ecosystems
+
 ### 3.2 Data Types Strategy
 - **UUID**: Primary keys for all entities (uuid-ossp extension)
 - **JSONB**: Flexible metadata storage
