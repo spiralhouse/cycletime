@@ -55,6 +55,7 @@ CycleTime automates the transformation of PRDs into structured development plans
 
 ### Available Services
 
+#### Infrastructure Services
 - **PostgreSQL 17**: `localhost:5432`
   - Main database: `cycletime_dev`
   - Test database: `cycletime_test`
@@ -65,6 +66,25 @@ CycleTime automates the transformation of PRDs into structured development plans
 - **MinIO (S3-compatible storage)**: `localhost:9000`
   - Admin console: `localhost:9001`
   - Default credentials: `minioadmin` / `minioadmin123`
+
+#### Application Services
+- **API Gateway**: `localhost:8000`
+  - Health check: `/health`
+  
+- **Web Dashboard**: `localhost:3001`
+  - Main interface for project management
+  
+- **MCP Server**: `localhost:8001`
+  - Model Context Protocol for AI integration
+  
+- **Claude Service**: `localhost:8002`
+  - Claude 4 Sonnet AI integration
+  
+- **Document Service**: `localhost:8003`
+  - Markdown processing and storage
+  
+- **Task Service**: `localhost:8004`
+  - Linear and GitHub integration
 
 ### Development Scripts
 
