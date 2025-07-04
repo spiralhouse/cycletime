@@ -10,6 +10,34 @@
 - Use Linear Issues to drive what we should be working on next
 - Plan features only after foundational architecture is agreed upon
 
+#### Feature Development Workflow
+- **Git workflow for new features**
+  - Always sync from main: `git checkout main && git pull origin main`
+  - Create feature branch: `git checkout -b feature/issue-identifier-description`
+  - Keep branches focused on single feature/Linear issue
+  - **NEVER work on outdated main branch**
+
+- **Complete feature development process**:
+  1. **Start**: Sync from main and create feature branch
+  2. **Create Design Task**: Create "Technical Design for [Feature]" subtask in Linear and move to "In Progress"
+  3. **Design**: Create technical design doc in `/docs/technical-designs/[feature-name].md`
+  4. **Review Design**: Submit design PR and move design subtask to "In Review"
+  5. **Design Approval**: Wait for design approval before proceeding
+  6. **Breakdown**: Create implementation subtasks linked to design document
+  7. **Implement**: Follow TDD practices to build feature
+  8. **Submit Feature**: Create feature PR and move parent Linear issue to "In Review"
+
+- **Technical design requirements**
+  - Include architectural decisions, API specifications, and high-level approach
+  - **NEVER start coding before design approval**
+  - Link design document to Linear issue for context
+
+- **Task breakdown guidelines**
+  - Create specific, implementable tasks in Linear
+  - Link subtasks to technical design document  
+  - Include effort estimates and dependencies
+  - Each subtask should be completable in 1-2 days
+
 #### Project Board Workflow
 - **Todo**: Issues ready to be worked on
 - **In Progress**: Issues currently being worked on (move here when starting work)
