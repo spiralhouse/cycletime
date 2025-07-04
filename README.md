@@ -106,6 +106,14 @@ npm run minio:web          # Open MinIO console
 - **95%+ user satisfaction** with AI-generated plans after human review
 - **Living documentation** that teams actually use and maintain
 
+## 🗺️ Roadmap
+
+See our detailed [Roadmap](./docs/ROADMAP.md) for:
+- MVP goals and current development phases
+- Future enhancements (multi-model AI, GitLab support, analytics)
+- Timeline and feature priorities
+- How to contribute to roadmap planning
+
 ## 🤝 Development Workflow
 
 This project follows a structured development workflow using Linear for task management. See `CLAUDE.md` for detailed development guidelines.
