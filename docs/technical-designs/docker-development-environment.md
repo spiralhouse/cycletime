@@ -417,13 +417,14 @@ check_service_health "MCP Server" 8001
 
 ```sql
 -- database/init/01-create-databases.sql
-CREATE DATABASE cycletime_dev;
+-- Note: Database names come from POSTGRES_DB environment variable
+-- This script creates additional databases for testing
+
 CREATE DATABASE cycletime_test;
 
--- Create development user
-CREATE USER cycletime_dev WITH PASSWORD 'dev_password';
-GRANT ALL PRIVILEGES ON DATABASE cycletime_dev TO cycletime_dev;
-GRANT ALL PRIVILEGES ON DATABASE cycletime_test TO cycletime_dev;
+-- Grant privileges to the main user (from POSTGRES_USER env var)
+-- The main database and user are created automatically by postgres image
+GRANT ALL PRIVILEGES ON DATABASE cycletime_test TO cycletime;
 ```
 
 ### 8.2 Seed Data
