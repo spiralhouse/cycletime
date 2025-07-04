@@ -223,6 +223,47 @@ services:
       retries: 3
     restart: unless-stopped
 
+  # Development Tools
+  adminer:
+    image: adminer:latest
+    container_name: cycletime-adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: pepa-linha-dark
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+    networks:
+      - cycletime-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: cycletime-redis-insight
+    environment:
+      - REDIS_INSIGHT_HOST=0.0.0.0
+      - REDIS_INSIGHT_PORT=5540
+    ports:
+      - "${REDIS_INSIGHT_PORT:-8081}:5540"
+    networks:
+      - cycletime-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5540/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
 volumes:
   cycletime_postgres_data:
     name: cycletime_postgres_data
