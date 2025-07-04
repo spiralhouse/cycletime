@@ -20,6 +20,14 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: ${POSTGRES_MEMORY_LIMIT:-512m}
+          cpus: "${POSTGRES_CPU_LIMIT:-0.5}"
+        reservations:
+          memory: 128m
+          cpus: "0.1"
 
   redis:
     image: redis:8-alpine
@@ -37,6 +45,14 @@ services:
       timeout: 5s
       retries: 3
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: ${REDIS_MEMORY_LIMIT:-256m}
+          cpus: "${REDIS_CPU_LIMIT:-0.25}"
+        reservations:
+          memory: 64m
+          cpus: "0.05"
 
   minio:
     image: minio/minio:latest
@@ -58,6 +74,14 @@ services:
       timeout: 20s
       retries: 3
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: ${MINIO_MEMORY_LIMIT:-256m}
+          cpus: "${MINIO_CPU_LIMIT:-0.25}"
+        reservations:
+          memory: 64m
+          cpus: "0.05"
 
   # Application Services
   api-gateway:
@@ -90,6 +114,14 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: ${APP_MEMORY_LIMIT:-512m}
+          cpus: "${APP_CPU_LIMIT:-0.5}"
+        reservations:
+          memory: 128m
+          cpus: "0.1"
 
   web-dashboard:
     build:
