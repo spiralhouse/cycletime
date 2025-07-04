@@ -1,0 +1,73 @@
+services:
+  # Core Infrastructure Services
+  postgres:
+    image: postgres:17-alpine
+    container_name: cycletime-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cycletime_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-cycletime}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-development_password}
+    volumes:
+      - cycletime_postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - cycletime-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cycletime} -d ${POSTGRES_DB:-cycletime_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:8-alpine
+    container_name: cycletime-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - cycletime_redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - cycletime-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: cycletime-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    volumes:
+      - cycletime_minio_data:/data
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    networks:
+      - cycletime-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  cycletime_postgres_data:
+    name: cycletime_postgres_data
+  cycletime_redis_data:
+    name: cycletime_redis_data
+  cycletime_minio_data:
+    name: cycletime_minio_data
+
+networks:
+  cycletime-network:
+    name: cycletime-network
+    driver: bridge
