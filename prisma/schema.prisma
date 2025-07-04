@@ -1,0 +1,178 @@
+// CycleTime Core Database Schema
+// Prisma schema for intelligent project orchestration platform
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// CORE ENTITIES - PHASE 1
+// =============================================================================
+
+// Users & Authentication Models
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String    @unique
+  github_id       Int       @unique
+  github_username String    @unique
+  name            String
+  avatar_url      String?
+  bio             String?
+  company         String?
+  location        String?
+  
+  // Preferences
+  timezone        String    @default("UTC")
+  locale          String    @default("en")
+  
+  // Metadata
+  first_login_at  DateTime?
+  last_login_at   DateTime?
+  is_active       Boolean   @default(true)
+  
+  // Timestamps
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  
+  // Relations
+  project_members ProjectMember[]
+  api_keys        ApiKey[]
+  user_sessions   UserSession[]
+  
+  @@map("users")
+}
+
+model UserSession {
+  id           String   @id @default(uuid()) @db.Uuid
+  user_id      String   @db.Uuid
+  session_id   String   @unique
+  access_token String
+  refresh_token String?
+  expires_at   DateTime
+  ip_address   String?
+  user_agent   String?
+  
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@map("user_sessions")
+}
+
+model ApiKey {
+  id          String      @id @default(uuid()) @db.Uuid
+  user_id     String      @db.Uuid
+  name        String
+  key_hash    String      @unique
+  permissions Json        @default("[]")
+  
+  last_used_at DateTime?
+  expires_at   DateTime?
+  is_active    Boolean     @default(true)
+  
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
+  
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@map("api_keys")
+}
+
+// Project & Repository Management
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model Project {
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String
+  description  String?
+  status       ProjectStatus @default(DRAFT)
+  
+  // Repository connection
+  repository_id String?      @unique @db.Uuid
+  
+  // Project settings
+  settings     Json          @default("{}")
+  
+  // AI Configuration
+  ai_model     String        @default("claude-4-sonnet")
+  ai_budget    Decimal?      @db.Decimal(10, 2)
+  
+  // Timestamps
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  
+  // Relations
+  repository   Repository?   @relation(fields: [repository_id], references: [id])
+  members      ProjectMember[]
+  
+  @@map("projects")
+}
+
+model ProjectMember {
+  id         String     @id @default(uuid()) @db.Uuid
+  project_id String     @db.Uuid
+  user_id    String     @db.Uuid
+  role       MemberRole @default(MEMBER)
+  
+  joined_at  DateTime   @default(now())
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([project_id, user_id])
+  @@map("project_members")
+}
+
+model Repository {
+  id            String  @id @default(uuid()) @db.Uuid
+  github_id     Int     @unique
+  full_name     String  @unique
+  name          String
+  owner         String
+  description   String?
+  
+  // Repository details
+  clone_url     String
+  ssh_url       String
+  default_branch String @default("main")
+  is_private     Boolean @default(false)
+  
+  // Webhook configuration
+  webhook_id     Int?
+  webhook_secret String?
+  
+  // Sync status
+  last_sync_at   DateTime?
+  sync_status    String?   @default("pending")
+  
+  // Timestamps
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  
+  // Relations
+  project Project?
+  
+  @@map("repositories")
+}
