@@ -52,7 +52,7 @@
     "redis-insight:web": "open http://localhost:8081",
     "web:all": "npm run minio:web && npm run adminer:web && npm run redis-insight:web",
     "dev:api-gateway": "node services/api-gateway/server.js",
-    "dev:web-dashboard": "node services/web-dashboard/server.js", 
+    "dev:web-dashboard": "node services/web-dashboard/server.js",
     "dev:mcp-server": "node services/mcp-server/server.js",
     "dev:claude-service": "node services/claude-service/server.js",
     "dev:document-service": "node services/document-service/server.js",

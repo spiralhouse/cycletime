@@ -161,3 +161,4 @@ mcp-logs/
 # Backup files
 *.bak
 *.backup
+/generated/prisma
