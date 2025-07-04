@@ -1,0 +1,13 @@
+[
+  {
+    "id": "cycletime-redis",
+    "name": "CycleTime Redis",
+    "host": "redis",
+    "port": 6379,
+    "username": "",
+    "password": "",
+    "connectionType": "STANDALONE",
+    "nameFromProvider": "CycleTime Redis Development",
+    "db": 0
+  }
+]

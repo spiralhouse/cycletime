@@ -230,6 +230,9 @@ services:
     environment:
       ADMINER_DEFAULT_SERVER: postgres
       ADMINER_DESIGN: pepa-linha-dark
+      ADMINER_DEFAULT_DB: ${POSTGRES_DB:-cycletime_dev}
+    volumes:
+      - ./config/adminer/index.php:/var/www/html/index.php
     ports:
       - "${ADMINER_PORT:-8080}:8080"
     networks:
@@ -250,6 +253,8 @@ services:
     environment:
       - REDIS_INSIGHT_HOST=0.0.0.0
       - REDIS_INSIGHT_PORT=5540
+    volumes:
+      - ./config/redis-insight/databases.json:/data/databases.json
     ports:
       - "${REDIS_INSIGHT_PORT:-8081}:5540"
     networks:

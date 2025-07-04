@@ -20,7 +20,7 @@
     "db:seed": "echo 'Database seeding not yet implemented'",
     "redis:cli": "docker compose exec redis redis-cli",
     "minio:web": "open http://localhost:9001",
-    "adminer:web": "open http://localhost:8080",
+    "adminer:web": "open 'http://localhost:8080/?pgsql=postgres&username=cycletime&db=cycletime_dev'",
     "redis-insight:web": "open http://localhost:8081",
     "dev:api-gateway": "node services/api-gateway/server.js",
     "dev:web-dashboard": "node services/web-dashboard/server.js", 

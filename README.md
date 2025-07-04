@@ -89,11 +89,20 @@ CycleTime automates the transformation of PRDs into structured development plans
 #### Development Tools
 - **Adminer**: `localhost:8080`
   - PostgreSQL database administration
-  - Default server: postgres, User: cycletime
+  - **Auto-configured** - `npm run adminer:web` opens with login pre-filled
+  - Manual connection details if needed:
+    - Server: `postgres` (or `localhost:5432` from host)
+    - Username: `cycletime`
+    - Password: `development_password`
+    - Database: `cycletime_dev`
   
 - **Redis Insight**: `localhost:8081`
   - Redis management and monitoring
-  - Automatically connects to Redis instance
+  - **Auto-configured** - CycleTime Redis connection pre-configured
+  - Manual connection details if needed:
+    - Host: `localhost` (or `redis` from container)
+    - Port: `6379`
+    - No authentication required
 
 ### Development Scripts
 
