@@ -33,9 +33,12 @@
 - **Backlog**: `1e7bd879-6685-4d94-8887-b7709b3ae6e8`
 
 ### Development Practices
-- **Follow Test-Driven Development (TDD)**
-  - Write tests first, then implement functionality
+- **Follow Test-Driven Development (TDD) with Red-Green-Refactor cycle**
+  - **Red**: Write a failing test that describes the desired functionality
+  - **Green**: Write the minimal code necessary to make the test pass
+  - **Refactor**: Improve the code while keeping tests green
   - Ensure comprehensive test coverage
+  - Never skip the refactor step - clean code is maintainable code
 
 ### Git Workflow
 - **Use Conventional Commits** (feat, fix, chore, etc.)
