@@ -144,7 +144,25 @@ gh pr create --title "feat: description" --body "Closes linear-issue-identifier"
 - `/packages/` - Individual packages (MCP server, web app, etc.)
 - `/tests/` - Test files
 
+## Claude Code Workflow Automation
+
+### Custom Slash Commands
+The `.claude/commands/` directory contains workflow automation:
+
+- **`/linear:start-feature`** - Complete feature startup workflow (sync, branch, design task)
+- **`/linear:move-to-review`** - Move issue to review and create PR
+- **`/linear:create-subtasks`** - Break down technical design into implementation tasks
+- **`/docs:technical-design`** - Generate comprehensive design document template
+- **`/workflow:tdd-cycle`** - Execute Red-Green-Refactor TDD process
+- **`/workflow:quality-check`** - Run complete pre-push quality verification
+- **`/workflow:atomic-commit`** - Create focused, conventional commits
+
+### Usage
+Type `/` in Claude Code to access these commands, then provide the Linear issue identifier as an argument (e.g., `/linear:start-feature SPI-123`).
+
 ## Notes
-- This file helps Claude understand our development workflow
+- This file provides core workflow documentation that applies across all projects
+- Slash commands in `.claude/commands/` automate repetitive workflow tasks
+- MCP configuration in `.mcp.json` provides team-shared tool access
 - Update this file as our practices evolve
 - Always refer to Linear Issues for current work priorities
