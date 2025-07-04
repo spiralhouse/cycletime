@@ -88,15 +88,15 @@ graph TB
 
 | Service | Container | Port | Purpose |
 |---------|-----------|------|---------|
-| PostgreSQL | `postgres:15-alpine` | 5432 | Primary database |
-| Redis | `redis:7-alpine` | 6379 | Cache and sessions |
+| PostgreSQL | `postgres:17-alpine` | 5432 | Primary database |
+| Redis | `redis:8-alpine` | 6379 | Cache and sessions |
 | MinIO | `minio/minio:latest` | 9000, 9001 | Object storage |
-| API Gateway | `node:18-alpine` | 8000 | Main API server |
-| Web Dashboard | `node:18-alpine` | 3000 | React frontend |
-| MCP Server | `node:18-alpine` | 8001 | Local AI integration |
-| Claude AI Service | `node:18-alpine` | 8002 | AI service |
-| Document Service | `node:18-alpine` | 8003 | Document processing |
-| Task Service | `node:18-alpine` | 8004 | Task management |
+| API Gateway | `node:22-alpine` | 8000 | Main API server |
+| Web Dashboard | `node:22-alpine` | 3000 | React frontend |
+| MCP Server | `node:22-alpine` | 8001 | Local AI integration |
+| Claude AI Service | `node:22-alpine` | 8002 | AI service |
+| Document Service | `node:22-alpine` | 8003 | Document processing |
+| Task Service | `node:22-alpine` | 8004 | Task management |
 | Adminer | `adminer:latest` | 8080 | Database admin |
 | Redis Insight | `redislabs/redisinsight:latest` | 8081 | Redis admin |
 
@@ -119,7 +119,7 @@ volumes:
 # Infrastructure services that must start first
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     container_name: cycletime-postgres
     environment:
       POSTGRES_DB: cycletime_dev
@@ -139,7 +139,7 @@ services:
       retries: 5
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     container_name: cycletime-redis
     command: redis-server --appendonly yes
     volumes:
@@ -515,7 +515,7 @@ GITHUB_TOKEN=real_dev_token
 ### 11.2 Development Speed
 ```dockerfile
 # Dockerfile.dev - optimized for development
-FROM node:18-alpine
+FROM node:22-alpine
 WORKDIR /app
 
 # Copy package files first for better caching
