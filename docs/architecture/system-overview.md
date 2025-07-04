@@ -2,12 +2,12 @@
 
 ## 1. Overview
 
-CycleTime is an intelligent project orchestration platform that transforms PRDs into structured development plans through multi-model AI orchestration. The system uses a microservices architecture with repository-centric documentation and hybrid AI assistance.
+CycleTime is an intelligent project orchestration platform that transforms PRDs into structured development plans using Claude 4 Sonnet for planning and analysis. The system uses a microservices architecture with repository-centric documentation and hybrid AI assistance.
 
 ### Core Principles
 - **Repository-centric**: All documentation lives in Git repositories
-- **Hybrid AI workflow**: CycleTime AI for planning, Local AI for implementation
-- **Multi-model orchestration**: Intelligent routing to optimal AI models
+- **Hybrid AI workflow**: Claude 4 Sonnet for planning, Local AI for implementation
+- **Single-model integration**: Direct Claude 4 Sonnet API integration for consistency
 - **Human-in-the-loop**: All AI suggestions require human approval
 - **Notification-driven**: Proactive user notifications for required actions
 
@@ -28,7 +28,7 @@ graph TB
     end
     
     subgraph "Core Services"
-        ORCH[AI Orchestration Service<br/>Multi-model routing]
+        CLAUDE[Claude AI Service<br/>Direct Anthropic integration]
         PROJ[Project Service<br/>CRUD operations]
         DOC[Documentation Service<br/>Template generation]
         TASK[Task Breakdown Service<br/>AI-assisted analysis]
@@ -48,7 +48,7 @@ graph TB
     end
     
     subgraph "External Systems"
-        MODELS[AI Model Providers<br/>OpenAI, Anthropic, Google]
+        ANTHROPIC[Anthropic Claude 4 Sonnet<br/>API]
         REPOS[Git Repositories<br/>GitHub, GitLab]
         TRACKERS[Issue Trackers<br/>Linear, GitHub, Jira]
         COMM[Communication<br/>Slack, Teams, Email]
@@ -60,24 +60,24 @@ graph TB
     
     %% API Layer connections
     API --> AUTH
-    API --> ORCH
+    API --> CLAUDE
     API --> PROJ
     API --> DOC
     API --> TASK
     API --> NOTIF
     
     %% Core Service connections
-    ORCH --> MODELS
+    CLAUDE --> ANTHROPIC
     PROJ --> GIT
     PROJ --> ISSUE
     DOC --> GIT
-    TASK --> ORCH
+    TASK --> CLAUDE
     NOTIF --> COMM
     
     %% Integration Service connections
     GIT --> REPOS
     ISSUE --> TRACKERS
-    MCP --> ORCH
+    MCP --> CLAUDE
     MCP --> GIT
     
     %% Data Layer connections
@@ -458,26 +458,26 @@ resources:
 - **Cost Optimization**: AI model costs per project and user
 - **Time to Value**: PRD-to-first-commit duration
 - **User Engagement**: Active projects and feature usage
-- **AI Efficiency**: Model selection accuracy and cost savings
+- **AI Efficiency**: Claude response quality and success rates
 
 #### Technical Metrics
 - **Response Times**: API latency percentiles (p50, p95, p99)
 - **Error Rates**: HTTP error rates by service and endpoint
 - **Resource Utilization**: CPU, memory, and storage usage
-- **AI Model Performance**: Response times and quality scores
+- **Claude Performance**: Response times and quality scores
 
 ### 7.2 Alerting Strategy
 
 #### Critical Alerts
 - **Service Downtime**: API gateway or core service failures
 - **Database Issues**: Connection failures or high latency
-- **AI Model Failures**: Provider API errors or quota exceeded
+- **Claude API Failures**: Anthropic API errors or quota exceeded
 - **Security Events**: Authentication failures or unauthorized access
 
 #### Warning Alerts
 - **High Response Times**: Latency above acceptable thresholds
 - **Resource Utilization**: High CPU/memory usage trends
-- **Cost Thresholds**: AI usage costs exceeding budgets
+- **Usage Thresholds**: Claude usage costs exceeding budgets
 - **Queue Backups**: Processing delays in async operations
 
 ## 8. Deployment Pipeline
