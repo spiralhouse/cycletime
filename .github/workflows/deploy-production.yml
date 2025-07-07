@@ -1,17 +1,20 @@
 name: Deploy to Production
 
+# TODO: Enable when production infrastructure is setup (SPI-34)
+# Current status: Disabled pending production environment setup
 on:
-  release:
-    types: [published]
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - production
+  workflow_dispatch: # Manual trigger only
+  # release:
+  #   types: [published]
+  # workflow_dispatch:
+  #   inputs:
+  #     environment:
+  #       description: 'Environment to deploy to'
+  #       required: true
+  #       default: 'production'
+  #       type: choice
+  #       options:
+  #         - production
 
 jobs:
   deploy-production:
@@ -52,7 +55,7 @@ jobs:
         id: deploy
         run: |
           echo "Deploying to production environment..."
-          echo "url=https://cycletime.dev" >> $GITHUB_OUTPUT
+          echo "url=https://cycletime.ai" >> $GITHUB_OUTPUT
         env:
           PRODUCTION_DEPLOY_KEY: ${{ secrets.PRODUCTION_DEPLOY_KEY }}
           DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}

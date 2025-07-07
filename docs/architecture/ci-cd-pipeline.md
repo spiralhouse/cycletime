@@ -4,6 +4,17 @@
 
 The CycleTime project uses GitHub Actions for continuous integration and deployment. This document outlines the complete CI/CD pipeline configuration and processes.
 
+### Current Status
+
+**Active Workflows:**
+- ✅ Continuous Integration (`ci.yml`) - Fully functional
+- ✅ Linear Integration (`linear-integration.yml`) - Fully functional
+
+**Disabled Workflows:**
+- ⚠️ Security Scanning (`security.yml`) - Disabled pending tool configuration ([SPI-33](https://linear.app/spiral-house/issue/SPI-33))
+- ⚠️ Staging Deployment (`deploy-staging.yml`) - Disabled pending infrastructure setup ([SPI-34](https://linear.app/spiral-house/issue/SPI-34))
+- ⚠️ Production Deployment (`deploy-production.yml`) - Disabled pending infrastructure setup ([SPI-34](https://linear.app/spiral-house/issue/SPI-34))
+
 ## Workflow Architecture
 
 ### Core Workflows
@@ -33,9 +44,9 @@ The CycleTime project uses GitHub Actions for continuous integration and deploym
    - Codecov integration for coverage tracking
    - Coverage reports uploaded on test completion
 
-#### 2. Staging Deployment (`deploy-staging.yml`)
-**Trigger:** Push to `main` branch
-**Purpose:** Automatic deployment to staging environment
+#### 2. Staging Deployment (`deploy-staging.yml`) - **DISABLED**
+**Status:** Disabled pending staging infrastructure setup (SPI-34)
+**Future Purpose:** Automatic deployment to staging environment
 
 **Steps:**
 1. Build application for production
@@ -44,9 +55,9 @@ The CycleTime project uses GitHub Actions for continuous integration and deploym
 4. Run health checks
 5. Notify deployment status
 
-#### 3. Production Deployment (`deploy-production.yml`)
-**Trigger:** Release publication or manual workflow dispatch
-**Purpose:** Controlled production deployment
+#### 3. Production Deployment (`deploy-production.yml`) - **DISABLED**
+**Status:** Disabled pending production infrastructure setup (SPI-34)
+**Future Purpose:** Controlled production deployment
 
 **Steps:**
 1. Build production artifacts
@@ -65,11 +76,11 @@ The CycleTime project uses GitHub Actions for continuous integration and deploym
 - Moves issues to "Done" when PR is merged
 - Adds PR links as comments on Linear issues
 
-#### 5. Security Scanning (`security.yml`)
-**Trigger:** Push, pull requests, and weekly schedule
-**Purpose:** Continuous security monitoring
+#### 5. Security Scanning (`security.yml`) - **DISABLED**
+**Status:** Disabled pending security tool configuration (SPI-33)
+**Future Purpose:** Continuous security monitoring
 
-**Scans:**
+**Planned Scans:**
 - **npm audit** - Dependency vulnerability scanning
 - **Trivy** - Container and filesystem vulnerability scanning
 - **GitLeaks** - Secret detection in repository history
@@ -158,7 +169,7 @@ All PRs must pass:
 2. Runs database migrations
 3. Deploys latest code
 4. Performs health checks
-5. Available at: `https://staging.cycletime.dev`
+5. Available at: `https://staging.cycletime.ai`
 
 ### Production Deployment
 1. **Manual** via GitHub releases or workflow dispatch
@@ -166,7 +177,7 @@ All PRs must pass:
 3. Database migration with rollback capability
 4. Blue-green deployment strategy
 5. Post-deployment monitoring
-6. Available at: `https://cycletime.dev`
+6. Available at: `https://cycletime.ai`
 
 ## Monitoring and Alerts
 

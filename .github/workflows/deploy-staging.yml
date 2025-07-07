@@ -1,8 +1,11 @@
 name: Deploy to Staging
 
+# TODO: Enable when staging infrastructure is setup (SPI-34)
+# Current status: Disabled pending staging environment setup
 on:
-  push:
-    branches: [ main ]
+  workflow_dispatch: # Manual trigger only
+  # push:
+  #   branches: [ main ]
 
 jobs:
   deploy-staging:
@@ -44,7 +47,7 @@ jobs:
         id: deploy
         run: |
           echo "Deploying to staging environment..."
-          echo "url=https://staging.cycletime.dev" >> $GITHUB_OUTPUT
+          echo "url=https://staging.cycletime.ai" >> $GITHUB_OUTPUT
         env:
           STAGING_DEPLOY_KEY: ${{ secrets.STAGING_DEPLOY_KEY }}
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}

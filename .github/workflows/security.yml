@@ -1,12 +1,15 @@
 name: Security
 
+# TODO: Enable when security scanning tools are configured (SPI-33)
+# Current status: Disabled pending security tool setup
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  schedule:
-    - cron: '0 0 * * 0' # Weekly on Sunday
+  workflow_dispatch: # Manual trigger only
+  # push:
+  #   branches: [ main ]
+  # pull_request:
+  #   branches: [ main ]
+  # schedule:
+  #   - cron: '0 0 * * 0' # Weekly on Sunday
 
 jobs:
   security-audit:
