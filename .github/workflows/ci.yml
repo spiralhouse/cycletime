@@ -49,9 +49,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
 
       - name: Run lint
-        run: echo "Linting not yet configured - skipping for now"
-        # TODO: Enable when linting is configured
-        # run: npm run lint
+        run: npm run lint
 
       - name: Run type check
         run: echo "Type checking not yet configured - skipping for now"

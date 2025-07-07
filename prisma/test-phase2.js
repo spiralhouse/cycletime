@@ -43,7 +43,7 @@ async function testPhase2DatabaseConnection() {
       ORDER BY typname;
     `;
     
-    const expectedEnums = [
+    const _expectedEnums = [
       'AiRequestStatus', 'AiRequestType', 'DocumentStatus', 
       'DocumentType', 'MemberRole', 'ProjectStatus'
     ];
