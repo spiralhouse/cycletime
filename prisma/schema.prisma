@@ -1,5 +1,5 @@
 // CycleTime Core Database Schema
-// Prisma schema for intelligent project orchestration platform
+// Prisma schema for intelligent project orchestration platform with AI integration
 
 generator client {
   provider = "prisma-client-js"
@@ -12,8 +12,58 @@ datasource db {
 }
 
 // =============================================================================
-// CORE ENTITIES - PHASE 1
+// CORE ENTITIES - PHASE 1 & 2
 // =============================================================================
+
+// Core Enums
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum DocumentType {
+  README
+  TECHNICAL_SPEC
+  USER_GUIDE
+  API_DOCS
+  CHANGELOG
+  ISSUE_TEMPLATE
+  PR_TEMPLATE
+  OTHER
+}
+
+enum DocumentStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AiRequestType {
+  DOCUMENTATION
+  CODE_REVIEW
+  PLANNING
+  TASK_ANALYSIS
+  GENERAL
+}
+
+enum AiRequestStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
 
 // Users & Authentication Models
 model User {
@@ -41,9 +91,12 @@ model User {
   updated_at      DateTime  @updatedAt
   
   // Relations
-  project_members ProjectMember[]
-  api_keys        ApiKey[]
-  user_sessions   UserSession[]
+  project_members  ProjectMember[]
+  api_keys         ApiKey[]
+  user_sessions    UserSession[]
+  documents        Document[]
+  document_versions DocumentVersion[]
+  ai_requests      AiRequest[]
   
   @@map("users")
 }
@@ -86,21 +139,6 @@ model ApiKey {
 }
 
 // Project & Repository Management
-enum ProjectStatus {
-  DRAFT
-  ACTIVE
-  PAUSED
-  COMPLETED
-  ARCHIVED
-}
-
-enum MemberRole {
-  OWNER
-  ADMIN
-  MEMBER
-  VIEWER
-}
-
 model Project {
   id           String        @id @default(uuid()) @db.Uuid
   name         String
@@ -122,8 +160,10 @@ model Project {
   updated_at   DateTime      @updatedAt
   
   // Relations
-  repository   Repository?   @relation(fields: [repository_id], references: [id])
+  repository   Repository?   @relation(fields: [repository_id], references: [id], onDelete: SetNull)
   members      ProjectMember[]
+  documents    Document[]
+  ai_requests  AiRequest[]
   
   @@map("projects")
 }
@@ -175,4 +215,104 @@ model Repository {
   project Project?
   
   @@map("repositories")
+}
+
+// =============================================================================
+// DOCUMENT MANAGEMENT - PHASE 2
+// =============================================================================
+
+model Document {
+  id          String         @id @default(uuid()) @db.Uuid
+  project_id  String         @db.Uuid
+  title       String
+  description String?
+  type        DocumentType
+  status      DocumentStatus @default(DRAFT)
+  file_path   String?
+  metadata    Json           @default("{}")
+  created_by  String         @db.Uuid
+  created_at  DateTime       @default(now())
+  updated_at  DateTime       @updatedAt
+
+  // Relations
+  project  Project           @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  creator  User              @relation(fields: [created_by], references: [id])
+  versions DocumentVersion[]
+
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id          String   @id @default(uuid()) @db.Uuid
+  document_id String   @db.Uuid
+  version     Int
+  content     String
+  diff_from_previous String?
+  commit_hash String?
+  created_by  String   @db.Uuid
+  created_at  DateTime @default(now())
+
+  // Relations
+  document Document @relation(fields: [document_id], references: [id], onDelete: Cascade)
+  creator  User     @relation(fields: [created_by], references: [id])
+
+  @@unique([document_id, version])
+  @@map("document_versions")
+}
+
+// =============================================================================
+// AI INTEGRATION - PHASE 2
+// =============================================================================
+
+model AiRequest {
+  id         String          @id @default(uuid()) @db.Uuid
+  project_id String?         @db.Uuid
+  user_id    String          @db.Uuid
+  type       AiRequestType
+  status     AiRequestStatus @default(PENDING)
+  prompt     String
+  context    Json            @default("{}")
+  model      String          @default("claude-4-sonnet")
+  created_at DateTime        @default(now())
+  updated_at DateTime        @updatedAt
+
+  // Relations
+  project     Project?    @relation(fields: [project_id], references: [id], onDelete: SetNull)
+  user        User        @relation(fields: [user_id], references: [id])
+  responses   AiResponse[]
+  usage       UsageTracking[]
+
+  @@map("ai_requests")
+}
+
+model AiResponse {
+  id           String   @id @default(uuid()) @db.Uuid
+  request_id   String   @db.Uuid
+  content      String
+  tokens_used  Int
+  model        String
+  finish_reason String?
+  metadata     Json     @default("{}")
+  created_at   DateTime @default(now())
+
+  // Relations
+  request AiRequest @relation(fields: [request_id], references: [id], onDelete: Cascade)
+
+  @@map("ai_responses")
+}
+
+model UsageTracking {
+  id            String   @id @default(uuid()) @db.Uuid
+  request_id    String   @db.Uuid
+  model         String
+  prompt_tokens Int
+  completion_tokens Int
+  total_tokens  Int
+  cost_estimate Decimal? @db.Decimal(10, 4)
+  created_at    DateTime @default(now())
+
+  // Relations
+  request AiRequest @relation(fields: [request_id], references: [id], onDelete: Cascade)
+
+  @@map("usage_tracking")
 }
