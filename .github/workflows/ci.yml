@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cycletime_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
+
+      - name: Run database migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run type check
+        run: echo "Type checking not yet configured - skipping for now"
+        # TODO: Enable when type checking is configured
+        # run: npm run typecheck
+
+      - name: Run tests
+        run: echo "Tests not yet configured - skipping for now"
+        # TODO: Enable when tests are configured
+        # run: npm test
+        # env:
+        #   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
+
+      - name: Run test coverage
+        run: echo "Test coverage not yet configured - skipping for now"
+        # TODO: Enable when test coverage is configured
+        # run: npm run test:coverage
+        # env:
+        #   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
+
+      - name: Upload coverage reports
+        run: echo "Coverage reporting not yet configured - skipping for now"
+        # TODO: Enable when test coverage is configured
+        # uses: codecov/codecov-action@v4
+        # with:
+        #   token: ${{ secrets.CODECOV_TOKEN }}
+        #   fail_ci_if_error: false
