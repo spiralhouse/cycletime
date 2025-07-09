@@ -3,6 +3,8 @@ import { PrismaClient } from '@prisma/client';
 import { config } from './config.js';
 import { setupMiddleware } from './middleware/index.js';
 import { setupRoutes } from './routes/index.js';
+import { authMiddleware } from './middleware/auth.js';
+import './types/fastify.js';
 
 // Initialize Prisma client
 const prisma = new PrismaClient({
@@ -43,8 +45,22 @@ const start = async () => {
     await prisma.$connect();
     fastify.log.info('Database connected successfully');
 
+    // Register JWT plugin
+    await fastify.register(import('@fastify/jwt'), {
+      secret: config.jwtSecret,
+      sign: {
+        algorithm: 'HS256',
+      },
+      verify: {
+        algorithms: ['HS256'],
+      },
+    });
+
     // Setup middleware
     await setupMiddleware(fastify as any);
+    
+    // Setup authentication middleware
+    await authMiddleware(fastify as any);
     
     // Setup routes
     await setupRoutes(fastify as any);
@@ -62,11 +78,6 @@ const start = async () => {
   }
 };
 
-// Add types for Fastify instance
-declare module 'fastify' {
-  interface FastifyInstance {
-    prisma: PrismaClient;
-  }
-}
+// Import types for Fastify instance
 
 start();
