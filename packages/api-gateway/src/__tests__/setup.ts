@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 
-// Mock environment variables for testing
+// Mock environment variables for testing - set them before any imports
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/cycletime_test';
 process.env.GITHUB_CLIENT_ID = 'test_client_id';
