@@ -7,7 +7,8 @@ module.exports = [
       'generated/**',
       'dist/**',
       'build/**',
-      '.github/**'
+      '.github/**',
+      'packages/**'
     ]
   },
   js.configs.recommended,

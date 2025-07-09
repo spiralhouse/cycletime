@@ -31,4 +31,5 @@ module.exports = {
     'node_modules/',
     'jest.config.js',
   ],
+  root: true,
 };
