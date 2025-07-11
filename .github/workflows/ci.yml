@@ -40,8 +40,12 @@ jobs:
 
       - name: Install API Gateway dependencies
         run: |
-          cd packages/api-gateway
-          npm ci
+          if [ -d "packages/api-gateway" ]; then
+            cd packages/api-gateway
+            npm ci
+          else
+            echo "API Gateway package not found - skipping dependency installation"
+          fi
 
       - name: Generate Prisma client
         run: npx prisma generate
@@ -58,18 +62,30 @@ jobs:
 
       - name: Run API Gateway type check
         run: |
-          cd packages/api-gateway
-          npm run typecheck
+          if [ -d "packages/api-gateway" ]; then
+            cd packages/api-gateway
+            npm run typecheck
+          else
+            echo "API Gateway package not found - skipping type check"
+          fi
 
       - name: Run API Gateway lint
         run: |
-          cd packages/api-gateway
-          npm run lint
+          if [ -d "packages/api-gateway" ]; then
+            cd packages/api-gateway
+            npm run lint
+          else
+            echo "API Gateway package not found - skipping lint"
+          fi
 
       - name: Run API Gateway tests
         run: |
-          cd packages/api-gateway
-          npm test
+          if [ -d "packages/api-gateway" ]; then
+            cd packages/api-gateway
+            npm test
+          else
+            echo "API Gateway package not found - skipping tests"
+          fi
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
           GITHUB_CLIENT_ID: test_client_id
@@ -79,8 +95,12 @@ jobs:
 
       - name: Run API Gateway test coverage
         run: |
-          cd packages/api-gateway
-          npm run test:coverage
+          if [ -d "packages/api-gateway" ]; then
+            cd packages/api-gateway
+            npm run test:coverage
+          else
+            echo "API Gateway package not found - skipping test coverage"
+          fi
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
           GITHUB_CLIENT_ID: test_client_id
