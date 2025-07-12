@@ -8,7 +8,7 @@
 
 CycleTime automates the transformation of PRDs into structured development plans while keeping humans in control of all critical decisions. Powered by **Claude 4 Sonnet** for intelligent planning and analysis, CycleTime creates a seamless connection between documentation, planning, and execution.
 
-### ✨ Key Benefits
+### ✨ Key Objectives
 
 - **⚡ 80% Faster Planning**: Turn PRDs into actionable development plans in 2-3 hours instead of 2-3 days
 - **🤖 AI-Powered Intelligence**: Leverage Claude 4 Sonnet for consistent, high-quality project analysis
@@ -21,6 +21,28 @@ CycleTime automates the transformation of PRDs into structured development plans
 - **Product Managers** who want to quickly translate product vision into clear engineering work
 - **Engineering Managers** seeking consistent task breakdown and progress visibility  
 - **Development Teams** that value documentation that stays current with code
+
+## 🏗️ How CycleTime Works
+
+1. **📝 Write PRDs in Markdown** - Store requirements in your repository's `/docs/requirements/` directory
+2. **🧠 AI Analysis** - Claude 4 Sonnet analyzes your PRD and generates structured project plans
+3. **👀 Human Review** - Review and refine generated `project-plan.md`, `milestones.md`, and `architecture.md`
+4. **🎫 Issue Creation** - Automatically create Linear/Jira issues with links to your documentation
+5. **🔄 Stay Synchronized** - Documentation stays current as your project evolves
+
+### 📊 Expected Results
+
+- **40% faster** time-to-first-commit on new projects
+- **95%+ user satisfaction** with AI-generated plans after human review
+- **Living documentation** that teams actually use and maintain
+
+## 🗺️ Roadmap
+
+See our detailed [Roadmap](./docs/ROADMAP.md) for:
+- MVP goals and current development phases
+- Future enhancements (multi-model AI, GitLab support, analytics)
+- Timeline and feature priorities
+- How to contribute to roadmap planning
 
 ## 🛠️ Quick Start
 
@@ -131,28 +153,6 @@ npm run redis-insight:web  # Open Redis Insight
 - `/database/` - Database initialization scripts
 - `/packages/` - Individual service packages (planned)
 - `/src/` - Core application code (planned)
-
-## 🏗️ How CycleTime Works
-
-1. **📝 Write PRDs in Markdown** - Store requirements in your repository's `/docs/requirements/` directory
-2. **🧠 AI Analysis** - Claude 4 Sonnet analyzes your PRD and generates structured project plans
-3. **👀 Human Review** - Review and refine generated `project-plan.md`, `milestones.md`, and `architecture.md`
-4. **🎫 Issue Creation** - Automatically create Linear/Jira issues with links to your documentation
-5. **🔄 Stay Synchronized** - Documentation stays current as your project evolves
-
-### 📊 Expected Results
-
-- **40% faster** time-to-first-commit on new projects
-- **95%+ user satisfaction** with AI-generated plans after human review
-- **Living documentation** that teams actually use and maintain
-
-## 🗺️ Roadmap
-
-See our detailed [Roadmap](./docs/ROADMAP.md) for:
-- MVP goals and current development phases
-- Future enhancements (multi-model AI, GitLab support, analytics)
-- Timeline and feature priorities
-- How to contribute to roadmap planning
 
 ## 🤝 Development Workflow
 
