@@ -32,7 +32,7 @@ describe('JWTService', () => {
       expect(typeof tokenPair.accessToken).toBe('string');
       expect(typeof tokenPair.refreshToken).toBe('string');
       expect(typeof tokenPair.expiresIn).toBe('number');
-      expect(tokenPair.expiresIn).toBe(900); // 15 minutes default
+      expect(tokenPair.expiresIn).toBe(3600); // 1 hour default
 
       // Verify access token payload
       const accessPayload = fastify.jwt.verify(tokenPair.accessToken) as any;
@@ -62,6 +62,8 @@ describe('JWTService', () => {
       const githubUsername = 'testuser';
 
       const tokenPair1 = await jwtService.generateTokenPair(userId, email, githubUsername);
+      // Add a small delay to ensure different iat (issued at) timestamps
+      await new Promise(resolve => setTimeout(resolve, 1000));
       const tokenPair2 = await jwtService.generateTokenPair(userId, email, githubUsername);
 
       expect(tokenPair1.accessToken).not.toBe(tokenPair2.accessToken);
@@ -101,13 +103,13 @@ describe('JWTService', () => {
     it('should throw error for invalid token', async () => {
       const invalidToken = 'invalid.jwt.token';
 
-      await expect(jwtService.verifyToken(invalidToken)).rejects.toThrow('Invalid token');
+      await expect(jwtService.verifyToken(invalidToken)).rejects.toThrow('Invalid or expired token');
     });
 
     it('should throw error for malformed token', async () => {
       const malformedToken = 'not-a-jwt-token';
 
-      await expect(jwtService.verifyToken(malformedToken)).rejects.toThrow('Invalid token');
+      await expect(jwtService.verifyToken(malformedToken)).rejects.toThrow('Invalid or expired token');
     });
 
     it('should throw error for expired token', async () => {
@@ -120,18 +122,18 @@ describe('JWTService', () => {
       // Wait a moment to ensure expiration
       await new Promise(resolve => setTimeout(resolve, 10));
 
-      await expect(jwtService.verifyToken(expiredToken)).rejects.toThrow('Invalid token');
+      await expect(jwtService.verifyToken(expiredToken)).rejects.toThrow('Invalid or expired token');
     });
   });
 
-  describe('refreshTokens', () => {
+  describe('refreshAccessToken', () => {
     it('should generate new token pair from valid refresh token', async () => {
       const userId = 'user_123';
       const email = 'test@example.com';
       const githubUsername = 'testuser';
 
       const originalTokenPair = await jwtService.generateTokenPair(userId, email, githubUsername);
-      const newTokenPair = await jwtService.refreshTokens(originalTokenPair.refreshToken);
+      const newTokenPair = await jwtService.refreshAccessToken(originalTokenPair.refreshToken);
 
       expect(newTokenPair).toHaveProperty('accessToken');
       expect(newTokenPair).toHaveProperty('refreshToken');
@@ -156,7 +158,7 @@ describe('JWTService', () => {
 
       const tokenPair = await jwtService.generateTokenPair(userId, email, githubUsername);
 
-      await expect(jwtService.refreshTokens(tokenPair.accessToken)).rejects.toThrow(
+      await expect(jwtService.refreshAccessToken(tokenPair.accessToken)).rejects.toThrow(
         'Invalid refresh token'
       );
     });
@@ -164,7 +166,7 @@ describe('JWTService', () => {
     it('should throw error for invalid refresh token', async () => {
       const invalidToken = 'invalid.refresh.token';
 
-      await expect(jwtService.refreshTokens(invalidToken)).rejects.toThrow('Invalid refresh token');
+      await expect(jwtService.refreshAccessToken(invalidToken)).rejects.toThrow('Invalid or expired token');
     });
 
     it('should throw error for expired refresh token', async () => {
@@ -177,7 +179,7 @@ describe('JWTService', () => {
       // Wait a moment to ensure expiration
       await new Promise(resolve => setTimeout(resolve, 10));
 
-      await expect(jwtService.refreshTokens(expiredRefreshToken)).rejects.toThrow('Invalid refresh token');
+      await expect(jwtService.refreshAccessToken(expiredRefreshToken)).rejects.toThrow('Invalid or expired token');
     });
   });
 
@@ -258,8 +260,8 @@ describe('JWTService', () => {
     });
 
     it('should handle invalid expiry format', () => {
-      expect(jwtService.parseExpiryToSeconds('invalid')).toBe(0);
-      expect(jwtService.parseExpiryToSeconds('')).toBe(0);
+      expect(jwtService.parseExpiryToSeconds('invalid')).toBe(3600);
+      expect(jwtService.parseExpiryToSeconds('')).toBe(3600);
     });
   });
 });

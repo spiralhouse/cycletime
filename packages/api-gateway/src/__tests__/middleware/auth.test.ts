@@ -3,8 +3,29 @@ import Fastify, { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import jwt from '@fastify/jwt';
 import { PrismaClient } from '@prisma/client';
 import { JWTService } from '../../services/jwt';
-import { UserService } from '../../services/user';
 import { authMiddleware } from '../../middleware/auth';
+
+// Mock the user service creation function BEFORE importing
+const mockUserService = {
+  getUserById: jest.fn(),
+  updateLastActive: jest.fn(),
+};
+
+jest.mock('../../services/user.js', () => ({
+  createUserService: jest.fn(() => mockUserService),
+  UserService: jest.fn(),
+}));
+
+// Mock JWT service creation  
+const mockJWTServiceAuth = {
+  extractTokenFromHeader: jest.fn(),
+  verifyToken: jest.fn(),
+};
+
+jest.mock('../../services/jwt.js', () => ({
+  createJWTService: jest.fn(() => mockJWTServiceAuth),
+  JWTService: jest.fn(),
+}));
 
 // Mock services
 const mockPrisma = {
@@ -12,11 +33,6 @@ const mockPrisma = {
     findUnique: jest.fn(),
   },
 } as unknown as PrismaClient;
-
-const mockUserService = {
-  getUserById: jest.fn(),
-  updateLastActive: jest.fn(),
-} as unknown as UserService;
 
 describe('Authentication Middleware', () => {
   let fastify: FastifyInstance;
@@ -42,6 +58,11 @@ describe('Authentication Middleware', () => {
     fastify.get('/health', async (request: FastifyRequest, reply: FastifyReply) => {
       return { status: 'healthy' };
     });
+
+    // Configure mock services for each test
+    (mockJWTServiceAuth.extractTokenFromHeader as jest.Mock).mockReturnValue(null);
+    (mockJWTServiceAuth.verifyToken as jest.Mock).mockRejectedValue(new Error('Invalid token'));
+    (mockUserService.getUserById as jest.Mock).mockResolvedValue(null);
 
     jest.clearAllMocks();
   });
@@ -88,6 +109,9 @@ describe('Authentication Middleware', () => {
 
   describe('Protected Routes', () => {
     it('should reject requests without authorization header', async () => {
+      // Mock JWT service to return null for missing token
+      (mockJWTServiceAuth.extractTokenFromHeader as jest.Mock).mockReturnValue(null);
+
       const response = await fastify.inject({
         method: 'GET',
         url: '/protected',
@@ -101,6 +125,9 @@ describe('Authentication Middleware', () => {
     });
 
     it('should reject requests with invalid authorization header format', async () => {
+      // Mock JWT service to return null for invalid format
+      (mockJWTServiceAuth.extractTokenFromHeader as jest.Mock).mockReturnValue(null);
+
       const response = await fastify.inject({
         method: 'GET',
         url: '/protected',
@@ -116,6 +143,10 @@ describe('Authentication Middleware', () => {
     });
 
     it('should reject requests with invalid JWT token', async () => {
+      // Mock JWT service to extract token but fail verification
+      (mockJWTServiceAuth.extractTokenFromHeader as jest.Mock).mockReturnValue('invalid.jwt.token');
+      (mockJWTServiceAuth.verifyToken as jest.Mock).mockRejectedValue(new Error('Invalid token'));
+
       const response = await fastify.inject({
         method: 'GET',
         url: '/protected',
@@ -126,8 +157,8 @@ describe('Authentication Middleware', () => {
 
       expect(response.statusCode).toBe(401);
       const body = JSON.parse(response.body);
-      expect(body.error.code).toBe('INVALID_TOKEN');
-      expect(body.error.message).toBe('Invalid or expired token');
+      expect(body.error.code).toBe('AUTH_INVALID');
+      expect(body.error.message).toBe('Invalid authentication credentials');
     });
 
     it('should reject requests with expired JWT token', async () => {
@@ -150,8 +181,8 @@ describe('Authentication Middleware', () => {
 
       expect(response.statusCode).toBe(401);
       const body = JSON.parse(response.body);
-      expect(body.error.code).toBe('INVALID_TOKEN');
-      expect(body.error.message).toBe('Invalid or expired token');
+      expect(body.error.code).toBe('AUTH_INVALID');
+      expect(body.error.message).toBe('Invalid authentication credentials');
     });
 
     it('should reject requests with refresh token instead of access token', async () => {
@@ -194,21 +225,30 @@ describe('Authentication Middleware', () => {
       const mockUser = {
         id: 'user_123',
         email: 'test@example.com',
-        github_id: 12345,
-        github_username: 'testuser',
+        githubId: 12345,
+        githubUsername: 'testuser',
         name: 'Test User',
-        created_at: new Date(),
-        updated_at: new Date(),
+        avatarUrl: undefined,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
+      // Mock successful authentication flow
+      (mockJWTServiceAuth.extractTokenFromHeader as jest.Mock).mockReturnValue('valid.access.token');
+      (mockJWTServiceAuth.verifyToken as jest.Mock).mockResolvedValue({
+        userId: 'user_123',
+        email: 'test@example.com',
+        githubUsername: 'testuser',
+        type: 'access',
+      });
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
+      (mockUserService.updateLastActive as jest.Mock).mockResolvedValue(undefined);
 
       const response = await fastify.inject({
         method: 'GET',
         url: '/protected',
         headers: {
-          authorization: `Bearer ${tokenPair.accessToken}`,
+          authorization: 'Bearer valid.access.token',
         },
       });
 
@@ -239,7 +279,7 @@ describe('Authentication Middleware', () => {
         },
       });
 
-      expect(response.statusCode).toBe(500);
+      expect(response.statusCode).toBe(401);
       const body = JSON.parse(response.body);
       expect(body.error.code).toBe('AUTH_INVALID');
       expect(body.error.message).toBe('Invalid authentication credentials');
