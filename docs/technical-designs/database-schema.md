@@ -587,6 +587,140 @@ model AiResponse {
   @@map("ai_responses")
 }
 
+// Context Window Management Tables
+
+model DocumentChunk {
+  id           String    @id @default(uuid()) @db.Uuid
+  document_id  String    @db.Uuid
+  project_id   String    @db.Uuid
+  
+  // Chunk content and metadata
+  content      String
+  chunk_index  Int
+  chunk_type   ChunkType @default(CONTENT)
+  section_path String?   // Path like "2.1.3" for hierarchical sections
+  
+  // Context optimization
+  token_count     Int
+  relevance_score Decimal? @db.Decimal(4, 3)
+  embedding       Decimal[] // Vector embedding for semantic search
+  
+  // Relationships and dependencies
+  parent_chunk_id String? @db.Uuid
+  cross_references String[] // Document IDs this chunk references
+  
+  // Timestamps
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  
+  // Relations
+  document Document @relation(fields: [document_id], references: [id], onDelete: Cascade)
+  project  Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  parent_chunk DocumentChunk? @relation("ChunkHierarchy", fields: [parent_chunk_id], references: [id])
+  child_chunks DocumentChunk[] @relation("ChunkHierarchy")
+  
+  // Context delivery tracking
+  context_deliveries ContextDelivery[]
+  
+  @@map("document_chunks")
+  @@index([document_id, chunk_index])
+  @@index([project_id, relevance_score])
+  @@index([embedding], type: Hash) // For vector similarity search
+}
+
+model ContextDelivery {
+  id              String    @id @default(uuid()) @db.Uuid
+  user_id         String    @db.Uuid
+  project_id      String    @db.Uuid
+  ai_request_id   String?   @db.Uuid
+  
+  // Delivery details
+  context_type    ContextType
+  delivery_method String    // "mcp", "api", "streaming"
+  agent_type      String?   // "claude", "copilot", "cursor", etc.
+  
+  // Context window optimization
+  total_tokens       Int
+  chunk_count        Int
+  optimization_score Decimal @db.Decimal(4, 3)
+  priority_levels    Json     // Array of priority levels used
+  
+  // Performance metrics
+  retrieval_time_ms Int
+  delivery_time_ms  Int
+  agent_satisfaction_score Decimal? @db.Decimal(3, 2)
+  
+  // Content tracking
+  delivered_chunks String[] // Array of chunk IDs delivered
+  context_summary  String?  // Brief summary of delivered context
+  
+  // Timestamps
+  created_at DateTime @default(now())
+  
+  // Relations
+  user        User      @relation(fields: [user_id], references: [id])
+  project     Project   @relation(fields: [project_id], references: [id])
+  ai_request  AiRequest? @relation(fields: [ai_request_id], references: [id])
+  chunks      DocumentChunk[] @relation(fields: [delivered_chunks], references: [id])
+  
+  @@map("context_deliveries")
+  @@index([user_id, created_at])
+  @@index([project_id, context_type])
+  @@index([ai_request_id])
+}
+
+model ContextWindowBudget {
+  id          String    @id @default(uuid()) @db.Uuid
+  user_id     String    @db.Uuid
+  project_id  String    @db.Uuid
+  
+  // Budget configuration
+  agent_type     String   // "claude", "copilot", etc.
+  max_tokens     Int      @default(100000)
+  priority_weights Json   // Weights for different context types
+  
+  // Usage tracking
+  current_usage     Int      @default(0)
+  daily_usage       Int      @default(0)
+  budget_reset_date DateTime
+  
+  // Optimization settings
+  auto_optimization Boolean @default(true)
+  chunk_strategy    String  @default("semantic") // "semantic", "hierarchical", "hybrid"
+  
+  // Timestamps
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  // Relations
+  user    User    @relation(fields: [user_id], references: [id])
+  project Project @relation(fields: [project_id], references: [id])
+  
+  @@map("context_window_budgets")
+  @@unique([user_id, project_id, agent_type])
+  @@index([project_id, agent_type])
+}
+
+// New enums for context management
+
+enum ChunkType {
+  CONTENT
+  HEADER
+  CODE_BLOCK
+  TABLE
+  DIAGRAM
+  REFERENCE
+  METADATA
+}
+
+enum ContextType {
+  IMMEDIATE    // Current task context
+  PROJECT      // Project-wide context
+  HISTORICAL   // Previous decisions and completed work
+  DEPENDENCY   // Related tasks and dependencies
+  ARCHITECTURAL // Technical architecture and constraints
+}
+
 model UsageTracking {
   id         String @id @default(uuid()) @db.Uuid
   request_id String @unique @db.Uuid

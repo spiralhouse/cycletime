@@ -2,14 +2,16 @@
 
 ## 1. Overview
 
-CycleTime is an intelligent project orchestration platform that transforms PRDs into structured development plans using Claude 4 Sonnet for planning and analysis. The system uses a microservices architecture with repository-centric documentation and hybrid AI assistance.
+CycleTime is an intelligent project orchestration platform that transforms PRDs into structured development plans using Claude 4 Sonnet for planning and analysis. The system uses a microservices architecture with repository-centric documentation, hybrid AI assistance, and advanced context window management to ensure reliable AI agent collaboration.
 
 ### Core Principles
-- **Repository-centric**: All documentation lives in Git repositories
-- **Hybrid AI workflow**: Claude 4 Sonnet for planning, Local AI for implementation
+- **Repository-centric**: All documentation lives in Git repositories with intelligent indexing
+- **Context-aware AI integration**: Intelligent context management prevents agent hallucination and maintains project coherence
+- **Hybrid AI workflow**: Claude 4 Sonnet for planning, Local AI for implementation with optimized context delivery
 - **Single-model integration**: Direct Claude 4 Sonnet API integration for consistency
 - **Human-in-the-loop**: All AI suggestions require human approval
 - **Notification-driven**: Proactive user notifications for required actions
+- **Context window optimization**: Intelligent prioritization and chunking for maximum agent effectiveness
 
 ## 2. System Architecture
 
@@ -29,6 +31,8 @@ graph TB
     
     subgraph "Core Services"
         CLAUDE[Claude AI Service<br/>Direct Anthropic integration]
+        CONTEXT[Context Management Service<br/>Intelligent chunking & prioritization]
+        SEARCH[Document Indexing Service<br/>Vector-based semantic search]
         PROJ[Project Service<br/>CRUD operations]
         DOC[Documentation Service<br/>Template generation]
         TASK[Task Breakdown Service<br/>AI-assisted analysis]
@@ -68,11 +72,16 @@ graph TB
     
     %% Core Service connections
     CLAUDE --> ANTHROPIC
+    CONTEXT --> SEARCH
+    CONTEXT --> DOC
+    SEARCH --> GIT
     PROJ --> GIT
     PROJ --> ISSUE
     DOC --> GIT
     TASK --> CLAUDE
+    TASK --> CONTEXT
     NOTIF --> COMM
+    MCP --> CONTEXT
     
     %% Integration Service connections
     GIT --> REPOS
@@ -135,6 +144,26 @@ graph TB
   - Git repository permission validation
 
 ### 3.3 Core Services
+
+#### Context Management Service
+- **Technology**: Node.js with TypeScript, Vector Database (Pinecone/Weaviate), Semantic Chunking
+- **Responsibilities**:
+  - Intelligent document chunking for optimal context window utilization
+  - Context prioritization based on task relevance and conversation history
+  - Real-time context window budgeting and optimization
+  - Cross-reference resolution and dependency linking
+  - Context delivery optimization for different AI agent types
+  - Historical context analysis and pattern recognition
+
+#### Document Indexing Service
+- **Technology**: Node.js with TypeScript, Vector Embeddings, Semantic Search
+- **Responsibilities**:
+  - Vector-based document indexing for semantic search capabilities
+  - Real-time document change detection and re-indexing
+  - Multi-layered context retrieval (immediate, project, historical)
+  - Relevance scoring and ranking for context delivery
+  - Document relationship mapping and semantic linking
+  - Search performance optimization and caching
 
 #### AI Orchestration Service
 - **Technology**: Node.js with TypeScript, LangChain
@@ -209,14 +238,17 @@ graph TB
   - API rate limiting and error handling
 
 #### MCP Server
-- **Technology**: Node.js with MCP Protocol, TypeScript
+- **Technology**: Node.js with MCP Protocol, TypeScript, Context Window Optimization
 - **Responsibilities**:
-  - Local AI assistant integration (Claude, Copilot, etc.)
-  - Repository context provision to Local AI
-  - Real-time project information access
-  - Tool execution for documentation operations
-  - Model routing recommendations
-  - Development workflow assistance
+  - Local AI assistant integration (Claude, Copilot, etc.) with context window management
+  - Intelligent repository context provision to Local AI with semantic chunking
+  - Real-time project information access with context prioritization
+  - Tool execution for documentation operations with context optimization
+  - Context window budgeting and usage monitoring for connected agents
+  - Model routing recommendations based on context requirements
+  - Development workflow assistance with context-aware recommendations
+  - Semantic search integration for relevant context discovery
+  - Cross-reference resolution and dependency context delivery
 
 ## 4. Data Architecture
 
