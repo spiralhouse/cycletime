@@ -12,11 +12,39 @@
 
 ### 1.2 Problem Statement
 
-Development teams struggle to efficiently translate Product Requirements Documents into structured, actionable development plans. The manual process of breaking down requirements into milestones, issues, and technical specifications is time-consuming, error-prone, and inconsistent across teams. Additionally, project documentation often becomes stale or disconnected from the actual development work, leading to context loss and miscommunication. While AI tools can assist with individual development tasks, there’s no integrated solution that maintains living documentation in the repository while intelligently orchestrating the entire project lifecycle from requirements analysis to task completion.
+Development teams struggle to efficiently translate Product Requirements Documents into structured, actionable development plans. The manual process of breaking down requirements into milestones, issues, and technical specifications is time-consuming, error-prone, and inconsistent across teams. Additionally, project documentation often becomes stale or disconnected from the actual development work, leading to context loss and miscommunication.
+
+**AI Agent Context Window Limitations**: While AI tools can assist with individual development tasks, they face critical limitations when working with large, complex software projects. AI agents frequently lose crucial project context due to conversation length constraints, context switching between different tools and sessions, and inability to efficiently access comprehensive project documentation. This leads to agent hallucination, inconsistent recommendations, and decisions that don't align with broader project goals and architectural constraints. Developers find themselves repeatedly re-explaining project context, significantly reducing the productivity gains that AI assistance should provide.
+
+Currently, there's no integrated solution that maintains living documentation in the repository while intelligently orchestrating the entire project lifecycle from requirements analysis to task completion, specifically addressing the context window management challenges that prevent reliable AI agent collaboration in software development.
 
 ### 1.3 Solution Overview
 
-CycleTime is an intelligent project orchestration platform that automates the transformation of PRDs into structured development plans while keeping humans in control of all critical decisions. The platform leverages Anthropic's Claude 4 Sonnet for planning and analysis tasks, while supporting integration with Local AI tools (GitHub Copilot, etc.) for code-specific assistance during development. By analyzing Markdown-formatted requirements documents stored in the project repository and providing AI-powered assistance through Claude 4 Sonnet, CycleTime creates a seamless connection between documentation, planning, and execution that both humans and AI agents can access throughout the project lifecycle.
+CycleTime is an intelligent project orchestration platform that automates the transformation of PRDs into structured development plans while keeping humans in control of all critical decisions. The platform specifically addresses AI agent context window limitations through repository-centric documentation and intelligent context management, enabling reliable AI collaboration across extended development cycles.
+
+The platform leverages Anthropic's Claude 4 Sonnet for planning and analysis tasks, while supporting integration with Local AI tools (GitHub Copilot, etc.) for code-specific assistance during development. Through advanced context window management via the Model Context Protocol (MCP), CycleTime ensures that AI agents maintain consistent access to relevant project information without overwhelming their processing capabilities or causing hallucinations due to context loss.
+
+By analyzing Markdown-formatted requirements documents stored in the project repository and providing AI-powered assistance through Claude 4 Sonnet, CycleTime creates a seamless connection between documentation, planning, and execution that both humans and AI agents can access throughout the project lifecycle, with intelligent context prioritization that scales from simple features to complex, multi-month projects.
+
+### 1.4 Context Window Management Strategy
+
+**Core Challenge**: AI agents working on software projects face significant limitations due to context window constraints. When agents lose access to crucial project context—whether due to conversation length limits, context switching between tools, or incomplete documentation access—they tend to hallucinate, make incorrect assumptions, or provide suboptimal recommendations that don't align with project requirements.
+
+**CycleTime's Approach**: 
+
+**Repository-Centric Context Persistence**: Unlike conversation-based AI interactions that lose context over time, CycleTime maintains all project context in versioned repository documentation. This ensures that both human team members and AI agents can access complete, up-to-date project information at any point in the development lifecycle.
+
+**Intelligent Context Retrieval**: Through the MCP (Model Context Protocol) integration, local AI tools can request specific project context with semantic search capabilities. Rather than overwhelming agents with entire documentation sets, CycleTime provides targeted, relevant context based on the current task and conversation scope.
+
+**Layered Context Architecture**:
+- **Immediate Context**: Current task specifications and directly related documentation
+- **Project Context**: Overall project goals, architecture decisions, and milestone status  
+- **Historical Context**: Previous decisions, completed tasks, and lessons learned
+- **Cross-Reference Context**: Related tasks, dependencies, and impact analysis
+
+**Context Window Optimization**: CycleTime automatically prioritizes and structures context delivery to maximize agent effectiveness within token limits, ensuring critical information reaches agents while filtering out noise that could lead to confusion or hallucination.
+
+This strategy transforms AI agent reliability from a best-effort interaction to a systematic, context-aware collaboration that maintains project coherence across extended development cycles.
 
 ## 2. Goals & Success Metrics
 
@@ -26,16 +54,20 @@ CycleTime is an intelligent project orchestration platform that automates the tr
 1. **Reliable AI Integration**: Provide consistent, high-quality analysis and planning using Claude 4 Sonnet with 95%+ success rate
 1. **Maintain Living Documentation**: Keep all project documentation in sync with actual development progress
 1. **Seamless Local AI Integration**: Enable Local AI tools to access repository context through MCP integration
-1. **Ensure Documentation Accessibility**: Make project context available to both humans and AI agents throughout development
+1. **Eliminate Context Window Limitations**: Provide AI agents with intelligent, prioritized access to project context, eliminating hallucinations and inconsistencies caused by context loss
+1. **Ensure Documentation Accessibility**: Make project context available to both humans and AI agents throughout development with context optimization for agent effectiveness
 
 ### 2.2 Success Metrics
 
 - **Time Savings**: Reduce project planning time from 2-3 days to 2-3 hours
 - **AI Reliability**: Achieve 95%+ successful Claude 4 Sonnet API responses with consistent quality
+- **Context Window Effectiveness**: Reduce AI agent hallucination incidents by 90% through intelligent context management
+- **Context Retrieval Performance**: Deliver relevant project context to AI agents in <5 seconds for 95% of requests
 - **Adoption**: 200+ projects managed within first year
 - **Quality**: 95%+ user satisfaction with generated plans after human review
-- **Integration Success**: 90%+ successful repository context provision to Local AI tools
+- **Integration Success**: 90%+ successful repository context provision to Local AI tools with optimized context delivery
 - **Productivity**: 40% faster time-to-first-commit on new projects
+- **Agent Consistency**: 85%+ consistency in AI recommendations across different conversation sessions for the same project context
 - **Retention**: 80%+ of teams continue using CycleTime after 3 months.
 
 ### 2.3 Non-Goals
@@ -461,24 +493,36 @@ sequenceDiagram
 
 ### 5.1 System Architecture
 
-**Primary Architecture**: Repository-Centric with Claude 4 Sonnet Integration
+**Primary Architecture**: Repository-Centric with Context-Aware AI Integration
 
-- **Claude 4 Sonnet Integration**: Direct API integration for all planning and analysis tasks
+- **Claude 4 Sonnet Integration**: Direct API integration for all planning and analysis tasks with context window optimization
 - **Git Integration**: Direct repository access for reading/writing Markdown documentation
+- **Context Management Service**: Intelligent document chunking, semantic search, and context prioritization engine
 - **CycleTime Server**: Central orchestration engine with REST API and webhook support
 - **Web Dashboard**: React-based interface for project management, document preview, and Claude configuration
-- **MCP Server Component**: Provides AI assistance with complete repository context for Local AI tools
+- **MCP Server Component**: Provides AI assistance with optimized repository context delivery for Local AI tools
+- **Document Indexing Service**: Vector-based search and semantic analysis for efficient context retrieval
+- **Context Window Optimizer**: Real-time context budgeting and delivery optimization for AI agents
 - **Issue Tracker Integrations**: Bidirectional sync with external systems
 
 ### 5.2 MCP Server Specifications
 
-**Server Type**: Hybrid (Resources + Tools)
+**Server Type**: Hybrid (Resources + Tools) with Context Window Optimization
 
 **Protocol Details**:
 
 - **MCP Version**: 1.0
 - **Transport**: stdio (for local development), HTTP (for remote access)
 - **Authentication**: Project-based API keys
+
+**Context Window Management Features**:
+
+- **Intelligent Context Chunking**: Automatically segments large documentation into semantically coherent chunks that fit within agent context windows
+- **Context Prioritization**: Ranks context relevance based on current task, conversation history, and project phase
+- **Semantic Search Integration**: Provides vector-based search capabilities for finding relevant context across project documentation
+- **Context Window Budgeting**: Monitors and optimizes token usage to prevent context overflow and maintain conversation coherence
+- **Cross-Reference Resolution**: Automatically resolves and includes related documentation sections when agents request specific context
+- **Layered Context Delivery**: Provides context at multiple granularity levels (immediate, project, historical) based on agent needs
 
 ### 5.3 Functional Requirements
 
@@ -503,16 +547,21 @@ sequenceDiagram
 
 **MCP Tools**:
 
-- **get-documentation**: Retrieve specific documentation sections from repository for Local AI context
+- **get-documentation**: Retrieve specific documentation sections from repository for Local AI context with intelligent chunking
+- **get-contextual-overview**: Provide layered project context (immediate/project/historical) optimized for agent context windows
+- **search-project-context**: Semantic search across all project documentation with relevance ranking
 - **analyze-requirements**: Get CycleTime AI analysis of requirements using optimal models with document references
 - **suggest-implementation**: Receive implementation suggestions from Local AI with CycleTime-provided context and technical designs
 - **review-technical-design**: Get CycleTime AI feedback on design documents using architectural reasoning models
-- **check-dependencies**: Analyze dependencies from documentation structure
+- **check-dependencies**: Analyze dependencies from documentation structure with context prioritization
 - **update-documentation**: Create or update documentation files in repository
-- **cross-reference-docs**: Find related information across different documentation types
+- **cross-reference-docs**: Find related information across different documentation types with semantic linking
 - **validate-documentation**: Check documentation consistency and completeness
+- **optimize-context-delivery**: Dynamically adjust context delivery based on agent performance and conversation length
+- **track-context-usage**: Monitor context window utilization and suggest optimizations
 - **configure-models**: Set model preferences and routing policies for specific tasks
 - **get-model-recommendations**: Receive CycleTime suggestions for optimal model selection based on task complexity
+- **manage-context-budget**: Set and monitor context window usage limits for different agent types
 
 ### 5.4 Non-Functional Requirements
 
@@ -524,6 +573,9 @@ sequenceDiagram
 - Issue creation with doc links: < 60 seconds for projects with 50+ issues
 - MCP documentation queries: < 5 seconds for any repository document with cached model responses
 - Cross-reference analysis: < 10 seconds across full project documentation
+- **Context Window Optimization**: < 2 seconds for context prioritization and chunking for any project size
+- **Semantic Search Performance**: < 3 seconds for finding relevant context across repositories with 1000+ documents
+- **Context Delivery Optimization**: 95% reduction in irrelevant context delivered to agents
 - Cost optimization: 49% reduction in AI costs through intelligent model routing
 
 **Reliability**:
