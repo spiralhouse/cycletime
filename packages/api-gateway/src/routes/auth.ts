@@ -60,9 +60,22 @@ export async function authRoutes(fastify: FastifyInstance) {
   // POST /auth/github/oauth - Initiate GitHub OAuth flow
   fastify.post('/auth/github/oauth', {
     schema: {
-      body: oauthInitiateSchema,
+      body: {
+        type: 'object',
+        properties: {
+          redirect_uri: { type: 'string', format: 'uri' }
+        },
+        additionalProperties: false
+      },
       response: {
-        200: oauthInitiateResponseSchema,
+        200: {
+          type: 'object',
+          properties: {
+            oauth_url: { type: 'string' },
+            state: { type: 'string' }
+          },
+          required: ['oauth_url', 'state']
+        }
       },
     },
   }, async (request: FastifyRequest<{ Body: z.infer<typeof oauthInitiateSchema> }>, reply: FastifyReply) => {
@@ -89,9 +102,35 @@ export async function authRoutes(fastify: FastifyInstance) {
   // GET /auth/github/callback - Handle GitHub OAuth callback
   fastify.get('/auth/github/callback', {
     schema: {
-      querystring: oauthCallbackSchema,
+      querystring: {
+        type: 'object',
+        properties: {
+          code: { type: 'string' },
+          state: { type: 'string' }
+        },
+        required: ['code', 'state']
+      },
       response: {
-        200: authSuccessResponseSchema,
+        200: {
+          type: 'object',
+          properties: {
+            access_token: { type: 'string' },
+            refresh_token: { type: 'string' },
+            expires_in: { type: 'number' },
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                email: { type: 'string' },
+                name: { type: 'string' },
+                github_username: { type: 'string' },
+                avatar_url: { type: 'string' }
+              },
+              required: ['id', 'email', 'name', 'github_username', 'avatar_url']
+            }
+          },
+          required: ['access_token', 'refresh_token', 'expires_in', 'user']
+        }
       },
     },
   }, async (request: FastifyRequest<{ Querystring: z.infer<typeof oauthCallbackSchema> }>, reply: FastifyReply) => {
@@ -170,9 +209,34 @@ export async function authRoutes(fastify: FastifyInstance) {
   // POST /auth/refresh - Refresh access token
   fastify.post('/auth/refresh', {
     schema: {
-      body: refreshTokenSchema,
+      body: {
+        type: 'object',
+        properties: {
+          refresh_token: { type: 'string' }
+        },
+        required: ['refresh_token']
+      },
       response: {
-        200: authSuccessResponseSchema,
+        200: {
+          type: 'object',
+          properties: {
+            access_token: { type: 'string' },
+            refresh_token: { type: 'string' },
+            expires_in: { type: 'number' },
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                email: { type: 'string' },
+                name: { type: 'string' },
+                github_username: { type: 'string' },
+                avatar_url: { type: 'string' }
+              },
+              required: ['id', 'email', 'name', 'github_username', 'avatar_url']
+            }
+          },
+          required: ['access_token', 'refresh_token', 'expires_in', 'user']
+        }
       },
     },
   }, async (request: FastifyRequest<{ Body: z.infer<typeof refreshTokenSchema> }>, reply: FastifyReply) => {
@@ -232,7 +296,13 @@ export async function authRoutes(fastify: FastifyInstance) {
   fastify.post('/auth/logout', {
     schema: {
       response: {
-        200: z.object({ message: z.string() }),
+        200: {
+          type: 'object',
+          properties: {
+            message: { type: 'string' }
+          },
+          required: ['message']
+        }
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
