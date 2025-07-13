@@ -94,7 +94,27 @@ describe('Authentication Routes', () => {
     // Register auth routes - authRoutes creates its own services internally
     await fastify.register(authRoutes);
 
+    // Reset mocks and set up default behavior
     jest.clearAllMocks();
+    
+    // Configure default mock behavior for each test
+    (mockJWTService.generateTokenPair as jest.Mock).mockResolvedValue({
+      accessToken: 'mock_access_token',
+      refreshToken: 'mock_refresh_token', 
+      expiresIn: 3600,
+    });
+    (mockJWTService.refreshAccessToken as jest.Mock).mockResolvedValue({
+      accessToken: 'new_access_token',
+      refreshToken: 'new_refresh_token',
+      expiresIn: 3600,
+    });
+    (mockUserServiceAuth.createOrUpdateUser as jest.Mock).mockResolvedValue({
+      id: 'user_123',
+      email: 'test@example.com',
+      githubUsername: 'testuser',
+      name: 'Test User',
+      avatarUrl: 'https://github.com/testuser.avatar',
+    });
   });
 
   afterEach(async () => {
