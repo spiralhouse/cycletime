@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { userRoutes } from '../../routes/user';
 import { UserService } from '../../services/user';
 import { JWTService } from '../../services/jwt';
-import { registerAuthMiddleware } from '../../middleware/auth';
+import { authMiddleware } from '../../middleware/auth';
 
 // Mock services
 const mockPrisma = {
@@ -43,7 +43,7 @@ describe('User Routes', () => {
     jwtService = new JWTService(fastify);
     
     // Register auth middleware and user routes
-    await registerAuthMiddleware(fastify, jwtService, mockUserService);
+    await fastify.register(authMiddleware);
     await fastify.register(userRoutes, { userService: mockUserService });
 
     jest.clearAllMocks();
