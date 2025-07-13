@@ -15,6 +15,7 @@ const mockPrisma = {
 
 const mockUserService = {
   getUserById: jest.fn(),
+  updateLastActive: jest.fn(),
 } as unknown as UserService;
 
 describe('Authentication Middleware', () => {
@@ -167,7 +168,7 @@ describe('Authentication Middleware', () => {
       expect(response.statusCode).toBe(401);
       const body = JSON.parse(response.body);
       expect(body.error.code).toBe('INVALID_TOKEN_TYPE');
-      expect(body.error.message).toBe('Access token required');
+      expect(body.error.message).toBe('Invalid token type');
     });
 
     it('should reject requests when user not found in database', async () => {
@@ -215,10 +216,11 @@ describe('Authentication Middleware', () => {
       const body = JSON.parse(response.body);
       expect(body.message).toBe('Protected resource accessed');
       expect(body.user).toEqual({
-        userId: 'user_123',
+        id: 'user_123',
         email: 'test@example.com',
         githubUsername: 'testuser',
-        user: mockUser,
+        name: 'Test User',
+        avatarUrl: undefined,
       });
 
       expect(mockUserService.getUserById).toHaveBeenCalledWith('user_123');
@@ -239,8 +241,8 @@ describe('Authentication Middleware', () => {
 
       expect(response.statusCode).toBe(500);
       const body = JSON.parse(response.body);
-      expect(body.error.code).toBe('INTERNAL_ERROR');
-      expect(body.error.message).toBe('Authentication failed');
+      expect(body.error.code).toBe('AUTH_INVALID');
+      expect(body.error.message).toBe('Invalid authentication credentials');
     });
 
     it('should handle case-insensitive Bearer token', async () => {

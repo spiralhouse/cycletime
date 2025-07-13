@@ -17,7 +17,8 @@ const mockPrisma = {
 
 const mockUserService = {
   getUserById: jest.fn(),
-  updateUser: jest.fn(),
+  updateUserProfile: jest.fn(),
+  updateLastActive: jest.fn(),
 } as unknown as UserService;
 
 describe('User Routes', () => {
@@ -28,11 +29,12 @@ describe('User Routes', () => {
   const mockUser = {
     id: 'user_123',
     email: 'test@example.com',
-    github_id: 12345,
-    github_username: 'testuser',
+    githubId: 12345,
+    githubUsername: 'testuser',
     name: 'Test User',
-    created_at: new Date('2024-01-01T00:00:00Z'),
-    updated_at: new Date('2024-01-01T00:00:00Z'),
+    avatarUrl: 'https://github.com/testuser.avatar',
+    createdAt: new Date('2024-01-01T00:00:00Z'),
+    updatedAt: new Date('2024-01-01T00:00:00Z'),
   };
 
   beforeEach(async () => {
@@ -44,7 +46,7 @@ describe('User Routes', () => {
     
     // Register auth middleware and user routes
     await fastify.register(authMiddleware);
-    await fastify.register(userRoutes, { userService: mockUserService });
+    await fastify.register(userRoutes);
 
     jest.clearAllMocks();
   });
@@ -54,14 +56,14 @@ describe('User Routes', () => {
     jest.resetAllMocks();
   });
 
-  describe('GET /user/profile', () => {
+  describe('GET /api/v1/user/profile', () => {
     it('should return user profile when authenticated', async () => {
       const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${tokenPair.accessToken}`,
         },
@@ -70,12 +72,13 @@ describe('User Routes', () => {
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
       
-      expect(body.user).toEqual({
+      expect(body).toEqual({
         id: 'user_123',
         email: 'test@example.com',
         github_id: 12345,
         github_username: 'testuser',
         name: 'Test User',
+        avatar_url: 'https://github.com/testuser.avatar',
         created_at: '2024-01-01T00:00:00.000Z',
         updated_at: '2024-01-01T00:00:00.000Z',
       });
@@ -86,7 +89,7 @@ describe('User Routes', () => {
     it('should require authentication', async () => {
       const response = await fastify.inject({
         method: 'GET',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
       });
 
       expect(response.statusCode).toBe(401);
@@ -101,13 +104,13 @@ describe('User Routes', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${tokenPair.accessToken}`,
         },
       });
 
-      expect(response.statusCode).toBe(401);
+      expect(response.statusCode).toBe(404);
       const body = JSON.parse(response.body);
       expect(body.error.code).toBe('USER_NOT_FOUND');
     });
@@ -118,7 +121,7 @@ describe('User Routes', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${tokenPair.accessToken}`,
         },
@@ -132,7 +135,7 @@ describe('User Routes', () => {
     it('should reject invalid JWT tokens', async () => {
       const response = await fastify.inject({
         method: 'GET',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: 'Bearer invalid.jwt.token',
         },
@@ -140,7 +143,7 @@ describe('User Routes', () => {
 
       expect(response.statusCode).toBe(401);
       const body = JSON.parse(response.body);
-      expect(body.error.code).toBe('INVALID_TOKEN');
+      expect(body.error.code).toBe('AUTH_INVALID');
     });
 
     it('should reject expired JWT tokens', async () => {
@@ -153,7 +156,7 @@ describe('User Routes', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${expiredToken}`,
         },
@@ -161,11 +164,11 @@ describe('User Routes', () => {
 
       expect(response.statusCode).toBe(401);
       const body = JSON.parse(response.body);
-      expect(body.error.code).toBe('INVALID_TOKEN');
+      expect(body.error.code).toBe('AUTH_INVALID');
     });
   });
 
-  describe('PUT /user/profile', () => {
+  describe('PUT /api/v1/user/profile', () => {
     const validUpdateData = {
       name: 'Updated Name',
       email: 'updated@example.com',
@@ -176,11 +179,11 @@ describe('User Routes', () => {
       const updatedUser = { ...mockUser, ...validUpdateData, updated_at: new Date() };
 
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
-      (mockUserService.updateUser as jest.Mock).mockResolvedValue(updatedUser);
+      (mockUserService.updateUserProfile as jest.Mock).mockResolvedValue(updatedUser);
 
       const response = await fastify.inject({
         method: 'PUT',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${tokenPair.accessToken}`,
         },
@@ -190,11 +193,10 @@ describe('User Routes', () => {
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
       
-      expect(body.user.name).toBe(validUpdateData.name);
-      expect(body.user.email).toBe(validUpdateData.email);
-      expect(body.message).toBe('Profile updated successfully');
+      expect(body.name).toBe(validUpdateData.name);
+      expect(body.email).toBe(validUpdateData.email);
 
-      expect(mockUserService.updateUser).toHaveBeenCalledWith('user_123', validUpdateData);
+      expect(mockUserService.updateUserProfile).toHaveBeenCalledWith('user_123', validUpdateData);
     });
 
     it('should update partial user profile', async () => {
@@ -203,11 +205,11 @@ describe('User Routes', () => {
       const updatedUser = { ...mockUser, ...partialUpdate };
 
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
-      (mockUserService.updateUser as jest.Mock).mockResolvedValue(updatedUser);
+      (mockUserService.updateUserProfile as jest.Mock).mockResolvedValue(updatedUser);
 
       const response = await fastify.inject({
         method: 'PUT',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${tokenPair.accessToken}`,
         },
@@ -217,16 +219,16 @@ describe('User Routes', () => {
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
       
-      expect(body.user.name).toBe(partialUpdate.name);
-      expect(body.user.email).toBe(mockUser.email); // Unchanged
+      expect(body.name).toBe(partialUpdate.name);
+      expect(body.email).toBe(mockUser.email); // Unchanged
       
-      expect(mockUserService.updateUser).toHaveBeenCalledWith('user_123', partialUpdate);
+      expect(mockUserService.updateUserProfile).toHaveBeenCalledWith('user_123', partialUpdate);
     });
 
     it('should require authentication', async () => {
       const response = await fastify.inject({
         method: 'PUT',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         payload: validUpdateData,
       });
 
@@ -247,7 +249,7 @@ describe('User Routes', () => {
 
       const response = await fastify.inject({
         method: 'PUT',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${tokenPair.accessToken}`,
         },
@@ -269,7 +271,7 @@ describe('User Routes', () => {
 
       const response = await fastify.inject({
         method: 'PUT',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${tokenPair.accessToken}`,
         },
@@ -291,7 +293,7 @@ describe('User Routes', () => {
 
       const response = await fastify.inject({
         method: 'PUT',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${tokenPair.accessToken}`,
         },
@@ -306,11 +308,11 @@ describe('User Routes', () => {
     it('should handle empty request body', async () => {
       const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
-      (mockUserService.updateUser as jest.Mock).mockResolvedValue(mockUser);
+      (mockUserService.updateUserProfile as jest.Mock).mockResolvedValue(mockUser);
 
       const response = await fastify.inject({
         method: 'PUT',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${tokenPair.accessToken}`,
         },
@@ -319,20 +321,20 @@ describe('User Routes', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body.user).toEqual(expect.objectContaining(mockUser));
+      expect(body.id).toBe(mockUser.id);
       
-      expect(mockUserService.updateUser).toHaveBeenCalledWith('user_123', {});
+      expect(mockUserService.updateUserProfile).toHaveBeenCalledWith('user_123', {});
     });
 
     it('should handle database update errors', async () => {
       const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
       
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
-      (mockUserService.updateUser as jest.Mock).mockRejectedValue(new Error('Unique constraint violation'));
+      (mockUserService.updateUserProfile as jest.Mock).mockRejectedValue(new Error('Unique constraint violation'));
 
       const response = await fastify.inject({
         method: 'PUT',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${tokenPair.accessToken}`,
         },
@@ -341,8 +343,8 @@ describe('User Routes', () => {
 
       expect(response.statusCode).toBe(500);
       const body = JSON.parse(response.body);
-      expect(body.error.code).toBe('UPDATE_ERROR');
-      expect(body.error.message).toBe('Failed to update profile');
+      expect(body.error.code).toBe('INTERNAL_ERROR');
+      expect(body.error.message).toBe('Failed to update user profile');
     });
 
     it('should handle malformed JSON request body', async () => {
@@ -351,7 +353,7 @@ describe('User Routes', () => {
 
       const response = await fastify.inject({
         method: 'PUT',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${tokenPair.accessToken}`,
           'content-type': 'application/json',
@@ -378,11 +380,11 @@ describe('User Routes', () => {
       const updatedUser = { ...mockUser, name: 'Updated Name' };
 
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
-      (mockUserService.updateUser as jest.Mock).mockResolvedValue(updatedUser);
+      (mockUserService.updateUserProfile as jest.Mock).mockResolvedValue(updatedUser);
 
       const response = await fastify.inject({
         method: 'PUT',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${tokenPair.accessToken}`,
         },
@@ -392,7 +394,7 @@ describe('User Routes', () => {
       expect(response.statusCode).toBe(200);
       
       // Should only pass allowed fields to update service
-      expect(mockUserService.updateUser).toHaveBeenCalledWith('user_123', {
+      expect(mockUserService.updateUserProfile).toHaveBeenCalledWith('user_123', {
         name: 'Updated Name',
       });
     });
@@ -402,7 +404,7 @@ describe('User Routes', () => {
     it('should return consistent error format', async () => {
       const response = await fastify.inject({
         method: 'GET',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
       });
 
       expect(response.statusCode).toBe(401);
@@ -420,7 +422,7 @@ describe('User Routes', () => {
     it('should include request ID in error responses', async () => {
       const response = await fastify.inject({
         method: 'GET',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
       });
 
       expect(response.statusCode).toBe(401);
@@ -436,7 +438,7 @@ describe('User Routes', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${tokenPair.accessToken}`,
         },
@@ -445,14 +447,13 @@ describe('User Routes', () => {
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
       
-      expect(body).toHaveProperty('user');
-      expect(body.user).toHaveProperty('id');
-      expect(body.user).toHaveProperty('email');
-      expect(body.user).toHaveProperty('github_id');
-      expect(body.user).toHaveProperty('github_username');
-      expect(body.user).toHaveProperty('name');
-      expect(body.user).toHaveProperty('created_at');
-      expect(body.user).toHaveProperty('updated_at');
+      expect(body).toHaveProperty('id');
+      expect(body).toHaveProperty('email');
+      expect(body).toHaveProperty('github_id');
+      expect(body).toHaveProperty('github_username');
+      expect(body).toHaveProperty('name');
+      expect(body).toHaveProperty('created_at');
+      expect(body).toHaveProperty('updated_at');
     });
 
     it('should return consistent success format for profile updates', async () => {
@@ -460,11 +461,11 @@ describe('User Routes', () => {
       const updatedUser = { ...mockUser, name: 'Updated Name' };
 
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
-      (mockUserService.updateUser as jest.Mock).mockResolvedValue(updatedUser);
+      (mockUserService.updateUserProfile as jest.Mock).mockResolvedValue(updatedUser);
 
       const response = await fastify.inject({
         method: 'PUT',
-        url: '/user/profile',
+        url: '/api/v1/user/profile',
         headers: {
           authorization: `Bearer ${tokenPair.accessToken}`,
         },
@@ -474,10 +475,9 @@ describe('User Routes', () => {
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
       
-      expect(body).toHaveProperty('user');
-      expect(body).toHaveProperty('message');
-      expect(body.message).toBe('Profile updated successfully');
-      expect(typeof body.user).toBe('object');
+      expect(body).toHaveProperty('id');
+      expect(body).toHaveProperty('name');
+      expect(body.name).toBe('Updated Name');
     });
   });
 });
