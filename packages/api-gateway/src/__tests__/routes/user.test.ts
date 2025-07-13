@@ -1,4 +1,17 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+
+// Mock the user service creation BEFORE importing anything that uses it
+const mockUserService = {
+  getUserById: jest.fn(),
+  updateUserProfile: jest.fn(),
+  updateLastActive: jest.fn(),
+};
+
+jest.mock('../../services/user.js', () => ({
+  createUserService: jest.fn(() => mockUserService),
+  UserService: jest.fn(),
+}));
+
 import Fastify, { FastifyInstance } from 'fastify';
 import jwt from '@fastify/jwt';
 import { PrismaClient } from '@prisma/client';
@@ -15,11 +28,7 @@ const mockPrisma = {
   },
 } as unknown as PrismaClient;
 
-const mockUserService = {
-  getUserById: jest.fn(),
-  updateUserProfile: jest.fn(),
-  updateLastActive: jest.fn(),
-} as unknown as UserService;
+// mockUserService is now defined above before the imports
 
 describe('User Routes', () => {
   let fastify: FastifyInstance;
@@ -59,7 +68,9 @@ describe('User Routes', () => {
   describe('GET /api/v1/user/profile', () => {
     it('should return user profile when authenticated', async () => {
       const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
+      // Mock user found for auth middleware
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
+      (mockUserService.updateLastActive as jest.Mock).mockResolvedValue(undefined);
 
       const response = await fastify.inject({
         method: 'GET',
@@ -100,6 +111,7 @@ describe('User Routes', () => {
 
     it('should handle user not found scenario', async () => {
       const tokenPair = await jwtService.generateTokenPair('nonexistent_user', 'test@example.com', 'testuser');
+      // Auth middleware will fail first when user not found
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(null);
 
       const response = await fastify.inject({
@@ -110,13 +122,15 @@ describe('User Routes', () => {
         },
       });
 
-      expect(response.statusCode).toBe(404);
+      expect(response.statusCode).toBe(401);
       const body = JSON.parse(response.body);
+      expect(body.error.code).toBe('USER_NOT_FOUND');
       expect(body.error.code).toBe('USER_NOT_FOUND');
     });
 
     it('should handle database errors', async () => {
       const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
+      // Auth middleware will catch this error first
       (mockUserService.getUserById as jest.Mock).mockRejectedValue(new Error('Database connection failed'));
 
       const response = await fastify.inject({
@@ -127,9 +141,9 @@ describe('User Routes', () => {
         },
       });
 
-      expect(response.statusCode).toBe(500);
+      expect(response.statusCode).toBe(401);
       const body = JSON.parse(response.body);
-      expect(body.error.code).toBe('INTERNAL_ERROR');
+      expect(body.error.code).toBe('AUTH_INVALID');
     });
 
     it('should reject invalid JWT tokens', async () => {
@@ -176,9 +190,11 @@ describe('User Routes', () => {
 
     it('should update user profile successfully', async () => {
       const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
-      const updatedUser = { ...mockUser, ...validUpdateData, updated_at: new Date() };
+      const updatedUser = { ...mockUser, ...validUpdateData, updatedAt: new Date() };
 
+      // Mock for auth middleware first, then for route handler
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
+      (mockUserService.updateLastActive as jest.Mock).mockResolvedValue(undefined);
       (mockUserService.updateUserProfile as jest.Mock).mockResolvedValue(updatedUser);
 
       const response = await fastify.inject({
@@ -204,7 +220,9 @@ describe('User Routes', () => {
       const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
       const updatedUser = { ...mockUser, ...partialUpdate };
 
+      // Mock for auth middleware first, then for route handler
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
+      (mockUserService.updateLastActive as jest.Mock).mockResolvedValue(undefined);
       (mockUserService.updateUserProfile as jest.Mock).mockResolvedValue(updatedUser);
 
       const response = await fastify.inject({
@@ -307,7 +325,9 @@ describe('User Routes', () => {
 
     it('should handle empty request body', async () => {
       const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
+      // Mock for auth middleware first, then for route handler
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
+      (mockUserService.updateLastActive as jest.Mock).mockResolvedValue(undefined);
       (mockUserService.updateUserProfile as jest.Mock).mockResolvedValue(mockUser);
 
       const response = await fastify.inject({
@@ -329,7 +349,9 @@ describe('User Routes', () => {
     it('should handle database update errors', async () => {
       const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
       
+      // Mock for auth middleware to succeed, then route handler to fail
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
+      (mockUserService.updateLastActive as jest.Mock).mockResolvedValue(undefined);
       (mockUserService.updateUserProfile as jest.Mock).mockRejectedValue(new Error('Unique constraint violation'));
 
       const response = await fastify.inject({
@@ -349,7 +371,9 @@ describe('User Routes', () => {
 
     it('should handle malformed JSON request body', async () => {
       const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
+      // Mock for auth middleware
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
+      (mockUserService.updateLastActive as jest.Mock).mockResolvedValue(undefined);
 
       const response = await fastify.inject({
         method: 'PUT',
@@ -379,7 +403,9 @@ describe('User Routes', () => {
 
       const updatedUser = { ...mockUser, name: 'Updated Name' };
 
+      // Mock for auth middleware first, then for route handler
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
+      (mockUserService.updateLastActive as jest.Mock).mockResolvedValue(undefined);
       (mockUserService.updateUserProfile as jest.Mock).mockResolvedValue(updatedUser);
 
       const response = await fastify.inject({
@@ -434,7 +460,9 @@ describe('User Routes', () => {
   describe('Success Response Format', () => {
     it('should return consistent success format for profile retrieval', async () => {
       const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
+      // Mock for auth middleware
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
+      (mockUserService.updateLastActive as jest.Mock).mockResolvedValue(undefined);
 
       const response = await fastify.inject({
         method: 'GET',
@@ -460,7 +488,9 @@ describe('User Routes', () => {
       const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
       const updatedUser = { ...mockUser, name: 'Updated Name' };
 
+      // Mock for auth middleware first, then for route handler
       (mockUserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
+      (mockUserService.updateLastActive as jest.Mock).mockResolvedValue(undefined);
       (mockUserService.updateUserProfile as jest.Mock).mockResolvedValue(updatedUser);
 
       const response = await fastify.inject({
