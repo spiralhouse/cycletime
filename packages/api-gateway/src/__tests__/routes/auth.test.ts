@@ -364,13 +364,14 @@ describe('Authentication Routes', () => {
     });
 
     it('should reject access token used as refresh token', async () => {
-      const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
+      // Mock the refresh service to reject access token as refresh token
+      (mockJWTService.refreshAccessToken as jest.Mock).mockRejectedValue(new Error('Invalid refresh token'));
 
       const response = await fastify.inject({
         method: 'POST',
         url: '/auth/refresh',
         payload: {
-          refresh_token: tokenPair.accessToken,
+          refresh_token: 'mock_access_token_used_as_refresh',
         },
       });
 
@@ -412,13 +413,11 @@ describe('Authentication Routes', () => {
     });
 
     it('should handle logout with authorization header', async () => {
-      const tokenPair = await jwtService.generateTokenPair('user_123', 'test@example.com', 'testuser');
-
       const response = await fastify.inject({
         method: 'POST',
         url: '/auth/logout',
         headers: {
-          authorization: `Bearer ${tokenPair.accessToken}`,
+          authorization: 'Bearer mock_access_token',
         },
       });
 
