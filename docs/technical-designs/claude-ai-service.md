@@ -1,4 +1,4 @@
-# Technical Design: Claude AI Service
+# Technical Design: AI Service with Multi-Provider Support
 
 **Issue**: SPI-14  
 **Created**: 2025-01-13  
@@ -7,21 +7,22 @@
 
 ## 1. Overview
 
-This document outlines the technical design for CycleTime's Claude AI Service, providing direct integration with Anthropic's Claude 4 Sonnet API for MVP functionality. The service handles all AI-powered operations including PRD analysis, document generation, and task breakdown while maintaining comprehensive logging, monitoring, and error handling.
+This document outlines the technical design for CycleTime's AI Service, providing a provider-agnostic architecture with Anthropic's Claude 4 Sonnet as the initial MVP implementation. The service is designed to support multiple LLM providers (OpenAI GPT, Google Gemini, xAI Grok) through generic interfaces while handling all AI-powered operations including PRD analysis, document generation, and task breakdown with comprehensive logging, monitoring, and error handling.
 
 ## 2. Goals & Requirements
 
 ### 2.1 Primary Goals
 
-- **Direct Claude 4 Sonnet Integration**: Single-provider AI service eliminating orchestration complexity
+- **Provider-Agnostic Architecture**: Generic interfaces supporting multiple LLM providers with Claude 4 Sonnet as MVP
+- **Future-Proof Design**: Easily extensible to OpenAI GPT, Google Gemini, xAI Grok, and other providers
 - **Comprehensive Request/Response Logging**: Full audit trail of AI interactions for debugging and optimization
-- **Robust Error Handling**: Graceful handling of API failures with intelligent retry mechanisms
+- **Robust Error Handling**: Graceful handling of API failures with intelligent retry mechanisms across providers
 - **Usage Tracking**: Detailed cost monitoring and performance metrics for budget management
 - **Scalable Architecture**: Support for high-volume AI requests with proper rate limiting
 
 ### 2.2 Functional Requirements
 
-- Direct Anthropic Claude 4 Sonnet API integration
+- Multi-provider AI integration with Anthropic Claude 4 Sonnet as initial implementation
 - Request queuing and processing with status tracking
 - Comprehensive logging of all AI interactions
 - Usage tracking with cost calculation and monitoring
@@ -51,27 +52,38 @@ This document outlines the technical design for CycleTime's Claude AI Service, p
 
 **Alternative Considered**: Python with FastAPI - Better AI/ML ecosystem but inconsistent with project stack
 
-### 3.2 Anthropic API Integration Strategy
+### 3.2 Multi-Provider Architecture Strategy
 
-**Decision**: Use official Anthropic TypeScript SDK with custom wrapper
+**Decision**: Implement provider abstraction layer with Claude as initial implementation
 **Rationale**:
-- Official SDK provides type safety and automatic updates
-- Custom wrapper allows for request/response logging and monitoring
-- Centralized error handling and retry logic
-- Standardized request format across the application
-- Easy to mock for testing
+- Generic interfaces support future providers (OpenAI GPT, Google Gemini, xAI Grok)
+- Provider-specific implementations encapsulate API differences
+- Standardized request/response format across all providers
+- Easy to add new providers without changing core business logic
+- Testable with mock providers
 
-**Integration Pattern**:
+**Architecture Pattern**:
 ```typescript
-class ClaudeApiClient {
+interface AIProvider {
+  name: string;
+  models: string[];
+  sendRequest(request: AIRequest): Promise<AIResponse>;
+  calculateCost(usage: TokenUsage): number;
+  validateConfig(): boolean;
+}
+
+class ClaudeProvider implements AIProvider {
   private anthropic: Anthropic;
-  private logger: Logger;
-  private usageTracker: UsageTracker;
+  // Claude-specific implementation
+}
+
+class AIProviderManager {
+  private providers: Map<string, AIProvider>;
+  private defaultProvider: string;
   
-  async sendRequest(request: ClaudeRequest): Promise<ClaudeResponse> {
-    // Pre-request logging and validation
-    // API call with error handling
-    // Post-request logging and usage tracking
+  async sendRequest(request: AIRequest): Promise<AIResponse> {
+    const provider = this.getProvider(request.provider || this.defaultProvider);
+    return provider.sendRequest(request);
   }
 }
 ```
@@ -111,46 +123,49 @@ class ClaudeApiClient {
 
 ## 4. System Components
 
-### 4.1 Claude AI Service
+### 4.1 AI Service
 
-**Location**: `/packages/claude-service/`
+**Location**: `/packages/ai-service/`
 **Technology Stack**:
 - Node.js 22 with TypeScript
 - Fastify web framework for API endpoints
-- Anthropic TypeScript SDK
+- Provider-specific SDKs (Anthropic, OpenAI, Google, xAI)
 - Prisma for database operations
 - Redis for request queuing and caching
 
 **Core Responsibilities**:
-- Claude 4 Sonnet API integration and request management
+- Multi-provider AI integration and request management
+- Provider abstraction and intelligent routing
 - Request validation and preprocessing
 - Response processing and storage
-- Error handling and retry logic
+- Error handling and retry logic across providers
 - Usage tracking and cost calculation
 - Performance monitoring and alerting
 
-### 4.2 API Client Wrapper
+### 4.2 Provider Abstraction Layer
 
-**Purpose**: Centralized Anthropic API interaction with monitoring
+**Purpose**: Generic AI provider interfaces supporting multiple LLM providers
 **Key Features**:
 ```typescript
-interface ClaudeRequest {
+interface AIRequest {
   id: string;
+  provider?: string; // "claude", "openai", "gemini", "grok"
+  model?: string;    // Provider-specific model identifier
   type: AiRequestType;
   prompt: string;
   context?: Record<string, unknown>;
-  parameters?: ClaudeParameters;
-  maxTokens?: number;
-  temperature?: number;
+  parameters?: AIParameters;
 }
 
-interface ClaudeResponse {
+interface AIResponse {
   id: string;
+  provider: string;
+  model: string;
   content: string;
   metadata: {
-    model: string;
-    stopReason: string;
+    stopReason?: string;
     tokenUsage: TokenUsage;
+    providerId?: string;
   };
   performance: {
     responseTimeMs: number;
@@ -158,11 +173,59 @@ interface ClaudeResponse {
   };
 }
 
-class ClaudeApiClient {
-  async analyzeDocument(request: DocumentAnalysisRequest): Promise<ClaudeResponse>
-  async generatePlan(request: PlanGenerationRequest): Promise<ClaudeResponse>
-  async breakdownTasks(request: TaskBreakdownRequest): Promise<ClaudeResponse>
-  async generateContent(request: ContentGenerationRequest): Promise<ClaudeResponse>
+interface AIParameters {
+  maxTokens?: number;
+  temperature?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  stream?: boolean;
+}
+
+abstract class BaseAIProvider implements AIProvider {
+  abstract name: string;
+  abstract models: string[];
+  abstract sendRequest(request: AIRequest): Promise<AIResponse>;
+  abstract calculateCost(usage: TokenUsage): number;
+  abstract validateConfig(): boolean;
+  
+  // Common functionality for all providers
+  protected normalizeRequest(request: AIRequest): any { /* ... */ }
+  protected normalizeResponse(response: any): AIResponse { /* ... */ }
+  protected handleError(error: any): never { /* ... */ }
+}
+
+class ClaudeProvider extends BaseAIProvider {
+  name = "claude";
+  models = ["claude-4-sonnet", "claude-3-5-sonnet", "claude-3-haiku"];
+  
+  async sendRequest(request: AIRequest): Promise<AIResponse> {
+    // Claude-specific implementation
+  }
+  
+  calculateCost(usage: TokenUsage): number {
+    // Claude pricing: $15/1M input, $75/1M output
+  }
+}
+
+class OpenAIProvider extends BaseAIProvider {
+  name = "openai";
+  models = ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"];
+  
+  // OpenAI-specific implementation
+}
+
+class AIProviderManager {
+  private providers = new Map<string, AIProvider>();
+  
+  async sendRequest(request: AIRequest): Promise<AIResponse> {
+    const provider = this.getProvider(request.provider || "claude");
+    return provider.sendRequest(request);
+  }
+  
+  getAvailableModels(): Record<string, string[]> {
+    // Returns all available models by provider
+  }
 }
 ```
 
@@ -178,6 +241,8 @@ class ClaudeApiClient {
 **Processing Pipeline**:
 ```typescript
 class RequestProcessor {
+  constructor(private providerManager: AIProviderManager) {}
+  
   async processRequest(requestId: string): Promise<void> {
     try {
       // 1. Load request from database
@@ -186,18 +251,29 @@ class RequestProcessor {
       // 2. Update status to PROCESSING
       await this.updateRequestStatus(requestId, 'PROCESSING');
       
-      // 3. Send to Claude API
-      const response = await this.claudeClient.sendRequest(request);
+      // 3. Send to appropriate AI provider
+      const response = await this.providerManager.sendRequest(request);
       
       // 4. Store response and update status
       await this.storeResponse(requestId, response);
       await this.updateRequestStatus(requestId, 'COMPLETED');
       
       // 5. Track usage and costs
-      await this.trackUsage(requestId, response.metadata.tokenUsage);
+      await this.trackUsage(requestId, response.metadata.tokenUsage, response.provider);
       
     } catch (error) {
       await this.handleError(requestId, error);
+    }
+  }
+  
+  private async handleError(requestId: string, error: any): Promise<void> {
+    // Provider-agnostic error handling
+    const retryable = this.isRetryableError(error);
+    if (retryable && await this.shouldRetry(requestId)) {
+      // Retry with exponential backoff
+      await this.scheduleRetry(requestId);
+    } else {
+      await this.updateRequestStatus(requestId, 'FAILED', error.message);
     }
   }
 }
@@ -213,11 +289,19 @@ class RequestProcessor {
 - Error rates and types
 - Daily/monthly usage aggregation
 
-**Cost Calculation**:
+**Multi-Provider Cost Calculation**:
 ```typescript
 class UsageTracker {
-  async trackRequest(requestId: string, tokenUsage: TokenUsage, responseTime: number): Promise<void> {
-    const cost = this.calculateCost(tokenUsage);
+  private providerManager: AIProviderManager;
+  
+  async trackRequest(
+    requestId: string, 
+    tokenUsage: TokenUsage, 
+    provider: string,
+    model: string,
+    responseTime: number
+  ): Promise<void> {
+    const cost = await this.calculateCost(tokenUsage, provider, model);
     
     await this.prisma.usageTracking.create({
       data: {
@@ -226,22 +310,118 @@ class UsageTracker {
         output_tokens: tokenUsage.outputTokens,
         total_tokens: tokenUsage.totalTokens,
         cost_usd: cost,
-        model_version: 'claude-4-sonnet',
+        model_version: `${provider}:${model}`,
         response_time_ms: responseTime,
       }
     });
   }
   
-  private calculateCost(tokenUsage: TokenUsage): number {
-    // Claude 4 Sonnet pricing: $15/1M input tokens, $75/1M output tokens
-    const inputCost = (tokenUsage.inputTokens / 1_000_000) * 15;
-    const outputCost = (tokenUsage.outputTokens / 1_000_000) * 75;
-    return inputCost + outputCost;
+  private async calculateCost(tokenUsage: TokenUsage, provider: string, model: string): Promise<number> {
+    const providerInstance = this.providerManager.getProvider(provider);
+    return providerInstance.calculateCost(tokenUsage);
+  }
+  
+  async getUsageByProvider(projectId: string, period: string): Promise<ProviderUsageStats[]> {
+    // Return usage statistics broken down by provider
+    const usage = await this.prisma.usageTracking.groupBy({
+      by: ['model_version'],
+      where: { 
+        request: { project_id: projectId },
+        created_at: { gte: this.getPeriodStart(period) }
+      },
+      _sum: { cost_usd: true, total_tokens: true },
+      _count: { request_id: true }
+    });
+    
+    return usage.map(stat => ({
+      provider: stat.model_version.split(':')[0],
+      model: stat.model_version.split(':')[1],
+      totalCost: stat._sum.cost_usd,
+      totalTokens: stat._sum.total_tokens,
+      requestCount: stat._count.request_id
+    }));
   }
 }
 ```
 
-## 5. Database Integration
+## 5. Provider-Specific Implementations
+
+### 5.1 Claude Provider (MVP Implementation)
+
+```typescript
+class ClaudeProvider extends BaseAIProvider {
+  name = "claude";
+  models = ["claude-4-sonnet", "claude-3-5-sonnet", "claude-3-haiku"];
+  
+  private anthropic: Anthropic;
+  
+  constructor(apiKey: string) {
+    super();
+    this.anthropic = new Anthropic({ apiKey });
+  }
+  
+  async sendRequest(request: AIRequest): Promise<AIResponse> {
+    const claudeRequest = this.normalizeRequest(request);
+    
+    const response = await this.anthropic.messages.create({
+      model: request.model || "claude-4-sonnet",
+      max_tokens: request.parameters?.maxTokens || 4000,
+      temperature: request.parameters?.temperature || 0.1,
+      messages: [{ role: "user", content: request.prompt }]
+    });
+    
+    return this.normalizeResponse(response, request.id);
+  }
+  
+  calculateCost(usage: TokenUsage): number {
+    // Claude 4 Sonnet pricing: $15/1M input, $75/1M output
+    const inputCost = (usage.inputTokens / 1_000_000) * 15;
+    const outputCost = (usage.outputTokens / 1_000_000) * 75;
+    return inputCost + outputCost;
+  }
+  
+  validateConfig(): boolean {
+    return !!process.env.ANTHROPIC_API_KEY;
+  }
+}
+```
+
+### 5.2 Future Provider Implementations
+
+```typescript
+class OpenAIProvider extends BaseAIProvider {
+  name = "openai";
+  models = ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"];
+  
+  calculateCost(usage: TokenUsage): number {
+    // OpenAI pricing varies by model
+    const model = this.getCurrentModel();
+    return this.getModelPricing(model, usage);
+  }
+}
+
+class GeminiProvider extends BaseAIProvider {
+  name = "gemini";
+  models = ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"];
+  
+  calculateCost(usage: TokenUsage): number {
+    // Google Gemini pricing
+    return (usage.totalTokens / 1_000_000) * 1.25;
+  }
+}
+
+class GrokProvider extends BaseAIProvider {
+  name = "grok";
+  models = ["grok-beta", "grok-2"];
+  
+  calculateCost(usage: TokenUsage): number {
+    // xAI Grok pricing
+    return (usage.totalTokens / 1_000_000) * 5.0;
+  }
+}
+```
+
+## 6. Database Integration
 
 ### 5.1 Existing Schema Usage
 
@@ -312,6 +492,8 @@ const usageTracking = await prisma.usageTracking.create({
 POST /api/v1/ai/requests
 {
   "type": "PRD_ANALYSIS",
+  "provider": "claude",        // Optional: "claude", "openai", "gemini", "grok"
+  "model": "claude-4-sonnet",  // Optional: provider-specific model
   "prompt": "Analyze this PRD for technical requirements...",
   "context": {
     "projectId": "proj_123",
@@ -319,7 +501,8 @@ POST /api/v1/ai/requests
   },
   "parameters": {
     "maxTokens": 4000,
-    "temperature": 0.1
+    "temperature": 0.1,
+    "topP": 0.9              // Provider-agnostic parameters
   }
 }
 
@@ -337,14 +520,45 @@ GET /api/v1/ai/requests/:id
 GET /api/v1/ai/requests/:id/response
 {
   "id": "resp_101",
+  "provider": "claude",
+  "model": "claude-4-sonnet",
   "content": "Based on the PRD analysis...",
   "metadata": {
-    "model": "claude-4-sonnet",
+    "stopReason": "end_turn",
     "tokenUsage": {
       "inputTokens": 2500,
       "outputTokens": 1200,
       "totalTokens": 3700
+    },
+    "providerId": "msg_01ABC123"
+  },
+  "performance": {
+    "responseTimeMs": 3200,
+    "retryCount": 0
+  }
+}
+
+// Get Available Models
+GET /api/v1/ai/models
+{
+  "providers": {
+    "claude": {
+      "name": "Anthropic Claude",
+      "models": [
+        { "id": "claude-4-sonnet", "name": "Claude 4 Sonnet", "inputCost": 15, "outputCost": 75 },
+        { "id": "claude-3-5-sonnet", "name": "Claude 3.5 Sonnet", "inputCost": 3, "outputCost": 15 }
+      ]
+    },
+    "openai": {
+      "name": "OpenAI",
+      "models": [
+        { "id": "gpt-4o", "name": "GPT-4o", "inputCost": 5, "outputCost": 15 }
+      ]
     }
+  },
+  "default": {
+    "provider": "claude",
+    "model": "claude-4-sonnet"
   }
 }
 ```
@@ -360,10 +574,19 @@ GET /api/v1/ai/usage?project=proj_123&period=month
   "totalCost": 95.75,
   "averageResponseTime": 3200,
   "errorRate": 0.02,
-  "breakdown": {
+  "byProvider": {
+    "claude": { "requests": 180, "cost": 72.50, "tokens": 950_000 },
+    "openai": { "requests": 65, "cost": 23.25, "tokens": 300_000 }
+  },
+  "byType": {
     "PRD_ANALYSIS": { "requests": 45, "cost": 35.20 },
     "TASK_BREAKDOWN": { "requests": 120, "cost": 28.50 },
     "DOCUMENT_GENERATION": { "requests": 80, "cost": 32.05 }
+  },
+  "byModel": {
+    "claude:claude-4-sonnet": { "requests": 150, "cost": 68.20 },
+    "claude:claude-3-5-sonnet": { "requests": 30, "cost": 4.30 },
+    "openai:gpt-4o": { "requests": 65, "cost": 23.25 }
   }
 }
 ```
@@ -655,9 +878,16 @@ async function healthCheck(): Promise<HealthStatus> {
 ### 12.1 Environment Variables
 
 ```bash
-# Anthropic API Configuration
+# AI Provider Configuration
 ANTHROPIC_API_KEY=sk-ant-api03-...
-ANTHROPIC_API_VERSION=2023-06-01
+OPENAI_API_KEY=sk-proj-...
+GOOGLE_AI_API_KEY=AIza...
+XAI_API_KEY=xai-...
+
+# Provider Settings
+DEFAULT_AI_PROVIDER=claude
+DEFAULT_AI_MODEL=claude-4-sonnet
+ENABLED_PROVIDERS=claude,openai  # Comma-separated list
 
 # Service Configuration
 NODE_ENV=production
@@ -670,13 +900,19 @@ DATABASE_URL=postgresql://...
 # Redis
 REDIS_URL=redis://...
 
-# Rate Limiting
-MAX_REQUESTS_PER_HOUR=1000
-MAX_CONCURRENT_REQUESTS=10
+# Rate Limiting (per provider)
+CLAUDE_MAX_REQUESTS_PER_HOUR=1000
+OPENAI_MAX_REQUESTS_PER_HOUR=500
+GEMINI_MAX_REQUESTS_PER_HOUR=300
+GROK_MAX_REQUESTS_PER_HOUR=100
 
 # Circuit Breaker
 CIRCUIT_BREAKER_THRESHOLD=5
 CIRCUIT_BREAKER_TIMEOUT=30000
+
+# Cost Management
+MONTHLY_BUDGET_USD=1000
+COST_ALERT_THRESHOLD=0.8  # Alert at 80% of budget
 ```
 
 ### 12.2 Docker Configuration
@@ -704,38 +940,51 @@ CMD ["node", "dist/server.js"]
 
 ## 13. Implementation Plan
 
-### 13.1 Phase 1: Core Infrastructure
+### 13.1 Phase 1: Provider Abstraction & Core Infrastructure
 - Set up package structure and dependencies
-- Implement Anthropic API client wrapper
-- Create basic request/response models
+- Implement provider abstraction layer with generic interfaces
+- Create Claude provider as MVP implementation
 - Set up database integration with Prisma
+- Implement provider manager and routing
 
-### 13.2 Phase 2: Request Processing
-- Implement asynchronous request processing
+### 13.2 Phase 2: Request Processing & MVP
+- Implement asynchronous request processing with Claude provider
 - Add status tracking and lifecycle management
 - Create API endpoints for request management
-- Implement basic error handling
+- Implement basic error handling and retry logic
+- Deploy MVP with Claude-only functionality
 
-### 13.3 Phase 3: Advanced Features
-- Add retry logic and circuit breaker
-- Implement rate limiting and caching
-- Create usage tracking and cost calculation
-- Add comprehensive monitoring and metrics
+### 13.3 Phase 3: Multi-Provider Support
+- Implement OpenAI provider for comparison and testing
+- Add provider selection and routing logic
+- Implement provider-specific cost calculation
+- Add model discovery and availability endpoints
+- Test with multiple providers
 
-### 13.4 Phase 4: Testing & Optimization
-- Write comprehensive test suite
-- Performance testing and optimization
-- Security review and hardening
-- Documentation and deployment guides
+### 13.4 Phase 4: Advanced Features & Optimization
+- Add Gemini and Grok providers for full multi-provider support
+- Implement intelligent provider selection based on task type
+- Add comprehensive monitoring and metrics per provider
+- Performance testing and optimization across providers
+- Security review and provider-specific hardening
+
+### 13.5 Phase 5: Future Enhancements
+- Implement cost optimization algorithms (automatic provider selection)
+- Add streaming support across all providers
+- Implement provider failover and fallback mechanisms
+- Add custom model integration support
+- Advanced analytics and provider performance comparison
 
 ## 14. Success Criteria
 
 ### 14.1 Functional Success
-- [ ] Successfully integrates with Anthropic Claude 4 Sonnet API
+- [ ] Provider abstraction layer supports multiple AI providers seamlessly
+- [ ] Successfully integrates with Anthropic Claude 4 Sonnet API as MVP
+- [ ] Generic interfaces allow easy addition of new providers (OpenAI, Gemini, Grok)
 - [ ] Processes all AI request types (PRD analysis, document generation, etc.)
-- [ ] Stores requests and responses in database correctly
-- [ ] Tracks usage and calculates costs accurately
-- [ ] Handles errors gracefully with appropriate retry logic
+- [ ] Stores requests and responses in database correctly with provider metadata
+- [ ] Tracks usage and calculates costs accurately per provider
+- [ ] Handles errors gracefully with provider-specific retry logic
 
 ### 14.2 Performance Success
 - [ ] Responds to 95% of requests within 5 seconds
@@ -751,4 +1000,4 @@ CMD ["node", "dist/server.js"]
 
 ---
 
-This technical design provides a comprehensive foundation for implementing CycleTime's Claude AI Service with direct Anthropic integration, robust error handling, and comprehensive monitoring capabilities.
+This technical design provides a comprehensive foundation for implementing CycleTime's AI Service with a provider-agnostic architecture. While focusing on Anthropic Claude 4 Sonnet for MVP delivery, the design ensures seamless extensibility to OpenAI GPT, Google Gemini, xAI Grok, and future providers through generic interfaces and robust abstraction layers. The architecture supports intelligent provider routing, comprehensive monitoring, and cost optimization across multiple AI providers while maintaining consistent quality and performance standards.
