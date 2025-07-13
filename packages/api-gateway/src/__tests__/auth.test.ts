@@ -5,7 +5,20 @@ import { authRoutes } from '../routes/auth';
 import { githubAuthService } from '../services/github-auth';
 
 // Mock external dependencies
-jest.mock('../services/github-auth');
+jest.mock('../services/github-auth', () => ({
+  githubAuthService: {
+    generateOAuthUrl: jest.fn((state) => `https://github.com/login/oauth/authorize?client_id=test&state=${state}`),
+    exchangeCodeForToken: jest.fn().mockResolvedValue('mock_github_token'),
+    fetchUserProfile: jest.fn().mockResolvedValue({
+      id: 12345,
+      login: 'testuser',
+      email: 'test@example.com',
+      name: 'Test User',
+      avatar_url: 'https://github.com/avatar.jpg',
+      html_url: 'https://github.com/testuser',
+    }),
+  },
+}));
 jest.mock('node-fetch');
 
 describe('Authentication Routes', () => {
@@ -102,6 +115,7 @@ describe('Authentication Routes', () => {
         updatedAt: new Date(),
       };
 
+      const { githubAuthService } = require('../services/github-auth');
       (githubAuthService.exchangeCodeForToken as jest.Mock).mockResolvedValue('github_token');
       (githubAuthService.fetchUserProfile as jest.Mock).mockResolvedValue(mockUser);
       (prisma.user.upsert as jest.Mock).mockResolvedValue(mockDbUser);
@@ -141,6 +155,7 @@ describe('Authentication Routes', () => {
     });
 
     it('should handle GitHub API errors', async () => {
+      const { githubAuthService } = require('../services/github-auth');
       (githubAuthService.exchangeCodeForToken as jest.Mock).mockRejectedValue(new Error('GitHub API error'));
 
       // First initiate OAuth to get a valid state

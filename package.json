@@ -91,7 +91,7 @@
   "author": "Spiral House",
   "license": "AGPL-3.0-or-later",
   "engines": {
-    "node": ">=22.0.0",
+    "node": ">=20.0.0",
     "npm": ">=10.0.0"
   },
   "dependencies": {

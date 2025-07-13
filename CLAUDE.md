@@ -94,11 +94,13 @@
   - Keep main branch always in a releasable state
 
 ### Quality Assurance
-- **Run comprehensive tests before pushing to origin**
-  - Unit tests
-  - Integration tests
-  - Linting
-  - Type checking
+- **ALWAYS run comprehensive quality checks before pushing to origin**
+  - `npm run lint` - ESLint validation
+  - `npm run typecheck` - TypeScript type checking
+  - `npm test` - Unit and integration tests
+  - `npm run test:coverage` - Test coverage validation
+  - Fix all issues before pushing to prevent CI failures
+  - Use `git status` and `git diff` to review changes before commit
 
 ## Commands
 

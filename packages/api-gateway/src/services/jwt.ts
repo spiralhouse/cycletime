@@ -89,15 +89,21 @@ export class JWTService {
     if (!authorization) return null;
     
     const parts = authorization.split(' ');
-    if (parts.length !== 2 || parts[0] !== 'Bearer') return null;
+    if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') return null;
     
-    return parts[1];
+    const token = parts[1].trim();
+    return token || null;
   }
 
   /**
    * Parse expiry string to seconds
    */
-  private parseExpiryToSeconds(expiry: string): number {
+  parseExpiryToSeconds(expiry: string): number {
+    // Check if it's just a number (treated as seconds)
+    if (/^\d+$/.test(expiry)) {
+      return parseInt(expiry, 10);
+    }
+    
     const match = expiry.match(/^(\d+)([smhd])$/);
     if (!match) return 3600; // default 1 hour
     
