@@ -28,7 +28,20 @@ export async function userRoutes(fastify: FastifyInstance) {
   fastify.get('/api/v1/user/profile', {
     schema: {
       response: {
-        200: userProfileResponseSchema,
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            email: { type: 'string' },
+            name: { type: 'string' },
+            github_username: { type: 'string' },
+            avatar_url: { type: 'string' },
+            github_id: { type: 'number' },
+            created_at: { type: 'string' },
+            updated_at: { type: 'string' }
+          },
+          required: ['id', 'email', 'name', 'github_username', 'avatar_url', 'github_id', 'created_at', 'updated_at']
+        }
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
@@ -78,9 +91,29 @@ export async function userRoutes(fastify: FastifyInstance) {
   // PUT /api/v1/user/profile - Update user profile
   fastify.put('/api/v1/user/profile', {
     schema: {
-      body: updateProfileSchema,
+      body: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          email: { type: 'string', format: 'email' }
+        },
+        additionalProperties: false
+      },
       response: {
-        200: userProfileResponseSchema,
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            email: { type: 'string' },
+            name: { type: 'string' },
+            github_username: { type: 'string' },
+            avatar_url: { type: 'string' },
+            github_id: { type: 'number' },
+            created_at: { type: 'string' },
+            updated_at: { type: 'string' }
+          },
+          required: ['id', 'email', 'name', 'github_username', 'avatar_url', 'github_id', 'created_at', 'updated_at']
+        }
       },
     },
   }, async (request: FastifyRequest<{ Body: z.infer<typeof updateProfileSchema> }>, reply: FastifyReply) => {
@@ -129,7 +162,13 @@ export async function userRoutes(fastify: FastifyInstance) {
   fastify.delete('/api/v1/user/profile', {
     schema: {
       response: {
-        200: z.object({ message: z.string() }),
+        200: {
+          type: 'object',
+          properties: {
+            message: { type: 'string' }
+          },
+          required: ['message']
+        }
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
