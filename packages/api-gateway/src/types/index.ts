@@ -4,9 +4,9 @@ import { FastifyRequest } from 'fastify';
 export interface UserContext {
   id: string;
   email: string;
-  github_id: number;
-  github_username: string;
+  githubUsername: string;
   name: string;
+  avatarUrl: string;
 }
 
 // API Key context for machine-to-machine requests
@@ -16,12 +16,6 @@ export interface APIKeyContext {
   name: string;
   permissions: string[];
   last_used_at: Date;
-}
-
-// Extended Fastify request with authentication context
-export interface AuthenticatedRequest extends FastifyRequest {
-  user?: UserContext;
-  apiKey?: APIKeyContext;
 }
 
 // JWT payload structure
