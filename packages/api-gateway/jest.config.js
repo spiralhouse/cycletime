@@ -4,6 +4,7 @@ export default {
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^node-fetch$': '<rootDir>/src/__tests__/__mocks__/node-fetch.js',
   },
   transform: {
     '^.+\\.ts$': ['ts-jest', {
@@ -11,10 +12,10 @@ export default {
     }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(node-fetch)/)',
+    'node_modules/(?!(node-fetch|fetch-blob|formdata-polyfill|data-uri-to-buffer)/)',
   ],
   roots: ['<rootDir>/src'],
-  testMatch: ['**/__tests__/**/simple.test.ts', '**/__tests__/**/health.test.ts'],
+  testMatch: ['**/__tests__/**/*.test.ts'],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
@@ -31,4 +32,5 @@ export default {
     },
   },
   setupFiles: ['<rootDir>/src/__tests__/setup.ts'],
+  setupFilesAfterEnv: [],
 };

@@ -5,7 +5,7 @@ const configSchema = z.object({
   // Server Configuration
   port: z.number().int().min(1).max(65535).default(3000),
   host: z.string().default('0.0.0.0'),
-  nodeEnv: z.enum(['development', 'staging', 'production']).default('development'),
+  nodeEnv: z.enum(['development', 'staging', 'production', 'test']).default('development'),
   logLevel: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 
   // Database
