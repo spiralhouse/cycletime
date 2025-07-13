@@ -349,11 +349,62 @@ class UsageTracker {
 ### 5.1 Claude Provider (MVP Implementation)
 
 ```typescript
+interface ClaudeModelSpec {
+  apiId: string;
+  name: string;
+  contextWindow: number;
+  maxOutputTokens: number;
+  inputCostPer1M: number;
+  outputCostPer1M: number;
+  useCase: string;
+  supportsExtendedThinking?: boolean;
+}
+
 class ClaudeProvider extends BaseAIProvider {
   name = "claude";
-  models = ["claude-4-sonnet", "claude-3-5-sonnet", "claude-3-haiku"];
+  models = ["claude-4-opus", "claude-4-sonnet", "claude-3-7-sonnet", "claude-3-haiku"];
   
   private anthropic: Anthropic;
+  private modelSpecs: Record<string, ClaudeModelSpec> = {
+    "claude-4-opus": {
+      apiId: "claude-opus-4-20250514",
+      name: "Claude 4 Opus",
+      contextWindow: 200_000,
+      maxOutputTokens: 32_000,
+      inputCostPer1M: 15.00,
+      outputCostPer1M: 75.00,
+      useCase: "Most complex reasoning tasks",
+      supportsExtendedThinking: true
+    },
+    "claude-4-sonnet": {
+      apiId: "claude-sonnet-4-20250514", 
+      name: "Claude 4 Sonnet",
+      contextWindow: 200_000,
+      maxOutputTokens: 64_000,
+      inputCostPer1M: 3.00,
+      outputCostPer1M: 15.00,
+      useCase: "Balanced performance & cost",
+      supportsExtendedThinking: true
+    },
+    "claude-3-7-sonnet": {
+      apiId: "claude-3-7-sonnet-20250219",
+      name: "Claude 3.7 Sonnet", 
+      contextWindow: 200_000,
+      maxOutputTokens: 64_000,
+      inputCostPer1M: 3.00,
+      outputCostPer1M: 15.00,
+      useCase: "General purpose tasks"
+    },
+    "claude-3-haiku": {
+      apiId: "claude-3-5-haiku-20241022",
+      name: "Claude 3.5 Haiku",
+      contextWindow: 200_000,
+      maxOutputTokens: 8_192,
+      inputCostPer1M: 0.80,
+      outputCostPer1M: 4.00,
+      useCase: "Fast, lightweight tasks"
+    }
+  };
   
   constructor(apiKey: string) {
     super();
@@ -361,23 +412,98 @@ class ClaudeProvider extends BaseAIProvider {
   }
   
   async sendRequest(request: AIRequest): Promise<AIResponse> {
+    const model = request.model || "claude-4-sonnet";
+    const modelSpec = this.getModelSpec(model);
+    
+    // Validate request against model constraints
+    this.validateRequest(request, modelSpec);
+    
     const claudeRequest = this.normalizeRequest(request);
     
     const response = await this.anthropic.messages.create({
-      model: request.model || "claude-4-sonnet",
-      max_tokens: request.parameters?.maxTokens || 4000,
+      model: modelSpec.apiId,
+      max_tokens: this.getMaxTokens(request, modelSpec),
       temperature: request.parameters?.temperature || 0.1,
+      top_p: request.parameters?.topP || 0.99,
       messages: [{ role: "user", content: request.prompt }]
     });
     
-    return this.normalizeResponse(response, request.id);
+    return this.normalizeResponse(response, request.id, model);
   }
   
-  calculateCost(usage: TokenUsage): number {
-    // Claude 4 Sonnet pricing: $15/1M input, $75/1M output
-    const inputCost = (usage.inputTokens / 1_000_000) * 15;
-    const outputCost = (usage.outputTokens / 1_000_000) * 75;
+  private getModelSpec(model: string): ClaudeModelSpec {
+    const spec = this.modelSpecs[model];
+    if (!spec) {
+      throw new Error(`Unsupported Claude model: ${model}`);
+    }
+    return spec;
+  }
+  
+  private validateRequest(request: AIRequest, modelSpec: ClaudeModelSpec): void {
+    const maxTokens = request.parameters?.maxTokens;
+    
+    if (maxTokens && maxTokens > modelSpec.maxOutputTokens) {
+      throw new Error(
+        `Requested maxTokens (${maxTokens}) exceeds ${modelSpec.name} limit (${modelSpec.maxOutputTokens})`
+      );
+    }
+    
+    // Estimate input tokens (rough approximation: 1 token ≈ 4 characters)
+    const estimatedInputTokens = Math.ceil(request.prompt.length / 4);
+    const requestedOutputTokens = maxTokens || 4000;
+    
+    if (estimatedInputTokens + requestedOutputTokens > modelSpec.contextWindow) {
+      throw new Error(
+        `Request would exceed ${modelSpec.name} context window (${modelSpec.contextWindow} tokens)`
+      );
+    }
+  }
+  
+  private getMaxTokens(request: AIRequest, modelSpec: ClaudeModelSpec): number {
+    const requested = request.parameters?.maxTokens;
+    
+    if (!requested) {
+      // Default based on model type and use case
+      if (modelSpec.apiId.includes("haiku")) return 2000;
+      if (modelSpec.apiId.includes("opus")) return 8000;
+      return 4000; // Sonnet models
+    }
+    
+    // Ensure we don't exceed model limits
+    return Math.min(requested, modelSpec.maxOutputTokens);
+  }
+  
+  calculateCost(usage: TokenUsage, model?: string): number {
+    const modelKey = model || "claude-4-sonnet";
+    const spec = this.getModelSpec(modelKey);
+    
+    const inputCost = (usage.inputTokens / 1_000_000) * spec.inputCostPer1M;
+    const outputCost = (usage.outputTokens / 1_000_000) * spec.outputCostPer1M;
+    
     return inputCost + outputCost;
+  }
+  
+  getModelInfo(model: string): ClaudeModelSpec {
+    return this.getModelSpec(model);
+  }
+  
+  getRecommendedModel(taskType: string, complexity: "low" | "medium" | "high"): string {
+    switch (taskType) {
+      case "PRD_ANALYSIS":
+      case "ARCHITECTURE_DESIGN":
+        return complexity === "high" ? "claude-4-opus" : "claude-4-sonnet";
+      
+      case "TASK_BREAKDOWN":
+      case "DOCUMENT_GENERATION":
+        return complexity === "low" ? "claude-3-7-sonnet" : "claude-4-sonnet";
+      
+      case "CODE_REVIEW":
+      case "GENERAL_QUERY":
+        return complexity === "low" ? "claude-3-haiku" : "claude-3-7-sonnet";
+      
+      default:
+        return "claude-4-sonnet"; // Safe default
+    }
   }
   
   validateConfig(): boolean {
@@ -389,34 +515,249 @@ class ClaudeProvider extends BaseAIProvider {
 ### 5.2 Future Provider Implementations
 
 ```typescript
+interface OpenAIModelSpec {
+  apiId: string;
+  name: string;
+  contextWindow: number;
+  maxOutputTokens: number;
+  inputCostPer1M: number;
+  outputCostPer1M: number;
+  useCase: string;
+  supportsVision?: boolean;
+}
+
 class OpenAIProvider extends BaseAIProvider {
   name = "openai";
   models = ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"];
   
-  calculateCost(usage: TokenUsage): number {
-    // OpenAI pricing varies by model
-    const model = this.getCurrentModel();
-    return this.getModelPricing(model, usage);
+  private openai: OpenAI;
+  private modelSpecs: Record<string, OpenAIModelSpec> = {
+    "gpt-4o": {
+      apiId: "gpt-4o",
+      name: "GPT-4o",
+      contextWindow: 128_000,
+      maxOutputTokens: 16_384,
+      inputCostPer1M: 5.0,
+      outputCostPer1M: 15.0,
+      useCase: "Complex reasoning and analysis",
+      supportsVision: true
+    },
+    "gpt-4o-mini": {
+      apiId: "gpt-4o-mini",
+      name: "GPT-4o Mini",
+      contextWindow: 128_000,
+      maxOutputTokens: 16_384,
+      inputCostPer1M: 0.15,
+      outputCostPer1M: 0.6,
+      useCase: "Fast, cost-effective tasks"
+    },
+    "gpt-3.5-turbo": {
+      apiId: "gpt-3.5-turbo",
+      name: "GPT-3.5 Turbo",
+      contextWindow: 16_385,
+      maxOutputTokens: 4_096,
+      inputCostPer1M: 0.5,
+      outputCostPer1M: 1.5,
+      useCase: "General purpose, legacy support"
+    }
+  };
+  
+  constructor(apiKey: string) {
+    super();
+    this.openai = new OpenAI({ apiKey });
   }
+  
+  async sendRequest(request: AIRequest): Promise<AIResponse> {
+    const model = request.model || "gpt-4o";
+    const modelSpec = this.getModelSpec(model);
+    
+    this.validateRequest(request, modelSpec);
+    
+    const response = await this.openai.chat.completions.create({
+      model: modelSpec.apiId,
+      messages: [{ role: "user", content: request.prompt }],
+      max_tokens: this.getMaxTokens(request, modelSpec),
+      temperature: request.parameters?.temperature || 0.1,
+      top_p: request.parameters?.topP || 1.0
+    });
+    
+    return this.normalizeResponse(response, request.id, model);
+  }
+  
+  calculateCost(usage: TokenUsage, model?: string): number {
+    const modelKey = model || "gpt-4o";
+    const spec = this.getModelSpec(modelKey);
+    
+    const inputCost = (usage.inputTokens / 1_000_000) * spec.inputCostPer1M;
+    const outputCost = (usage.outputTokens / 1_000_000) * spec.outputCostPer1M;
+    
+    return inputCost + outputCost;
+  }
+}
+
+interface GeminiModelSpec {
+  apiId: string;
+  name: string;
+  contextWindow: number;
+  maxOutputTokens: number;
+  inputCostPer1M: number;
+  outputCostPer1M: number;
+  useCase: string;
+  supportsMultimodal?: boolean;
 }
 
 class GeminiProvider extends BaseAIProvider {
   name = "gemini";
-  models = ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"];
+  models = ["gemini-2.5-flash", "gemini-2.0-pro", "gemini-2.0-flash"];
   
-  calculateCost(usage: TokenUsage): number {
-    // Google Gemini pricing
-    return (usage.totalTokens / 1_000_000) * 1.25;
+  private client: GoogleGenerativeAI;
+  private modelSpecs: Record<string, GeminiModelSpec> = {
+    "gemini-2.5-flash": {
+      apiId: "gemini-2.5-flash",
+      name: "Gemini 2.5 Flash",
+      contextWindow: 1_000_000,
+      maxOutputTokens: 8_192,
+      inputCostPer1M: 0.075,
+      outputCostPer1M: 0.3,
+      useCase: "Latest fastest multimodal model",
+      supportsMultimodal: true
+    },
+    "gemini-2.0-pro": {
+      apiId: "gemini-2.0-pro",
+      name: "Gemini 2.0 Pro",
+      contextWindow: 2_000_000,
+      maxOutputTokens: 8_192,
+      inputCostPer1M: 1.25,
+      outputCostPer1M: 5.0,
+      useCase: "Complex reasoning with large context",
+      supportsMultimodal: true
+    },
+    "gemini-2.0-flash": {
+      apiId: "gemini-2.0-flash",
+      name: "Gemini 2.0 Flash",
+      contextWindow: 1_000_000,
+      maxOutputTokens: 8_192,
+      inputCostPer1M: 0.075,
+      outputCostPer1M: 0.3,
+      useCase: "Fast, cost-effective multimodal",
+      supportsMultimodal: true
+    }
+  };
+  
+  constructor(apiKey: string) {
+    super();
+    this.client = new GoogleGenerativeAI(apiKey);
   }
+  
+  async sendRequest(request: AIRequest): Promise<AIResponse> {
+    const model = request.model || "gemini-2.5-flash";
+    const modelSpec = this.getModelSpec(model);
+    
+    this.validateRequest(request, modelSpec);
+    
+    const genModel = this.client.getGenerativeModel({ model: modelSpec.apiId });
+    const response = await genModel.generateContent({
+      contents: [{ parts: [{ text: request.prompt }] }],
+      generationConfig: {
+        maxOutputTokens: this.getMaxTokens(request, modelSpec),
+        temperature: request.parameters?.temperature || 0.1,
+        topP: request.parameters?.topP || 0.95
+      }
+    });
+    
+    return this.normalizeResponse(response, request.id, model);
+  }
+  
+  calculateCost(usage: TokenUsage, model?: string): number {
+    const modelKey = model || "gemini-2.5-flash";
+    const spec = this.getModelSpec(modelKey);
+    
+    const inputCost = (usage.inputTokens / 1_000_000) * spec.inputCostPer1M;
+    const outputCost = (usage.outputTokens / 1_000_000) * spec.outputCostPer1M;
+    
+    return inputCost + outputCost;
+  }
+}
+
+interface GrokModelSpec {
+  apiId: string;
+  name: string;
+  contextWindow: number;
+  maxOutputTokens: number;
+  inputCostPer1M: number;
+  outputCostPer1M: number;
+  useCase: string;
+  features?: string[];
 }
 
 class GrokProvider extends BaseAIProvider {
   name = "grok";
   models = ["grok-beta", "grok-2"];
   
-  calculateCost(usage: TokenUsage): number {
-    // xAI Grok pricing
-    return (usage.totalTokens / 1_000_000) * 5.0;
+  private client: any; // xAI SDK when available
+  private modelSpecs: Record<string, GrokModelSpec> = {
+    "grok-beta": {
+      apiId: "grok-beta",
+      name: "Grok Beta",
+      contextWindow: 131_072,
+      maxOutputTokens: 4_096,
+      inputCostPer1M: 5.0,
+      outputCostPer1M: 15.0,
+      useCase: "Experimental reasoning with real-time data",
+      features: ["real-time-web", "reasoning"]
+    },
+    "grok-2": {
+      apiId: "grok-2",
+      name: "Grok 2",
+      contextWindow: 131_072,
+      maxOutputTokens: 4_096,
+      inputCostPer1M: 2.0,
+      outputCostPer1M: 10.0,
+      useCase: "General purpose with web access",
+      features: ["web-search", "multimodal"]
+    }
+  };
+  
+  constructor(apiKey: string) {
+    super();
+    // Initialize xAI client when SDK becomes available
+    this.client = { apiKey }; // Placeholder
+  }
+  
+  async sendRequest(request: AIRequest): Promise<AIResponse> {
+    const model = request.model || "grok-2";
+    const modelSpec = this.getModelSpec(model);
+    
+    this.validateRequest(request, modelSpec);
+    
+    // Placeholder for xAI API call structure (OpenAI-compatible)
+    const response = await fetch('https://api.x.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.client.apiKey}`
+      },
+      body: JSON.stringify({
+        model: modelSpec.apiId,
+        messages: [{ role: "user", content: request.prompt }],
+        max_tokens: this.getMaxTokens(request, modelSpec),
+        temperature: request.parameters?.temperature || 0.1,
+        top_p: request.parameters?.topP || 1.0
+      })
+    });
+    
+    const data = await response.json();
+    return this.normalizeResponse(data, request.id, model);
+  }
+  
+  calculateCost(usage: TokenUsage, model?: string): number {
+    const modelKey = model || "grok-2";
+    const spec = this.getModelSpec(modelKey);
+    
+    const inputCost = (usage.inputTokens / 1_000_000) * spec.inputCostPer1M;
+    const outputCost = (usage.outputTokens / 1_000_000) * spec.outputCostPer1M;
+    
+    return inputCost + outputCost;
   }
 }
 ```
@@ -545,8 +886,42 @@ GET /api/v1/ai/models
     "claude": {
       "name": "Anthropic Claude",
       "models": [
-        { "id": "claude-4-sonnet", "name": "Claude 4 Sonnet", "inputCost": 15, "outputCost": 75 },
-        { "id": "claude-3-5-sonnet", "name": "Claude 3.5 Sonnet", "inputCost": 3, "outputCost": 15 }
+        { 
+          "id": "claude-4-opus", 
+          "name": "Claude 4 Opus", 
+          "inputCost": 15.0, 
+          "outputCost": 75.0,
+          "maxOutputTokens": 32000,
+          "contextWindow": 200000,
+          "useCase": "Most complex reasoning tasks"
+        },
+        { 
+          "id": "claude-4-sonnet", 
+          "name": "Claude 4 Sonnet", 
+          "inputCost": 3.0, 
+          "outputCost": 15.0,
+          "maxOutputTokens": 64000,
+          "contextWindow": 200000,
+          "useCase": "Balanced performance & cost"
+        },
+        { 
+          "id": "claude-3-7-sonnet", 
+          "name": "Claude 3.7 Sonnet", 
+          "inputCost": 3.0, 
+          "outputCost": 15.0,
+          "maxOutputTokens": 64000,
+          "contextWindow": 200000,
+          "useCase": "General purpose tasks"
+        },
+        { 
+          "id": "claude-3-haiku", 
+          "name": "Claude 3.5 Haiku", 
+          "inputCost": 0.8, 
+          "outputCost": 4.0,
+          "maxOutputTokens": 8192,
+          "contextWindow": 200000,
+          "useCase": "Fast, lightweight tasks"
+        }
       ]
     },
     "openai": {
