@@ -4,7 +4,7 @@ import jwt from '@fastify/jwt';
 import { PrismaClient } from '@prisma/client';
 import { JWTService } from '../../services/jwt';
 import { UserService } from '../../services/user';
-import { registerAuthMiddleware } from '../../middleware/auth';
+import { authMiddleware } from '../../middleware/auth';
 
 // Mock services
 const mockPrisma = {
@@ -30,7 +30,7 @@ describe('Authentication Middleware', () => {
     jwtService = new JWTService(fastify);
     
     // Register auth middleware
-    await registerAuthMiddleware(fastify, jwtService, mockUserService);
+    await fastify.register(authMiddleware);
     
     // Add a protected test route
     fastify.get('/protected', async (request: FastifyRequest, reply: FastifyReply) => {
