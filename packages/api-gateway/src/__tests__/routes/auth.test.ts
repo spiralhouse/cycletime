@@ -17,21 +17,19 @@ jest.mock('crypto', () => ({
 }));
 
 // Mock GitHub auth service
-const mockGithubAuthService = {
-  generateOAuthUrl: jest.fn((state) => `https://github.com/login/oauth/authorize?client_id=test&state=${state}`),
-  exchangeCodeForToken: jest.fn(() => Promise.resolve('mock_github_token')),
-  fetchUserProfile: jest.fn(() => Promise.resolve({
-    id: 12345,
-    login: 'testuser',
-    email: 'test@example.com',
-    name: 'Test User',
-    avatar_url: 'https://github.com/testuser.avatar',
-    html_url: 'https://github.com/testuser'
-  })),
-};
-
 jest.mock('../../services/github-auth.js', () => ({
-  githubAuthService: mockGithubAuthService,
+  githubAuthService: {
+    generateOAuthUrl: jest.fn((state) => `https://github.com/login/oauth/authorize?client_id=test&state=${state}`),
+    exchangeCodeForToken: jest.fn(() => Promise.resolve('mock_github_token')),
+    fetchUserProfile: jest.fn(() => Promise.resolve({
+      id: 12345,
+      login: 'testuser',
+      email: 'test@example.com',
+      name: 'Test User',
+      avatar_url: 'https://github.com/testuser.avatar',
+      html_url: 'https://github.com/testuser'
+    })),
+  },
 }));
 
 // Mock JWT service creation
