@@ -13,23 +13,44 @@ This design implements an asynchronous request processing engine that handles AI
 
 ### Core Components
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   API Gateway   │───▶│ RequestProcessor │───▶│   Redis Queue   │
-│                 │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │                       │
-                                ▼                       ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │    Database     │    │  Worker Pool    │
-                       │  (Status/Meta)  │    │                 │
-                       └─────────────────┘    └─────────────────┘
-                                │                       │
-                                ▼                       ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │   AI Provider   │    │  Response Store │
-                       │   (Claude)      │    │                 │
-                       └─────────────────┘    └─────────────────┘
+```mermaid
+graph TD
+    A[API Gateway] --> B[RequestProcessor]
+    B --> C[Redis Queue]
+    B --> D[Database<br/>Status/Metadata]
+    C --> E[Worker Pool]
+    E --> F[AI Provider<br/>Claude]
+    E --> D
+    F --> G[Response Store]
+    G --> D
+    
+    subgraph "Queue System"
+        C
+        H[High Priority Queue]
+        I[Normal Priority Queue]
+        J[Low Priority Queue]
+        K[Processing Queue]
+        L[Dead Letter Queue]
+        
+        C --> H
+        C --> I
+        C --> J
+        H --> K
+        I --> K
+        J --> K
+        K --> L
+    end
+    
+    subgraph "Worker Management"
+        E
+        M[Worker 1]
+        N[Worker 2]
+        O[Worker N]
+        
+        E --> M
+        E --> N
+        E --> O
+    end
 ```
 
 ### Request Lifecycle States
@@ -39,6 +60,89 @@ This design implements an asynchronous request processing engine that handles AI
 3. **COMPLETED** - Successfully processed with results
 4. **FAILED** - Processing failed, may be retryable
 5. **CANCELLED** - Request cancelled by user
+
+### Request Processing Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API as API Gateway
+    participant RP as RequestProcessor
+    participant RQ as Redis Queue
+    participant DB as Database
+    participant WP as Worker Pool
+    participant W as Worker
+    participant AI as AI Provider
+    participant RS as Response Store
+
+    Note over Client,RS: Happy Path - Successful Processing
+    
+    Client->>API: Submit AI Request
+    API->>RP: enqueueRequest(request, priority)
+    RP->>DB: Create request record (PENDING)
+    RP->>RQ: Push to priority queue
+    RP-->>API: Return request ID
+    API-->>Client: Request queued (ID: req_123)
+    
+    loop Worker Processing
+        WP->>RQ: Poll for next request
+        RQ-->>WP: Return queued request
+        WP->>W: Assign request to worker
+        W->>DB: Update status (PROCESSING)
+        W->>RQ: Move to processing queue
+        W->>AI: Send request to provider
+        AI-->>W: Return AI response
+        W->>RS: Store response
+        W->>DB: Update status (COMPLETED)
+        W->>RQ: Remove from processing queue
+    end
+    
+    Client->>API: Check status (req_123)
+    API->>DB: Query request status
+    DB-->>API: Status: COMPLETED
+    API-->>Client: Request completed
+    
+    Client->>API: Get response (req_123)
+    API->>RS: Retrieve response
+    RS-->>API: Return AI response
+    API-->>Client: AI response content
+
+    Note over Client,RS: Error Handling - Retry Flow
+    
+    Client->>API: Submit AI Request
+    API->>RP: enqueueRequest(request, priority)
+    RP->>DB: Create request record (PENDING)
+    RP->>RQ: Push to priority queue
+    
+    WP->>RQ: Poll for next request
+    RQ-->>WP: Return queued request
+    WP->>W: Assign request to worker
+    W->>DB: Update status (PROCESSING)
+    W->>AI: Send request to provider
+    AI-->>W: Error (rate limit/timeout)
+    
+    alt Within retry limit
+        W->>DB: Update retry count
+        W->>RQ: Re-queue with delay
+        Note right of W: Exponential backoff
+    else Max retries exceeded
+        W->>DB: Update status (FAILED)
+        W->>RQ: Move to dead letter queue
+    end
+    
+    Note over Client,RS: Cancellation Flow
+    
+    Client->>API: Cancel request (req_123)
+    API->>RP: cancelRequest(req_123)
+    
+    alt Request in queue
+        RP->>RQ: Remove from queue
+        RP->>DB: Update status (CANCELLED)
+        RP-->>API: Cancelled successfully
+    else Request processing
+        RP-->>API: Cannot cancel (processing)
+    end
+```
 
 ## Implementation Details
 
