@@ -12,7 +12,7 @@ Break down approved technical design into Linear subtasks for: $ARGUMENTS
 ### 1. **Analyze Technical Design**
 - Read approved technical design document for $ARGUMENTS
 - Identify implementable components from design
-- Estimate effort for each component (1-2 day chunks)
+- Estimate effort for each component using Fibonacci scale (see estimation guide below)
 
 ### 2. **Create Linear Subtasks**
 For each component, create subtask with:
@@ -49,8 +49,24 @@ Description:
 - Implementation details: [specific requirements]
 - Acceptance criteria: [what defines done]
 
-Estimate: [X story points / Y hours]
+Estimate: [X story points using Fibonacci scale]
 Dependencies: [Blocked by other subtasks if applicable]
 ```
+
+## Estimation Scale (Fibonacci)
+
+**Sprint Context**: 2-week sprints (10 working days), 8-hour workdays
+
+- **1 point** = Trivial task (< 2 hours)
+- **2 points** = Simple task (2-8 hours, < 1 day)  
+- **3 points** = Moderate task (1-3 days, 8-24 hours)
+- **5 points** = Slightly complex task (3-5 days, half sprint)
+- **8 points** = Complex task (5-10 days, full sprint)
+- **13 points** = Highly complex task (≥ full sprint, consider decomposition)
+
+**Guidelines**:
+- Target subtasks at 1-5 points for optimal sprint planning
+- 8+ point tasks may need further breakdown
+- Consider task complexity, unknowns, and dependencies when estimating
 
 Create subtasks systematically and ensure complete coverage of the technical design.

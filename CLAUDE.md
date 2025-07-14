@@ -35,8 +35,8 @@
 - **Task breakdown guidelines**
   - Use `/linear:create-subtasks` command to create implementation subtasks
   - Command automatically uses `parentId` parameter for proper subtask linking
-  - Command includes effort estimates (Linear estimation enabled)
-  - Each subtask should be completable in 1-2 days
+  - Command includes effort estimates using Fibonacci scale (Linear estimation enabled)
+  - Target subtasks at 1-5 points for optimal sprint planning
   - All subtasks link to technical design document for context
 
 #### Project Board Workflow
@@ -60,6 +60,21 @@
 - **Canceled**: `a2581462-7e43-4edb-a13a-023a2f4a6b1e`
 - **Duplicate**: `3f7c4359-7560-4bd9-93b7-9900671742aa`
 - **Backlog**: `1e7bd879-6685-4d94-8887-b7709b3ae6e8`
+
+#### Estimation Scale (Fibonacci)
+**Sprint Context**: 2-week sprints (10 working days), 8-hour workdays
+
+- **1 point** = Trivial task (< 2 hours)
+- **2 points** = Simple task (2-8 hours, < 1 day)  
+- **3 points** = Moderate task (1-3 days, 8-24 hours)
+- **5 points** = Slightly complex task (3-5 days, half sprint)
+- **8 points** = Complex task (5-10 days, full sprint)
+- **13 points** = Highly complex task (≥ full sprint, consider decomposition)
+
+**Guidelines**:
+- Target subtasks at 1-5 points for optimal sprint planning
+- 8+ point tasks may need further breakdown
+- Consider task complexity, unknowns, and dependencies when estimating
 
 ### Development Practices
 - **Follow Test-Driven Development (TDD) with Red-Green-Refactor cycle**
