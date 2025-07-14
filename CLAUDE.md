@@ -33,10 +33,11 @@
   - Link design document to Linear issue for context
 
 - **Task breakdown guidelines**
-  - Create specific, implementable tasks in Linear
-  - Link subtasks to technical design document  
-  - Include effort estimates and dependencies
-  - Each subtask should be completable in 1-2 days
+  - Use `/linear:create-subtasks` command to create implementation subtasks
+  - Command automatically uses `parentId` parameter for proper subtask linking
+  - Command includes effort estimates using Fibonacci scale (Linear estimation enabled)
+  - Target subtasks at 1-5 points for optimal sprint planning
+  - All subtasks link to technical design document for context
 
 #### Project Board Workflow
 - **Todo**: Issues ready to be worked on
@@ -59,6 +60,22 @@
 - **Canceled**: `a2581462-7e43-4edb-a13a-023a2f4a6b1e`
 - **Duplicate**: `3f7c4359-7560-4bd9-93b7-9900671742aa`
 - **Backlog**: `1e7bd879-6685-4d94-8887-b7709b3ae6e8`
+
+#### Estimation Scale (Fibonacci)
+**Complexity-Based Estimation**: Points reflect task complexity, not time duration
+
+- **1 point** = Trivial complexity (straightforward implementation)
+- **2 points** = Simple complexity (well-understood requirements)  
+- **3 points** = Moderate complexity (some architectural decisions needed)
+- **5 points** = Moderately complex (multiple integrations or significant logic)
+- **8 points** = Complex (substantial architectural work or many unknowns)
+- **13 points** = Highly complex (major feature, consider decomposition)
+
+**Guidelines**:
+- Target subtasks at 1-5 points for optimal sprint planning
+- 8+ point tasks may need further breakdown
+- Consider task complexity, unknowns, and dependencies when estimating
+- Let velocity emerge from completed complexity over time
 
 ### Development Practices
 - **Follow Test-Driven Development (TDD) with Red-Green-Refactor cycle**
@@ -158,9 +175,31 @@ The `.claude/commands/` directory contains workflow automation:
 - **`/workflow:tdd-cycle`** - Execute Red-Green-Refactor TDD process
 - **`/workflow:quality-check`** - Run complete pre-push quality verification
 - **`/workflow:atomic-commit`** - Create focused, conventional commits
+- **`/workflow:context-sync`** - Recover project context after interruption or context loss
 
 ### Usage
 Type `/` in Claude Code to access these commands, then provide the Linear issue identifier as an argument (e.g., `/linear:start-feature SPI-123`).
+
+### Context Recovery
+When development is interrupted (system restart, context loss, returning to work), use `/workflow:context-sync` to intelligently recover project state:
+
+**When to Use**:
+- After system crashes, restarts, or unexpected shutdowns
+- When AI context has been reset or compacted during conversation
+- Returning to work after breaks, meetings, or context switches
+- When unsure of current development state or next steps
+- Before starting work to verify project status
+
+**What It Provides**:
+- Current Linear issue status and priorities
+- Git repository state and recent changes
+- Links to relevant technical documentation
+- Basic code quality health check
+- Actionable next steps for resuming work
+
+**Usage**: `/workflow:context-sync [optional-issue-id]`
+
+This systematic approach prevents duplicate work and ensures accurate context recovery without assumptions.
 
 ## Notes
 - This file provides core workflow documentation that applies across all projects

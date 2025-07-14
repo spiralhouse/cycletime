@@ -12,13 +12,14 @@ Break down approved technical design into Linear subtasks for: $ARGUMENTS
 ### 1. **Analyze Technical Design**
 - Read approved technical design document for $ARGUMENTS
 - Identify implementable components from design
-- Estimate effort for each component (1-2 day chunks)
+- Estimate effort for each component using Fibonacci scale (see estimation guide below)
 
 ### 2. **Create Linear Subtasks**
 For each component, create subtask with:
 - **Title**: Clear, actionable task description
 - **Description**: Link to technical design document + specific implementation details
-- **Estimate**: Story points or time estimate
+- **Parent Issue**: Use `parentId` parameter to link subtasks to parent (not naming conventions like "SPI-X.Y")
+- **Estimate**: Story points or time estimate (Linear estimation enabled)
 - **Dependencies**: Use Linear "Blocked by" relationships if needed
 - **Labels**: Appropriate team/component labels
 
@@ -48,8 +49,25 @@ Description:
 - Implementation details: [specific requirements]
 - Acceptance criteria: [what defines done]
 
-Estimate: [X story points / Y hours]
+Estimate: [X story points using Fibonacci scale]
 Dependencies: [Blocked by other subtasks if applicable]
 ```
+
+## Estimation Scale (Fibonacci)
+
+**Complexity-Based Estimation**: Points reflect task complexity, not time duration
+
+- **1 point** = Trivial complexity (straightforward implementation)
+- **2 points** = Simple complexity (well-understood requirements)  
+- **3 points** = Moderate complexity (some architectural decisions needed)
+- **5 points** = Moderately complex (multiple integrations or significant logic)
+- **8 points** = Complex (substantial architectural work or many unknowns)
+- **13 points** = Highly complex (major feature, consider decomposition)
+
+**Guidelines**:
+- Target subtasks at 1-5 points for optimal sprint planning
+- 8+ point tasks may need further breakdown
+- Consider task complexity, unknowns, and dependencies when estimating
+- Let velocity emerge from completed complexity over time
 
 Create subtasks systematically and ensure complete coverage of the technical design.

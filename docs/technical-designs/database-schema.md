@@ -1057,26 +1057,26 @@ WHERE d.project_id = $1 AND dv.version = (
 
 ## 10. Implementation Plan
 
-### 10.1 Phase 1: Core Schema (Week 1)
+### 10.1 Phase 1: Core Schema (5 Points - Moderately Complex)
 1. **Prisma Setup**: Initialize Prisma with PostgreSQL connection
 2. **Core Entities**: Implement Users, Projects, ProjectMembers, Repositories
 3. **Authentication**: Add UserSessions and ApiKeys tables
 4. **Basic Indexes**: Create essential performance indexes
 5. **Migration System**: Set up automated migration workflow
 
-### 10.2 Phase 2: Documents & AI (Week 1)
+### 10.2 Phase 2: Documents & AI (5 Points - Moderately Complex)
 1. **Document Management**: Implement Documents and DocumentVersions
 2. **AI Integration**: Add AiRequest, AiResponse, UsageTracking tables
 3. **Full-text Search**: Configure PostgreSQL FTS for documents
 4. **Seed Data**: Create development fixtures and test data
 
-### 10.3 Phase 3: Tasks & Integration (Week 1)
+### 10.3 Phase 3: Tasks & Integration (3 Points - Moderate Complexity)
 1. **Task Management**: Implement Tasks, TaskDependencies, ExternalIssues
 2. **Notifications**: Add Notifications and NotificationPreferences
 3. **Performance Optimization**: Add remaining indexes and query optimization
 4. **Security**: Implement RLS policies and audit logging
 
-### 10.4 Phase 4: Production Ready (Week 1)
+### 10.4 Phase 4: Production Ready (3 Points - Moderate Complexity)
 1. **Backup Strategy**: Configure automated backups and WAL archiving
 2. **Monitoring**: Add query performance monitoring
 3. **Connection Pooling**: Configure PgBouncer for production

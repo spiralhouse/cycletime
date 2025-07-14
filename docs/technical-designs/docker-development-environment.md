@@ -559,25 +559,25 @@ npm run test:service -- api-gateway
 
 ## 13. Implementation Plan
 
-### 13.1 Phase 1: Core Infrastructure (Week 1)
+### 13.1 Phase 1: Core Infrastructure (3 Points - Moderate Complexity)
 1. **Setup docker-compose.yml** with PostgreSQL, Redis, MinIO
 2. **Create base Dockerfiles** for Node.js services
 3. **Implement health checks** for all infrastructure services
 4. **Create setup scripts** and package.json commands
 
-### 13.2 Phase 2: Application Services (Week 1)
+### 13.2 Phase 2: Application Services (5 Points - Moderately Complex)
 1. **Add API Gateway container** with development configuration
 2. **Add Web Dashboard container** with hot reload
 3. **Add MCP Server container** with debugging support
 4. **Implement service discovery** and inter-service communication
 
-### 13.3 Phase 3: Development Tools (Week 1) 
+### 13.3 Phase 3: Development Tools (3 Points - Moderate Complexity) 
 1. **Add Adminer** for database management
 2. **Add Redis Insight** for cache management
 3. **Create monitoring scripts** for service health
 4. **Add logging aggregation** and debugging tools
 
-### 13.4 Phase 4: Optimization (Week 1)
+### 13.4 Phase 4: Optimization (2 Points - Simple Complexity)
 1. **Performance tuning** for container startup
 2. **Volume optimization** for data persistence
 3. **Documentation** and developer onboarding
