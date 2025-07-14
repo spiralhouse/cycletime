@@ -31,7 +31,7 @@ export class ClaudeProvider extends BaseAIProvider {
       outputCostPer1M: 15.00,
     },
     'claude-3-7-sonnet': {
-      apiId: 'claude-3-7-sonnet-20240329',
+      apiId: 'claude-3-7-sonnet-20250219',
       contextWindow: 200_000,
       maxOutputTokens: 4_096,
       inputCostPer1M: 3.00,
@@ -39,11 +39,11 @@ export class ClaudeProvider extends BaseAIProvider {
       isLegacy: true,
     },
     'claude-3-haiku': {
-      apiId: 'claude-3-haiku-20240307',
+      apiId: 'claude-3-5-haiku-20241022',
       contextWindow: 200_000,
       maxOutputTokens: 4_096,
-      inputCostPer1M: 0.25,
-      outputCostPer1M: 1.25,
+      inputCostPer1M: 0.80,
+      outputCostPer1M: 4.00,
       isLegacy: true,
     },
   };
@@ -80,7 +80,7 @@ export class ClaudeProvider extends BaseAIProvider {
             content: normalizedRequest.prompt,
           },
         ],
-        temperature: normalizedRequest.parameters?.temperature || 0.7,
+        temperature: normalizedRequest.parameters?.temperature || 0.1,
       });
 
       return this.normalizeResponse(response, normalizedRequest.id, request.model || 'claude-4-sonnet');
