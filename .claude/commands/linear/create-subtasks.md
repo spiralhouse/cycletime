@@ -18,7 +18,8 @@ Break down approved technical design into Linear subtasks for: $ARGUMENTS
 For each component, create subtask with:
 - **Title**: Clear, actionable task description
 - **Description**: Link to technical design document + specific implementation details
-- **Estimate**: Story points or time estimate
+- **Parent Issue**: Use `parentId` parameter to link subtasks to parent (not naming conventions like "SPI-X.Y")
+- **Estimate**: Story points or time estimate (Linear estimation enabled)
 - **Dependencies**: Use Linear "Blocked by" relationships if needed
 - **Labels**: Appropriate team/component labels
 

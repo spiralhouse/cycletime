@@ -33,10 +33,11 @@
   - Link design document to Linear issue for context
 
 - **Task breakdown guidelines**
-  - Create specific, implementable tasks in Linear
-  - Link subtasks to technical design document  
-  - Include effort estimates and dependencies
+  - Use `/linear:create-subtasks` command to create implementation subtasks
+  - Command automatically uses `parentId` parameter for proper subtask linking
+  - Command includes effort estimates (Linear estimation enabled)
   - Each subtask should be completable in 1-2 days
+  - All subtasks link to technical design document for context
 
 #### Project Board Workflow
 - **Todo**: Issues ready to be worked on
