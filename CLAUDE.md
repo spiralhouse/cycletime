@@ -62,19 +62,20 @@
 - **Backlog**: `1e7bd879-6685-4d94-8887-b7709b3ae6e8`
 
 #### Estimation Scale (Fibonacci)
-**Sprint Context**: 2-week sprints (10 working days), 8-hour workdays
+**Complexity-Based Estimation**: Points reflect task complexity, not time duration
 
-- **1 point** = Trivial task (< 2 hours)
-- **2 points** = Simple task (2-8 hours, < 1 day)  
-- **3 points** = Moderate task (1-3 days, 8-24 hours)
-- **5 points** = Slightly complex task (3-5 days, half sprint)
-- **8 points** = Complex task (5-10 days, full sprint)
-- **13 points** = Highly complex task (≥ full sprint, consider decomposition)
+- **1 point** = Trivial complexity (straightforward implementation)
+- **2 points** = Simple complexity (well-understood requirements)  
+- **3 points** = Moderate complexity (some architectural decisions needed)
+- **5 points** = Moderately complex (multiple integrations or significant logic)
+- **8 points** = Complex (substantial architectural work or many unknowns)
+- **13 points** = Highly complex (major feature, consider decomposition)
 
 **Guidelines**:
 - Target subtasks at 1-5 points for optimal sprint planning
 - 8+ point tasks may need further breakdown
 - Consider task complexity, unknowns, and dependencies when estimating
+- Let velocity emerge from completed complexity over time
 
 ### Development Practices
 - **Follow Test-Driven Development (TDD) with Red-Green-Refactor cycle**
