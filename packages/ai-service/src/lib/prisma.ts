@@ -4,7 +4,7 @@
  */
 
 // Import the generated Prisma client from the root project
-import { PrismaClient } from '../../../generated/prisma';
+import { PrismaClient } from '../../../../generated/prisma';
 
 // Create singleton instance
 let prisma: PrismaClient;

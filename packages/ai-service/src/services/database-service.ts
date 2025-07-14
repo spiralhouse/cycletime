@@ -20,10 +20,10 @@ export class DatabaseService {
         id: request.id,
         project_id: projectId || null,
         user_id: userId,
-        type: this.mapAiRequestType(request.type),
+        type: this.mapAiRequestType(request.type) as any,
         status: 'PENDING',
         prompt: request.prompt,
-        context: request.context || {},
+        context: (request.context || {}) as any,
         model: request.model || 'claude-4-sonnet',
       },
     });
@@ -37,7 +37,7 @@ export class DatabaseService {
   async updateAIRequestStatus(requestId: string, status: AiRequestStatus) {
     return await this.prisma.aiRequest.update({
       where: { id: requestId },
-      data: { status: status.toString() },
+      data: { status: status as any },
     });
   }
 
