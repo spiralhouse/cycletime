@@ -175,9 +175,31 @@ The `.claude/commands/` directory contains workflow automation:
 - **`/workflow:tdd-cycle`** - Execute Red-Green-Refactor TDD process
 - **`/workflow:quality-check`** - Run complete pre-push quality verification
 - **`/workflow:atomic-commit`** - Create focused, conventional commits
+- **`/workflow:context-sync`** - Recover project context after interruption or context loss
 
 ### Usage
 Type `/` in Claude Code to access these commands, then provide the Linear issue identifier as an argument (e.g., `/linear:start-feature SPI-123`).
+
+### Context Recovery
+When development is interrupted (system restart, context loss, returning to work), use `/workflow:context-sync` to intelligently recover project state:
+
+**When to Use**:
+- After system crashes, restarts, or unexpected shutdowns
+- When AI context has been reset or compacted during conversation
+- Returning to work after breaks, meetings, or context switches
+- When unsure of current development state or next steps
+- Before starting work to verify project status
+
+**What It Provides**:
+- Current Linear issue status and priorities
+- Git repository state and recent changes
+- Links to relevant technical documentation
+- Basic code quality health check
+- Actionable next steps for resuming work
+
+**Usage**: `/workflow:context-sync [optional-issue-id]`
+
+This systematic approach prevents duplicate work and ensures accurate context recovery without assumptions.
 
 ## Notes
 - This file provides core workflow documentation that applies across all projects
