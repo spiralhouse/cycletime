@@ -9,6 +9,7 @@ export * from './interfaces/ai-types';
 
 // Provider Abstraction Layer
 export { BaseAIProvider } from './providers/base-ai-provider';
+export { ClaudeProvider } from './providers/claude-provider';
 
 // Service Layer
 export { AIProviderManager } from './services/ai-provider-manager';
