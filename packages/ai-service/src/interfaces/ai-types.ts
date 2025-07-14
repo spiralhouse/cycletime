@@ -11,6 +11,14 @@ export enum AiRequestType {
   GENERAL_QUERY = 'GENERAL_QUERY'
 }
 
+export enum AiRequestStatus {
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED'
+}
+
 export interface TokenUsage {
   inputTokens: number;
   outputTokens: number;
