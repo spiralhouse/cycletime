@@ -162,3 +162,6 @@ mcp-logs/
 *.bak
 *.backup
 /generated/prisma
+
+# TurboRepo cache
+.turbo

@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "CycleTime - Intelligent Project Orchestration Platform with MCP Integration",
   "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "setup": "./scripts/setup.sh",
     "setup:check": "./scripts/setup-check.sh",
@@ -75,10 +79,11 @@
     "validate": "./scripts/validate-environment.sh",
     "troubleshoot": "./scripts/troubleshoot.sh",
     "onboard": "./scripts/onboard-developer.sh",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "turbo run build",
+    "test": "turbo run test",
     "test:integration": "echo \"Integration tests not yet implemented\" && exit 1",
-    "lint": "eslint .",
-    "typecheck": "echo \"Type checking not yet configured\" && exit 1"
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck"
   },
   "keywords": [
     "project-management",
@@ -94,12 +99,14 @@
     "node": ">=20.0.0",
     "npm": ">=10.0.0"
   },
+  "packageManager": "npm@10.8.2",
   "dependencies": {
     "@prisma/client": "^6.11.1",
     "prisma": "^6.11.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
-    "eslint": "^9.31.0"
+    "eslint": "^9.31.0",
+    "turbo": "^2.0.0"
   }
 }

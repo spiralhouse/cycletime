@@ -25,6 +25,16 @@ jobs:
         ports:
           - 5432:5432
 
+      redis:
+        image: redis:8
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,17 +45,8 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install root dependencies
+      - name: Install dependencies
         run: npm ci
-
-      - name: Install API Gateway dependencies
-        run: |
-          if [ -d "packages/api-gateway" ]; then
-            cd packages/api-gateway
-            npm ci
-          else
-            echo "API Gateway package not found - skipping dependency installation"
-          fi
 
       - name: Generate Prisma client
         run: npx prisma generate
@@ -57,52 +58,43 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
 
-      - name: Run root lint
-        run: npm run lint
-
-      - name: Run API Gateway type check
-        run: |
-          if [ -d "packages/api-gateway" ]; then
-            cd packages/api-gateway
-            npm run typecheck
-          else
-            echo "API Gateway package not found - skipping type check"
-          fi
-
-      - name: Run API Gateway lint
-        run: |
-          if [ -d "packages/api-gateway" ]; then
-            cd packages/api-gateway
-            npm run lint
-          else
-            echo "API Gateway package not found - skipping lint"
-          fi
-
-      - name: Run API Gateway tests
-        run: |
-          if [ -d "packages/api-gateway" ]; then
-            cd packages/api-gateway
-            npm test
-          else
-            echo "API Gateway package not found - skipping tests"
-          fi
+      - name: Build packages
+        run: npm run build
         env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+      - name: Run lint
+        run: npm run lint
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+      - name: Run type check
+        run: npm run typecheck
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+      - name: Run tests
+        run: npm test
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
+          REDIS_URL: redis://localhost:6379
           GITHUB_CLIENT_ID: test_client_id
           GITHUB_CLIENT_SECRET: test_client_secret
           GITHUB_REDIRECT_URI: http://localhost:3000/auth/callback
           JWT_SECRET: test_jwt_secret_that_is_long_enough_for_testing
 
-      - name: Run API Gateway test coverage
+      - name: Run test coverage
         run: |
-          if [ -d "packages/api-gateway" ]; then
-            cd packages/api-gateway
-            npm run test:coverage
-          else
-            echo "API Gateway package not found - skipping test coverage"
-          fi
+          cd packages/api-gateway
+          npm run test:coverage
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
+          REDIS_URL: redis://localhost:6379
           GITHUB_CLIENT_ID: test_client_id
           GITHUB_CLIENT_SECRET: test_client_secret
           GITHUB_REDIRECT_URI: http://localhost:3000/auth/callback
