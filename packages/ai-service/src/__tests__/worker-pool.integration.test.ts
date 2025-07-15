@@ -8,6 +8,7 @@ describe('WorkerPool Integration Tests', () => {
   let requestProcessor: RequestProcessor;
   let queueManager: QueueManager;
   let testClient: any;
+  let keyPrefix: string;
   const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
   beforeAll(async () => {
@@ -37,6 +38,9 @@ describe('WorkerPool Integration Tests', () => {
     // Clean up any existing test data
     await testClient.flushAll();
     
+    // Generate unique key prefix for this test run
+    keyPrefix = `test-worker-pool-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     // Create components
     requestProcessor = new RequestProcessor({
       redisUrl,
@@ -48,7 +52,7 @@ describe('WorkerPool Integration Tests', () => {
     });
     queueManager = new QueueManager({
       redisUrl,
-      keyPrefix: 'test-worker-pool',
+      keyPrefix: keyPrefix,
       cleanupInterval: 200,
       staleRequestTimeout: 5000,
       retryDelay: 100,
@@ -117,7 +121,7 @@ describe('WorkerPool Integration Tests', () => {
 
       // Add items to queue to trigger scaling
       for (let i = 0; i < 10; i++) {
-        await testClient.lPush('test-worker-pool:priority:normal', JSON.stringify({
+        await testClient.lPush(`${keyPrefix}:priority:normal`, JSON.stringify({
           id: `scale-test-${i}`,
           data: { content: `test ${i}` },
           priority: 'normal'
@@ -149,7 +153,7 @@ describe('WorkerPool Integration Tests', () => {
       await workerPool.start();
 
       // Add a test item to the queue
-      await testClient.lPush('test-worker-pool:priority:high', JSON.stringify({
+      await testClient.lPush(`${keyPrefix}:priority:high`, JSON.stringify({
         id: 'process-test-1',
         data: { prompt: 'Test processing' },
         priority: 'high'
@@ -218,7 +222,7 @@ describe('WorkerPool Integration Tests', () => {
 
       // Add multiple items to queue
       for (let i = 0; i < 5; i++) {
-        await testClient.lPush('test-worker-pool:priority:normal', JSON.stringify({
+        await testClient.lPush(`${keyPrefix}:priority:normal`, JSON.stringify({
           id: `coord-test-${i}`,
           data: { content: `coordination test ${i}` },
           priority: 'normal'
@@ -252,7 +256,7 @@ describe('WorkerPool Integration Tests', () => {
       expect(queueManager.isRunning()).toBe(true);
 
       // Add some items to queue
-      await testClient.lPush('test-worker-pool:priority:normal', JSON.stringify({
+      await testClient.lPush(`${keyPrefix}:priority:normal`, JSON.stringify({
         id: 'shutdown-test',
         data: { content: 'test shutdown' },
         priority: 'normal'
