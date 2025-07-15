@@ -25,7 +25,7 @@
   5. **Design Approval**: Wait for design approval before proceeding
   6. **Breakdown**: Create implementation subtasks linked to design document
   7. **Implement**: Follow TDD practices to build feature
-  8. **Submit Feature**: Create feature PR and move parent Linear issue to "In Review"
+  8. **Submit Subtask**: Create subtask PR and move subtask Linear issue to "In Review"
 
 - **Technical design requirements**
   - Include architectural decisions, API specifications, and high-level approach
@@ -38,6 +38,13 @@
   - Command includes effort estimates using Fibonacci scale (Linear estimation enabled)
   - Target subtasks at 1-5 points for optimal sprint planning
   - All subtasks link to technical design document for context
+
+- **Parent issue lifecycle management**
+  - **Parent issues remain "In Progress" until ALL subtasks are completed**
+  - Only move parent to "In Review" when creating final integration PR that closes the parent
+  - Never move parent to "Done" until it's fully implemented and merged
+  - Design completion does NOT move parent to "Done" - only moves design subtask to "In Review"
+  - Track progress through subtask completion, not parent status changes
 
 #### Project Board Workflow
 - **Todo**: Issues ready to be worked on
