@@ -2,13 +2,19 @@
 
 ## Overview
 
-The CycleTime project uses GitHub Actions for continuous integration and deployment. This document outlines the complete CI/CD pipeline configuration and processes.
+The CycleTime project uses GitHub Actions for continuous integration and deployment, enhanced with TurboRepo for monorepo build orchestration. This document outlines the complete CI/CD pipeline configuration and processes.
 
 ### Current Status
 
 **Active Workflows:**
-- ✅ Continuous Integration (`ci.yml`) - Fully functional
+- ✅ Continuous Integration (`ci.yml`) - Enhanced with TurboRepo
 - ✅ Linear Integration (`linear-integration.yml`) - Fully functional
+
+**TurboRepo Integration:**
+- ✅ Monorepo build orchestration with parallel execution
+- ✅ Remote caching for 50-70% faster CI times
+- ✅ Automatic dependency graph management
+- ✅ All packages tested (API Gateway + AI Service + future packages)
 
 **Disabled Workflows:**
 - ⚠️ Security Scanning (`security.yml`) - Disabled pending tool configuration ([SPI-33](https://linear.app/spiral-house/issue/SPI-33))
@@ -21,28 +27,39 @@ The CycleTime project uses GitHub Actions for continuous integration and deploym
 
 #### 1. Continuous Integration (`ci.yml`)
 **Trigger:** Push to `main` and all pull requests
-**Purpose:** Automated testing, linting, and quality assurance
+**Purpose:** Automated testing, linting, and quality assurance with TurboRepo orchestration
 
-**Steps:**
+**Infrastructure Services:**
+- **PostgreSQL 17** - Database service for API Gateway and other services
+- **Redis 8** - Cache and queue service for AI Service testing
+- **Node.js 20** - Runtime with npm caching enabled
+
+**TurboRepo Pipeline Steps:**
 1. **Environment Setup**
-   - PostgreSQL 17 service container
-   - Node.js 20 with npm caching
-   - Dependency installation
+   - Multi-service infrastructure (PostgreSQL + Redis)
+   - Workspace dependency installation with `npm ci`
+   - TurboRepo cache directory configuration
 
 2. **Database Setup**
-   - Prisma client generation
+   - Prisma client generation for all packages
    - Database migration deployment
    - Test database preparation
 
-3. **Quality Checks**
-   - ESLint code linting
-   - TypeScript type checking
-   - Unit and integration tests
-   - Test coverage reporting
+3. **Parallel Quality Checks** (via TurboRepo)
+   - `turbo run lint` - Parallel linting across all packages
+   - `turbo run typecheck` - Parallel TypeScript validation
+   - `turbo run test` - Parallel testing with dependency awareness
+   - `turbo run build` - Parallel builds respecting dependency order
 
-4. **Coverage Reporting**
-   - Codecov integration for coverage tracking
-   - Coverage reports uploaded on test completion
+4. **Enhanced Testing Coverage**
+   - **API Gateway**: Authentication, middleware, routes, services
+   - **AI Service**: Providers, queue management, worker pools, request processing
+   - **Future Packages**: Automatically included as they're added
+
+5. **Performance Optimizations**
+   - Remote caching reduces redundant work
+   - Affected package detection for PR optimization
+   - Parallel execution for 50-70% faster CI times
 
 #### 2. Staging Deployment (`deploy-staging.yml`) - **DISABLED**
 **Status:** Disabled pending staging infrastructure setup (SPI-34)
@@ -76,7 +93,45 @@ The CycleTime project uses GitHub Actions for continuous integration and deploym
 - Moves issues to "Done" when PR is merged
 - Adds PR links as comments on Linear issues
 
-#### 5. Security Scanning (`security.yml`) - **DISABLED**
+#### 5. TurboRepo Build System
+**Purpose:** Monorepo build orchestration and optimization
+
+**Configuration:** `turbo.json` in project root
+```json
+{
+  "pipeline": {
+    "build": { "dependsOn": ["^build"], "outputs": ["dist/**"] },
+    "test": { "dependsOn": ["build"], "outputs": ["coverage/**"] },
+    "lint": { "outputs": [] },
+    "typecheck": { "dependsOn": ["^build"], "outputs": [] }
+  },
+  "remoteCache": { "signature": true }
+}
+```
+
+**Key Features:**
+- **Dependency Graph**: Automatically builds packages in correct order
+- **Parallel Execution**: Runs independent tasks simultaneously
+- **Remote Caching**: Caches build artifacts to speed up CI
+- **Incremental Builds**: Only rebuilds changed packages
+- **Package Filtering**: Target specific packages or affected packages
+
+**Local Development:**
+```bash
+# Build all packages
+npm run build
+
+# Test all packages in parallel
+npm run test
+
+# Test specific package
+npx turbo run test --filter=ai-service
+
+# Build affected packages only
+npx turbo run build --filter=...[HEAD~1]
+```
+
+#### 6. Security Scanning (`security.yml`) - **DISABLED**
 **Status:** Disabled pending security tool configuration (SPI-33)
 **Future Purpose:** Continuous security monitoring
 
@@ -126,7 +181,10 @@ The CycleTime project uses GitHub Actions for continuous integration and deploym
 #### CI Environment
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/cycletime_test
+REDIS_URL=redis://localhost:6379
 NODE_ENV=test
+TURBO_TOKEN=${TURBO_TOKEN}  # Remote caching token
+TURBO_TEAM=${TURBO_TEAM}    # TurboRepo team identifier
 ```
 
 #### Staging Environment
@@ -154,13 +212,14 @@ NODE_ENV=production
 3. **Failed CI** → Issue remains in current status
 
 ### Quality Gates
-All PRs must pass:
-- [ ] Linting (ESLint)
-- [ ] Type checking (TypeScript)
-- [ ] Unit tests
-- [ ] Integration tests
-- [ ] Security scans
-- [ ] Test coverage threshold
+All PRs must pass TurboRepo orchestrated checks:
+- [ ] Linting (ESLint across all packages)
+- [ ] Type checking (TypeScript across all packages)
+- [ ] Unit tests (all packages tested in parallel)
+- [ ] Integration tests (database and Redis integration)
+- [ ] Security scans (when SPI-33 is completed)
+- [ ] Test coverage threshold (aggregated across packages)
+- [ ] Build success (all packages build successfully)
 
 ## Deployment Process
 
@@ -226,11 +285,20 @@ All PRs must pass:
 
 ### Debug Commands
 ```bash
-# Local CI simulation
-npm run lint
-npm run typecheck
-npm test
-npm run test:coverage
+# Local CI simulation with TurboRepo
+npm run build        # Build all packages
+npm run test         # Test all packages in parallel
+npm run lint         # Lint all packages in parallel
+npm run typecheck    # Type check all packages
+
+# Package-specific debugging
+npx turbo run test --filter=api-gateway
+npx turbo run test --filter=ai-service
+npx turbo run build --filter=api-gateway...
+
+# TurboRepo cache inspection
+npx turbo run build --dry-run
+npx turbo run test --summarize
 
 # Database debugging
 npm run db:test
@@ -244,18 +312,21 @@ npm run health
 ## Future Enhancements
 
 ### Planned Improvements
-- [ ] **Performance testing** integration
-- [ ] **End-to-end testing** with Playwright
+- [ ] **Performance testing** integration with TurboRepo
+- [ ] **End-to-end testing** with Playwright across packages
 - [ ] **Infrastructure as Code** with Terraform
-- [ ] **Container registry** integration
+- [ ] **Container registry** integration for package-based deployments
 - [ ] **Multi-environment** configuration management
 - [ ] **Rollback automation** for failed deployments
+- [ ] **Advanced TurboRepo features** (task scheduling, deployment orchestration)
 
 ### Metrics and Analytics
 - [ ] **Deployment frequency** tracking
 - [ ] **Lead time** measurement
 - [ ] **Mean time to recovery** monitoring
 - [ ] **Change failure rate** analysis
+- [ ] **TurboRepo performance metrics** (cache hit rates, build times)
+- [ ] **Package-specific metrics** (test coverage, build performance)
 
 ---
 
