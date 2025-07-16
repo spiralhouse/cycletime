@@ -117,19 +117,22 @@ describe('WorkerPool Integration Tests', () => {
       }
 
       await queueManager.start();
-      await workerPool.start();
-
-      // Add items to queue to trigger scaling
+      
+      // Add items to queue BEFORE starting worker pool to prevent immediate consumption
       for (let i = 0; i < 10; i++) {
-        await testClient.lPush(`${keyPrefix}:priority:normal`, JSON.stringify({
+        await testClient.rPush(`${keyPrefix}:priority:normal`, JSON.stringify({
           id: `scale-test-${i}`,
           data: { content: `test ${i}` },
           priority: 'normal'
         }));
       }
 
-      // Wait for scaling to occur
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Now start worker pool
+      await workerPool.start();
+
+      // Verify queue has items before scaling
+      const preScaleHealth = await workerPool.getHealthStatus();
+      expect(preScaleHealth.queueMetrics.totalDepth).toBeGreaterThan(0);
 
       // Trigger scaling check
       await workerPool.scaleWorkers();
@@ -153,7 +156,7 @@ describe('WorkerPool Integration Tests', () => {
       await workerPool.start();
 
       // Add a test item to the queue
-      await testClient.lPush(`${keyPrefix}:priority:high`, JSON.stringify({
+      await testClient.rPush(`${keyPrefix}:priority:high`, JSON.stringify({
         id: 'process-test-1',
         data: { prompt: 'Test processing' },
         priority: 'high'
@@ -222,7 +225,7 @@ describe('WorkerPool Integration Tests', () => {
 
       // Add multiple items to queue
       for (let i = 0; i < 5; i++) {
-        await testClient.lPush(`${keyPrefix}:priority:normal`, JSON.stringify({
+        await testClient.rPush(`${keyPrefix}:priority:normal`, JSON.stringify({
           id: `coord-test-${i}`,
           data: { content: `coordination test ${i}` },
           priority: 'normal'
@@ -256,7 +259,7 @@ describe('WorkerPool Integration Tests', () => {
       expect(queueManager.isRunning()).toBe(true);
 
       // Add some items to queue
-      await testClient.lPush(`${keyPrefix}:priority:normal`, JSON.stringify({
+      await testClient.rPush(`${keyPrefix}:priority:normal`, JSON.stringify({
         id: 'shutdown-test',
         data: { content: 'test shutdown' },
         priority: 'normal'

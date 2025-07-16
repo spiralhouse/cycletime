@@ -4,6 +4,7 @@ import { createClient } from 'redis';
 describe('RedisQueue Integration Tests', () => {
   let redisQueue: RedisQueue;
   let testClient: any;
+  let keyPrefix: string;
   const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
   beforeAll(async () => {
@@ -30,12 +31,12 @@ describe('RedisQueue Integration Tests', () => {
       return; // Skip if Redis not available
     }
 
-    // Clean up any existing test data
-    await testClient.flushAll();
+    // Use unique key prefix for test isolation
+    keyPrefix = `test-queue-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     redisQueue = new RedisQueue({ 
       url: redisUrl,
-      keyPrefix: 'test-queue'
+      keyPrefix: keyPrefix
     });
     await redisQueue.connect();
   });
@@ -117,7 +118,7 @@ describe('RedisQueue Integration Tests', () => {
       
       const newRedisQueue = new RedisQueue({ 
         url: redisUrl,
-        keyPrefix: 'test-queue'
+        keyPrefix: keyPrefix
       });
       await newRedisQueue.connect();
 

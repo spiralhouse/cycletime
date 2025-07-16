@@ -15,8 +15,11 @@ describe('RedisQueue', () => {
       connect: jest.fn().mockResolvedValue(undefined),
       disconnect: jest.fn().mockResolvedValue(undefined),
       isReady: true,
+      isOpen: true,
       lPush: jest.fn().mockResolvedValue(1),
+      rPush: jest.fn().mockResolvedValue(1),
       rPop: jest.fn().mockResolvedValue(null),
+      lPop: jest.fn().mockResolvedValue(null),
       lLen: jest.fn().mockResolvedValue(0),
       lRange: jest.fn().mockResolvedValue([]),
       on: jest.fn(),
@@ -46,6 +49,12 @@ describe('RedisQueue', () => {
       await redisQueue.disconnect();
       expect(mockRedisClient.disconnect).toHaveBeenCalled();
     });
+
+    it('should not disconnect when client is already closed', async () => {
+      mockRedisClient.isOpen = false;
+      await redisQueue.disconnect();
+      expect(mockRedisClient.disconnect).not.toHaveBeenCalled();
+    });
   });
 
   describe('enqueue operations', () => {
@@ -59,7 +68,7 @@ describe('RedisQueue', () => {
 
       await redisQueue.enqueue(requestId, requestData, QueuePriority.HIGH);
 
-      expect(mockRedisClient.lPush).toHaveBeenCalledWith(
+      expect(mockRedisClient.rPush).toHaveBeenCalledWith(
         'queue:priority:high',
         JSON.stringify({ id: requestId, data: requestData, priority: QueuePriority.HIGH })
       );
@@ -71,7 +80,7 @@ describe('RedisQueue', () => {
 
       await redisQueue.enqueue(requestId, requestData, QueuePriority.NORMAL);
 
-      expect(mockRedisClient.lPush).toHaveBeenCalledWith(
+      expect(mockRedisClient.rPush).toHaveBeenCalledWith(
         'queue:priority:normal',
         JSON.stringify({ id: requestId, data: requestData, priority: QueuePriority.NORMAL })
       );
@@ -83,7 +92,7 @@ describe('RedisQueue', () => {
 
       await redisQueue.enqueue(requestId, requestData, QueuePriority.LOW);
 
-      expect(mockRedisClient.lPush).toHaveBeenCalledWith(
+      expect(mockRedisClient.rPush).toHaveBeenCalledWith(
         'queue:priority:low',
         JSON.stringify({ id: requestId, data: requestData, priority: QueuePriority.LOW })
       );
@@ -95,7 +104,7 @@ describe('RedisQueue', () => {
 
       await redisQueue.enqueue(requestId, requestData);
 
-      expect(mockRedisClient.lPush).toHaveBeenCalledWith(
+      expect(mockRedisClient.rPush).toHaveBeenCalledWith(
         'queue:priority:normal',
         JSON.stringify({ id: requestId, data: requestData, priority: QueuePriority.NORMAL })
       );
@@ -122,14 +131,14 @@ describe('RedisQueue', () => {
         priority: QueuePriority.HIGH
       });
 
-      mockRedisClient.rPop
+      mockRedisClient.lPop
         .mockResolvedValueOnce(highPriorityItem)  // high priority queue has item
         .mockResolvedValueOnce(null)              // normal priority queue empty
         .mockResolvedValueOnce(null);             // low priority queue empty
 
       const result = await redisQueue.dequeue();
 
-      expect(mockRedisClient.rPop).toHaveBeenCalledWith('queue:priority:high');
+      expect(mockRedisClient.lPop).toHaveBeenCalledWith('queue:priority:high');
       expect(result).toEqual({
         id: 'req_high',
         data: { prompt: 'high priority' },
@@ -144,15 +153,15 @@ describe('RedisQueue', () => {
         priority: QueuePriority.NORMAL
       });
 
-      mockRedisClient.rPop
+      mockRedisClient.lPop
         .mockResolvedValueOnce(null)                // high priority queue empty
         .mockResolvedValueOnce(normalPriorityItem)  // normal priority queue has item
         .mockResolvedValueOnce(null);               // low priority queue empty
 
       const result = await redisQueue.dequeue();
 
-      expect(mockRedisClient.rPop).toHaveBeenCalledWith('queue:priority:high');
-      expect(mockRedisClient.rPop).toHaveBeenCalledWith('queue:priority:normal');
+      expect(mockRedisClient.lPop).toHaveBeenCalledWith('queue:priority:high');
+      expect(mockRedisClient.lPop).toHaveBeenCalledWith('queue:priority:normal');
       expect(result).toEqual({
         id: 'req_normal',
         data: { prompt: 'normal priority' },
@@ -167,16 +176,16 @@ describe('RedisQueue', () => {
         priority: QueuePriority.LOW
       });
 
-      mockRedisClient.rPop
+      mockRedisClient.lPop
         .mockResolvedValueOnce(null)             // high priority queue empty
         .mockResolvedValueOnce(null)             // normal priority queue empty
         .mockResolvedValueOnce(lowPriorityItem); // low priority queue has item
 
       const result = await redisQueue.dequeue();
 
-      expect(mockRedisClient.rPop).toHaveBeenCalledWith('queue:priority:high');
-      expect(mockRedisClient.rPop).toHaveBeenCalledWith('queue:priority:normal');
-      expect(mockRedisClient.rPop).toHaveBeenCalledWith('queue:priority:low');
+      expect(mockRedisClient.lPop).toHaveBeenCalledWith('queue:priority:high');
+      expect(mockRedisClient.lPop).toHaveBeenCalledWith('queue:priority:normal');
+      expect(mockRedisClient.lPop).toHaveBeenCalledWith('queue:priority:low');
       expect(result).toEqual({
         id: 'req_low',
         data: { prompt: 'low priority' },
@@ -185,12 +194,12 @@ describe('RedisQueue', () => {
     });
 
     it('should return null when all queues are empty', async () => {
-      mockRedisClient.rPop.mockResolvedValue(null);
+      mockRedisClient.lPop.mockResolvedValue(null);
 
       const result = await redisQueue.dequeue();
 
       expect(result).toBeNull();
-      expect(mockRedisClient.rPop).toHaveBeenCalledTimes(3); // tried all three queues
+      expect(mockRedisClient.lPop).toHaveBeenCalledTimes(3); // tried all three queues
     });
 
     it('should throw error when Redis is not connected', async () => {
@@ -264,7 +273,7 @@ describe('RedisQueue', () => {
 
       const result = await redisQueue.peek();
 
-      expect(mockRedisClient.lRange).toHaveBeenCalledWith('queue:priority:high', -1, -1);
+      expect(mockRedisClient.lRange).toHaveBeenCalledWith('queue:priority:high', 0, 0);
       expect(result).toEqual({
         id: 'req_peek',
         data: { prompt: 'peek test' },
@@ -312,7 +321,7 @@ describe('RedisQueue', () => {
     });
 
     it('should handle Redis connection errors', async () => {
-      mockRedisClient.lPush.mockRejectedValue(new Error('Redis connection lost'));
+      mockRedisClient.rPush.mockRejectedValue(new Error('Redis connection lost'));
 
       await expect(
         redisQueue.enqueue('req_error', { prompt: 'test' })
@@ -320,7 +329,7 @@ describe('RedisQueue', () => {
     });
 
     it('should handle malformed JSON during dequeue', async () => {
-      mockRedisClient.rPop.mockResolvedValue('invalid json');
+      mockRedisClient.lPop.mockResolvedValue('invalid json');
 
       await expect(redisQueue.dequeue()).rejects.toThrow();
     });
