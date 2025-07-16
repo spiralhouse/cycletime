@@ -88,18 +88,6 @@ jobs:
           GITHUB_REDIRECT_URI: http://localhost:3000/auth/callback
           JWT_SECRET: test_jwt_secret_that_is_long_enough_for_testing
 
-      - name: Run test coverage
-        run: |
-          cd packages/api-gateway
-          npm run test:coverage
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
-          REDIS_URL: redis://localhost:6379
-          GITHUB_CLIENT_ID: test_client_id
-          GITHUB_CLIENT_SECRET: test_client_secret
-          GITHUB_REDIRECT_URI: http://localhost:3000/auth/callback
-          JWT_SECRET: test_jwt_secret_that_is_long_enough_for_testing
-
       - name: Upload coverage reports
         run: echo "Coverage reporting not yet configured - skipping for now"
         # TODO: Enable when test coverage is configured
