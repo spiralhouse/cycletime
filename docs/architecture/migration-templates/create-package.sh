@@ -304,24 +304,24 @@ npm install
 # Start development server
 npm run dev
 
-# Run tests
-npm test
+# Run tests (from project root)
+turbo test --filter=@cycletime/${SERVICE_NAME}
 
-# Build for production
-npm run build
+# Build for production (from project root)
+turbo build --filter=@cycletime/${SERVICE_NAME}
 \`\`\`
 
 ## Testing
 
 \`\`\`bash
-# Run all tests
-npm test
+# Run all tests (from project root)
+turbo test --filter=@cycletime/${SERVICE_NAME}
 
-# Run tests in watch mode
+# Run tests in watch mode (from package directory)
 npm run test:watch
 
-# Generate coverage report
-npm run test:coverage
+# Generate coverage report (from package directory)
+npm run test -- --coverage
 \`\`\`
 
 ## API Documentation
@@ -370,7 +370,7 @@ npm install
 # Run initial build and test
 print_status "Running initial build and tests..."
 npm run build
-npm run test
+npm test
 
 cd - > /dev/null
 

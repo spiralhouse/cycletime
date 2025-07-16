@@ -550,11 +550,11 @@ services:
 
 ### 12.2 Test Commands
 ```bash
-# Run tests with clean database
-npm run test:integration
+# Run integration tests across all packages
+turbo test --filter=...@cycletime/*
 
 # Test specific service
-npm run test:service -- api-gateway
+turbo test --filter=@cycletime/api-gateway
 ```
 
 ## 13. Implementation Plan

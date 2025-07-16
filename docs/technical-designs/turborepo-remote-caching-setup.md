@@ -46,25 +46,25 @@ Updated `.github/workflows/ci.yml` to include TurboRepo environment variables:
 
 ```yaml
 - name: Build packages
-  run: npm run build
+  run: turbo build
   env:
     TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
     TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
 - name: Run lint
-  run: npm run lint
+  run: turbo lint
   env:
     TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
     TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
 - name: Run type check
-  run: npm run typecheck
+  run: turbo typecheck
   env:
     TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
     TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
 - name: Run tests
-  run: npm test
+  run: turbo test
   env:
     TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
     TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
@@ -126,7 +126,7 @@ export TURBO_TOKEN="your-token-here"
 export TURBO_TEAM="your-team-slug"
 
 # Run build to test remote caching
-npm run build
+turbo build
 
 # Check for remote cache usage in output
 # Look for "REMOTE CACHE" indicators in turbo output
@@ -211,7 +211,7 @@ npm run build
 ### Debug Commands
 ```bash
 # Enable verbose turbo logging
-TURBO_LOG_VERBOSITY=2 npm run build
+TURBO_LOG_VERBOSITY=2 turbo build
 
 # Check turbo configuration
 npx turbo run build --dry-run

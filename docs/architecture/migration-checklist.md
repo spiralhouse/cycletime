@@ -60,7 +60,7 @@ This checklist provides a step-by-step process for migrating Docker services to 
 
 - [ ] **Verify TypeScript compilation**
   ```bash
-  npm run typecheck
+  turbo typecheck --filter=@cycletime/package-name
   ```
 
 ### 1.3 Configure Testing
@@ -80,7 +80,7 @@ This checklist provides a step-by-step process for migrating Docker services to 
 
 - [ ] **Verify ESLint configuration**
   - [ ] Ensure package inherits from root ESLint config
-  - [ ] Test linting: `npm run lint`
+  - [ ] Test linting: `turbo lint --filter=@cycletime/package-name`
   - [ ] Fix any initial linting issues
 
 ### 1.5 Verify Package Detection
@@ -194,7 +194,7 @@ This checklist provides a step-by-step process for migrating Docker services to 
 
 - [ ] **Verify test coverage**
   ```bash
-  npm run test:coverage
+  npm run test --workspace=@cycletime/package-name -- --coverage
   ```
   - [ ] Ensure minimum 80% coverage
   - [ ] Review coverage report for gaps
@@ -287,10 +287,10 @@ This checklist provides a step-by-step process for migrating Docker services to 
 - [ ] **Test build commands**
   ```bash
   # From project root
-  npm run build
-  npm run test
-  npm run lint
-  npm run typecheck
+  turbo build
+  turbo test
+  turbo lint
+  turbo typecheck
   ```
   - [ ] Verify all commands complete successfully
   - [ ] Check build outputs are correct
@@ -315,9 +315,9 @@ This checklist provides a step-by-step process for migrating Docker services to 
 
 - [ ] **Run comprehensive quality checks**
   ```bash
-  npm run lint
-  npm run typecheck
-  npm run test:coverage
+  turbo lint
+  turbo typecheck
+  npm run test --workspace=@cycletime/package-name -- --coverage
   ```
   - [ ] Fix all linting issues
   - [ ] Resolve TypeScript errors

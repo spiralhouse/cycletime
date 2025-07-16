@@ -109,10 +109,10 @@ npm run test --workspace=@cycletime/existing-service
 ./docs/architecture/migration-templates/create-package.sh service-name "description" type
 
 # Post-migration validation
-npm run build
-npm run test
-npm run lint
-npm run typecheck
+turbo build
+turbo test
+turbo lint
+turbo typecheck
 
 # Docker integration test
 docker compose build service-name

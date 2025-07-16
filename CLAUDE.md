@@ -119,28 +119,44 @@
 
 ### Quality Assurance
 - **ALWAYS run comprehensive quality checks before pushing to origin**
-  - `npm run lint` - ESLint validation
-  - `npm run typecheck` - TypeScript type checking
-  - `npm test` - Unit and integration tests
-  - `npm run test:coverage` - Test coverage validation
+  - `turbo lint` - ESLint validation across all packages
+  - `turbo typecheck` - TypeScript type checking across all packages
+  - `turbo test` - Unit and integration tests across all packages
+  - Package-specific coverage: `npm run test --workspace=@cycletime/package-name -- --coverage`
   - Fix all issues before pushing to prevent CI failures
   - Use `git status` and `git diff` to review changes before commit
 
 ## Commands
 
-### Testing
+### TurboRepo Monorepo Commands
 ```bash
-# Run all tests
+# Run all tests across packages
+turbo test
+
+# Run tests with coverage for specific package
+npm run test --workspace=@cycletime/shared-utils -- --coverage
+
+# Run linting across packages
+turbo lint
+
+# Run type checking across packages
+turbo typecheck
+
+# Build all packages
+turbo build
+
+# Run commands for specific package only
+npm run test --workspace=@cycletime/package-name
+npm run build --workspace=@cycletime/package-name
+```
+
+### Package-Specific Operations
+```bash
+# When working on individual packages
+cd packages/shared-utils
 npm test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run linting
+npm run build
 npm run lint
-
-# Run type checking
-npm run typecheck
 ```
 
 ### Git Workflow
