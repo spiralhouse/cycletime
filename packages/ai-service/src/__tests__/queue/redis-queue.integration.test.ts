@@ -5,21 +5,13 @@ describe('RedisQueue Integration Tests', () => {
   let redisQueue: RedisQueue;
   let testClient: any;
   let keyPrefix: string;
-  let redisAvailable = false;
   const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
   beforeAll(async () => {
     // Create a test client to verify Redis is available
     testClient = createClient({ url: redisUrl });
-    
-    try {
-      await testClient.connect();
-      await testClient.ping();
-      redisAvailable = true;
-    } catch (error) {
-      console.log('Skipping Redis integration tests - Redis not available:', error instanceof Error ? error.message : String(error));
-      redisAvailable = false;
-    }
+    await testClient.connect();
+    await testClient.ping();
   });
 
   afterAll(async () => {
@@ -29,10 +21,6 @@ describe('RedisQueue Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    if (!redisAvailable) {
-      return; // Skip if Redis not available
-    }
-
     // Clear all Redis data to avoid test interference
     await testClient.flushAll();
 
@@ -47,7 +35,7 @@ describe('RedisQueue Integration Tests', () => {
   });
 
   afterEach(async () => {
-    if (redisQueue && redisAvailable) {
+    if (redisQueue) {
       await redisQueue.disconnect();
       
       // Clean up any test data
@@ -60,12 +48,6 @@ describe('RedisQueue Integration Tests', () => {
 
   describe('Real Redis Operations', () => {
     it('should connect to Redis successfully', async () => {
-      if (!redisAvailable) {
-        console.log('Skipping Redis connection test - Redis not available');
-        expect(true).toBe(true); // Mark test as passed when skipped
-        return;
-      }
-
       expect(redisQueue).toBeDefined();
       
       // Verify connection by getting queue metrics
@@ -81,11 +63,6 @@ describe('RedisQueue Integration Tests', () => {
     });
 
     it('should enqueue and dequeue items in priority order', async () => {
-      if (!redisAvailable) {
-        console.log('Skipping Redis enqueue/dequeue test - Redis not available');
-        expect(true).toBe(true); // Mark test as passed when skipped
-        return;
-      }
 
       // Enqueue items in different priorities
       await redisQueue.enqueue('low-1', { content: 'low priority' }, QueuePriority.LOW);
@@ -121,11 +98,6 @@ describe('RedisQueue Integration Tests', () => {
     });
 
     it('should persist data across connections', async () => {
-      if (!redisAvailable) {
-        console.log('Skipping Redis persistence test - Redis not available');
-        expect(true).toBe(true); // Mark test as passed when skipped
-        return;
-      }
 
       // Enqueue an item
       await redisQueue.enqueue('persist-test', { data: 'persistent data' }, QueuePriority.NORMAL);
@@ -148,11 +120,6 @@ describe('RedisQueue Integration Tests', () => {
     });
 
     it('should handle concurrent operations correctly', async () => {
-      if (!redisAvailable) {
-        console.log('Skipping Redis concurrent operations test - Redis not available');
-        expect(true).toBe(true); // Mark test as passed when skipped
-        return;
-      }
 
       // Create multiple enqueue operations concurrently
       const enqueuePromises = Array.from({ length: 10 }, (_, i) =>
@@ -184,11 +151,6 @@ describe('RedisQueue Integration Tests', () => {
     });
 
     it('should handle FIFO order within same priority', async () => {
-      if (!redisAvailable) {
-        console.log('Skipping Redis FIFO test - Redis not available');
-        expect(true).toBe(true); // Mark test as passed when skipped
-        return;
-      }
 
       // Enqueue multiple items with same priority
       await redisQueue.enqueue('first', { order: 1 }, QueuePriority.NORMAL);
@@ -207,11 +169,6 @@ describe('RedisQueue Integration Tests', () => {
     });
 
     it('should handle large payloads correctly', async () => {
-      if (!redisAvailable) {
-        console.log('Skipping Redis large payload test - Redis not available');
-        expect(true).toBe(true); // Mark test as passed when skipped
-        return;
-      }
 
       // Create a large payload
       const largeData = {
@@ -231,11 +188,6 @@ describe('RedisQueue Integration Tests', () => {
 
   describe('Error Handling with Real Redis', () => {
     it('should handle Redis connection errors gracefully', async () => {
-      if (!redisAvailable) {
-        console.log('Skipping Redis error handling test - Redis not available');
-        expect(true).toBe(true); // Mark test as passed when skipped
-        return;
-      }
 
       // Create queue with invalid URL
       const invalidQueue = new RedisQueue({ url: 'redis://invalid-host:6379' });
@@ -244,11 +196,6 @@ describe('RedisQueue Integration Tests', () => {
     });
 
     it('should detect when Redis is disconnected', async () => {
-      if (!redisAvailable) {
-        console.log('Skipping Redis disconnect detection test - Redis not available');
-        expect(true).toBe(true); // Mark test as passed when skipped
-        return;
-      }
 
       // Disconnect Redis
       await redisQueue.disconnect();

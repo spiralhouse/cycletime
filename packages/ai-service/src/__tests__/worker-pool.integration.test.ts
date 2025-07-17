@@ -15,14 +15,8 @@ describe('WorkerPool Integration Tests', () => {
   beforeAll(async () => {
     // Create a test client to verify Redis is available
     testClient = createClient({ url: redisUrl });
-    
-    try {
-      await testClient.connect();
-      await testClient.ping();
-    } catch (error) {
-      console.log('Skipping WorkerPool integration tests - Redis not available:', error instanceof Error ? error.message : String(error));
-      return;
-    }
+    await testClient.connect();
+    await testClient.ping();
   });
 
   afterAll(async () => {
@@ -32,10 +26,6 @@ describe('WorkerPool Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    if (!testClient?.isReady) {
-      return; // Skip if Redis not available
-    }
-
     // Clean up any existing test data
     await testClient.flushAll();
     
@@ -75,21 +65,16 @@ describe('WorkerPool Integration Tests', () => {
   });
 
   afterEach(async () => {
-    if (workerPool && testClient?.isReady) {
+    if (workerPool) {
       await workerPool.stop();
     }
-    if (queueManager && testClient?.isReady) {
+    if (queueManager) {
       await queueManager.stop();
     }
   });
 
   describe('End-to-End Integration', () => {
     it('should start worker pool and queue manager together', async () => {
-      if (!testClient?.isReady) {
-        console.log('Skipping WorkerPool startup test - Redis not available');
-        return;
-      }
-
       // Start queue manager first
       await queueManager.start();
       expect(queueManager.isRunning()).toBe(true);
@@ -115,32 +100,24 @@ describe('WorkerPool Integration Tests', () => {
     });
 
     it('should handle worker scaling based on queue depth', async () => {
-      if (!testClient?.isReady) {
-        console.log('Skipping WorkerPool scaling test - Redis not available');
-        expect(true).toBe(true); // Mark test as passed when skipped
-        return;
-      }
-
-      await queueManager.start();
-      
-      // Create a separate RedisQueue instance for adding test data
+      // Create a separate RedisQueue instance for adding test data BEFORE starting queue manager
       const testRedisQueue = new RedisQueue({
         url: redisUrl,
         keyPrefix: keyPrefix
       });
       await testRedisQueue.connect();
       
-      // Add a large number of items to queue using RedisQueue API to ensure some remain after workers start
+      // Add a large number of items to queue using RedisQueue API before any background processing starts
       for (let i = 0; i < 50; i++) {
         await testRedisQueue.enqueue(`scale-test-${i}`, { content: `test ${i}` }, QueuePriority.NORMAL);
       }
 
-      // Add delay to ensure all Redis operations are committed
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Verify queue has items before starting worker pool
+      // Verify queue has items before starting any processing
       const initialMetrics = await testRedisQueue.getQueueMetrics();
       expect(initialMetrics.totalDepth).toBe(50);
+
+      // Now start queue manager
+      await queueManager.start();
 
       // Now start worker pool with longer delay to prevent immediate processing
       await workerPool.start();
@@ -183,12 +160,6 @@ describe('WorkerPool Integration Tests', () => {
     });
 
     it('should process queue items when workers are available', async () => {
-      if (!testClient?.isReady) {
-        console.log('Skipping WorkerPool queue processing test - Redis not available');
-        expect(true).toBe(true); // Mark test as passed when skipped
-        return;
-      }
-
       await queueManager.start();
       await workerPool.start();
 
@@ -218,12 +189,6 @@ describe('WorkerPool Integration Tests', () => {
     });
 
     it('should handle worker health checks with real queue', async () => {
-      if (!testClient?.isReady) {
-        console.log('Skipping WorkerPool health check test - Redis not available');
-        expect(true).toBe(true); // Mark test as passed when skipped
-        return;
-      }
-
       await queueManager.start();
       await workerPool.start();
 
@@ -243,11 +208,6 @@ describe('WorkerPool Integration Tests', () => {
     });
 
     it('should coordinate between multiple workers and queue', async () => {
-      if (!testClient?.isReady) {
-        console.log('Skipping WorkerPool coordination test - Redis not available');
-        return;
-      }
-
       // Configure for multiple workers
       const multiWorkerPool = new WorkerPool(
         {
@@ -290,11 +250,6 @@ describe('WorkerPool Integration Tests', () => {
     });
 
     it('should handle graceful shutdown of entire system', async () => {
-      if (!testClient?.isReady) {
-        console.log('Skipping WorkerPool shutdown test - Redis not available');
-        return;
-      }
-
       await queueManager.start();
       await workerPool.start();
 
@@ -328,11 +283,6 @@ describe('WorkerPool Integration Tests', () => {
 
   describe('Error Handling Integration', () => {
     it('should handle Redis connection errors gracefully', async () => {
-      if (!testClient?.isReady) {
-        console.log('Skipping WorkerPool Redis error test - Redis not available');
-        return;
-      }
-
       // Create components with invalid Redis URL
       const invalidQueueManager = new QueueManager({
         redisUrl: 'redis://invalid-host:6379',
@@ -359,11 +309,6 @@ describe('WorkerPool Integration Tests', () => {
     });
 
     it('should recover from temporary Redis disconnections', async () => {
-      if (!testClient?.isReady) {
-        console.log('Skipping WorkerPool Redis recovery test - Redis not available');
-        return;
-      }
-
       await queueManager.start();
       await workerPool.start();
 
