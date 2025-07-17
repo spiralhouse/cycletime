@@ -33,6 +33,9 @@ describe('RedisQueue Integration Tests', () => {
       return; // Skip if Redis not available
     }
 
+    // Clear all Redis data to avoid test interference
+    await testClient.flushAll();
+
     // Use unique key prefix for test isolation with process ID for extra uniqueness
     keyPrefix = `test-queue-${Date.now()}-${process.pid}-${Math.random().toString(36).substr(2, 9)}`;
     
@@ -41,12 +44,6 @@ describe('RedisQueue Integration Tests', () => {
       keyPrefix: keyPrefix
     });
     await redisQueue.connect();
-    
-    // Clear any existing data for this prefix
-    const keys = await testClient.keys(`${keyPrefix}:*`);
-    if (keys.length > 0) {
-      await testClient.del(keys);
-    }
   });
 
   afterEach(async () => {
@@ -94,6 +91,9 @@ describe('RedisQueue Integration Tests', () => {
       await redisQueue.enqueue('low-1', { content: 'low priority' }, QueuePriority.LOW);
       await redisQueue.enqueue('normal-1', { content: 'normal priority' }, QueuePriority.NORMAL);
       await redisQueue.enqueue('high-1', { content: 'high priority' }, QueuePriority.HIGH);
+
+      // Add delay to ensure Redis operations are committed
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       // Verify queue metrics
       const metrics = await redisQueue.getQueueMetrics();
@@ -161,11 +161,14 @@ describe('RedisQueue Integration Tests', () => {
 
       await Promise.all(enqueuePromises);
 
+      // Add a small delay to ensure Redis operations are fully committed
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Verify all items were enqueued
       const metrics = await redisQueue.getQueueMetrics();
       expect(metrics.totalDepth).toBe(10);
 
-      // Dequeue all items
+      // Dequeue all items with proper error handling
       const items = [];
       for (let i = 0; i < 10; i++) {
         const item = await redisQueue.dequeue();
