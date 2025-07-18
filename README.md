@@ -2,42 +2,42 @@
 
 **Intelligent Project Orchestration Platform with MCP Integration**
 
-*Empower your team with intelligent project orchestration that keeps you in charge, enhances accuracy, and accelerates collaboration*
+*Automate PRD-to-development planning while maintaining human control over all technical decisions*
 
-## 🚀 What is CycleTime?
+## What is CycleTime?
 
 CycleTime automates the transformation of PRDs into structured development plans while keeping humans in control of all critical decisions. Powered by **Claude 4 Sonnet** for intelligent planning and analysis, CycleTime creates a seamless connection between documentation, planning, and execution.
 
-### ✨ Key Objectives
+### Key Objectives
 
-- **⚡ 80% Faster Planning**: Turn PRDs into actionable development plans in 2-3 hours instead of 2-3 days
-- **🤖 AI-Powered Intelligence**: Leverage Claude 4 Sonnet for consistent, high-quality project analysis
-- **📚 Living Documentation**: Keep project docs in sync with actual development progress in your repository
-- **🔗 Seamless AI Integration**: Enable your existing AI tools to access full project context via MCP
-- **👥 Human-Centered**: AI suggests, humans decide - maintain full control over critical decisions
+- **Faster Planning**: Convert PRDs into actionable development plans in hours, not days
+- **Consistent Analysis**: Use Claude 4 Sonnet for reliable project breakdown and technical planning
+- **Repository-Based Documentation**: Keep project docs synchronized with actual development progress
+- **AI Tool Integration**: Provide project context to existing AI assistants through MCP
+- **Human Oversight**: AI generates suggestions, teams make all final decisions
 
-### 🎯 Perfect For
+### Target Users
 
-- **Product Managers** who want to quickly translate product vision into clear engineering work
-- **Engineering Managers** seeking consistent task breakdown and progress visibility  
-- **Development Teams** that value documentation that stays current with code
+- **Product Managers** who need to translate product requirements into clear engineering specifications
+- **Engineering Managers** who want consistent project breakdown and dependency tracking
+- **Technical Leads** who value up-to-date project documentation that reflects actual implementation
 
-## 🏗️ How CycleTime Works
+## How CycleTime Works
 
-1. **📝 Write PRDs in Markdown** - Store requirements in your repository's `/docs/requirements/` directory
-2. **🧠 AI Analysis** - Claude 4 Sonnet analyzes your PRD and generates structured project plans
-3. **👀 Human Review** - Review and refine generated `project-plan.md`, `milestones.md`, and `architecture.md`
-4. **🎫 Issue Creation** - Automatically create Linear/Jira issues with links to your documentation
-5. **🔄 Stay Synchronized** - Documentation stays current as your project evolves
+1. **Store PRDs in Markdown** - Place requirements in your repository's `/docs/requirements/` directory
+2. **AI Analysis** - Claude 4 Sonnet processes your PRD and generates structured project plans
+3. **Team Review** - Review and refine generated `project-plan.md`, `milestones.md`, and `architecture.md`
+4. **Issue Creation** - Generate Linear/Jira issues with links to your documentation
+5. **Maintain Sync** - Documentation updates automatically as your project progresses
 
-### 📊 Expected Results
+### Expected Results
 
-- **40% faster** time-to-first-commit on new projects
-- **95%+ user satisfaction** with AI-generated plans after human review
-- **Living documentation** that teams actually use and maintain
-- **Developer tool freedom** - teams continue using their preferred development tools and workflows
+- Reduced time-to-first-commit on new projects
+- High-quality project plans that require minimal revision
+- Documentation that stays current with implementation
+- No disruption to existing development tools and workflows
 
-## 🛠️ Tool Freedom & Integration
+## Integration & Compatibility
 
 CycleTime is designed to work with your existing development workflow, not replace it:
 
