@@ -126,23 +126,23 @@ services:
   web-dashboard:
     build:
       context: .
-      dockerfile: services/web-dashboard/Dockerfile.dev
+      dockerfile: packages/web-dashboard/Dockerfile.dev
     container_name: cycletime-web
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-8000}
-      WEB_PORT: ${WEB_PORT:-3001}
+      WEB_DASHBOARD_PORT: ${WEB_DASHBOARD_PORT:-3000}
     volumes:
       - ./:/app
       - cycletime_node_modules:/app/node_modules
     ports:
-      - "${WEB_PORT:-3001}:3001"
+      - "${WEB_DASHBOARD_PORT:-3000}:3000"
     networks:
       - cycletime-network
     depends_on:
       - api-gateway
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -202,13 +202,15 @@ services:
   document-service:
     build:
       context: .
-      dockerfile: services/document-service/Dockerfile.dev
+      dockerfile: packages/document-service/Dockerfile.dev
     container_name: cycletime-documents
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       API_URL: http://api-gateway:8000
       DOCUMENT_SERVICE_PORT: ${DOCUMENT_SERVICE_PORT:-8003}
-      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ENDPOINT: minio:9000
+      MINIO_PORT: 9000
+      MINIO_USE_SSL: "false"
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
     volumes:
@@ -231,7 +233,7 @@ services:
   task-service:
     build:
       context: .
-      dockerfile: services/task-service/Dockerfile.dev
+      dockerfile: packages/task-service/Dockerfile.dev
     container_name: cycletime-tasks
     environment:
       NODE_ENV: ${NODE_ENV:-development}

@@ -4,11 +4,11 @@
 
 *Enhance team collaboration and developer experience with intelligent AI assistance that keeps humans in control*
 
-## What is CycleTime?
+## 🚀 What is CycleTime?
 
-CycleTime enhances team collaboration by intelligently assisting with PRD analysis and development planning. Built with support for leading AI models (OpenAI, Anthropic, Google, and more), CycleTime improves developer experience while ensuring teams maintain full control over all critical decisions.
+CycleTime enhances team collaboration and developer experience with intelligent AI assistance that keeps humans in control. Built with support for leading AI models (OpenAI, Anthropic, Google, and more), CycleTime improves developer experience while ensuring teams maintain full control over all critical decisions.
 
-### Key Objectives
+### ✨ Key Objectives
 
 - **Enhanced Collaboration**: Streamline team communication with AI-assisted project breakdown and shared documentation
 - **Improved Developer Experience**: Leverage your preferred AI models to reduce planning overhead and focus on building
