@@ -69,10 +69,10 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
 - **Sub-issues**: Sub-issues will be created after technical design is approved  
 - **Scope**: Single-provider usage analytics, budget alerts
 
-**SPI-17: PRD Analysis Engine**
-- **Description**: Build core PRD analysis and document generation using Claude 4 Sonnet
+**SPI-17: PRD Analysis Engine with Contract Generation**
+- **Description**: Build core PRD analysis, document generation, and basic contract generation using Claude 4 Sonnet
 - **Sub-issues**: Sub-issues will be created after technical design is approved
-- **Scope**: PRD analysis, project plan generation, template creation
+- **Scope**: PRD analysis, project plan generation, template creation, **system boundary analysis, basic API contract generation**
 
 **~~SPI-15: Model Selection Logic~~** *(Eliminated - not needed for single-model approach)*
 
@@ -82,9 +82,10 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
 - **Description**: Implement Git repository operations and webhooks
 - **Sub-issues**: Sub-issues will be created after technical design is approved
 
-**SPI-19: Document Processing**
-- **Description**: Build Markdown document parsing and analysis
+**SPI-19: Document Processing with Standards Engine**
+- **Description**: Build Markdown document parsing, analysis, and basic development standards management
 - **Sub-issues**: Sub-issues will be created after technical design is approved
+- **Scope**: Document parsing, basic team standards definition, standards storage in repository (`/docs/standards/` directory)
 
 **SPI-20: Linear API Integration**
 - **Description**: Connect with Linear for issue management
@@ -139,10 +140,10 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
   - `SPI-25-2`: Project context and status retrieval
   - `SPI-25-3`: Cross-reference and dependency analysis
 
-**SPI-26: Local AI Integration**
-- **Description**: Enable integration with Claude/Copilot
+**SPI-26: Local AI Integration with Standards Delivery**
+- **Description**: Enable integration with Claude/Copilot and deliver development standards via MCP
 - **Sub-issues**: Sub-issues will be created after technical design is approved
-- **Scope**: MCP tools for task context, implementation suggestions, design feedback (no model routing needed)
+- **Scope**: MCP tools for task context, implementation suggestions, design feedback, **standards delivery to AI coding tools, basic contract access**
 
 **SPI-27: CLI Tool**
 - **Description**: Command-line interface for project management
@@ -152,7 +153,23 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
   - `SPI-27-2`: PRD analysis and issue creation commands
   - `SPI-27-3`: Local MCP server management
 
-### Milestone 6: Polish & Testing (Week 6)
+### Milestone 6: Killer Features Validation & Testing (Week 6)
+
+**SPI-32: Contract-First Development Validation**
+- **Description**: Validate contract generation and parallel development workflow
+- **Sub-issues**:
+  - `SPI-32-DESIGN`: Technical design for contract validation workflow
+  - `SPI-32-1`: End-to-end contract generation testing with real PRD
+  - `SPI-32-2`: Contract compliance validation system
+  - `SPI-32-3`: Demo scenario for parallel development workflow
+
+**SPI-33: Standards Enforcement Validation**
+- **Description**: Validate development standards delivery and enforcement
+- **Sub-issues**:
+  - `SPI-33-DESIGN`: Technical design for standards validation workflow
+  - `SPI-33-1`: Standards delivery to AI tools via MCP testing
+  - `SPI-33-2`: Basic compliance analysis implementation
+  - `SPI-33-3`: Demo scenario for standards-aware development
 
 **SPI-23: MVP Testing & Polish**
 - **Description**: Build complete test suite for all components
@@ -209,6 +226,8 @@ This document outlines the MVP project plan for CycleTime - an intelligent proje
 
 ### Functional Requirements
 - [ ] Analyze PRD.md and generate project-plan.md in <5 minutes
+- [ ] **Generate basic API contracts and system boundaries from PRD**
+- [ ] **Store and deliver development standards via MCP to AI coding tools**
 - [ ] Create Linear issues with documentation links
 - [ ] MCP server provides repository context to Local AI
 - [ ] Web interface allows complete project management
@@ -276,14 +295,20 @@ The following Linear issues have been created in the CycleTime Scrum project:
 ### Milestone 6: Testing & Polish
 - **SPI-23**: MVP Testing & Polish
 
-**Total Issues Created**: 13 core issues *(SPI-15 eliminated for single-model approach)*
+### New Milestone 6 Issues:
+- **SPI-32**: Contract-First Development Validation
+- **SPI-33**: Standards Enforcement Validation
+
+**Total Issues Created**: 15 core issues *(SPI-15 eliminated, SPI-32 & SPI-33 added for killer features)*
 **Next Steps**: Create technical design sub-issues as each issue is started
 
-### **Scope Reduction Benefits**
+### **Updated MVP Strategy**
+- **Includes Killer Features**: Contract-first development and standards enforcement capabilities included in simplified form
 - **Simplified architecture**: Direct Claude API integration instead of orchestration layer
 - **Reduced complexity**: Single provider eliminates model routing complexity  
 - **Faster development**: Fewer abstraction layers and configuration options
-- **Lower risk**: Fewer external dependencies and failure points
+- **Market Differentiation**: MVP validates unique value propositions that set CycleTime apart
+- **Lower risk**: Fewer external dependencies while maintaining competitive advantages
 - **Easier maintenance**: Simpler codebase with single AI provider integration
 
 ---
