@@ -45,7 +45,9 @@ export class RedisQueue extends EventEmitter {
   }
 
   async disconnect(): Promise<void> {
-    await this.client.disconnect();
+    if (this.client.isOpen) {
+      await this.client.disconnect();
+    }
   }
 
   private ensureConnected(): void {
@@ -72,7 +74,7 @@ export class RedisQueue extends EventEmitter {
     };
 
     const queueKey = this.getQueueKey(priority);
-    await this.client.lPush(queueKey, JSON.stringify(queueItem));
+    await this.client.rPush(queueKey, JSON.stringify(queueItem));
   }
 
   async dequeue<T>(): Promise<QueueItem<T> | null> {
@@ -83,7 +85,7 @@ export class RedisQueue extends EventEmitter {
 
     for (const priority of priorities) {
       const queueKey = this.getQueueKey(priority);
-      const item = await this.client.rPop(queueKey);
+      const item = await this.client.lPop(queueKey);
 
       if (item) {
         try {
@@ -105,7 +107,7 @@ export class RedisQueue extends EventEmitter {
 
     for (const priority of priorities) {
       const queueKey = this.getQueueKey(priority);
-      const items = await this.client.lRange(queueKey, -1, -1);
+      const items = await this.client.lRange(queueKey, 0, 0);
 
       if (items.length > 0) {
         try {

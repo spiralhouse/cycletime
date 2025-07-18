@@ -46,6 +46,7 @@ export class QueueManager {
   private lastCleanupRun: number = 0;
   private lastRetryProcessRun: number = 0;
   private shutdownPromise: Promise<void> | null = null;
+  private initialTasks: Promise<void>[] = [];
 
   constructor(config: QueueManagerConfig) {
     this.config = {
@@ -144,18 +145,24 @@ export class QueueManager {
       });
     }, this.config.retryDelay);
 
-    // Run initial tasks
-    this.scheduleInitialTasks();
+    // Schedule initial tasks with slight delay to ensure they can be canceled
+    setTimeout(() => {
+      this.scheduleInitialTasks();
+    }, 10);
   }
 
   private scheduleInitialTasks(): void {
-    this.runCleanupTask().catch(error => {
+    if (!this.running) return;
+    
+    const cleanupTask = this.runCleanupTask().catch(error => {
       this.logError('Initial cleanup task failed', error);
     });
-
-    this.runRetryTask().catch(error => {
+    
+    const retryTask = this.runRetryTask().catch(error => {
       this.logError('Initial retry task failed', error);
     });
+    
+    this.initialTasks = [cleanupTask, retryTask];
   }
 
   private logError(message: string, error: Error): void {
@@ -175,6 +182,12 @@ export class QueueManager {
   }
 
   private async gracefulShutdown(): Promise<void> {
+    // Wait for any running initial tasks to complete first
+    if (this.initialTasks.length > 0) {
+      await Promise.allSettled(this.initialTasks);
+      this.initialTasks = [];
+    }
+    
     const shutdownPromise = this.redisQueue.disconnect();
     
     // Wait for graceful shutdown timeout or Redis disconnect, whichever comes first
@@ -186,6 +199,9 @@ export class QueueManager {
   }
 
   private async runCleanupTask(): Promise<void> {
+    if (!this.running) {
+      return;
+    }
     try {
       await this.cleanupStaleRequests();
       this.lastCleanupRun = Date.now();
@@ -195,6 +211,9 @@ export class QueueManager {
   }
 
   private async runRetryTask(): Promise<void> {
+    if (!this.running) {
+      return;
+    }
     try {
       await this.processRetryQueue();
       this.lastRetryProcessRun = Date.now();

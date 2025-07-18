@@ -119,10 +119,10 @@ The CycleTime project uses GitHub Actions for continuous integration and deploym
 **Local Development:**
 ```bash
 # Build all packages
-npm run build
+turbo build
 
 # Test all packages in parallel
-npm run test
+turbo test
 
 # Test specific package
 npx turbo run test --filter=ai-service
@@ -271,7 +271,7 @@ All PRs must pass TurboRepo orchestrated checks:
 #### CI Failures
 1. **Database connection** - Check PostgreSQL service configuration
 2. **Test failures** - Review test logs and fix failing tests
-3. **Linting errors** - Run `npm run lint` locally and fix issues
+3. **Linting errors** - Run `turbo lint` locally and fix issues
 
 #### Deployment Failures
 1. **Migration errors** - Check database schema compatibility
@@ -286,10 +286,10 @@ All PRs must pass TurboRepo orchestrated checks:
 ### Debug Commands
 ```bash
 # Local CI simulation with TurboRepo
-npm run build        # Build all packages
-npm run test         # Test all packages in parallel
-npm run lint         # Lint all packages in parallel
-npm run typecheck    # Type check all packages
+turbo build        # Build all packages
+turbo test         # Test all packages in parallel
+turbo lint         # Lint all packages in parallel
+turbo typecheck    # Type check all packages
 
 # Package-specific debugging
 npx turbo run test --filter=api-gateway
