@@ -22,9 +22,9 @@ Currently, there's no integrated solution that maintains living documentation in
 
 CycleTime is an intelligent project orchestration platform that automates the transformation of PRDs into structured development plans while keeping humans in control of all critical decisions. The platform specifically addresses AI agent context window limitations through repository-centric documentation and intelligent context management, enabling reliable AI collaboration across extended development cycles.
 
-The platform leverages Anthropic's Claude 4 Sonnet for planning and analysis tasks, while supporting integration with Local AI tools (GitHub Copilot, etc.) for code-specific assistance during development. Through advanced context window management via the Model Context Protocol (MCP), CycleTime ensures that AI agents maintain consistent access to relevant project information without overwhelming their processing capabilities or causing hallucinations due to context loss.
+The platform provides flexible AI model selection with support for leading providers (OpenAI, Anthropic, Google, and more) for planning and analysis tasks, while supporting integration with Local AI tools (GitHub Copilot, etc.) for code-specific assistance during development. Through advanced context window management via the Model Context Protocol (MCP), CycleTime ensures that AI agents maintain consistent access to relevant project information without overwhelming their processing capabilities or causing hallucinations due to context loss.
 
-By analyzing Markdown-formatted requirements documents stored in the project repository and providing AI-powered assistance through Claude 4 Sonnet, CycleTime creates a seamless connection between documentation, planning, and execution that both humans and AI agents can access throughout the project lifecycle, with intelligent context prioritization that scales from simple features to complex, multi-month projects. The platform supports both monorepo and polyrepo architectures, with the MVP implementation focusing on monorepos for streamlined initial deployment.
+By analyzing Markdown-formatted requirements documents stored in the project repository and providing AI-powered assistance through your chosen AI models, CycleTime creates a seamless connection between documentation, planning, and execution that both humans and AI agents can access throughout the project lifecycle, with intelligent context prioritization that scales from simple features to complex, multi-month projects. The platform supports both monorepo and polyrepo architectures, with the MVP implementation focusing on monorepos for streamlined initial deployment.
 
 ### 1.4 Context Window Management Strategy
 
@@ -50,8 +50,8 @@ This strategy transforms AI agent reliability from a best-effort interaction to 
 
 ### 2.1 Primary Goals
 
-1. **Accelerate Project Planning**: Reduce PRD-to-development-kickoff time by 80% through intelligent automation with Claude 4 Sonnet
-1. **Reliable AI Integration**: Provide consistent, high-quality analysis and planning using Claude 4 Sonnet with 95%+ success rate
+1. **Accelerate Project Planning**: Reduce PRD-to-development-kickoff time by 80% through intelligent automation with your preferred AI models
+1. **Reliable AI Integration**: Provide consistent, high-quality analysis and planning using optimal AI models with 95%+ success rate
 1. **Maintain Living Documentation**: Keep all project documentation in sync with actual development progress
 1. **Seamless Local AI Integration**: Enable Local AI tools to access repository context through MCP integration
 1. **Eliminate Context Window Limitations**: Provide AI agents with intelligent, prioritized access to project context, eliminating hallucinations and inconsistencies caused by context loss
@@ -60,7 +60,7 @@ This strategy transforms AI agent reliability from a best-effort interaction to 
 ### 2.2 Success Metrics
 
 - **Time Savings**: Reduce project planning time from 2-3 days to 2-3 hours
-- **AI Reliability**: Achieve 95%+ successful Claude 4 Sonnet API responses with consistent quality
+- **AI Reliability**: Achieve 95%+ successful AI API responses with consistent quality across multiple providers
 - **Context Window Effectiveness**: Reduce AI agent hallucination incidents by 90% through intelligent context management
 - **Context Retrieval Performance**: Deliver relevant project context to AI agents in <5 seconds for 95% of requests
 - **Adoption**: 200+ projects managed within first year
@@ -133,7 +133,7 @@ sequenceDiagram
     
     PM->>REPO: Commit PRD.md to /docs/requirements/
     PM->>CT: Trigger analysis via web interface
-    CT->>AI: Analyze PRD with Claude 4
+    CT->>AI: Analyze PRD with selected AI model
     AI->>REPO: Read PRD.md
     AI->>AI: Generate development plan
     AI->>REPO: Create project-plan.md, milestones.md, architecture.md
@@ -263,7 +263,7 @@ sequenceDiagram
 
 1. **Sarah (PM)** commits `PRD-oauth-enhancement.md` to `/docs/requirements/`
 1. **Sarah** triggers CycleTime analysis via web dashboard
-1. **CycleTime** analyzes PRD using Claude 4 Sonnet, generates:
+1. **CycleTime** analyzes PRD using your preferred AI model, generates:
 - `project-plan.md` (3-month timeline, 4 milestones)
 - `milestones.md` (OAuth providers, Security audit, UI redesign, Testing)
 - `architecture.md` (Security architecture, API changes, Database schema)
@@ -278,8 +278,8 @@ sequenceDiagram
 **Week 2: Technical Design**
 7. **Jordan (Senior Dev)** selects AUTH-1 epic, creates feature branch `feature/google-oauth`
 8. **Jordan** uses Local AI with MCP tool: `get-documentation` to review requirements and architecture
-9. **CycleTime** uses Claude 4 Sonnet for architectural analysis and reasoning
-10. **CycleTime** generates `/docs/technical-designs/google-oauth-integration.md` using Claude 4 Sonnet with:
+9. **CycleTime** uses optimal AI models for architectural analysis and reasoning
+10. **CycleTime** generates `/docs/technical-designs/google-oauth-integration.md` using selected AI models with:
 - API endpoint specifications
 - Database schema changes
 - Security considerations
@@ -313,7 +313,7 @@ sequenceDiagram
 **Key Benefits Demonstrated**:
 
 - **Documentation stays current**: All project context lives in repository with code
-- **Reliable AI assistance**: Claude 4 Sonnet for planning and architecture, Local AI for coding assistance
+- **Reliable AI assistance**: Optimal AI models for planning and architecture, Local AI for coding assistance
 - **Seamless tool integration**: Linear issues link directly to repository documentation
 - **Human oversight**: All AI suggestions reviewed and approved by appropriate team members
 - **Consistent quality**: Single AI model ensures predictable, high-quality analysis and planning
@@ -341,7 +341,7 @@ sequenceDiagram
     Note over Sarah,LINEAR: Week 1: Planning Phase
     Sarah->>REPO: Commit PRD-oauth-enhancement.md
     Sarah->>CT: Trigger analysis
-    CT->>AI: Analyze PRD with Claude 4
+    CT->>AI: Analyze PRD with selected AI model
     AI->>REPO: Generate project-plan.md, milestones.md, architecture.md
     CT->>Sarah: Notify planning documents ready for review
     CT->>Alex: Notify planning documents ready for review
@@ -355,7 +355,7 @@ sequenceDiagram
     Jordan->>REPO: Create feature/google-oauth branch
     Jordan->>LocalAI: get-documentation for requirements
     LocalAI->>CT: Request context via MCP
-    CT->>AI: Route to Claude 4 for architecture
+    CT->>AI: Route to optimal model for architecture
     AI->>REPO: Generate google-oauth-integration.md template
     CT->>Jordan: Notify technical design template ready
     Jordan->>REPO: Refine design with implementation details
@@ -391,19 +391,19 @@ sequenceDiagram
 
 ### 4.1 Must-Have Features (P0)
 
-#### Feature 1: Claude 4 Sonnet PRD Analysis Engine
+#### Feature 1: Multi-Model PRD Analysis Engine
 
-- **Description**: Analyze Markdown PRD documents using Claude 4 Sonnet for consistent, high-quality planning and analysis
+- **Description**: Analyze Markdown PRD documents using optimal AI models for consistent, high-quality planning and analysis
 - **User Story**: “As a Product Manager, I want the system to automatically select the best AI model for analyzing my PRD so that I get the highest quality results while optimizing costs”
 - **Acceptance Criteria**:
   - Parse Markdown PRD documents from repository `/docs/requirements/` directory
-  - Analyze requirements using Claude 4 Sonnet for complex reasoning and understanding
+  - Analyze requirements using your preferred AI models for complex reasoning and understanding
   - Generate planning documents: `project-plan.md`, `milestones.md`, `architecture.md` in repository
   - Support standard Markdown extensions (tables, code blocks, mermaid diagrams)
   - Achieve 95%+ successful API responses with consistent quality output
   - Provide clear error handling and retry mechanisms for API failures
-  - Support configurable Claude 4 Sonnet parameters and prompts
-- **Implementation**: Direct Claude 4 Sonnet integration, Git integration, Markdown parsing library, template-based document generation
+  - Support configurable AI model parameters and prompts across multiple providers
+- **Implementation**: Multi-provider AI integration, Git integration, Markdown parsing library, template-based document generation
 
 #### Feature 2: Documentation-Linked Issue Management
 
@@ -423,7 +423,7 @@ sequenceDiagram
 - **Description**: Generate technical design documents focused on architectural decisions with AI-assisted task breakdown for implementation
 - **User Story**: “As a Senior Developer, I want technical designs created with the most appropriate AI model for architectural planning so that I get consistent, high-quality specifications”
 - **Acceptance Criteria**:
-  - Use Claude 4 Sonnet for technical analysis and architectural reasoning
+  - Use optimal AI models for technical analysis and architectural reasoning
   - Generate technical design templates in `/docs/technical-designs/` directory focusing on architectural decisions
   - Provide AI-assisted task breakdown using feature complexity templates
   - Create design documents with high-level specifications and decision rationale
@@ -431,7 +431,7 @@ sequenceDiagram
   - Enable breakdown review process for high-risk features
   - Automatically detect when code changes affect architectural decisions
   - Enable collaborative editing through standard Git workflow with AI assistance
-- **Implementation**: Claude 4 Sonnet integration, Git integration, template system, task breakdown algorithms, complexity scoring
+- **Implementation**: Multi-model AI integration, Git integration, template system, task breakdown algorithms, complexity scoring
 
 #### Feature 4: Repository-Synced Progress Tracking
 
@@ -495,11 +495,11 @@ sequenceDiagram
 
 **Primary Architecture**: Repository-Centric with Context-Aware AI Integration
 
-- **Claude 4 Sonnet Integration**: Direct API integration for all planning and analysis tasks with context window optimization
+- **Multi-Model AI Integration**: Direct API integration with multiple providers for all planning and analysis tasks with intelligent model routing
 - **Git Integration**: Direct repository access for reading/writing Markdown documentation
 - **Context Management Service**: Intelligent document chunking, semantic search, and context prioritization engine
 - **CycleTime Server**: Central orchestration engine with REST API and webhook support
-- **Web Dashboard**: React-based interface for project management, document preview, and Claude configuration
+- **Web Dashboard**: React-based interface for project management, document preview, and AI model configuration
 - **MCP Server Component**: Provides AI assistance with optimized repository context delivery for Local AI tools
 - **Document Indexing Service**: Vector-based search and semantic analysis for efficient context retrieval
 - **Context Window Optimizer**: Real-time context budgeting and delivery optimization for AI agents
@@ -655,7 +655,7 @@ sequenceDiagram
 
 ### 8.1 External Dependencies
 
-- **AI Model Provider**: Anthropic Claude 4 Sonnet API for planning and analysis
+- **AI Model Providers**: Multiple provider APIs (OpenAI, Anthropic, Google, etc.) for planning and analysis
 - **Git Integration**: Direct repository access via SSH/HTTPS for documentation management
 - **Issue Tracking APIs**: Jira, GitHub Issues, Linear APIs for bidirectional sync
 - **Markdown Processing**: Advanced Markdown parsing with support for extensions (tables, mermaid, etc.)
