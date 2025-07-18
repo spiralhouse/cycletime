@@ -2,7 +2,7 @@
 
 **Intelligent Project Orchestration Platform with MCP Integration**
 
-*Transform your Product Requirements Documents into structured development plans in hours, not days*
+*Empower your team with intelligent project orchestration that preserves your workflow, enhances accuracy, and accelerates collaboration*
 
 ## 🚀 What is CycleTime?
 
