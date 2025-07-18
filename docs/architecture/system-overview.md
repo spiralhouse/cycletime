@@ -2,13 +2,14 @@
 
 ## 1. Overview
 
-CycleTime is an intelligent project orchestration platform that transforms PRDs into structured development plans using Claude 4 Sonnet for planning and analysis. The system uses a microservices architecture with repository-centric documentation, hybrid AI assistance, and advanced context window management to ensure reliable AI agent collaboration.
+CycleTime is an intelligent project orchestration platform that transforms PRDs into structured development plans using multi-model AI integration for optimal planning and analysis. The system uses a microservices architecture with repository-centric documentation, contract-first parallel development, custom development standards enforcement, and advanced context window management to ensure reliable AI agent collaboration.
 
 ### Core Principles
 - **Repository-centric**: All documentation lives in Git repositories with intelligent indexing
 - **Context-aware AI integration**: Intelligent context management prevents agent hallucination and maintains project coherence
-- **Hybrid AI workflow**: Claude 4 Sonnet for planning, Local AI for implementation with optimized context delivery
-- **Single-model integration**: Direct Claude 4 Sonnet API integration for consistency
+- **Multi-model AI orchestration**: Optimal AI model selection for different tasks (planning, contracts, standards, analysis)
+- **Contract-first development**: Automated generation of system boundaries and API contracts for parallel development
+- **Standards enforcement**: Custom development standards delivered via MCP with AI-powered compliance analysis
 - **Human-in-the-loop**: All AI suggestions require human approval
 - **Notification-driven**: Proactive user notifications for required actions
 - **Context window optimization**: Intelligent prioritization and chunking for maximum agent effectiveness
@@ -30,9 +31,11 @@ graph TB
     end
     
     subgraph "Core Services"
-        CLAUDE[Claude AI Service<br/>Direct Anthropic integration]
+        AI_ORCH[AI Orchestration Service<br/>Multi-model routing & optimization]
         CONTEXT[Context Management Service<br/>Intelligent chunking & prioritization]
         SEARCH[Document Indexing Service<br/>Vector-based semantic search]
+        CONTRACT[Contract Generation Engine<br/>API specs & system boundaries]
+        STANDARDS[Standards Engine<br/>Custom rules & compliance analysis]
         PROJ[Project Service<br/>CRUD operations]
         DOC[Documentation Service<br/>Template generation]
         TASK[Task Breakdown Service<br/>AI-assisted analysis]
@@ -52,7 +55,7 @@ graph TB
     end
     
     subgraph "External Systems"
-        ANTHROPIC[Anthropic Claude 4 Sonnet<br/>API]
+        AI_PROVIDERS[AI Model Providers<br/>OpenAI, Anthropic, Google, etc.]
         REPOS[Git Repositories<br/>GitHub, GitLab]
         TRACKERS[Issue Trackers<br/>Linear, GitHub, Jira]
         COMM[Communication<br/>Slack, Teams, Email]
@@ -64,29 +67,36 @@ graph TB
     
     %% API Layer connections
     API --> AUTH
-    API --> CLAUDE
+    API --> AI_ORCH
+    API --> CONTRACT
+    API --> STANDARDS
     API --> PROJ
     API --> DOC
     API --> TASK
     API --> NOTIF
     
     %% Core Service connections
-    CLAUDE --> ANTHROPIC
+    AI_ORCH --> AI_PROVIDERS
+    CONTRACT --> AI_ORCH
+    STANDARDS --> AI_ORCH
     CONTEXT --> SEARCH
     CONTEXT --> DOC
     SEARCH --> GIT
     PROJ --> GIT
     PROJ --> ISSUE
     DOC --> GIT
-    TASK --> CLAUDE
+    TASK --> AI_ORCH
     TASK --> CONTEXT
+    TASK --> CONTRACT
     NOTIF --> COMM
     MCP --> CONTEXT
+    MCP --> CONTRACT
+    MCP --> STANDARDS
     
     %% Integration Service connections
     GIT --> REPOS
     ISSUE --> TRACKERS
-    MCP --> CLAUDE
+    MCP --> AI_ORCH
     MCP --> GIT
     
     %% Data Layer connections
@@ -174,6 +184,32 @@ graph TB
   - Request queuing and batch processing
   - Response caching and optimization
   - Model provider API management and error handling
+  - Multi-provider integration (OpenAI, Anthropic, Google, etc.)
+  - Task-specific model routing for optimal performance
+
+#### Contract Generation Engine
+- **Technology**: Node.js with TypeScript, OpenAPI Generator, GraphQL Tools
+- **Responsibilities**:
+  - System boundary analysis from PRD requirements
+  - API contract generation (OpenAPI/GraphQL specifications)
+  - Component interface definition and validation
+  - Dependency mapping and integration point documentation
+  - Mock/stub template generation for parallel development
+  - Contract compliance validation against implementations
+  - Integration risk assessment and reporting
+  - Contract versioning and evolution management
+
+#### Standards Engine
+- **Technology**: Node.js with TypeScript, AST parsers, Rule Engine
+- **Responsibilities**:
+  - Custom development standards definition and storage
+  - AI-powered code compliance analysis
+  - Real-time standards delivery via MCP to AI coding tools
+  - Pull request compliance reporting with detailed feedback
+  - Configurable enforcement levels (advisory, warning, blocking)
+  - Standards template library with industry best practices
+  - Team-specific customization and rule inheritance
+  - Compliance metrics tracking and trend analysis
 
 #### Project Service
 - **Technology**: Node.js with TypeScript, Prisma ORM
@@ -240,8 +276,8 @@ graph TB
 #### MCP Server
 - **Technology**: Node.js with MCP Protocol, TypeScript, Context Window Optimization
 - **Responsibilities**:
-  - Local AI assistant integration (Claude, Copilot, etc.) with context window management
-  - Intelligent repository context provision to Local AI with semantic chunking
+  - Local AI assistant integration (Claude Code, Cursor, Windsurf, etc.) with context window management
+  - Intelligent repository context provision to AI coding tools with semantic chunking
   - Real-time project information access with context prioritization
   - Tool execution for documentation operations with context optimization
   - Context window budgeting and usage monitoring for connected agents
@@ -249,6 +285,10 @@ graph TB
   - Development workflow assistance with context-aware recommendations
   - Semantic search integration for relevant context discovery
   - Cross-reference resolution and dependency context delivery
+  - **Contract delivery**: API specifications and system boundaries to AI coding tools
+  - **Standards enforcement**: Real-time development standards guidance during coding
+  - **Compliance validation**: Automated code analysis against team standards
+  - **Integration support**: Mock/stub generation and contract validation tools
 
 ## 4. Data Architecture
 
@@ -265,8 +305,16 @@ documents, document_templates, document_versions
 -- Tasks and breakdown management
 tasks, task_templates, task_dependencies, estimates
 
+-- Contract-first development
+contracts, contract_versions, system_boundaries, api_specifications,
+dependency_maps, mock_templates, contract_compliance_reports
+
+-- Standards enforcement
+team_standards, standard_rules, compliance_reports, enforcement_configs,
+standard_templates, compliance_metrics, violation_history
+
 -- AI orchestration and costs
-ai_requests, model_configs, cost_tracking
+ai_requests, model_configs, cost_tracking, model_performance_metrics
 
 -- Notifications and user preferences
 notifications, notification_preferences, delivery_logs
