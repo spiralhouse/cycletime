@@ -6,41 +6,16 @@
 
 ## 🚀 What is CycleTime?
 
-CycleTime helps engineering teams of any size, from enterprises to solo founders, maintain alignment and deliver consistent, high-quality results through AI-powered project orchestration. Powered by **Claude 4 Sonnet** for intelligent planning and analysis, CycleTime creates a seamless connection between documentation, planning, and execution—without forcing teams to change their development tools or workflows.
+CycleTime enhances team collaboration and developer experience with intelligent AI assistance that keeps humans in control. Built with support for leading AI models (OpenAI, Anthropic, Google, and more), CycleTime improves developer experience while ensuring teams maintain full control over all critical decisions.
 
 ### ✨ Key Objectives
 
-- **🎯 Team Alignment**: Keep engineering teams of any size synchronized with consistent project documentation and clear development processes
-- **🛠️ Tool Freedom**: Developers stay productive with their preferred tools—we provide coordination, not another toolchain to learn
-- **📚 Living Documentation**: Keep project docs in sync with actual development progress in your repository
-- **🔗 Seamless AI Integration**: Enable your existing AI tools to access full project context via MCP
-- **⚙️ Best Practices at Scale**: Apply proven development processes to projects of any size, from solo work to large team initiatives
-- **👥 Human-Centered**: AI suggests, humans decide - maintain full control over critical decisions
-
-### 🎯 Perfect For
-
-- **Engineering Managers** leading teams of 5-50+ developers who need consistent coordination and progress visibility
-- **Technical Leads** managing complex projects with multiple developers and cross-team dependencies
-- **Product Managers** working with large engineering teams who need reliable translation of vision into structured development work
-- **Development Teams** that value documentation staying current with code and want to use their preferred development tools
-
-*While designed for large team coordination, solo developers also benefit from the structured processes and development best practices that scale with project growth.*
-
-## 🏗️ How CycleTime Works
-
-1. **📝 Write PRDs in Markdown** - Store requirements in your repository's `/docs/requirements/` directory
-2. **🧠 AI Analysis** - Claude 4 Sonnet analyzes your PRD and generates structured project plans
-3. **👀 Human Review** - Review and refine generated `project-plan.md`, `milestones.md`, and `architecture.md`
-4. **🎫 Issue Creation** - Automatically create Linear/Jira issues with links to your documentation
-5. **🔄 Stay Synchronized** - Documentation stays current as your project evolves
-
-### 📊 Expected Results
-
-- **Improved team coordination** with consistent documentation and clear development processes
-- **Higher accuracy** in project deliverables through structured planning and progress tracking
-- **95%+ satisfaction** with AI-generated plans after human review
-- **Living documentation** that teams actually use and maintain
-- **Developer tool freedom** - teams continue using their preferred development tools and workflows
+- **Enhanced Collaboration**: Streamline team communication with AI-assisted project breakdown and shared documentation
+- **Improved Developer Experience**: Leverage your preferred AI models to reduce planning overhead and focus on building
+- **Workflow Integration**: Seamlessly connect with your existing tools - Linear, Jira, GitHub Issues - without disrupting team processes
+- **Living Documentation**: Keep project context current and accessible to both humans and AI tools
+- **Seamless AI Integration**: Connect existing AI assistants to project context through MCP
+- **Human-Centered Control**: AI provides intelligent suggestions, teams drive all decisions
 
 ## 🚀 Killer Features
 
@@ -66,7 +41,22 @@ CycleTime introduces two revolutionary capabilities that no other platform provi
 - **Engineering Managers** who want to improve team productivity with consistent project breakdown and tracking
 - **Technical Leads** who value excellent developer experience with current documentation and AI-assisted planning
 
-## 🛠️ Tool Freedom & Integration
+## How CycleTime Works
+
+1. **Store PRDs in Markdown** - Place requirements in your repository's `/docs/requirements/` directory
+2. **AI Analysis** - Your chosen AI model processes your PRD and generates structured project plans
+3. **Team Review** - Review and refine generated `project-plan.md`, `milestones.md`, and `architecture.md`
+4. **Issue Creation** - Generate Linear/Jira issues with links to your documentation
+5. **Maintain Sync** - Documentation updates automatically as your project progresses
+
+### Expected Results
+
+- Enhanced team collaboration and reduced planning friction
+- Better developer experience with AI-assisted project breakdown
+- Documentation that serves both human teams and AI tools effectively
+- Improved productivity without disrupting existing development workflows
+
+## Integration & Compatibility
 
 CycleTime is designed to work with your existing development workflow, not replace it:
 
@@ -142,8 +132,8 @@ See our detailed [Roadmap](./docs/ROADMAP.md) for:
 - **MCP Server**: `localhost:8001`
   - Model Context Protocol for AI integration
   
-- **Claude Service**: `localhost:8002`
-  - Claude 4 Sonnet AI integration
+- **AI Service**: `localhost:8002`
+  - Multi-model AI integration (OpenAI, Anthropic, Google, etc.)
   
 - **Document Service**: `localhost:8003`
   - Markdown processing and storage
