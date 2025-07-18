@@ -78,8 +78,20 @@ describe('RedisQueue Integration Tests', () => {
       // Add delay to ensure Redis operations are committed
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Verify queue metrics
+      // Verify queue metrics with debug info
       const metrics = await redisQueue.getQueueMetrics();
+      
+      // Debug information if the test fails
+      if (metrics.totalDepth !== 3) {
+        console.log('Debug: Expected 3 items but got', metrics.totalDepth);
+        console.log('Debug: Queue metrics:', JSON.stringify(metrics, null, 2));
+        console.log('Debug: Key prefix:', keyPrefix);
+        
+        // Check if keys exist
+        const keys = await testClient.keys(`${keyPrefix}:*`);
+        console.log('Debug: Keys in Redis:', keys);
+      }
+      
       expect(metrics.totalDepth).toBe(3);
       expect(metrics.queueDepth[QueuePriority.HIGH]).toBe(1);
       expect(metrics.queueDepth[QueuePriority.NORMAL]).toBe(1);
