@@ -6,12 +6,12 @@
 
 ## What is CycleTime?
 
-CycleTime automates the transformation of PRDs into structured development plans while keeping humans in control of all critical decisions. Powered by **Claude 4 Sonnet** for intelligent planning and analysis, CycleTime creates a seamless connection between documentation, planning, and execution.
+CycleTime automates the transformation of PRDs into structured development plans while keeping humans in control of all critical decisions. Built with support for leading AI models (OpenAI, Anthropic, Google, and more), CycleTime creates a seamless connection between documentation, planning, and execution.
 
 ### Key Objectives
 
 - **Faster Planning**: Convert PRDs into actionable development plans in hours, not days
-- **Consistent Analysis**: Use Claude 4 Sonnet for reliable project breakdown and technical planning
+- **Consistent Analysis**: Use your preferred AI model for reliable project breakdown and technical planning
 - **Repository-Based Documentation**: Keep project docs synchronized with actual development progress
 - **AI Tool Integration**: Provide project context to existing AI assistants through MCP
 - **Human Oversight**: AI generates suggestions, teams make all final decisions
@@ -25,7 +25,7 @@ CycleTime automates the transformation of PRDs into structured development plans
 ## How CycleTime Works
 
 1. **Store PRDs in Markdown** - Place requirements in your repository's `/docs/requirements/` directory
-2. **AI Analysis** - Claude 4 Sonnet processes your PRD and generates structured project plans
+2. **AI Analysis** - Your chosen AI model processes your PRD and generates structured project plans
 3. **Team Review** - Review and refine generated `project-plan.md`, `milestones.md`, and `architecture.md`
 4. **Issue Creation** - Generate Linear/Jira issues with links to your documentation
 5. **Maintain Sync** - Documentation updates automatically as your project progresses
@@ -113,8 +113,8 @@ See our detailed [Roadmap](./docs/ROADMAP.md) for:
 - **MCP Server**: `localhost:8001`
   - Model Context Protocol for AI integration
   
-- **Claude Service**: `localhost:8002`
-  - Claude 4 Sonnet AI integration
+- **AI Service**: `localhost:8002`
+  - Multi-model AI integration (OpenAI, Anthropic, Google, etc.)
   
 - **Document Service**: `localhost:8003`
   - Markdown processing and storage
