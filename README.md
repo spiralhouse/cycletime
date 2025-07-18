@@ -35,6 +35,20 @@ CycleTime automates the transformation of PRDs into structured development plans
 - **40% faster** time-to-first-commit on new projects
 - **95%+ user satisfaction** with AI-generated plans after human review
 - **Living documentation** that teams actually use and maintain
+- **Developer tool freedom** - teams continue using their preferred development tools and workflows
+
+## 🛠️ Tool Freedom & Integration
+
+CycleTime is designed to work with your existing development workflow, not replace it:
+
+- **Any IDE or Editor**: VS Code, IntelliJ, Vim, Emacs - use whatever makes you productive
+- **Any Git Workflow**: Works with GitHub, GitLab, Bitbucket and any Git hosting platform
+- **Any Repository Structure**: Supports both monorepos and polyrepos (MVP focuses on monorepos)
+- **Any AI Tools**: MCP integration connects with existing AI assistants (GitHub Copilot, Cursor, etc.)
+- **Any Issue Tracker**: Native integration with Linear, Jira, GitHub Issues
+- **Repository-Centric**: All coordination happens through standard Git operations - no proprietary formats
+
+*The only requirement is that you store project documentation in Markdown format within your Git repository.*
 
 ## 🗺️ Roadmap
 
