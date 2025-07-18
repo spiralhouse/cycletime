@@ -42,10 +42,10 @@ CycleTime enhances team collaboration by intelligently assisting with PRD analys
 
 CycleTime is designed to work with your existing development workflow, not replace it:
 
-- **Any IDE or Editor**: VS Code, IntelliJ, Vim, Emacs - use whatever makes you productive
+- **Any AI Coding Tool**: Claude Code, Cursor, Windsurf, GitHub Copilot, JetBrains AI - use your preferred AI-enabled development environment
 - **Any Git Workflow**: Works with GitHub, GitLab, Bitbucket and any Git hosting platform
 - **Any Repository Structure**: Supports both monorepos and polyrepos (MVP focuses on monorepos)
-- **Any AI Tools**: MCP integration connects with existing AI assistants (GitHub Copilot, Cursor, etc.)
+- **MCP Integration**: Connect with any MCP-enabled AI tool for seamless context sharing and enhanced development workflows
 - **Any Issue Tracker**: Native integration with Linear, Jira, GitHub Issues
 - **Repository-Centric**: All coordination happens through standard Git operations - no proprietary formats
 

@@ -22,7 +22,7 @@ Currently, there's no integrated solution that maintains living documentation in
 
 CycleTime is an intelligent project orchestration platform that enhances team collaboration and developer experience through AI-assisted project planning. The platform keeps humans in control of all critical decisions while leveraging the best of AI to improve planning efficiency and team coordination. CycleTime specifically addresses AI agent context window limitations through repository-centric documentation and intelligent context management, enabling reliable human-AI collaboration across extended development cycles.
 
-The platform provides flexible AI model selection with support for leading providers (OpenAI, Anthropic, Google, and more) for planning and analysis tasks, while supporting integration with Local AI tools (GitHub Copilot, etc.) for code-specific assistance during development. Through advanced context window management via the Model Context Protocol (MCP), CycleTime ensures that AI agents maintain consistent access to relevant project information without overwhelming their processing capabilities or causing hallucinations due to context loss.
+The platform provides flexible AI model selection with support for leading providers (OpenAI, Anthropic, Google, and more) for planning and analysis tasks, while supporting integration with popular AI coding tools (Claude Code, Cursor, Windsurf, GitHub Copilot, JetBrains AI, etc.) for code-specific assistance during development. Through advanced context window management via the Model Context Protocol (MCP), CycleTime ensures that AI agents maintain consistent access to relevant project information without overwhelming their processing capabilities or causing hallucinations due to context loss.
 
 By analyzing Markdown-formatted requirements documents stored in the project repository and providing AI-powered assistance through your chosen AI models, CycleTime creates a seamless connection between documentation, planning, and execution that both humans and AI agents can access throughout the project lifecycle, with intelligent context prioritization that scales from simple features to complex, multi-month projects. The platform supports both monorepo and polyrepo architectures, with the MVP implementation focusing on monorepos for streamlined initial deployment.
 
@@ -54,7 +54,7 @@ This strategy transforms AI agent reliability from a best-effort interaction to 
 1. **Improve Developer Experience**: Leverage the best of AI to reduce planning overhead and enhance development workflows with 95%+ success rate
 1. **Integrate with Existing Workflows**: Seamlessly connect with teams' preferred issue tracking systems (Linear, Jira, GitHub Issues) without requiring process changes
 1. **Maintain Living Documentation**: Keep all project documentation in sync with actual development progress
-1. **Seamless Local AI Integration**: Enable Local AI tools to access repository context through MCP integration
+1. **Seamless AI Tool Integration**: Enable popular AI coding tools (Claude Code, Cursor, Windsurf, etc.) to access repository context through MCP integration
 1. **Eliminate Context Window Limitations**: Provide AI agents with intelligent, prioritized access to project context, eliminating hallucinations and inconsistencies caused by context loss
 1. **Maintain Human Control**: Ensure teams drive all critical decisions while benefiting from AI-enhanced collaboration and documentation accessibility
 
@@ -66,7 +66,7 @@ This strategy transforms AI agent reliability from a best-effort interaction to 
 - **Context Retrieval Performance**: Deliver relevant project context to AI agents in <5 seconds for 95% of requests
 - **Adoption**: 200+ projects managed within first year
 - **Quality**: 95%+ user satisfaction with generated plans after human review
-- **Integration Success**: 90%+ successful repository context provision to Local AI tools with optimized context delivery
+- **Integration Success**: 90%+ successful repository context provision to AI coding tools with optimized context delivery
 - **Productivity**: 40% faster time-to-first-commit on new projects
 - **Agent Consistency**: 85%+ consistency in AI recommendations across different conversation sessions for the same project context
 - **Retention**: 80%+ of teams continue using CycleTime after 3 months.
@@ -278,7 +278,7 @@ sequenceDiagram
 
 **Week 2: Technical Design**
 7. **Jordan (Senior Dev)** selects AUTH-1 epic, creates feature branch `feature/google-oauth`
-8. **Jordan** uses Local AI with MCP tool: `get-documentation` to review requirements and architecture
+8. **Jordan** uses Claude Code with MCP tool: `get-documentation` to review requirements and architecture
 9. **CycleTime** uses optimal AI models for architectural analysis and reasoning
 10. **CycleTime** generates `/docs/technical-designs/google-oauth-integration.md` using selected AI models with:
 - API endpoint specifications
@@ -296,10 +296,10 @@ sequenceDiagram
 14. **CycleTime** creates Linear issues with proper dependencies and context links
 
 **Week 3-4: Implementation**
-14. **Taylor (Backend)** claims `AUTH-1-1` and `AUTH-1-2`, uses Local AI with MCP assistant:
+14. **Taylor (Backend)** claims `AUTH-1-1` and `AUTH-1-2`, uses Cursor with MCP assistant:
 `CycleTime.getTaskContext({ task_id: "AUTH-1-1", include_code_context: true })`
-15. **Local AI tools** provide coding assistance with context from CycleTime MCP server
-16. **Casey (Frontend)** claims `AUTH-1-4`, gets React component suggestions from Local AI with CycleTime context
+15. **AI coding tools** provide assistance with context from CycleTime MCP server
+16. **Casey (Frontend)** claims `AUTH-1-4`, gets React component suggestions from Windsurf with CycleTime context
 17. **Jordan** monitors progress, claims `AUTH-1-5` for testing
 18. As each task completes, **CycleTime** updates project status documents automatically
 19. **Linear** shows progress with direct links to technical design documentation
@@ -314,7 +314,7 @@ sequenceDiagram
 **Key Benefits Demonstrated**:
 
 - **Documentation stays current**: All project context lives in repository with code
-- **Reliable AI assistance**: Optimal AI models for planning and architecture, Local AI for coding assistance
+- **Reliable AI assistance**: Optimal AI models for planning and architecture, AI coding tools for development assistance
 - **Seamless tool integration**: Linear issues link directly to repository documentation
 - **Human oversight**: All AI suggestions reviewed and approved by appropriate team members
 - **Consistent quality**: Single AI model ensures predictable, high-quality analysis and planning
@@ -335,7 +335,7 @@ sequenceDiagram
     participant Taylor as Backend Dev (Taylor)
     participant CT as CycleTime
     participant AI as CycleTime AI
-    participant LocalAI as Local AI
+    participant LocalAI as AI Coding Tools
     participant REPO as Git Repository
     participant LINEAR as Linear
     
@@ -501,7 +501,7 @@ sequenceDiagram
 - **Context Management Service**: Intelligent document chunking, semantic search, and context prioritization engine
 - **CycleTime Server**: Central orchestration engine with REST API and webhook support
 - **Web Dashboard**: React-based interface for project management, document preview, and AI model configuration
-- **MCP Server Component**: Provides AI assistance with optimized repository context delivery for Local AI tools
+- **MCP Server Component**: Provides AI assistance with optimized repository context delivery for AI coding tools
 - **Document Indexing Service**: Vector-based search and semantic analysis for efficient context retrieval
 - **Context Window Optimizer**: Real-time context budgeting and delivery optimization for AI agents
 - **Issue Tracker Integrations**: Bidirectional sync with external systems
@@ -548,11 +548,11 @@ sequenceDiagram
 
 **MCP Tools**:
 
-- **get-documentation**: Retrieve specific documentation sections from repository for Local AI context with intelligent chunking
+- **get-documentation**: Retrieve specific documentation sections from repository for AI coding tools with intelligent chunking
 - **get-contextual-overview**: Provide layered project context (immediate/project/historical) optimized for agent context windows
 - **search-project-context**: Semantic search across all project documentation with relevance ranking
 - **analyze-requirements**: Get CycleTime AI analysis of requirements using optimal models with document references
-- **suggest-implementation**: Receive implementation suggestions from Local AI with CycleTime-provided context and technical designs
+- **suggest-implementation**: Receive implementation suggestions from AI coding tools with CycleTime-provided context and technical designs
 - **review-technical-design**: Get CycleTime AI feedback on design documents using architectural reasoning models
 - **check-dependencies**: Analyze dependencies from documentation structure with context prioritization
 - **update-documentation**: Create or update documentation files in repository
