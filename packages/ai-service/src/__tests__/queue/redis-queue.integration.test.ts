@@ -35,6 +35,9 @@ describe('RedisQueue Integration Tests', () => {
     if (keys.length > 0) {
       await testClient.del(keys);
     }
+    
+    // Small delay to ensure cleanup is complete
+    await new Promise(resolve => setTimeout(resolve, 10));
   });
 
   afterEach(async () => {
@@ -73,7 +76,7 @@ describe('RedisQueue Integration Tests', () => {
       await redisQueue.enqueue('high-1', { content: 'high priority' }, QueuePriority.HIGH);
 
       // Add delay to ensure Redis operations are committed
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Verify queue metrics
       const metrics = await redisQueue.getQueueMetrics();
