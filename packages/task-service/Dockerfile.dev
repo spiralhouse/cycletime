@@ -1,0 +1,22 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY packages/task-service/package*.json ./packages/task-service/
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build the package
+RUN npm run build --workspace=@cycletime/task-service
+
+# Expose the port
+EXPOSE 8004
+
+# Start the service
+CMD ["npm", "run", "start", "--workspace=@cycletime/task-service"]
