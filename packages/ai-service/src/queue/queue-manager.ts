@@ -191,11 +191,19 @@ export class QueueManager {
     const shutdownPromise = this.redisQueue.disconnect();
     
     // Wait for graceful shutdown timeout or Redis disconnect, whichever comes first
+    let timeoutId: NodeJS.Timeout | undefined;
     const timeoutPromise = new Promise<void>(resolve => {
-      setTimeout(resolve, this.config.gracefulShutdownTimeout);
+      timeoutId = setTimeout(resolve, this.config.gracefulShutdownTimeout);
     });
 
-    await Promise.race([shutdownPromise, timeoutPromise]);
+    try {
+      await Promise.race([shutdownPromise, timeoutPromise]);
+    } finally {
+      // Clean up the timeout if it hasn't fired yet
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
   }
 
   private async runCleanupTask(): Promise<void> {
