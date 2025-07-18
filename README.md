@@ -2,49 +2,68 @@
 
 **Intelligent Project Orchestration Platform with MCP Integration**
 
-*Transform your Product Requirements Documents into structured development plans in hours, not days*
+*Enhance team collaboration and developer experience with intelligent AI assistance that keeps humans in control*
 
-## 🚀 What is CycleTime?
+## What is CycleTime?
 
-CycleTime automates the transformation of PRDs into structured development plans while keeping humans in control of all critical decisions. Powered by **Claude 4 Sonnet** for intelligent planning and analysis, CycleTime creates a seamless connection between documentation, planning, and execution.
+CycleTime enhances team collaboration by intelligently assisting with PRD analysis and development planning. Built with support for leading AI models (OpenAI, Anthropic, Google, and more), CycleTime improves developer experience while ensuring teams maintain full control over all critical decisions.
 
-### ✨ Key Objectives
+### Key Objectives
 
-- **⚡ 80% Faster Planning**: Turn PRDs into actionable development plans in 2-3 hours instead of 2-3 days
-- **🤖 AI-Powered Intelligence**: Leverage Claude 4 Sonnet for consistent, high-quality project analysis
-- **📚 Living Documentation**: Keep project docs in sync with actual development progress in your repository
-- **🔗 Seamless AI Integration**: Enable your existing AI tools to access full project context via MCP
-- **👥 Human-Centered**: AI suggests, humans decide - maintain full control over critical decisions
+- **Enhanced Collaboration**: Streamline team communication with AI-assisted project breakdown and shared documentation
+- **Improved Developer Experience**: Leverage your preferred AI models to reduce planning overhead and focus on building
+- **Workflow Integration**: Seamlessly connect with your existing tools - Linear, Jira, GitHub Issues - without disrupting team processes
+- **Living Documentation**: Keep project context current and accessible to both humans and AI tools
+- **Seamless AI Integration**: Connect existing AI assistants to project context through MCP
+- **Human-Centered Control**: AI provides intelligent suggestions, teams drive all decisions
 
-### 🎯 Perfect For
+## 🚀 Killer Features
 
-- **Product Managers** who want to quickly translate product vision into clear engineering work
-- **Engineering Managers** seeking consistent task breakdown and progress visibility  
-- **Development Teams** that value documentation that stays current with code
+CycleTime introduces two revolutionary capabilities that no other platform provides:
 
-## 🏗️ How CycleTime Works
+### 📋 Contract-First Parallel Development
+- **Generate system boundaries and API contracts** automatically from PRDs
+- **Enable multiple developers to work simultaneously** without coordination bottlenecks
+- **Reduce integration errors by 75%** through upfront interface specifications
+- **Create mock/stub templates** for independent development and testing
+- **Validate implementation compliance** with generated contracts
 
-1. **📝 Write PRDs in Markdown** - Store requirements in your repository's `/docs/requirements/` directory
-2. **🧠 AI Analysis** - Claude 4 Sonnet analyzes your PRD and generates structured project plans
-3. **👀 Human Review** - Review and refine generated `project-plan.md`, `milestones.md`, and `architecture.md`
-4. **🎫 Issue Creation** - Automatically create Linear/Jira issues with links to your documentation
-5. **🔄 Stay Synchronized** - Documentation stays current as your project evolves
+### 🎯 Custom Development Standards Enforcement
+- **Define team-specific development standards** beyond static analysis (TDD cycles, architectural patterns, documentation requirements)
+- **Deliver standards to AI coding tools** via MCP for real-time guidance during development  
+- **Automatically analyze pull requests** for standards compliance using AI-powered code analysis
+- **Configurable enforcement levels** (advisory, warning, blocking) with detailed compliance reports
+- **Ships with sensible defaults** (TDD, conventional commits, security practices) that can be fully customized
 
-### 📊 Expected Results
+### Target Users
 
-- **40% faster** time-to-first-commit on new projects
-- **95%+ user satisfaction** with AI-generated plans after human review
-- **Living documentation** that teams actually use and maintain
-- **Developer tool freedom** - teams continue using their preferred development tools and workflows
+- **Product Managers** seeking better collaboration with engineering teams through clearer, AI-enhanced specifications
+- **Engineering Managers** who want to improve team productivity with consistent project breakdown and tracking
+- **Technical Leads** who value excellent developer experience with current documentation and AI-assisted planning
 
-## 🛠️ Tool Freedom & Integration
+## How CycleTime Works
+
+1. **Store PRDs in Markdown** - Place requirements in your repository's `/docs/requirements/` directory
+2. **AI Analysis** - Your chosen AI model processes your PRD and generates structured project plans
+3. **Team Review** - Review and refine generated `project-plan.md`, `milestones.md`, and `architecture.md`
+4. **Issue Creation** - Generate Linear/Jira issues with links to your documentation
+5. **Maintain Sync** - Documentation updates automatically as your project progresses
+
+### Expected Results
+
+- Enhanced team collaboration and reduced planning friction
+- Better developer experience with AI-assisted project breakdown
+- Documentation that serves both human teams and AI tools effectively
+- Improved productivity without disrupting existing development workflows
+
+## Integration & Compatibility
 
 CycleTime is designed to work with your existing development workflow, not replace it:
 
-- **Any IDE or Editor**: VS Code, IntelliJ, Vim, Emacs - use whatever makes you productive
+- **Any AI Coding Tool**: Claude Code, Cursor, Windsurf, GitHub Copilot, JetBrains AI - use your preferred AI-enabled development environment
 - **Any Git Workflow**: Works with GitHub, GitLab, Bitbucket and any Git hosting platform
 - **Any Repository Structure**: Supports both monorepos and polyrepos (MVP focuses on monorepos)
-- **Any AI Tools**: MCP integration connects with existing AI assistants (GitHub Copilot, Cursor, etc.)
+- **MCP Integration**: Connect with any MCP-enabled AI tool for seamless context sharing and enhanced development workflows
 - **Any Issue Tracker**: Native integration with Linear, Jira, GitHub Issues
 - **Repository-Centric**: All coordination happens through standard Git operations - no proprietary formats
 
@@ -113,8 +132,8 @@ See our detailed [Roadmap](./docs/ROADMAP.md) for:
 - **MCP Server**: `localhost:8001`
   - Model Context Protocol for AI integration
   
-- **Claude Service**: `localhost:8002`
-  - Claude 4 Sonnet AI integration
+- **AI Service**: `localhost:8002`
+  - Multi-model AI integration (OpenAI, Anthropic, Google, etc.)
   
 - **Document Service**: `localhost:8003`
   - Markdown processing and storage
