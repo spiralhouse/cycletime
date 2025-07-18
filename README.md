@@ -2,25 +2,29 @@
 
 **Intelligent Project Orchestration Platform with MCP Integration**
 
-*Transform your Product Requirements Documents into structured development plans in hours, not days*
+*Keep engineering teams of any size synchronized with AI-powered project orchestration and living documentation*
 
 ## 🚀 What is CycleTime?
 
-CycleTime automates the transformation of PRDs into structured development plans while keeping humans in control of all critical decisions. Powered by **Claude 4 Sonnet** for intelligent planning and analysis, CycleTime creates a seamless connection between documentation, planning, and execution.
+CycleTime helps engineering teams of any size, from enterprises to solo founders, maintain alignment and deliver consistent, high-quality results through AI-powered project orchestration. Powered by **Claude 4 Sonnet** for intelligent planning and analysis, CycleTime creates a seamless connection between documentation, planning, and execution—without forcing teams to change their development tools or workflows.
 
 ### ✨ Key Objectives
 
-- **⚡ 80% Faster Planning**: Turn PRDs into actionable development plans in 2-3 hours instead of 2-3 days
-- **🤖 AI-Powered Intelligence**: Leverage Claude 4 Sonnet for consistent, high-quality project analysis
+- **🎯 Team Alignment**: Keep engineering teams of any size synchronized with consistent project documentation and clear development processes
+- **🛠️ Tool Freedom**: Developers stay productive with their preferred tools—we provide coordination, not another toolchain to learn
 - **📚 Living Documentation**: Keep project docs in sync with actual development progress in your repository
 - **🔗 Seamless AI Integration**: Enable your existing AI tools to access full project context via MCP
+- **⚙️ Best Practices at Scale**: Apply proven development processes to projects of any size, from solo work to large team initiatives
 - **👥 Human-Centered**: AI suggests, humans decide - maintain full control over critical decisions
 
 ### 🎯 Perfect For
 
-- **Product Managers** who want to quickly translate product vision into clear engineering work
-- **Engineering Managers** seeking consistent task breakdown and progress visibility  
-- **Development Teams** that value documentation that stays current with code
+- **Engineering Managers** leading teams of 5-50+ developers who need consistent coordination and progress visibility
+- **Technical Leads** managing complex projects with multiple developers and cross-team dependencies
+- **Product Managers** working with large engineering teams who need reliable translation of vision into structured development work
+- **Development Teams** that value documentation staying current with code and want to use their preferred development tools
+
+*While designed for large team coordination, solo developers also benefit from the structured processes and development best practices that scale with project growth.*
 
 ## 🏗️ How CycleTime Works
 
@@ -32,9 +36,23 @@ CycleTime automates the transformation of PRDs into structured development plans
 
 ### 📊 Expected Results
 
-- **40% faster** time-to-first-commit on new projects
-- **95%+ user satisfaction** with AI-generated plans after human review
+- **Improved team coordination** with consistent documentation and clear development processes
+- **Higher accuracy** in project deliverables through structured planning and progress tracking
+- **95%+ satisfaction** with AI-generated plans after human review
 - **Living documentation** that teams actually use and maintain
+- **Developer tool freedom** - teams continue using their preferred development tools and workflows
+
+## 🛠️ Tool Freedom & Integration
+
+CycleTime is designed to work with your existing development workflow, not replace it:
+
+- **Any IDE or Editor**: VS Code, IntelliJ, Vim, Emacs - use whatever makes you productive
+- **Any Git Workflow**: Works with GitHub, GitLab, Bitbucket and any Git hosting platform
+- **Any AI Tools**: MCP integration connects with existing AI assistants (GitHub Copilot, Cursor, etc.)
+- **Any Issue Tracker**: Native integration with Linear, Jira, GitHub Issues
+- **Repository-Centric**: All coordination happens through standard Git operations - no proprietary formats
+
+*The only requirement is that you store project documentation in Markdown format within your Git repository.*
 
 ## 🗺️ Roadmap
 
