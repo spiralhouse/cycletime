@@ -1,0 +1,1103 @@
+openapi: 3.0.3
+info:
+  title: CycleTime API Gateway
+  description: Unified entry point with authentication, authorization, rate limiting, and service routing for all CycleTime services
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://gateway.cycletime.dev
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the gateway is healthy and operational
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Gateway is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /metrics:
+    get:
+      summary: Get gateway metrics
+      description: Retrieve operational metrics for the gateway
+      operationId: getMetrics
+      tags:
+        - Metrics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Gateway metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      summary: User login
+      description: Authenticate user and return JWT token
+      operationId: login
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      summary: User logout
+      description: Invalidate user session and JWT token
+      operationId: logout
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      summary: Refresh JWT token
+      description: Refresh expired JWT token with a new one
+      operationId: refreshToken
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/profile:
+    get:
+      summary: Get user profile
+      description: Retrieve authenticated user profile information
+      operationId: getUserProfile
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/ai-service/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: AI Service proxy
+      description: Proxy requests to the AI Service
+      operationId: proxyToAiService
+      tags:
+        - Service Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: Path to proxy to AI Service
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request proxied successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/context-management/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: Context Management Service proxy
+      description: Proxy requests to the Context Management Service
+      operationId: proxyToContextManagementService
+      tags:
+        - Service Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: Path to proxy to Context Management Service
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request proxied successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/issue-tracker/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: Issue Tracker Service proxy
+      description: Proxy requests to the Issue Tracker Service
+      operationId: proxyToIssueTrackerService
+      tags:
+        - Service Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: Path to proxy to Issue Tracker Service
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request proxied successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/document-service/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: Document Service proxy
+      description: Proxy requests to the Document Service
+      operationId: proxyToDocumentService
+      tags:
+        - Service Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: Path to proxy to Document Service
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request proxied successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/web-dashboard/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: Web Dashboard proxy
+      description: Proxy requests to the Web Dashboard
+      operationId: proxyToWebDashboard
+      tags:
+        - Service Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: Path to proxy to Web Dashboard
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request proxied successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/project-service/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: Project Service proxy
+      description: Proxy requests to the Project Service
+      operationId: proxyToProjectService
+      tags:
+        - Service Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: Path to proxy to Project Service
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request proxied successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/task-service/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: Task Service proxy
+      description: Proxy requests to the Task Service
+      operationId: proxyToTaskService
+      tags:
+        - Service Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: Path to proxy to Task Service
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request proxied successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/standards-engine/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: Standards Engine proxy
+      description: Proxy requests to the Standards Engine
+      operationId: proxyToStandardsEngine
+      tags:
+        - Service Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: Path to proxy to Standards Engine
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request proxied successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/notification-service/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: Notification Service proxy
+      description: Proxy requests to the Notification Service
+      operationId: proxyToNotificationService
+      tags:
+        - Service Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: Path to proxy to Notification Service
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request proxied successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/document-indexing-service/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: Document Indexing Service proxy
+      description: Proxy requests to the Document Indexing Service
+      operationId: proxyToDocumentIndexingService
+      tags:
+        - Service Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: Path to proxy to Document Indexing Service
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request proxied successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/contract-generation-engine/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: Contract Generation Engine proxy
+      description: Proxy requests to the Contract Generation Engine
+      operationId: proxyToContractGenerationEngine
+      tags:
+        - Service Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: Path to proxy to Contract Generation Engine
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request proxied successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/mcp-server/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: MCP Server proxy
+      description: Proxy requests to the MCP Server
+      operationId: proxyToMcpServer
+      tags:
+        - Service Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: Path to proxy to MCP Server
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request proxied successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/cli-service/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: CLI Service proxy
+      description: Proxy requests to the CLI Service
+      operationId: proxyToCliService
+      tags:
+        - Service Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: Path to proxy to CLI Service
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request proxied successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/services:
+    get:
+      summary: List registered services
+      description: Get a list of all registered services and their status
+      operationId: listServices
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of services
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceListResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/services/{serviceId}:
+    get:
+      summary: Get service details
+      description: Get detailed information about a specific service
+      operationId: getServiceDetails
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: serviceId
+          in: path
+          required: true
+          description: Service identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Service details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceDetailsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Service not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/rate-limits:
+    get:
+      summary: Get rate limit configuration
+      description: Retrieve current rate limit settings
+      operationId: getRateLimits
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Rate limit configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitConfig'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update rate limit configuration
+      description: Update rate limit settings for endpoints
+      operationId: updateRateLimits
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RateLimitConfig'
+      responses:
+        '200':
+          description: Rate limits updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitConfig'
+        '400':
+          description: Invalid rate limit configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime:
+          type: number
+          description: Uptime in seconds
+        services:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [healthy, degraded, unhealthy]
+              responseTime:
+                type: number
+                description: Response time in milliseconds
+              lastCheck:
+                type: string
+                format: date-time
+      required:
+        - status
+        - timestamp
+        - version
+        - uptime
+
+    MetricsResponse:
+      type: object
+      properties:
+        requestCount:
+          type: object
+          additionalProperties:
+            type: number
+        responseTime:
+          type: object
+          properties:
+            average:
+              type: number
+            p95:
+              type: number
+            p99:
+              type: number
+        errorRate:
+          type: object
+          additionalProperties:
+            type: number
+        rateLimitHits:
+          type: object
+          additionalProperties:
+            type: number
+        activeConnections:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        rememberMe:
+          type: boolean
+          default: false
+      required:
+        - email
+        - password
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+        refreshToken:
+          type: string
+          description: JWT refresh token
+        expiresIn:
+          type: number
+          description: Token expiration time in seconds
+        tokenType:
+          type: string
+          default: Bearer
+        user:
+          $ref: '#/components/schemas/UserProfile'
+      required:
+        - accessToken
+        - refreshToken
+        - expiresIn
+        - tokenType
+        - user
+
+    LogoutResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - message
+        - timestamp
+
+    RefreshTokenRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+          description: JWT refresh token
+      required:
+        - refreshToken
+
+    RefreshTokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: New JWT access token
+        refreshToken:
+          type: string
+          description: New JWT refresh token
+        expiresIn:
+          type: number
+          description: Token expiration time in seconds
+        tokenType:
+          type: string
+          default: Bearer
+      required:
+        - accessToken
+        - refreshToken
+        - expiresIn
+        - tokenType
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        lastLogin:
+          type: string
+          format: date-time
+      required:
+        - id
+        - email
+        - name
+        - roles
+        - permissions
+
+    ServiceListResponse:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceInfo'
+        total:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - services
+        - total
+        - timestamp
+
+    ServiceInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy, unknown]
+        url:
+          type: string
+          format: uri
+        healthCheckUrl:
+          type: string
+          format: uri
+        lastHealthCheck:
+          type: string
+          format: date-time
+        responseTime:
+          type: number
+          description: Average response time in milliseconds
+        registeredAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - version
+        - status
+        - url
+
+    ServiceDetailsResponse:
+      type: object
+      properties:
+        service:
+          $ref: '#/components/schemas/ServiceInfo'
+        endpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/EndpointInfo'
+        metrics:
+          type: object
+          properties:
+            requestCount:
+              type: number
+            errorCount:
+              type: number
+            averageResponseTime:
+              type: number
+            lastHour:
+              type: object
+              properties:
+                requests:
+                  type: number
+                errors:
+                  type: number
+        configuration:
+          type: object
+          additionalProperties: true
+      required:
+        - service
+        - endpoints
+        - metrics
+
+    EndpointInfo:
+      type: object
+      properties:
+        path:
+          type: string
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS]
+        description:
+          type: string
+        rateLimitEnabled:
+          type: boolean
+        rateLimitConfig:
+          $ref: '#/components/schemas/RateLimitEndpointConfig'
+      required:
+        - path
+        - method
+
+    RateLimitConfig:
+      type: object
+      properties:
+        global:
+          $ref: '#/components/schemas/RateLimitGlobalConfig'
+        endpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/RateLimitEndpointConfig'
+        ipWhitelist:
+          type: array
+          items:
+            type: string
+        ipBlacklist:
+          type: array
+          items:
+            type: string
+      required:
+        - global
+        - endpoints
+
+    RateLimitGlobalConfig:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        requestsPerMinute:
+          type: number
+        requestsPerHour:
+          type: number
+        requestsPerDay:
+          type: number
+        burstLimit:
+          type: number
+      required:
+        - enabled
+
+    RateLimitEndpointConfig:
+      type: object
+      properties:
+        path:
+          type: string
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, '*']
+        requestsPerMinute:
+          type: number
+        requestsPerHour:
+          type: number
+        requestsPerDay:
+          type: number
+        burstLimit:
+          type: number
+        enabled:
+          type: boolean
+      required:
+        - path
+        - method
+        - enabled
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        requestId:
+          type: string
+        details:
+          type: object
+      required:
+        - error
+        - message
+        - timestamp
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Gateway health and status endpoints
+  - name: Metrics
+    description: Operational metrics and monitoring
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Service Proxy
+    description: Service proxy endpoints for all CycleTime services
+  - name: Admin
+    description: Administrative endpoints for gateway management
