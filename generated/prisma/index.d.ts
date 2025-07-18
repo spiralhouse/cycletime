@@ -1875,18 +1875,18 @@ export namespace Prisma {
    */
 
   export type UserCountOutputType = {
-    user_sessions: number
-    api_keys: number
     project_members: number
+    api_keys: number
+    user_sessions: number
     documents: number
     document_versions: number
     ai_requests: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user_sessions?: boolean | UserCountOutputTypeCountUser_sessionsArgs
-    api_keys?: boolean | UserCountOutputTypeCountApi_keysArgs
     project_members?: boolean | UserCountOutputTypeCountProject_membersArgs
+    api_keys?: boolean | UserCountOutputTypeCountApi_keysArgs
+    user_sessions?: boolean | UserCountOutputTypeCountUser_sessionsArgs
     documents?: boolean | UserCountOutputTypeCountDocumentsArgs
     document_versions?: boolean | UserCountOutputTypeCountDocument_versionsArgs
     ai_requests?: boolean | UserCountOutputTypeCountAi_requestsArgs
@@ -1906,8 +1906,8 @@ export namespace Prisma {
   /**
    * UserCountOutputType without action
    */
-  export type UserCountOutputTypeCountUser_sessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: UserSessionWhereInput
+  export type UserCountOutputTypeCountProject_membersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ProjectMemberWhereInput
   }
 
   /**
@@ -1920,8 +1920,8 @@ export namespace Prisma {
   /**
    * UserCountOutputType without action
    */
-  export type UserCountOutputTypeCountProject_membersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: ProjectMemberWhereInput
+  export type UserCountOutputTypeCountUser_sessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserSessionWhereInput
   }
 
   /**
@@ -1951,13 +1951,13 @@ export namespace Prisma {
    */
 
   export type ProjectCountOutputType = {
-    project_members: number
+    members: number
     documents: number
     ai_requests: number
   }
 
   export type ProjectCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    project_members?: boolean | ProjectCountOutputTypeCountProject_membersArgs
+    members?: boolean | ProjectCountOutputTypeCountMembersArgs
     documents?: boolean | ProjectCountOutputTypeCountDocumentsArgs
     ai_requests?: boolean | ProjectCountOutputTypeCountAi_requestsArgs
   }
@@ -1976,7 +1976,7 @@ export namespace Prisma {
   /**
    * ProjectCountOutputType without action
    */
-  export type ProjectCountOutputTypeCountProject_membersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type ProjectCountOutputTypeCountMembersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ProjectMemberWhereInput
   }
 
@@ -2356,9 +2356,9 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: boolean
     updated_at?: boolean
-    user_sessions?: boolean | User$user_sessionsArgs<ExtArgs>
-    api_keys?: boolean | User$api_keysArgs<ExtArgs>
     project_members?: boolean | User$project_membersArgs<ExtArgs>
+    api_keys?: boolean | User$api_keysArgs<ExtArgs>
+    user_sessions?: boolean | User$user_sessionsArgs<ExtArgs>
     documents?: boolean | User$documentsArgs<ExtArgs>
     document_versions?: boolean | User$document_versionsArgs<ExtArgs>
     ai_requests?: boolean | User$ai_requestsArgs<ExtArgs>
@@ -2424,9 +2424,9 @@ export namespace Prisma {
 
   export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "github_id" | "github_username" | "name" | "avatar_url" | "bio" | "company" | "location" | "timezone" | "locale" | "first_login_at" | "last_login_at" | "is_active" | "created_at" | "updated_at", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user_sessions?: boolean | User$user_sessionsArgs<ExtArgs>
-    api_keys?: boolean | User$api_keysArgs<ExtArgs>
     project_members?: boolean | User$project_membersArgs<ExtArgs>
+    api_keys?: boolean | User$api_keysArgs<ExtArgs>
+    user_sessions?: boolean | User$user_sessionsArgs<ExtArgs>
     documents?: boolean | User$documentsArgs<ExtArgs>
     document_versions?: boolean | User$document_versionsArgs<ExtArgs>
     ai_requests?: boolean | User$ai_requestsArgs<ExtArgs>
@@ -2438,9 +2438,9 @@ export namespace Prisma {
   export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "User"
     objects: {
-      user_sessions: Prisma.$UserSessionPayload<ExtArgs>[]
-      api_keys: Prisma.$ApiKeyPayload<ExtArgs>[]
       project_members: Prisma.$ProjectMemberPayload<ExtArgs>[]
+      api_keys: Prisma.$ApiKeyPayload<ExtArgs>[]
+      user_sessions: Prisma.$UserSessionPayload<ExtArgs>[]
       documents: Prisma.$DocumentPayload<ExtArgs>[]
       document_versions: Prisma.$DocumentVersionPayload<ExtArgs>[]
       ai_requests: Prisma.$AiRequestPayload<ExtArgs>[]
@@ -2856,9 +2856,9 @@ export namespace Prisma {
    */
   export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    user_sessions<T extends User$user_sessionsArgs<ExtArgs> = {}>(args?: Subset<T, User$user_sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    api_keys<T extends User$api_keysArgs<ExtArgs> = {}>(args?: Subset<T, User$api_keysArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ApiKeyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     project_members<T extends User$project_membersArgs<ExtArgs> = {}>(args?: Subset<T, User$project_membersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    api_keys<T extends User$api_keysArgs<ExtArgs> = {}>(args?: Subset<T, User$api_keysArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ApiKeyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    user_sessions<T extends User$user_sessionsArgs<ExtArgs> = {}>(args?: Subset<T, User$user_sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     documents<T extends User$documentsArgs<ExtArgs> = {}>(args?: Subset<T, User$documentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DocumentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     document_versions<T extends User$document_versionsArgs<ExtArgs> = {}>(args?: Subset<T, User$document_versionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ai_requests<T extends User$ai_requestsArgs<ExtArgs> = {}>(args?: Subset<T, User$ai_requestsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AiRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -3295,27 +3295,27 @@ export namespace Prisma {
   }
 
   /**
-   * User.user_sessions
+   * User.project_members
    */
-  export type User$user_sessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type User$project_membersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the UserSession
+     * Select specific fields to fetch from the ProjectMember
      */
-    select?: UserSessionSelect<ExtArgs> | null
+    select?: ProjectMemberSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the UserSession
+     * Omit specific fields from the ProjectMember
      */
-    omit?: UserSessionOmit<ExtArgs> | null
+    omit?: ProjectMemberOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: UserSessionInclude<ExtArgs> | null
-    where?: UserSessionWhereInput
-    orderBy?: UserSessionOrderByWithRelationInput | UserSessionOrderByWithRelationInput[]
-    cursor?: UserSessionWhereUniqueInput
+    include?: ProjectMemberInclude<ExtArgs> | null
+    where?: ProjectMemberWhereInput
+    orderBy?: ProjectMemberOrderByWithRelationInput | ProjectMemberOrderByWithRelationInput[]
+    cursor?: ProjectMemberWhereUniqueInput
     take?: number
     skip?: number
-    distinct?: UserSessionScalarFieldEnum | UserSessionScalarFieldEnum[]
+    distinct?: ProjectMemberScalarFieldEnum | ProjectMemberScalarFieldEnum[]
   }
 
   /**
@@ -3343,27 +3343,27 @@ export namespace Prisma {
   }
 
   /**
-   * User.project_members
+   * User.user_sessions
    */
-  export type User$project_membersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type User$user_sessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ProjectMember
+     * Select specific fields to fetch from the UserSession
      */
-    select?: ProjectMemberSelect<ExtArgs> | null
+    select?: UserSessionSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the ProjectMember
+     * Omit specific fields from the UserSession
      */
-    omit?: ProjectMemberOmit<ExtArgs> | null
+    omit?: UserSessionOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: ProjectMemberInclude<ExtArgs> | null
-    where?: ProjectMemberWhereInput
-    orderBy?: ProjectMemberOrderByWithRelationInput | ProjectMemberOrderByWithRelationInput[]
-    cursor?: ProjectMemberWhereUniqueInput
+    include?: UserSessionInclude<ExtArgs> | null
+    where?: UserSessionWhereInput
+    orderBy?: UserSessionOrderByWithRelationInput | UserSessionOrderByWithRelationInput[]
+    cursor?: UserSessionWhereUniqueInput
     take?: number
     skip?: number
-    distinct?: ProjectMemberScalarFieldEnum | ProjectMemberScalarFieldEnum[]
+    distinct?: UserSessionScalarFieldEnum | UserSessionScalarFieldEnum[]
   }
 
   /**
@@ -5934,7 +5934,7 @@ export namespace Prisma {
     created_at?: boolean
     updated_at?: boolean
     repository?: boolean | Project$repositoryArgs<ExtArgs>
-    project_members?: boolean | Project$project_membersArgs<ExtArgs>
+    members?: boolean | Project$membersArgs<ExtArgs>
     documents?: boolean | Project$documentsArgs<ExtArgs>
     ai_requests?: boolean | Project$ai_requestsArgs<ExtArgs>
     _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
@@ -5984,7 +5984,7 @@ export namespace Prisma {
   export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "status" | "repository_id" | "settings" | "ai_model" | "ai_budget" | "created_at" | "updated_at", ExtArgs["result"]["project"]>
   export type ProjectInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     repository?: boolean | Project$repositoryArgs<ExtArgs>
-    project_members?: boolean | Project$project_membersArgs<ExtArgs>
+    members?: boolean | Project$membersArgs<ExtArgs>
     documents?: boolean | Project$documentsArgs<ExtArgs>
     ai_requests?: boolean | Project$ai_requestsArgs<ExtArgs>
     _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
@@ -6000,7 +6000,7 @@ export namespace Prisma {
     name: "Project"
     objects: {
       repository: Prisma.$RepositoryPayload<ExtArgs> | null
-      project_members: Prisma.$ProjectMemberPayload<ExtArgs>[]
+      members: Prisma.$ProjectMemberPayload<ExtArgs>[]
       documents: Prisma.$DocumentPayload<ExtArgs>[]
       ai_requests: Prisma.$AiRequestPayload<ExtArgs>[]
     }
@@ -6410,7 +6410,7 @@ export namespace Prisma {
   export interface Prisma__ProjectClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     repository<T extends Project$repositoryArgs<ExtArgs> = {}>(args?: Subset<T, Project$repositoryArgs<ExtArgs>>): Prisma__RepositoryClient<$Result.GetResult<Prisma.$RepositoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-    project_members<T extends Project$project_membersArgs<ExtArgs> = {}>(args?: Subset<T, Project$project_membersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    members<T extends Project$membersArgs<ExtArgs> = {}>(args?: Subset<T, Project$membersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     documents<T extends Project$documentsArgs<ExtArgs> = {}>(args?: Subset<T, Project$documentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DocumentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ai_requests<T extends Project$ai_requestsArgs<ExtArgs> = {}>(args?: Subset<T, Project$ai_requestsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AiRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
@@ -6867,9 +6867,9 @@ export namespace Prisma {
   }
 
   /**
-   * Project.project_members
+   * Project.members
    */
-  export type Project$project_membersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type Project$membersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the ProjectMember
      */
@@ -15513,9 +15513,9 @@ export namespace Prisma {
     is_active?: BoolFilter<"User"> | boolean
     created_at?: DateTimeFilter<"User"> | Date | string
     updated_at?: DateTimeFilter<"User"> | Date | string
-    user_sessions?: UserSessionListRelationFilter
-    api_keys?: ApiKeyListRelationFilter
     project_members?: ProjectMemberListRelationFilter
+    api_keys?: ApiKeyListRelationFilter
+    user_sessions?: UserSessionListRelationFilter
     documents?: DocumentListRelationFilter
     document_versions?: DocumentVersionListRelationFilter
     ai_requests?: AiRequestListRelationFilter
@@ -15538,9 +15538,9 @@ export namespace Prisma {
     is_active?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
-    user_sessions?: UserSessionOrderByRelationAggregateInput
-    api_keys?: ApiKeyOrderByRelationAggregateInput
     project_members?: ProjectMemberOrderByRelationAggregateInput
+    api_keys?: ApiKeyOrderByRelationAggregateInput
+    user_sessions?: UserSessionOrderByRelationAggregateInput
     documents?: DocumentOrderByRelationAggregateInput
     document_versions?: DocumentVersionOrderByRelationAggregateInput
     ai_requests?: AiRequestOrderByRelationAggregateInput
@@ -15566,9 +15566,9 @@ export namespace Prisma {
     is_active?: BoolFilter<"User"> | boolean
     created_at?: DateTimeFilter<"User"> | Date | string
     updated_at?: DateTimeFilter<"User"> | Date | string
-    user_sessions?: UserSessionListRelationFilter
-    api_keys?: ApiKeyListRelationFilter
     project_members?: ProjectMemberListRelationFilter
+    api_keys?: ApiKeyListRelationFilter
+    user_sessions?: UserSessionListRelationFilter
     documents?: DocumentListRelationFilter
     document_versions?: DocumentVersionListRelationFilter
     ai_requests?: AiRequestListRelationFilter
@@ -15795,7 +15795,7 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"Project"> | Date | string
     updated_at?: DateTimeFilter<"Project"> | Date | string
     repository?: XOR<RepositoryNullableScalarRelationFilter, RepositoryWhereInput> | null
-    project_members?: ProjectMemberListRelationFilter
+    members?: ProjectMemberListRelationFilter
     documents?: DocumentListRelationFilter
     ai_requests?: AiRequestListRelationFilter
   }
@@ -15812,7 +15812,7 @@ export namespace Prisma {
     created_at?: SortOrder
     updated_at?: SortOrder
     repository?: RepositoryOrderByWithRelationInput
-    project_members?: ProjectMemberOrderByRelationAggregateInput
+    members?: ProjectMemberOrderByRelationAggregateInput
     documents?: DocumentOrderByRelationAggregateInput
     ai_requests?: AiRequestOrderByRelationAggregateInput
   }
@@ -15832,7 +15832,7 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"Project"> | Date | string
     updated_at?: DateTimeFilter<"Project"> | Date | string
     repository?: XOR<RepositoryNullableScalarRelationFilter, RepositoryWhereInput> | null
-    project_members?: ProjectMemberListRelationFilter
+    members?: ProjectMemberListRelationFilter
     documents?: DocumentListRelationFilter
     ai_requests?: AiRequestListRelationFilter
   }, "id" | "repository_id">
@@ -16469,9 +16469,9 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: Date | string
     updated_at?: Date | string
-    user_sessions?: UserSessionCreateNestedManyWithoutUserInput
-    api_keys?: ApiKeyCreateNestedManyWithoutUserInput
     project_members?: ProjectMemberCreateNestedManyWithoutUserInput
+    api_keys?: ApiKeyCreateNestedManyWithoutUserInput
+    user_sessions?: UserSessionCreateNestedManyWithoutUserInput
     documents?: DocumentCreateNestedManyWithoutCreatorInput
     document_versions?: DocumentVersionCreateNestedManyWithoutCreatorInput
     ai_requests?: AiRequestCreateNestedManyWithoutUserInput
@@ -16494,9 +16494,9 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: Date | string
     updated_at?: Date | string
-    user_sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
-    api_keys?: ApiKeyUncheckedCreateNestedManyWithoutUserInput
     project_members?: ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+    api_keys?: ApiKeyUncheckedCreateNestedManyWithoutUserInput
+    user_sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     documents?: DocumentUncheckedCreateNestedManyWithoutCreatorInput
     document_versions?: DocumentVersionUncheckedCreateNestedManyWithoutCreatorInput
     ai_requests?: AiRequestUncheckedCreateNestedManyWithoutUserInput
@@ -16519,9 +16519,9 @@ export namespace Prisma {
     is_active?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    user_sessions?: UserSessionUpdateManyWithoutUserNestedInput
-    api_keys?: ApiKeyUpdateManyWithoutUserNestedInput
     project_members?: ProjectMemberUpdateManyWithoutUserNestedInput
+    api_keys?: ApiKeyUpdateManyWithoutUserNestedInput
+    user_sessions?: UserSessionUpdateManyWithoutUserNestedInput
     documents?: DocumentUpdateManyWithoutCreatorNestedInput
     document_versions?: DocumentVersionUpdateManyWithoutCreatorNestedInput
     ai_requests?: AiRequestUpdateManyWithoutUserNestedInput
@@ -16544,9 +16544,9 @@ export namespace Prisma {
     is_active?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    user_sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
-    api_keys?: ApiKeyUncheckedUpdateManyWithoutUserNestedInput
     project_members?: ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+    api_keys?: ApiKeyUncheckedUpdateManyWithoutUserNestedInput
+    user_sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     documents?: DocumentUncheckedUpdateManyWithoutCreatorNestedInput
     document_versions?: DocumentVersionUncheckedUpdateManyWithoutCreatorNestedInput
     ai_requests?: AiRequestUncheckedUpdateManyWithoutUserNestedInput
@@ -16800,7 +16800,7 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     repository?: RepositoryCreateNestedOneWithoutProjectInput
-    project_members?: ProjectMemberCreateNestedManyWithoutProjectInput
+    members?: ProjectMemberCreateNestedManyWithoutProjectInput
     documents?: DocumentCreateNestedManyWithoutProjectInput
     ai_requests?: AiRequestCreateNestedManyWithoutProjectInput
   }
@@ -16816,7 +16816,7 @@ export namespace Prisma {
     ai_budget?: Decimal | DecimalJsLike | number | string | null
     created_at?: Date | string
     updated_at?: Date | string
-    project_members?: ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
+    members?: ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
     documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
     ai_requests?: AiRequestUncheckedCreateNestedManyWithoutProjectInput
   }
@@ -16832,7 +16832,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     repository?: RepositoryUpdateOneWithoutProjectNestedInput
-    project_members?: ProjectMemberUpdateManyWithoutProjectNestedInput
+    members?: ProjectMemberUpdateManyWithoutProjectNestedInput
     documents?: DocumentUpdateManyWithoutProjectNestedInput
     ai_requests?: AiRequestUpdateManyWithoutProjectNestedInput
   }
@@ -16848,7 +16848,7 @@ export namespace Prisma {
     ai_budget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    project_members?: ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
+    members?: ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
     documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
     ai_requests?: AiRequestUncheckedUpdateManyWithoutProjectNestedInput
   }
@@ -16897,7 +16897,7 @@ export namespace Prisma {
     joined_at?: Date | string
     created_at?: Date | string
     updated_at?: Date | string
-    project: ProjectCreateNestedOneWithoutProject_membersInput
+    project: ProjectCreateNestedOneWithoutMembersInput
     user: UserCreateNestedOneWithoutProject_membersInput
   }
 
@@ -16917,7 +16917,7 @@ export namespace Prisma {
     joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    project?: ProjectUpdateOneRequiredWithoutProject_membersNestedInput
+    project?: ProjectUpdateOneRequiredWithoutMembersNestedInput
     user?: UserUpdateOneRequiredWithoutProject_membersNestedInput
   }
 
@@ -17600,10 +17600,10 @@ export namespace Prisma {
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
 
-  export type UserSessionListRelationFilter = {
-    every?: UserSessionWhereInput
-    some?: UserSessionWhereInput
-    none?: UserSessionWhereInput
+  export type ProjectMemberListRelationFilter = {
+    every?: ProjectMemberWhereInput
+    some?: ProjectMemberWhereInput
+    none?: ProjectMemberWhereInput
   }
 
   export type ApiKeyListRelationFilter = {
@@ -17612,10 +17612,10 @@ export namespace Prisma {
     none?: ApiKeyWhereInput
   }
 
-  export type ProjectMemberListRelationFilter = {
-    every?: ProjectMemberWhereInput
-    some?: ProjectMemberWhereInput
-    none?: ProjectMemberWhereInput
+  export type UserSessionListRelationFilter = {
+    every?: UserSessionWhereInput
+    some?: UserSessionWhereInput
+    none?: UserSessionWhereInput
   }
 
   export type DocumentListRelationFilter = {
@@ -17641,7 +17641,7 @@ export namespace Prisma {
     nulls?: NullsOrder
   }
 
-  export type UserSessionOrderByRelationAggregateInput = {
+  export type ProjectMemberOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -17649,7 +17649,7 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
-  export type ProjectMemberOrderByRelationAggregateInput = {
+  export type UserSessionOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -18547,11 +18547,11 @@ export namespace Prisma {
     cost_estimate?: SortOrder
   }
 
-  export type UserSessionCreateNestedManyWithoutUserInput = {
-    create?: XOR<UserSessionCreateWithoutUserInput, UserSessionUncheckedCreateWithoutUserInput> | UserSessionCreateWithoutUserInput[] | UserSessionUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: UserSessionCreateOrConnectWithoutUserInput | UserSessionCreateOrConnectWithoutUserInput[]
-    createMany?: UserSessionCreateManyUserInputEnvelope
-    connect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+  export type ProjectMemberCreateNestedManyWithoutUserInput = {
+    create?: XOR<ProjectMemberCreateWithoutUserInput, ProjectMemberUncheckedCreateWithoutUserInput> | ProjectMemberCreateWithoutUserInput[] | ProjectMemberUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ProjectMemberCreateOrConnectWithoutUserInput | ProjectMemberCreateOrConnectWithoutUserInput[]
+    createMany?: ProjectMemberCreateManyUserInputEnvelope
+    connect?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
   }
 
   export type ApiKeyCreateNestedManyWithoutUserInput = {
@@ -18561,11 +18561,11 @@ export namespace Prisma {
     connect?: ApiKeyWhereUniqueInput | ApiKeyWhereUniqueInput[]
   }
 
-  export type ProjectMemberCreateNestedManyWithoutUserInput = {
-    create?: XOR<ProjectMemberCreateWithoutUserInput, ProjectMemberUncheckedCreateWithoutUserInput> | ProjectMemberCreateWithoutUserInput[] | ProjectMemberUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: ProjectMemberCreateOrConnectWithoutUserInput | ProjectMemberCreateOrConnectWithoutUserInput[]
-    createMany?: ProjectMemberCreateManyUserInputEnvelope
-    connect?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
+  export type UserSessionCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserSessionCreateWithoutUserInput, UserSessionUncheckedCreateWithoutUserInput> | UserSessionCreateWithoutUserInput[] | UserSessionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserSessionCreateOrConnectWithoutUserInput | UserSessionCreateOrConnectWithoutUserInput[]
+    createMany?: UserSessionCreateManyUserInputEnvelope
+    connect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
   }
 
   export type DocumentCreateNestedManyWithoutCreatorInput = {
@@ -18589,11 +18589,11 @@ export namespace Prisma {
     connect?: AiRequestWhereUniqueInput | AiRequestWhereUniqueInput[]
   }
 
-  export type UserSessionUncheckedCreateNestedManyWithoutUserInput = {
-    create?: XOR<UserSessionCreateWithoutUserInput, UserSessionUncheckedCreateWithoutUserInput> | UserSessionCreateWithoutUserInput[] | UserSessionUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: UserSessionCreateOrConnectWithoutUserInput | UserSessionCreateOrConnectWithoutUserInput[]
-    createMany?: UserSessionCreateManyUserInputEnvelope
-    connect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+  export type ProjectMemberUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<ProjectMemberCreateWithoutUserInput, ProjectMemberUncheckedCreateWithoutUserInput> | ProjectMemberCreateWithoutUserInput[] | ProjectMemberUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ProjectMemberCreateOrConnectWithoutUserInput | ProjectMemberCreateOrConnectWithoutUserInput[]
+    createMany?: ProjectMemberCreateManyUserInputEnvelope
+    connect?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
   }
 
   export type ApiKeyUncheckedCreateNestedManyWithoutUserInput = {
@@ -18603,11 +18603,11 @@ export namespace Prisma {
     connect?: ApiKeyWhereUniqueInput | ApiKeyWhereUniqueInput[]
   }
 
-  export type ProjectMemberUncheckedCreateNestedManyWithoutUserInput = {
-    create?: XOR<ProjectMemberCreateWithoutUserInput, ProjectMemberUncheckedCreateWithoutUserInput> | ProjectMemberCreateWithoutUserInput[] | ProjectMemberUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: ProjectMemberCreateOrConnectWithoutUserInput | ProjectMemberCreateOrConnectWithoutUserInput[]
-    createMany?: ProjectMemberCreateManyUserInputEnvelope
-    connect?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
+  export type UserSessionUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserSessionCreateWithoutUserInput, UserSessionUncheckedCreateWithoutUserInput> | UserSessionCreateWithoutUserInput[] | UserSessionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserSessionCreateOrConnectWithoutUserInput | UserSessionCreateOrConnectWithoutUserInput[]
+    createMany?: UserSessionCreateManyUserInputEnvelope
+    connect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
   }
 
   export type DocumentUncheckedCreateNestedManyWithoutCreatorInput = {
@@ -18659,18 +18659,18 @@ export namespace Prisma {
     set?: Date | string
   }
 
-  export type UserSessionUpdateManyWithoutUserNestedInput = {
-    create?: XOR<UserSessionCreateWithoutUserInput, UserSessionUncheckedCreateWithoutUserInput> | UserSessionCreateWithoutUserInput[] | UserSessionUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: UserSessionCreateOrConnectWithoutUserInput | UserSessionCreateOrConnectWithoutUserInput[]
-    upsert?: UserSessionUpsertWithWhereUniqueWithoutUserInput | UserSessionUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: UserSessionCreateManyUserInputEnvelope
-    set?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
-    disconnect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
-    delete?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
-    connect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
-    update?: UserSessionUpdateWithWhereUniqueWithoutUserInput | UserSessionUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: UserSessionUpdateManyWithWhereWithoutUserInput | UserSessionUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: UserSessionScalarWhereInput | UserSessionScalarWhereInput[]
+  export type ProjectMemberUpdateManyWithoutUserNestedInput = {
+    create?: XOR<ProjectMemberCreateWithoutUserInput, ProjectMemberUncheckedCreateWithoutUserInput> | ProjectMemberCreateWithoutUserInput[] | ProjectMemberUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ProjectMemberCreateOrConnectWithoutUserInput | ProjectMemberCreateOrConnectWithoutUserInput[]
+    upsert?: ProjectMemberUpsertWithWhereUniqueWithoutUserInput | ProjectMemberUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: ProjectMemberCreateManyUserInputEnvelope
+    set?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
+    disconnect?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
+    delete?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
+    connect?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
+    update?: ProjectMemberUpdateWithWhereUniqueWithoutUserInput | ProjectMemberUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: ProjectMemberUpdateManyWithWhereWithoutUserInput | ProjectMemberUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: ProjectMemberScalarWhereInput | ProjectMemberScalarWhereInput[]
   }
 
   export type ApiKeyUpdateManyWithoutUserNestedInput = {
@@ -18687,18 +18687,18 @@ export namespace Prisma {
     deleteMany?: ApiKeyScalarWhereInput | ApiKeyScalarWhereInput[]
   }
 
-  export type ProjectMemberUpdateManyWithoutUserNestedInput = {
-    create?: XOR<ProjectMemberCreateWithoutUserInput, ProjectMemberUncheckedCreateWithoutUserInput> | ProjectMemberCreateWithoutUserInput[] | ProjectMemberUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: ProjectMemberCreateOrConnectWithoutUserInput | ProjectMemberCreateOrConnectWithoutUserInput[]
-    upsert?: ProjectMemberUpsertWithWhereUniqueWithoutUserInput | ProjectMemberUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: ProjectMemberCreateManyUserInputEnvelope
-    set?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
-    disconnect?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
-    delete?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
-    connect?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
-    update?: ProjectMemberUpdateWithWhereUniqueWithoutUserInput | ProjectMemberUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: ProjectMemberUpdateManyWithWhereWithoutUserInput | ProjectMemberUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: ProjectMemberScalarWhereInput | ProjectMemberScalarWhereInput[]
+  export type UserSessionUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserSessionCreateWithoutUserInput, UserSessionUncheckedCreateWithoutUserInput> | UserSessionCreateWithoutUserInput[] | UserSessionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserSessionCreateOrConnectWithoutUserInput | UserSessionCreateOrConnectWithoutUserInput[]
+    upsert?: UserSessionUpsertWithWhereUniqueWithoutUserInput | UserSessionUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserSessionCreateManyUserInputEnvelope
+    set?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    disconnect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    delete?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    connect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    update?: UserSessionUpdateWithWhereUniqueWithoutUserInput | UserSessionUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserSessionUpdateManyWithWhereWithoutUserInput | UserSessionUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserSessionScalarWhereInput | UserSessionScalarWhereInput[]
   }
 
   export type DocumentUpdateManyWithoutCreatorNestedInput = {
@@ -18743,18 +18743,18 @@ export namespace Prisma {
     deleteMany?: AiRequestScalarWhereInput | AiRequestScalarWhereInput[]
   }
 
-  export type UserSessionUncheckedUpdateManyWithoutUserNestedInput = {
-    create?: XOR<UserSessionCreateWithoutUserInput, UserSessionUncheckedCreateWithoutUserInput> | UserSessionCreateWithoutUserInput[] | UserSessionUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: UserSessionCreateOrConnectWithoutUserInput | UserSessionCreateOrConnectWithoutUserInput[]
-    upsert?: UserSessionUpsertWithWhereUniqueWithoutUserInput | UserSessionUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: UserSessionCreateManyUserInputEnvelope
-    set?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
-    disconnect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
-    delete?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
-    connect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
-    update?: UserSessionUpdateWithWhereUniqueWithoutUserInput | UserSessionUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: UserSessionUpdateManyWithWhereWithoutUserInput | UserSessionUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: UserSessionScalarWhereInput | UserSessionScalarWhereInput[]
+  export type ProjectMemberUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<ProjectMemberCreateWithoutUserInput, ProjectMemberUncheckedCreateWithoutUserInput> | ProjectMemberCreateWithoutUserInput[] | ProjectMemberUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ProjectMemberCreateOrConnectWithoutUserInput | ProjectMemberCreateOrConnectWithoutUserInput[]
+    upsert?: ProjectMemberUpsertWithWhereUniqueWithoutUserInput | ProjectMemberUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: ProjectMemberCreateManyUserInputEnvelope
+    set?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
+    disconnect?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
+    delete?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
+    connect?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
+    update?: ProjectMemberUpdateWithWhereUniqueWithoutUserInput | ProjectMemberUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: ProjectMemberUpdateManyWithWhereWithoutUserInput | ProjectMemberUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: ProjectMemberScalarWhereInput | ProjectMemberScalarWhereInput[]
   }
 
   export type ApiKeyUncheckedUpdateManyWithoutUserNestedInput = {
@@ -18771,18 +18771,18 @@ export namespace Prisma {
     deleteMany?: ApiKeyScalarWhereInput | ApiKeyScalarWhereInput[]
   }
 
-  export type ProjectMemberUncheckedUpdateManyWithoutUserNestedInput = {
-    create?: XOR<ProjectMemberCreateWithoutUserInput, ProjectMemberUncheckedCreateWithoutUserInput> | ProjectMemberCreateWithoutUserInput[] | ProjectMemberUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: ProjectMemberCreateOrConnectWithoutUserInput | ProjectMemberCreateOrConnectWithoutUserInput[]
-    upsert?: ProjectMemberUpsertWithWhereUniqueWithoutUserInput | ProjectMemberUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: ProjectMemberCreateManyUserInputEnvelope
-    set?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
-    disconnect?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
-    delete?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
-    connect?: ProjectMemberWhereUniqueInput | ProjectMemberWhereUniqueInput[]
-    update?: ProjectMemberUpdateWithWhereUniqueWithoutUserInput | ProjectMemberUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: ProjectMemberUpdateManyWithWhereWithoutUserInput | ProjectMemberUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: ProjectMemberScalarWhereInput | ProjectMemberScalarWhereInput[]
+  export type UserSessionUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserSessionCreateWithoutUserInput, UserSessionUncheckedCreateWithoutUserInput> | UserSessionCreateWithoutUserInput[] | UserSessionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserSessionCreateOrConnectWithoutUserInput | UserSessionCreateOrConnectWithoutUserInput[]
+    upsert?: UserSessionUpsertWithWhereUniqueWithoutUserInput | UserSessionUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserSessionCreateManyUserInputEnvelope
+    set?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    disconnect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    delete?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    connect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    update?: UserSessionUpdateWithWhereUniqueWithoutUserInput | UserSessionUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserSessionUpdateManyWithWhereWithoutUserInput | UserSessionUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserSessionScalarWhereInput | UserSessionScalarWhereInput[]
   }
 
   export type DocumentUncheckedUpdateManyWithoutCreatorNestedInput = {
@@ -19009,9 +19009,9 @@ export namespace Prisma {
     deleteMany?: AiRequestScalarWhereInput | AiRequestScalarWhereInput[]
   }
 
-  export type ProjectCreateNestedOneWithoutProject_membersInput = {
-    create?: XOR<ProjectCreateWithoutProject_membersInput, ProjectUncheckedCreateWithoutProject_membersInput>
-    connectOrCreate?: ProjectCreateOrConnectWithoutProject_membersInput
+  export type ProjectCreateNestedOneWithoutMembersInput = {
+    create?: XOR<ProjectCreateWithoutMembersInput, ProjectUncheckedCreateWithoutMembersInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutMembersInput
     connect?: ProjectWhereUniqueInput
   }
 
@@ -19025,12 +19025,12 @@ export namespace Prisma {
     set?: $Enums.MemberRole
   }
 
-  export type ProjectUpdateOneRequiredWithoutProject_membersNestedInput = {
-    create?: XOR<ProjectCreateWithoutProject_membersInput, ProjectUncheckedCreateWithoutProject_membersInput>
-    connectOrCreate?: ProjectCreateOrConnectWithoutProject_membersInput
-    upsert?: ProjectUpsertWithoutProject_membersInput
+  export type ProjectUpdateOneRequiredWithoutMembersNestedInput = {
+    create?: XOR<ProjectCreateWithoutMembersInput, ProjectUncheckedCreateWithoutMembersInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutMembersInput
+    upsert?: ProjectUpsertWithoutMembersInput
     connect?: ProjectWhereUniqueInput
-    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutProject_membersInput, ProjectUpdateWithoutProject_membersInput>, ProjectUncheckedUpdateWithoutProject_membersInput>
+    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutMembersInput, ProjectUpdateWithoutMembersInput>, ProjectUncheckedUpdateWithoutMembersInput>
   }
 
   export type UserUpdateOneRequiredWithoutProject_membersNestedInput = {
@@ -19740,37 +19740,31 @@ export namespace Prisma {
     _max?: NestedEnumAiRequestStatusFilter<$PrismaModel>
   }
 
-  export type UserSessionCreateWithoutUserInput = {
+  export type ProjectMemberCreateWithoutUserInput = {
     id?: string
-    session_id: string
-    access_token: string
-    refresh_token?: string | null
-    expires_at: Date | string
-    ip_address?: string | null
-    user_agent?: string | null
+    role?: $Enums.MemberRole
+    joined_at?: Date | string
+    created_at?: Date | string
+    updated_at?: Date | string
+    project: ProjectCreateNestedOneWithoutMembersInput
+  }
+
+  export type ProjectMemberUncheckedCreateWithoutUserInput = {
+    id?: string
+    project_id: string
+    role?: $Enums.MemberRole
+    joined_at?: Date | string
     created_at?: Date | string
     updated_at?: Date | string
   }
 
-  export type UserSessionUncheckedCreateWithoutUserInput = {
-    id?: string
-    session_id: string
-    access_token: string
-    refresh_token?: string | null
-    expires_at: Date | string
-    ip_address?: string | null
-    user_agent?: string | null
-    created_at?: Date | string
-    updated_at?: Date | string
+  export type ProjectMemberCreateOrConnectWithoutUserInput = {
+    where: ProjectMemberWhereUniqueInput
+    create: XOR<ProjectMemberCreateWithoutUserInput, ProjectMemberUncheckedCreateWithoutUserInput>
   }
 
-  export type UserSessionCreateOrConnectWithoutUserInput = {
-    where: UserSessionWhereUniqueInput
-    create: XOR<UserSessionCreateWithoutUserInput, UserSessionUncheckedCreateWithoutUserInput>
-  }
-
-  export type UserSessionCreateManyUserInputEnvelope = {
-    data: UserSessionCreateManyUserInput | UserSessionCreateManyUserInput[]
+  export type ProjectMemberCreateManyUserInputEnvelope = {
+    data: ProjectMemberCreateManyUserInput | ProjectMemberCreateManyUserInput[]
     skipDuplicates?: boolean
   }
 
@@ -19808,31 +19802,37 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type ProjectMemberCreateWithoutUserInput = {
+  export type UserSessionCreateWithoutUserInput = {
     id?: string
-    role?: $Enums.MemberRole
-    joined_at?: Date | string
-    created_at?: Date | string
-    updated_at?: Date | string
-    project: ProjectCreateNestedOneWithoutProject_membersInput
-  }
-
-  export type ProjectMemberUncheckedCreateWithoutUserInput = {
-    id?: string
-    project_id: string
-    role?: $Enums.MemberRole
-    joined_at?: Date | string
+    session_id: string
+    access_token: string
+    refresh_token?: string | null
+    expires_at: Date | string
+    ip_address?: string | null
+    user_agent?: string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
 
-  export type ProjectMemberCreateOrConnectWithoutUserInput = {
-    where: ProjectMemberWhereUniqueInput
-    create: XOR<ProjectMemberCreateWithoutUserInput, ProjectMemberUncheckedCreateWithoutUserInput>
+  export type UserSessionUncheckedCreateWithoutUserInput = {
+    id?: string
+    session_id: string
+    access_token: string
+    refresh_token?: string | null
+    expires_at: Date | string
+    ip_address?: string | null
+    user_agent?: string | null
+    created_at?: Date | string
+    updated_at?: Date | string
   }
 
-  export type ProjectMemberCreateManyUserInputEnvelope = {
-    data: ProjectMemberCreateManyUserInput | ProjectMemberCreateManyUserInput[]
+  export type UserSessionCreateOrConnectWithoutUserInput = {
+    where: UserSessionWhereUniqueInput
+    create: XOR<UserSessionCreateWithoutUserInput, UserSessionUncheckedCreateWithoutUserInput>
+  }
+
+  export type UserSessionCreateManyUserInputEnvelope = {
+    data: UserSessionCreateManyUserInput | UserSessionCreateManyUserInput[]
     skipDuplicates?: boolean
   }
 
@@ -19942,36 +19942,33 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type UserSessionUpsertWithWhereUniqueWithoutUserInput = {
-    where: UserSessionWhereUniqueInput
-    update: XOR<UserSessionUpdateWithoutUserInput, UserSessionUncheckedUpdateWithoutUserInput>
-    create: XOR<UserSessionCreateWithoutUserInput, UserSessionUncheckedCreateWithoutUserInput>
+  export type ProjectMemberUpsertWithWhereUniqueWithoutUserInput = {
+    where: ProjectMemberWhereUniqueInput
+    update: XOR<ProjectMemberUpdateWithoutUserInput, ProjectMemberUncheckedUpdateWithoutUserInput>
+    create: XOR<ProjectMemberCreateWithoutUserInput, ProjectMemberUncheckedCreateWithoutUserInput>
   }
 
-  export type UserSessionUpdateWithWhereUniqueWithoutUserInput = {
-    where: UserSessionWhereUniqueInput
-    data: XOR<UserSessionUpdateWithoutUserInput, UserSessionUncheckedUpdateWithoutUserInput>
+  export type ProjectMemberUpdateWithWhereUniqueWithoutUserInput = {
+    where: ProjectMemberWhereUniqueInput
+    data: XOR<ProjectMemberUpdateWithoutUserInput, ProjectMemberUncheckedUpdateWithoutUserInput>
   }
 
-  export type UserSessionUpdateManyWithWhereWithoutUserInput = {
-    where: UserSessionScalarWhereInput
-    data: XOR<UserSessionUpdateManyMutationInput, UserSessionUncheckedUpdateManyWithoutUserInput>
+  export type ProjectMemberUpdateManyWithWhereWithoutUserInput = {
+    where: ProjectMemberScalarWhereInput
+    data: XOR<ProjectMemberUpdateManyMutationInput, ProjectMemberUncheckedUpdateManyWithoutUserInput>
   }
 
-  export type UserSessionScalarWhereInput = {
-    AND?: UserSessionScalarWhereInput | UserSessionScalarWhereInput[]
-    OR?: UserSessionScalarWhereInput[]
-    NOT?: UserSessionScalarWhereInput | UserSessionScalarWhereInput[]
-    id?: UuidFilter<"UserSession"> | string
-    user_id?: UuidFilter<"UserSession"> | string
-    session_id?: StringFilter<"UserSession"> | string
-    access_token?: StringFilter<"UserSession"> | string
-    refresh_token?: StringNullableFilter<"UserSession"> | string | null
-    expires_at?: DateTimeFilter<"UserSession"> | Date | string
-    ip_address?: StringNullableFilter<"UserSession"> | string | null
-    user_agent?: StringNullableFilter<"UserSession"> | string | null
-    created_at?: DateTimeFilter<"UserSession"> | Date | string
-    updated_at?: DateTimeFilter<"UserSession"> | Date | string
+  export type ProjectMemberScalarWhereInput = {
+    AND?: ProjectMemberScalarWhereInput | ProjectMemberScalarWhereInput[]
+    OR?: ProjectMemberScalarWhereInput[]
+    NOT?: ProjectMemberScalarWhereInput | ProjectMemberScalarWhereInput[]
+    id?: UuidFilter<"ProjectMember"> | string
+    project_id?: UuidFilter<"ProjectMember"> | string
+    user_id?: UuidFilter<"ProjectMember"> | string
+    role?: EnumMemberRoleFilter<"ProjectMember"> | $Enums.MemberRole
+    joined_at?: DateTimeFilter<"ProjectMember"> | Date | string
+    created_at?: DateTimeFilter<"ProjectMember"> | Date | string
+    updated_at?: DateTimeFilter<"ProjectMember"> | Date | string
   }
 
   export type ApiKeyUpsertWithWhereUniqueWithoutUserInput = {
@@ -20006,33 +20003,36 @@ export namespace Prisma {
     updated_at?: DateTimeFilter<"ApiKey"> | Date | string
   }
 
-  export type ProjectMemberUpsertWithWhereUniqueWithoutUserInput = {
-    where: ProjectMemberWhereUniqueInput
-    update: XOR<ProjectMemberUpdateWithoutUserInput, ProjectMemberUncheckedUpdateWithoutUserInput>
-    create: XOR<ProjectMemberCreateWithoutUserInput, ProjectMemberUncheckedCreateWithoutUserInput>
+  export type UserSessionUpsertWithWhereUniqueWithoutUserInput = {
+    where: UserSessionWhereUniqueInput
+    update: XOR<UserSessionUpdateWithoutUserInput, UserSessionUncheckedUpdateWithoutUserInput>
+    create: XOR<UserSessionCreateWithoutUserInput, UserSessionUncheckedCreateWithoutUserInput>
   }
 
-  export type ProjectMemberUpdateWithWhereUniqueWithoutUserInput = {
-    where: ProjectMemberWhereUniqueInput
-    data: XOR<ProjectMemberUpdateWithoutUserInput, ProjectMemberUncheckedUpdateWithoutUserInput>
+  export type UserSessionUpdateWithWhereUniqueWithoutUserInput = {
+    where: UserSessionWhereUniqueInput
+    data: XOR<UserSessionUpdateWithoutUserInput, UserSessionUncheckedUpdateWithoutUserInput>
   }
 
-  export type ProjectMemberUpdateManyWithWhereWithoutUserInput = {
-    where: ProjectMemberScalarWhereInput
-    data: XOR<ProjectMemberUpdateManyMutationInput, ProjectMemberUncheckedUpdateManyWithoutUserInput>
+  export type UserSessionUpdateManyWithWhereWithoutUserInput = {
+    where: UserSessionScalarWhereInput
+    data: XOR<UserSessionUpdateManyMutationInput, UserSessionUncheckedUpdateManyWithoutUserInput>
   }
 
-  export type ProjectMemberScalarWhereInput = {
-    AND?: ProjectMemberScalarWhereInput | ProjectMemberScalarWhereInput[]
-    OR?: ProjectMemberScalarWhereInput[]
-    NOT?: ProjectMemberScalarWhereInput | ProjectMemberScalarWhereInput[]
-    id?: UuidFilter<"ProjectMember"> | string
-    project_id?: UuidFilter<"ProjectMember"> | string
-    user_id?: UuidFilter<"ProjectMember"> | string
-    role?: EnumMemberRoleFilter<"ProjectMember"> | $Enums.MemberRole
-    joined_at?: DateTimeFilter<"ProjectMember"> | Date | string
-    created_at?: DateTimeFilter<"ProjectMember"> | Date | string
-    updated_at?: DateTimeFilter<"ProjectMember"> | Date | string
+  export type UserSessionScalarWhereInput = {
+    AND?: UserSessionScalarWhereInput | UserSessionScalarWhereInput[]
+    OR?: UserSessionScalarWhereInput[]
+    NOT?: UserSessionScalarWhereInput | UserSessionScalarWhereInput[]
+    id?: UuidFilter<"UserSession"> | string
+    user_id?: UuidFilter<"UserSession"> | string
+    session_id?: StringFilter<"UserSession"> | string
+    access_token?: StringFilter<"UserSession"> | string
+    refresh_token?: StringNullableFilter<"UserSession"> | string | null
+    expires_at?: DateTimeFilter<"UserSession"> | Date | string
+    ip_address?: StringNullableFilter<"UserSession"> | string | null
+    user_agent?: StringNullableFilter<"UserSession"> | string | null
+    created_at?: DateTimeFilter<"UserSession"> | Date | string
+    updated_at?: DateTimeFilter<"UserSession"> | Date | string
   }
 
   export type DocumentUpsertWithWhereUniqueWithoutCreatorInput = {
@@ -20147,8 +20147,8 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: Date | string
     updated_at?: Date | string
-    api_keys?: ApiKeyCreateNestedManyWithoutUserInput
     project_members?: ProjectMemberCreateNestedManyWithoutUserInput
+    api_keys?: ApiKeyCreateNestedManyWithoutUserInput
     documents?: DocumentCreateNestedManyWithoutCreatorInput
     document_versions?: DocumentVersionCreateNestedManyWithoutCreatorInput
     ai_requests?: AiRequestCreateNestedManyWithoutUserInput
@@ -20171,8 +20171,8 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: Date | string
     updated_at?: Date | string
-    api_keys?: ApiKeyUncheckedCreateNestedManyWithoutUserInput
     project_members?: ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+    api_keys?: ApiKeyUncheckedCreateNestedManyWithoutUserInput
     documents?: DocumentUncheckedCreateNestedManyWithoutCreatorInput
     document_versions?: DocumentVersionUncheckedCreateNestedManyWithoutCreatorInput
     ai_requests?: AiRequestUncheckedCreateNestedManyWithoutUserInput
@@ -20211,8 +20211,8 @@ export namespace Prisma {
     is_active?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    api_keys?: ApiKeyUpdateManyWithoutUserNestedInput
     project_members?: ProjectMemberUpdateManyWithoutUserNestedInput
+    api_keys?: ApiKeyUpdateManyWithoutUserNestedInput
     documents?: DocumentUpdateManyWithoutCreatorNestedInput
     document_versions?: DocumentVersionUpdateManyWithoutCreatorNestedInput
     ai_requests?: AiRequestUpdateManyWithoutUserNestedInput
@@ -20235,8 +20235,8 @@ export namespace Prisma {
     is_active?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    api_keys?: ApiKeyUncheckedUpdateManyWithoutUserNestedInput
     project_members?: ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+    api_keys?: ApiKeyUncheckedUpdateManyWithoutUserNestedInput
     documents?: DocumentUncheckedUpdateManyWithoutCreatorNestedInput
     document_versions?: DocumentVersionUncheckedUpdateManyWithoutCreatorNestedInput
     ai_requests?: AiRequestUncheckedUpdateManyWithoutUserNestedInput
@@ -20259,8 +20259,8 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: Date | string
     updated_at?: Date | string
-    user_sessions?: UserSessionCreateNestedManyWithoutUserInput
     project_members?: ProjectMemberCreateNestedManyWithoutUserInput
+    user_sessions?: UserSessionCreateNestedManyWithoutUserInput
     documents?: DocumentCreateNestedManyWithoutCreatorInput
     document_versions?: DocumentVersionCreateNestedManyWithoutCreatorInput
     ai_requests?: AiRequestCreateNestedManyWithoutUserInput
@@ -20283,8 +20283,8 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: Date | string
     updated_at?: Date | string
-    user_sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     project_members?: ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+    user_sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     documents?: DocumentUncheckedCreateNestedManyWithoutCreatorInput
     document_versions?: DocumentVersionUncheckedCreateNestedManyWithoutCreatorInput
     ai_requests?: AiRequestUncheckedCreateNestedManyWithoutUserInput
@@ -20323,8 +20323,8 @@ export namespace Prisma {
     is_active?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    user_sessions?: UserSessionUpdateManyWithoutUserNestedInput
     project_members?: ProjectMemberUpdateManyWithoutUserNestedInput
+    user_sessions?: UserSessionUpdateManyWithoutUserNestedInput
     documents?: DocumentUpdateManyWithoutCreatorNestedInput
     document_versions?: DocumentVersionUpdateManyWithoutCreatorNestedInput
     ai_requests?: AiRequestUpdateManyWithoutUserNestedInput
@@ -20347,8 +20347,8 @@ export namespace Prisma {
     is_active?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    user_sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     project_members?: ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+    user_sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     documents?: DocumentUncheckedUpdateManyWithoutCreatorNestedInput
     document_versions?: DocumentVersionUncheckedUpdateManyWithoutCreatorNestedInput
     ai_requests?: AiRequestUncheckedUpdateManyWithoutUserNestedInput
@@ -20598,7 +20598,7 @@ export namespace Prisma {
     data: XOR<AiRequestUpdateManyMutationInput, AiRequestUncheckedUpdateManyWithoutProjectInput>
   }
 
-  export type ProjectCreateWithoutProject_membersInput = {
+  export type ProjectCreateWithoutMembersInput = {
     id?: string
     name: string
     description?: string | null
@@ -20613,7 +20613,7 @@ export namespace Prisma {
     ai_requests?: AiRequestCreateNestedManyWithoutProjectInput
   }
 
-  export type ProjectUncheckedCreateWithoutProject_membersInput = {
+  export type ProjectUncheckedCreateWithoutMembersInput = {
     id?: string
     name: string
     description?: string | null
@@ -20628,9 +20628,9 @@ export namespace Prisma {
     ai_requests?: AiRequestUncheckedCreateNestedManyWithoutProjectInput
   }
 
-  export type ProjectCreateOrConnectWithoutProject_membersInput = {
+  export type ProjectCreateOrConnectWithoutMembersInput = {
     where: ProjectWhereUniqueInput
-    create: XOR<ProjectCreateWithoutProject_membersInput, ProjectUncheckedCreateWithoutProject_membersInput>
+    create: XOR<ProjectCreateWithoutMembersInput, ProjectUncheckedCreateWithoutMembersInput>
   }
 
   export type UserCreateWithoutProject_membersInput = {
@@ -20650,8 +20650,8 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: Date | string
     updated_at?: Date | string
-    user_sessions?: UserSessionCreateNestedManyWithoutUserInput
     api_keys?: ApiKeyCreateNestedManyWithoutUserInput
+    user_sessions?: UserSessionCreateNestedManyWithoutUserInput
     documents?: DocumentCreateNestedManyWithoutCreatorInput
     document_versions?: DocumentVersionCreateNestedManyWithoutCreatorInput
     ai_requests?: AiRequestCreateNestedManyWithoutUserInput
@@ -20674,8 +20674,8 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: Date | string
     updated_at?: Date | string
-    user_sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     api_keys?: ApiKeyUncheckedCreateNestedManyWithoutUserInput
+    user_sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     documents?: DocumentUncheckedCreateNestedManyWithoutCreatorInput
     document_versions?: DocumentVersionUncheckedCreateNestedManyWithoutCreatorInput
     ai_requests?: AiRequestUncheckedCreateNestedManyWithoutUserInput
@@ -20686,18 +20686,18 @@ export namespace Prisma {
     create: XOR<UserCreateWithoutProject_membersInput, UserUncheckedCreateWithoutProject_membersInput>
   }
 
-  export type ProjectUpsertWithoutProject_membersInput = {
-    update: XOR<ProjectUpdateWithoutProject_membersInput, ProjectUncheckedUpdateWithoutProject_membersInput>
-    create: XOR<ProjectCreateWithoutProject_membersInput, ProjectUncheckedCreateWithoutProject_membersInput>
+  export type ProjectUpsertWithoutMembersInput = {
+    update: XOR<ProjectUpdateWithoutMembersInput, ProjectUncheckedUpdateWithoutMembersInput>
+    create: XOR<ProjectCreateWithoutMembersInput, ProjectUncheckedCreateWithoutMembersInput>
     where?: ProjectWhereInput
   }
 
-  export type ProjectUpdateToOneWithWhereWithoutProject_membersInput = {
+  export type ProjectUpdateToOneWithWhereWithoutMembersInput = {
     where?: ProjectWhereInput
-    data: XOR<ProjectUpdateWithoutProject_membersInput, ProjectUncheckedUpdateWithoutProject_membersInput>
+    data: XOR<ProjectUpdateWithoutMembersInput, ProjectUncheckedUpdateWithoutMembersInput>
   }
 
-  export type ProjectUpdateWithoutProject_membersInput = {
+  export type ProjectUpdateWithoutMembersInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
@@ -20712,7 +20712,7 @@ export namespace Prisma {
     ai_requests?: AiRequestUpdateManyWithoutProjectNestedInput
   }
 
-  export type ProjectUncheckedUpdateWithoutProject_membersInput = {
+  export type ProjectUncheckedUpdateWithoutMembersInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
@@ -20755,8 +20755,8 @@ export namespace Prisma {
     is_active?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    user_sessions?: UserSessionUpdateManyWithoutUserNestedInput
     api_keys?: ApiKeyUpdateManyWithoutUserNestedInput
+    user_sessions?: UserSessionUpdateManyWithoutUserNestedInput
     documents?: DocumentUpdateManyWithoutCreatorNestedInput
     document_versions?: DocumentVersionUpdateManyWithoutCreatorNestedInput
     ai_requests?: AiRequestUpdateManyWithoutUserNestedInput
@@ -20779,8 +20779,8 @@ export namespace Prisma {
     is_active?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    user_sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     api_keys?: ApiKeyUncheckedUpdateManyWithoutUserNestedInput
+    user_sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     documents?: DocumentUncheckedUpdateManyWithoutCreatorNestedInput
     document_versions?: DocumentVersionUncheckedUpdateManyWithoutCreatorNestedInput
     ai_requests?: AiRequestUncheckedUpdateManyWithoutUserNestedInput
@@ -20796,7 +20796,7 @@ export namespace Prisma {
     ai_budget?: Decimal | DecimalJsLike | number | string | null
     created_at?: Date | string
     updated_at?: Date | string
-    project_members?: ProjectMemberCreateNestedManyWithoutProjectInput
+    members?: ProjectMemberCreateNestedManyWithoutProjectInput
     documents?: DocumentCreateNestedManyWithoutProjectInput
     ai_requests?: AiRequestCreateNestedManyWithoutProjectInput
   }
@@ -20811,7 +20811,7 @@ export namespace Prisma {
     ai_budget?: Decimal | DecimalJsLike | number | string | null
     created_at?: Date | string
     updated_at?: Date | string
-    project_members?: ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
+    members?: ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
     documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
     ai_requests?: AiRequestUncheckedCreateNestedManyWithoutProjectInput
   }
@@ -20842,7 +20842,7 @@ export namespace Prisma {
     ai_budget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    project_members?: ProjectMemberUpdateManyWithoutProjectNestedInput
+    members?: ProjectMemberUpdateManyWithoutProjectNestedInput
     documents?: DocumentUpdateManyWithoutProjectNestedInput
     ai_requests?: AiRequestUpdateManyWithoutProjectNestedInput
   }
@@ -20857,7 +20857,7 @@ export namespace Prisma {
     ai_budget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    project_members?: ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
+    members?: ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
     documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
     ai_requests?: AiRequestUncheckedUpdateManyWithoutProjectNestedInput
   }
@@ -20873,7 +20873,7 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     repository?: RepositoryCreateNestedOneWithoutProjectInput
-    project_members?: ProjectMemberCreateNestedManyWithoutProjectInput
+    members?: ProjectMemberCreateNestedManyWithoutProjectInput
     ai_requests?: AiRequestCreateNestedManyWithoutProjectInput
   }
 
@@ -20888,7 +20888,7 @@ export namespace Prisma {
     ai_budget?: Decimal | DecimalJsLike | number | string | null
     created_at?: Date | string
     updated_at?: Date | string
-    project_members?: ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
+    members?: ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
     ai_requests?: AiRequestUncheckedCreateNestedManyWithoutProjectInput
   }
 
@@ -20914,9 +20914,9 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: Date | string
     updated_at?: Date | string
-    user_sessions?: UserSessionCreateNestedManyWithoutUserInput
-    api_keys?: ApiKeyCreateNestedManyWithoutUserInput
     project_members?: ProjectMemberCreateNestedManyWithoutUserInput
+    api_keys?: ApiKeyCreateNestedManyWithoutUserInput
+    user_sessions?: UserSessionCreateNestedManyWithoutUserInput
     document_versions?: DocumentVersionCreateNestedManyWithoutCreatorInput
     ai_requests?: AiRequestCreateNestedManyWithoutUserInput
   }
@@ -20938,9 +20938,9 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: Date | string
     updated_at?: Date | string
-    user_sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
-    api_keys?: ApiKeyUncheckedCreateNestedManyWithoutUserInput
     project_members?: ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+    api_keys?: ApiKeyUncheckedCreateNestedManyWithoutUserInput
+    user_sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     document_versions?: DocumentVersionUncheckedCreateNestedManyWithoutCreatorInput
     ai_requests?: AiRequestUncheckedCreateNestedManyWithoutUserInput
   }
@@ -21002,7 +21002,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     repository?: RepositoryUpdateOneWithoutProjectNestedInput
-    project_members?: ProjectMemberUpdateManyWithoutProjectNestedInput
+    members?: ProjectMemberUpdateManyWithoutProjectNestedInput
     ai_requests?: AiRequestUpdateManyWithoutProjectNestedInput
   }
 
@@ -21017,7 +21017,7 @@ export namespace Prisma {
     ai_budget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    project_members?: ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
+    members?: ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
     ai_requests?: AiRequestUncheckedUpdateManyWithoutProjectNestedInput
   }
 
@@ -21049,9 +21049,9 @@ export namespace Prisma {
     is_active?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    user_sessions?: UserSessionUpdateManyWithoutUserNestedInput
-    api_keys?: ApiKeyUpdateManyWithoutUserNestedInput
     project_members?: ProjectMemberUpdateManyWithoutUserNestedInput
+    api_keys?: ApiKeyUpdateManyWithoutUserNestedInput
+    user_sessions?: UserSessionUpdateManyWithoutUserNestedInput
     document_versions?: DocumentVersionUpdateManyWithoutCreatorNestedInput
     ai_requests?: AiRequestUpdateManyWithoutUserNestedInput
   }
@@ -21073,9 +21073,9 @@ export namespace Prisma {
     is_active?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    user_sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
-    api_keys?: ApiKeyUncheckedUpdateManyWithoutUserNestedInput
     project_members?: ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+    api_keys?: ApiKeyUncheckedUpdateManyWithoutUserNestedInput
+    user_sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     document_versions?: DocumentVersionUncheckedUpdateManyWithoutCreatorNestedInput
     ai_requests?: AiRequestUncheckedUpdateManyWithoutUserNestedInput
   }
@@ -21146,9 +21146,9 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: Date | string
     updated_at?: Date | string
-    user_sessions?: UserSessionCreateNestedManyWithoutUserInput
-    api_keys?: ApiKeyCreateNestedManyWithoutUserInput
     project_members?: ProjectMemberCreateNestedManyWithoutUserInput
+    api_keys?: ApiKeyCreateNestedManyWithoutUserInput
+    user_sessions?: UserSessionCreateNestedManyWithoutUserInput
     documents?: DocumentCreateNestedManyWithoutCreatorInput
     ai_requests?: AiRequestCreateNestedManyWithoutUserInput
   }
@@ -21170,9 +21170,9 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: Date | string
     updated_at?: Date | string
-    user_sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
-    api_keys?: ApiKeyUncheckedCreateNestedManyWithoutUserInput
     project_members?: ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+    api_keys?: ApiKeyUncheckedCreateNestedManyWithoutUserInput
+    user_sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     documents?: DocumentUncheckedCreateNestedManyWithoutCreatorInput
     ai_requests?: AiRequestUncheckedCreateNestedManyWithoutUserInput
   }
@@ -21249,9 +21249,9 @@ export namespace Prisma {
     is_active?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    user_sessions?: UserSessionUpdateManyWithoutUserNestedInput
-    api_keys?: ApiKeyUpdateManyWithoutUserNestedInput
     project_members?: ProjectMemberUpdateManyWithoutUserNestedInput
+    api_keys?: ApiKeyUpdateManyWithoutUserNestedInput
+    user_sessions?: UserSessionUpdateManyWithoutUserNestedInput
     documents?: DocumentUpdateManyWithoutCreatorNestedInput
     ai_requests?: AiRequestUpdateManyWithoutUserNestedInput
   }
@@ -21273,9 +21273,9 @@ export namespace Prisma {
     is_active?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    user_sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
-    api_keys?: ApiKeyUncheckedUpdateManyWithoutUserNestedInput
     project_members?: ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+    api_keys?: ApiKeyUncheckedUpdateManyWithoutUserNestedInput
+    user_sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     documents?: DocumentUncheckedUpdateManyWithoutCreatorNestedInput
     ai_requests?: AiRequestUncheckedUpdateManyWithoutUserNestedInput
   }
@@ -21291,7 +21291,7 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     repository?: RepositoryCreateNestedOneWithoutProjectInput
-    project_members?: ProjectMemberCreateNestedManyWithoutProjectInput
+    members?: ProjectMemberCreateNestedManyWithoutProjectInput
     documents?: DocumentCreateNestedManyWithoutProjectInput
   }
 
@@ -21306,7 +21306,7 @@ export namespace Prisma {
     ai_budget?: Decimal | DecimalJsLike | number | string | null
     created_at?: Date | string
     updated_at?: Date | string
-    project_members?: ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
+    members?: ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
     documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
   }
 
@@ -21332,9 +21332,9 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: Date | string
     updated_at?: Date | string
-    user_sessions?: UserSessionCreateNestedManyWithoutUserInput
-    api_keys?: ApiKeyCreateNestedManyWithoutUserInput
     project_members?: ProjectMemberCreateNestedManyWithoutUserInput
+    api_keys?: ApiKeyCreateNestedManyWithoutUserInput
+    user_sessions?: UserSessionCreateNestedManyWithoutUserInput
     documents?: DocumentCreateNestedManyWithoutCreatorInput
     document_versions?: DocumentVersionCreateNestedManyWithoutCreatorInput
   }
@@ -21356,9 +21356,9 @@ export namespace Prisma {
     is_active?: boolean
     created_at?: Date | string
     updated_at?: Date | string
-    user_sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
-    api_keys?: ApiKeyUncheckedCreateNestedManyWithoutUserInput
     project_members?: ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+    api_keys?: ApiKeyUncheckedCreateNestedManyWithoutUserInput
+    user_sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     documents?: DocumentUncheckedCreateNestedManyWithoutCreatorInput
     document_versions?: DocumentVersionUncheckedCreateNestedManyWithoutCreatorInput
   }
@@ -21450,7 +21450,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     repository?: RepositoryUpdateOneWithoutProjectNestedInput
-    project_members?: ProjectMemberUpdateManyWithoutProjectNestedInput
+    members?: ProjectMemberUpdateManyWithoutProjectNestedInput
     documents?: DocumentUpdateManyWithoutProjectNestedInput
   }
 
@@ -21465,7 +21465,7 @@ export namespace Prisma {
     ai_budget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    project_members?: ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
+    members?: ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
     documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
   }
 
@@ -21497,9 +21497,9 @@ export namespace Prisma {
     is_active?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    user_sessions?: UserSessionUpdateManyWithoutUserNestedInput
-    api_keys?: ApiKeyUpdateManyWithoutUserNestedInput
     project_members?: ProjectMemberUpdateManyWithoutUserNestedInput
+    api_keys?: ApiKeyUpdateManyWithoutUserNestedInput
+    user_sessions?: UserSessionUpdateManyWithoutUserNestedInput
     documents?: DocumentUpdateManyWithoutCreatorNestedInput
     document_versions?: DocumentVersionUpdateManyWithoutCreatorNestedInput
   }
@@ -21521,9 +21521,9 @@ export namespace Prisma {
     is_active?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    user_sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
-    api_keys?: ApiKeyUncheckedUpdateManyWithoutUserNestedInput
     project_members?: ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+    api_keys?: ApiKeyUncheckedUpdateManyWithoutUserNestedInput
+    user_sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     documents?: DocumentUncheckedUpdateManyWithoutCreatorNestedInput
     document_versions?: DocumentVersionUncheckedUpdateManyWithoutCreatorNestedInput
   }
@@ -21732,14 +21732,11 @@ export namespace Prisma {
     responses?: AiResponseUncheckedUpdateManyWithoutRequestNestedInput
   }
 
-  export type UserSessionCreateManyUserInput = {
+  export type ProjectMemberCreateManyUserInput = {
     id?: string
-    session_id: string
-    access_token: string
-    refresh_token?: string | null
-    expires_at: Date | string
-    ip_address?: string | null
-    user_agent?: string | null
+    project_id: string
+    role?: $Enums.MemberRole
+    joined_at?: Date | string
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -21756,11 +21753,14 @@ export namespace Prisma {
     updated_at?: Date | string
   }
 
-  export type ProjectMemberCreateManyUserInput = {
+  export type UserSessionCreateManyUserInput = {
     id?: string
-    project_id: string
-    role?: $Enums.MemberRole
-    joined_at?: Date | string
+    session_id: string
+    access_token: string
+    refresh_token?: string | null
+    expires_at: Date | string
+    ip_address?: string | null
+    user_agent?: string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -21800,38 +21800,29 @@ export namespace Prisma {
     updated_at?: Date | string
   }
 
-  export type UserSessionUpdateWithoutUserInput = {
+  export type ProjectMemberUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
-    session_id?: StringFieldUpdateOperationsInput | string
-    access_token?: StringFieldUpdateOperationsInput | string
-    refresh_token?: NullableStringFieldUpdateOperationsInput | string | null
-    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    ip_address?: NullableStringFieldUpdateOperationsInput | string | null
-    user_agent?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumMemberRoleFieldUpdateOperationsInput | $Enums.MemberRole
+    joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    project?: ProjectUpdateOneRequiredWithoutMembersNestedInput
+  }
+
+  export type ProjectMemberUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    project_id?: StringFieldUpdateOperationsInput | string
+    role?: EnumMemberRoleFieldUpdateOperationsInput | $Enums.MemberRole
+    joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type UserSessionUncheckedUpdateWithoutUserInput = {
+  export type ProjectMemberUncheckedUpdateManyWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
-    session_id?: StringFieldUpdateOperationsInput | string
-    access_token?: StringFieldUpdateOperationsInput | string
-    refresh_token?: NullableStringFieldUpdateOperationsInput | string | null
-    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    ip_address?: NullableStringFieldUpdateOperationsInput | string | null
-    user_agent?: NullableStringFieldUpdateOperationsInput | string | null
-    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type UserSessionUncheckedUpdateManyWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    session_id?: StringFieldUpdateOperationsInput | string
-    access_token?: StringFieldUpdateOperationsInput | string
-    refresh_token?: NullableStringFieldUpdateOperationsInput | string | null
-    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    ip_address?: NullableStringFieldUpdateOperationsInput | string | null
-    user_agent?: NullableStringFieldUpdateOperationsInput | string | null
+    project_id?: StringFieldUpdateOperationsInput | string
+    role?: EnumMemberRoleFieldUpdateOperationsInput | $Enums.MemberRole
+    joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -21872,29 +21863,38 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type ProjectMemberUpdateWithoutUserInput = {
+  export type UserSessionUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
-    role?: EnumMemberRoleFieldUpdateOperationsInput | $Enums.MemberRole
-    joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
-    project?: ProjectUpdateOneRequiredWithoutProject_membersNestedInput
-  }
-
-  export type ProjectMemberUncheckedUpdateWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    project_id?: StringFieldUpdateOperationsInput | string
-    role?: EnumMemberRoleFieldUpdateOperationsInput | $Enums.MemberRole
-    joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    session_id?: StringFieldUpdateOperationsInput | string
+    access_token?: StringFieldUpdateOperationsInput | string
+    refresh_token?: NullableStringFieldUpdateOperationsInput | string | null
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+    user_agent?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type ProjectMemberUncheckedUpdateManyWithoutUserInput = {
+  export type UserSessionUncheckedUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
-    project_id?: StringFieldUpdateOperationsInput | string
-    role?: EnumMemberRoleFieldUpdateOperationsInput | $Enums.MemberRole
-    joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    session_id?: StringFieldUpdateOperationsInput | string
+    access_token?: StringFieldUpdateOperationsInput | string
+    refresh_token?: NullableStringFieldUpdateOperationsInput | string | null
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+    user_agent?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserSessionUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    session_id?: StringFieldUpdateOperationsInput | string
+    access_token?: StringFieldUpdateOperationsInput | string
+    refresh_token?: NullableStringFieldUpdateOperationsInput | string | null
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+    user_agent?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }

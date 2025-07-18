@@ -1,5 +1,5 @@
-// Prisma Schema for CycleTime Core Database
-// PostgreSQL 17 with UUID primary keys and performance optimization
+// CycleTime Core Database Schema
+// Prisma schema for intelligent project orchestration platform with AI integration
 
 generator client {
   provider = "prisma-client-js"
@@ -10,6 +10,10 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// =============================================================================
+// CORE ENTITIES - PHASE 1 & 2
+// =============================================================================
 
 // Core Enums
 enum ProjectStatus {
@@ -61,30 +65,35 @@ enum AiRequestStatus {
   CANCELLED
 }
 
-// === CORE ENTITIES ===
-
+// Users & Authentication Models
 model User {
-  id              String    @id @default(uuid()) @db.Uuid
-  email           String    @unique
-  github_id       Int       @unique
-  github_username String    @unique
+  id              String  @id @default(uuid()) @db.Uuid
+  email           String  @unique
+  github_id       Int     @unique
+  github_username String  @unique
   name            String
   avatar_url      String?
   bio             String?
   company         String?
   location        String?
-  timezone        String    @default("UTC")
-  locale          String    @default("en")
-  first_login_at  DateTime?
-  last_login_at   DateTime?
-  is_active       Boolean   @default(true)
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
+
+  // Preferences
+  timezone String @default("UTC")
+  locale   String @default("en")
+
+  // Metadata
+  first_login_at DateTime?
+  last_login_at  DateTime?
+  is_active      Boolean   @default(true)
+
+  // Timestamps
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   // Relations
-  user_sessions     UserSession[]
-  api_keys          ApiKey[]
   project_members   ProjectMember[]
+  api_keys          ApiKey[]
+  user_sessions     UserSession[]
   documents         Document[]
   document_versions DocumentVersion[]
   ai_requests       AiRequest[]
@@ -101,50 +110,60 @@ model UserSession {
   expires_at    DateTime
   ip_address    String?
   user_agent    String?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
 
-  // Relations
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("user_sessions")
 }
 
 model ApiKey {
-  id           String    @id @default(uuid()) @db.Uuid
-  user_id      String    @db.Uuid
-  name         String
-  key_hash     String    @unique
-  permissions  Json      @default("[]")
+  id          String @id @default(uuid()) @db.Uuid
+  user_id     String @db.Uuid
+  name        String
+  key_hash    String @unique
+  permissions Json   @default("[]")
+
   last_used_at DateTime?
   expires_at   DateTime?
   is_active    Boolean   @default(true)
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @updatedAt
 
-  // Relations
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("api_keys")
 }
 
+// Project & Repository Management
 model Project {
-  id            String        @id @default(uuid()) @db.Uuid
-  name          String
-  description   String?
-  status        ProjectStatus @default(DRAFT)
-  repository_id String?       @unique @db.Uuid
-  settings      Json          @default("{}")
-  ai_model      String        @default("claude-4-sonnet")
-  ai_budget     Decimal?      @db.Decimal(10, 2)
-  created_at    DateTime      @default(now())
-  updated_at    DateTime      @updatedAt
+  id          String        @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  status      ProjectStatus @default(DRAFT)
+
+  // Repository connection
+  repository_id String? @unique @db.Uuid
+
+  // Project settings
+  settings Json @default("{}")
+
+  // AI Configuration
+  ai_model  String   @default("claude-4-sonnet")
+  ai_budget Decimal? @db.Decimal(10, 2)
+
+  // Timestamps
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   // Relations
-  repository      Repository?     @relation(fields: [repository_id], references: [id], onDelete: SetNull)
-  project_members ProjectMember[]
-  documents       Document[]
-  ai_requests     AiRequest[]
+  repository  Repository?     @relation(fields: [repository_id], references: [id], onDelete: SetNull)
+  members     ProjectMember[]
+  documents   Document[]
+  ai_requests AiRequest[]
 
   @@map("projects")
 }
@@ -154,11 +173,11 @@ model ProjectMember {
   project_id String     @db.Uuid
   user_id    String     @db.Uuid
   role       MemberRole @default(MEMBER)
-  joined_at  DateTime   @default(now())
-  created_at DateTime   @default(now())
-  updated_at DateTime   @updatedAt
 
-  // Relations
+  joined_at  DateTime @default(now())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
   project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -167,22 +186,30 @@ model ProjectMember {
 }
 
 model Repository {
-  id             String    @id @default(uuid()) @db.Uuid
-  github_id      Int       @unique
-  full_name      String    @unique
-  name           String
-  owner          String
-  description    String?
+  id          String  @id @default(uuid()) @db.Uuid
+  github_id   Int     @unique
+  full_name   String  @unique
+  name        String
+  owner       String
+  description String?
+
+  // Repository details
   clone_url      String
   ssh_url        String
-  default_branch String    @default("main")
-  is_private     Boolean   @default(false)
+  default_branch String  @default("main")
+  is_private     Boolean @default(false)
+
+  // Webhook configuration
   webhook_id     Int?
   webhook_secret String?
-  last_sync_at   DateTime?
-  sync_status    String?   @default("pending")
-  created_at     DateTime  @default(now())
-  updated_at     DateTime  @updatedAt
+
+  // Sync status
+  last_sync_at DateTime?
+  sync_status  String?   @default("pending")
+
+  // Timestamps
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   // Relations
   project Project?
@@ -190,7 +217,9 @@ model Repository {
   @@map("repositories")
 }
 
-// === DOCUMENT MANAGEMENT ===
+// =============================================================================
+// DOCUMENT MANAGEMENT - PHASE 2
+// =============================================================================
 
 model Document {
   id          String         @id @default(uuid()) @db.Uuid
@@ -231,7 +260,9 @@ model DocumentVersion {
   @@map("document_versions")
 }
 
-// === AI INTEGRATION ===
+// =============================================================================
+// AI INTEGRATION - PHASE 2
+// =============================================================================
 
 model AiRequest {
   id         String          @id @default(uuid()) @db.Uuid
