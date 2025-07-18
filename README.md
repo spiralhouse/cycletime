@@ -2,7 +2,7 @@
 
 **Intelligent Project Orchestration Platform with MCP Integration**
 
-*Keep engineering teams of any size synchronized with AI-powered project orchestration and living documentation*
+*Enhance team collaboration and developer experience with intelligent AI assistance that keeps humans in control*
 
 ## 🚀 What is CycleTime?
 
@@ -42,13 +42,38 @@ CycleTime helps engineering teams of any size, from enterprises to solo founders
 - **Living documentation** that teams actually use and maintain
 - **Developer tool freedom** - teams continue using their preferred development tools and workflows
 
+## 🚀 Killer Features
+
+CycleTime introduces two revolutionary capabilities that no other platform provides:
+
+### 📋 Contract-First Parallel Development
+- **Generate system boundaries and API contracts** automatically from PRDs
+- **Enable multiple developers to work simultaneously** without coordination bottlenecks
+- **Reduce integration errors by 75%** through upfront interface specifications
+- **Create mock/stub templates** for independent development and testing
+- **Validate implementation compliance** with generated contracts
+
+### 🎯 Custom Development Standards Enforcement
+- **Define team-specific development standards** beyond static analysis (TDD cycles, architectural patterns, documentation requirements)
+- **Deliver standards to AI coding tools** via MCP for real-time guidance during development  
+- **Automatically analyze pull requests** for standards compliance using AI-powered code analysis
+- **Configurable enforcement levels** (advisory, warning, blocking) with detailed compliance reports
+- **Ships with sensible defaults** (TDD, conventional commits, security practices) that can be fully customized
+
+### Target Users
+
+- **Product Managers** seeking better collaboration with engineering teams through clearer, AI-enhanced specifications
+- **Engineering Managers** who want to improve team productivity with consistent project breakdown and tracking
+- **Technical Leads** who value excellent developer experience with current documentation and AI-assisted planning
+
 ## 🛠️ Tool Freedom & Integration
 
 CycleTime is designed to work with your existing development workflow, not replace it:
 
-- **Any IDE or Editor**: VS Code, IntelliJ, Vim, Emacs - use whatever makes you productive
+- **Any AI Coding Tool**: Claude Code, Cursor, Windsurf, GitHub Copilot, JetBrains AI - use your preferred AI-enabled development environment
 - **Any Git Workflow**: Works with GitHub, GitLab, Bitbucket and any Git hosting platform
-- **Any AI Tools**: MCP integration connects with existing AI assistants (GitHub Copilot, Cursor, etc.)
+- **Any Repository Structure**: Supports both monorepos and polyrepos (MVP focuses on monorepos)
+- **MCP Integration**: Connect with any MCP-enabled AI tool for seamless context sharing and enhanced development workflows
 - **Any Issue Tracker**: Native integration with Linear, Jira, GitHub Issues
 - **Repository-Centric**: All coordination happens through standard Git operations - no proprietary formats
 

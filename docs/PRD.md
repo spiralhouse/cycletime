@@ -24,7 +24,7 @@ CycleTime is an intelligent project orchestration platform that helps engineerin
 
 The platform leverages Anthropic's Claude 4 Sonnet for planning and analysis tasks, while supporting integration with Local AI tools (GitHub Copilot, etc.) for code-specific assistance during development. Through advanced context window management via the Model Context Protocol (MCP), CycleTime ensures that AI agents maintain consistent access to relevant project information without overwhelming their processing capabilities or causing hallucinations due to context loss.
 
-By analyzing Markdown-formatted requirements documents stored in the project repository and providing AI-powered assistance through Claude 4 Sonnet, CycleTime creates a seamless connection between documentation, planning, and execution that both humans and AI agents can access throughout the project lifecycle, with intelligent context prioritization that scales from simple features to complex, multi-month projects.
+By analyzing Markdown-formatted requirements documents stored in the project repository and providing AI-powered assistance through Claude 4 Sonnet, CycleTime creates a seamless connection between documentation, planning, and execution that both humans and AI agents can access throughout the project lifecycle, with intelligent context prioritization that scales from simple features to complex, multi-month projects. The platform supports both monorepo and polyrepo architectures, with the MVP implementation focusing on monorepos for streamlined initial deployment.
 
 ### 1.4 Context Window Management Strategy
 
