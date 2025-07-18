@@ -26,14 +26,14 @@ describe('WorkerPool Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    // Clean up any existing test data
-    await testClient.flushAll();
+    // Generate highly unique key prefix for this test run - avoid flushAll to prevent interference
+    keyPrefix = `test-worker-pool-${Date.now()}-${process.pid}-${Math.random().toString(36).substr(2, 9)}-${Math.floor(Math.random() * 1000000)}`;
     
-    // Add delay to ensure cleanup is complete
-    await new Promise(resolve => setTimeout(resolve, 50));
-    
-    // Generate unique key prefix for this test run
-    keyPrefix = `test-worker-pool-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Clean up only keys with our specific prefix
+    const keys = await testClient.keys(`${keyPrefix}:*`);
+    if (keys.length > 0) {
+      await testClient.del(keys);
+    }
     
     // Create components
     requestProcessor = new RequestProcessor({

@@ -21,17 +21,20 @@ describe('RedisQueue Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    // Clear all Redis data to avoid test interference
-    await testClient.flushAll();
-
-    // Use unique key prefix for test isolation with process ID for extra uniqueness
-    keyPrefix = `test-queue-${Date.now()}-${process.pid}-${Math.random().toString(36).substr(2, 9)}`;
+    // Use highly unique key prefix for test isolation - avoid flushAll to prevent interference with parallel tests
+    keyPrefix = `test-queue-${Date.now()}-${process.pid}-${Math.random().toString(36).substr(2, 9)}-${Math.floor(Math.random() * 1000000)}`;
     
     redisQueue = new RedisQueue({ 
       url: redisUrl,
       keyPrefix: keyPrefix
     });
     await redisQueue.connect();
+    
+    // Clean up only keys with our specific prefix
+    const keys = await testClient.keys(`${keyPrefix}:*`);
+    if (keys.length > 0) {
+      await testClient.del(keys);
+    }
   });
 
   afterEach(async () => {
@@ -120,7 +123,6 @@ describe('RedisQueue Integration Tests', () => {
     });
 
     it('should handle concurrent operations correctly', async () => {
-
       // Create multiple enqueue operations concurrently
       const enqueuePromises = Array.from({ length: 10 }, (_, i) =>
         redisQueue.enqueue(`concurrent-${i}`, { index: i }, QueuePriority.NORMAL)
@@ -128,11 +130,29 @@ describe('RedisQueue Integration Tests', () => {
 
       await Promise.all(enqueuePromises);
 
-      // Add a small delay to ensure Redis operations are fully committed
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for Redis operations to fully commit and verify multiple times if needed
+      let metrics;
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      do {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        metrics = await redisQueue.getQueueMetrics();
+        attempts++;
+      } while (metrics.totalDepth !== 10 && attempts < maxAttempts);
+
+      // Log debugging info if still failing
+      if (metrics.totalDepth !== 10) {
+        console.error(`Expected 10 items, got ${metrics.totalDepth} after ${attempts} attempts. Key prefix: ${keyPrefix}`);
+        console.error('Metrics:', metrics);
+        
+        // Check if items exist directly in Redis
+        const queueKey = `${keyPrefix}:priority:normal`;
+        const queueLength = await testClient.lLen(queueKey);
+        console.error(`Direct Redis queue length for ${queueKey}:`, queueLength);
+      }
 
       // Verify all items were enqueued
-      const metrics = await redisQueue.getQueueMetrics();
       expect(metrics.totalDepth).toBe(10);
 
       // Dequeue all items with proper error handling
