@@ -2,7 +2,7 @@
 
 **Intelligent Project Orchestration Platform with MCP Integration**
 
-*Empower your team with intelligent project orchestration that preserves your workflow, enhances accuracy, and accelerates collaboration*
+*Empower your team with intelligent project orchestration that keeps you in charge, enhances accuracy, and accelerates collaboration*
 
 ## 🚀 What is CycleTime?
 
