@@ -12,6 +12,7 @@ CycleTime enhances team collaboration by intelligently assisting with PRD analys
 
 - **Enhanced Collaboration**: Streamline team communication with AI-assisted project breakdown and shared documentation
 - **Improved Developer Experience**: Leverage your preferred AI models to reduce planning overhead and focus on building
+- **Workflow Integration**: Seamlessly connect with your existing tools - Linear, Jira, GitHub Issues - without disrupting team processes
 - **Living Documentation**: Keep project context current and accessible to both humans and AI tools
 - **Seamless AI Integration**: Connect existing AI assistants to project context through MCP
 - **Human-Centered Control**: AI provides intelligent suggestions, teams drive all decisions
