@@ -1,0 +1,250 @@
+<div class="projects-container">
+    <div class="projects-header">
+        <h1>Projects</h1>
+        <button class="btn btn-primary" onclick="createProject()">New Project</button>
+    </div>
+    
+    <div class="projects-content">
+        <div class="projects-grid" id="projects-grid">
+            <div class="loading">Loading projects...</div>
+        </div>
+    </div>
+</div>
+
+<style>
+.projects-container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    font-family: 'Inter', sans-serif;
+}
+
+.projects-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.projects-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #1a1a1a;
+}
+
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.project-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.project-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.project-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.project-description {
+    color: #6b7280;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.project-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.project-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.project-status.active {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.project-status.archived {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.project-progress {
+    width: 100%;
+    height: 8px;
+    background: #f3f4f6;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.project-progress-bar {
+    height: 100%;
+    background: #667eea;
+    transition: width 0.3s ease;
+}
+
+.project-team {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.team-avatars {
+    display: flex;
+    margin-right: 0.5rem;
+}
+
+.team-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    margin-left: -4px;
+    border: 2px solid white;
+}
+
+.team-count {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5a67d8;
+}
+
+.loading {
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+    grid-column: 1 / -1;
+    padding: 2rem;
+}
+
+@media (max-width: 768px) {
+    .projects-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .projects-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadProjects();
+});
+
+async function loadProjects() {
+    try {
+        const token = localStorage.getItem('authToken');
+        
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        const response = await fetch('/api/v1/dashboard/projects', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            displayProjects(result.data.projects);
+        } else {
+            console.error('Failed to load projects:', result.error);
+        }
+    } catch (error) {
+        console.error('Error loading projects:', error);
+    }
+}
+
+function displayProjects(projects) {
+    const grid = document.getElementById('projects-grid');
+    grid.innerHTML = '';
+    
+    projects.forEach(project => {
+        const card = document.createElement('div');
+        card.className = 'project-card';
+        card.onclick = () => viewProject(project.id);
+        
+        card.innerHTML = `
+            <div class="project-title">${project.name}</div>
+            <div class="project-description">${project.description}</div>
+            <div class="project-meta">
+                <span class="project-status ${project.status}">${project.status}</span>
+                <span class="project-date">${formatDate(project.updatedAt)}</span>
+            </div>
+            <div class="project-progress">
+                <div class="project-progress-bar" style="width: ${project.progress * 100}%"></div>
+            </div>
+            <div class="project-team">
+                <div class="team-avatars">
+                    ${project.teamMembers.slice(0, 3).map(member => 
+                        `<img src="${member.avatar || '/public/default-avatar.png'}" alt="${member.name}" class="team-avatar">`
+                    ).join('')}
+                </div>
+                <span class="team-count">${project.teamMembers.length} members</span>
+            </div>
+        `;
+        
+        grid.appendChild(card);
+    });
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+}
+
+function viewProject(projectId) {
+    window.location.href = `/projects/${projectId}`;
+}
+
+function createProject() {
+    alert('Create Project functionality would be implemented here');
+}
+</script>

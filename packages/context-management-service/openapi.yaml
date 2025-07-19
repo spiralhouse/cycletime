@@ -1,0 +1,1122 @@
+openapi: 3.0.3
+info:
+  title: Context Management Service API
+  description: AI context window optimization and intelligent context delivery service
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8004
+    description: Development server
+  - url: https://api.cycletime.dev/context-management
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the service is healthy and operational
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/context/analyze:
+    post:
+      summary: Analyze document context
+      description: Analyze documents and create optimized context chunks
+      operationId: analyzeContext
+      tags:
+        - Context Analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContextAnalysisRequest'
+      responses:
+        '202':
+          description: Context analysis started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextAnalysisResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/context/{contextId}:
+    get:
+      summary: Get context details
+      description: Get details of a specific context analysis
+      operationId: getContext
+      tags:
+        - Context Retrieval
+      parameters:
+        - name: contextId
+          in: path
+          required: true
+          description: Context ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Context details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextDetails'
+        '404':
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete context
+      description: Delete a context analysis and all associated chunks
+      operationId: deleteContext
+      tags:
+        - Context Management
+      parameters:
+        - name: contextId
+          in: path
+          required: true
+          description: Context ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Context deleted successfully
+        '404':
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/context/{contextId}/chunks:
+    get:
+      summary: Get context chunks
+      description: Get optimized context chunks for AI consumption
+      operationId: getContextChunks
+      tags:
+        - Context Retrieval
+      parameters:
+        - name: contextId
+          in: path
+          required: true
+          description: Context ID
+          schema:
+            type: string
+            format: uuid
+        - name: maxTokens
+          in: query
+          description: Maximum tokens for context window
+          schema:
+            type: integer
+            minimum: 100
+            maximum: 200000
+            default: 8000
+        - name: priority
+          in: query
+          description: Minimum priority score
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+            default: 0.5
+        - name: includeMetadata
+          in: query
+          description: Include chunk metadata
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Context chunks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextChunks'
+        '404':
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/context/prioritize:
+    post:
+      summary: Prioritize context
+      description: Re-prioritize context chunks based on new criteria
+      operationId: prioritizeContext
+      tags:
+        - Context Optimization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrioritizationRequest'
+      responses:
+        '200':
+          description: Context prioritized successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrioritizationResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/context/{contextId}/relevance:
+    get:
+      summary: Get context relevance
+      description: Get relevance scores for context chunks
+      operationId: getContextRelevance
+      tags:
+        - Context Analysis
+      parameters:
+        - name: contextId
+          in: path
+          required: true
+          description: Context ID
+          schema:
+            type: string
+            format: uuid
+        - name: query
+          in: query
+          description: Query to calculate relevance against
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Context relevance scores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelevanceScores'
+        '404':
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/context/optimize:
+    post:
+      summary: Optimize context window
+      description: Optimize context chunks for specific AI model and use case
+      operationId: optimizeContext
+      tags:
+        - Context Optimization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OptimizationRequest'
+      responses:
+        '200':
+          description: Context optimized successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OptimizedContext'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/context/usage:
+    post:
+      summary: Track context usage
+      description: Track how context was used and its effectiveness
+      operationId: trackContextUsage
+      tags:
+        - Context Learning
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsageTrackingRequest'
+      responses:
+        '200':
+          description: Usage tracked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageTrackingResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/context/feedback:
+    post:
+      summary: Provide context feedback
+      description: Provide feedback on context quality and effectiveness
+      operationId: provideContextFeedback
+      tags:
+        - Context Learning
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+      responses:
+        '200':
+          description: Feedback processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/context/models:
+    get:
+      summary: List supported AI models
+      description: Get list of supported AI models and their context window sizes
+      operationId: listSupportedModels
+      tags:
+        - Model Support
+      responses:
+        '200':
+          description: List of supported models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportedModels'
+
+  /api/v1/context/analytics:
+    get:
+      summary: Get context analytics
+      description: Get analytics and metrics for context usage
+      operationId: getContextAnalytics
+      tags:
+        - Analytics
+      parameters:
+        - name: timeframe
+          in: query
+          description: Time frame for analytics
+          schema:
+            type: string
+            enum: [hour, day, week, month]
+            default: day
+        - name: contextId
+          in: query
+          description: Filter by specific context ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Context analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextAnalytics'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        dependencies:
+          type: object
+          properties:
+            redis:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            vectorDatabase:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            documentService:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+      required:
+        - status
+        - timestamp
+        - version
+
+    ContextAnalysisRequest:
+      type: object
+      properties:
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentInput'
+        projectId:
+          type: string
+          format: uuid
+        analysisType:
+          type: string
+          enum: [full, incremental, targeted]
+          default: full
+        chunkingStrategy:
+          type: string
+          enum: [semantic, fixed, adaptive]
+          default: semantic
+        targetModel:
+          type: string
+          enum: [gpt-4, gpt-3.5-turbo, claude-3, claude-3-haiku]
+          default: gpt-4
+        maxChunkSize:
+          type: integer
+          minimum: 100
+          maximum: 8000
+          default: 1000
+        overlapSize:
+          type: integer
+          minimum: 0
+          maximum: 500
+          default: 100
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          default: medium
+      required:
+        - documents
+        - projectId
+
+    DocumentInput:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+          enum: [markdown, text, code, json, yaml]
+        language:
+          type: string
+        metadata:
+          type: object
+        lastModified:
+          type: string
+          format: date-time
+        priority:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.5
+      required:
+        - id
+        - content
+        - title
+        - type
+
+    ContextAnalysisResponse:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        estimatedCompletion:
+          type: string
+          format: date-time
+        documentsCount:
+          type: integer
+        estimatedChunks:
+          type: integer
+        processingStage:
+          type: string
+          enum: [queued, tokenizing, chunking, analyzing, optimizing, completed]
+      required:
+        - contextId
+        - status
+        - documentsCount
+
+    ContextDetails:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        documentsCount:
+          type: integer
+        chunksCount:
+          type: integer
+        totalTokens:
+          type: integer
+        averageRelevance:
+          type: number
+          minimum: 0
+          maximum: 1
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        lastAccessedAt:
+          type: string
+          format: date-time
+        configuration:
+          $ref: '#/components/schemas/ContextConfiguration'
+        statistics:
+          $ref: '#/components/schemas/ContextStatistics'
+      required:
+        - contextId
+        - projectId
+        - status
+        - documentsCount
+        - chunksCount
+        - totalTokens
+        - createdAt
+
+    ContextConfiguration:
+      type: object
+      properties:
+        chunkingStrategy:
+          type: string
+          enum: [semantic, fixed, adaptive]
+        targetModel:
+          type: string
+        maxChunkSize:
+          type: integer
+        overlapSize:
+          type: integer
+        analysisType:
+          type: string
+          enum: [full, incremental, targeted]
+      required:
+        - chunkingStrategy
+        - targetModel
+        - maxChunkSize
+
+    ContextStatistics:
+      type: object
+      properties:
+        averageChunkSize:
+          type: number
+        tokenDistribution:
+          type: object
+          properties:
+            min:
+              type: integer
+            max:
+              type: integer
+            mean:
+              type: number
+            median:
+              type: number
+        documentTypes:
+          type: object
+          additionalProperties:
+            type: integer
+        languageDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+        processingTime:
+          type: number
+          description: Processing time in seconds
+      required:
+        - averageChunkSize
+        - tokenDistribution
+        - processingTime
+
+    ContextChunks:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        chunks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextChunk'
+        totalTokens:
+          type: integer
+        totalChunks:
+          type: integer
+        optimizedFor:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        truncated:
+          type: boolean
+          description: Whether chunks were truncated to fit token limit
+      required:
+        - contextId
+        - chunks
+        - totalTokens
+        - totalChunks
+        - generatedAt
+
+    ContextChunk:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        tokens:
+          type: integer
+        relevanceScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        priority:
+          type: number
+          minimum: 0
+          maximum: 1
+        documentId:
+          type: string
+        documentTitle:
+          type: string
+        documentType:
+          type: string
+        chunkIndex:
+          type: integer
+        position:
+          type: object
+          properties:
+            startChar:
+              type: integer
+            endChar:
+              type: integer
+            startLine:
+              type: integer
+            endLine:
+              type: integer
+        metadata:
+          type: object
+          properties:
+            keywords:
+              type: array
+              items:
+                type: string
+            entities:
+              type: array
+              items:
+                type: string
+            concepts:
+              type: array
+              items:
+                type: string
+            sentiment:
+              type: number
+              minimum: -1
+              maximum: 1
+        relationships:
+          type: array
+          items:
+            type: object
+            properties:
+              chunkId:
+                type: string
+                format: uuid
+              relationshipType:
+                type: string
+                enum: [references, extends, implements, depends_on]
+              strength:
+                type: number
+                minimum: 0
+                maximum: 1
+      required:
+        - id
+        - content
+        - tokens
+        - relevanceScore
+        - priority
+        - documentId
+        - chunkIndex
+
+    PrioritizationRequest:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        query:
+          type: string
+          description: Query to prioritize against
+        weights:
+          type: object
+          properties:
+            relevance:
+              type: number
+              minimum: 0
+              maximum: 1
+              default: 0.6
+            recency:
+              type: number
+              minimum: 0
+              maximum: 1
+              default: 0.2
+            frequency:
+              type: number
+              minimum: 0
+              maximum: 1
+              default: 0.1
+            importance:
+              type: number
+              minimum: 0
+              maximum: 1
+              default: 0.1
+        contextType:
+          type: string
+          enum: [code_analysis, documentation, debugging, feature_development]
+      required:
+        - contextId
+        - query
+
+    PrioritizationResponse:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        chunksAffected:
+          type: integer
+        averageScoreChange:
+          type: number
+        prioritizedAt:
+          type: string
+          format: date-time
+        topChunks:
+          type: array
+          items:
+            type: object
+            properties:
+              chunkId:
+                type: string
+                format: uuid
+              oldScore:
+                type: number
+              newScore:
+                type: number
+              scoreChange:
+                type: number
+      required:
+        - contextId
+        - chunksAffected
+        - averageScoreChange
+        - prioritizedAt
+
+    RelevanceScores:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        query:
+          type: string
+        scores:
+          type: array
+          items:
+            type: object
+            properties:
+              chunkId:
+                type: string
+                format: uuid
+              relevanceScore:
+                type: number
+                minimum: 0
+                maximum: 1
+              explanation:
+                type: string
+              matchedKeywords:
+                type: array
+                items:
+                  type: string
+              matchedConcepts:
+                type: array
+                items:
+                  type: string
+        averageRelevance:
+          type: number
+          minimum: 0
+          maximum: 1
+        calculatedAt:
+          type: string
+          format: date-time
+      required:
+        - contextId
+        - query
+        - scores
+        - averageRelevance
+        - calculatedAt
+
+    OptimizationRequest:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        targetModel:
+          type: string
+          enum: [gpt-4, gpt-3.5-turbo, claude-3, claude-3-haiku]
+        maxTokens:
+          type: integer
+          minimum: 100
+          maximum: 200000
+        useCase:
+          type: string
+          enum: [code_generation, documentation, debugging, analysis, chat]
+        preserveStructure:
+          type: boolean
+          default: true
+        includeMetadata:
+          type: boolean
+          default: true
+        compressionLevel:
+          type: string
+          enum: [none, light, medium, aggressive]
+          default: medium
+      required:
+        - contextId
+        - targetModel
+        - maxTokens
+
+    OptimizedContext:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        optimizedChunks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextChunk'
+        totalTokens:
+          type: integer
+        compressionRatio:
+          type: number
+          description: Ratio of optimized to original tokens
+        optimizedFor:
+          type: string
+        optimization:
+          type: object
+          properties:
+            originalChunks:
+              type: integer
+            optimizedChunks:
+              type: integer
+            tokensReduced:
+              type: integer
+            relevancePreserved:
+              type: number
+              minimum: 0
+              maximum: 1
+        optimizedAt:
+          type: string
+          format: date-time
+      required:
+        - contextId
+        - optimizedChunks
+        - totalTokens
+        - compressionRatio
+        - optimizedFor
+        - optimization
+        - optimizedAt
+
+    UsageTrackingRequest:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+        aiModel:
+          type: string
+        tokensUsed:
+          type: integer
+        chunksUsed:
+          type: integer
+        usageType:
+          type: string
+          enum: [generation, analysis, chat, debugging]
+        effectiveness:
+          type: number
+          minimum: 0
+          maximum: 1
+        feedback:
+          type: string
+          enum: [helpful, partially_helpful, not_helpful, irrelevant]
+        responseTime:
+          type: number
+          description: Response time in milliseconds
+      required:
+        - contextId
+        - sessionId
+        - aiModel
+        - tokensUsed
+        - chunksUsed
+        - usageType
+
+    UsageTrackingResponse:
+      type: object
+      properties:
+        trackingId:
+          type: string
+          format: uuid
+        tracked:
+          type: boolean
+        learningUpdated:
+          type: boolean
+        recommendations:
+          type: array
+          items:
+            type: string
+      required:
+        - trackingId
+        - tracked
+        - learningUpdated
+
+    FeedbackRequest:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        chunkId:
+          type: string
+          format: uuid
+        feedback:
+          type: string
+          enum: [relevant, irrelevant, outdated, incorrect, helpful, confusing]
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        improvementSuggestion:
+          type: string
+        userId:
+          type: string
+      required:
+        - contextId
+        - chunkId
+        - feedback
+        - rating
+
+    FeedbackResponse:
+      type: object
+      properties:
+        feedbackId:
+          type: string
+          format: uuid
+        processed:
+          type: boolean
+        learningImpact:
+          type: string
+          enum: [none, low, medium, high]
+        thanksMessage:
+          type: string
+      required:
+        - feedbackId
+        - processed
+        - learningImpact
+
+    SupportedModels:
+      type: object
+      properties:
+        models:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              provider:
+                type: string
+              maxTokens:
+                type: integer
+              recommendedChunkSize:
+                type: integer
+              supportsStreaming:
+                type: boolean
+              costPerToken:
+                type: number
+              contextWindowSize:
+                type: integer
+        defaultModel:
+          type: string
+        lastUpdated:
+          type: string
+          format: date-time
+      required:
+        - models
+        - defaultModel
+        - lastUpdated
+
+    ContextAnalytics:
+      type: object
+      properties:
+        timeframe:
+          type: string
+        totalRequests:
+          type: integer
+        totalTokensProcessed:
+          type: integer
+        averageProcessingTime:
+          type: number
+        successRate:
+          type: number
+          minimum: 0
+          maximum: 1
+        modelUsage:
+          type: object
+          additionalProperties:
+            type: integer
+        usagePatterns:
+          type: object
+          properties:
+            peakHours:
+              type: array
+              items:
+                type: integer
+            commonUseCases:
+              type: array
+              items:
+                type: object
+                properties:
+                  useCase:
+                    type: string
+                  count:
+                    type: integer
+                  percentage:
+                    type: number
+        effectivenessMetrics:
+          type: object
+          properties:
+            averageRelevanceScore:
+              type: number
+              minimum: 0
+              maximum: 1
+            userSatisfaction:
+              type: number
+              minimum: 0
+              maximum: 1
+            contextHitRate:
+              type: number
+              minimum: 0
+              maximum: 1
+        generatedAt:
+          type: string
+          format: date-time
+      required:
+        - timeframe
+        - totalRequests
+        - totalTokensProcessed
+        - averageProcessingTime
+        - successRate
+        - generatedAt
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        contextId:
+          type: string
+          format: uuid
+        details:
+          type: object
+      required:
+        - error
+        - message
+        - timestamp
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health and status
+  - name: Context Analysis
+    description: Document analysis and context creation
+  - name: Context Retrieval
+    description: Context and chunk retrieval operations
+  - name: Context Optimization
+    description: Context optimization and prioritization
+  - name: Context Management
+    description: Context lifecycle management
+  - name: Context Learning
+    description: Usage tracking and feedback
+  - name: Model Support
+    description: AI model support and configuration
+  - name: Analytics
+    description: Context usage analytics and metrics

@@ -1,0 +1,1887 @@
+openapi: 3.0.3
+info:
+  title: Web Dashboard Service API
+  description: Web Dashboard Service providing the main web interface for CycleTime with authentication, real-time updates, and frontend API management
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://dashboard.cycletime.dev
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the Web Dashboard service is healthy and operational
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/auth/login:
+    post:
+      summary: User login
+      description: Authenticate user and create session
+      operationId: login
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/logout:
+    post:
+      summary: User logout
+      description: End user session and invalidate tokens
+      operationId: logout
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/refresh:
+    post:
+      summary: Refresh authentication token
+      description: Refresh user authentication token
+      operationId: refreshToken
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/profile:
+    get:
+      summary: Get user profile
+      description: Get current user's profile information
+      operationId: getUserProfile
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/dashboard/overview:
+    get:
+      summary: Get dashboard overview
+      description: Get overview data for the main dashboard
+      operationId: getDashboardOverview
+      tags:
+        - Dashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: timeframe
+          in: query
+          description: Time frame for dashboard data
+          schema:
+            type: string
+            enum: [day, week, month, quarter, year]
+            default: month
+        - name: projectId
+          in: query
+          description: Filter by specific project
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Dashboard overview data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardOverviewResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/dashboard/projects:
+    get:
+      summary: Get projects summary
+      description: Get summary of all projects for dashboard
+      operationId: getProjectsSummary
+      tags:
+        - Dashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of projects to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: status
+          in: query
+          description: Filter by project status
+          schema:
+            type: string
+            enum: [active, archived, planned]
+        - name: sort
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [name, created, updated, activity]
+            default: updated
+      responses:
+        '200':
+          description: Projects summary data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectsSummaryResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/dashboard/tasks:
+    get:
+      summary: Get tasks summary
+      description: Get summary of tasks for dashboard
+      operationId: getTasksSummary
+      tags:
+        - Dashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of tasks to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: Filter by task status
+          schema:
+            type: string
+            enum: [todo, in_progress, review, done]
+        - name: assignedToMe
+          in: query
+          description: Filter to tasks assigned to current user
+          schema:
+            type: boolean
+            default: false
+        - name: priority
+          in: query
+          description: Filter by priority
+          schema:
+            type: string
+            enum: [low, medium, high, urgent]
+      responses:
+        '200':
+          description: Tasks summary data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TasksSummaryResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/dashboard/analytics:
+    get:
+      summary: Get dashboard analytics
+      description: Get analytics data for dashboard widgets
+      operationId: getDashboardAnalytics
+      tags:
+        - Dashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: timeframe
+          in: query
+          description: Time frame for analytics
+          schema:
+            type: string
+            enum: [day, week, month, quarter, year]
+            default: month
+        - name: metrics
+          in: query
+          description: Specific metrics to retrieve
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [velocity, quality, performance, team_activity, project_health]
+        - name: projectId
+          in: query
+          description: Filter by specific project
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Dashboard analytics data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardAnalyticsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/dashboard/notifications:
+    get:
+      summary: Get user notifications
+      description: Get notifications for current user
+      operationId: getNotifications
+      tags:
+        - Dashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of notifications to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: unreadOnly
+          in: query
+          description: Return only unread notifications
+          schema:
+            type: boolean
+            default: false
+        - name: type
+          in: query
+          description: Filter by notification type
+          schema:
+            type: string
+            enum: [task_assigned, task_completed, project_updated, mention, system]
+      responses:
+        '200':
+          description: User notifications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/dashboard/notifications/{notificationId}/read:
+    post:
+      summary: Mark notification as read
+      description: Mark a specific notification as read
+      operationId: markNotificationRead
+      tags:
+        - Dashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          description: Notification ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationActionResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/dashboard/search:
+    get:
+      summary: Search dashboard content
+      description: Search across projects, tasks, and other dashboard content
+      operationId: searchDashboard
+      tags:
+        - Dashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query
+          schema:
+            type: string
+            minLength: 2
+        - name: type
+          in: query
+          description: Content type to search
+          schema:
+            type: string
+            enum: [all, projects, tasks, users, documents]
+            default: all
+        - name: limit
+          in: query
+          description: Maximum number of results
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/preferences:
+    get:
+      summary: Get user preferences
+      description: Get current user's dashboard preferences
+      operationId: getUserPreferences
+      tags:
+        - Preferences
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferencesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update user preferences
+      description: Update current user's dashboard preferences
+      operationId: updateUserPreferences
+      tags:
+        - Preferences
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePreferencesRequest'
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferencesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid preferences data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/widgets:
+    get:
+      summary: Get dashboard widgets
+      description: Get configured dashboard widgets for current user
+      operationId: getDashboardWidgets
+      tags:
+        - Widgets
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Dashboard widgets configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardWidgetsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Add dashboard widget
+      description: Add a new widget to user's dashboard
+      operationId: addDashboardWidget
+      tags:
+        - Widgets
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddWidgetRequest'
+      responses:
+        '201':
+          description: Widget added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WidgetResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid widget configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/widgets/{widgetId}:
+    put:
+      summary: Update dashboard widget
+      description: Update configuration of a dashboard widget
+      operationId: updateDashboardWidget
+      tags:
+        - Widgets
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: widgetId
+          in: path
+          required: true
+          description: Widget ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWidgetRequest'
+      responses:
+        '200':
+          description: Widget updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WidgetResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Widget not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Remove dashboard widget
+      description: Remove a widget from user's dashboard
+      operationId: removeDashboardWidget
+      tags:
+        - Widgets
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: widgetId
+          in: path
+          required: true
+          description: Widget ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Widget removed successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Widget not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/proxy/{serviceName}:
+    get:
+      summary: Proxy GET request to backend service
+      description: Proxy GET requests to backend services
+      operationId: proxyGetRequest
+      tags:
+        - API Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: serviceName
+          in: path
+          required: true
+          description: Name of the backend service
+          schema:
+            type: string
+            enum: [ai-service, document-service, project-service, task-service, issue-tracker-service]
+      responses:
+        '200':
+          description: Proxied response
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Service not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Proxy POST request to backend service
+      description: Proxy POST requests to backend services
+      operationId: proxyPostRequest
+      tags:
+        - API Proxy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: serviceName
+          in: path
+          required: true
+          description: Name of the backend service
+          schema:
+            type: string
+            enum: [ai-service, document-service, project-service, task-service, issue-tracker-service]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Proxied response
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Service not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/realtime/status:
+    get:
+      summary: Get real-time connection status
+      description: Get status of real-time connections and active sessions
+      operationId: getRealtimeStatus
+      tags:
+        - Real-time
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Real-time status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealtimeStatusResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        dependencies:
+          type: object
+          properties:
+            redis:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            database:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            apiGateway:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            backendServices:
+              type: object
+              properties:
+                projectService:
+                  type: string
+                  enum: [healthy, degraded, unhealthy]
+                taskService:
+                  type: string
+                  enum: [healthy, degraded, unhealthy]
+                aiService:
+                  type: string
+                  enum: [healthy, degraded, unhealthy]
+        uptime:
+          type: number
+          description: Service uptime in seconds
+        metrics:
+          type: object
+          properties:
+            activeConnections:
+              type: integer
+            totalRequests:
+              type: integer
+            averageResponseTime:
+              type: number
+      required:
+        - status
+        - timestamp
+        - version
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        rememberMe:
+          type: boolean
+          default: false
+      required:
+        - email
+        - password
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/User'
+        tokens:
+          type: object
+          properties:
+            accessToken:
+              type: string
+            refreshToken:
+              type: string
+            expiresIn:
+              type: integer
+              description: Access token expiration time in seconds
+        preferences:
+          $ref: '#/components/schemas/UserPreferences'
+        lastLogin:
+          type: string
+          format: date-time
+      required:
+        - success
+        - user
+        - tokens
+
+    LogoutResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message
+
+    RefreshTokenRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+      required:
+        - refreshToken
+
+    RefreshTokenResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        tokens:
+          type: object
+          properties:
+            accessToken:
+              type: string
+            refreshToken:
+              type: string
+            expiresIn:
+              type: integer
+      required:
+        - success
+        - tokens
+
+    UserProfileResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        preferences:
+          $ref: '#/components/schemas/UserPreferences'
+        stats:
+          type: object
+          properties:
+            totalProjects:
+              type: integer
+            activeTasks:
+              type: integer
+            completedTasks:
+              type: integer
+            teamMemberships:
+              type: integer
+      required:
+        - user
+        - preferences
+        - stats
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        avatar:
+          type: string
+          format: uri
+        role:
+          type: string
+          enum: [admin, manager, developer, viewer]
+        status:
+          type: string
+          enum: [active, inactive, pending]
+        createdAt:
+          type: string
+          format: date-time
+        lastActive:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+        language:
+          type: string
+          default: en
+      required:
+        - id
+        - email
+        - name
+        - role
+        - status
+        - createdAt
+
+    UserPreferences:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [light, dark, auto]
+          default: auto
+        notifications:
+          type: object
+          properties:
+            email:
+              type: boolean
+              default: true
+            push:
+              type: boolean
+              default: true
+            taskAssigned:
+              type: boolean
+              default: true
+            projectUpdates:
+              type: boolean
+              default: true
+            mentions:
+              type: boolean
+              default: true
+        dashboard:
+          type: object
+          properties:
+            defaultView:
+              type: string
+              enum: [overview, projects, tasks, analytics]
+              default: overview
+            showWelcomeCard:
+              type: boolean
+              default: true
+            refreshInterval:
+              type: integer
+              minimum: 30
+              maximum: 300
+              default: 60
+            compactMode:
+              type: boolean
+              default: false
+        display:
+          type: object
+          properties:
+            language:
+              type: string
+              default: en
+            timezone:
+              type: string
+            dateFormat:
+              type: string
+              enum: [MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD]
+              default: MM/DD/YYYY
+            timeFormat:
+              type: string
+              enum: [12h, 24h]
+              default: 12h
+
+    UpdatePreferencesRequest:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [light, dark, auto]
+        notifications:
+          type: object
+          properties:
+            email:
+              type: boolean
+            push:
+              type: boolean
+            taskAssigned:
+              type: boolean
+            projectUpdates:
+              type: boolean
+            mentions:
+              type: boolean
+        dashboard:
+          type: object
+          properties:
+            defaultView:
+              type: string
+              enum: [overview, projects, tasks, analytics]
+            showWelcomeCard:
+              type: boolean
+            refreshInterval:
+              type: integer
+              minimum: 30
+              maximum: 300
+            compactMode:
+              type: boolean
+        display:
+          type: object
+          properties:
+            language:
+              type: string
+            timezone:
+              type: string
+            dateFormat:
+              type: string
+              enum: [MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD]
+            timeFormat:
+              type: string
+              enum: [12h, 24h]
+
+    UserPreferencesResponse:
+      type: object
+      properties:
+        preferences:
+          $ref: '#/components/schemas/UserPreferences'
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - preferences
+        - updatedAt
+
+    DashboardOverviewResponse:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            totalProjects:
+              type: integer
+            activeProjects:
+              type: integer
+            totalTasks:
+              type: integer
+            activeTasks:
+              type: integer
+            completedTasks:
+              type: integer
+            teamMembers:
+              type: integer
+        recentActivity:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityItem'
+        upcomingDeadlines:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeadlineItem'
+        performanceMetrics:
+          type: object
+          properties:
+            velocityTrend:
+              type: string
+              enum: [up, down, stable]
+            completionRate:
+              type: number
+              minimum: 0
+              maximum: 1
+            averageCycleTime:
+              type: number
+        generatedAt:
+          type: string
+          format: date-time
+      required:
+        - summary
+        - recentActivity
+        - upcomingDeadlines
+        - performanceMetrics
+        - generatedAt
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [task_created, task_completed, project_updated, user_joined, comment_added]
+        title:
+          type: string
+        description:
+          type: string
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            avatar:
+              type: string
+              format: uri
+        timestamp:
+          type: string
+          format: date-time
+        relatedItem:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [project, task, user]
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+      required:
+        - id
+        - type
+        - title
+        - timestamp
+
+    DeadlineItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [task, project, milestone]
+        title:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        status:
+          type: string
+          enum: [todo, in_progress, review, done]
+        assignee:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            avatar:
+              type: string
+              format: uri
+        project:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+      required:
+        - id
+        - type
+        - title
+        - dueDate
+        - priority
+        - status
+
+    ProjectsSummaryResponse:
+      type: object
+      properties:
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectSummary'
+        totalProjects:
+          type: integer
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrevious:
+              type: boolean
+      required:
+        - projects
+        - totalProjects
+        - pagination
+
+    ProjectSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, archived, planned]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+        tasksCount:
+          type: object
+          properties:
+            total:
+              type: integer
+            completed:
+              type: integer
+            inProgress:
+              type: integer
+            todo:
+              type: integer
+        teamMembers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              avatar:
+                type: string
+                format: uri
+              role:
+                type: string
+        dueDate:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - status
+        - progress
+        - tasksCount
+        - teamMembers
+        - createdAt
+        - updatedAt
+
+    TasksSummaryResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskSummary'
+        totalTasks:
+          type: integer
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrevious:
+              type: boolean
+      required:
+        - tasks
+        - totalTasks
+        - pagination
+
+    TaskSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [todo, in_progress, review, done]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        assignee:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            avatar:
+              type: string
+              format: uri
+        project:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+        dueDate:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - status
+        - priority
+        - createdAt
+        - updatedAt
+
+    DashboardAnalyticsResponse:
+      type: object
+      properties:
+        timeframe:
+          type: string
+        metrics:
+          type: object
+          properties:
+            velocity:
+              type: object
+              properties:
+                current:
+                  type: number
+                previous:
+                  type: number
+                trend:
+                  type: string
+                  enum: [up, down, stable]
+                change:
+                  type: number
+            quality:
+              type: object
+              properties:
+                score:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                trend:
+                  type: string
+                  enum: [up, down, stable]
+                metrics:
+                  type: object
+                  properties:
+                    testCoverage:
+                      type: number
+                    bugRate:
+                      type: number
+                    codeReviewRate:
+                      type: number
+            performance:
+              type: object
+              properties:
+                cycleTime:
+                  type: number
+                leadTime:
+                  type: number
+                throughput:
+                  type: number
+                trend:
+                  type: string
+                  enum: [up, down, stable]
+            teamActivity:
+              type: object
+              properties:
+                activeMembers:
+                  type: integer
+                commitsPerDay:
+                  type: number
+                pullRequestsPerDay:
+                  type: number
+                collaborationScore:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+        charts:
+          type: object
+          properties:
+            velocityChart:
+              type: array
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  value:
+                    type: number
+            burndownChart:
+              type: array
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  remaining:
+                    type: number
+                  completed:
+                    type: number
+        generatedAt:
+          type: string
+          format: date-time
+      required:
+        - timeframe
+        - metrics
+        - charts
+        - generatedAt
+
+    NotificationsResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        unreadCount:
+          type: integer
+        totalCount:
+          type: integer
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrevious:
+              type: boolean
+      required:
+        - notifications
+        - unreadCount
+        - totalCount
+        - pagination
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [task_assigned, task_completed, project_updated, mention, system]
+        title:
+          type: string
+        message:
+          type: string
+        read:
+          type: boolean
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        createdAt:
+          type: string
+          format: date-time
+        readAt:
+          type: string
+          format: date-time
+        relatedItem:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [project, task, user, comment]
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+        actionUrl:
+          type: string
+          format: uri
+        metadata:
+          type: object
+      required:
+        - id
+        - type
+        - title
+        - message
+        - read
+        - priority
+        - createdAt
+
+    NotificationActionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        notification:
+          $ref: '#/components/schemas/Notification'
+      required:
+        - success
+        - message
+
+    SearchResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        totalResults:
+          type: integer
+        searchTime:
+          type: number
+        filters:
+          type: object
+          properties:
+            type:
+              type: string
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrevious:
+              type: boolean
+      required:
+        - query
+        - results
+        - totalResults
+        - searchTime
+        - pagination
+
+    SearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [project, task, user, document]
+        title:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+          format: uri
+        relevanceScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        highlightedText:
+          type: string
+        metadata:
+          type: object
+          properties:
+            project:
+              type: string
+            status:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+      required:
+        - id
+        - type
+        - title
+        - url
+        - relevanceScore
+
+    DashboardWidgetsResponse:
+      type: object
+      properties:
+        widgets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Widget'
+        layout:
+          type: object
+          properties:
+            columns:
+              type: integer
+              minimum: 1
+              maximum: 12
+            rows:
+              type: integer
+              minimum: 1
+            gaps:
+              type: object
+              properties:
+                horizontal:
+                  type: number
+                vertical:
+                  type: number
+      required:
+        - widgets
+        - layout
+
+    Widget:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [tasks, projects, analytics, notifications, calendar, weather, notes]
+        title:
+          type: string
+        position:
+          type: object
+          properties:
+            x:
+              type: integer
+              minimum: 0
+            y:
+              type: integer
+              minimum: 0
+            width:
+              type: integer
+              minimum: 1
+            height:
+              type: integer
+              minimum: 1
+        config:
+          type: object
+          properties:
+            refreshInterval:
+              type: integer
+              minimum: 30
+              maximum: 3600
+            showHeader:
+              type: boolean
+              default: true
+            theme:
+              type: string
+              enum: [light, dark, auto]
+            filters:
+              type: object
+        enabled:
+          type: boolean
+          default: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - type
+        - title
+        - position
+        - enabled
+        - createdAt
+        - updatedAt
+
+    AddWidgetRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [tasks, projects, analytics, notifications, calendar, weather, notes]
+        title:
+          type: string
+        position:
+          type: object
+          properties:
+            x:
+              type: integer
+              minimum: 0
+            y:
+              type: integer
+              minimum: 0
+            width:
+              type: integer
+              minimum: 1
+            height:
+              type: integer
+              minimum: 1
+        config:
+          type: object
+          properties:
+            refreshInterval:
+              type: integer
+              minimum: 30
+              maximum: 3600
+            showHeader:
+              type: boolean
+              default: true
+            theme:
+              type: string
+              enum: [light, dark, auto]
+            filters:
+              type: object
+      required:
+        - type
+        - title
+        - position
+
+    UpdateWidgetRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        position:
+          type: object
+          properties:
+            x:
+              type: integer
+              minimum: 0
+            y:
+              type: integer
+              minimum: 0
+            width:
+              type: integer
+              minimum: 1
+            height:
+              type: integer
+              minimum: 1
+        config:
+          type: object
+          properties:
+            refreshInterval:
+              type: integer
+              minimum: 30
+              maximum: 3600
+            showHeader:
+              type: boolean
+            theme:
+              type: string
+              enum: [light, dark, auto]
+            filters:
+              type: object
+        enabled:
+          type: boolean
+
+    WidgetResponse:
+      type: object
+      properties:
+        widget:
+          $ref: '#/components/schemas/Widget'
+        message:
+          type: string
+      required:
+        - widget
+        - message
+
+    RealtimeStatusResponse:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        activeConnections:
+          type: integer
+        userSession:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            connectedAt:
+              type: string
+              format: date-time
+            lastActivity:
+              type: string
+              format: date-time
+            rooms:
+              type: array
+              items:
+                type: string
+        server:
+          type: object
+          properties:
+            uptime:
+              type: number
+            totalConnections:
+              type: integer
+            messagesSent:
+              type: integer
+            messagesReceived:
+              type: integer
+      required:
+        - connected
+        - activeConnections
+        - userSession
+        - server
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        details:
+          type: object
+        requestId:
+          type: string
+      required:
+        - error
+        - message
+        - timestamp
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health and status
+  - name: Authentication
+    description: User authentication and session management
+  - name: Dashboard
+    description: Dashboard data aggregation and rendering
+  - name: Preferences
+    description: User preferences and settings
+  - name: Widgets
+    description: Dashboard widget management
+  - name: API Proxy
+    description: Frontend API proxying to backend services
+  - name: Real-time
+    description: Real-time updates and notifications

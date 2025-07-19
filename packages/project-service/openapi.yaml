@@ -1,0 +1,2097 @@
+openapi: 3.0.3
+info:
+  title: Project Service API
+  description: Project lifecycle management service with team management, templates, analytics, and intelligent project insights
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8006
+    description: Development server
+  - url: https://api.cycletime.dev/projects
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the project service is healthy and operational
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/projects:
+    get:
+      summary: List projects
+      description: Get a paginated list of projects with optional filtering
+      operationId: listProjects
+      tags:
+        - Projects
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of projects per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: search
+          in: query
+          description: Search query for project name and description
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by project status
+          schema:
+            type: string
+            enum: [active, archived, on_hold, planning, completed]
+        - name: owner
+          in: query
+          description: Filter by owner ID
+          schema:
+            type: string
+            format: uuid
+        - name: template
+          in: query
+          description: Filter by template ID
+          schema:
+            type: string
+            format: uuid
+        - name: sortBy
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [name, createdAt, updatedAt, status, progress]
+            default: createdAt
+        - name: sortOrder
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectListResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create project
+      description: Create a new project
+      operationId: createProject
+      tags:
+        - Projects
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '201':
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Project already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects/{projectId}:
+    get:
+      summary: Get project
+      description: Get project details and metadata
+      operationId: getProject
+      tags:
+        - Projects
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+        - name: includeTeam
+          in: query
+          description: Include team members in response
+          schema:
+            type: boolean
+            default: false
+        - name: includeAnalytics
+          in: query
+          description: Include analytics data in response
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update project
+      description: Update project details and metadata
+      operationId: updateProject
+      tags:
+        - Projects
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectRequest'
+      responses:
+        '200':
+          description: Project updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete project
+      description: Delete a project (archive by default)
+      operationId: deleteProject
+      tags:
+        - Projects
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+        - name: permanent
+          in: query
+          description: Permanently delete the project
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '204':
+          description: Project deleted successfully
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects/{projectId}/team:
+    get:
+      summary: Get project team
+      description: Get all team members for a project
+      operationId: getProjectTeam
+      tags:
+        - Team Management
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Project team members
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTeamResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Add team member
+      description: Add a team member to a project
+      operationId: addTeamMember
+      tags:
+        - Team Management
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddTeamMemberRequest'
+      responses:
+        '201':
+          description: Team member added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamMemberResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects/{projectId}/team/{userId}:
+    put:
+      summary: Update team member role
+      description: Update a team member's role in a project
+      operationId: updateTeamMemberRole
+      tags:
+        - Team Management
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTeamMemberRequest'
+      responses:
+        '200':
+          description: Team member role updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamMemberResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Project or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Remove team member
+      description: Remove a team member from a project
+      operationId: removeTeamMember
+      tags:
+        - Team Management
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Team member removed successfully
+        '404':
+          description: Project or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects/{projectId}/templates:
+    get:
+      summary: Get project templates
+      description: Get available templates for a project
+      operationId: getProjectTemplates
+      tags:
+        - Templates
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          description: Filter by template category
+          schema:
+            type: string
+            enum: [agile, waterfall, kanban, scrum, custom]
+      responses:
+        '200':
+          description: Available templates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTemplatesResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Apply template
+      description: Apply a template to a project
+      operationId: applyTemplate
+      tags:
+        - Templates
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyTemplateRequest'
+      responses:
+        '200':
+          description: Template applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Project or template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/templates:
+    get:
+      summary: List templates
+      description: Get available project templates
+      operationId: listTemplates
+      tags:
+        - Templates
+      parameters:
+        - name: category
+          in: query
+          description: Filter by template category
+          schema:
+            type: string
+            enum: [agile, waterfall, kanban, scrum, custom]
+        - name: public
+          in: query
+          description: Filter by public/private templates
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateListResponse'
+
+    post:
+      summary: Create template
+      description: Create a new project template
+      operationId: createTemplate
+      tags:
+        - Templates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+      responses:
+        '201':
+          description: Template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/templates/{templateId}:
+    get:
+      summary: Get template
+      description: Get template details
+      operationId: getTemplate
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: Template ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Template details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update template
+      description: Update template details
+      operationId: updateTemplate
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: Template ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTemplateRequest'
+      responses:
+        '200':
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete template
+      description: Delete a project template
+      operationId: deleteTemplate
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: Template ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Template deleted successfully
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects/{projectId}/analytics:
+    get:
+      summary: Get project analytics
+      description: Get analytics and metrics for a project
+      operationId: getProjectAnalytics
+      tags:
+        - Analytics
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+        - name: timeRange
+          in: query
+          description: Time range for analytics
+          schema:
+            type: string
+            enum: [day, week, month, quarter, year]
+            default: month
+        - name: metrics
+          in: query
+          description: Comma-separated list of metrics to include
+          schema:
+            type: string
+            example: "velocity,burndown,cycle_time"
+      responses:
+        '200':
+          description: Project analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectAnalyticsResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects/{projectId}/forecasting:
+    get:
+      summary: Get project forecasting
+      description: Get AI-powered project forecasting and predictions
+      operationId: getProjectForecasting
+      tags:
+        - Analytics
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+        - name: horizon
+          in: query
+          description: Forecasting horizon in days
+          schema:
+            type: integer
+            minimum: 7
+            maximum: 365
+            default: 90
+      responses:
+        '200':
+          description: Project forecasting data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectForecastingResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects/{projectId}/resources:
+    get:
+      summary: Get resource allocation
+      description: Get current resource allocation for a project
+      operationId: getResourceAllocation
+      tags:
+        - Resource Management
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Resource allocation data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceAllocationResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Allocate resources
+      description: Allocate resources to a project
+      operationId: allocateResources
+      tags:
+        - Resource Management
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllocateResourcesRequest'
+      responses:
+        '201':
+          description: Resources allocated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceAllocationResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects/{projectId}/capacity:
+    get:
+      summary: Get capacity planning
+      description: Get capacity planning data for a project
+      operationId: getCapacityPlanning
+      tags:
+        - Resource Management
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+        - name: timeframe
+          in: query
+          description: Timeframe for capacity planning
+          schema:
+            type: string
+            enum: [week, month, quarter]
+            default: month
+      responses:
+        '200':
+          description: Capacity planning data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapacityPlanningResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects/{projectId}/insights:
+    get:
+      summary: Get project insights
+      description: Get AI-powered intelligent insights for a project
+      operationId: getProjectInsights
+      tags:
+        - Analytics
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          description: Filter insights by category
+          schema:
+            type: string
+            enum: [performance, risks, opportunities, team, timeline]
+      responses:
+        '200':
+          description: Project insights
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectInsightsResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        dependencies:
+          type: object
+          properties:
+            redis:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            queue:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+        metrics:
+          type: object
+          properties:
+            projectsCount:
+              type: integer
+            activeProjects:
+              type: integer
+            templatesCount:
+              type: integer
+            averageTeamSize:
+              type: number
+      required:
+        - status
+        - timestamp
+        - version
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, archived, on_hold, planning, completed]
+        visibility:
+          type: string
+          enum: [public, private, internal]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          description: Custom metadata fields
+        owner:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+        template:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            category:
+              type: string
+          nullable: true
+        timeline:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date-time
+              nullable: true
+            endDate:
+              type: string
+              format: date-time
+              nullable: true
+            dueDate:
+              type: string
+              format: date-time
+              nullable: true
+            milestones:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                  dueDate:
+                    type: string
+                    format: date-time
+                  completed:
+                    type: boolean
+        resources:
+          type: object
+          properties:
+            budget:
+              type: number
+              nullable: true
+            budgetUsed:
+              type: number
+              nullable: true
+            estimatedHours:
+              type: number
+              nullable: true
+            actualHours:
+              type: number
+              nullable: true
+        integrations:
+          type: object
+          properties:
+            github:
+              type: object
+              properties:
+                repository:
+                  type: string
+                  nullable: true
+                enabled:
+                  type: boolean
+            linear:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  nullable: true
+                enabled:
+                  type: boolean
+            slack:
+              type: object
+              properties:
+                channel:
+                  type: string
+                  nullable: true
+                enabled:
+                  type: boolean
+        team:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamMember'
+        settings:
+          type: object
+          properties:
+            notifications:
+              type: object
+              properties:
+                email:
+                  type: boolean
+                slack:
+                  type: boolean
+                inApp:
+                  type: boolean
+            permissions:
+              type: object
+              properties:
+                allowGuestAccess:
+                  type: boolean
+                requireApproval:
+                  type: boolean
+            automation:
+              type: object
+              properties:
+                autoAssign:
+                  type: boolean
+                autoProgress:
+                  type: boolean
+                autoNotify:
+                  type: boolean
+        audit:
+          type: object
+          properties:
+            createdBy:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedBy:
+              type: string
+              format: uuid
+            updatedAt:
+              type: string
+              format: date-time
+            version:
+              type: integer
+      required:
+        - id
+        - name
+        - status
+        - visibility
+        - owner
+        - audit
+
+    TeamMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [owner, admin, member, contributor, viewer]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [read, write, delete, manage_team, manage_settings]
+        allocation:
+          type: object
+          properties:
+            percentage:
+              type: number
+              minimum: 0
+              maximum: 100
+            hoursPerWeek:
+              type: number
+              minimum: 0
+            startDate:
+              type: string
+              format: date-time
+              nullable: true
+            endDate:
+              type: string
+              format: date-time
+              nullable: true
+        addedAt:
+          type: string
+          format: date-time
+        addedBy:
+          type: string
+          format: uuid
+      required:
+        - id
+        - name
+        - email
+        - role
+        - addedAt
+        - addedBy
+
+    ProjectTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [agile, waterfall, kanban, scrum, custom]
+        visibility:
+          type: string
+          enum: [public, private, organization]
+        configuration:
+          type: object
+          properties:
+            phases:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  duration:
+                    type: integer
+                  dependencies:
+                    type: array
+                    items:
+                      type: string
+            taskTemplates:
+              type: array
+              items:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  description:
+                    type: string
+                  estimatedHours:
+                    type: number
+                  phase:
+                    type: string
+                  dependencies:
+                    type: array
+                    items:
+                      type: string
+            roles:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  permissions:
+                    type: array
+                    items:
+                      type: string
+                  defaultAllocation:
+                    type: number
+        metadata:
+          type: object
+          properties:
+            author:
+              type: string
+            version:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
+            usageCount:
+              type: integer
+        audit:
+          type: object
+          properties:
+            createdBy:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedBy:
+              type: string
+              format: uuid
+            updatedAt:
+              type: string
+              format: date-time
+      required:
+        - id
+        - name
+        - category
+        - visibility
+        - configuration
+        - audit
+
+    ProjectResponse:
+      type: object
+      properties:
+        project:
+          $ref: '#/components/schemas/Project'
+      required:
+        - project
+
+    ProjectListResponse:
+      type: object
+      properties:
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrevious:
+              type: boolean
+        filters:
+          type: object
+          properties:
+            status:
+              type: string
+            owner:
+              type: string
+            search:
+              type: string
+      required:
+        - projects
+        - pagination
+
+    CreateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        templateId:
+          type: string
+          format: uuid
+          nullable: true
+        visibility:
+          type: string
+          enum: [public, private, internal]
+          default: private
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          default: medium
+        tags:
+          type: array
+          items:
+            type: string
+        timeline:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date-time
+              nullable: true
+            endDate:
+              type: string
+              format: date-time
+              nullable: true
+            dueDate:
+              type: string
+              format: date-time
+              nullable: true
+        resources:
+          type: object
+          properties:
+            budget:
+              type: number
+              nullable: true
+            estimatedHours:
+              type: number
+              nullable: true
+        integrations:
+          type: object
+          properties:
+            github:
+              type: object
+              properties:
+                repository:
+                  type: string
+                  nullable: true
+                enabled:
+                  type: boolean
+                  default: false
+            linear:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  nullable: true
+                enabled:
+                  type: boolean
+                  default: false
+        metadata:
+          type: object
+      required:
+        - name
+
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, archived, on_hold, planning, completed]
+        visibility:
+          type: string
+          enum: [public, private, internal]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        tags:
+          type: array
+          items:
+            type: string
+        timeline:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date-time
+              nullable: true
+            endDate:
+              type: string
+              format: date-time
+              nullable: true
+            dueDate:
+              type: string
+              format: date-time
+              nullable: true
+        resources:
+          type: object
+          properties:
+            budget:
+              type: number
+              nullable: true
+            estimatedHours:
+              type: number
+              nullable: true
+        integrations:
+          type: object
+          properties:
+            github:
+              type: object
+              properties:
+                repository:
+                  type: string
+                  nullable: true
+                enabled:
+                  type: boolean
+            linear:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  nullable: true
+                enabled:
+                  type: boolean
+        metadata:
+          type: object
+        version:
+          type: integer
+          description: Current version for optimistic locking
+
+    ProjectTeamResponse:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        team:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamMember'
+        statistics:
+          type: object
+          properties:
+            totalMembers:
+              type: integer
+            activeMembers:
+              type: integer
+            totalAllocation:
+              type: number
+            averageAllocation:
+              type: number
+      required:
+        - projectId
+        - team
+
+    TeamMemberResponse:
+      type: object
+      properties:
+        member:
+          $ref: '#/components/schemas/TeamMember'
+      required:
+        - member
+
+    AddTeamMemberRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [owner, admin, member, contributor, viewer]
+          default: member
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [read, write, delete, manage_team, manage_settings]
+        allocation:
+          type: object
+          properties:
+            percentage:
+              type: number
+              minimum: 0
+              maximum: 100
+            hoursPerWeek:
+              type: number
+              minimum: 0
+            startDate:
+              type: string
+              format: date-time
+              nullable: true
+            endDate:
+              type: string
+              format: date-time
+              nullable: true
+      required:
+        - userId
+        - role
+
+    UpdateTeamMemberRequest:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [owner, admin, member, contributor, viewer]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [read, write, delete, manage_team, manage_settings]
+        allocation:
+          type: object
+          properties:
+            percentage:
+              type: number
+              minimum: 0
+              maximum: 100
+            hoursPerWeek:
+              type: number
+              minimum: 0
+            startDate:
+              type: string
+              format: date-time
+              nullable: true
+            endDate:
+              type: string
+              format: date-time
+              nullable: true
+
+    TemplateResponse:
+      type: object
+      properties:
+        template:
+          $ref: '#/components/schemas/ProjectTemplate'
+      required:
+        - template
+
+    TemplateListResponse:
+      type: object
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectTemplate'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrevious:
+              type: boolean
+      required:
+        - templates
+        - pagination
+
+    ProjectTemplatesResponse:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectTemplate'
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              template:
+                $ref: '#/components/schemas/ProjectTemplate'
+              score:
+                type: number
+              reasons:
+                type: array
+                items:
+                  type: string
+      required:
+        - projectId
+        - templates
+
+    CreateTemplateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [agile, waterfall, kanban, scrum, custom]
+        visibility:
+          type: string
+          enum: [public, private, organization]
+          default: private
+        configuration:
+          type: object
+          properties:
+            phases:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  duration:
+                    type: integer
+                  dependencies:
+                    type: array
+                    items:
+                      type: string
+            taskTemplates:
+              type: array
+              items:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  description:
+                    type: string
+                  estimatedHours:
+                    type: number
+                  phase:
+                    type: string
+                  dependencies:
+                    type: array
+                    items:
+                      type: string
+            roles:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  permissions:
+                    type: array
+                    items:
+                      type: string
+                  defaultAllocation:
+                    type: number
+        metadata:
+          type: object
+          properties:
+            tags:
+              type: array
+              items:
+                type: string
+      required:
+        - name
+        - category
+        - configuration
+
+    UpdateTemplateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [agile, waterfall, kanban, scrum, custom]
+        visibility:
+          type: string
+          enum: [public, private, organization]
+        configuration:
+          type: object
+        metadata:
+          type: object
+
+    ApplyTemplateRequest:
+      type: object
+      properties:
+        templateId:
+          type: string
+          format: uuid
+        configuration:
+          type: object
+          properties:
+            preserveExisting:
+              type: boolean
+              default: false
+            phaseMapping:
+              type: object
+              additionalProperties:
+                type: string
+            customizations:
+              type: object
+      required:
+        - templateId
+
+    ProjectAnalyticsResponse:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        timeRange:
+          type: string
+        summary:
+          type: object
+          properties:
+            totalTasks:
+              type: integer
+            completedTasks:
+              type: integer
+            pendingTasks:
+              type: integer
+            overdueTasks:
+              type: integer
+            teamVelocity:
+              type: number
+            burndownRate:
+              type: number
+            progressPercentage:
+              type: number
+        performance:
+          type: object
+          properties:
+            cycleTime:
+              type: number
+              description: Average cycle time in hours
+            leadTime:
+              type: number
+              description: Average lead time in hours
+            throughput:
+              type: number
+              description: Tasks completed per week
+            qualityMetrics:
+              type: object
+              properties:
+                defectRate:
+                  type: number
+                codeReviewTime:
+                  type: number
+                testCoverage:
+                  type: number
+        trends:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              completed:
+                type: integer
+              created:
+                type: integer
+              velocity:
+                type: number
+        teamMetrics:
+          type: object
+          properties:
+            productivity:
+              type: array
+              items:
+                type: object
+                properties:
+                  memberId:
+                    type: string
+                    format: uuid
+                  tasksCompleted:
+                    type: integer
+                  hoursWorked:
+                    type: number
+                  efficiency:
+                    type: number
+            collaboration:
+              type: object
+              properties:
+                codeReviews:
+                  type: integer
+                pairProgramming:
+                  type: number
+                knowledgeSharing:
+                  type: number
+      required:
+        - projectId
+        - timeRange
+        - summary
+        - performance
+        - trends
+
+    ProjectForecastingResponse:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        horizon:
+          type: integer
+        predictions:
+          type: object
+          properties:
+            completionDate:
+              type: string
+              format: date-time
+            confidence:
+              type: number
+              minimum: 0
+              maximum: 1
+            remainingEffort:
+              type: number
+            budgetForecast:
+              type: number
+        scenarios:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              probability:
+                type: number
+              completionDate:
+                type: string
+                format: date-time
+              budgetImpact:
+                type: number
+              description:
+                type: string
+        risks:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [schedule, budget, scope, team, technical]
+              severity:
+                type: string
+                enum: [low, medium, high, critical]
+              probability:
+                type: number
+              impact:
+                type: string
+              mitigation:
+                type: string
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [resource, timeline, scope, process]
+              priority:
+                type: string
+                enum: [low, medium, high, urgent]
+              description:
+                type: string
+              expectedImpact:
+                type: string
+      required:
+        - projectId
+        - horizon
+        - predictions
+
+    ResourceAllocationResponse:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        resources:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [human, financial, equipment, software]
+              name:
+                type: string
+              allocated:
+                type: number
+              available:
+                type: number
+              utilization:
+                type: number
+              cost:
+                type: number
+              period:
+                type: object
+                properties:
+                  start:
+                    type: string
+                    format: date-time
+                  end:
+                    type: string
+                    format: date-time
+        summary:
+          type: object
+          properties:
+            totalBudget:
+              type: number
+            usedBudget:
+              type: number
+            remainingBudget:
+              type: number
+            totalHours:
+              type: number
+            allocatedHours:
+              type: number
+            availableHours:
+              type: number
+            utilizationRate:
+              type: number
+      required:
+        - projectId
+        - resources
+        - summary
+
+    AllocateResourcesRequest:
+      type: object
+      properties:
+        resources:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [human, financial, equipment, software]
+              name:
+                type: string
+              amount:
+                type: number
+              cost:
+                type: number
+              period:
+                type: object
+                properties:
+                  start:
+                    type: string
+                    format: date-time
+                  end:
+                    type: string
+                    format: date-time
+              metadata:
+                type: object
+            required:
+              - type
+              - name
+              - amount
+      required:
+        - resources
+
+    CapacityPlanningResponse:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        timeframe:
+          type: string
+        capacity:
+          type: object
+          properties:
+            totalCapacity:
+              type: number
+            allocatedCapacity:
+              type: number
+            availableCapacity:
+              type: number
+            utilizationRate:
+              type: number
+        teamCapacity:
+          type: array
+          items:
+            type: object
+            properties:
+              memberId:
+                type: string
+                format: uuid
+              memberName:
+                type: string
+              totalHours:
+                type: number
+              allocatedHours:
+                type: number
+              availableHours:
+                type: number
+              skills:
+                type: array
+                items:
+                  type: string
+        forecast:
+          type: array
+          items:
+            type: object
+            properties:
+              period:
+                type: string
+                format: date
+              requiredCapacity:
+                type: number
+              availableCapacity:
+                type: number
+              gap:
+                type: number
+              recommendations:
+                type: array
+                items:
+                  type: string
+      required:
+        - projectId
+        - timeframe
+        - capacity
+        - teamCapacity
+        - forecast
+
+    ProjectInsightsResponse:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        insights:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              category:
+                type: string
+                enum: [performance, risks, opportunities, team, timeline]
+              type:
+                type: string
+                enum: [warning, recommendation, observation, alert]
+              severity:
+                type: string
+                enum: [low, medium, high, critical]
+              title:
+                type: string
+              description:
+                type: string
+              evidence:
+                type: array
+                items:
+                  type: string
+              recommendations:
+                type: array
+                items:
+                  type: string
+              impact:
+                type: string
+              confidence:
+                type: number
+                minimum: 0
+                maximum: 1
+              generatedAt:
+                type: string
+                format: date-time
+        summary:
+          type: object
+          properties:
+            totalInsights:
+              type: integer
+            criticalCount:
+              type: integer
+            warningCount:
+              type: integer
+            healthScore:
+              type: number
+              minimum: 0
+              maximum: 100
+            trending:
+              type: string
+              enum: [improving, stable, declining]
+      required:
+        - projectId
+        - insights
+        - summary
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        details:
+          type: object
+      required:
+        - error
+        - message
+        - timestamp
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health and status
+  - name: Projects
+    description: Project management operations
+  - name: Team Management
+    description: Team member management and role assignment
+  - name: Templates
+    description: Project template management and application
+  - name: Analytics
+    description: Project analytics, forecasting, and insights
+  - name: Resource Management
+    description: Resource allocation and capacity planning

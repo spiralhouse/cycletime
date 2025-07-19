@@ -1,0 +1,1603 @@
+asyncapi: 3.0.0
+info:
+  title: Document Service Events API
+  version: 1.0.0
+  description: |
+    Events published by the Document Service for real-time notifications and system integration.
+    
+    This service publishes events for:
+    - Document lifecycle (created, updated, deleted)
+    - Version management (version created, version compared)
+    - Collaboration (shared, unshared, commented)
+    - File operations (uploaded, downloaded, processed)
+    - Search indexing (indexed, index updated)
+    - Permissions (granted, revoked, updated)
+    
+    Events are published to Redis channels and can be consumed by other services
+    for monitoring, analytics, search indexing, and workflow automation.
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  development:
+    host: localhost:6379
+    protocol: redis
+    description: Development Redis server
+  production:
+    host: redis.cycletime.dev:6379
+    protocol: redis
+    description: Production Redis server
+
+defaultContentType: application/json
+
+channels:
+  documents/created:
+    description: Published when a new document is created
+    messages:
+      documentCreated:
+        $ref: '#/components/messages/DocumentCreated'
+
+  documents/updated:
+    description: Published when a document is updated
+    messages:
+      documentUpdated:
+        $ref: '#/components/messages/DocumentUpdated'
+
+  documents/deleted:
+    description: Published when a document is deleted
+    messages:
+      documentDeleted:
+        $ref: '#/components/messages/DocumentDeleted'
+
+  documents/restored:
+    description: Published when a deleted document is restored
+    messages:
+      documentRestored:
+        $ref: '#/components/messages/DocumentRestored'
+
+  documents/version/created:
+    description: Published when a new document version is created
+    messages:
+      documentVersionCreated:
+        $ref: '#/components/messages/DocumentVersionCreated'
+
+  documents/version/compared:
+    description: Published when document versions are compared
+    messages:
+      documentVersionsCompared:
+        $ref: '#/components/messages/DocumentVersionsCompared'
+
+  documents/shared:
+    description: Published when a document is shared
+    messages:
+      documentShared:
+        $ref: '#/components/messages/DocumentShared'
+
+  documents/unshared:
+    description: Published when document sharing is revoked
+    messages:
+      documentUnshared:
+        $ref: '#/components/messages/DocumentUnshared'
+
+  documents/permissions/updated:
+    description: Published when document permissions are updated
+    messages:
+      documentPermissionsUpdated:
+        $ref: '#/components/messages/DocumentPermissionsUpdated'
+
+  documents/commented:
+    description: Published when a comment is added to a document
+    messages:
+      documentCommented:
+        $ref: '#/components/messages/DocumentCommented'
+
+  documents/comment/updated:
+    description: Published when a document comment is updated
+    messages:
+      documentCommentUpdated:
+        $ref: '#/components/messages/DocumentCommentUpdated'
+
+  documents/comment/deleted:
+    description: Published when a document comment is deleted
+    messages:
+      documentCommentDeleted:
+        $ref: '#/components/messages/DocumentCommentDeleted'
+
+  documents/uploaded:
+    description: Published when a document file is uploaded
+    messages:
+      documentUploaded:
+        $ref: '#/components/messages/DocumentUploaded'
+
+  documents/downloaded:
+    description: Published when a document is downloaded
+    messages:
+      documentDownloaded:
+        $ref: '#/components/messages/DocumentDownloaded'
+
+  documents/processed:
+    description: Published when document processing is completed
+    messages:
+      documentProcessed:
+        $ref: '#/components/messages/DocumentProcessed'
+
+  documents/indexed:
+    description: Published when a document is indexed for search
+    messages:
+      documentIndexed:
+        $ref: '#/components/messages/DocumentIndexed'
+
+  documents/search/performed:
+    description: Published when a document search is performed
+    messages:
+      documentSearchPerformed:
+        $ref: '#/components/messages/DocumentSearchPerformed'
+
+  documents/metadata/updated:
+    description: Published when document metadata is updated
+    messages:
+      documentMetadataUpdated:
+        $ref: '#/components/messages/DocumentMetadataUpdated'
+
+  documents/analytics/updated:
+    description: Published when document analytics are updated
+    messages:
+      documentAnalyticsUpdated:
+        $ref: '#/components/messages/DocumentAnalyticsUpdated'
+
+  documents/storage/moved:
+    description: Published when a document is moved to different storage location
+    messages:
+      documentStorageMoved:
+        $ref: '#/components/messages/DocumentStorageMoved'
+
+  documents/virus/detected:
+    description: Published when a virus is detected in a document
+    messages:
+      documentVirusDetected:
+        $ref: '#/components/messages/DocumentVirusDetected'
+
+  documents/processing/failed:
+    description: Published when document processing fails
+    messages:
+      documentProcessingFailed:
+        $ref: '#/components/messages/DocumentProcessingFailed'
+
+  documents/quota/exceeded:
+    description: Published when storage quota is exceeded
+    messages:
+      documentQuotaExceeded:
+        $ref: '#/components/messages/DocumentQuotaExceeded'
+
+operations:
+  publishDocumentCreated:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1created'
+    summary: Publish document created event
+    description: Publishes an event when a new document is created
+
+  publishDocumentUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1updated'
+    summary: Publish document updated event
+    description: Publishes an event when a document is updated
+
+  publishDocumentDeleted:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1deleted'
+    summary: Publish document deleted event
+    description: Publishes an event when a document is deleted
+
+  publishDocumentRestored:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1restored'
+    summary: Publish document restored event
+    description: Publishes an event when a deleted document is restored
+
+  publishDocumentVersionCreated:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1version~1created'
+    summary: Publish document version created event
+    description: Publishes an event when a new document version is created
+
+  publishDocumentVersionsCompared:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1version~1compared'
+    summary: Publish document versions compared event
+    description: Publishes an event when document versions are compared
+
+  publishDocumentShared:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1shared'
+    summary: Publish document shared event
+    description: Publishes an event when a document is shared
+
+  publishDocumentUnshared:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1unshared'
+    summary: Publish document unshared event
+    description: Publishes an event when document sharing is revoked
+
+  publishDocumentPermissionsUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1permissions~1updated'
+    summary: Publish document permissions updated event
+    description: Publishes an event when document permissions are updated
+
+  publishDocumentCommented:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1commented'
+    summary: Publish document commented event
+    description: Publishes an event when a comment is added to a document
+
+  publishDocumentCommentUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1comment~1updated'
+    summary: Publish document comment updated event
+    description: Publishes an event when a document comment is updated
+
+  publishDocumentCommentDeleted:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1comment~1deleted'
+    summary: Publish document comment deleted event
+    description: Publishes an event when a document comment is deleted
+
+  publishDocumentUploaded:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1uploaded'
+    summary: Publish document uploaded event
+    description: Publishes an event when a document file is uploaded
+
+  publishDocumentDownloaded:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1downloaded'
+    summary: Publish document downloaded event
+    description: Publishes an event when a document is downloaded
+
+  publishDocumentProcessed:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1processed'
+    summary: Publish document processed event
+    description: Publishes an event when document processing is completed
+
+  publishDocumentIndexed:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1indexed'
+    summary: Publish document indexed event
+    description: Publishes an event when a document is indexed for search
+
+  publishDocumentSearchPerformed:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1search~1performed'
+    summary: Publish document search performed event
+    description: Publishes an event when a document search is performed
+
+  publishDocumentMetadataUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1metadata~1updated'
+    summary: Publish document metadata updated event
+    description: Publishes an event when document metadata is updated
+
+  publishDocumentAnalyticsUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1analytics~1updated'
+    summary: Publish document analytics updated event
+    description: Publishes an event when document analytics are updated
+
+  publishDocumentStorageMoved:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1storage~1moved'
+    summary: Publish document storage moved event
+    description: Publishes an event when a document is moved to different storage location
+
+  publishDocumentVirusDetected:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1virus~1detected'
+    summary: Publish document virus detected event
+    description: Publishes an event when a virus is detected in a document
+
+  publishDocumentProcessingFailed:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1processing~1failed'
+    summary: Publish document processing failed event
+    description: Publishes an event when document processing fails
+
+  publishDocumentQuotaExceeded:
+    action: send
+    channel:
+      $ref: '#/channels/documents~1quota~1exceeded'
+    summary: Publish document quota exceeded event
+    description: Publishes an event when storage quota is exceeded
+
+components:
+  messages:
+    DocumentCreated:
+      name: DocumentCreated
+      title: Document Created
+      summary: A new document has been created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentCreatedPayload'
+
+    DocumentUpdated:
+      name: DocumentUpdated
+      title: Document Updated
+      summary: A document has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentUpdatedPayload'
+
+    DocumentDeleted:
+      name: DocumentDeleted
+      title: Document Deleted
+      summary: A document has been deleted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentDeletedPayload'
+
+    DocumentRestored:
+      name: DocumentRestored
+      title: Document Restored
+      summary: A deleted document has been restored
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentRestoredPayload'
+
+    DocumentVersionCreated:
+      name: DocumentVersionCreated
+      title: Document Version Created
+      summary: A new document version has been created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentVersionCreatedPayload'
+
+    DocumentVersionsCompared:
+      name: DocumentVersionsCompared
+      title: Document Versions Compared
+      summary: Document versions have been compared
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentVersionsComparedPayload'
+
+    DocumentShared:
+      name: DocumentShared
+      title: Document Shared
+      summary: A document has been shared
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentSharedPayload'
+
+    DocumentUnshared:
+      name: DocumentUnshared
+      title: Document Unshared
+      summary: Document sharing has been revoked
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentUnsharedPayload'
+
+    DocumentPermissionsUpdated:
+      name: DocumentPermissionsUpdated
+      title: Document Permissions Updated
+      summary: Document permissions have been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentPermissionsUpdatedPayload'
+
+    DocumentCommented:
+      name: DocumentCommented
+      title: Document Commented
+      summary: A comment has been added to a document
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentCommentedPayload'
+
+    DocumentCommentUpdated:
+      name: DocumentCommentUpdated
+      title: Document Comment Updated
+      summary: A document comment has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentCommentUpdatedPayload'
+
+    DocumentCommentDeleted:
+      name: DocumentCommentDeleted
+      title: Document Comment Deleted
+      summary: A document comment has been deleted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentCommentDeletedPayload'
+
+    DocumentUploaded:
+      name: DocumentUploaded
+      title: Document Uploaded
+      summary: A document file has been uploaded
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentUploadedPayload'
+
+    DocumentDownloaded:
+      name: DocumentDownloaded
+      title: Document Downloaded
+      summary: A document has been downloaded
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentDownloadedPayload'
+
+    DocumentProcessed:
+      name: DocumentProcessed
+      title: Document Processed
+      summary: Document processing has been completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentProcessedPayload'
+
+    DocumentIndexed:
+      name: DocumentIndexed
+      title: Document Indexed
+      summary: A document has been indexed for search
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentIndexedPayload'
+
+    DocumentSearchPerformed:
+      name: DocumentSearchPerformed
+      title: Document Search Performed
+      summary: A document search has been performed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentSearchPerformedPayload'
+
+    DocumentMetadataUpdated:
+      name: DocumentMetadataUpdated
+      title: Document Metadata Updated
+      summary: Document metadata has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentMetadataUpdatedPayload'
+
+    DocumentAnalyticsUpdated:
+      name: DocumentAnalyticsUpdated
+      title: Document Analytics Updated
+      summary: Document analytics have been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentAnalyticsUpdatedPayload'
+
+    DocumentStorageMoved:
+      name: DocumentStorageMoved
+      title: Document Storage Moved
+      summary: A document has been moved to different storage location
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentStorageMovedPayload'
+
+    DocumentVirusDetected:
+      name: DocumentVirusDetected
+      title: Document Virus Detected
+      summary: A virus has been detected in a document
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentVirusDetectedPayload'
+
+    DocumentProcessingFailed:
+      name: DocumentProcessingFailed
+      title: Document Processing Failed
+      summary: Document processing has failed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentProcessingFailedPayload'
+
+    DocumentQuotaExceeded:
+      name: DocumentQuotaExceeded
+      title: Document Quota Exceeded
+      summary: Storage quota has been exceeded
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentQuotaExceededPayload'
+
+  schemas:
+    BaseEvent:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for the event
+        eventType:
+          type: string
+          description: Type of the event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        source:
+          type: string
+          description: Service that generated the event
+          default: document-service
+        version:
+          type: string
+          description: Event schema version
+          default: "1.0.0"
+        correlationId:
+          type: string
+          format: uuid
+          description: Correlation ID for tracking related events
+        metadata:
+          type: object
+          description: Additional event metadata
+          properties:
+            userId:
+              type: string
+              format: uuid
+            sessionId:
+              type: string
+            projectId:
+              type: string
+              format: uuid
+            requestId:
+              type: string
+            clientIp:
+              type: string
+            userAgent:
+              type: string
+      required:
+        - eventId
+        - eventType
+        - timestamp
+        - source
+        - version
+
+    DocumentCreatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            title:
+              type: string
+            type:
+              type: string
+            size:
+              type: integer
+            author:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            status:
+              type: string
+              enum: [draft, published]
+            tags:
+              type: array
+              items:
+                type: string
+            permissions:
+              type: object
+              properties:
+                public:
+                  type: boolean
+                readers:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                writers:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                admins:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+          required:
+            - documentId
+            - title
+            - type
+            - size
+            - author
+            - status
+
+    DocumentUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            title:
+              type: string
+            previousVersion:
+              type: string
+            newVersion:
+              type: string
+            changes:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  oldValue:
+                    type: string
+                  newValue:
+                    type: string
+            updatedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+          required:
+            - documentId
+            - title
+            - previousVersion
+            - newVersion
+            - changes
+            - updatedBy
+
+    DocumentDeletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            title:
+              type: string
+            type:
+              type: string
+            size:
+              type: integer
+            deletedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            permanent:
+              type: boolean
+            retentionPeriod:
+              type: integer
+              description: Days until permanent deletion
+          required:
+            - documentId
+            - title
+            - type
+            - size
+            - deletedBy
+            - permanent
+
+    DocumentRestoredPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            title:
+              type: string
+            type:
+              type: string
+            restoredBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            deletedAt:
+              type: string
+              format: date-time
+          required:
+            - documentId
+            - title
+            - type
+            - restoredBy
+            - deletedAt
+
+    DocumentVersionCreatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            versionId:
+              type: string
+            version:
+              type: string
+            comment:
+              type: string
+            size:
+              type: integer
+            previousVersion:
+              type: string
+            changes:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [added, removed, modified]
+                  path:
+                    type: string
+                  description:
+                    type: string
+            createdBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+          required:
+            - documentId
+            - versionId
+            - version
+            - size
+            - createdBy
+
+    DocumentVersionsComparedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            fromVersion:
+              type: string
+            toVersion:
+              type: string
+            comparedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            changesCount:
+              type: integer
+            similarityScore:
+              type: number
+              minimum: 0
+              maximum: 1
+          required:
+            - documentId
+            - fromVersion
+            - toVersion
+            - comparedBy
+            - changesCount
+
+    DocumentSharedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            shareId:
+              type: string
+              format: uuid
+            sharedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            sharedWith:
+              type: array
+              items:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    format: uuid
+                  groupId:
+                    type: string
+                    format: uuid
+                  permissions:
+                    type: array
+                    items:
+                      type: string
+                      enum: [read, write, admin]
+            permissions:
+              type: array
+              items:
+                type: string
+                enum: [read, write, admin]
+            expiresAt:
+              type: string
+              format: date-time
+              nullable: true
+            message:
+              type: string
+          required:
+            - documentId
+            - shareId
+            - sharedBy
+            - sharedWith
+            - permissions
+
+    DocumentUnsharedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            shareId:
+              type: string
+              format: uuid
+            unsharedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            unsharedFrom:
+              type: array
+              items:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    format: uuid
+                  groupId:
+                    type: string
+                    format: uuid
+            reason:
+              type: string
+              enum: [manual, expired, policy]
+          required:
+            - documentId
+            - shareId
+            - unsharedBy
+            - unsharedFrom
+            - reason
+
+    DocumentPermissionsUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            updatedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            previousPermissions:
+              type: object
+              properties:
+                public:
+                  type: boolean
+                users:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      userId:
+                        type: string
+                        format: uuid
+                      permissions:
+                        type: array
+                        items:
+                          type: string
+            newPermissions:
+              type: object
+              properties:
+                public:
+                  type: boolean
+                users:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      userId:
+                        type: string
+                        format: uuid
+                      permissions:
+                        type: array
+                        items:
+                          type: string
+          required:
+            - documentId
+            - updatedBy
+            - previousPermissions
+            - newPermissions
+
+    DocumentCommentedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            commentId:
+              type: string
+              format: uuid
+            content:
+              type: string
+            author:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            position:
+              type: object
+              properties:
+                page:
+                  type: integer
+                x:
+                  type: number
+                y:
+                  type: number
+                selection:
+                  type: string
+              nullable: true
+            parentId:
+              type: string
+              format: uuid
+              nullable: true
+            threadLength:
+              type: integer
+          required:
+            - documentId
+            - commentId
+            - content
+            - author
+            - threadLength
+
+    DocumentCommentUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            commentId:
+              type: string
+              format: uuid
+            previousContent:
+              type: string
+            newContent:
+              type: string
+            updatedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            status:
+              type: string
+              enum: [active, resolved]
+          required:
+            - documentId
+            - commentId
+            - previousContent
+            - newContent
+            - updatedBy
+            - status
+
+    DocumentCommentDeletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            commentId:
+              type: string
+              format: uuid
+            content:
+              type: string
+            deletedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            threadLength:
+              type: integer
+          required:
+            - documentId
+            - commentId
+            - content
+            - deletedBy
+            - threadLength
+
+    DocumentUploadedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            filename:
+              type: string
+            originalName:
+              type: string
+            type:
+              type: string
+            mimeType:
+              type: string
+            size:
+              type: integer
+            checksum:
+              type: string
+            storageLocation:
+              type: string
+            uploadedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            uploadTime:
+              type: number
+              description: Upload time in milliseconds
+            virusScanStatus:
+              type: string
+              enum: [pending, clean, infected, failed]
+          required:
+            - documentId
+            - filename
+            - originalName
+            - type
+            - mimeType
+            - size
+            - checksum
+            - storageLocation
+            - uploadedBy
+            - uploadTime
+            - virusScanStatus
+
+    DocumentDownloadedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            title:
+              type: string
+            type:
+              type: string
+            size:
+              type: integer
+            version:
+              type: string
+            downloadedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            downloadFormat:
+              type: string
+            downloadMethod:
+              type: string
+              enum: [direct, link, api]
+            downloadTime:
+              type: number
+              description: Download time in milliseconds
+          required:
+            - documentId
+            - title
+            - type
+            - size
+            - version
+            - downloadedBy
+            - downloadFormat
+            - downloadMethod
+
+    DocumentProcessedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            processingType:
+              type: string
+              enum: [text-extraction, thumbnail-generation, format-conversion, virus-scan, indexing]
+            status:
+              type: string
+              enum: [completed, failed, partial]
+            processingTime:
+              type: number
+              description: Processing time in milliseconds
+            results:
+              type: object
+              properties:
+                extractedText:
+                  type: string
+                pageCount:
+                  type: integer
+                wordCount:
+                  type: integer
+                language:
+                  type: string
+                thumbnailGenerated:
+                  type: boolean
+                formatConverted:
+                  type: boolean
+                virusScanResult:
+                  type: string
+                  enum: [clean, infected, failed]
+                indexingResult:
+                  type: string
+                  enum: [indexed, failed, partial]
+            errors:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  message:
+                    type: string
+                  details:
+                    type: object
+          required:
+            - documentId
+            - processingType
+            - status
+            - processingTime
+
+    DocumentIndexedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            title:
+              type: string
+            type:
+              type: string
+            indexingStatus:
+              type: string
+              enum: [indexed, updated, failed, removed]
+            indexingTime:
+              type: number
+              description: Indexing time in milliseconds
+            extractedFields:
+              type: object
+              properties:
+                text:
+                  type: string
+                title:
+                  type: string
+                keywords:
+                  type: array
+                  items:
+                    type: string
+                entities:
+                  type: array
+                  items:
+                    type: string
+                language:
+                  type: string
+                pageCount:
+                  type: integer
+                wordCount:
+                  type: integer
+            searchableFields:
+              type: array
+              items:
+                type: string
+            error:
+              type: string
+              nullable: true
+          required:
+            - documentId
+            - title
+            - type
+            - indexingStatus
+            - indexingTime
+
+    DocumentSearchPerformedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            query:
+              type: string
+            filters:
+              type: object
+            resultCount:
+              type: integer
+            searchTime:
+              type: number
+              description: Search time in milliseconds
+            searchedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            topResults:
+              type: array
+              items:
+                type: object
+                properties:
+                  documentId:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                  score:
+                    type: number
+              maxItems: 5
+            facetsUsed:
+              type: array
+              items:
+                type: string
+          required:
+            - query
+            - resultCount
+            - searchTime
+            - searchedBy
+
+    DocumentMetadataUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            updatedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            previousMetadata:
+              type: object
+            newMetadata:
+              type: object
+            changes:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  oldValue:
+                    type: string
+                  newValue:
+                    type: string
+                  operation:
+                    type: string
+                    enum: [added, updated, removed]
+          required:
+            - documentId
+            - updatedBy
+            - previousMetadata
+            - newMetadata
+            - changes
+
+    DocumentAnalyticsUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            metrics:
+              type: object
+              properties:
+                viewCount:
+                  type: integer
+                downloadCount:
+                  type: integer
+                shareCount:
+                  type: integer
+                commentCount:
+                  type: integer
+                uniqueViewers:
+                  type: integer
+                averageViewTime:
+                  type: number
+                lastAccessed:
+                  type: string
+                  format: date-time
+            previousMetrics:
+              type: object
+            period:
+              type: string
+              enum: [hour, day, week, month]
+          required:
+            - documentId
+            - metrics
+            - previousMetrics
+            - period
+
+    DocumentStorageMovedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            previousLocation:
+              type: string
+            newLocation:
+              type: string
+            reason:
+              type: string
+              enum: [optimization, policy, migration, backup]
+            moveTime:
+              type: number
+              description: Move time in milliseconds
+            movedBy:
+              type: string
+              enum: [system, user, policy]
+          required:
+            - documentId
+            - previousLocation
+            - newLocation
+            - reason
+            - moveTime
+            - movedBy
+
+    DocumentVirusDetectedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            filename:
+              type: string
+            size:
+              type: integer
+            uploadedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            scanResult:
+              type: object
+              properties:
+                engine:
+                  type: string
+                virusName:
+                  type: string
+                threatLevel:
+                  type: string
+                  enum: [low, medium, high, critical]
+                scanTime:
+                  type: string
+                  format: date-time
+            actions:
+              type: array
+              items:
+                type: string
+                enum: [quarantined, deleted, blocked, reported]
+            notificationsSent:
+              type: array
+              items:
+                type: string
+                format: uuid
+          required:
+            - documentId
+            - filename
+            - size
+            - uploadedBy
+            - scanResult
+            - actions
+
+    DocumentProcessingFailedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              format: uuid
+            processingType:
+              type: string
+              enum: [text-extraction, thumbnail-generation, format-conversion, virus-scan, indexing]
+            error:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [timeout, memory, format, corruption, network, system]
+                message:
+                  type: string
+                code:
+                  type: string
+                details:
+                  type: object
+            processingTime:
+              type: number
+              description: Processing time before failure in milliseconds
+            retryCount:
+              type: integer
+            retryScheduled:
+              type: boolean
+            nextRetry:
+              type: string
+              format: date-time
+              nullable: true
+          required:
+            - documentId
+            - processingType
+            - error
+            - processingTime
+            - retryCount
+            - retryScheduled
+
+    DocumentQuotaExceededPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            quotaType:
+              type: string
+              enum: [storage, document-count, upload-bandwidth, download-bandwidth]
+            currentUsage:
+              type: integer
+            quotaLimit:
+              type: integer
+            exceededBy:
+              type: integer
+            documentId:
+              type: string
+              format: uuid
+              nullable: true
+              description: Document that triggered the quota exceeded event
+            actions:
+              type: array
+              items:
+                type: string
+                enum: [upload-blocked, download-throttled, notification-sent, admin-alerted]
+            recommendations:
+              type: array
+              items:
+                type: string
+          required:
+            - userId
+            - quotaType
+            - currentUsage
+            - quotaLimit
+            - exceededBy
+            - actions
+
+  correlationIds:
+    documentCorrelation:
+      description: Correlation ID for tracking document lifecycle events
+      location: $message.payload.correlationId
+
+    userCorrelation:
+      description: Correlation ID for tracking user-related events
+      location: $message.payload.metadata.userId
+
+    projectCorrelation:
+      description: Correlation ID for tracking project-related events
+      location: $message.payload.metadata.projectId

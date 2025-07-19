@@ -1,0 +1,1932 @@
+openapi: 3.0.3
+info:
+  title: Document Service API
+  description: Document lifecycle management service with version control, collaboration, and search integration
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8004
+    description: Development server
+  - url: https://api.cycletime.dev/documents
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the document service is healthy and operational
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/documents:
+    get:
+      summary: List documents
+      description: Get a paginated list of documents with optional filtering
+      operationId: listDocuments
+      tags:
+        - Documents
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of documents per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: search
+          in: query
+          description: Search query for document content and metadata
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Filter by document type
+          schema:
+            type: string
+            enum: [pdf, docx, txt, md, json, xml, html, csv, xlsx, pptx, image]
+        - name: status
+          in: query
+          description: Filter by document status
+          schema:
+            type: string
+            enum: [draft, published, archived, deleted]
+        - name: tag
+          in: query
+          description: Filter by tag
+          schema:
+            type: string
+        - name: author
+          in: query
+          description: Filter by author ID
+          schema:
+            type: string
+            format: uuid
+        - name: sortBy
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [createdAt, updatedAt, title, size, type]
+            default: updatedAt
+        - name: sortOrder
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentListResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create document
+      description: Create a new document with metadata
+      operationId: createDocument
+      tags:
+        - Documents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDocumentRequest'
+      responses:
+        '201':
+          description: Document created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Document already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/{documentId}:
+    get:
+      summary: Get document
+      description: Get document details and metadata
+      operationId: getDocument
+      tags:
+        - Documents
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+        - name: includeContent
+          in: query
+          description: Include document content in response
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Document details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update document
+      description: Update document metadata and content
+      operationId: updateDocument
+      tags:
+        - Documents
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDocumentRequest'
+      responses:
+        '200':
+          description: Document updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Document conflict (version mismatch)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete document
+      description: Delete a document (soft delete by default)
+      operationId: deleteDocument
+      tags:
+        - Documents
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+        - name: permanent
+          in: query
+          description: Permanently delete the document
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '204':
+          description: Document deleted successfully
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/{documentId}/content:
+    get:
+      summary: Get document content
+      description: Download document content
+      operationId: getDocumentContent
+      tags:
+        - Documents
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+        - name: version
+          in: query
+          description: Specific version to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/{documentId}/versions:
+    get:
+      summary: List document versions
+      description: Get all versions of a document
+      operationId: listDocumentVersions
+      tags:
+        - Version Management
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of versions per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of document versions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentVersionListResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create document version
+      description: Create a new version of a document
+      operationId: createDocumentVersion
+      tags:
+        - Version Management
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVersionRequest'
+      responses:
+        '201':
+          description: Version created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentVersionResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/{documentId}/versions/{versionId}:
+    get:
+      summary: Get document version
+      description: Get details of a specific document version
+      operationId: getDocumentVersion
+      tags:
+        - Version Management
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+        - name: versionId
+          in: path
+          required: true
+          description: Version ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document version details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentVersionResponse'
+        '404':
+          description: Document or version not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/{documentId}/versions/compare:
+    post:
+      summary: Compare document versions
+      description: Compare two versions of a document
+      operationId: compareDocumentVersions
+      tags:
+        - Version Management
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompareVersionsRequest'
+      responses:
+        '200':
+          description: Version comparison result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionComparisonResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document or version not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/{documentId}/share:
+    post:
+      summary: Share document
+      description: Share a document with users or groups
+      operationId: shareDocument
+      tags:
+        - Collaboration
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShareDocumentRequest'
+      responses:
+        '200':
+          description: Document shared successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/{documentId}/permissions:
+    get:
+      summary: Get document permissions
+      description: Get permissions for a document
+      operationId: getDocumentPermissions
+      tags:
+        - Collaboration
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Document permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentPermissionsResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update document permissions
+      description: Update permissions for a document
+      operationId: updateDocumentPermissions
+      tags:
+        - Collaboration
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePermissionsRequest'
+      responses:
+        '200':
+          description: Permissions updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentPermissionsResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/{documentId}/comments:
+    get:
+      summary: Get document comments
+      description: Get comments for a document
+      operationId: getDocumentComments
+      tags:
+        - Collaboration
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of comments per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Document comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentCommentsResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Add document comment
+      description: Add a comment to a document
+      operationId: addDocumentComment
+      tags:
+        - Collaboration
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddCommentRequest'
+      responses:
+        '201':
+          description: Comment added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentCommentResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/{documentId}/comments/{commentId}:
+    put:
+      summary: Update document comment
+      description: Update a document comment
+      operationId: updateDocumentComment
+      tags:
+        - Collaboration
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+        - name: commentId
+          in: path
+          required: true
+          description: Comment ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCommentRequest'
+      responses:
+        '200':
+          description: Comment updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentCommentResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document or comment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete document comment
+      description: Delete a document comment
+      operationId: deleteDocumentComment
+      tags:
+        - Collaboration
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+        - name: commentId
+          in: path
+          required: true
+          description: Comment ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Comment deleted successfully
+        '404':
+          description: Document or comment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/upload:
+    post:
+      summary: Upload document
+      description: Upload a document file
+      operationId: uploadDocument
+      tags:
+        - File Operations
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Document file to upload
+                title:
+                  type: string
+                  description: Document title
+                description:
+                  type: string
+                  description: Document description
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: Document tags
+                metadata:
+                  type: string
+                  description: Additional metadata as JSON string
+              required:
+                - file
+      responses:
+        '201':
+          description: Document uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '400':
+          description: Invalid request or file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: File too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/{documentId}/download:
+    get:
+      summary: Download document
+      description: Download document file
+      operationId: downloadDocument
+      tags:
+        - File Operations
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+        - name: version
+          in: query
+          description: Specific version to download
+          schema:
+            type: string
+        - name: format
+          in: query
+          description: Convert to specific format (if supported)
+          schema:
+            type: string
+            enum: [pdf, docx, txt, html, json]
+      responses:
+        '200':
+          description: Document file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/search:
+    post:
+      summary: Search documents
+      description: Advanced document search with filters and facets
+      operationId: searchDocuments
+      tags:
+        - Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Invalid search request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/{documentId}/metadata:
+    get:
+      summary: Get document metadata
+      description: Get detailed metadata for a document
+      operationId: getDocumentMetadata
+      tags:
+        - Metadata
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Document metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentMetadataResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update document metadata
+      description: Update document metadata
+      operationId: updateDocumentMetadata
+      tags:
+        - Metadata
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMetadataRequest'
+      responses:
+        '200':
+          description: Metadata updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentMetadataResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        dependencies:
+          type: object
+          properties:
+            storage:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            redis:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            documentIndexing:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+        metrics:
+          type: object
+          properties:
+            documentsCount:
+              type: integer
+            storageUsed:
+              type: integer
+            averageResponseTime:
+              type: number
+      required:
+        - status
+        - timestamp
+        - version
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [pdf, docx, txt, md, json, xml, html, csv, xlsx, pptx, image]
+        mimeType:
+          type: string
+        size:
+          type: integer
+          description: File size in bytes
+        status:
+          type: string
+          enum: [draft, published, archived, deleted]
+        version:
+          type: string
+        checksum:
+          type: string
+          description: SHA-256 hash of the document content
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          description: Custom metadata fields
+        storageLocation:
+          type: string
+          description: Internal storage location
+        author:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+        permissions:
+          type: object
+          properties:
+            public:
+              type: boolean
+            readers:
+              type: array
+              items:
+                type: string
+                format: uuid
+            writers:
+              type: array
+              items:
+                type: string
+                format: uuid
+            admins:
+              type: array
+              items:
+                type: string
+                format: uuid
+        statistics:
+          type: object
+          properties:
+            viewCount:
+              type: integer
+            downloadCount:
+              type: integer
+            commentCount:
+              type: integer
+            lastAccessed:
+              type: string
+              format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - id
+        - title
+        - type
+        - mimeType
+        - size
+        - status
+        - version
+        - checksum
+        - author
+        - createdAt
+        - updatedAt
+
+    DocumentResponse:
+      type: object
+      properties:
+        document:
+          $ref: '#/components/schemas/Document'
+        content:
+          type: string
+          description: Document content (only included if requested)
+      required:
+        - document
+
+    DocumentListResponse:
+      type: object
+      properties:
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrevious:
+              type: boolean
+        filters:
+          type: object
+          properties:
+            type:
+              type: string
+            status:
+              type: string
+            tag:
+              type: string
+            author:
+              type: string
+            search:
+              type: string
+        facets:
+          type: object
+          properties:
+            types:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+            statuses:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+            tags:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+      required:
+        - documents
+        - pagination
+
+    CreateDocumentRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [pdf, docx, txt, md, json, xml, html, csv, xlsx, pptx, image]
+        content:
+          type: string
+          description: Document content (for text-based documents)
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          description: Custom metadata fields
+        status:
+          type: string
+          enum: [draft, published]
+          default: draft
+      required:
+        - title
+        - type
+
+    UpdateDocumentRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        content:
+          type: string
+          description: Document content (for text-based documents)
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          description: Custom metadata fields
+        status:
+          type: string
+          enum: [draft, published, archived]
+        version:
+          type: string
+          description: Current version for optimistic locking
+
+    DocumentVersion:
+      type: object
+      properties:
+        id:
+          type: string
+        version:
+          type: string
+        comment:
+          type: string
+        size:
+          type: integer
+        checksum:
+          type: string
+        author:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+        changes:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [added, removed, modified]
+              path:
+                type: string
+              description:
+                type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - version
+        - size
+        - checksum
+        - author
+        - createdAt
+
+    DocumentVersionResponse:
+      type: object
+      properties:
+        version:
+          $ref: '#/components/schemas/DocumentVersion'
+        content:
+          type: string
+          description: Version content (only included if requested)
+      required:
+        - version
+
+    DocumentVersionListResponse:
+      type: object
+      properties:
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentVersion'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrevious:
+              type: boolean
+      required:
+        - versions
+        - pagination
+
+    CreateVersionRequest:
+      type: object
+      properties:
+        comment:
+          type: string
+        content:
+          type: string
+          description: New version content
+        metadata:
+          type: object
+          description: Version-specific metadata
+      required:
+        - content
+
+    CompareVersionsRequest:
+      type: object
+      properties:
+        fromVersion:
+          type: string
+        toVersion:
+          type: string
+        format:
+          type: string
+          enum: [unified, side-by-side, summary]
+          default: unified
+      required:
+        - fromVersion
+        - toVersion
+
+    VersionComparisonResponse:
+      type: object
+      properties:
+        fromVersion:
+          type: string
+        toVersion:
+          type: string
+        format:
+          type: string
+        changes:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [added, removed, modified]
+              lineNumber:
+                type: integer
+              content:
+                type: string
+              previousContent:
+                type: string
+        summary:
+          type: object
+          properties:
+            linesAdded:
+              type: integer
+            linesRemoved:
+              type: integer
+            linesModified:
+              type: integer
+            similarityScore:
+              type: number
+              minimum: 0
+              maximum: 1
+        diff:
+          type: string
+          description: Unified diff format
+      required:
+        - fromVersion
+        - toVersion
+        - format
+        - changes
+        - summary
+
+    ShareDocumentRequest:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            type: string
+            format: uuid
+        groups:
+          type: array
+          items:
+            type: string
+            format: uuid
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [read, write, admin]
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        message:
+          type: string
+        allowDownload:
+          type: boolean
+          default: true
+        allowComments:
+          type: boolean
+          default: true
+      required:
+        - permissions
+
+    ShareResponse:
+      type: object
+      properties:
+        shareId:
+          type: string
+          format: uuid
+        shareLink:
+          type: string
+          format: uri
+        permissions:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - shareId
+        - shareLink
+        - permissions
+        - createdAt
+
+    DocumentPermissionsResponse:
+      type: object
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        public:
+          type: boolean
+        permissions:
+          type: array
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+                format: uuid
+              groupId:
+                type: string
+                format: uuid
+              permissions:
+                type: array
+                items:
+                  type: string
+                  enum: [read, write, admin]
+              grantedBy:
+                type: string
+                format: uuid
+              grantedAt:
+                type: string
+                format: date-time
+              expiresAt:
+                type: string
+                format: date-time
+                nullable: true
+        inheritedPermissions:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+                enum: [folder, workspace, organization]
+              permissions:
+                type: array
+                items:
+                  type: string
+        effectivePermissions:
+          type: object
+          properties:
+            currentUser:
+              type: array
+              items:
+                type: string
+      required:
+        - documentId
+        - public
+        - permissions
+
+    UpdatePermissionsRequest:
+      type: object
+      properties:
+        public:
+          type: boolean
+        permissions:
+          type: array
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+                format: uuid
+              groupId:
+                type: string
+                format: uuid
+              permissions:
+                type: array
+                items:
+                  type: string
+                  enum: [read, write, admin]
+              expiresAt:
+                type: string
+                format: date-time
+                nullable: true
+
+    DocumentComment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        author:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+        position:
+          type: object
+          properties:
+            page:
+              type: integer
+            x:
+              type: number
+            y:
+              type: number
+            selection:
+              type: string
+          nullable: true
+        thread:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              content:
+                type: string
+              author:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  email:
+                    type: string
+              createdAt:
+                type: string
+                format: date-time
+              updatedAt:
+                type: string
+                format: date-time
+        status:
+          type: string
+          enum: [active, resolved, deleted]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - content
+        - author
+        - status
+        - createdAt
+        - updatedAt
+
+    DocumentCommentResponse:
+      type: object
+      properties:
+        comment:
+          $ref: '#/components/schemas/DocumentComment'
+      required:
+        - comment
+
+    DocumentCommentsResponse:
+      type: object
+      properties:
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentComment'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrevious:
+              type: boolean
+      required:
+        - comments
+        - pagination
+
+    AddCommentRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        position:
+          type: object
+          properties:
+            page:
+              type: integer
+            x:
+              type: number
+            y:
+              type: number
+            selection:
+              type: string
+          nullable: true
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent comment ID for threaded comments
+      required:
+        - content
+
+    UpdateCommentRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        status:
+          type: string
+          enum: [active, resolved]
+      required:
+        - content
+
+    SearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Search query
+        filters:
+          type: object
+          properties:
+            type:
+              type: array
+              items:
+                type: string
+            status:
+              type: array
+              items:
+                type: string
+            tags:
+              type: array
+              items:
+                type: string
+            author:
+              type: array
+              items:
+                type: string
+                format: uuid
+            dateRange:
+              type: object
+              properties:
+                from:
+                  type: string
+                  format: date-time
+                to:
+                  type: string
+                  format: date-time
+        facets:
+          type: array
+          items:
+            type: string
+            enum: [type, status, tags, author, createdAt]
+        sort:
+          type: object
+          properties:
+            field:
+              type: string
+              enum: [relevance, createdAt, updatedAt, title, size]
+            order:
+              type: string
+              enum: [asc, desc]
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              minimum: 1
+              default: 1
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+              default: 20
+        highlight:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              default: true
+            fields:
+              type: array
+              items:
+                type: string
+            fragmentSize:
+              type: integer
+              default: 150
+            maxFragments:
+              type: integer
+              default: 3
+      required:
+        - query
+
+    SearchResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              document:
+                $ref: '#/components/schemas/Document'
+              score:
+                type: number
+                description: Relevance score
+              highlights:
+                type: object
+                properties:
+                  title:
+                    type: array
+                    items:
+                      type: string
+                  content:
+                    type: array
+                    items:
+                      type: string
+                  description:
+                    type: array
+                    items:
+                      type: string
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrevious:
+              type: boolean
+        facets:
+          type: object
+          properties:
+            types:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+            statuses:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+            tags:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+            authors:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+        statistics:
+          type: object
+          properties:
+            totalDocuments:
+              type: integer
+            searchTime:
+              type: number
+              description: Search time in milliseconds
+            maxScore:
+              type: number
+      required:
+        - query
+        - results
+        - pagination
+        - statistics
+
+    DocumentMetadataResponse:
+      type: object
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        metadata:
+          type: object
+          description: Document metadata
+        systemMetadata:
+          type: object
+          properties:
+            extractedText:
+              type: string
+            language:
+              type: string
+            pageCount:
+              type: integer
+            wordCount:
+              type: integer
+            readingTime:
+              type: integer
+              description: Estimated reading time in minutes
+            lastIndexed:
+              type: string
+              format: date-time
+            processingStatus:
+              type: string
+              enum: [pending, processing, completed, failed]
+        analytics:
+          type: object
+          properties:
+            viewCount:
+              type: integer
+            downloadCount:
+              type: integer
+            shareCount:
+              type: integer
+            commentCount:
+              type: integer
+            lastAccessed:
+              type: string
+              format: date-time
+            topViewers:
+              type: array
+              items:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    format: uuid
+                  viewCount:
+                    type: integer
+                  lastViewed:
+                    type: string
+                    format: date-time
+      required:
+        - documentId
+        - metadata
+        - systemMetadata
+        - analytics
+
+    UpdateMetadataRequest:
+      type: object
+      properties:
+        metadata:
+          type: object
+          description: Custom metadata fields
+        systemMetadata:
+          type: object
+          properties:
+            language:
+              type: string
+            processingStatus:
+              type: string
+              enum: [pending, processing, completed, failed]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        details:
+          type: object
+      required:
+        - error
+        - message
+        - timestamp
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health and status
+  - name: Documents
+    description: Document management operations
+  - name: Version Management
+    description: Document version control
+  - name: Collaboration
+    description: Document sharing and collaboration
+  - name: File Operations
+    description: File upload and download operations
+  - name: Search
+    description: Document search and discovery
+  - name: Metadata
+    description: Document metadata management

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <meta name="description" content="{{description}}">
+    <meta name="author" content="CycleTime Team">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/public/favicon.ico">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/public/css/main.css">
+    
+    <!-- Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        {{{body}}}
+    </div>
+    
+    <!-- Scripts -->
+    <script src="/public/js/main.js"></script>
+    
+    <!-- Socket.IO -->
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- App initialization -->
+    <script>
+        // Initialize the dashboard app
+        window.CycleTime = {
+            config: {
+                apiUrl: '/api/v1',
+                wsUrl: window.location.origin,
+                version: '1.0.0'
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,1250 @@
+asyncapi: 3.0.0
+info:
+  title: Web Dashboard Service Events
+  version: 1.0.0
+  description: Real-time events for the Web Dashboard Service providing live updates, notifications, and collaboration features
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  development:
+    host: localhost:3000
+    protocol: ws
+    description: Development WebSocket server
+  production:
+    host: dashboard.cycletime.dev
+    protocol: wss
+    description: Production WebSocket server
+
+channels:
+  user/connected:
+    address: user/connected
+    description: User connected to dashboard
+    messages:
+      userConnected:
+        $ref: '#/components/messages/UserConnected'
+
+  user/disconnected:
+    address: user/disconnected
+    description: User disconnected from dashboard
+    messages:
+      userDisconnected:
+        $ref: '#/components/messages/UserDisconnected'
+
+  user/presence:
+    address: user/presence
+    description: User presence status changes
+    messages:
+      userPresence:
+        $ref: '#/components/messages/UserPresence'
+
+  dashboard/data/updated:
+    address: dashboard/data/updated
+    description: Dashboard data has been updated
+    messages:
+      dashboardDataUpdated:
+        $ref: '#/components/messages/DashboardDataUpdated'
+
+  dashboard/view/changed:
+    address: dashboard/view/changed
+    description: User changed dashboard view
+    messages:
+      dashboardViewChanged:
+        $ref: '#/components/messages/DashboardViewChanged'
+
+  dashboard/widget/updated:
+    address: dashboard/widget/updated
+    description: Dashboard widget configuration updated
+    messages:
+      dashboardWidgetUpdated:
+        $ref: '#/components/messages/DashboardWidgetUpdated'
+
+  dashboard/notification/sent:
+    address: dashboard/notification/sent
+    description: New notification sent to user
+    messages:
+      notificationSent:
+        $ref: '#/components/messages/NotificationSent'
+
+  dashboard/notification/read:
+    address: dashboard/notification/read
+    description: Notification marked as read
+    messages:
+      notificationRead:
+        $ref: '#/components/messages/NotificationRead'
+
+  project/updated:
+    address: project/updated
+    description: Project information updated
+    messages:
+      projectUpdated:
+        $ref: '#/components/messages/ProjectUpdated'
+
+  project/created:
+    address: project/created
+    description: New project created
+    messages:
+      projectCreated:
+        $ref: '#/components/messages/ProjectCreated'
+
+  project/deleted:
+    address: project/deleted
+    description: Project deleted
+    messages:
+      projectDeleted:
+        $ref: '#/components/messages/ProjectDeleted'
+
+  task/created:
+    address: task/created
+    description: New task created
+    messages:
+      taskCreated:
+        $ref: '#/components/messages/TaskCreated'
+
+  task/updated:
+    address: task/updated
+    description: Task information updated
+    messages:
+      taskUpdated:
+        $ref: '#/components/messages/TaskUpdated'
+
+  task/completed:
+    address: task/completed
+    description: Task marked as completed
+    messages:
+      taskCompleted:
+        $ref: '#/components/messages/TaskCompleted'
+
+  task/assigned:
+    address: task/assigned
+    description: Task assigned to user
+    messages:
+      taskAssigned:
+        $ref: '#/components/messages/TaskAssigned'
+
+  collaboration/cursor:
+    address: collaboration/cursor
+    description: User cursor position in collaborative editing
+    messages:
+      collaborationCursor:
+        $ref: '#/components/messages/CollaborationCursor'
+
+  collaboration/typing:
+    address: collaboration/typing
+    description: User typing indicator in collaborative editing
+    messages:
+      collaborationTyping:
+        $ref: '#/components/messages/CollaborationTyping'
+
+  system/maintenance:
+    address: system/maintenance
+    description: System maintenance notifications
+    messages:
+      systemMaintenance:
+        $ref: '#/components/messages/SystemMaintenance'
+
+  system/error:
+    address: system/error
+    description: System error notifications
+    messages:
+      systemError:
+        $ref: '#/components/messages/SystemError'
+
+  analytics/updated:
+    address: analytics/updated
+    description: Analytics data updated
+    messages:
+      analyticsUpdated:
+        $ref: '#/components/messages/AnalyticsUpdated'
+
+operations:
+  userConnected:
+    action: send
+    channel:
+      $ref: '#/channels/user~1connected'
+    description: Notify when user connects to dashboard
+    messages:
+      - $ref: '#/channels/user~1connected/messages/userConnected'
+
+  userDisconnected:
+    action: send
+    channel:
+      $ref: '#/channels/user~1disconnected'
+    description: Notify when user disconnects from dashboard
+    messages:
+      - $ref: '#/channels/user~1disconnected/messages/userDisconnected'
+
+  userPresence:
+    action: send
+    channel:
+      $ref: '#/channels/user~1presence'
+    description: Broadcast user presence changes
+    messages:
+      - $ref: '#/channels/user~1presence/messages/userPresence'
+
+  dashboardDataUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/dashboard~1data~1updated'
+    description: Notify when dashboard data is updated
+    messages:
+      - $ref: '#/channels/dashboard~1data~1updated/messages/dashboardDataUpdated'
+
+  dashboardViewChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/dashboard~1view~1changed'
+    description: Handle dashboard view changes
+    messages:
+      - $ref: '#/channels/dashboard~1view~1changed/messages/dashboardViewChanged'
+
+  dashboardWidgetUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/dashboard~1widget~1updated'
+    description: Notify when dashboard widget is updated
+    messages:
+      - $ref: '#/channels/dashboard~1widget~1updated/messages/dashboardWidgetUpdated'
+
+  notificationSent:
+    action: send
+    channel:
+      $ref: '#/channels/dashboard~1notification~1sent'
+    description: Send notification to user
+    messages:
+      - $ref: '#/channels/dashboard~1notification~1sent/messages/notificationSent'
+
+  notificationRead:
+    action: receive
+    channel:
+      $ref: '#/channels/dashboard~1notification~1read'
+    description: Handle notification read status
+    messages:
+      - $ref: '#/channels/dashboard~1notification~1read/messages/notificationRead'
+
+  projectUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/project~1updated'
+    description: Notify when project is updated
+    messages:
+      - $ref: '#/channels/project~1updated/messages/projectUpdated'
+
+  projectCreated:
+    action: send
+    channel:
+      $ref: '#/channels/project~1created'
+    description: Notify when project is created
+    messages:
+      - $ref: '#/channels/project~1created/messages/projectCreated'
+
+  projectDeleted:
+    action: send
+    channel:
+      $ref: '#/channels/project~1deleted'
+    description: Notify when project is deleted
+    messages:
+      - $ref: '#/channels/project~1deleted/messages/projectDeleted'
+
+  taskCreated:
+    action: send
+    channel:
+      $ref: '#/channels/task~1created'
+    description: Notify when task is created
+    messages:
+      - $ref: '#/channels/task~1created/messages/taskCreated'
+
+  taskUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/task~1updated'
+    description: Notify when task is updated
+    messages:
+      - $ref: '#/channels/task~1updated/messages/taskUpdated'
+
+  taskCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/task~1completed'
+    description: Notify when task is completed
+    messages:
+      - $ref: '#/channels/task~1completed/messages/taskCompleted'
+
+  taskAssigned:
+    action: send
+    channel:
+      $ref: '#/channels/task~1assigned'
+    description: Notify when task is assigned
+    messages:
+      - $ref: '#/channels/task~1assigned/messages/taskAssigned'
+
+  collaborationCursor:
+    action: send
+    channel:
+      $ref: '#/channels/collaboration~1cursor'
+    description: Broadcast cursor position in collaborative editing
+    messages:
+      - $ref: '#/channels/collaboration~1cursor/messages/collaborationCursor'
+
+  collaborationTyping:
+    action: send
+    channel:
+      $ref: '#/channels/collaboration~1typing'
+    description: Broadcast typing indicator in collaborative editing
+    messages:
+      - $ref: '#/channels/collaboration~1typing/messages/collaborationTyping'
+
+  systemMaintenance:
+    action: send
+    channel:
+      $ref: '#/channels/system~1maintenance'
+    description: Send system maintenance notifications
+    messages:
+      - $ref: '#/channels/system~1maintenance/messages/systemMaintenance'
+
+  systemError:
+    action: send
+    channel:
+      $ref: '#/channels/system~1error'
+    description: Send system error notifications
+    messages:
+      - $ref: '#/channels/system~1error/messages/systemError'
+
+  analyticsUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/analytics~1updated'
+    description: Notify when analytics data is updated
+    messages:
+      - $ref: '#/channels/analytics~1updated/messages/analyticsUpdated'
+
+components:
+  messages:
+    UserConnected:
+      name: UserConnected
+      title: User Connected
+      description: User connected to dashboard
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UserConnectedPayload'
+
+    UserDisconnected:
+      name: UserDisconnected
+      title: User Disconnected
+      description: User disconnected from dashboard
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UserDisconnectedPayload'
+
+    UserPresence:
+      name: UserPresence
+      title: User Presence
+      description: User presence status change
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UserPresencePayload'
+
+    DashboardDataUpdated:
+      name: DashboardDataUpdated
+      title: Dashboard Data Updated
+      description: Dashboard data has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DashboardDataUpdatedPayload'
+
+    DashboardViewChanged:
+      name: DashboardViewChanged
+      title: Dashboard View Changed
+      description: User changed dashboard view
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DashboardViewChangedPayload'
+
+    DashboardWidgetUpdated:
+      name: DashboardWidgetUpdated
+      title: Dashboard Widget Updated
+      description: Dashboard widget configuration updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DashboardWidgetUpdatedPayload'
+
+    NotificationSent:
+      name: NotificationSent
+      title: Notification Sent
+      description: New notification sent to user
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/NotificationSentPayload'
+
+    NotificationRead:
+      name: NotificationRead
+      title: Notification Read
+      description: Notification marked as read
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/NotificationReadPayload'
+
+    ProjectUpdated:
+      name: ProjectUpdated
+      title: Project Updated
+      description: Project information updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectUpdatedPayload'
+
+    ProjectCreated:
+      name: ProjectCreated
+      title: Project Created
+      description: New project created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectCreatedPayload'
+
+    ProjectDeleted:
+      name: ProjectDeleted
+      title: Project Deleted
+      description: Project deleted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectDeletedPayload'
+
+    TaskCreated:
+      name: TaskCreated
+      title: Task Created
+      description: New task created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskCreatedPayload'
+
+    TaskUpdated:
+      name: TaskUpdated
+      title: Task Updated
+      description: Task information updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskUpdatedPayload'
+
+    TaskCompleted:
+      name: TaskCompleted
+      title: Task Completed
+      description: Task marked as completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskCompletedPayload'
+
+    TaskAssigned:
+      name: TaskAssigned
+      title: Task Assigned
+      description: Task assigned to user
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskAssignedPayload'
+
+    CollaborationCursor:
+      name: CollaborationCursor
+      title: Collaboration Cursor
+      description: User cursor position in collaborative editing
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CollaborationCursorPayload'
+
+    CollaborationTyping:
+      name: CollaborationTyping
+      title: Collaboration Typing
+      description: User typing indicator in collaborative editing
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CollaborationTypingPayload'
+
+    SystemMaintenance:
+      name: SystemMaintenance
+      title: System Maintenance
+      description: System maintenance notification
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SystemMaintenancePayload'
+
+    SystemError:
+      name: SystemError
+      title: System Error
+      description: System error notification
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SystemErrorPayload'
+
+    AnalyticsUpdated:
+      name: AnalyticsUpdated
+      title: Analytics Updated
+      description: Analytics data updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AnalyticsUpdatedPayload'
+
+  schemas:
+    UserConnectedPayload:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        avatar:
+          type: string
+          format: uri
+        connectedAt:
+          type: string
+          format: date-time
+        clientInfo:
+          type: object
+          properties:
+            userAgent:
+              type: string
+            ip:
+              type: string
+            location:
+              type: string
+      required:
+        - userId
+        - sessionId
+        - username
+        - connectedAt
+
+    UserDisconnectedPayload:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        disconnectedAt:
+          type: string
+          format: date-time
+        duration:
+          type: number
+          description: Session duration in seconds
+        reason:
+          type: string
+          enum: [logout, timeout, network_error, server_shutdown]
+      required:
+        - userId
+        - sessionId
+        - username
+        - disconnectedAt
+
+    UserPresencePayload:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        status:
+          type: string
+          enum: [online, away, busy, offline]
+        lastSeen:
+          type: string
+          format: date-time
+        currentView:
+          type: string
+          enum: [dashboard, project, task, settings]
+        activity:
+          type: string
+          description: Current user activity
+      required:
+        - userId
+        - username
+        - status
+        - lastSeen
+
+    DashboardDataUpdatedPayload:
+      type: object
+      properties:
+        dataType:
+          type: string
+          enum: [overview, projects, tasks, analytics, notifications]
+        updateType:
+          type: string
+          enum: [full, partial, incremental]
+        updatedAt:
+          type: string
+          format: date-time
+        affectedUsers:
+          type: array
+          items:
+            type: string
+            format: uuid
+        changes:
+          type: object
+          properties:
+            added:
+              type: array
+              items:
+                type: object
+            updated:
+              type: array
+              items:
+                type: object
+            removed:
+              type: array
+              items:
+                type: object
+        metadata:
+          type: object
+          properties:
+            source:
+              type: string
+              enum: [user_action, system_update, scheduled_refresh]
+            reason:
+              type: string
+      required:
+        - dataType
+        - updateType
+        - updatedAt
+
+    DashboardViewChangedPayload:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        previousView:
+          type: string
+          enum: [overview, projects, tasks, analytics, settings]
+        currentView:
+          type: string
+          enum: [overview, projects, tasks, analytics, settings]
+        changedAt:
+          type: string
+          format: date-time
+        filters:
+          type: object
+        parameters:
+          type: object
+      required:
+        - userId
+        - sessionId
+        - currentView
+        - changedAt
+
+    DashboardWidgetUpdatedPayload:
+      type: object
+      properties:
+        widgetId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: [added, updated, removed, moved, resized]
+        widget:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [tasks, projects, analytics, notifications, calendar]
+            title:
+              type: string
+            position:
+              type: object
+              properties:
+                x:
+                  type: integer
+                y:
+                  type: integer
+                width:
+                  type: integer
+                height:
+                  type: integer
+            config:
+              type: object
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - widgetId
+        - userId
+        - action
+        - updatedAt
+
+    NotificationSentPayload:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [task_assigned, task_completed, project_updated, mention, system]
+        title:
+          type: string
+        message:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        sentAt:
+          type: string
+          format: date-time
+        actionUrl:
+          type: string
+          format: uri
+        relatedItem:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [project, task, user, comment]
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+        metadata:
+          type: object
+      required:
+        - notificationId
+        - userId
+        - type
+        - title
+        - message
+        - priority
+        - sentAt
+
+    NotificationReadPayload:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        readAt:
+          type: string
+          format: date-time
+        sessionId:
+          type: string
+          format: uuid
+      required:
+        - notificationId
+        - userId
+        - readAt
+
+    ProjectUpdatedPayload:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        action:
+          type: string
+          enum: [created, updated, deleted, archived, restored]
+        changes:
+          type: object
+          properties:
+            fields:
+              type: array
+              items:
+                type: string
+            previous:
+              type: object
+            current:
+              type: object
+        updatedBy:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+        updatedAt:
+          type: string
+          format: date-time
+        affectedUsers:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+        - projectId
+        - name
+        - action
+        - updatedBy
+        - updatedAt
+
+    ProjectCreatedPayload:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        createdBy:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+        teamMembers:
+          type: array
+          items:
+            type: string
+            format: uuid
+        visibility:
+          type: string
+          enum: [private, team, public]
+      required:
+        - projectId
+        - name
+        - createdBy
+        - createdAt
+
+    ProjectDeletedPayload:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        deletedBy:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+        deletedAt:
+          type: string
+          format: date-time
+        affectedUsers:
+          type: array
+          items:
+            type: string
+            format: uuid
+        reason:
+          type: string
+      required:
+        - projectId
+        - name
+        - deletedBy
+        - deletedAt
+
+    TaskCreatedPayload:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [todo, in_progress, review, done]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        projectId:
+          type: string
+          format: uuid
+        projectName:
+          type: string
+        createdBy:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+        assignee:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+        dueDate:
+          type: string
+          format: date-time
+      required:
+        - taskId
+        - title
+        - status
+        - priority
+        - projectId
+        - projectName
+        - createdBy
+        - createdAt
+
+    TaskUpdatedPayload:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        action:
+          type: string
+          enum: [updated, status_changed, assigned, priority_changed, due_date_changed]
+        changes:
+          type: object
+          properties:
+            fields:
+              type: array
+              items:
+                type: string
+            previous:
+              type: object
+            current:
+              type: object
+        updatedBy:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+        updatedAt:
+          type: string
+          format: date-time
+        affectedUsers:
+          type: array
+          items:
+            type: string
+            format: uuid
+        projectId:
+          type: string
+          format: uuid
+        projectName:
+          type: string
+      required:
+        - taskId
+        - title
+        - action
+        - updatedBy
+        - updatedAt
+
+    TaskCompletedPayload:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        completedBy:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+        completedAt:
+          type: string
+          format: date-time
+        projectId:
+          type: string
+          format: uuid
+        projectName:
+          type: string
+        duration:
+          type: number
+          description: Task duration in seconds
+        teamMembers:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+        - taskId
+        - title
+        - completedBy
+        - completedAt
+        - projectId
+        - projectName
+
+    TaskAssignedPayload:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        assignedTo:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+        assignedBy:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+        assignedAt:
+          type: string
+          format: date-time
+        projectId:
+          type: string
+          format: uuid
+        projectName:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        dueDate:
+          type: string
+          format: date-time
+      required:
+        - taskId
+        - title
+        - assignedTo
+        - assignedBy
+        - assignedAt
+        - projectId
+        - projectName
+        - priority
+
+    CollaborationCursorPayload:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        documentId:
+          type: string
+          format: uuid
+        cursor:
+          type: object
+          properties:
+            line:
+              type: integer
+            column:
+              type: integer
+            selection:
+              type: object
+              properties:
+                start:
+                  type: object
+                  properties:
+                    line:
+                      type: integer
+                    column:
+                      type: integer
+                end:
+                  type: object
+                  properties:
+                    line:
+                      type: integer
+                    column:
+                      type: integer
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - userId
+        - username
+        - documentId
+        - cursor
+        - timestamp
+
+    CollaborationTypingPayload:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        documentId:
+          type: string
+          format: uuid
+        typing:
+          type: boolean
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - userId
+        - username
+        - documentId
+        - typing
+        - timestamp
+
+    SystemMaintenancePayload:
+      type: object
+      properties:
+        maintenanceId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [scheduled, emergency, update, deployment]
+        title:
+          type: string
+        message:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        scheduledStart:
+          type: string
+          format: date-time
+        estimatedDuration:
+          type: number
+          description: Estimated duration in minutes
+        affectedServices:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled]
+        notifiedAt:
+          type: string
+          format: date-time
+      required:
+        - maintenanceId
+        - type
+        - title
+        - message
+        - severity
+        - status
+        - notifiedAt
+
+    SystemErrorPayload:
+      type: object
+      properties:
+        errorId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [service_unavailable, database_error, network_error, authentication_error]
+        title:
+          type: string
+        message:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        service:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        affectedUsers:
+          type: array
+          items:
+            type: string
+            format: uuid
+        resolution:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [investigating, identified, fixing, resolved]
+            eta:
+              type: string
+              format: date-time
+            workaround:
+              type: string
+      required:
+        - errorId
+        - type
+        - title
+        - message
+        - severity
+        - service
+        - timestamp
+
+    AnalyticsUpdatedPayload:
+      type: object
+      properties:
+        dataType:
+          type: string
+          enum: [velocity, quality, performance, team_activity]
+        timeframe:
+          type: string
+          enum: [hour, day, week, month, quarter, year]
+        updatedAt:
+          type: string
+          format: date-time
+        affectedProjects:
+          type: array
+          items:
+            type: string
+            format: uuid
+        affectedUsers:
+          type: array
+          items:
+            type: string
+            format: uuid
+        summary:
+          type: object
+          properties:
+            totalRecords:
+              type: integer
+            changedRecords:
+              type: integer
+            newRecords:
+              type: integer
+        source:
+          type: string
+          enum: [real_time, batch_processing, manual_update]
+      required:
+        - dataType
+        - timeframe
+        - updatedAt
+        - summary
+        - source

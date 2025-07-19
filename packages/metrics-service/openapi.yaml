@@ -1,0 +1,964 @@
+openapi: 3.0.3
+info:
+  title: Metrics Service API
+  description: Metrics collection and monitoring service with Prometheus integration for system health and performance analytics
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8007
+    description: Development server
+  - url: https://api.cycletime.dev/metrics
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the metrics service is healthy and operational
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /metrics:
+    get:
+      summary: Prometheus metrics endpoint
+      description: Get Prometheus-formatted metrics for scraping
+      operationId: getPrometheusMetrics
+      tags:
+        - Metrics
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: |
+                  # HELP cycletime_api_requests_total Total number of API requests
+                  # TYPE cycletime_api_requests_total counter
+                  cycletime_api_requests_total{method="GET",route="/health",status="200"} 1234
+
+  /api/v1/metrics:
+    get:
+      summary: List available metrics
+      description: Get list of all collected metrics with metadata
+      operationId: listMetrics
+      tags:
+        - Metrics
+      parameters:
+        - name: category
+          in: query
+          description: Filter by metric category
+          schema:
+            type: string
+            enum: [system, application, business, custom]
+        - name: service
+          in: query
+          description: Filter by service name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsListResponse'
+
+    post:
+      summary: Record custom metric
+      description: Record a custom metric value
+      operationId: recordMetric
+      tags:
+        - Metrics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricRecord'
+      responses:
+        '201':
+          description: Metric recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricResponse'
+
+  /api/v1/metrics/{metricId}:
+    get:
+      summary: Get metric details
+      description: Get detailed information about a specific metric
+      operationId: getMetric
+      tags:
+        - Metrics
+      parameters:
+        - name: metricId
+          in: path
+          required: true
+          description: Metric identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Metric details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricDetailResponse'
+
+  /api/v1/metrics/{metricId}/history:
+    get:
+      summary: Get metric history
+      description: Get historical values for a metric
+      operationId: getMetricHistory
+      tags:
+        - Metrics
+      parameters:
+        - name: metricId
+          in: path
+          required: true
+          description: Metric identifier
+          schema:
+            type: string
+        - name: timeRange
+          in: query
+          description: Time range for history
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d, 30d]
+            default: 24h
+        - name: resolution
+          in: query
+          description: Data resolution
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 1h, 6h, 1d]
+            default: 5m
+      responses:
+        '200':
+          description: Metric history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricHistoryResponse'
+
+  /api/v1/dashboards:
+    get:
+      summary: List dashboards
+      description: Get list of available Grafana dashboards
+      operationId: listDashboards
+      tags:
+        - Dashboards
+      responses:
+        '200':
+          description: List of dashboards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardsResponse'
+
+    post:
+      summary: Create dashboard
+      description: Create a new monitoring dashboard
+      operationId: createDashboard
+      tags:
+        - Dashboards
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardCreateRequest'
+      responses:
+        '201':
+          description: Dashboard created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResponse'
+
+  /api/v1/dashboards/{dashboardId}:
+    get:
+      summary: Get dashboard
+      description: Get dashboard configuration and panels
+      operationId: getDashboard
+      tags:
+        - Dashboards
+      parameters:
+        - name: dashboardId
+          in: path
+          required: true
+          description: Dashboard identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dashboard details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResponse'
+
+    put:
+      summary: Update dashboard
+      description: Update dashboard configuration
+      operationId: updateDashboard
+      tags:
+        - Dashboards
+      parameters:
+        - name: dashboardId
+          in: path
+          required: true
+          description: Dashboard identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardUpdateRequest'
+      responses:
+        '200':
+          description: Dashboard updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResponse'
+
+    delete:
+      summary: Delete dashboard
+      description: Delete a monitoring dashboard
+      operationId: deleteDashboard
+      tags:
+        - Dashboards
+      parameters:
+        - name: dashboardId
+          in: path
+          required: true
+          description: Dashboard identifier
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Dashboard deleted successfully
+
+  /api/v1/alerts:
+    get:
+      summary: List alerts
+      description: Get list of active alerts and alert rules
+      operationId: listAlerts
+      tags:
+        - Alerts
+      parameters:
+        - name: status
+          in: query
+          description: Filter by alert status
+          schema:
+            type: string
+            enum: [active, resolved, silenced]
+        - name: severity
+          in: query
+          description: Filter by severity level
+          schema:
+            type: string
+            enum: [critical, high, medium, low]
+      responses:
+        '200':
+          description: List of alerts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertsResponse'
+
+    post:
+      summary: Create alert rule
+      description: Create a new alert rule
+      operationId: createAlert
+      tags:
+        - Alerts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRuleRequest'
+      responses:
+        '201':
+          description: Alert rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertRuleResponse'
+
+  /api/v1/alerts/{alertId}:
+    get:
+      summary: Get alert details
+      description: Get detailed information about an alert
+      operationId: getAlert
+      tags:
+        - Alerts
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          description: Alert identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alert details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertResponse'
+
+    put:
+      summary: Update alert rule
+      description: Update an existing alert rule
+      operationId: updateAlert
+      tags:
+        - Alerts
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          description: Alert identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRuleRequest'
+      responses:
+        '200':
+          description: Alert rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertRuleResponse'
+
+    delete:
+      summary: Delete alert rule
+      description: Delete an alert rule
+      operationId: deleteAlert
+      tags:
+        - Alerts
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          description: Alert identifier
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Alert rule deleted successfully
+
+  /api/v1/alerts/{alertId}/silence:
+    post:
+      summary: Silence alert
+      description: Temporarily silence an alert
+      operationId: silenceAlert
+      tags:
+        - Alerts
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          description: Alert identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertSilenceRequest'
+      responses:
+        '200':
+          description: Alert silenced successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertResponse'
+
+  /api/v1/system/health:
+    get:
+      summary: Get system health metrics
+      description: Get comprehensive system health information
+      operationId: getSystemHealth
+      tags:
+        - System Health
+      responses:
+        '200':
+          description: System health metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemHealthResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime:
+          type: number
+        dependencies:
+          type: object
+          properties:
+            redis:
+              type: string
+              enum: [connected, disconnected]
+            influxdb:
+              type: string
+              enum: [connected, disconnected]
+            prometheus:
+              type: string
+              enum: [connected, disconnected]
+            grafana:
+              type: string
+              enum: [connected, disconnected]
+
+    MetricsListResponse:
+      type: object
+      properties:
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricSummary'
+        total:
+          type: integer
+        categories:
+          type: array
+          items:
+            type: string
+
+    MetricSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [system, application, business, custom]
+        type:
+          type: string
+          enum: [counter, gauge, histogram, summary]
+        unit:
+          type: string
+        service:
+          type: string
+        lastValue:
+          type: number
+        lastUpdated:
+          type: string
+          format: date-time
+
+    MetricRecord:
+      type: object
+      required:
+        - name
+        - value
+        - type
+      properties:
+        name:
+          type: string
+        value:
+          type: number
+        type:
+          type: string
+          enum: [counter, gauge, histogram, summary]
+        unit:
+          type: string
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    MetricResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        value:
+          type: number
+        type:
+          type: string
+        unit:
+          type: string
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+        recorded:
+          type: boolean
+
+    MetricDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        type:
+          type: string
+        unit:
+          type: string
+        service:
+          type: string
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+        statistics:
+          type: object
+          properties:
+            min:
+              type: number
+            max:
+              type: number
+            avg:
+              type: number
+            count:
+              type: integer
+            sum:
+              type: number
+        lastValue:
+          type: number
+        lastUpdated:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    MetricHistoryResponse:
+      type: object
+      properties:
+        metric:
+          $ref: '#/components/schemas/MetricSummary'
+        timeRange:
+          type: string
+        resolution:
+          type: string
+        dataPoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataPoint'
+
+    DataPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+
+    DashboardsResponse:
+      type: object
+      properties:
+        dashboards:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardSummary'
+        total:
+          type: integer
+
+    DashboardSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        panelCount:
+          type: integer
+        isStarred:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DashboardCreateRequest:
+      type: object
+      required:
+        - title
+        - panels
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        panels:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardPanel'
+
+    DashboardUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        panels:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardPanel'
+
+    DashboardResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        panels:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardPanel'
+        isStarred:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DashboardPanel:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+          enum: [graph, stat, table, heatmap, pie, bar]
+        metrics:
+          type: array
+          items:
+            type: string
+        timeRange:
+          type: string
+        gridPos:
+          type: object
+          properties:
+            x:
+              type: integer
+            y:
+              type: integer
+            w:
+              type: integer
+            h:
+              type: integer
+
+    AlertsResponse:
+      type: object
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertSummary'
+        total:
+          type: integer
+        activeCount:
+          type: integer
+        resolvedCount:
+          type: integer
+        silencedCount:
+          type: integer
+
+    AlertSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, resolved, silenced]
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        metric:
+          type: string
+        value:
+          type: number
+        threshold:
+          type: number
+        firedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+
+    AlertRuleRequest:
+      type: object
+      required:
+        - name
+        - metric
+        - condition
+        - threshold
+        - severity
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        metric:
+          type: string
+        condition:
+          type: string
+          enum: [gt, lt, eq, ne, gte, lte]
+        threshold:
+          type: number
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        duration:
+          type: string
+          description: How long condition must be true
+        notifications:
+          type: array
+          items:
+            type: string
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+
+    AlertRuleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        metric:
+          type: string
+        condition:
+          type: string
+        threshold:
+          type: number
+        severity:
+          type: string
+        duration:
+          type: string
+        notifications:
+          type: array
+          items:
+            type: string
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+        isEnabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AlertResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        ruleId:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        severity:
+          type: string
+        metric:
+          type: string
+        value:
+          type: number
+        threshold:
+          type: number
+        condition:
+          type: string
+        message:
+          type: string
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+        firedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+        silencedUntil:
+          type: string
+          format: date-time
+
+    AlertSilenceRequest:
+      type: object
+      required:
+        - duration
+        - reason
+      properties:
+        duration:
+          type: string
+          description: Duration to silence (e.g., "1h", "24h")
+        reason:
+          type: string
+
+    SystemHealthResponse:
+      type: object
+      properties:
+        overall:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceHealth'
+        infrastructure:
+          $ref: '#/components/schemas/InfrastructureHealth'
+        metrics:
+          $ref: '#/components/schemas/HealthMetrics'
+
+    ServiceHealth:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        responseTime:
+          type: number
+        errorRate:
+          type: number
+        uptime:
+          type: number
+
+    InfrastructureHealth:
+      type: object
+      properties:
+        cpu:
+          type: number
+        memory:
+          type: number
+        disk:
+          type: number
+        network:
+          type: number
+        database:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+
+    HealthMetrics:
+      type: object
+      properties:
+        totalMetrics:
+          type: integer
+        metricsPerSecond:
+          type: number
+        storageUsed:
+          type: number
+        alertsActive:
+          type: integer
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health and status
+  - name: Metrics
+    description: Metrics collection and retrieval
+  - name: Dashboards
+    description: Monitoring dashboard management
+  - name: Alerts
+    description: Alert management and configuration
+  - name: System Health
+    description: System-wide health monitoring

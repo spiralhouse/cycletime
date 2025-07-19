@@ -1,0 +1,1783 @@
+openapi: 3.0.3
+info:
+  title: Document Indexing Service API
+  description: Vector-based semantic search and document indexing service with AI-powered embeddings
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8005
+    description: Development server
+  - url: https://api.cycletime.dev/document-indexing
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the document indexing service is healthy and operational
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /health/detailed:
+    get:
+      summary: Detailed health check
+      description: Get detailed health information including component status and metrics
+      operationId: detailedHealthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Detailed health information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailedHealthResponse'
+
+  /api/v1/indices:
+    get:
+      summary: List indices
+      description: Get a list of all document indices
+      operationId: listIndices
+      tags:
+        - Index Management
+      parameters:
+        - name: status
+          in: query
+          description: Filter by index status
+          schema:
+            type: string
+            enum: [active, inactive, creating, updating, deleting]
+      responses:
+        '200':
+          description: List of indices
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndicesResponse'
+
+    post:
+      summary: Create index
+      description: Create a new document index
+      operationId: createIndex
+      tags:
+        - Index Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIndexRequest'
+      responses:
+        '201':
+          description: Index created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/indices/{indexId}:
+    get:
+      summary: Get index
+      description: Get details of a specific index
+      operationId: getIndex
+      tags:
+        - Index Management
+      parameters:
+        - name: indexId
+          in: path
+          required: true
+          description: Index ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Index details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexResponse'
+        '404':
+          description: Index not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update index
+      description: Update index configuration
+      operationId: updateIndex
+      tags:
+        - Index Management
+      parameters:
+        - name: indexId
+          in: path
+          required: true
+          description: Index ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIndexRequest'
+      responses:
+        '200':
+          description: Index updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Index not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete index
+      description: Delete an index and all its documents
+      operationId: deleteIndex
+      tags:
+        - Index Management
+      parameters:
+        - name: indexId
+          in: path
+          required: true
+          description: Index ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Index deleted successfully
+        '404':
+          description: Index not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/indices/{indexId}/stats:
+    get:
+      summary: Get index statistics
+      description: Get statistics for a specific index
+      operationId: getIndexStats
+      tags:
+        - Index Management
+      parameters:
+        - name: indexId
+          in: path
+          required: true
+          description: Index ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Index statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexStatsResponse'
+        '404':
+          description: Index not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents:
+    post:
+      summary: Index document
+      description: Index a new document
+      operationId: indexDocument
+      tags:
+        - Document Indexing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexDocumentRequest'
+      responses:
+        '201':
+          description: Document indexed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexingResultResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/bulk:
+    post:
+      summary: Bulk index documents
+      description: Index multiple documents in a single operation
+      operationId: bulkIndexDocuments
+      tags:
+        - Document Indexing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkIndexRequest'
+      responses:
+        '202':
+          description: Bulk indexing started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkIndexingResultResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/{documentId}:
+    put:
+      summary: Reindex document
+      description: Reindex an existing document
+      operationId: reindexDocument
+      tags:
+        - Document Indexing
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReindexDocumentRequest'
+      responses:
+        '200':
+          description: Document reindexed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexingResultResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Remove document from index
+      description: Remove a document from the index
+      operationId: removeDocument
+      tags:
+        - Document Indexing
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+        - name: indexId
+          in: query
+          required: true
+          description: Index ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Document removed successfully
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents/{documentId}/status:
+    get:
+      summary: Get indexing status
+      description: Get the indexing status of a document
+      operationId: getIndexingStatus
+      tags:
+        - Document Indexing
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+        - name: indexId
+          in: query
+          required: true
+          description: Index ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Indexing status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexingStatusResponse'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/search:
+    post:
+      summary: Search documents
+      description: Search for documents using semantic, keyword, or hybrid search
+      operationId: searchDocuments
+      tags:
+        - Search Operations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Invalid search request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/search/similarity:
+    post:
+      summary: Similarity search
+      description: Find documents similar to given embeddings
+      operationId: similaritySearch
+      tags:
+        - Search Operations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimilaritySearchRequest'
+      responses:
+        '200':
+          description: Similarity search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/search/suggestions:
+    get:
+      summary: Get search suggestions
+      description: Get search query suggestions
+      operationId: getSearchSuggestions
+      tags:
+        - Search Operations
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Partial search query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of suggestions
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 5
+      responses:
+        '200':
+          description: Search suggestions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchSuggestionsResponse'
+
+  /api/v1/embeddings:
+    post:
+      summary: Generate embeddings
+      description: Generate embeddings for text content
+      operationId: generateEmbeddings
+      tags:
+        - Embedding Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateEmbeddingsRequest'
+      responses:
+        '200':
+          description: Embeddings generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmbeddingsResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/embeddings/batch:
+    post:
+      summary: Generate batch embeddings
+      description: Generate embeddings for multiple texts
+      operationId: generateBatchEmbeddings
+      tags:
+        - Embedding Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchEmbeddingsRequest'
+      responses:
+        '200':
+          description: Batch embeddings generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchEmbeddingsResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/embeddings/compare:
+    post:
+      summary: Compare embeddings
+      description: Compare two embeddings and get similarity score
+      operationId: compareEmbeddings
+      tags:
+        - Embedding Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompareEmbeddingsRequest'
+      responses:
+        '200':
+          description: Embeddings comparison result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmbeddingComparisonResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/analytics:
+    get:
+      summary: Get analytics metrics
+      description: Get analytics and metrics for the document indexing service
+      operationId: getAnalytics
+      tags:
+        - Analytics
+      parameters:
+        - name: timeframe
+          in: query
+          description: Time frame for analytics
+          schema:
+            type: string
+            enum: [hour, day, week, month]
+            default: day
+        - name: metrics
+          in: query
+          description: Specific metrics to retrieve
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [indexing, search, embeddings, performance, storage, users]
+      responses:
+        '200':
+          description: Analytics metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsResponse'
+
+  /api/v1/analytics/report:
+    post:
+      summary: Generate analytics report
+      description: Generate a comprehensive analytics report
+      operationId: generateAnalyticsReport
+      tags:
+        - Analytics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateReportRequest'
+      responses:
+        '200':
+          description: Analytics report generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsReportResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        dependencies:
+          type: object
+          properties:
+            vectorDatabase:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            embeddingService:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            redis:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            textProcessor:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+        metrics:
+          type: object
+          properties:
+            indexCount:
+              type: integer
+            totalDocuments:
+              type: integer
+            averageResponseTime:
+              type: number
+            memoryUsage:
+              type: number
+            diskUsage:
+              type: number
+      required:
+        - status
+        - timestamp
+        - version
+
+    DetailedHealthResponse:
+      allOf:
+        - $ref: '#/components/schemas/HealthResponse'
+        - type: object
+          properties:
+            uptime:
+              type: number
+              description: Uptime in seconds
+            components:
+              type: object
+              properties:
+                vectorDatabase:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                    responseTime:
+                      type: number
+                    lastCheck:
+                      type: string
+                      format: date-time
+                embeddingService:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                    responseTime:
+                      type: number
+                    lastCheck:
+                      type: string
+                      format: date-time
+                redis:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                    responseTime:
+                      type: number
+                    lastCheck:
+                      type: string
+                      format: date-time
+                textProcessor:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                    responseTime:
+                      type: number
+                    lastCheck:
+                      type: string
+                      format: date-time
+
+    DocumentIndex:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, creating, updating, deleting]
+        documentCount:
+          type: integer
+        vectorDimensions:
+          type: integer
+        embeddingModel:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        settings:
+          type: object
+          properties:
+            chunkSize:
+              type: integer
+            chunkOverlap:
+              type: integer
+            similarityThreshold:
+              type: number
+            enableHybridSearch:
+              type: boolean
+            enableKeywordSearch:
+              type: boolean
+      required:
+        - id
+        - name
+        - status
+        - documentCount
+        - vectorDimensions
+        - embeddingModel
+        - createdAt
+        - updatedAt
+        - settings
+
+    IndexResponse:
+      type: object
+      properties:
+        index:
+          $ref: '#/components/schemas/DocumentIndex'
+      required:
+        - index
+
+    IndicesResponse:
+      type: object
+      properties:
+        indices:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentIndex'
+        total:
+          type: integer
+      required:
+        - indices
+        - total
+
+    CreateIndexRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        vectorDimensions:
+          type: integer
+          default: 1536
+        embeddingModel:
+          type: string
+          default: text-embedding-3-small
+        settings:
+          type: object
+          properties:
+            chunkSize:
+              type: integer
+              default: 1000
+            chunkOverlap:
+              type: integer
+              default: 100
+            similarityThreshold:
+              type: number
+              default: 0.7
+            enableHybridSearch:
+              type: boolean
+              default: true
+            enableKeywordSearch:
+              type: boolean
+              default: true
+      required:
+        - name
+
+    UpdateIndexRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        settings:
+          type: object
+          properties:
+            chunkSize:
+              type: integer
+            chunkOverlap:
+              type: integer
+            similarityThreshold:
+              type: number
+            enableHybridSearch:
+              type: boolean
+            enableKeywordSearch:
+              type: boolean
+
+    IndexStatsResponse:
+      type: object
+      properties:
+        indexId:
+          type: string
+        statistics:
+          type: object
+          properties:
+            totalDocuments:
+              type: integer
+            totalEmbeddings:
+              type: integer
+            totalChunks:
+              type: integer
+            averageIndexingTime:
+              type: number
+            vectorDimensions:
+              type: integer
+            storageUsed:
+              type: integer
+            queryCount:
+              type: integer
+            averageQueryTime:
+              type: number
+            successRate:
+              type: number
+            errorRate:
+              type: number
+            lastIndexed:
+              type: string
+              format: date-time
+            popularQueries:
+              type: array
+              items:
+                type: string
+      required:
+        - indexId
+        - statistics
+
+    IndexDocumentRequest:
+      type: object
+      properties:
+        documentId:
+          type: string
+        indexId:
+          type: string
+        content:
+          type: string
+        metadata:
+          type: object
+        options:
+          type: object
+          properties:
+            chunkSize:
+              type: integer
+            chunkOverlap:
+              type: integer
+            generateEmbeddings:
+              type: boolean
+              default: true
+            embeddingModel:
+              type: string
+            extractKeywords:
+              type: boolean
+              default: true
+            extractEntities:
+              type: boolean
+              default: true
+            generateSummary:
+              type: boolean
+              default: true
+            priority:
+              type: string
+              enum: [low, medium, high]
+              default: medium
+      required:
+        - documentId
+        - indexId
+        - content
+
+    ReindexDocumentRequest:
+      type: object
+      properties:
+        indexId:
+          type: string
+        content:
+          type: string
+        metadata:
+          type: object
+        options:
+          type: object
+          properties:
+            forceReindex:
+              type: boolean
+              default: false
+            compareChecksums:
+              type: boolean
+              default: true
+            preserveMetadata:
+              type: boolean
+              default: true
+            updateEmbeddings:
+              type: boolean
+              default: true
+      required:
+        - indexId
+
+    BulkIndexRequest:
+      type: object
+      properties:
+        indexId:
+          type: string
+        documents:
+          type: array
+          items:
+            type: object
+            properties:
+              documentId:
+                type: string
+              content:
+                type: string
+              metadata:
+                type: object
+            required:
+              - documentId
+              - content
+        options:
+          type: object
+          properties:
+            chunkSize:
+              type: integer
+            chunkOverlap:
+              type: integer
+            generateEmbeddings:
+              type: boolean
+              default: true
+            embeddingModel:
+              type: string
+            extractKeywords:
+              type: boolean
+              default: true
+            extractEntities:
+              type: boolean
+              default: true
+            generateSummary:
+              type: boolean
+              default: true
+            priority:
+              type: string
+              enum: [low, medium, high]
+              default: medium
+      required:
+        - indexId
+        - documents
+
+    IndexingResult:
+      type: object
+      properties:
+        documentId:
+          type: string
+        indexId:
+          type: string
+        status:
+          type: string
+          enum: [success, failed, partial]
+        processingTime:
+          type: number
+        chunksCreated:
+          type: integer
+        embeddingsGenerated:
+          type: integer
+        keywordsExtracted:
+          type: integer
+        entitiesExtracted:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+      required:
+        - documentId
+        - indexId
+        - status
+        - processingTime
+        - chunksCreated
+        - embeddingsGenerated
+        - keywordsExtracted
+        - entitiesExtracted
+
+    IndexingResultResponse:
+      type: object
+      properties:
+        result:
+          $ref: '#/components/schemas/IndexingResult'
+      required:
+        - result
+
+    BulkIndexingResult:
+      type: object
+      properties:
+        batchId:
+          type: string
+        totalDocuments:
+          type: integer
+        successCount:
+          type: integer
+        failureCount:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/IndexingResult'
+        processingTime:
+          type: number
+        errors:
+          type: array
+          items:
+            type: string
+      required:
+        - batchId
+        - totalDocuments
+        - successCount
+        - failureCount
+        - results
+        - processingTime
+
+    BulkIndexingResultResponse:
+      type: object
+      properties:
+        result:
+          $ref: '#/components/schemas/BulkIndexingResult'
+      required:
+        - result
+
+    IndexingStatusResponse:
+      type: object
+      properties:
+        documentId:
+          type: string
+        indexId:
+          type: string
+        status:
+          type: string
+          enum: [indexed, indexing, failed, pending]
+        indexedAt:
+          type: string
+          format: date-time
+        version:
+          type: string
+        checksum:
+          type: string
+        chunksCount:
+          type: integer
+        hasEmbeddings:
+          type: boolean
+        keywordsCount:
+          type: integer
+        entitiesCount:
+          type: integer
+        wordCount:
+          type: integer
+        language:
+          type: string
+      required:
+        - documentId
+        - indexId
+        - status
+
+    SearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+        indexId:
+          type: string
+        searchType:
+          type: string
+          enum: [semantic, keyword, hybrid]
+          default: semantic
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+        threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.7
+        filters:
+          type: object
+          properties:
+            documentTypes:
+              type: array
+              items:
+                type: string
+            languages:
+              type: array
+              items:
+                type: string
+            authors:
+              type: array
+              items:
+                type: string
+            dateRange:
+              type: object
+              properties:
+                from:
+                  type: string
+                  format: date-time
+                to:
+                  type: string
+                  format: date-time
+            tags:
+              type: array
+              items:
+                type: string
+            metadata:
+              type: object
+            minWordCount:
+              type: integer
+            maxWordCount:
+              type: integer
+        sort:
+          type: object
+          properties:
+            field:
+              type: string
+              enum: [relevance, date, title, wordCount]
+              default: relevance
+            order:
+              type: string
+              enum: [asc, desc]
+              default: desc
+        highlight:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              default: true
+            fields:
+              type: array
+              items:
+                type: string
+            fragmentSize:
+              type: integer
+              default: 150
+            maxFragments:
+              type: integer
+              default: 3
+            preTag:
+              type: string
+              default: <mark>
+            postTag:
+              type: string
+              default: </mark>
+        includeMetadata:
+          type: boolean
+          default: true
+        includeChunks:
+          type: boolean
+          default: false
+        boostFields:
+          type: object
+          additionalProperties:
+            type: number
+      required:
+        - query
+
+    SimilaritySearchRequest:
+      type: object
+      properties:
+        embeddings:
+          type: array
+          items:
+            type: number
+        indexId:
+          type: string
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+        threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.7
+        includeMetadata:
+          type: boolean
+          default: true
+      required:
+        - embeddings
+
+    SearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+        documentId:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        metadata:
+          type: object
+        score:
+          type: number
+        highlights:
+          type: array
+          items:
+            type: string
+        chunks:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              content:
+                type: string
+              startIndex:
+                type: integer
+              endIndex:
+                type: integer
+              chunkIndex:
+                type: integer
+              relevanceScore:
+                type: number
+        similarity:
+          type: number
+        relevanceScore:
+          type: number
+        matchType:
+          type: string
+          enum: [semantic, keyword, hybrid]
+      required:
+        - id
+        - documentId
+        - title
+        - content
+        - score
+        - similarity
+        - relevanceScore
+        - matchType
+
+    SearchResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
+        processingTime:
+          type: number
+        searchType:
+          type: string
+        filters:
+          type: object
+        facets:
+          type: object
+          properties:
+            documentTypes:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+            languages:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+            authors:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+        suggestions:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+      required:
+        - query
+        - results
+        - total
+        - offset
+        - limit
+        - processingTime
+        - searchType
+
+    SearchSuggestionsResponse:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: string
+        query:
+          type: string
+      required:
+        - suggestions
+        - query
+
+    GenerateEmbeddingsRequest:
+      type: object
+      properties:
+        text:
+          type: string
+        model:
+          type: string
+          default: text-embedding-3-small
+        dimensions:
+          type: integer
+          default: 1536
+        normalize:
+          type: boolean
+          default: true
+        metadata:
+          type: object
+      required:
+        - text
+
+    BatchEmbeddingsRequest:
+      type: object
+      properties:
+        texts:
+          type: array
+          items:
+            type: string
+        options:
+          type: object
+          properties:
+            model:
+              type: string
+              default: text-embedding-3-small
+            dimensions:
+              type: integer
+              default: 1536
+            batchSize:
+              type: integer
+              default: 10
+            normalize:
+              type: boolean
+              default: true
+            metadata:
+              type: object
+      required:
+        - texts
+
+    EmbeddingResult:
+      type: object
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        embeddings:
+          type: array
+          items:
+            type: number
+        model:
+          type: string
+        dimensions:
+          type: integer
+        tokens:
+          type: integer
+        processingTime:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - text
+        - embeddings
+        - model
+        - dimensions
+        - tokens
+        - processingTime
+        - createdAt
+
+    EmbeddingsResponse:
+      type: object
+      properties:
+        embedding:
+          $ref: '#/components/schemas/EmbeddingResult'
+      required:
+        - embedding
+
+    BatchEmbeddingsResponse:
+      type: object
+      properties:
+        batchId:
+          type: string
+        embeddings:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmbeddingResult'
+        totalTexts:
+          type: integer
+        successCount:
+          type: integer
+        failureCount:
+          type: integer
+        processingTime:
+          type: number
+        errors:
+          type: array
+          items:
+            type: string
+      required:
+        - batchId
+        - embeddings
+        - totalTexts
+        - successCount
+        - failureCount
+        - processingTime
+
+    CompareEmbeddingsRequest:
+      type: object
+      properties:
+        embedding1:
+          type: array
+          items:
+            type: number
+        embedding2:
+          type: array
+          items:
+            type: number
+        method:
+          type: string
+          enum: [cosine, euclidean, manhattan]
+          default: cosine
+      required:
+        - embedding1
+        - embedding2
+
+    EmbeddingComparisonResponse:
+      type: object
+      properties:
+        similarity:
+          type: number
+        distance:
+          type: number
+        method:
+          type: string
+        metadata:
+          type: object
+      required:
+        - similarity
+        - distance
+        - method
+
+    GenerateReportRequest:
+      type: object
+      properties:
+        timeframe:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+          required:
+            - start
+            - end
+        options:
+          type: object
+          properties:
+            includeInsights:
+              type: boolean
+              default: true
+            includeTrends:
+              type: boolean
+              default: true
+            includeRecommendations:
+              type: boolean
+              default: true
+      required:
+        - timeframe
+
+    AnalyticsMetrics:
+      type: object
+      properties:
+        indexing:
+          type: object
+          properties:
+            totalDocuments:
+              type: integer
+            documentsIndexedToday:
+              type: integer
+            averageIndexingTime:
+              type: number
+            indexingThroughput:
+              type: integer
+            failureRate:
+              type: number
+            popularDocumentTypes:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  count:
+                    type: integer
+        search:
+          type: object
+          properties:
+            totalQueries:
+              type: integer
+            queriesExecutedToday:
+              type: integer
+            averageQueryTime:
+              type: number
+            searchThroughput:
+              type: integer
+            popularQueries:
+              type: array
+              items:
+                type: object
+                properties:
+                  query:
+                    type: string
+                  count:
+                    type: integer
+            querySuccessRate:
+              type: number
+            topSearchTerms:
+              type: array
+              items:
+                type: object
+                properties:
+                  term:
+                    type: string
+                  count:
+                    type: integer
+        embeddings:
+          type: object
+          properties:
+            totalEmbeddings:
+              type: integer
+            embeddingsGeneratedToday:
+              type: integer
+            averageEmbeddingTime:
+              type: number
+            embeddingThroughput:
+              type: integer
+            uniqueModels:
+              type: array
+              items:
+                type: string
+            modelUsage:
+              type: array
+              items:
+                type: object
+                properties:
+                  model:
+                    type: string
+                  count:
+                    type: integer
+        performance:
+          type: object
+          properties:
+            averageResponseTime:
+              type: number
+            p95ResponseTime:
+              type: number
+            p99ResponseTime:
+              type: number
+            errorRate:
+              type: number
+            uptime:
+              type: number
+            throughput:
+              type: number
+        storage:
+          type: object
+          properties:
+            totalIndexSize:
+              type: integer
+            documentsCount:
+              type: integer
+            embeddingsCount:
+              type: integer
+            averageDocumentSize:
+              type: number
+            storageGrowthRate:
+              type: number
+        users:
+          type: object
+          properties:
+            activeUsers:
+              type: integer
+            uniqueUsersToday:
+              type: integer
+            topUsers:
+              type: array
+              items:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  queryCount:
+                    type: integer
+            userRetentionRate:
+              type: number
+
+    AnalyticsResponse:
+      type: object
+      properties:
+        timeframe:
+          type: string
+        metrics:
+          $ref: '#/components/schemas/AnalyticsMetrics'
+        generatedAt:
+          type: string
+          format: date-time
+      required:
+        - timeframe
+        - metrics
+        - generatedAt
+
+    AnalyticsReport:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        timeframe:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        metrics:
+          $ref: '#/components/schemas/AnalyticsMetrics'
+        trends:
+          type: object
+          properties:
+            indexingTrend:
+              type: string
+              enum: [increasing, decreasing, stable]
+            searchTrend:
+              type: string
+              enum: [increasing, decreasing, stable]
+            performanceTrend:
+              type: string
+              enum: [improving, degrading, stable]
+        insights:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [positive, negative, neutral]
+              title:
+                type: string
+              description:
+                type: string
+              impact:
+                type: string
+                enum: [high, medium, low]
+              recommendation:
+                type: string
+        generatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - description
+        - timeframe
+        - metrics
+        - trends
+        - insights
+        - generatedAt
+
+    AnalyticsReportResponse:
+      type: object
+      properties:
+        report:
+          $ref: '#/components/schemas/AnalyticsReport'
+      required:
+        - report
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        details:
+          type: object
+      required:
+        - error
+        - message
+        - timestamp
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health and status
+  - name: Index Management
+    description: Document index management operations
+  - name: Document Indexing
+    description: Document indexing operations
+  - name: Search Operations
+    description: Document search and discovery
+  - name: Embedding Management
+    description: Vector embedding operations
+  - name: Analytics
+    description: Service analytics and metrics

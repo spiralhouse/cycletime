@@ -1,0 +1,958 @@
+openapi: 3.0.3
+info:
+  title: Issue Tracker Service API
+  description: Multi-platform issue tracking service for Linear, GitHub, and Jira integration
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8008
+    description: Development server
+  - url: https://api.cycletime.dev/issue-tracker
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the service is healthy and operational
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/issues:
+    get:
+      summary: List issues
+      description: Get a list of issues with filtering and pagination
+      operationId: listIssues
+      tags:
+        - Issues
+      parameters:
+        - name: platform
+          in: query
+          description: Filter by platform
+          schema:
+            type: string
+            enum: [linear, github, jira, all]
+            default: all
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+        - name: assignee
+          in: query
+          description: Filter by assignee
+          schema:
+            type: string
+        - name: project
+          in: query
+          description: Filter by project
+          schema:
+            type: string
+        - name: labels
+          in: query
+          description: Filter by labels (comma-separated)
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Number of issues to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of issues to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of issues
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueList'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create issue
+      description: Create a new issue on the specified platform
+      operationId: createIssue
+      tags:
+        - Issues
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIssueRequest'
+      responses:
+        '201':
+          description: Issue created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/issues/{issueId}:
+    get:
+      summary: Get issue
+      description: Get issue details by ID
+      operationId: getIssue
+      tags:
+        - Issues
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          description: Issue ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Issue details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+        '404':
+          description: Issue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update issue
+      description: Update an existing issue
+      operationId: updateIssue
+      tags:
+        - Issues
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          description: Issue ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIssueRequest'
+      responses:
+        '200':
+          description: Issue updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+        '404':
+          description: Issue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete issue
+      description: Delete an issue
+      operationId: deleteIssue
+      tags:
+        - Issues
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          description: Issue ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Issue deleted successfully
+        '404':
+          description: Issue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/issues/{issueId}/comments:
+    get:
+      summary: List comments
+      description: Get comments for an issue
+      operationId: listComments
+      tags:
+        - Comments
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          description: Issue ID
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Number of comments to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - name: offset
+          in: query
+          description: Number of comments to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentList'
+        '404':
+          description: Issue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Add comment
+      description: Add a comment to an issue
+      operationId: addComment
+      tags:
+        - Comments
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          description: Issue ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+      responses:
+        '201':
+          description: Comment added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '404':
+          description: Issue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/issues/{issueId}/status:
+    put:
+      summary: Update issue status
+      description: Update the status of an issue
+      operationId: updateIssueStatus
+      tags:
+        - Issues
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          description: Issue ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusRequest'
+      responses:
+        '200':
+          description: Issue status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+        '404':
+          description: Issue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/issues/{issueId}/labels:
+    post:
+      summary: Add labels
+      description: Add labels to an issue
+      operationId: addLabels
+      tags:
+        - Labels
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          description: Issue ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddLabelsRequest'
+      responses:
+        '200':
+          description: Labels added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+        '404':
+          description: Issue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/issues/sync:
+    post:
+      summary: Sync with external platforms
+      description: Trigger synchronization with external issue tracking platforms
+      operationId: syncIssues
+      tags:
+        - Sync
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncRequest'
+      responses:
+        '202':
+          description: Sync started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/issues/metrics:
+    get:
+      summary: Get issue metrics
+      description: Get metrics and analytics for issues
+      operationId: getIssueMetrics
+      tags:
+        - Metrics
+      parameters:
+        - name: platform
+          in: query
+          description: Filter by platform
+          schema:
+            type: string
+            enum: [linear, github, jira, all]
+            default: all
+        - name: project
+          in: query
+          description: Filter by project
+          schema:
+            type: string
+        - name: timeframe
+          in: query
+          description: Time frame for metrics
+          schema:
+            type: string
+            enum: [day, week, month, quarter, year]
+            default: month
+      responses:
+        '200':
+          description: Issue metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueMetrics'
+
+  /api/v1/platforms:
+    get:
+      summary: List platforms
+      description: Get configured platforms and their status
+      operationId: listPlatforms
+      tags:
+        - Platforms
+      responses:
+        '200':
+          description: List of platforms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformList'
+
+  /api/v1/platforms/{platform}/projects:
+    get:
+      summary: List projects
+      description: Get projects from a specific platform
+      operationId: listProjects
+      tags:
+        - Projects
+      parameters:
+        - name: platform
+          in: path
+          required: true
+          description: Platform name
+          schema:
+            type: string
+            enum: [linear, github, jira]
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectList'
+        '404':
+          description: Platform not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        platforms:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [healthy, degraded, unhealthy]
+      required:
+        - status
+        - timestamp
+        - version
+
+    Issue:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique issue identifier
+        platformId:
+          type: string
+          description: Platform-specific issue ID
+        platform:
+          type: string
+          enum: [linear, github, jira]
+          description: Issue platform
+        title:
+          type: string
+          description: Issue title
+        description:
+          type: string
+          description: Issue description
+        status:
+          type: string
+          description: Issue status
+        assignee:
+          $ref: '#/components/schemas/User'
+        reporter:
+          $ref: '#/components/schemas/User'
+        project:
+          $ref: '#/components/schemas/Project'
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Label'
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        url:
+          type: string
+          format: uri
+          description: URL to the issue on the platform
+        metadata:
+          type: object
+          description: Platform-specific metadata
+      required:
+        - id
+        - platformId
+        - platform
+        - title
+        - status
+        - createdAt
+        - updatedAt
+
+    IssueList:
+      type: object
+      properties:
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/Issue'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        filters:
+          type: object
+          description: Applied filters
+      required:
+        - issues
+        - pagination
+
+    CreateIssueRequest:
+      type: object
+      properties:
+        platform:
+          type: string
+          enum: [linear, github, jira]
+        title:
+          type: string
+        description:
+          type: string
+        projectId:
+          type: string
+        assigneeId:
+          type: string
+        labels:
+          type: array
+          items:
+            type: string
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        metadata:
+          type: object
+      required:
+        - platform
+        - title
+        - projectId
+
+    UpdateIssueRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        assigneeId:
+          type: string
+        labels:
+          type: array
+          items:
+            type: string
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        metadata:
+          type: object
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+        issueId:
+          type: string
+        author:
+          $ref: '#/components/schemas/User'
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+      required:
+        - id
+        - issueId
+        - author
+        - body
+        - createdAt
+
+    CommentList:
+      type: object
+      properties:
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required:
+        - comments
+        - pagination
+
+    CreateCommentRequest:
+      type: object
+      properties:
+        body:
+          type: string
+        metadata:
+          type: object
+      required:
+        - body
+
+    UpdateStatusRequest:
+      type: object
+      properties:
+        status:
+          type: string
+        comment:
+          type: string
+      required:
+        - status
+
+    AddLabelsRequest:
+      type: object
+      properties:
+        labels:
+          type: array
+          items:
+            type: string
+      required:
+        - labels
+
+    SyncRequest:
+      type: object
+      properties:
+        platforms:
+          type: array
+          items:
+            type: string
+            enum: [linear, github, jira]
+        projects:
+          type: array
+          items:
+            type: string
+        since:
+          type: string
+          format: date-time
+        force:
+          type: boolean
+          default: false
+
+    SyncResponse:
+      type: object
+      properties:
+        syncId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [started, queued]
+        estimatedCompletion:
+          type: string
+          format: date-time
+        platforms:
+          type: array
+          items:
+            type: string
+      required:
+        - syncId
+        - status
+        - platforms
+
+    IssueMetrics:
+      type: object
+      properties:
+        totalIssues:
+          type: integer
+        openIssues:
+          type: integer
+        closedIssues:
+          type: integer
+        statusDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+        priorityDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+        platformDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+        averageResolutionTime:
+          type: number
+          description: Average resolution time in hours
+        trends:
+          type: object
+          properties:
+            created:
+              type: array
+              items:
+                $ref: '#/components/schemas/MetricDataPoint'
+            resolved:
+              type: array
+              items:
+                $ref: '#/components/schemas/MetricDataPoint'
+      required:
+        - totalIssues
+        - openIssues
+        - closedIssues
+        - statusDistribution
+        - priorityDistribution
+        - platformDistribution
+
+    MetricDataPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+      required:
+        - timestamp
+        - value
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        avatar:
+          type: string
+          format: uri
+        platform:
+          type: string
+        platformId:
+          type: string
+      required:
+        - id
+        - name
+        - platform
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        platform:
+          type: string
+        platformId:
+          type: string
+        url:
+          type: string
+          format: uri
+      required:
+        - id
+        - name
+        - platform
+
+    ProjectList:
+      type: object
+      properties:
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+        platform:
+          type: string
+      required:
+        - projects
+        - platform
+
+    Label:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+        description:
+          type: string
+        platform:
+          type: string
+      required:
+        - id
+        - name
+        - platform
+
+    Platform:
+      type: object
+      properties:
+        name:
+          type: string
+          enum: [linear, github, jira]
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        configured:
+          type: boolean
+        lastSync:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+      required:
+        - name
+        - status
+        - configured
+
+    PlatformList:
+      type: object
+      properties:
+        platforms:
+          type: array
+          items:
+            $ref: '#/components/schemas/Platform'
+      required:
+        - platforms
+
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+        offset:
+          type: integer
+        total:
+          type: integer
+        hasMore:
+          type: boolean
+      required:
+        - limit
+        - offset
+        - total
+        - hasMore
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        details:
+          type: object
+      required:
+        - error
+        - message
+        - timestamp
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health and status
+  - name: Issues
+    description: Issue management operations
+  - name: Comments
+    description: Issue comment operations
+  - name: Labels
+    description: Issue label operations
+  - name: Sync
+    description: Platform synchronization
+  - name: Metrics
+    description: Issue metrics and analytics
+  - name: Platforms
+    description: Platform management
+  - name: Projects
+    description: Project management

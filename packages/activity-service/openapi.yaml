@@ -1,0 +1,830 @@
+openapi: 3.0.3
+info:
+  title: Activity Service API
+  description: Activity tracking and audit logging service with comprehensive analytics and real-time feeds
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8009
+    description: Development server
+  - url: https://api.cycletime.dev/activity
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the activity service is healthy and operational
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/activities:
+    get:
+      summary: List activities
+      description: Get list of activities with filtering and pagination
+      operationId: listActivities
+      tags:
+        - Activities
+      parameters:
+        - name: userId
+          in: query
+          description: Filter by user ID
+          schema:
+            type: string
+        - name: entityType
+          in: query
+          description: Filter by entity type
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          description: Filter by entity ID
+          schema:
+            type: string
+        - name: action
+          in: query
+          description: Filter by action type
+          schema:
+            type: string
+        - name: from
+          in: query
+          description: Start date (ISO format)
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: End date (ISO format)
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: Maximum number of activities to return
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: Number of activities to skip
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of activities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivitiesResponse'
+
+    post:
+      summary: Log activity
+      description: Log a new activity event
+      operationId: logActivity
+      tags:
+        - Activities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityLogRequest'
+      responses:
+        '201':
+          description: Activity logged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityResponse'
+
+  /api/v1/activities/{activityId}:
+    get:
+      summary: Get activity details
+      description: Get detailed information about a specific activity
+      operationId: getActivity
+      tags:
+        - Activities
+      parameters:
+        - name: activityId
+          in: path
+          required: true
+          description: Activity identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Activity details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityResponse'
+
+  /api/v1/activities/feed:
+    get:
+      summary: Get activity feed
+      description: Get real-time activity feed for user dashboard
+      operationId: getActivityFeed
+      tags:
+        - Activities
+      parameters:
+        - name: userId
+          in: query
+          description: User ID for personalized feed
+          schema:
+            type: string
+        - name: feedType
+          in: query
+          description: Type of feed to retrieve
+          schema:
+            type: string
+            enum: [personal, team, project, global]
+            default: personal
+        - name: limit
+          in: query
+          description: Maximum number of activities
+          schema:
+            type: integer
+            default: 20
+            maximum: 50
+      responses:
+        '200':
+          description: Activity feed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityFeedResponse'
+
+  /api/v1/audit:
+    get:
+      summary: Get audit trail
+      description: Get comprehensive audit trail for compliance and security
+      operationId: getAuditTrail
+      tags:
+        - Audit
+      parameters:
+        - name: entityType
+          in: query
+          description: Filter by entity type
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          description: Filter by entity ID
+          schema:
+            type: string
+        - name: userId
+          in: query
+          description: Filter by user ID
+          schema:
+            type: string
+        - name: action
+          in: query
+          description: Filter by action type
+          schema:
+            type: string
+        - name: severity
+          in: query
+          description: Filter by severity level
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: from
+          in: query
+          description: Start date
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: End date
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: Maximum number of records
+          schema:
+            type: integer
+            default: 100
+            maximum: 1000
+        - name: offset
+          in: query
+          description: Number of records to skip
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Audit trail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditTrailResponse'
+
+    post:
+      summary: Create audit record
+      description: Create a new audit record for compliance tracking
+      operationId: createAuditRecord
+      tags:
+        - Audit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuditRecordRequest'
+      responses:
+        '201':
+          description: Audit record created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditRecordResponse'
+
+  /api/v1/analytics:
+    get:
+      summary: Get activity analytics
+      description: Get analytics and insights on user and system activity
+      operationId: getActivityAnalytics
+      tags:
+        - Analytics
+      parameters:
+        - name: timeRange
+          in: query
+          description: Time range for analytics
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d, 30d, 90d]
+            default: 7d
+        - name: groupBy
+          in: query
+          description: Group analytics by dimension
+          schema:
+            type: string
+            enum: [user, action, entity, hour, day, week]
+            default: day
+        - name: metrics
+          in: query
+          description: Comma-separated list of metrics to include
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Activity analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityAnalyticsResponse'
+
+  /api/v1/analytics/summary:
+    get:
+      summary: Get activity summary
+      description: Get high-level summary of activity metrics
+      operationId: getActivitySummary
+      tags:
+        - Analytics
+      parameters:
+        - name: timeRange
+          in: query
+          description: Time range for summary
+          schema:
+            type: string
+            enum: [24h, 7d, 30d]
+            default: 7d
+      responses:
+        '200':
+          description: Activity summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivitySummaryResponse'
+
+  /api/v1/analytics/trends:
+    get:
+      summary: Get activity trends
+      description: Get trending activities and patterns
+      operationId: getActivityTrends
+      tags:
+        - Analytics
+      parameters:
+        - name: timeRange
+          in: query
+          description: Time range for trends
+          schema:
+            type: string
+            enum: [7d, 30d, 90d]
+            default: 30d
+        - name: trendType
+          in: query
+          description: Type of trend analysis
+          schema:
+            type: string
+            enum: [users, actions, entities, peak_hours]
+            default: actions
+      responses:
+        '200':
+          description: Activity trends
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityTrendsResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime:
+          type: number
+        dependencies:
+          type: object
+          properties:
+            redis:
+              type: string
+              enum: [connected, disconnected]
+            elasticsearch:
+              type: string
+              enum: [connected, disconnected]
+
+    ActivitiesResponse:
+      type: object
+      properties:
+        activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivitySummary'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+        hasMore:
+          type: boolean
+
+    ActivitySummary:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        action:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: string
+        entityName:
+          type: string
+        description:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+
+    ActivityLogRequest:
+      type: object
+      required:
+        - userId
+        - action
+        - entityType
+        - entityId
+      properties:
+        userId:
+          type: string
+        action:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: string
+        entityName:
+          type: string
+        description:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          default: medium
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+
+    ActivityResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        action:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: string
+        entityName:
+          type: string
+        description:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        severity:
+          type: string
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        indexed:
+          type: boolean
+
+    ActivityFeedResponse:
+      type: object
+      properties:
+        feed:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityFeedItem'
+        feedType:
+          type: string
+        hasMore:
+          type: boolean
+        lastUpdated:
+          type: string
+          format: date-time
+
+    ActivityFeedItem:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        userName:
+          type: string
+        userAvatar:
+          type: string
+        action:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: string
+        entityName:
+          type: string
+        description:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        relativeTime:
+          type: string
+        isRead:
+          type: boolean
+
+    AuditTrailResponse:
+      type: object
+      properties:
+        auditRecords:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditRecord'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+        hasMore:
+          type: boolean
+
+    AuditRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        action:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: string
+        entityName:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+        sessionId:
+          type: string
+        changes:
+          type: object
+          properties:
+            before:
+              type: object
+              additionalProperties: true
+            after:
+              type: object
+              additionalProperties: true
+        metadata:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+        compliance:
+          type: object
+          properties:
+            retention:
+              type: string
+            classification:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
+
+    AuditRecordRequest:
+      type: object
+      required:
+        - userId
+        - action
+        - entityType
+        - entityId
+      properties:
+        userId:
+          type: string
+        action:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: string
+        entityName:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          default: medium
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+        sessionId:
+          type: string
+        changes:
+          type: object
+          properties:
+            before:
+              type: object
+              additionalProperties: true
+            after:
+              type: object
+              additionalProperties: true
+        metadata:
+          type: object
+          additionalProperties: true
+        compliance:
+          type: object
+          properties:
+            retention:
+              type: string
+            classification:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
+
+    AuditRecordResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        action:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: string
+        entityName:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+        sessionId:
+          type: string
+        changes:
+          type: object
+          properties:
+            before:
+              type: object
+              additionalProperties: true
+            after:
+              type: object
+              additionalProperties: true
+        metadata:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+        compliance:
+          type: object
+          properties:
+            retention:
+              type: string
+            classification:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
+        indexed:
+          type: boolean
+
+    ActivityAnalyticsResponse:
+      type: object
+      properties:
+        timeRange:
+          type: string
+        groupBy:
+          type: string
+        metrics:
+          type: object
+          properties:
+            totalActivities:
+              type: integer
+            uniqueUsers:
+              type: integer
+            topActions:
+              type: array
+              items:
+                type: object
+                properties:
+                  action:
+                    type: string
+                  count:
+                    type: integer
+            activityByTime:
+              type: array
+              items:
+                type: object
+                properties:
+                  timestamp:
+                    type: string
+                  count:
+                    type: integer
+            userActivity:
+              type: array
+              items:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  userName:
+                    type: string
+                  count:
+                    type: integer
+        generatedAt:
+          type: string
+          format: date-time
+
+    ActivitySummaryResponse:
+      type: object
+      properties:
+        timeRange:
+          type: string
+        summary:
+          type: object
+          properties:
+            totalActivities:
+              type: integer
+            totalUsers:
+              type: integer
+            averageActivitiesPerUser:
+              type: number
+            mostActiveHour:
+              type: string
+            topAction:
+              type: string
+            topEntity:
+              type: string
+            growth:
+              type: object
+              properties:
+                activities:
+                  type: number
+                users:
+                  type: number
+        generatedAt:
+          type: string
+          format: date-time
+
+    ActivityTrendsResponse:
+      type: object
+      properties:
+        timeRange:
+          type: string
+        trendType:
+          type: string
+        trends:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              value:
+                type: number
+              change:
+                type: number
+              changePercent:
+                type: number
+              trend:
+                type: string
+                enum: [up, down, stable]
+        insights:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              message:
+                type: string
+              impact:
+                type: string
+                enum: [positive, negative, neutral]
+        generatedAt:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health and status
+  - name: Activities
+    description: Activity logging and retrieval
+  - name: Audit
+    description: Audit trail and compliance
+  - name: Analytics
+    description: Activity analytics and insights

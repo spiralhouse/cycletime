@@ -1,0 +1,982 @@
+openapi: 3.0.3
+info:
+  title: Contract Generation Engine API
+  description: Automated generation of API specifications and system boundaries for parallel development
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8010
+    description: Development server
+  - url: https://api.cycletime.dev/contract-generation
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the service is healthy and operational
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/contracts/generate:
+    post:
+      summary: Generate API contract
+      description: Generate OpenAPI and AsyncAPI specifications from requirements
+      operationId: generateContract
+      tags:
+        - Contract Generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContractGenerationRequest'
+      responses:
+        '202':
+          description: Contract generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractGenerationResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/contracts/{contractId}/status:
+    get:
+      summary: Get contract generation status
+      description: Check the status of a contract generation job
+      operationId: getContractStatus
+      tags:
+        - Contract Generation
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          description: Contract generation job ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Contract generation status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractStatus'
+        '404':
+          description: Contract not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/contracts:
+    get:
+      summary: List contracts
+      description: Get a list of contracts with optional filtering
+      operationId: listContracts
+      tags:
+        - Contract Management
+      parameters:
+        - name: serviceName
+          in: query
+          description: Filter by service name
+          schema:
+            type: string
+        - name: serviceType
+          in: query
+          description: Filter by service type
+          schema:
+            type: string
+            enum: [rest-api, event-driven, hybrid, cli, web-ui]
+        - name: status
+          in: query
+          description: Filter by contract status
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed]
+        - name: limit
+          in: query
+          description: Maximum number of results
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          description: Number of results to skip
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of contracts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contracts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContractStatus'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/v1/contracts/{contractId}:
+    delete:
+      summary: Delete contract
+      description: Delete a contract and all associated data
+      operationId: deleteContract
+      tags:
+        - Contract Management
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          description: Contract ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Contract deleted successfully
+        '404':
+          description: Contract not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/contracts/{contractId}/specification:
+    get:
+      summary: Get generated contract specification
+      description: Retrieve the generated OpenAPI/AsyncAPI specification
+      operationId: getContractSpecification
+      tags:
+        - Contract Generation
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          description: Contract generation job ID
+          schema:
+            type: string
+            format: uuid
+        - name: format
+          in: query
+          required: false
+          description: Specification format
+          schema:
+            type: string
+            enum: [openapi, asyncapi, combined]
+            default: combined
+      responses:
+        '200':
+          description: Contract specification
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractSpecification'
+            application/x-yaml:
+              schema:
+                type: string
+        '404':
+          description: Contract not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/contracts/{contractId}/validate:
+    post:
+      summary: Validate contract specification
+      description: Validate the generated contract against standards
+      operationId: validateContract
+      tags:
+        - Contract Validation
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          description: Contract generation job ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationOptions'
+      responses:
+        '200':
+          description: Contract validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '404':
+          description: Contract not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/contracts/{contractId}/refine:
+    put:
+      summary: Refine contract specification
+      description: Apply refinements and improvements to the generated contract
+      operationId: refineContract
+      tags:
+        - Contract Refinement
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          description: Contract generation job ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContractRefinementRequest'
+      responses:
+        '200':
+          description: Contract refinement applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractRefinementResponse'
+        '404':
+          description: Contract not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/boundaries/analyze:
+    post:
+      summary: Analyze system boundaries
+      description: Analyze service boundaries and dependencies
+      operationId: analyzeSystemBoundaries
+      tags:
+        - System Boundaries
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoundaryAnalysisRequest'
+      responses:
+        '200':
+          description: System boundary analysis result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoundaryAnalysisResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        dependencies:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [healthy, degraded, unhealthy]
+      required:
+        - status
+        - timestamp
+        - version
+
+    ContractGenerationRequest:
+      type: object
+      properties:
+        serviceName:
+          type: string
+          description: Name of the service to generate contract for
+        serviceType:
+          type: string
+          enum: [rest-api, event-driven, hybrid, cli, web-ui]
+          description: Type of service
+        requirements:
+          type: string
+          description: Service requirements and specifications
+        architecture:
+          type: string
+          description: Architectural description and patterns
+        dependencies:
+          type: array
+          items:
+            type: string
+          description: Service dependencies
+        endpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/EndpointSpec'
+          description: Endpoint specifications
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventSpec'
+          description: Event specifications
+        options:
+          $ref: '#/components/schemas/GenerationOptions'
+      required:
+        - serviceName
+        - serviceType
+        - requirements
+
+    EndpointSpec:
+      type: object
+      properties:
+        path:
+          type: string
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH]
+        description:
+          type: string
+        requestSchema:
+          type: object
+        responseSchema:
+          type: object
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParameterSpec'
+      required:
+        - path
+        - method
+        - description
+
+    EventSpec:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        schema:
+          type: object
+        type:
+          type: string
+          enum: [published, consumed]
+      required:
+        - name
+        - description
+        - type
+
+    ParameterSpec:
+      type: object
+      properties:
+        name:
+          type: string
+        in:
+          type: string
+          enum: [query, path, header, cookie]
+        description:
+          type: string
+        required:
+          type: boolean
+        schema:
+          type: object
+      required:
+        - name
+        - in
+
+    GenerationOptions:
+      type: object
+      properties:
+        includeExamples:
+          type: boolean
+          default: true
+        includeMockData:
+          type: boolean
+          default: true
+        validateOutput:
+          type: boolean
+          default: true
+        outputFormat:
+          type: string
+          enum: [json, yaml, both]
+          default: both
+
+    ContractGenerationResponse:
+      type: object
+      properties:
+        contractId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        estimatedCompletion:
+          type: string
+          format: date-time
+        message:
+          type: string
+      required:
+        - contractId
+        - status
+
+    ContractStatus:
+      type: object
+      properties:
+        contractId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        error:
+          type: string
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenerationStage'
+      required:
+        - contractId
+        - status
+        - progress
+        - createdAt
+
+    GenerationStage:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        message:
+          type: string
+      required:
+        - name
+        - status
+
+    ContractSpecification:
+      type: object
+      properties:
+        contractId:
+          type: string
+          format: uuid
+        serviceName:
+          type: string
+        openapi:
+          type: object
+          description: OpenAPI 3.0 specification
+        asyncapi:
+          type: object
+          description: AsyncAPI 2.0 specification
+        boundaries:
+          $ref: '#/components/schemas/SystemBoundaries'
+        metadata:
+          $ref: '#/components/schemas/ContractMetadata'
+      required:
+        - contractId
+        - serviceName
+
+    SystemBoundaries:
+      type: object
+      properties:
+        service:
+          type: string
+        dependencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceDependency'
+        provides:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceCapability'
+        integrations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceIntegration'
+      required:
+        - service
+        - dependencies
+        - provides
+
+    ServiceDependency:
+      type: object
+      properties:
+        service:
+          type: string
+        type:
+          type: string
+          enum: [synchronous, asynchronous, eventual]
+        endpoints:
+          type: array
+          items:
+            type: string
+        events:
+          type: array
+          items:
+            type: string
+        required:
+          type: boolean
+      required:
+        - service
+        - type
+
+    ServiceCapability:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        endpoints:
+          type: array
+          items:
+            type: string
+        events:
+          type: array
+          items:
+            type: string
+      required:
+        - name
+        - description
+
+    ServiceIntegration:
+      type: object
+      properties:
+        service:
+          type: string
+        pattern:
+          type: string
+          enum: [request-response, event-driven, pub-sub, streaming]
+        protocol:
+          type: string
+          enum: [http, websocket, grpc, message-queue]
+        authentication:
+          type: string
+          enum: [none, api-key, jwt, oauth2, mutual-tls]
+      required:
+        - service
+        - pattern
+        - protocol
+
+    ContractMetadata:
+      type: object
+      properties:
+        version:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        generatedBy:
+          type: string
+        requirements:
+          type: string
+        architecture:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+        - version
+        - generatedAt
+        - generatedBy
+
+    ValidationOptions:
+      type: object
+      properties:
+        strict:
+          type: boolean
+          default: false
+        rules:
+          type: array
+          items:
+            type: string
+        skipRules:
+          type: array
+          items:
+            type: string
+
+    ValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationWarning'
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationSuggestion'
+      required:
+        - valid
+        - errors
+        - warnings
+        - score
+
+    ValidationError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        severity:
+          type: string
+          enum: [error, warning, info]
+      required:
+        - code
+        - message
+        - severity
+
+    ValidationWarning:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        recommendation:
+          type: string
+      required:
+        - code
+        - message
+
+    ValidationSuggestion:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [improvement, optimization, best-practice]
+        message:
+          type: string
+        impact:
+          type: string
+          enum: [low, medium, high]
+        effort:
+          type: string
+          enum: [low, medium, high]
+      required:
+        - type
+        - message
+        - impact
+        - effort
+
+    ContractRefinementRequest:
+      type: object
+      properties:
+        refinements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractRefinement'
+        options:
+          $ref: '#/components/schemas/RefinementOptions'
+      required:
+        - refinements
+
+    ContractRefinement:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [add-endpoint, modify-endpoint, remove-endpoint, add-event, modify-event, remove-event, update-schema]
+        path:
+          type: string
+        operation:
+          type: object
+        description:
+          type: string
+      required:
+        - type
+        - path
+
+    RefinementOptions:
+      type: object
+      properties:
+        preserveExamples:
+          type: boolean
+          default: true
+        validateResult:
+          type: boolean
+          default: true
+        updateVersion:
+          type: boolean
+          default: true
+
+    ContractRefinementResponse:
+      type: object
+      properties:
+        contractId:
+          type: string
+          format: uuid
+        applied:
+          type: number
+        skipped:
+          type: number
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - contractId
+        - applied
+        - skipped
+        - updatedAt
+
+    BoundaryAnalysisRequest:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            type: string
+        architecture:
+          type: string
+        requirements:
+          type: string
+        options:
+          $ref: '#/components/schemas/BoundaryAnalysisOptions'
+      required:
+        - services
+
+    BoundaryAnalysisOptions:
+      type: object
+      properties:
+        includeDataFlow:
+          type: boolean
+          default: true
+        includeSecurityBoundaries:
+          type: boolean
+          default: true
+        includePerformanceRequirements:
+          type: boolean
+          default: false
+
+    BoundaryAnalysisResponse:
+      type: object
+      properties:
+        analysisId:
+          type: string
+          format: uuid
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceBoundary'
+        interactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceInteraction'
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoundaryRecommendation'
+        generatedAt:
+          type: string
+          format: date-time
+      required:
+        - analysisId
+        - services
+        - interactions
+        - generatedAt
+
+    ServiceBoundary:
+      type: object
+      properties:
+        service:
+          type: string
+        responsibilities:
+          type: array
+          items:
+            type: string
+        dataOwnership:
+          type: array
+          items:
+            type: string
+        securityScope:
+          type: string
+          enum: [public, internal, restricted, private]
+        scalingCharacteristics:
+          type: object
+          properties:
+            pattern:
+              type: string
+              enum: [cpu-bound, io-bound, memory-bound, mixed]
+            expectedLoad:
+              type: string
+              enum: [low, medium, high, variable]
+      required:
+        - service
+        - responsibilities
+        - securityScope
+
+    ServiceInteraction:
+      type: object
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        type:
+          type: string
+          enum: [synchronous, asynchronous, batch, streaming]
+        protocol:
+          type: string
+        dataFlow:
+          type: string
+        frequency:
+          type: string
+          enum: [rare, occasional, frequent, constant]
+        consistency:
+          type: string
+          enum: [strong, eventual, weak]
+      required:
+        - from
+        - to
+        - type
+        - protocol
+
+    BoundaryRecommendation:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [split-service, merge-services, extract-shared-component, add-gateway, add-cache]
+        description:
+          type: string
+        rationale:
+          type: string
+        impact:
+          type: string
+          enum: [low, medium, high]
+        effort:
+          type: string
+          enum: [low, medium, high]
+      required:
+        - type
+        - description
+        - rationale
+        - impact
+        - effort
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        details:
+          type: object
+      required:
+        - error
+        - message
+        - timestamp
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health and status
+  - name: Contract Generation
+    description: API contract generation operations
+  - name: Contract Validation
+    description: Contract validation and compliance
+  - name: Contract Refinement
+    description: Contract refinement and improvement
+  - name: System Boundaries
+    description: System boundary analysis and documentation

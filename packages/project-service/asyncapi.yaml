@@ -1,0 +1,1723 @@
+asyncapi: 3.0.0
+info:
+  title: Project Service Events
+  description: Project lifecycle management events for real-time notifications and integrations
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  development:
+    host: localhost:6379
+    protocol: redis
+    description: Development Redis server
+  production:
+    host: redis.cycletime.dev:6379
+    protocol: redis
+    description: Production Redis server
+
+channels:
+  project/created:
+    address: project.created
+    description: Project created events
+    messages:
+      ProjectCreated:
+        $ref: '#/components/messages/ProjectCreated'
+
+  project/updated:
+    address: project.updated
+    description: Project updated events
+    messages:
+      ProjectUpdated:
+        $ref: '#/components/messages/ProjectUpdated'
+
+  project/deleted:
+    address: project.deleted
+    description: Project deleted events
+    messages:
+      ProjectDeleted:
+        $ref: '#/components/messages/ProjectDeleted'
+
+  project/status_changed:
+    address: project.status_changed
+    description: Project status changed events
+    messages:
+      ProjectStatusChanged:
+        $ref: '#/components/messages/ProjectStatusChanged'
+
+  project/team/member_added:
+    address: project.team.member_added
+    description: Team member added events
+    messages:
+      TeamMemberAdded:
+        $ref: '#/components/messages/TeamMemberAdded'
+
+  project/team/member_removed:
+    address: project.team.member_removed
+    description: Team member removed events
+    messages:
+      TeamMemberRemoved:
+        $ref: '#/components/messages/TeamMemberRemoved'
+
+  project/team/member_role_changed:
+    address: project.team.member_role_changed
+    description: Team member role changed events
+    messages:
+      TeamMemberRoleChanged:
+        $ref: '#/components/messages/TeamMemberRoleChanged'
+
+  project/template/applied:
+    address: project.template.applied
+    description: Template applied to project events
+    messages:
+      TemplateApplied:
+        $ref: '#/components/messages/TemplateApplied'
+
+  project/milestone/reached:
+    address: project.milestone.reached
+    description: Project milestone reached events
+    messages:
+      MilestoneReached:
+        $ref: '#/components/messages/MilestoneReached'
+
+  project/milestone/missed:
+    address: project.milestone.missed
+    description: Project milestone missed events
+    messages:
+      MilestoneMissed:
+        $ref: '#/components/messages/MilestoneMissed'
+
+  project/analytics/updated:
+    address: project.analytics.updated
+    description: Project analytics updated events
+    messages:
+      AnalyticsUpdated:
+        $ref: '#/components/messages/AnalyticsUpdated'
+
+  project/resource/allocated:
+    address: project.resource.allocated
+    description: Resource allocated to project events
+    messages:
+      ResourceAllocated:
+        $ref: '#/components/messages/ResourceAllocated'
+
+  project/resource/deallocated:
+    address: project.resource.deallocated
+    description: Resource deallocated from project events
+    messages:
+      ResourceDeallocated:
+        $ref: '#/components/messages/ResourceDeallocated'
+
+  project/budget/threshold_reached:
+    address: project.budget.threshold_reached
+    description: Budget threshold reached events
+    messages:
+      BudgetThresholdReached:
+        $ref: '#/components/messages/BudgetThresholdReached'
+
+  project/deadline/approaching:
+    address: project.deadline.approaching
+    description: Project deadline approaching events
+    messages:
+      DeadlineApproaching:
+        $ref: '#/components/messages/DeadlineApproaching'
+
+  project/risk/identified:
+    address: project.risk.identified
+    description: Project risk identified events
+    messages:
+      RiskIdentified:
+        $ref: '#/components/messages/RiskIdentified'
+
+  project/insight/generated:
+    address: project.insight.generated
+    description: Project insight generated events
+    messages:
+      InsightGenerated:
+        $ref: '#/components/messages/InsightGenerated'
+
+  template/created:
+    address: template.created
+    description: Template created events
+    messages:
+      TemplateCreated:
+        $ref: '#/components/messages/TemplateCreated'
+
+  template/updated:
+    address: template.updated
+    description: Template updated events
+    messages:
+      TemplateUpdated:
+        $ref: '#/components/messages/TemplateUpdated'
+
+  template/deleted:
+    address: template.deleted
+    description: Template deleted events
+    messages:
+      TemplateDeleted:
+        $ref: '#/components/messages/TemplateDeleted'
+
+operations:
+  publishProjectCreated:
+    action: send
+    channel:
+      $ref: '#/channels/project~1created'
+    summary: Publish project created event
+    description: Publishes an event when a new project is created
+
+  publishProjectUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/project~1updated'
+    summary: Publish project updated event
+    description: Publishes an event when a project is updated
+
+  publishProjectDeleted:
+    action: send
+    channel:
+      $ref: '#/channels/project~1deleted'
+    summary: Publish project deleted event
+    description: Publishes an event when a project is deleted
+
+  publishProjectStatusChanged:
+    action: send
+    channel:
+      $ref: '#/channels/project~1status_changed'
+    summary: Publish project status changed event
+    description: Publishes an event when a project status changes
+
+  publishTeamMemberAdded:
+    action: send
+    channel:
+      $ref: '#/channels/project~1team~1member_added'
+    summary: Publish team member added event
+    description: Publishes an event when a team member is added
+
+  publishTeamMemberRemoved:
+    action: send
+    channel:
+      $ref: '#/channels/project~1team~1member_removed'
+    summary: Publish team member removed event
+    description: Publishes an event when a team member is removed
+
+  publishTeamMemberRoleChanged:
+    action: send
+    channel:
+      $ref: '#/channels/project~1team~1member_role_changed'
+    summary: Publish team member role changed event
+    description: Publishes an event when a team member's role changes
+
+  publishTemplateApplied:
+    action: send
+    channel:
+      $ref: '#/channels/project~1template~1applied'
+    summary: Publish template applied event
+    description: Publishes an event when a template is applied to a project
+
+  publishMilestoneReached:
+    action: send
+    channel:
+      $ref: '#/channels/project~1milestone~1reached'
+    summary: Publish milestone reached event
+    description: Publishes an event when a project milestone is reached
+
+  publishMilestoneMissed:
+    action: send
+    channel:
+      $ref: '#/channels/project~1milestone~1missed'
+    summary: Publish milestone missed event
+    description: Publishes an event when a project milestone is missed
+
+  publishAnalyticsUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/project~1analytics~1updated'
+    summary: Publish analytics updated event
+    description: Publishes an event when project analytics are updated
+
+  publishResourceAllocated:
+    action: send
+    channel:
+      $ref: '#/channels/project~1resource~1allocated'
+    summary: Publish resource allocated event
+    description: Publishes an event when resources are allocated to a project
+
+  publishResourceDeallocated:
+    action: send
+    channel:
+      $ref: '#/channels/project~1resource~1deallocated'
+    summary: Publish resource deallocated event
+    description: Publishes an event when resources are deallocated from a project
+
+  publishBudgetThresholdReached:
+    action: send
+    channel:
+      $ref: '#/channels/project~1budget~1threshold_reached'
+    summary: Publish budget threshold reached event
+    description: Publishes an event when a project budget threshold is reached
+
+  publishDeadlineApproaching:
+    action: send
+    channel:
+      $ref: '#/channels/project~1deadline~1approaching'
+    summary: Publish deadline approaching event
+    description: Publishes an event when a project deadline is approaching
+
+  publishRiskIdentified:
+    action: send
+    channel:
+      $ref: '#/channels/project~1risk~1identified'
+    summary: Publish risk identified event
+    description: Publishes an event when a project risk is identified
+
+  publishInsightGenerated:
+    action: send
+    channel:
+      $ref: '#/channels/project~1insight~1generated'
+    summary: Publish insight generated event
+    description: Publishes an event when a project insight is generated
+
+  publishTemplateCreated:
+    action: send
+    channel:
+      $ref: '#/channels/template~1created'
+    summary: Publish template created event
+    description: Publishes an event when a new template is created
+
+  publishTemplateUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/template~1updated'
+    summary: Publish template updated event
+    description: Publishes an event when a template is updated
+
+  publishTemplateDeleted:
+    action: send
+    channel:
+      $ref: '#/channels/template~1deleted'
+    summary: Publish template deleted event
+    description: Publishes an event when a template is deleted
+
+components:
+  messages:
+    ProjectCreated:
+      name: ProjectCreated
+      summary: Project created
+      description: Event fired when a new project is created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectCreatedPayload'
+
+    ProjectUpdated:
+      name: ProjectUpdated
+      summary: Project updated
+      description: Event fired when a project is updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectUpdatedPayload'
+
+    ProjectDeleted:
+      name: ProjectDeleted
+      summary: Project deleted
+      description: Event fired when a project is deleted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectDeletedPayload'
+
+    ProjectStatusChanged:
+      name: ProjectStatusChanged
+      summary: Project status changed
+      description: Event fired when a project status changes
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectStatusChangedPayload'
+
+    TeamMemberAdded:
+      name: TeamMemberAdded
+      summary: Team member added
+      description: Event fired when a team member is added to a project
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TeamMemberAddedPayload'
+
+    TeamMemberRemoved:
+      name: TeamMemberRemoved
+      summary: Team member removed
+      description: Event fired when a team member is removed from a project
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TeamMemberRemovedPayload'
+
+    TeamMemberRoleChanged:
+      name: TeamMemberRoleChanged
+      summary: Team member role changed
+      description: Event fired when a team member's role changes
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TeamMemberRoleChangedPayload'
+
+    TemplateApplied:
+      name: TemplateApplied
+      summary: Template applied
+      description: Event fired when a template is applied to a project
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TemplateAppliedPayload'
+
+    MilestoneReached:
+      name: MilestoneReached
+      summary: Milestone reached
+      description: Event fired when a project milestone is reached
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/MilestoneReachedPayload'
+
+    MilestoneMissed:
+      name: MilestoneMissed
+      summary: Milestone missed
+      description: Event fired when a project milestone is missed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/MilestoneMissedPayload'
+
+    AnalyticsUpdated:
+      name: AnalyticsUpdated
+      summary: Analytics updated
+      description: Event fired when project analytics are updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AnalyticsUpdatedPayload'
+
+    ResourceAllocated:
+      name: ResourceAllocated
+      summary: Resource allocated
+      description: Event fired when resources are allocated to a project
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ResourceAllocatedPayload'
+
+    ResourceDeallocated:
+      name: ResourceDeallocated
+      summary: Resource deallocated
+      description: Event fired when resources are deallocated from a project
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ResourceDeallocatedPayload'
+
+    BudgetThresholdReached:
+      name: BudgetThresholdReached
+      summary: Budget threshold reached
+      description: Event fired when a project budget threshold is reached
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/BudgetThresholdReachedPayload'
+
+    DeadlineApproaching:
+      name: DeadlineApproaching
+      summary: Deadline approaching
+      description: Event fired when a project deadline is approaching
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DeadlineApproachingPayload'
+
+    RiskIdentified:
+      name: RiskIdentified
+      summary: Risk identified
+      description: Event fired when a project risk is identified
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RiskIdentifiedPayload'
+
+    InsightGenerated:
+      name: InsightGenerated
+      summary: Insight generated
+      description: Event fired when a project insight is generated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/InsightGeneratedPayload'
+
+    TemplateCreated:
+      name: TemplateCreated
+      summary: Template created
+      description: Event fired when a new template is created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TemplateCreatedPayload'
+
+    TemplateUpdated:
+      name: TemplateUpdated
+      summary: Template updated
+      description: Event fired when a template is updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TemplateUpdatedPayload'
+
+    TemplateDeleted:
+      name: TemplateDeleted
+      summary: Template deleted
+      description: Event fired when a template is deleted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TemplateDeletedPayload'
+
+  schemas:
+    BaseEventPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for the event
+        eventType:
+          type: string
+          description: Type of the event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        source:
+          type: string
+          description: Source service that generated the event
+          default: project-service
+        version:
+          type: string
+          description: Event schema version
+          default: "1.0"
+        userId:
+          type: string
+          format: uuid
+          description: User who triggered the event
+        correlationId:
+          type: string
+          format: uuid
+          description: Correlation ID for tracing
+        metadata:
+          type: object
+          description: Additional event metadata
+      required:
+        - eventId
+        - eventType
+        - timestamp
+        - source
+        - version
+
+    ProjectCreatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.created]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                description:
+                  type: string
+                  nullable: true
+                status:
+                  type: string
+                visibility:
+                  type: string
+                priority:
+                  type: string
+                owner:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                template:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    category:
+                      type: string
+                  nullable: true
+                timeline:
+                  type: object
+                  properties:
+                    startDate:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    endDate:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    dueDate:
+                      type: string
+                      format: date-time
+                      nullable: true
+                resources:
+                  type: object
+                  properties:
+                    budget:
+                      type: number
+                      nullable: true
+                    estimatedHours:
+                      type: number
+                      nullable: true
+                tags:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - projectId
+                - name
+                - status
+                - visibility
+                - priority
+                - owner
+          required:
+            - data
+
+    ProjectUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.updated]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                changes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      field:
+                        type: string
+                      oldValue:
+                        type: string
+                        nullable: true
+                      newValue:
+                        type: string
+                        nullable: true
+                currentState:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    description:
+                      type: string
+                    status:
+                      type: string
+                    visibility:
+                      type: string
+                    priority:
+                      type: string
+                    progress:
+                      type: number
+                    updatedAt:
+                      type: string
+                      format: date-time
+              required:
+                - projectId
+                - projectName
+                - changes
+                - currentState
+          required:
+            - data
+
+    ProjectDeletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.deleted]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                permanent:
+                  type: boolean
+                  description: Whether the project was permanently deleted
+                deletedAt:
+                  type: string
+                  format: date-time
+                owner:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+              required:
+                - projectId
+                - projectName
+                - permanent
+                - deletedAt
+                - owner
+          required:
+            - data
+
+    ProjectStatusChangedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.status_changed]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                oldStatus:
+                  type: string
+                newStatus:
+                  type: string
+                statusChangedAt:
+                  type: string
+                  format: date-time
+                owner:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                reason:
+                  type: string
+                  nullable: true
+              required:
+                - projectId
+                - projectName
+                - oldStatus
+                - newStatus
+                - statusChangedAt
+                - owner
+          required:
+            - data
+
+    TeamMemberAddedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.team.member_added]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                member:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                    role:
+                      type: string
+                    permissions:
+                      type: array
+                      items:
+                        type: string
+                    allocation:
+                      type: object
+                      properties:
+                        percentage:
+                          type: number
+                        hoursPerWeek:
+                          type: number
+                addedBy:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+              required:
+                - projectId
+                - projectName
+                - member
+                - addedBy
+          required:
+            - data
+
+    TeamMemberRemovedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.team.member_removed]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                member:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                    role:
+                      type: string
+                removedBy:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                reason:
+                  type: string
+                  nullable: true
+              required:
+                - projectId
+                - projectName
+                - member
+                - removedBy
+          required:
+            - data
+
+    TeamMemberRoleChangedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.team.member_role_changed]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                member:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                oldRole:
+                  type: string
+                newRole:
+                  type: string
+                oldPermissions:
+                  type: array
+                  items:
+                    type: string
+                newPermissions:
+                  type: array
+                  items:
+                    type: string
+                changedBy:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+              required:
+                - projectId
+                - projectName
+                - member
+                - oldRole
+                - newRole
+                - changedBy
+          required:
+            - data
+
+    TemplateAppliedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.template.applied]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                template:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    category:
+                      type: string
+                    version:
+                      type: string
+                appliedBy:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                configuration:
+                  type: object
+                  properties:
+                    preserveExisting:
+                      type: boolean
+                    customizations:
+                      type: object
+                results:
+                  type: object
+                  properties:
+                    tasksCreated:
+                      type: integer
+                    milestonesAdded:
+                      type: integer
+                    rolesConfigured:
+                      type: integer
+              required:
+                - projectId
+                - projectName
+                - template
+                - appliedBy
+          required:
+            - data
+
+    MilestoneReachedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.milestone.reached]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                milestone:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    dueDate:
+                      type: string
+                      format: date-time
+                    completedAt:
+                      type: string
+                      format: date-time
+                    progress:
+                      type: number
+                completedBy:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+                impact:
+                  type: object
+                  properties:
+                    progressIncrement:
+                      type: number
+                    nextMilestones:
+                      type: array
+                      items:
+                        type: string
+                    risksReduced:
+                      type: array
+                      items:
+                        type: string
+              required:
+                - projectId
+                - projectName
+                - milestone
+          required:
+            - data
+
+    MilestoneMissedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.milestone.missed]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                milestone:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    dueDate:
+                      type: string
+                      format: date-time
+                    currentProgress:
+                      type: number
+                daysMissed:
+                  type: integer
+                impact:
+                  type: object
+                  properties:
+                    projectDelay:
+                      type: number
+                      description: Estimated delay in days
+                    affectedMilestones:
+                      type: array
+                      items:
+                        type: string
+                    budgetImpact:
+                      type: number
+                      nullable: true
+                recommendations:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - projectId
+                - projectName
+                - milestone
+                - daysMissed
+          required:
+            - data
+
+    AnalyticsUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.analytics.updated]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                analyticsType:
+                  type: string
+                  enum: [performance, velocity, burndown, forecasting, team]
+                timeRange:
+                  type: string
+                metrics:
+                  type: object
+                  properties:
+                    previousValue:
+                      type: number
+                      nullable: true
+                    currentValue:
+                      type: number
+                    trend:
+                      type: string
+                      enum: [improving, stable, declining]
+                    percentageChange:
+                      type: number
+                      nullable: true
+                insights:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      severity:
+                        type: string
+                      message:
+                        type: string
+                generatedAt:
+                  type: string
+                  format: date-time
+              required:
+                - projectId
+                - projectName
+                - analyticsType
+                - timeRange
+                - metrics
+                - generatedAt
+          required:
+            - data
+
+    ResourceAllocatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.resource.allocated]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                resource:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [human, financial, equipment, software]
+                    name:
+                      type: string
+                    amount:
+                      type: number
+                    cost:
+                      type: number
+                    period:
+                      type: object
+                      properties:
+                        start:
+                          type: string
+                          format: date-time
+                        end:
+                          type: string
+                          format: date-time
+                allocatedBy:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                budgetImpact:
+                  type: object
+                  properties:
+                    totalBudget:
+                      type: number
+                    usedBudget:
+                      type: number
+                    remainingBudget:
+                      type: number
+                    utilizationRate:
+                      type: number
+              required:
+                - projectId
+                - projectName
+                - resource
+                - allocatedBy
+          required:
+            - data
+
+    ResourceDeallocatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.resource.deallocated]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                resource:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [human, financial, equipment, software]
+                    name:
+                      type: string
+                    amount:
+                      type: number
+                    cost:
+                      type: number
+                deallocatedBy:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                reason:
+                  type: string
+                  nullable: true
+                budgetImpact:
+                  type: object
+                  properties:
+                    totalBudget:
+                      type: number
+                    usedBudget:
+                      type: number
+                    remainingBudget:
+                      type: number
+                    utilizationRate:
+                      type: number
+              required:
+                - projectId
+                - projectName
+                - resource
+                - deallocatedBy
+          required:
+            - data
+
+    BudgetThresholdReachedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.budget.threshold_reached]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                threshold:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [percentage, absolute]
+                    value:
+                      type: number
+                    severity:
+                      type: string
+                      enum: [warning, critical]
+                budget:
+                  type: object
+                  properties:
+                    total:
+                      type: number
+                    used:
+                      type: number
+                    remaining:
+                      type: number
+                    utilizationRate:
+                      type: number
+                forecast:
+                  type: object
+                  properties:
+                    projectedOverrun:
+                      type: number
+                      nullable: true
+                    estimatedCompletion:
+                      type: string
+                      format: date-time
+                    recommendations:
+                      type: array
+                      items:
+                        type: string
+              required:
+                - projectId
+                - projectName
+                - threshold
+                - budget
+          required:
+            - data
+
+    DeadlineApproachingPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.deadline.approaching]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                deadline:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [project_due_date, milestone, phase_end]
+                    date:
+                      type: string
+                      format: date-time
+                    title:
+                      type: string
+                daysRemaining:
+                  type: integer
+                urgency:
+                  type: string
+                  enum: [low, medium, high, critical]
+                progress:
+                  type: object
+                  properties:
+                    current:
+                      type: number
+                    expected:
+                      type: number
+                    onTrack:
+                      type: boolean
+                risks:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      severity:
+                        type: string
+                      description:
+                        type: string
+                recommendations:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - projectId
+                - projectName
+                - deadline
+                - daysRemaining
+                - urgency
+                - progress
+          required:
+            - data
+
+    RiskIdentifiedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.risk.identified]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                risk:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum: [schedule, budget, scope, team, technical, external]
+                    severity:
+                      type: string
+                      enum: [low, medium, high, critical]
+                    probability:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    impact:
+                      type: string
+                    identifiedBy:
+                      type: string
+                      enum: [ai_analysis, user_report, system_monitoring]
+                evidence:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      value:
+                        type: string
+                      source:
+                        type: string
+                mitigation:
+                  type: object
+                  properties:
+                    recommended:
+                      type: array
+                      items:
+                        type: string
+                    effort:
+                      type: string
+                      enum: [low, medium, high]
+                    timeline:
+                      type: string
+                estimatedImpact:
+                  type: object
+                  properties:
+                    schedule:
+                      type: number
+                      description: Estimated delay in days
+                    budget:
+                      type: number
+                      description: Estimated cost impact
+                    scope:
+                      type: string
+                      description: Scope impact description
+              required:
+                - projectId
+                - projectName
+                - risk
+          required:
+            - data
+
+    InsightGeneratedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [project.insight.generated]
+            data:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                  format: uuid
+                projectName:
+                  type: string
+                insight:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    category:
+                      type: string
+                      enum: [performance, risks, opportunities, team, timeline]
+                    type:
+                      type: string
+                      enum: [warning, recommendation, observation, alert]
+                    severity:
+                      type: string
+                      enum: [low, medium, high, critical]
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    confidence:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                    impact:
+                      type: string
+                evidence:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      metric:
+                        type: string
+                      value:
+                        type: string
+                      trend:
+                        type: string
+                recommendations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      action:
+                        type: string
+                      priority:
+                        type: string
+                      effort:
+                        type: string
+                      expectedImpact:
+                        type: string
+                generatedBy:
+                  type: string
+                  enum: [ai_analysis, user_feedback, system_monitoring]
+                modelVersion:
+                  type: string
+                  description: AI model version used for analysis
+              required:
+                - projectId
+                - projectName
+                - insight
+          required:
+            - data
+
+    TemplateCreatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [template.created]
+            data:
+              type: object
+              properties:
+                templateId:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                description:
+                  type: string
+                  nullable: true
+                category:
+                  type: string
+                visibility:
+                  type: string
+                createdBy:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                configuration:
+                  type: object
+                  properties:
+                    phases:
+                      type: integer
+                    taskTemplates:
+                      type: integer
+                    roles:
+                      type: integer
+                metadata:
+                  type: object
+                  properties:
+                    tags:
+                      type: array
+                      items:
+                        type: string
+                    version:
+                      type: string
+              required:
+                - templateId
+                - name
+                - category
+                - visibility
+                - createdBy
+          required:
+            - data
+
+    TemplateUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [template.updated]
+            data:
+              type: object
+              properties:
+                templateId:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                changes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      field:
+                        type: string
+                      oldValue:
+                        type: string
+                        nullable: true
+                      newValue:
+                        type: string
+                        nullable: true
+                updatedBy:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                version:
+                  type: string
+                usageImpact:
+                  type: object
+                  properties:
+                    activeProjects:
+                      type: integer
+                    requiresReapplication:
+                      type: boolean
+              required:
+                - templateId
+                - name
+                - changes
+                - updatedBy
+          required:
+            - data
+
+    TemplateDeletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [template.deleted]
+            data:
+              type: object
+              properties:
+                templateId:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                category:
+                  type: string
+                deletedBy:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                usage:
+                  type: object
+                  properties:
+                    totalUsage:
+                      type: integer
+                    activeProjects:
+                      type: integer
+                    lastUsed:
+                      type: string
+                      format: date-time
+                      nullable: true
+                replacementTemplate:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                  nullable: true
+              required:
+                - templateId
+                - name
+                - category
+                - deletedBy
+          required:
+            - data

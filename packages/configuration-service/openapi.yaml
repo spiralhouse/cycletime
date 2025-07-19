@@ -1,0 +1,509 @@
+openapi: 3.0.3
+info:
+  title: Configuration Service API
+  description: Dynamic configuration management service with environment support, feature flags, and validation
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8010
+    description: Development server
+  - url: https://api.cycletime.dev/config
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, unhealthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                  dependencies:
+                    type: object
+                    properties:
+                      consul:
+                        type: string
+                      etcd:
+                        type: string
+                      redis:
+                        type: string
+
+  /api/v1/config:
+    get:
+      summary: Get all configurations
+      operationId: getAllConfigurations
+      tags:
+        - Configuration
+      parameters:
+        - name: environment
+          in: query
+          description: Filter by environment
+          schema:
+            type: string
+        - name: service
+          in: query
+          description: Filter by service name
+          schema:
+            type: string
+        - name: includeSecrets
+          in: query
+          description: Include secret configurations
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of configurations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  configurations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConfigurationItem'
+
+  /api/v1/config/{key}:
+    get:
+      summary: Get configuration by key
+      operationId: getConfiguration
+      tags:
+        - Configuration
+      parameters:
+        - name: key
+          in: path
+          required: true
+          description: Configuration key
+          schema:
+            type: string
+        - name: environment
+          in: query
+          description: Environment context
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Configuration value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationItem'
+
+    put:
+      summary: Update configuration
+      operationId: updateConfiguration
+      tags:
+        - Configuration
+      parameters:
+        - name: key
+          in: path
+          required: true
+          description: Configuration key
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigurationUpdateRequest'
+      responses:
+        '200':
+          description: Configuration updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationItem'
+
+  /api/v1/environments:
+    get:
+      summary: List environments
+      operationId: listEnvironments
+      tags:
+        - Environment
+      responses:
+        '200':
+          description: List of environments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  environments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Environment'
+
+  /api/v1/feature-flags:
+    get:
+      summary: List feature flags
+      operationId: listFeatureFlags
+      tags:
+        - Feature Flags
+      parameters:
+        - name: environment
+          in: query
+          description: Filter by environment
+          schema:
+            type: string
+        - name: enabled
+          in: query
+          description: Filter by enabled status
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of feature flags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  featureFlags:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FeatureFlag'
+
+    post:
+      summary: Create feature flag
+      operationId: createFeatureFlag
+      tags:
+        - Feature Flags
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureFlagCreateRequest'
+      responses:
+        '201':
+          description: Feature flag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureFlag'
+
+  /api/v1/feature-flags/{flagId}:
+    get:
+      summary: Get feature flag
+      operationId: getFeatureFlag
+      tags:
+        - Feature Flags
+      parameters:
+        - name: flagId
+          in: path
+          required: true
+          description: Feature flag ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Feature flag details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureFlag'
+
+    put:
+      summary: Update feature flag
+      operationId: updateFeatureFlag
+      tags:
+        - Feature Flags
+      parameters:
+        - name: flagId
+          in: path
+          required: true
+          description: Feature flag ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureFlagUpdateRequest'
+      responses:
+        '200':
+          description: Feature flag updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureFlag'
+
+    delete:
+      summary: Delete feature flag
+      operationId: deleteFeatureFlag
+      tags:
+        - Feature Flags
+      parameters:
+        - name: flagId
+          in: path
+          required: true
+          description: Feature flag ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Feature flag deleted
+
+  /api/v1/feature-flags/{flagId}/toggle:
+    post:
+      summary: Toggle feature flag
+      operationId: toggleFeatureFlag
+      tags:
+        - Feature Flags
+      parameters:
+        - name: flagId
+          in: path
+          required: true
+          description: Feature flag ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+                environment:
+                  type: string
+      responses:
+        '200':
+          description: Feature flag toggled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureFlag'
+
+components:
+  schemas:
+    ConfigurationItem:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+        type:
+          type: string
+          enum: [string, number, boolean, json, secret]
+        environment:
+          type: string
+        service:
+          type: string
+        description:
+          type: string
+        isSecret:
+          type: boolean
+        lastModified:
+          type: string
+          format: date-time
+        modifiedBy:
+          type: string
+        version:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+
+    ConfigurationUpdateRequest:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+        type:
+          type: string
+          enum: [string, number, boolean, json, secret]
+        environment:
+          type: string
+        service:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    Environment:
+      type: object
+      properties:
+        name:
+          type: string
+        displayName:
+          type: string
+        description:
+          type: string
+        isActive:
+          type: boolean
+        parentEnvironment:
+          type: string
+        configCount:
+          type: integer
+        featureFlagCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    FeatureFlag:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        key:
+          type: string
+        enabled:
+          type: boolean
+        environment:
+          type: string
+        rolloutPercentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              operator:
+                type: string
+                enum: [equals, not_equals, contains, greater_than, less_than]
+              value:
+                type: string
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedBy:
+          type: string
+
+    FeatureFlagCreateRequest:
+      type: object
+      required:
+        - name
+        - key
+        - environment
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        key:
+          type: string
+        enabled:
+          type: boolean
+          default: false
+        environment:
+          type: string
+        rolloutPercentage:
+          type: number
+          minimum: 0
+          maximum: 100
+          default: 0
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              operator:
+                type: string
+                enum: [equals, not_equals, contains, greater_than, less_than]
+              value:
+                type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    FeatureFlagUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        rolloutPercentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              operator:
+                type: string
+                enum: [equals, not_equals, contains, greater_than, less_than]
+              value:
+                type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health and status
+  - name: Configuration
+    description: Configuration management
+  - name: Environment
+    description: Environment management
+  - name: Feature Flags
+    description: Feature flag management

@@ -1,0 +1,561 @@
+asyncapi: 3.0.0
+info:
+  title: Metrics Service Events API
+  version: 1.0.0
+  description: |
+    Events published by the Metrics Service for real-time monitoring and alerting.
+    
+    This service publishes events for:
+    - Metric collection and data points
+    - Alert state changes and notifications
+    - Dashboard updates and modifications
+    - System health status changes
+    - Threshold breaches and anomalies
+    
+    Events are published to Redis channels and can be consumed by other services
+    for real-time monitoring, alerting, and analytics.
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  development:
+    host: localhost:6379
+    protocol: redis
+    description: Development Redis server
+  production:
+    host: redis.cycletime.dev:6379
+    protocol: redis
+    description: Production Redis server
+
+defaultContentType: application/json
+
+channels:
+  metrics/collected:
+    description: Published when a new metric is collected
+    messages:
+      metricCollected:
+        $ref: '#/components/messages/MetricCollected'
+
+  metrics/threshold/breached:
+    description: Published when a metric breaches its threshold
+    messages:
+      thresholdBreached:
+        $ref: '#/components/messages/ThresholdBreached'
+
+  alerts/triggered:
+    description: Published when an alert is triggered
+    messages:
+      alertTriggered:
+        $ref: '#/components/messages/AlertTriggered'
+
+  alerts/resolved:
+    description: Published when an alert is resolved
+    messages:
+      alertResolved:
+        $ref: '#/components/messages/AlertResolved'
+
+  alerts/silenced:
+    description: Published when an alert is silenced
+    messages:
+      alertSilenced:
+        $ref: '#/components/messages/AlertSilenced'
+
+  dashboards/updated:
+    description: Published when a dashboard is updated
+    messages:
+      dashboardUpdated:
+        $ref: '#/components/messages/DashboardUpdated'
+
+  dashboards/created:
+    description: Published when a new dashboard is created
+    messages:
+      dashboardCreated:
+        $ref: '#/components/messages/DashboardCreated'
+
+  system/health/changed:
+    description: Published when system health status changes
+    messages:
+      systemHealthChanged:
+        $ref: '#/components/messages/SystemHealthChanged'
+
+  system/anomaly/detected:
+    description: Published when a system anomaly is detected
+    messages:
+      anomalyDetected:
+        $ref: '#/components/messages/AnomalyDetected'
+
+operations:
+  publishMetricCollected:
+    action: send
+    channel:
+      $ref: '#/channels/metrics~1collected'
+    summary: Publish metric collected event
+    description: Publishes when a new metric data point is collected
+
+  publishThresholdBreached:
+    action: send
+    channel:
+      $ref: '#/channels/metrics~1threshold~1breached'
+    summary: Publish threshold breached event
+    description: Publishes when a metric value breaches its configured threshold
+
+  publishAlertTriggered:
+    action: send
+    channel:
+      $ref: '#/channels/alerts~1triggered'
+    summary: Publish alert triggered event
+    description: Publishes when an alert rule is triggered
+
+  publishAlertResolved:
+    action: send
+    channel:
+      $ref: '#/channels/alerts~1resolved'
+    summary: Publish alert resolved event
+    description: Publishes when an alert is resolved
+
+  publishAlertSilenced:
+    action: send
+    channel:
+      $ref: '#/channels/alerts~1silenced'
+    summary: Publish alert silenced event
+    description: Publishes when an alert is silenced
+
+  publishDashboardUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/dashboards~1updated'
+    summary: Publish dashboard updated event
+    description: Publishes when a dashboard is updated
+
+  publishDashboardCreated:
+    action: send
+    channel:
+      $ref: '#/channels/dashboards~1created'
+    summary: Publish dashboard created event
+    description: Publishes when a new dashboard is created
+
+  publishSystemHealthChanged:
+    action: send
+    channel:
+      $ref: '#/channels/system~1health~1changed'
+    summary: Publish system health changed event
+    description: Publishes when overall system health status changes
+
+  publishAnomalyDetected:
+    action: send
+    channel:
+      $ref: '#/channels/system~1anomaly~1detected'
+    summary: Publish anomaly detected event
+    description: Publishes when a system anomaly is detected
+
+components:
+  messages:
+    MetricCollected:
+      name: MetricCollected
+      title: Metric Collected
+      summary: A metric data point was collected
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/MetricCollectedPayload'
+
+    ThresholdBreached:
+      name: ThresholdBreached
+      title: Threshold Breached
+      summary: A metric value has breached its threshold
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ThresholdBreachedPayload'
+
+    AlertTriggered:
+      name: AlertTriggered
+      title: Alert Triggered
+      summary: An alert rule has been triggered
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AlertTriggeredPayload'
+
+    AlertResolved:
+      name: AlertResolved
+      title: Alert Resolved
+      summary: An alert has been resolved
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AlertResolvedPayload'
+
+    AlertSilenced:
+      name: AlertSilenced
+      title: Alert Silenced
+      summary: An alert has been silenced
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AlertSilencedPayload'
+
+    DashboardUpdated:
+      name: DashboardUpdated
+      title: Dashboard Updated
+      summary: A dashboard has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DashboardUpdatedPayload'
+
+    DashboardCreated:
+      name: DashboardCreated
+      title: Dashboard Created
+      summary: A new dashboard has been created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DashboardCreatedPayload'
+
+    SystemHealthChanged:
+      name: SystemHealthChanged
+      title: System Health Changed
+      summary: Overall system health status has changed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SystemHealthChangedPayload'
+
+    AnomalyDetected:
+      name: AnomalyDetected
+      title: Anomaly Detected
+      summary: A system anomaly has been detected
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AnomalyDetectedPayload'
+
+  schemas:
+    MetricCollectedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        metric:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            value:
+              type: number
+            type:
+              type: string
+              enum: [counter, gauge, histogram, summary]
+            unit:
+              type: string
+            labels:
+              type: object
+              additionalProperties:
+                type: string
+            service:
+              type: string
+        source:
+          type: string
+        environment:
+          type: string
+
+    ThresholdBreachedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        metric:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            value:
+              type: number
+            threshold:
+              type: number
+            condition:
+              type: string
+              enum: [gt, lt, eq, ne, gte, lte]
+            severity:
+              type: string
+              enum: [critical, high, medium, low]
+        duration:
+          type: string
+        service:
+          type: string
+        environment:
+          type: string
+
+    AlertTriggeredPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        alert:
+          type: object
+          properties:
+            id:
+              type: string
+            ruleId:
+              type: string
+            name:
+              type: string
+            severity:
+              type: string
+              enum: [critical, high, medium, low]
+            metric:
+              type: string
+            value:
+              type: number
+            threshold:
+              type: number
+            condition:
+              type: string
+            message:
+              type: string
+            labels:
+              type: object
+              additionalProperties:
+                type: string
+        service:
+          type: string
+        environment:
+          type: string
+        notifications:
+          type: array
+          items:
+            type: string
+
+    AlertResolvedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        alert:
+          type: object
+          properties:
+            id:
+              type: string
+            ruleId:
+              type: string
+            name:
+              type: string
+            severity:
+              type: string
+            duration:
+              type: string
+            resolvedBy:
+              type: string
+              enum: [auto, manual]
+        service:
+          type: string
+        environment:
+          type: string
+
+    AlertSilencedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        alert:
+          type: object
+          properties:
+            id:
+              type: string
+            ruleId:
+              type: string
+            name:
+              type: string
+            severity:
+              type: string
+            silencedUntil:
+              type: string
+              format: date-time
+            reason:
+              type: string
+            silencedBy:
+              type: string
+        service:
+          type: string
+        environment:
+          type: string
+
+    DashboardUpdatedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        dashboard:
+          type: object
+          properties:
+            id:
+              type: string
+            title:
+              type: string
+            description:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
+            panelCount:
+              type: integer
+            updatedBy:
+              type: string
+        changes:
+          type: array
+          items:
+            type: string
+        service:
+          type: string
+        environment:
+          type: string
+
+    DashboardCreatedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        dashboard:
+          type: object
+          properties:
+            id:
+              type: string
+            title:
+              type: string
+            description:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
+            panelCount:
+              type: integer
+            createdBy:
+              type: string
+        service:
+          type: string
+        environment:
+          type: string
+
+    SystemHealthChangedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        healthStatus:
+          type: object
+          properties:
+            overall:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            previous:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            services:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  status:
+                    type: string
+                  responseTime:
+                    type: number
+                  errorRate:
+                    type: number
+            infrastructure:
+              type: object
+              properties:
+                cpu:
+                  type: number
+                memory:
+                  type: number
+                disk:
+                  type: number
+                network:
+                  type: number
+        trigger:
+          type: string
+        service:
+          type: string
+        environment:
+          type: string
+
+    AnomalyDetectedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        anomaly:
+          type: object
+          properties:
+            id:
+              type: string
+            type:
+              type: string
+              enum: [spike, drop, trend, pattern]
+            metric:
+              type: string
+            value:
+              type: number
+            expectedValue:
+              type: number
+            deviation:
+              type: number
+            confidence:
+              type: number
+            severity:
+              type: string
+              enum: [critical, high, medium, low]
+            description:
+              type: string
+        context:
+          type: object
+          properties:
+            service:
+              type: string
+            timeWindow:
+              type: string
+            historicalData:
+              type: boolean
+        service:
+          type: string
+        environment:
+          type: string
