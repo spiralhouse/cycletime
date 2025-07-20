@@ -1,0 +1,241 @@
+openapi: 3.0.3
+info:
+  title: Standards Engine API
+  description: Development standards management and delivery system for AI-assisted development
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3007
+    description: Development server
+  - url: https://api.cycletime.dev/standards
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the standards engine service is healthy and operational
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/standards:
+    get:
+      summary: List development standards
+      description: Get a list of development standards with optional filtering
+      operationId: listStandards
+      tags:
+        - Standards
+      parameters:
+        - name: category
+          in: query
+          description: Filter by standard category
+          schema:
+            type: string
+            enum: [coding, testing, documentation, architecture, security]
+        - name: project
+          in: query
+          description: Filter by project ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of development standards
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Standards endpoint - implementation pending"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/v1/compliance:
+    get:
+      summary: Check compliance status
+      description: Get compliance status for a project or codebase
+      operationId: checkCompliance
+      tags:
+        - Compliance
+      parameters:
+        - name: project
+          in: query
+          description: Project ID to check compliance for
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Compliance status information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Compliance endpoint - implementation pending"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+          example: healthy
+        service:
+          type: string
+          example: standards-engine
+        version:
+          type: string
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: number
+          description: Service uptime in seconds
+      required:
+        - status
+        - service
+        - version
+        - timestamp
+        - uptime
+
+    Standard:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [coding, testing, documentation, architecture, security]
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/StandardRule'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - description
+        - category
+        - rules
+
+    StandardRule:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [error, warning, info]
+        pattern:
+          type: string
+          description: Regular expression or pattern to match
+        examples:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - description
+        - severity
+
+    ComplianceReport:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        overallScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplianceViolation'
+        generatedAt:
+          type: string
+          format: date-time
+      required:
+        - projectId
+        - overallScore
+        - violations
+        - generatedAt
+
+    ComplianceViolation:
+      type: object
+      properties:
+        standardId:
+          type: string
+          format: uuid
+        ruleId:
+          type: string
+        severity:
+          type: string
+          enum: [error, warning, info]
+        message:
+          type: string
+        file:
+          type: string
+        line:
+          type: integer
+        column:
+          type: integer
+      required:
+        - standardId
+        - ruleId
+        - severity
+        - message
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health and status endpoints
+  - name: Standards
+    description: Development standards management
+  - name: Compliance
+    description: Compliance checking and reporting

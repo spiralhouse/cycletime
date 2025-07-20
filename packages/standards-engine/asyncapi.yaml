@@ -1,0 +1,526 @@
+asyncapi: 3.0.0
+info:
+  title: Standards Engine Events API
+  version: 1.0.0
+  description: |
+    Events published by the Standards Engine for real-time standards management and compliance monitoring.
+    
+    This service publishes events for:
+    - Standard definitions (created, updated, deleted)
+    - Compliance checks (started, completed, failed)
+    - Violations (detected, resolved, ignored)
+    - AI integrations (standards delivered, feedback received)
+    - MCP communications (tool updates, context delivery)
+    
+    Events are published to Redis channels and can be consumed by other services
+    for monitoring, analytics, AI tool integration, and workflow automation.
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  development:
+    host: localhost:6379
+    protocol: redis
+    description: Development Redis server
+  production:
+    host: redis.cycletime.dev:6379
+    protocol: redis
+    description: Production Redis server
+
+defaultContentType: application/json
+
+channels:
+  standards/created:
+    description: Published when a new development standard is created
+    messages:
+      standardCreated:
+        $ref: '#/components/messages/StandardCreated'
+
+  standards/updated:
+    description: Published when a development standard is updated
+    messages:
+      standardUpdated:
+        $ref: '#/components/messages/StandardUpdated'
+
+  standards/deleted:
+    description: Published when a development standard is deleted
+    messages:
+      standardDeleted:
+        $ref: '#/components/messages/StandardDeleted'
+
+  compliance/check-started:
+    description: Published when a compliance check is initiated
+    messages:
+      complianceCheckStarted:
+        $ref: '#/components/messages/ComplianceCheckStarted'
+
+  compliance/check-completed:
+    description: Published when a compliance check is completed
+    messages:
+      complianceCheckCompleted:
+        $ref: '#/components/messages/ComplianceCheckCompleted'
+
+  compliance/violation-detected:
+    description: Published when a compliance violation is detected
+    messages:
+      violationDetected:
+        $ref: '#/components/messages/ViolationDetected'
+
+  compliance/violation-resolved:
+    description: Published when a compliance violation is resolved
+    messages:
+      violationResolved:
+        $ref: '#/components/messages/ViolationResolved'
+
+  ai/standards-delivered:
+    description: Published when standards are delivered to AI tools via MCP
+    messages:
+      standardsDelivered:
+        $ref: '#/components/messages/StandardsDelivered'
+
+  ai/feedback-received:
+    description: Published when feedback is received from AI tools
+    messages:
+      aiFeedbackReceived:
+        $ref: '#/components/messages/AIFeedbackReceived'
+
+  system/health-updated:
+    description: Published when system health status changes
+    messages:
+      healthUpdated:
+        $ref: '#/components/messages/HealthUpdated'
+
+operations:
+  publishStandardCreated:
+    action: send
+    channel:
+      $ref: '#/channels/standards~1created'
+    description: Publish event when a new standard is created
+
+  publishStandardUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/standards~1updated'
+    description: Publish event when a standard is updated
+
+  publishStandardDeleted:
+    action: send
+    channel:
+      $ref: '#/channels/standards~1deleted'
+    description: Publish event when a standard is deleted
+
+  publishComplianceCheckStarted:
+    action: send
+    channel:
+      $ref: '#/channels/compliance~1check-started'
+    description: Publish event when compliance check starts
+
+  publishComplianceCheckCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/compliance~1check-completed'
+    description: Publish event when compliance check completes
+
+  publishViolationDetected:
+    action: send
+    channel:
+      $ref: '#/channels/compliance~1violation-detected'
+    description: Publish event when violation is detected
+
+  publishViolationResolved:
+    action: send
+    channel:
+      $ref: '#/channels/compliance~1violation-resolved'
+    description: Publish event when violation is resolved
+
+  publishStandardsDelivered:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1standards-delivered'
+    description: Publish event when standards are delivered to AI tools
+
+  publishAIFeedbackReceived:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1feedback-received'
+    description: Publish event when AI feedback is received
+
+  publishHealthUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/system~1health-updated'
+    description: Publish event when system health changes
+
+components:
+  messages:
+    StandardCreated:
+      name: StandardCreated
+      title: Standard Created
+      description: A new development standard has been created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/StandardCreatedPayload'
+
+    StandardUpdated:
+      name: StandardUpdated
+      title: Standard Updated
+      description: A development standard has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/StandardUpdatedPayload'
+
+    StandardDeleted:
+      name: StandardDeleted
+      title: Standard Deleted
+      description: A development standard has been deleted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/StandardDeletedPayload'
+
+    ComplianceCheckStarted:
+      name: ComplianceCheckStarted
+      title: Compliance Check Started
+      description: A compliance check has been initiated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ComplianceCheckStartedPayload'
+
+    ComplianceCheckCompleted:
+      name: ComplianceCheckCompleted
+      title: Compliance Check Completed
+      description: A compliance check has been completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ComplianceCheckCompletedPayload'
+
+    ViolationDetected:
+      name: ViolationDetected
+      title: Violation Detected
+      description: A compliance violation has been detected
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ViolationDetectedPayload'
+
+    ViolationResolved:
+      name: ViolationResolved
+      title: Violation Resolved
+      description: A compliance violation has been resolved
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ViolationResolvedPayload'
+
+    StandardsDelivered:
+      name: StandardsDelivered
+      title: Standards Delivered
+      description: Standards have been delivered to AI tools
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/StandardsDeliveredPayload'
+
+    AIFeedbackReceived:
+      name: AIFeedbackReceived
+      title: AI Feedback Received
+      description: Feedback has been received from AI tools
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AIFeedbackReceivedPayload'
+
+    HealthUpdated:
+      name: HealthUpdated
+      title: Health Updated
+      description: System health status has changed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HealthUpdatedPayload'
+
+  schemas:
+    StandardCreatedPayload:
+      type: object
+      properties:
+        standardId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+          enum: [coding, testing, documentation, architecture, security]
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        projectId:
+          type: string
+          format: uuid
+      required:
+        - standardId
+        - name
+        - category
+        - createdBy
+        - createdAt
+
+    StandardUpdatedPayload:
+      type: object
+      properties:
+        standardId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        changes:
+          type: array
+          items:
+            type: string
+        updatedBy:
+          type: string
+          format: uuid
+        updatedAt:
+          type: string
+          format: date-time
+        version:
+          type: string
+      required:
+        - standardId
+        - changes
+        - updatedBy
+        - updatedAt
+
+    StandardDeletedPayload:
+      type: object
+      properties:
+        standardId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        deletedBy:
+          type: string
+          format: uuid
+        deletedAt:
+          type: string
+          format: date-time
+        reason:
+          type: string
+      required:
+        - standardId
+        - name
+        - deletedBy
+        - deletedAt
+
+    ComplianceCheckStartedPayload:
+      type: object
+      properties:
+        checkId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        standardIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        initiatedBy:
+          type: string
+          format: uuid
+        startedAt:
+          type: string
+          format: date-time
+      required:
+        - checkId
+        - projectId
+        - standardIds
+        - initiatedBy
+        - startedAt
+
+    ComplianceCheckCompletedPayload:
+      type: object
+      properties:
+        checkId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        overallScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        violationCount:
+          type: integer
+          minimum: 0
+        completedAt:
+          type: string
+          format: date-time
+        duration:
+          type: number
+          description: Check duration in milliseconds
+      required:
+        - checkId
+        - projectId
+        - overallScore
+        - violationCount
+        - completedAt
+        - duration
+
+    ViolationDetectedPayload:
+      type: object
+      properties:
+        violationId:
+          type: string
+          format: uuid
+        standardId:
+          type: string
+          format: uuid
+        ruleId:
+          type: string
+        projectId:
+          type: string
+          format: uuid
+        file:
+          type: string
+        line:
+          type: integer
+        severity:
+          type: string
+          enum: [error, warning, info]
+        message:
+          type: string
+        detectedAt:
+          type: string
+          format: date-time
+      required:
+        - violationId
+        - standardId
+        - ruleId
+        - projectId
+        - severity
+        - message
+        - detectedAt
+
+    ViolationResolvedPayload:
+      type: object
+      properties:
+        violationId:
+          type: string
+          format: uuid
+        standardId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        resolvedBy:
+          type: string
+          format: uuid
+        resolvedAt:
+          type: string
+          format: date-time
+        resolution:
+          type: string
+          enum: [fixed, ignored, false_positive]
+        comment:
+          type: string
+      required:
+        - violationId
+        - standardId
+        - projectId
+        - resolvedBy
+        - resolvedAt
+        - resolution
+
+    StandardsDeliveredPayload:
+      type: object
+      properties:
+        deliveryId:
+          type: string
+          format: uuid
+        aiTool:
+          type: string
+          enum: [claude, copilot, cursor]
+        standardIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        projectId:
+          type: string
+          format: uuid
+        deliveredAt:
+          type: string
+          format: date-time
+        mcpSessionId:
+          type: string
+      required:
+        - deliveryId
+        - aiTool
+        - standardIds
+        - deliveredAt
+
+    AIFeedbackReceivedPayload:
+      type: object
+      properties:
+        feedbackId:
+          type: string
+          format: uuid
+        aiTool:
+          type: string
+          enum: [claude, copilot, cursor]
+        standardId:
+          type: string
+          format: uuid
+        feedback:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        receivedAt:
+          type: string
+          format: date-time
+        mcpSessionId:
+          type: string
+      required:
+        - feedbackId
+        - aiTool
+        - standardId
+        - feedback
+        - receivedAt
+
+    HealthUpdatedPayload:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        previousStatus:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        checks:
+          type: object
+          properties:
+            database:
+              type: string
+              enum: [healthy, unhealthy]
+            redis:
+              type: string
+              enum: [healthy, unhealthy]
+            ai_services:
+              type: string
+              enum: [healthy, unhealthy]
+        updatedAt:
+          type: string
+          format: date-time
+        uptime:
+          type: number
+      required:
+        - status
+        - checks
+        - updatedAt
+        - uptime
