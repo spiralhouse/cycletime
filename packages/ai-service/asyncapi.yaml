@@ -3,17 +3,30 @@ info:
   title: AI Service Events API
   version: 1.0.0
   description: |
-    Events published by the AI Service for real-time notifications and system integration.
+    Comprehensive AsyncAPI specification for AI Service event-driven communication.
     
-    This service publishes events for:
-    - AI request lifecycle (received, processing, completed, failed)
-    - Provider health changes and configuration updates
-    - Context optimization results
-    - Project analysis completion
-    - Model availability changes
+    **Published Events (25 types):**
+    - AI Request Lifecycle: received, processing, completed, failed, response generated
+    - Context Management: analysis started/completed, optimization results
+    - Provider Management: health changes, configuration, errors, connection status
+    - Project Analysis: started, completed, insights/recommendations generated
+    - Embedding Generation: embedding completion events
+    - Usage & Monitoring: usage tracking, threshold alerts, rate limits
+    - Service Health: health checks, service-level errors, shutdown notifications
+    - Model Management: availability changes
     
-    Events are published to Redis channels and can be consumed by other services
-    for monitoring, analytics, and workflow automation.
+    **Consumed Events (6 types):**
+    - Project Management: created, updated, deleted
+    - Context Management: updated, analysis requested
+    - System Configuration: config updates
+    
+    **Message Broker Support:**
+    - Primary: Redis pub/sub (production)
+    - Fallback: In-memory EventEmitter (development)
+    - Dual server configuration for development and production environments
+    
+    Events enable real-time monitoring, analytics, workflow automation, and
+    service integration across the CycleTime platform.
   contact:
     name: CycleTime Team
     email: team@cycletime.dev
@@ -152,6 +165,79 @@ channels:
     messages:
       serviceHealthChanged:
         $ref: '#/components/messages/ServiceHealthChanged'
+
+  ai/provider/connection/lost:
+    description: Published when provider connection is lost
+    messages:
+      providerConnectionLost:
+        $ref: '#/components/messages/ProviderConnectionLost'
+
+  ai/provider/connection/restored:
+    description: Published when provider connection is restored
+    messages:
+      providerConnectionRestored:
+        $ref: '#/components/messages/ProviderConnectionRestored'
+
+  ai/usage/threshold/reached:
+    description: Published when usage threshold is exceeded
+    messages:
+      usageThresholdReached:
+        $ref: '#/components/messages/UsageThresholdReached'
+
+  ai/health/checked:
+    description: Published when health check is performed
+    messages:
+      healthChecked:
+        $ref: '#/components/messages/HealthChecked'
+
+  ai/service/error:
+    description: Published when service-level errors occur
+    messages:
+      serviceError:
+        $ref: '#/components/messages/ServiceError'
+
+  ai/service/shutdown:
+    description: Published when service shutdown is initiated
+    messages:
+      serviceShutdown:
+        $ref: '#/components/messages/ServiceShutdown'
+
+  # Consumed Events
+  project/created:
+    description: Consumed when a new project is created
+    messages:
+      projectCreated:
+        $ref: '#/components/messages/ProjectCreated'
+
+  project/updated:
+    description: Consumed when a project is updated
+    messages:
+      projectUpdated:
+        $ref: '#/components/messages/ProjectUpdated'
+
+  project/deleted:
+    description: Consumed when a project is deleted
+    messages:
+      projectDeleted:
+        $ref: '#/components/messages/ProjectDeleted'
+
+  context/updated:
+    description: Consumed when project context is updated
+    messages:
+      contextUpdated:
+        $ref: '#/components/messages/ContextUpdated'
+
+  context/analysis/requested:
+    description: Consumed when context analysis is requested
+    messages:
+      contextAnalysisRequested:
+        $ref: '#/components/messages/ContextAnalysisRequested'
+
+  system/config/updated:
+    description: Consumed when system configuration is updated
+    messages:
+      systemConfigUpdated:
+        $ref: '#/components/messages/SystemConfigUpdated'
 
 operations:
   publishAIRequestReceived:
@@ -293,6 +379,91 @@ operations:
       $ref: '#/channels/ai~1service~1health~1changed'
     summary: Publish service health changed event
     description: Publishes an event when service health changes
+
+  publishProviderConnectionLost:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1provider~1connection~1lost'
+    summary: Publish provider connection lost event
+    description: Publishes an event when provider connection is lost
+
+  publishProviderConnectionRestored:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1provider~1connection~1restored'
+    summary: Publish provider connection restored event
+    description: Publishes an event when provider connection is restored
+
+  publishUsageThresholdReached:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1usage~1threshold~1reached'
+    summary: Publish usage threshold reached event
+    description: Publishes an event when usage threshold is exceeded
+
+  publishHealthChecked:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1health~1checked'
+    summary: Publish health checked event
+    description: Publishes an event when health check is performed
+
+  publishServiceError:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1service~1error'
+    summary: Publish service error event
+    description: Publishes an event when service-level errors occur
+
+  publishServiceShutdown:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1service~1shutdown'
+    summary: Publish service shutdown event
+    description: Publishes an event when service shutdown is initiated
+
+  # Consumed Event Operations
+  consumeProjectCreated:
+    action: receive
+    channel:
+      $ref: '#/channels/project~1created'
+    summary: Consume project created event
+    description: Handles events when a new project is created
+
+  consumeProjectUpdated:
+    action: receive
+    channel:
+      $ref: '#/channels/project~1updated'
+    summary: Consume project updated event
+    description: Handles events when a project is updated
+
+  consumeProjectDeleted:
+    action: receive
+    channel:
+      $ref: '#/channels/project~1deleted'
+    summary: Consume project deleted event
+    description: Handles events when a project is deleted
+
+  consumeContextUpdated:
+    action: receive
+    channel:
+      $ref: '#/channels/context~1updated'
+    summary: Consume context updated event
+    description: Handles events when project context is updated
+
+  consumeContextAnalysisRequested:
+    action: receive
+    channel:
+      $ref: '#/channels/context~1analysis~1requested'
+    summary: Consume context analysis requested event
+    description: Handles events when context analysis is requested
+
+  consumeSystemConfigUpdated:
+    action: receive
+    channel:
+      $ref: '#/channels/system~1config~1updated'
+    summary: Consume system config updated event
+    description: Handles events when system configuration is updated
 
 components:
   messages:
@@ -455,6 +626,103 @@ components:
       contentType: application/json
       payload:
         $ref: '#/components/schemas/ServiceHealthChangedPayload'
+
+    ProviderConnectionLost:
+      name: ProviderConnectionLost
+      title: Provider Connection Lost
+      summary: Provider connection has been lost
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProviderConnectionLostPayload'
+
+    ProviderConnectionRestored:
+      name: ProviderConnectionRestored
+      title: Provider Connection Restored
+      summary: Provider connection has been restored
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProviderConnectionRestoredPayload'
+
+    UsageThresholdReached:
+      name: UsageThresholdReached
+      title: Usage Threshold Reached
+      summary: Usage threshold has been exceeded
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UsageThresholdReachedPayload'
+
+    HealthChecked:
+      name: HealthChecked
+      title: Health Checked
+      summary: Health check has been performed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HealthCheckedPayload'
+
+    ServiceError:
+      name: ServiceError
+      title: Service Error
+      summary: Service-level error has occurred
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ServiceErrorPayload'
+
+    ServiceShutdown:
+      name: ServiceShutdown
+      title: Service Shutdown
+      summary: Service shutdown has been initiated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ServiceShutdownPayload'
+
+    # Consumed Event Messages
+    ProjectCreated:
+      name: ProjectCreated
+      title: Project Created
+      summary: A new project has been created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectCreatedPayload'
+
+    ProjectUpdated:
+      name: ProjectUpdated
+      title: Project Updated
+      summary: A project has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectUpdatedPayload'
+
+    ProjectDeleted:
+      name: ProjectDeleted
+      title: Project Deleted
+      summary: A project has been deleted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectDeletedPayload'
+
+    ContextUpdated:
+      name: ContextUpdated
+      title: Context Updated
+      summary: Project context has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextUpdatedPayload'
+
+    ContextAnalysisRequested:
+      name: ContextAnalysisRequested
+      title: Context Analysis Requested
+      summary: Context analysis has been requested
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextAnalysisRequestedPayload'
+
+    SystemConfigUpdated:
+      name: SystemConfigUpdated
+      title: System Config Updated
+      summary: System configuration has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SystemConfigUpdatedPayload'
 
   schemas:
     BaseEvent:
@@ -1281,6 +1549,543 @@ components:
             - currentHealth
             - components
             - metrics
+
+    ProviderConnectionLostPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            reason:
+              type: string
+              enum: [network_error, authentication_failed, timeout, rate_limit, server_error]
+            lastSuccessful:
+              type: string
+              format: date-time
+            connectionAttempts:
+              type: integer
+            impact:
+              type: object
+              properties:
+                activeRequests:
+                  type: integer
+                queuedRequests:
+                  type: integer
+                fallbackProvider:
+                  type: string
+            retryStrategy:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+                nextRetry:
+                  type: string
+                  format: date-time
+                maxRetries:
+                  type: integer
+          required:
+            - provider
+            - reason
+            - lastSuccessful
+            - connectionAttempts
+
+    ProviderConnectionRestoredPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            downtime:
+              type: number
+              description: Downtime duration in milliseconds
+            restoredAt:
+              type: string
+              format: date-time
+            healthCheck:
+              type: object
+              properties:
+                responseTime:
+                  type: number
+                success:
+                  type: boolean
+                modelsAvailable:
+                  type: integer
+            impact:
+              type: object
+              properties:
+                requestsProcessed:
+                  type: integer
+                queueCleared:
+                  type: boolean
+                fallbackDeactivated:
+                  type: boolean
+          required:
+            - provider
+            - downtime
+            - restoredAt
+            - healthCheck
+
+    UsageThresholdReachedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            thresholdType:
+              type: string
+              enum: [tokens, requests, cost, rate_limit]
+            current:
+              type: number
+            threshold:
+              type: number
+            timeframe:
+              type: string
+              enum: [minute, hour, day, month]
+            severity:
+              type: string
+              enum: [warning, critical]
+            action:
+              type: string
+              enum: [throttle, block, fallback, alert]
+            impact:
+              type: object
+              properties:
+                affectedUsers:
+                  type: integer
+                queuedRequests:
+                  type: integer
+                estimatedDelay:
+                  type: number
+          required:
+            - provider
+            - thresholdType
+            - current
+            - threshold
+            - timeframe
+            - severity
+            - action
+
+    HealthCheckedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            component:
+              type: string
+              enum: [service, redis, providers, context_service]
+            status:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            responseTime:
+              type: number
+            checks:
+              type: object
+              properties:
+                database:
+                  type: boolean
+                redis:
+                  type: boolean
+                providers:
+                  type: object
+                  properties:
+                    openai:
+                      type: boolean
+                    anthropic:
+                      type: boolean
+                    google:
+                      type: boolean
+                    azure:
+                      type: boolean
+                externalServices:
+                  type: boolean
+            metrics:
+              type: object
+              properties:
+                uptime:
+                  type: number
+                requestCount:
+                  type: integer
+                errorRate:
+                  type: number
+                averageResponseTime:
+                  type: number
+          required:
+            - component
+            - status
+            - responseTime
+            - checks
+
+    ServiceErrorPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            error:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [internal_error, configuration_error, dependency_error, resource_exhausted]
+                message:
+                  type: string
+                code:
+                  type: string
+                stack:
+                  type: string
+                details:
+                  type: object
+            context:
+              type: object
+              properties:
+                component:
+                  type: string
+                operation:
+                  type: string
+                requestId:
+                  type: string
+                userId:
+                  type: string
+            impact:
+              type: object
+              properties:
+                severity:
+                  type: string
+                  enum: [low, medium, high, critical]
+                affectedFeatures:
+                  type: array
+                  items:
+                    type: string
+                userImpact:
+                  type: string
+                  enum: [none, minimal, moderate, severe]
+            recovery:
+              type: object
+              properties:
+                automatic:
+                  type: boolean
+                action:
+                  type: string
+                estimatedTime:
+                  type: number
+          required:
+            - error
+            - context
+            - impact
+
+    ServiceShutdownPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            reason:
+              type: string
+              enum: [planned_maintenance, configuration_reload, critical_error, resource_exhaustion]
+            graceful:
+              type: boolean
+            timeout:
+              type: number
+              description: Shutdown timeout in milliseconds
+            activeConnections:
+              type: integer
+            pendingRequests:
+              type: integer
+            status:
+              type: object
+              properties:
+                database:
+                  type: string
+                  enum: [disconnected, draining, closed]
+                redis:
+                  type: string
+                  enum: [disconnected, draining, closed]
+                providers:
+                  type: string
+                  enum: [disconnected, draining, closed]
+            estimatedDowntime:
+              type: number
+              description: Expected downtime in milliseconds
+          required:
+            - reason
+            - graceful
+            - timeout
+            - activeConnections
+            - pendingRequests
+
+    # Consumed Event Schemas
+    ProjectCreatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            projectId:
+              type: string
+              format: uuid
+            name:
+              type: string
+            description:
+              type: string
+            owner:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            repository:
+              type: object
+              properties:
+                url:
+                  type: string
+                branch:
+                  type: string
+                provider:
+                  type: string
+                  enum: [github, gitlab, bitbucket]
+            configuration:
+              type: object
+              properties:
+                language:
+                  type: string
+                framework:
+                  type: string
+                aiEnabled:
+                  type: boolean
+                contextAnalysisEnabled:
+                  type: boolean
+          required:
+            - projectId
+            - name
+            - owner
+
+    ProjectUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            projectId:
+              type: string
+              format: uuid
+            changes:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  oldValue:
+                    type: string
+                  newValue:
+                    type: string
+            updatedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+            configuration:
+              type: object
+              properties:
+                contextAnalysisEnabled:
+                  type: boolean
+                aiEnabled:
+                  type: boolean
+                analysisDepth:
+                  type: string
+                  enum: [shallow, medium, deep]
+          required:
+            - projectId
+            - changes
+            - updatedBy
+
+    ProjectDeletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            projectId:
+              type: string
+              format: uuid
+            name:
+              type: string
+            deletedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+            cleanup:
+              type: object
+              properties:
+                contextRemoved:
+                  type: boolean
+                analysisDataRemoved:
+                  type: boolean
+                modelsCleared:
+                  type: boolean
+                cacheCleared:
+                  type: boolean
+          required:
+            - projectId
+            - name
+            - deletedBy
+            - cleanup
+
+    ContextUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            contextId:
+              type: string
+              format: uuid
+            projectId:
+              type: string
+              format: uuid
+            updateType:
+              type: string
+              enum: [incremental, full, reindexed]
+            changes:
+              type: object
+              properties:
+                documentsAdded:
+                  type: integer
+                documentsRemoved:
+                  type: integer
+                documentsModified:
+                  type: integer
+                totalDocuments:
+                  type: integer
+            impact:
+              type: object
+              properties:
+                reanalysisRequired:
+                  type: boolean
+                modelsAffected:
+                  type: array
+                  items:
+                    type: string
+                cacheInvalidated:
+                  type: boolean
+          required:
+            - contextId
+            - projectId
+            - updateType
+            - changes
+
+    ContextAnalysisRequestedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            requestId:
+              type: string
+              format: uuid
+            contextId:
+              type: string
+              format: uuid
+            projectId:
+              type: string
+              format: uuid
+            analysisType:
+              type: string
+              enum: [full, incremental, targeted, performance]
+            priority:
+              type: string
+              enum: [low, medium, high, urgent]
+            scope:
+              type: array
+              items:
+                type: string
+            configuration:
+              type: object
+              properties:
+                depth:
+                  type: string
+                  enum: [shallow, medium, deep]
+                includeTests:
+                  type: boolean
+                includeDocs:
+                  type: boolean
+                maxFiles:
+                  type: integer
+            requestedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                source:
+                  type: string
+                  enum: [user, system, scheduled]
+          required:
+            - requestId
+            - contextId
+            - projectId
+            - analysisType
+            - priority
+
+    SystemConfigUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            configSection:
+              type: string
+              enum: [providers, redis, rate_limits, analysis, logging]
+            changes:
+              type: array
+              items:
+                type: object
+                properties:
+                  key:
+                    type: string
+                  oldValue:
+                    type: string
+                  newValue:
+                    type: string
+                  type:
+                    type: string
+                    enum: [added, modified, removed]
+            updatedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                source:
+                  type: string
+                  enum: [admin, system, deployment]
+            impact:
+              type: object
+              properties:
+                restartRequired:
+                  type: boolean
+                affectedServices:
+                  type: array
+                  items:
+                    type: string
+                cacheCleared:
+                  type: boolean
+                providersReconfigured:
+                  type: boolean
+          required:
+            - configSection
+            - changes
+            - updatedBy
+            - impact
 
   correlationIds:
     requestCorrelation:
