@@ -15,6 +15,9 @@ servers:
   - url: https://api.cycletime.dev/standards
     description: Production server
 
+security:
+  - bearerAuth: []
+
 paths:
   /health:
     get:
@@ -23,6 +26,7 @@ paths:
       operationId: healthCheck
       tags:
         - Health
+      security: []
       responses:
         '200':
           description: Service is healthy
@@ -31,72 +35,346 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
 
-  /api/v1/standards:
-    get:
-      summary: List development standards
-      description: Get a list of development standards with optional filtering
-      operationId: listStandards
+  /api/v1/standards/validate:
+    post:
+      summary: Validate code against standards
+      description: Analyze provided code against team-specific development standards
+      operationId: validateCode
       tags:
-        - Standards
+        - Standards Validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CodeValidationRequest'
+            examples:
+              typescript_validation:
+                summary: TypeScript code validation
+                value:
+                  code: "function hello() { return 'world'; }"
+                  language: "typescript"
+                  teamId: "team-123"
+                  projectId: "proj-456"
+                  contextPath: "src/utils/hello.ts"
+      responses:
+        '200':
+          description: Code validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+              examples:
+                violations_found:
+                  summary: Validation with violations
+                  value:
+                    success: true
+                    data:
+                      overall_score: 75
+                      violations:
+                        - standardId: "std-001"
+                          ruleId: "no-var"
+                          severity: "error"
+                          message: "Use 'const' or 'let' instead of 'var'"
+                          line: 1
+                          column: 1
+                          suggestion: "Replace 'var' with 'const'"
+                      passed_rules: 12
+                      total_rules: 15
+                    metadata:
+                      requestId: "req-123"
+                      timestamp: "2025-01-20T10:30:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimit'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/standards/team/{teamId}/rules:
+    get:
+      summary: Get team-specific standards rules
+      description: Retrieve all standards rules configured for a specific team
+      operationId: getTeamStandards
+      tags:
+        - Standards Management
       parameters:
+        - name: teamId
+          in: path
+          required: true
+          description: Team identifier
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
         - name: category
           in: query
           description: Filter by standard category
           schema:
             type: string
             enum: [coding, testing, documentation, architecture, security]
-        - name: project
+        - name: active_only
           in: query
-          description: Filter by project ID
+          description: Return only active rules
           schema:
-            type: string
-            format: uuid
+            type: boolean
+            default: true
       responses:
         '200':
-          description: List of development standards
+          description: Team standards retrieved successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Standards endpoint - implementation pending"
-                  timestamp:
-                    type: string
-                    format: date-time
+                $ref: '#/components/schemas/TeamStandardsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/compliance:
-    get:
-      summary: Check compliance status
-      description: Get compliance status for a project or codebase
-      operationId: checkCompliance
+  /api/v1/standards/configure:
+    post:
+      summary: Configure team standards
+      description: Create or update standards configuration for a team
+      operationId: configureStandards
       tags:
-        - Compliance
+        - Standards Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StandardsConfigurationRequest'
+            examples:
+              team_config:
+                summary: Configure team standards
+                value:
+                  teamId: "team-123"
+                  standards:
+                    - name: "TypeScript Best Practices"
+                      category: "coding"
+                      rules:
+                        - id: "no-var"
+                          description: "Use const/let instead of var"
+                          severity: "error"
+                          pattern: "\\bvar\\s"
+                        - id: "prefer-const"
+                          description: "Prefer const for immutable variables"
+                          severity: "warning"
+                  enforcement_level: "warning"
+      responses:
+        '200':
+          description: Standards configured successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/compliance/report/{commitId}:
+    get:
+      summary: Get compliance report for commit
+      description: Retrieve detailed compliance analysis for a specific commit
+      operationId: getComplianceReport
+      tags:
+        - Compliance Reporting
       parameters:
-        - name: project
+        - name: commitId
+          in: path
+          required: true
+          description: Git commit identifier
+          schema:
+            type: string
+          example: "a1b2c3d4e5f6"
+        - name: include_suggestions
           in: query
-          description: Project ID to check compliance for
+          description: Include improvement suggestions
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Compliance report retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceReportResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/standards/enforcement/level:
+    put:
+      summary: Set enforcement level
+      description: Configure how strictly standards are enforced for a team
+      operationId: setEnforcementLevel
+      tags:
+        - Standards Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnforcementLevelRequest'
+      responses:
+        '200':
+          description: Enforcement level updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnforcementLevelResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/standards/templates:
+    get:
+      summary: Get standards templates
+      description: Retrieve available standards templates for different languages and frameworks
+      operationId: getStandardsTemplates
+      tags:
+        - Standards Templates
+      parameters:
+        - name: language
+          in: query
+          description: Filter by programming language
+          schema:
+            type: string
+            enum: [typescript, javascript, python, java, go, rust, php]
+        - name: framework
+          in: query
+          description: Filter by framework
+          schema:
+            type: string
+            enum: [react, vue, angular, express, fastify, django, spring, gin]
+      responses:
+        '200':
+          description: Standards templates retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardsTemplatesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/standards/analyze/code:
+    post:
+      summary: Analyze code compliance
+      description: Perform detailed compliance analysis on code with AI-powered insights
+      operationId: analyzeCodeCompliance
+      tags:
+        - Standards Analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CodeAnalysisRequest'
+      responses:
+        '200':
+          description: Code analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodeAnalysisResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimit'
+
+  /api/v1/compliance/metrics/{projectId}:
+    get:
+      summary: Get compliance metrics
+      description: Retrieve compliance metrics and trends for a project
+      operationId: getComplianceMetrics
+      tags:
+        - Compliance Reporting
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project identifier
+          schema:
+            type: string
+            format: uuid
+        - name: timeframe
+          in: query
+          description: Time range for metrics
+          schema:
+            type: string
+            enum: [day, week, month, quarter, year]
+            default: month
+        - name: granularity
+          in: query
+          description: Data granularity
+          schema:
+            type: string
+            enum: [hourly, daily, weekly]
+            default: daily
+      responses:
+        '200':
+          description: Compliance metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceMetricsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/standards/rule/{ruleId}:
+    delete:
+      summary: Delete standards rule
+      description: Remove a specific standards rule from team configuration
+      operationId: deleteStandardsRule
+      tags:
+        - Standards Management
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          description: Rule identifier
+          schema:
+            type: string
+        - name: teamId
+          in: query
+          required: true
+          description: Team identifier
           schema:
             type: string
             format: uuid
       responses:
         '200':
-          description: Compliance status information
+          description: Rule deleted successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Compliance endpoint - implementation pending"
-                  timestamp:
-                    type: string
-                    format: date-time
+                $ref: '#/components/schemas/RuleDeletionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
+    # Base Response Types
     HealthResponse:
       type: object
       properties:
@@ -116,6 +394,15 @@ components:
         uptime:
           type: number
           description: Service uptime in seconds
+        dependencies:
+          type: object
+          properties:
+            redis:
+              type: string
+              enum: [healthy, unhealthy]
+            ai_service:
+              type: string
+              enum: [healthy, unhealthy]
       required:
         - status
         - service
@@ -123,12 +410,212 @@ components:
         - timestamp
         - uptime
 
+    APIResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+        error:
+          $ref: '#/components/schemas/APIError'
+        metadata:
+          $ref: '#/components/schemas/ResponseMetadata'
+      required:
+        - success
+
+    APIError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+        field:
+          type: string
+      required:
+        - code
+        - message
+
+    ResponseMetadata:
+      type: object
+      properties:
+        requestId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        processingTime:
+          type: number
+          description: Processing time in milliseconds
+      required:
+        - requestId
+        - timestamp
+
+    # Standards Validation Schemas
+    CodeValidationRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Source code to validate
+        language:
+          type: string
+          enum: [typescript, javascript, python, java, go, rust, php]
+        teamId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        contextPath:
+          type: string
+          description: File path for context
+        standards:
+          type: array
+          items:
+            type: string
+          description: Specific standard IDs to validate against
+      required:
+        - code
+        - language
+        - teamId
+
+    ValidationResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ValidationResult'
+
+    ValidationResult:
+      type: object
+      properties:
+        overall_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Overall compliance score
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/StandardsViolation'
+        passed_rules:
+          type: integer
+          minimum: 0
+        total_rules:
+          type: integer
+          minimum: 0
+        analysis_time:
+          type: number
+          description: Analysis time in milliseconds
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImprovementSuggestion'
+      required:
+        - overall_score
+        - violations
+        - passed_rules
+        - total_rules
+
+    StandardsViolation:
+      type: object
+      properties:
+        standardId:
+          type: string
+        ruleId:
+          type: string
+        severity:
+          type: string
+          enum: [error, warning, info]
+        message:
+          type: string
+        line:
+          type: integer
+          minimum: 1
+        column:
+          type: integer
+          minimum: 1
+        suggestion:
+          type: string
+        fix_available:
+          type: boolean
+        auto_fixable:
+          type: boolean
+      required:
+        - standardId
+        - ruleId
+        - severity
+        - message
+
+    ImprovementSuggestion:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [refactor, optimization, best_practice]
+        title:
+          type: string
+        description:
+          type: string
+        impact:
+          type: string
+          enum: [low, medium, high]
+        effort:
+          type: string
+          enum: [low, medium, high]
+        code_example:
+          type: string
+      required:
+        - type
+        - title
+        - description
+        - impact
+        - effort
+
+    # Standards Management Schemas
+    TeamStandardsResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/TeamStandards'
+
+    TeamStandards:
+      type: object
+      properties:
+        teamId:
+          type: string
+          format: uuid
+        standards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Standard'
+        enforcement_level:
+          type: string
+          enum: [advisory, warning, blocking]
+        last_updated:
+          type: string
+          format: date-time
+        total_rules:
+          type: integer
+      required:
+        - teamId
+        - standards
+        - enforcement_level
+
     Standard:
       type: object
       properties:
         id:
           type: string
-          format: uuid
         name:
           type: string
         description:
@@ -140,18 +627,22 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/StandardRule'
-        createdAt:
+        active:
+          type: boolean
+        version:
+          type: string
+        created_at:
           type: string
           format: date-time
-        updatedAt:
+        updated_at:
           type: string
           format: date-time
       required:
         - id
         - name
-        - description
         - category
         - rules
+        - active
 
     StandardRule:
       type: object
@@ -167,6 +658,19 @@ components:
           type: string
           description: Regular expression or pattern to match
         examples:
+          type: object
+          properties:
+            good:
+              type: array
+              items:
+                type: string
+            bad:
+              type: array
+              items:
+                type: string
+        auto_fixable:
+          type: boolean
+        tags:
           type: array
           items:
             type: string
@@ -175,67 +679,721 @@ components:
         - description
         - severity
 
+    StandardsConfigurationRequest:
+      type: object
+      properties:
+        teamId:
+          type: string
+          format: uuid
+        standards:
+          type: array
+          items:
+            $ref: '#/components/schemas/StandardInput'
+        enforcement_level:
+          type: string
+          enum: [advisory, warning, blocking]
+        inherit_from_template:
+          type: string
+          description: Template ID to inherit from
+      required:
+        - teamId
+        - standards
+
+    StandardInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [coding, testing, documentation, architecture, security]
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/StandardRuleInput'
+        active:
+          type: boolean
+          default: true
+      required:
+        - name
+        - category
+        - rules
+
+    StandardRuleInput:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [error, warning, info]
+        pattern:
+          type: string
+        examples:
+          type: object
+        auto_fixable:
+          type: boolean
+          default: false
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - description
+        - severity
+
+    ConfigurationResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                teamId:
+                  type: string
+                  format: uuid
+                standards_count:
+                  type: integer
+                rules_count:
+                  type: integer
+                configuration_id:
+                  type: string
+
+    # Compliance Reporting Schemas
+    ComplianceReportResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ComplianceReport'
+
     ComplianceReport:
       type: object
       properties:
+        commitId:
+          type: string
         projectId:
           type: string
           format: uuid
-        overallScore:
+        overall_score:
+          type: number
+          minimum: 0
+          maximum: 100
+        file_reports:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileComplianceReport'
+        summary:
+          $ref: '#/components/schemas/ComplianceSummary'
+        trends:
+          $ref: '#/components/schemas/ComplianceTrends'
+        generated_at:
+          type: string
+          format: date-time
+      required:
+        - commitId
+        - projectId
+        - overall_score
+        - file_reports
+        - summary
+        - generated_at
+
+    FileComplianceReport:
+      type: object
+      properties:
+        file_path:
+          type: string
+        language:
+          type: string
+        score:
           type: number
           minimum: 0
           maximum: 100
         violations:
           type: array
           items:
-            $ref: '#/components/schemas/ComplianceViolation'
-        generatedAt:
+            $ref: '#/components/schemas/StandardsViolation'
+        lines_analyzed:
+          type: integer
+        complexity_score:
+          type: number
+      required:
+        - file_path
+        - language
+        - score
+        - violations
+
+    ComplianceSummary:
+      type: object
+      properties:
+        total_files:
+          type: integer
+        files_with_violations:
+          type: integer
+        total_violations:
+          type: integer
+        violations_by_severity:
+          type: object
+          properties:
+            error:
+              type: integer
+            warning:
+              type: integer
+            info:
+              type: integer
+        top_violation_types:
+          type: array
+          items:
+            type: object
+            properties:
+              rule_id:
+                type: string
+              count:
+                type: integer
+      required:
+        - total_files
+        - files_with_violations
+        - total_violations
+        - violations_by_severity
+
+    ComplianceTrends:
+      type: object
+      properties:
+        score_trend:
+          type: string
+          enum: [improving, stable, declining]
+        previous_score:
+          type: number
+        score_change:
+          type: number
+        violation_trend:
+          type: object
+          properties:
+            total_change:
+              type: integer
+            by_severity:
+              type: object
+              properties:
+                error:
+                  type: integer
+                warning:
+                  type: integer
+                info:
+                  type: integer
+
+    ComplianceMetricsResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ComplianceMetrics'
+
+    ComplianceMetrics:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        timeframe:
+          type: string
+        metrics:
+          type: object
+          properties:
+            average_score:
+              type: number
+            score_trend:
+              type: array
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  score:
+                    type: number
+            violation_trends:
+              type: object
+              properties:
+                total:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      date:
+                        type: string
+                        format: date
+                      count:
+                        type: integer
+                by_severity:
+                  type: object
+            top_violations:
+              type: array
+              items:
+                type: object
+                properties:
+                  rule_id:
+                    type: string
+                  rule_name:
+                    type: string
+                  count:
+                    type: integer
+                  trend:
+                    type: string
+                    enum: [increasing, stable, decreasing]
+            team_performance:
+              type: object
+              properties:
+                commits_analyzed:
+                  type: integer
+                improvement_rate:
+                  type: number
+                consistency_score:
+                  type: number
+      required:
+        - projectId
+        - timeframe
+        - metrics
+
+    # Enforcement and Templates Schemas
+    EnforcementLevelRequest:
+      type: object
+      properties:
+        teamId:
+          type: string
+          format: uuid
+        level:
+          type: string
+          enum: [advisory, warning, blocking]
+        rules_override:
+          type: array
+          items:
+            type: object
+            properties:
+              rule_id:
+                type: string
+              level:
+                type: string
+                enum: [advisory, warning, blocking]
+      required:
+        - teamId
+        - level
+
+    EnforcementLevelResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                teamId:
+                  type: string
+                  format: uuid
+                level:
+                  type: string
+                rules_count:
+                  type: integer
+                updated_at:
+                  type: string
+                  format: date-time
+
+    StandardsTemplatesResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/StandardsTemplates'
+
+    StandardsTemplates:
+      type: object
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/StandardsTemplate'
+        total_count:
+          type: integer
+      required:
+        - templates
+        - total_count
+
+    StandardsTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        language:
+          type: string
+        framework:
+          type: string
+        category:
+          type: string
+        standards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Standard'
+        usage_count:
+          type: integer
+        rating:
+          type: number
+          minimum: 0
+          maximum: 5
+        created_by:
+          type: string
+        created_at:
           type: string
           format: date-time
       required:
-        - projectId
-        - overallScore
-        - violations
-        - generatedAt
+        - id
+        - name
+        - language
+        - standards
 
-    ComplianceViolation:
+    # Code Analysis Schemas
+    CodeAnalysisRequest:
       type: object
       properties:
-        standardId:
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInput'
+        teamId:
           type: string
           format: uuid
-        ruleId:
+        projectId:
           type: string
-        severity:
-          type: string
-          enum: [error, warning, info]
-        message:
-          type: string
-        file:
-          type: string
-        line:
-          type: integer
-        column:
-          type: integer
+          format: uuid
+        analysis_options:
+          $ref: '#/components/schemas/AnalysisOptions'
       required:
-        - standardId
-        - ruleId
-        - severity
-        - message
+        - files
+        - teamId
 
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+    FileInput:
+      type: object
+      properties:
+        path:
+          type: string
+        content:
+          type: string
+        language:
+          type: string
+      required:
+        - path
+        - content
+        - language
 
-security:
-  - bearerAuth: []
+    AnalysisOptions:
+      type: object
+      properties:
+        include_suggestions:
+          type: boolean
+          default: true
+        include_complexity:
+          type: boolean
+          default: false
+        include_ai_insights:
+          type: boolean
+          default: true
+        severity_threshold:
+          type: string
+          enum: [info, warning, error]
+          default: info
+
+    CodeAnalysisResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/CodeAnalysisResult'
+
+    CodeAnalysisResult:
+      type: object
+      properties:
+        analysis_id:
+          type: string
+        overall_score:
+          type: number
+          minimum: 0
+          maximum: 100
+        file_analyses:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileAnalysis'
+        ai_insights:
+          $ref: '#/components/schemas/AIInsights'
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recommendation'
+        processing_time:
+          type: number
+        analyzed_at:
+          type: string
+          format: date-time
+      required:
+        - analysis_id
+        - overall_score
+        - file_analyses
+        - analyzed_at
+
+    FileAnalysis:
+      type: object
+      properties:
+        file_path:
+          type: string
+        language:
+          type: string
+        score:
+          type: number
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/StandardsViolation'
+        complexity_metrics:
+          $ref: '#/components/schemas/ComplexityMetrics'
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImprovementSuggestion'
+
+    ComplexityMetrics:
+      type: object
+      properties:
+        cyclomatic_complexity:
+          type: number
+        cognitive_complexity:
+          type: number
+        maintainability_index:
+          type: number
+        lines_of_code:
+          type: integer
+        technical_debt_minutes:
+          type: number
+
+    AIInsights:
+      type: object
+      properties:
+        overall_assessment:
+          type: string
+        key_patterns:
+          type: array
+          items:
+            type: string
+        improvement_priorities:
+          type: array
+          items:
+            type: object
+            properties:
+              area:
+                type: string
+              priority:
+                type: string
+                enum: [low, medium, high, critical]
+              description:
+                type: string
+        learning_opportunities:
+          type: array
+          items:
+            type: string
+
+    Recommendation:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [refactoring, performance, security, maintainability]
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        title:
+          type: string
+        description:
+          type: string
+        impact:
+          type: string
+        effort_estimate:
+          type: string
+        resources:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [documentation, tutorial, tool, example]
+              title:
+                type: string
+              url:
+                type: string
+
+    RuleDeletionResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                ruleId:
+                  type: string
+                teamId:
+                  type: string
+                  format: uuid
+                deleted_at:
+                  type: string
+                  format: date-time
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/APIResponse'
+              - type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    $ref: '#/components/schemas/APIError'
+
+    Unauthorized:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/APIResponse'
+              - type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: "UNAUTHORIZED"
+                      message:
+                        type: string
+                        example: "Authentication token required"
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/APIResponse'
+              - type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: "FORBIDDEN"
+                      message:
+                        type: string
+                        example: "Insufficient permissions"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/APIResponse'
+              - type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: "NOT_FOUND"
+                      message:
+                        type: string
+                        example: "Resource not found"
+
+    RateLimit:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/APIResponse'
+              - type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: "RATE_LIMIT_EXCEEDED"
+                      message:
+                        type: string
+                        example: "Rate limit exceeded, retry after 60 seconds"
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/APIResponse'
+              - type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: "INTERNAL_ERROR"
+                      message:
+                        type: string
+                        example: "An internal error occurred"
 
 tags:
   - name: Health
     description: Service health and status endpoints
-  - name: Standards
-    description: Development standards management
-  - name: Compliance
-    description: Compliance checking and reporting
+  - name: Standards Validation
+    description: Code validation against development standards
+  - name: Standards Management
+    description: Team standards configuration and management
+  - name: Compliance Reporting
+    description: Compliance analysis and reporting
+  - name: Standards Templates
+    description: Pre-defined standards templates
+  - name: Standards Analysis
+    description: Advanced code analysis with AI insights
