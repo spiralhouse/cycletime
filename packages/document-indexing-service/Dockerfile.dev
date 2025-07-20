@@ -1,0 +1,40 @@
+# Development Dockerfile for Document Indexing Service
+FROM node:22-alpine
+
+# Install system dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    libc6-compat
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY packages/document-indexing-service/package*.json ./packages/document-indexing-service/
+
+# Install all dependencies (including dev dependencies)
+RUN npm ci
+
+# Copy source code
+COPY packages/document-indexing-service/ ./packages/document-indexing-service/
+COPY packages/shared-types/ ./packages/shared-types/
+COPY packages/shared-utils/ ./packages/shared-utils/
+COPY packages/shared-config/ ./packages/shared-config/
+
+# Copy TypeScript configuration
+COPY tsconfig.json ./
+
+# Create data directory for vector databases
+RUN mkdir -p /app/data
+
+# Set working directory to service
+WORKDIR /app/packages/document-indexing-service
+
+# Expose port
+EXPOSE 3003
+
+# Development command with auto-reload
+CMD ["npm", "run", "dev"]

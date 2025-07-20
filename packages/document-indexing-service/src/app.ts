@@ -119,12 +119,10 @@ export async function createApp(options: AppOptions): Promise<FastifyInstance> {
 
   // Global error handler
   app.setErrorHandler((error, request, reply) => {
-    logger.error({
-      error: error.message,
-      stack: error.stack,
+    logger.error('Request error', error, {
       url: request.url,
       method: request.method,
-    }, 'Request error');
+    });
 
     const statusCode = error.statusCode || 500;
     const response = {

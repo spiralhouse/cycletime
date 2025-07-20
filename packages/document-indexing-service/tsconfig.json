@@ -2,7 +2,8 @@
   "extends": "../shared-config/tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "tsBuildInfoFile": "./dist/.tsbuildinfo-document-indexing"
   },
   "include": [
     "src/**/*"
@@ -19,9 +20,6 @@
     },
     {
       "path": "../shared-utils"
-    },
-    {
-      "path": "../shared-config"
     }
   ]
 }
