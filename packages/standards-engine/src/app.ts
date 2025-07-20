@@ -8,14 +8,25 @@ import swaggerUi from '@fastify/swagger-ui';
 import { APIResponse, HttpStatus } from '@cycletime/shared-types';
 import { getEnvVar, getEnvVarAsNumber, isProduction } from '@cycletime/shared-config';
 import { logger } from './utils/logger';
+import { StandardsController } from './controllers/standards-controller.js';
+import { ComplianceController } from './controllers/compliance-controller.js';
+import { HealthController } from './controllers/health-controller.js';
 
 export class App {
   private server: FastifyInstance;
+  private standardsController: StandardsController;
+  private complianceController: ComplianceController;
+  private healthController: HealthController;
 
   constructor() {
     this.server = fastify({
       loggerInstance: logger,
     });
+
+    // Initialize controllers
+    this.standardsController = new StandardsController();
+    this.complianceController = new ComplianceController();
+    this.healthController = new HealthController();
 
     this.registerPlugins();
     this.registerRoutes();
@@ -115,56 +126,30 @@ export class App {
   }
 
   private registerRoutes(): void {
-    // Health check endpoint
-    this.server.get('/health', async (request, reply) => {
-      const response: APIResponse = {
-        success: true,
-        data: {
-          status: 'healthy',
-          service: 'standards-engine',
-          version: getEnvVar('npm_package_version', '1.0.0'),
-          timestamp: new Date().toISOString(),
-          uptime: process.uptime(),
-        },
-        metadata: {
-          requestId: request.id,
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-        },
-      };
-      reply.status(HttpStatus.OK).send(response);
-    });
+    // Health endpoints
+    this.server.get('/health', this.healthController.healthCheck.bind(this.healthController));
+    this.server.get('/health/detailed', this.healthController.detailedHealthCheck.bind(this.healthController));
+    this.server.get('/health/dependencies', this.healthController.dependencyCheck.bind(this.healthController));
+    this.server.get('/health/readiness', this.healthController.readinessProbe.bind(this.healthController));
+    this.server.get('/health/liveness', this.healthController.livenessProbe.bind(this.healthController));
 
-    // Basic standards endpoints placeholders
-    this.server.get('/api/v1/standards', async (request, reply) => {
-      const response: APIResponse = {
-        success: true,
-        data: {
-          message: 'Standards endpoint - implementation pending',
-        },
-        metadata: {
-          requestId: request.id,
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-        },
-      };
-      reply.status(HttpStatus.OK).send(response);
-    });
+    // Standards endpoints
+    this.server.post('/api/v1/standards/validate', this.standardsController.validateCode.bind(this.standardsController));
+    this.server.get('/api/v1/standards/team/:teamId/rules', this.standardsController.getTeamStandards.bind(this.standardsController));
+    this.server.post('/api/v1/standards/configure', this.standardsController.configureStandards.bind(this.standardsController));
+    this.server.get('/api/v1/standards/templates', this.standardsController.getStandardsTemplates.bind(this.standardsController));
+    this.server.post('/api/v1/standards/analyze/code', this.standardsController.analyzeCodeCompliance.bind(this.standardsController));
+    this.server.delete('/api/v1/standards/rule/:ruleId', this.standardsController.deleteStandardsRule.bind(this.standardsController));
+    this.server.put('/api/v1/standards/enforcement/level', this.standardsController.setEnforcementLevel.bind(this.standardsController));
 
-    this.server.get('/api/v1/compliance', async (request, reply) => {
-      const response: APIResponse = {
-        success: true,
-        data: {
-          message: 'Compliance endpoint - implementation pending',
-        },
-        metadata: {
-          requestId: request.id,
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-        },
-      };
-      reply.status(HttpStatus.OK).send(response);
-    });
+    // Compliance endpoints
+    this.server.get('/api/v1/compliance/report/:commitId', this.complianceController.getComplianceReport.bind(this.complianceController));
+    this.server.get('/api/v1/compliance/metrics/:projectId', this.complianceController.getComplianceMetrics.bind(this.complianceController));
+    this.server.get('/api/v1/compliance/trends/:projectId', this.complianceController.getComplianceTrends.bind(this.complianceController));
+    this.server.get('/api/v1/compliance/alerts/:projectId', this.complianceController.getComplianceAlerts.bind(this.complianceController));
+    this.server.get('/api/v1/compliance/summary', this.complianceController.getMultiProjectSummary.bind(this.complianceController));
+    this.server.get('/api/v1/compliance/export/:projectId', this.complianceController.exportComplianceData.bind(this.complianceController));
+    this.server.get('/api/v1/compliance/historical/:projectId', this.complianceController.getHistoricalComparison.bind(this.complianceController));
 
     logger.info('Routes registered successfully');
   }
