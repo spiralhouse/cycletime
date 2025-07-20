@@ -28,7 +28,7 @@ export class EventService extends EventEmitter {
       timestamp: new Date().toISOString(),
       source: 'ai-service',
       version: '1.0.0',
-      correlationId: payload.correlationId || crypto.randomUUID(),
+      correlationId: payload.metadata?.correlationId || payload.correlationId || crypto.randomUUID(),
       ...payload,
     };
 
@@ -380,6 +380,81 @@ export class EventService extends EventEmitter {
       requestsQueued: limitInfo.requestsQueued || 0,
       estimatedDelay: limitInfo.estimatedDelay || 0,
       fallbackProvider: limitInfo.fallbackProvider,
+      metadata,
+    });
+  }
+
+  async publishProviderConnectionLost(providerId: string, connectionInfo: any, metadata: any): Promise<void> {
+    await this.publishEvent('ai.provider.connection.lost', {
+      provider: providerId,
+      connectionLost: new Date().toISOString(),
+      lastSuccessfulConnection: connectionInfo.lastSuccessfulConnection || new Date(Date.now() - 30000).toISOString(),
+      error: {
+        type: connectionInfo.error?.type || 'network_error',
+        message: connectionInfo.error?.message || 'Connection lost to provider',
+        code: connectionInfo.error?.code || 'CONNECTION_LOST',
+        details: connectionInfo.error?.details,
+      },
+      impact: {
+        affectedModels: connectionInfo.impact?.affectedModels || [],
+        queuedRequests: connectionInfo.impact?.queuedRequests || 0,
+        fallbackProvider: connectionInfo.impact?.fallbackProvider,
+        estimatedDowntime: connectionInfo.impact?.estimatedDowntime || 300000, // 5 minutes
+      },
+      recovery: {
+        retryAttempts: connectionInfo.recovery?.retryAttempts || 0,
+        nextRetry: connectionInfo.recovery?.nextRetry || new Date(Date.now() + 30000).toISOString(),
+        automaticFailover: connectionInfo.recovery?.automaticFailover !== undefined ? connectionInfo.recovery.automaticFailover : true,
+      },
+      metadata,
+    });
+  }
+
+  async publishProviderConnectionRestored(providerId: string, restorationInfo: any, metadata: any): Promise<void> {
+    await this.publishEvent('ai.provider.connection.restored', {
+      provider: providerId,
+      connectionRestored: new Date().toISOString(),
+      downtimeDuration: restorationInfo.downtimeDuration || 30000,
+      connectionLost: restorationInfo.connectionLost || new Date(Date.now() - 30000).toISOString(),
+      restorationMethod: restorationInfo.restorationMethod || 'automatic_retry',
+      healthCheck: {
+        responseTime: restorationInfo.healthCheck?.responseTime || 500 + Math.random() * 1000,
+        availability: restorationInfo.healthCheck?.availability || 1.0,
+        modelsVerified: restorationInfo.healthCheck?.modelsVerified || [],
+        testRequestSuccessful: restorationInfo.healthCheck?.testRequestSuccessful || true,
+      },
+      impact: {
+        queuedRequestsResumed: restorationInfo.impact?.queuedRequestsResumed || 0,
+        fallbackProviderDisabled: restorationInfo.impact?.fallbackProviderDisabled !== undefined ? restorationInfo.impact.fallbackProviderDisabled : false,
+        serviceFullyRestored: restorationInfo.impact?.serviceFullyRestored !== undefined ? restorationInfo.impact.serviceFullyRestored : true,
+      },
+      metadata,
+    });
+  }
+
+  async publishUsageThresholdReached(thresholdInfo: any, metadata: any): Promise<void> {
+    await this.publishEvent('ai.usage.threshold.reached', {
+      thresholdType: thresholdInfo.thresholdType || 'tokens_per_hour',
+      current: thresholdInfo.current || 0,
+      threshold: thresholdInfo.threshold || 100000,
+      percentage: thresholdInfo.percentage || ((thresholdInfo.current || 0) / (thresholdInfo.threshold || 1)) * 100,
+      windowStart: thresholdInfo.windowStart || new Date(Date.now() - 3600000).toISOString(),
+      windowEnd: thresholdInfo.windowEnd || new Date().toISOString(),
+      provider: thresholdInfo.provider,
+      model: thresholdInfo.model,
+      userId: thresholdInfo.userId,
+      projectId: thresholdInfo.projectId,
+      actions: {
+        alertSent: thresholdInfo.actions?.alertSent || true,
+        rateLimitApplied: thresholdInfo.actions?.rateLimitApplied || false,
+        requestsQueued: thresholdInfo.actions?.requestsQueued || 0,
+        fallbackProviderActivated: thresholdInfo.actions?.fallbackProviderActivated || false,
+      },
+      forecast: {
+        timeToLimit: thresholdInfo.forecast?.timeToLimit || 1800000, // 30 minutes
+        recommendedAction: thresholdInfo.forecast?.recommendedAction || 'monitor',
+        projectedUsage: thresholdInfo.forecast?.projectedUsage || thresholdInfo.current * 1.2,
+      },
       metadata,
     });
   }

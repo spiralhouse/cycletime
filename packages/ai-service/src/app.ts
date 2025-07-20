@@ -22,6 +22,7 @@ import { requestController } from './controllers/request-controller';
 // Import services
 import { EventService } from './services/event-service';
 import { MockDataService } from './services/mock-data-service';
+import { MessageBrokerManager, createMessageBroker } from './services/message-broker';
 
 // Import middleware
 import { authPlugin } from './middleware/auth-middleware';
@@ -128,10 +129,34 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   // Initialize services
   const eventService = new EventService();
   const mockDataService = new MockDataService();
+  
+  // Initialize message broker (use Redis in production, memory in development)
+  const brokerType = process.env.MESSAGE_BROKER || (process.env.NODE_ENV === 'production' ? 'redis' : 'memory');
+  const messageBroker = createMessageBroker(
+    brokerType as 'memory' | 'redis', 
+    process.env.REDIS_URL || 'redis://localhost:6379'
+  );
+
+  // Initialize message broker
+  try {
+    await messageBroker.initialize();
+    logger.info('Message broker initialized successfully', { 
+      brokerType,
+      connected: messageBroker.isConnected() 
+    });
+  } catch (error) {
+    const logContext = { brokerType };
+    logger.error('Failed to initialize message broker', error instanceof Error ? error : undefined, logContext);
+    // Continue without message broker for development
+    if (process.env.NODE_ENV === 'production') {
+      throw error;
+    }
+  }
 
   // Decorate Fastify instance with services
   app.decorate('eventService', eventService);
   app.decorate('mockDataService', mockDataService);
+  app.decorate('messageBroker', messageBroker);
 
   // Register authentication middleware
   await app.register(authPlugin);
@@ -207,8 +232,9 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
         timestamp: new Date().toISOString(),
       });
       
-      // Cleanup mock data service
+      // Cleanup services
       mockDataService.cleanup();
+      await messageBroker.shutdown();
       
       await app.close();
       process.exit(0);
@@ -229,5 +255,6 @@ declare module 'fastify' {
   interface FastifyInstance {
     eventService: EventService;
     mockDataService: MockDataService;
+    messageBroker: MessageBrokerManager;
   }
 }
