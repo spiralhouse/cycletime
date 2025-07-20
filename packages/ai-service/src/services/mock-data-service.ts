@@ -11,11 +11,41 @@ export interface MockProvider {
   configuration: {
     configured: boolean;
     lastConfigured?: string;
+    apiKey?: string;
+    baseUrl?: string;
+    organization?: string;
+    region?: string;
   };
   metrics: {
     requestCount: number;
     errorRate: number;
     averageResponseTime: number;
+    uptime: number;
+    lastError?: string;
+  };
+}
+
+export interface MockRequest {
+  id: string;
+  type: 'chat_completion' | 'chat_completion_stream' | 'embedding' | 'context_analysis' | 'project_analysis';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  provider: string;
+  model: string;
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+  processingTime?: number;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  userId: string;
+  sessionId?: string | undefined;
+  projectId?: string | undefined;
+  requestData: any;
+  responseData?: any;
+  error?: {
+    type: string;
+    message: string;
+    code: string;
+    retryable: boolean;
   };
 }
 
@@ -64,10 +94,14 @@ export class MockDataService {
   private projectInsights: Map<string, MockProjectInsight[]> = new Map();
   private projectRecommendations: Map<string, MockProjectRecommendation[]> = new Map();
   private contextStore: Map<string, any> = new Map();
-  private requestQueue: Map<string, any> = new Map();
+  private requestQueue: Map<string, MockRequest> = new Map();
+  private analysisQueue: Map<string, any> = new Map();
+  private healthSimulationInterval: NodeJS.Timeout | null = null;
+  private processingTimeouts: Map<string, NodeJS.Timeout> = new Map();
 
   constructor() {
     this.initializeMockData();
+    this.startHealthSimulation();
   }
 
   private initializeMockData(): void {
@@ -84,11 +118,14 @@ export class MockDataService {
         configuration: {
           configured: true,
           lastConfigured: new Date(Date.now() - 86400000).toISOString(),
+          baseUrl: 'https://api.openai.com/v1',
+          organization: 'cycletime-org',
         },
         metrics: {
           requestCount: 1247,
           errorRate: 0.02,
           averageResponseTime: 850,
+          uptime: 0.998,
         },
       },
       {
@@ -102,11 +139,14 @@ export class MockDataService {
         configuration: {
           configured: true,
           lastConfigured: new Date(Date.now() - 172800000).toISOString(),
+          baseUrl: 'https://api.anthropic.com',
+          region: 'us-east-1',
         },
         metrics: {
           requestCount: 892,
           errorRate: 0.015,
           averageResponseTime: 1200,
+          uptime: 0.995,
         },
       },
       {
@@ -120,11 +160,15 @@ export class MockDataService {
         configuration: {
           configured: true,
           lastConfigured: new Date(Date.now() - 259200000).toISOString(),
+          baseUrl: 'https://generativelanguage.googleapis.com/v1',
+          region: 'us-central1',
         },
         metrics: {
           requestCount: 456,
           errorRate: 0.08,
           averageResponseTime: 1800,
+          uptime: 0.985,
+          lastError: 'Rate limit exceeded',
         },
       },
       {
@@ -137,11 +181,15 @@ export class MockDataService {
         models: ['gpt-4', 'gpt-35-turbo', 'text-embedding-ada-002'],
         configuration: {
           configured: false,
+          baseUrl: 'https://cycletime.openai.azure.com',
+          region: 'eastus',
         },
         metrics: {
           requestCount: 0,
           errorRate: 0,
           averageResponseTime: 0,
+          uptime: 0,
+          lastError: 'Authentication failed',
         },
       },
     ];
@@ -249,6 +297,66 @@ export class MockDataService {
     logger.info('Mock data service initialized with sample data');
   }
 
+  private startHealthSimulation(): void {
+    // Simulate dynamic health status changes every 30 seconds
+    this.healthSimulationInterval = setInterval(() => {
+      this.simulateProviderHealthChanges();
+    }, 30000);
+  }
+
+  private simulateProviderHealthChanges(): void {
+    this.providers.forEach(provider => {
+      // Skip unconfigured providers
+      if (!provider.configuration.configured) return;
+
+      const random = Math.random();
+      
+      // Simulate health changes based on current health
+      switch (provider.health) {
+        case 'healthy':
+          if (random < 0.05) { // 5% chance to degrade
+            provider.health = 'degraded';
+            provider.metrics.errorRate = Math.min(provider.metrics.errorRate + 0.02, 0.1);
+            logger.debug(`Provider ${provider.id} health degraded`);
+          }
+          break;
+        case 'degraded':
+          if (random < 0.3) { // 30% chance to recover
+            provider.health = 'healthy';
+            provider.metrics.errorRate = Math.max(provider.metrics.errorRate - 0.01, 0.01);
+            logger.debug(`Provider ${provider.id} health recovered`);
+          } else if (random < 0.1) { // 10% chance to become unhealthy
+            provider.health = 'unhealthy';
+            provider.metrics.errorRate = Math.min(provider.metrics.errorRate + 0.05, 0.2);
+            provider.metrics.lastError = 'Service unavailable';
+            logger.debug(`Provider ${provider.id} health became unhealthy`);
+          }
+          break;
+        case 'unhealthy':
+          if (random < 0.2) { // 20% chance to improve to degraded
+            provider.health = 'degraded';
+            provider.metrics.errorRate = Math.max(provider.metrics.errorRate - 0.03, 0.05);
+            delete provider.metrics.lastError;
+            logger.debug(`Provider ${provider.id} health improved to degraded`);
+          }
+          break;
+      }
+
+      provider.lastHealthCheck = new Date().toISOString();
+    });
+  }
+
+  public cleanup(): void {
+    if (this.healthSimulationInterval) {
+      clearInterval(this.healthSimulationInterval);
+      this.healthSimulationInterval = null;
+    }
+    
+    // Clear any pending processing timeouts
+    this.processingTimeouts.forEach(timeout => clearTimeout(timeout));
+    this.processingTimeouts.clear();
+  }
+
   // Provider methods
   getProviders(): MockProvider[] {
     return this.providers;
@@ -274,7 +382,7 @@ export class MockDataService {
     }
   }
 
-  configureProvider(id: string, configuration: any): boolean {
+  configureProvider(id: string, _configuration: any): boolean {
     const provider = this.getProvider(id);
     if (provider) {
       provider.configuration.configured = true;
@@ -361,7 +469,7 @@ export class MockDataService {
     return this.contextStore.get(contextId);
   }
 
-  optimizeContext(contextId: string, options: any): any {
+  optimizeContext(contextId: string, _options: any): any {
     const context = this.contextStore.get(contextId);
     if (!context) {
       return null;
@@ -423,14 +531,14 @@ export class MockDataService {
   }
 
   // Project analysis methods
-  startProjectAnalysis(projectId: string, options: any): { analysisId: string; status: string } {
+  startProjectAnalysis(projectId: string, _options: any): { analysisId: string; status: string } {
     const analysisId = crypto.randomUUID();
     const analysis = {
       analysisId,
       projectId,
       status: 'processing',
-      analysisType: options.analysisType || 'full',
-      scope: options.scope || ['code', 'documentation', 'issues', 'metrics'],
+      analysisType: _options.analysisType || 'full',
+      scope: _options.scope || ['code', 'documentation', 'issues', 'metrics'],
       createdAt: new Date().toISOString(),
       progress: {
         stage: 'scanning',
@@ -439,11 +547,11 @@ export class MockDataService {
       },
     };
 
-    this.requestQueue.set(analysisId, analysis);
+    this.analysisQueue.set(analysisId, analysis);
 
     // Simulate analysis completion
     setTimeout(() => {
-      const anal = this.requestQueue.get(analysisId);
+      const anal = this.analysisQueue.get(analysisId);
       if (anal) {
         anal.status = 'completed';
         anal.completedAt = new Date().toISOString();
@@ -457,10 +565,10 @@ export class MockDataService {
   }
 
   getProjectAnalysis(analysisId: string): any {
-    return this.requestQueue.get(analysisId);
+    return this.analysisQueue.get(analysisId);
   }
 
-  getProjectInsights(projectId: string, timeframe: string = 'month'): MockProjectInsight[] {
+  getProjectInsights(projectId: string, _timeframe: string = 'month'): MockProjectInsight[] {
     if (!this.projectInsights.has(projectId)) {
       this.generateProjectInsights(projectId);
     }
@@ -586,10 +694,243 @@ export class MockDataService {
     this.projectRecommendations.set(projectId, recommendations);
   }
 
+  // Request management methods
+  createAIRequest(type: MockRequest['type'], provider: string, model: string, requestData: any, userId: string, priority: MockRequest['priority'] = 'medium', sessionId?: string, projectId?: string): MockRequest {
+    const requestId = crypto.randomUUID();
+    const request: MockRequest = {
+      id: requestId,
+      type,
+      status: 'pending',
+      provider,
+      model,
+      createdAt: new Date().toISOString(),
+      priority,
+      userId,
+      sessionId,
+      projectId,
+      requestData,
+    };
+
+    this.requestQueue.set(requestId, request);
+    
+    // Start processing simulation
+    this.simulateRequestProcessing(requestId);
+    
+    return request;
+  }
+
+  getAIRequest(requestId: string): MockRequest | undefined {
+    return this.requestQueue.get(requestId);
+  }
+
+  cancelAIRequest(requestId: string): boolean {
+    const request = this.requestQueue.get(requestId);
+    if (request && request.status === 'pending') {
+      request.status = 'cancelled';
+      request.completedAt = new Date().toISOString();
+      
+      // Clear any pending timeout
+      const timeout = this.processingTimeouts.get(requestId);
+      if (timeout) {
+        clearTimeout(timeout);
+        this.processingTimeouts.delete(requestId);
+      }
+      
+      return true;
+    }
+    return false;
+  }
+
+  private simulateRequestProcessing(requestId: string): void {
+    const request = this.requestQueue.get(requestId);
+    if (!request) return;
+
+    const provider = this.getProvider(request.provider);
+    if (!provider) {
+      this.failRequest(requestId, 'Provider not found', 'PROVIDER_NOT_FOUND');
+      return;
+    }
+
+    if (!provider.configuration.configured) {
+      this.failRequest(requestId, 'Provider not configured', 'PROVIDER_NOT_CONFIGURED');
+      return;
+    }
+
+    // Calculate processing time based on request type and provider health
+    let baseProcessingTime = this.getBaseProcessingTime(request.type);
+    
+    // Adjust based on provider health
+    switch (provider.health) {
+      case 'healthy':
+        baseProcessingTime *= 0.8 + Math.random() * 0.4; // 80-120% of base time
+        break;
+      case 'degraded':
+        baseProcessingTime *= 1.5 + Math.random() * 1.0; // 150-250% of base time
+        break;
+      case 'unhealthy':
+        // High chance of failure
+        if (Math.random() < 0.7) {
+          this.failRequest(requestId, 'Provider unhealthy', 'PROVIDER_UNHEALTHY');
+          return;
+        }
+        baseProcessingTime *= 3.0 + Math.random() * 2.0; // 300-500% of base time
+        break;
+    }
+
+    // Adjust based on priority
+    switch (request.priority) {
+      case 'urgent':
+        baseProcessingTime *= 0.5;
+        break;
+      case 'high':
+        baseProcessingTime *= 0.7;
+        break;
+      case 'low':
+        baseProcessingTime *= 1.5;
+        break;
+    }
+
+    // Start processing after a small delay
+    setTimeout(() => {
+      const req = this.requestQueue.get(requestId);
+      if (req && req.status === 'pending') {
+        req.status = 'processing';
+        req.startedAt = new Date().toISOString();
+      }
+    }, 100 + Math.random() * 200);
+
+    // Complete processing after calculated time
+    const timeout = setTimeout(() => {
+      this.completeRequest(requestId, baseProcessingTime);
+      this.processingTimeouts.delete(requestId);
+    }, baseProcessingTime);
+
+    this.processingTimeouts.set(requestId, timeout);
+  }
+
+  private getBaseProcessingTime(requestType: MockRequest['type']): number {
+    const times = {
+      chat_completion: 2000 + Math.random() * 8000, // 2-10 seconds
+      chat_completion_stream: 3000 + Math.random() * 12000, // 3-15 seconds
+      embedding: 500 + Math.random() * 1500, // 0.5-2 seconds
+      context_analysis: 10000 + Math.random() * 20000, // 10-30 seconds
+      project_analysis: 15000 + Math.random() * 45000, // 15-60 seconds
+    };
+    return times[requestType] || 5000;
+  }
+
+  private completeRequest(requestId: string, processingTime: number): void {
+    const request = this.requestQueue.get(requestId);
+    if (!request || request.status !== 'processing') return;
+
+    // Simulate occasional failures
+    if (Math.random() < 0.05) { // 5% failure rate
+      this.failRequest(requestId, 'Processing failed', 'PROCESSING_ERROR');
+      return;
+    }
+
+    request.status = 'completed';
+    request.completedAt = new Date().toISOString();
+    request.processingTime = processingTime;
+
+    // Generate appropriate response data
+    switch (request.type) {
+      case 'chat_completion':
+      case 'chat_completion_stream':
+        request.responseData = this.generateChatCompletion(request.requestData);
+        break;
+      case 'embedding':
+        request.responseData = this.generateEmbeddings(request.requestData);
+        break;
+      case 'context_analysis':
+        request.responseData = this.generateContextAnalysis(request.requestData);
+        break;
+      case 'project_analysis':
+        request.responseData = this.generateProjectAnalysisResponse(request.requestData);
+        break;
+    }
+
+    // Update provider metrics
+    const provider = this.getProvider(request.provider);
+    if (provider) {
+      provider.metrics.requestCount++;
+      provider.metrics.averageResponseTime = 
+        (provider.metrics.averageResponseTime * 0.9) + (processingTime * 0.1);
+    }
+  }
+
+  private failRequest(requestId: string, message: string, code: string): void {
+    const request = this.requestQueue.get(requestId);
+    if (!request) return;
+
+    request.status = 'failed';
+    request.completedAt = new Date().toISOString();
+    request.error = {
+      type: this.getErrorType(code),
+      message,
+      code,
+      retryable: this.isRetryableError(code),
+    };
+
+    // Update provider error metrics
+    const provider = this.getProvider(request.provider);
+    if (provider) {
+      provider.metrics.errorRate = Math.min(provider.metrics.errorRate + 0.001, 1.0);
+      provider.metrics.lastError = message;
+    }
+  }
+
+  private getErrorType(code: string): string {
+    const errorTypeMap: { [key: string]: string } = {
+      'PROVIDER_NOT_FOUND': 'validation_error',
+      'PROVIDER_NOT_CONFIGURED': 'authentication',
+      'PROVIDER_UNHEALTHY': 'provider_error',
+      'PROCESSING_ERROR': 'internal_error',
+      'RATE_LIMIT_EXCEEDED': 'rate_limit',
+    };
+    return errorTypeMap[code] || 'internal_error';
+  }
+
+  private isRetryableError(code: string): boolean {
+    const retryableErrors = ['PROVIDER_UNHEALTHY', 'PROCESSING_ERROR', 'RATE_LIMIT_EXCEEDED'];
+    return retryableErrors.includes(code);
+  }
+
+  private generateContextAnalysis(requestData: any): any {
+    return {
+      contextId: crypto.randomUUID(),
+      analysisType: requestData.analysisType || 'full',
+      documentsAnalyzed: requestData.documents?.length || 0,
+      totalTokens: Math.floor(Math.random() * 50000) + 10000,
+      optimizedTokens: Math.floor(Math.random() * 30000) + 5000,
+      compressionRatio: 0.3 + Math.random() * 0.4,
+      insights: [
+        'High code complexity in authentication module',
+        'Inconsistent error handling patterns detected',
+        'Opportunities for performance optimization identified',
+      ],
+    };
+  }
+
+  private generateProjectAnalysisResponse(requestData: any): any {
+    return {
+      analysisId: crypto.randomUUID(),
+      projectId: requestData.projectId,
+      scope: requestData.scope || ['code', 'documentation'],
+      metrics: {
+        codeQuality: 0.7 + Math.random() * 0.3,
+        testCoverage: 0.6 + Math.random() * 0.4,
+        documentation: 0.5 + Math.random() * 0.4,
+        performance: 0.8 + Math.random() * 0.2,
+      },
+      recommendations: this.getProjectRecommendations(requestData.projectId),
+      insights: this.getProjectInsights(requestData.projectId),
+    };
+  }
+
   // Chat completion methods
   generateChatCompletion(request: any): any {
     const model = this.getModel(request.model || 'gpt-4') || this.models[0];
-    const requestId = crypto.randomUUID();
     const responseId = crypto.randomUUID();
     
     const promptTokens = Math.floor(Math.random() * 1000) + 100;
@@ -647,9 +988,8 @@ export class MockDataService {
   // Embedding methods
   generateEmbeddings(request: any): any {
     const model = this.getModel(request.model || 'text-embedding-3-large') || this.models.find(m => m.capabilities.includes('embedding'));
-    const embeddingId = crypto.randomUUID();
     
-    const embeddings = request.input.map((text: string, index: number) => ({
+    const embeddings = request.input.map((_text: string, index: number) => ({
       object: 'embedding',
       embedding: Array.from({ length: 1536 }, () => Math.random() * 2 - 1), // Mock embedding vector
       index,

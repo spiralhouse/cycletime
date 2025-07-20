@@ -43,7 +43,7 @@ const providerController: FastifyPluginAsync = async (fastify) => {
         }),
       },
     },
-  }, async (request, reply) => {
+  }, async (_request, _reply) => {
     const providers = fastify.mockDataService.getProviders();
     const activeProviders = providers.filter(p => p.status === 'active').length;
 

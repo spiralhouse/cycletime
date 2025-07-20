@@ -53,7 +53,7 @@ const healthController: FastifyPluginAsync = async (fastify) => {
         }),
       },
     },
-  }, async (request, reply) => {
+  }, async (_request, _reply) => {
     const healthStatus = fastify.mockDataService.getHealthStatus();
     
     // Publish health check event

@@ -82,7 +82,7 @@ const contextController: FastifyPluginAsync = async (fastify) => {
         }),
       },
     },
-  }, async (request, reply) => {
+  }, async (request, _reply) => {
     const requestBody = request.body as any;
     
     const result = fastify.mockDataService.createContext(requestBody.projectId, requestBody.documents);

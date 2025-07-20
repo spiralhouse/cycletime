@@ -42,7 +42,7 @@ const modelController: FastifyPluginAsync = async (fastify) => {
         }),
       },
     },
-  }, async (request, reply) => {
+  }, async (request, _reply) => {
     const { provider, capability } = request.query as any;
     
     const models = fastify.mockDataService.getModels(provider, capability);

@@ -44,11 +44,11 @@ export class EventService extends EventEmitter {
     this.emit(eventType, event);
     this.emit('*', event);
 
-    logger.info({
+    logger.info('Event published', {
       eventId: event.eventId,
       eventType,
       correlationId: event.correlationId,
-    }, 'Event published');
+    });
 
     // In production, publish to Redis channels
     // await this.publishToRedis(eventType, event);
@@ -320,7 +320,7 @@ export class EventService extends EventEmitter {
 
     await this.publishEvent('ai.analysis.recommendations.generated', {
       recommendationsCount: recommendations.length || 0,
-      categories: [...new Set(recommendations.map((r: any) => r.category))] || [],
+      categories: [...new Set(recommendations.map((r: any) => r.category))],
       priorities: {
         critical: priorities.critical || 0,
         high: priorities.high || 0,

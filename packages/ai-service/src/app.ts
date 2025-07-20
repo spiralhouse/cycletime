@@ -6,7 +6,7 @@ import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
 import { logger } from '@cycletime/shared-utils';
-import { loadConfig } from '@cycletime/shared-config';
+// import { loadConfig } from '@cycletime/shared-config';
 
 // Import stub controllers
 import { healthController } from './controllers/health-controller';
@@ -17,10 +17,14 @@ import { contextController } from './controllers/context-controller';
 import { projectController } from './controllers/project-controller';
 import { embeddingController } from './controllers/embedding-controller';
 import { analyticsController } from './controllers/analytics-controller';
+import { requestController } from './controllers/request-controller';
 
 // Import services
 import { EventService } from './services/event-service';
 import { MockDataService } from './services/mock-data-service';
+
+// Import middleware
+import { authPlugin } from './middleware/auth-middleware';
 
 export interface AppOptions {
   port?: number;
@@ -29,7 +33,13 @@ export interface AppOptions {
 }
 
 export async function createApp(options: AppOptions = {}): Promise<FastifyInstance> {
-  const config = await loadConfig();
+  // Mock config for development
+  const config = {
+    LOG_LEVEL: process.env.LOG_LEVEL || 'info',
+    CORS_ORIGIN: process.env.CORS_ORIGIN || '*',
+    RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX || '100'),
+    RATE_LIMIT_WINDOW: process.env.RATE_LIMIT_WINDOW || '1 minute',
+  };
   
   const app = Fastify({
     logger: options.logger ?? {
@@ -68,12 +78,12 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   await app.register(rateLimit, {
     max: config.RATE_LIMIT_MAX || 100,
     timeWindow: config.RATE_LIMIT_WINDOW || '1 minute',
-    errorResponseBuilder: (request, context) => {
+    errorResponseBuilder: (_request, context) => {
       return {
         error: 'Rate limit exceeded',
         message: `Too many requests, please try again later.`,
         statusCode: 429,
-        timeWindow: context.timeWindow,
+        timeWindow: '1 minute',
         limit: context.max,
       };
     },
@@ -123,6 +133,9 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   app.decorate('eventService', eventService);
   app.decorate('mockDataService', mockDataService);
 
+  // Register authentication middleware
+  await app.register(authPlugin);
+
   // Register controllers
   await app.register(healthController);
   await app.register(providerController);
@@ -132,19 +145,13 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   await app.register(projectController);
   await app.register(embeddingController);
   await app.register(analyticsController);
+  await app.register(requestController);
 
   // Error handler
   app.setErrorHandler(async (error, request, reply) => {
     const errorId = crypto.randomUUID();
     
-    logger.error({
-      errorId,
-      error: error.message,
-      stack: error.stack,
-      url: request.url,
-      method: request.method,
-      headers: request.headers,
-    }, 'Request error');
+    logger.error('Request error', error);
 
     // Publish error event
     await eventService.publishEvent('ai/service/error', {
@@ -173,12 +180,12 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   app.setNotFoundHandler(async (request, reply) => {
     const errorId = crypto.randomUUID();
     
-    logger.warn({
+    logger.warn('Route not found', {
       errorId,
       url: request.url,
       method: request.method,
       headers: request.headers,
-    }, 'Route not found');
+    });
 
     return reply.status(404).send({
       error: 'Not Found',
@@ -200,10 +207,13 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
         timestamp: new Date().toISOString(),
       });
       
+      // Cleanup mock data service
+      mockDataService.cleanup();
+      
       await app.close();
       process.exit(0);
     } catch (error) {
-      logger.error(error, 'Error during shutdown');
+      logger.error('Error during shutdown', error as Error);
       process.exit(1);
     }
   };

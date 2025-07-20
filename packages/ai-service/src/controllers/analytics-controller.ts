@@ -69,7 +69,7 @@ const analyticsController: FastifyPluginAsync = async (fastify) => {
         }),
       },
     },
-  }, async (request, reply) => {
+  }, async (request, _reply) => {
     const { timeframe, provider, model } = request.query as any;
     
     // Generate analytics data

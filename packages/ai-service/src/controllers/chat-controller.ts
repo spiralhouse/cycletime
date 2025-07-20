@@ -98,64 +98,90 @@ const chatController: FastifyPluginAsync = async (fastify) => {
     },
   }, async (request, reply) => {
     const requestBody = request.body as any;
-    const requestId = crypto.randomUUID();
+    const userId = request.user?.id || requestBody.metadata?.userId || 'anonymous-user';
+    
+    // Create AI request with proper simulation - this handles async processing
+    const aiRequest = fastify.mockDataService.createAIRequest(
+      'chat_completion',
+      requestBody.provider || 'openai',
+      requestBody.model || 'gpt-4',
+      requestBody,
+      userId,
+      'medium', // priority
+      requestBody.metadata?.sessionId,
+      requestBody.metadata?.projectId
+    );
     
     // Publish request received event
-    await fastify.eventService.publishAIRequestReceived(requestId, {
+    await fastify.eventService.publishAIRequestReceived(aiRequest.id, {
       requestType: 'chat_completion',
-      provider: requestBody.provider,
-      model: requestBody.model,
+      provider: requestBody.provider || 'openai',
+      model: requestBody.model || 'gpt-4',
       tokens: {
         estimated: requestBody.messages.reduce((sum: number, msg: any) => sum + Math.floor(msg.content.length / 4), 0),
         maxTokens: requestBody.maxTokens || 1000,
       },
       priority: 'medium',
-      queuePosition: 1,
-      userId: requestBody.metadata?.userId,
+      queuePosition: Math.floor(Math.random() * 10) + 1,
+      userId,
       sessionId: requestBody.metadata?.sessionId,
       projectId: requestBody.metadata?.projectId,
     });
 
-    // Publish processing event
-    await fastify.eventService.publishAIRequestProcessing(requestId, {
-      provider: requestBody.provider || 'openai',
-      model: requestBody.model || 'gpt-4',
-      estimatedMs: 2000,
-      contextOptimization: requestBody.contextOptimization,
-    });
+    // For non-streaming requests, we can either return immediately with request ID
+    // or wait for completion. Let's implement immediate response pattern
+    if (requestBody.stream !== true) {
+      // Wait a short time for potential immediate completion
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const updatedRequest = fastify.mockDataService.getAIRequest(aiRequest.id);
+      if (updatedRequest?.status === 'completed' && updatedRequest.responseData) {
+        return updatedRequest.responseData;
+      }
+      
+      // Return request tracking response
+      return {
+        id: aiRequest.id,
+        object: 'chat.completion.request',
+        created: Math.floor(Date.now() / 1000),
+        status: aiRequest.status,
+        model: requestBody.model || 'gpt-4',
+        provider: requestBody.provider || 'openai',
+        estimated_completion: new Date(Date.now() + 5000).toISOString(),
+        queue_position: Math.floor(Math.random() * 10) + 1,
+        message: 'Request received and queued for processing. Use GET /api/v1/requests/{id} to check status.',
+      };
+    }
 
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
-
+    // For streaming, generate immediate response
     try {
-      // Generate mock response
       const response = fastify.mockDataService.generateChatCompletion(requestBody);
       
       // Publish completion events
-      await fastify.eventService.publishAIRequestCompleted(requestId, {
+      await fastify.eventService.publishAIRequestCompleted(aiRequest.id, {
         processingTime: response.metadata.processingTime,
         tokens: response.usage,
         cost: response.usage.estimatedCost,
         quality: {
-          score: 0.85,
+          score: 0.85 + Math.random() * 0.1,
           feedback: 'good',
         },
       }, {
         provider: response.provider,
         model: response.model,
-        userId: requestBody.metadata?.userId,
+        userId,
       });
 
-      await fastify.eventService.publishAIResponseGenerated(requestId, response, {
+      await fastify.eventService.publishAIResponseGenerated(aiRequest.id, response, {
         provider: response.provider,
         model: response.model,
-        userId: requestBody.metadata?.userId,
+        userId,
       });
 
       return response;
     } catch (error: any) {
       // Publish failure event
-      await fastify.eventService.publishAIRequestFailed(requestId, {
+      await fastify.eventService.publishAIRequestFailed(aiRequest.id, {
         type: 'internal_error',
         message: error.message,
         code: 'PROCESSING_ERROR',
@@ -163,7 +189,7 @@ const chatController: FastifyPluginAsync = async (fastify) => {
       }, {
         provider: requestBody.provider || 'openai',
         model: requestBody.model || 'gpt-4',
-        userId: requestBody.metadata?.userId,
+        userId,
       });
 
       return reply.status(500).send({
@@ -236,7 +262,7 @@ const chatController: FastifyPluginAsync = async (fastify) => {
       provider: requestBody.provider,
       model: requestBody.model,
       streaming: true,
-      userId: requestBody.metadata?.userId,
+      userId: request.user?.id || requestBody.metadata?.userId,
     });
 
     // Generate streaming response
@@ -298,7 +324,7 @@ const chatController: FastifyPluginAsync = async (fastify) => {
     }, {
       provider: mockResponse.provider,
       model: mockResponse.model,
-      userId: requestBody.metadata?.userId,
+      userId: request.user?.id || requestBody.metadata?.userId,
     });
   });
 };

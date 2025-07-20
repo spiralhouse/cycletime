@@ -56,7 +56,7 @@ const projectController: FastifyPluginAsync = async (fastify) => {
         }),
       },
     },
-  }, async (request, reply) => {
+  }, async (request, _reply) => {
     const { projectId } = request.params as { projectId: string };
     const requestBody = request.body as any;
     
@@ -139,7 +139,7 @@ const projectController: FastifyPluginAsync = async (fastify) => {
         }),
       },
     },
-  }, async (request, reply) => {
+  }, async (request, _reply) => {
     const { projectId } = request.params as { projectId: string };
     const { timeframe, category } = request.query as any;
     
@@ -227,7 +227,7 @@ const projectController: FastifyPluginAsync = async (fastify) => {
         }),
       },
     },
-  }, async (request, reply) => {
+  }, async (request, _reply) => {
     const { projectId } = request.params as { projectId: string };
     const { priority, category } = request.query as any;
     
@@ -358,7 +358,7 @@ const projectController: FastifyPluginAsync = async (fastify) => {
         }),
       },
     },
-  }, async (request, reply) => {
+  }, async (request, _reply) => {
     const { projectId } = request.params as { projectId: string };
     const { timeframe, metric } = request.query as any;
     
