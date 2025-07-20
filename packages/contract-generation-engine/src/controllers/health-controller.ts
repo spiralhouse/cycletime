@@ -53,7 +53,7 @@ export class HealthController {
       
       reply.code(statusCode).send(healthResponse);
     } catch (error) {
-      logger.error('Health check failed', { error });
+      logger.error('Health check failed', error.message);
       
       reply.code(503).send({
         status: 'unhealthy',
@@ -90,7 +90,7 @@ export class HealthController {
       
       reply.code(statusCode).send(readinessResponse);
     } catch (error) {
-      logger.error('Readiness check failed', { error });
+      logger.error('Readiness check failed', error.message);
       
       reply.code(503).send({
         ready: false,
@@ -115,7 +115,7 @@ export class HealthController {
 
       reply.code(200).send(livenessResponse);
     } catch (error) {
-      logger.error('Liveness check failed', { error });
+      logger.error('Liveness check failed', error.message);
       
       reply.code(503).send({
         alive: false,
@@ -151,7 +151,7 @@ export class HealthController {
 
       reply.code(200).send(metrics);
     } catch (error) {
-      logger.error('Failed to get metrics', { error });
+      logger.error('Failed to get metrics', error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -199,7 +199,7 @@ export class HealthController {
 
       reply.code(200).send(serviceInfo);
     } catch (error) {
-      logger.error('Failed to get service info', { error });
+      logger.error('Failed to get service info', error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -227,7 +227,7 @@ export class HealthController {
       const health = await this.contractStorage.healthCheck();
       return health.status === 'healthy' || health.status === 'degraded';
     } catch (error) {
-      logger.error('Storage readiness check failed', { error });
+      logger.error('Storage readiness check failed', error.message);
       return false;
     }
   }
@@ -237,7 +237,7 @@ export class HealthController {
       const health = await this.eventService.healthCheck();
       return health.status === 'healthy' || health.status === 'degraded';
     } catch (error) {
-      logger.error('Event readiness check failed', { error });
+      logger.error('Event readiness check failed', error.message);
       return false;
     }
   }
@@ -260,7 +260,7 @@ export class HealthController {
         },
       };
     } catch (error) {
-      logger.error('Failed to get service stats', { error });
+      logger.error('Failed to get service stats', error.message);
       return {
         error: 'Failed to retrieve stats',
       };

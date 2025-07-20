@@ -63,7 +63,7 @@ export class ContractGenerator {
         metadata,
       };
     } catch (error) {
-      logger.error('Contract generation failed', { error, request: this.request });
+      logger.error('Contract generation failed' + ": " + error.message);
       throw error;
     }
   }
@@ -169,7 +169,7 @@ export class ContractGenerator {
         const pathItem = spec.paths[endpoint.path] || {};
         const method = endpoint.method.toLowerCase() as keyof OpenAPIV3.PathItemObject;
         
-        pathItem[method] = {
+        (pathItem as any)[method] = {
           summary: endpoint.description,
           description: endpoint.description,
           operationId: this.generateOperationId(endpoint.method, endpoint.path),

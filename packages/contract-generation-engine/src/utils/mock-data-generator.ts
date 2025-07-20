@@ -67,7 +67,7 @@ export class MockDataGenerator {
         requestId: this.generateId(),
       };
     } catch (error) {
-      logger.error('Mock data generation failed', { error, operation, path, method });
+      logger.error('Mock data generation failed' + ": " + error.message);
       return this.generateDefaultResponse(operation, path, method);
     }
   }

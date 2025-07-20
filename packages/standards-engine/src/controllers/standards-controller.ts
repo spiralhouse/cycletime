@@ -107,8 +107,7 @@ export class StandardsController {
         metadata: {
           requestId: request.id,
           timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          processingTime: result.analysisTime
+          version: '1.0.0'
         }
       };
 
@@ -454,8 +453,7 @@ export class StandardsController {
         metadata: {
           requestId: request.id,
           timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          processingTime: result.processingTime
+          version: '1.0.0'
         }
       };
 

@@ -149,7 +149,7 @@ export class StandardsAnalysisService implements IStandardsAnalysisService {
     
     // Filter violations by severity threshold if specified
     const filteredViolations = options?.severityThreshold 
-      ? violations.filter(v => this.meetsSeverityThreshold(v.severity, options.severityThreshold))
+      ? violations.filter(v => this.meetsSeverityThreshold(v.severity, options.severityThreshold!))
       : violations;
 
     const score = this.mockDataService.calculateComplianceScore(filteredViolations);

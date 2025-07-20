@@ -4,7 +4,9 @@ import {
   StandardsAnalyzedEvent,
   ComplianceViolationEvent,
   StandardsUpdatedEvent,
-  BaseEventPayload
+  BaseEventPayload,
+  StandardsSeverity,
+  EnforcementLevel
 } from '../types/standards-types.js';
 import { getEnvVar } from '@cycletime/shared-config';
 import { MockDataService } from './mock-data-service.js';
@@ -361,14 +363,14 @@ export class EventService implements IEventService {
           projectId: event.data.projectId,
           standardId: 'std-ts-best-practices',
           ruleId: 'ts-no-var',
-          severity: 'error' as const,
+          severity: StandardsSeverity.ERROR,
           message: 'Use const or let instead of var',
           filePath: 'src/component.tsx',
           line: 15,
           column: 5,
           fixAvailable: true,
           autoFixable: true,
-          enforcementLevel: 'blocking' as const,
+          enforcementLevel: EnforcementLevel.BLOCKING,
           suggestedFix: 'Replace var with const',
           context: {
             pullRequestId: event.data.pullRequestId,

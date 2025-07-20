@@ -55,12 +55,7 @@ export class StubGenerationService {
       // Clean up
       this.activeGenerations.delete(generationId);
       
-      logger.error('Stub generation failed', {
-        error,
-        generationId,
-        contractId: specification.contractId,
-        serviceName: specification.serviceName,
-      });
+      logger.error('Stub generation failed: ' + error.message);
       
       throw error;
     }
@@ -104,11 +99,7 @@ export class StubGenerationService {
 
       return customizedStub;
     } catch (error) {
-      logger.error('Customized stub generation failed', {
-        error,
-        contractId: specification.contractId,
-        serviceName: specification.serviceName,
-      });
+      logger.error('Customized stub generation failed: ' + error.message);
       throw error;
     }
   }
@@ -181,10 +172,7 @@ export class StubGenerationService {
 
       return { stubs, bundle };
     } catch (error) {
-      logger.error('Stub bundle generation failed', {
-        error,
-        serviceCount: specifications.length,
-      });
+      logger.error('Stub bundle generation failed: ' + error.message);
       throw error;
     }
   }
@@ -240,11 +228,7 @@ export class StubGenerationService {
 
       return tests;
     } catch (error) {
-      logger.error('Stub test generation failed', {
-        error,
-        contractId: specification.contractId,
-        serviceName: specification.serviceName,
-      });
+      logger.error('Stub test generation failed: ' + error.message);
       throw error;
     }
   }
@@ -306,11 +290,7 @@ export class StubGenerationService {
 
       return docs;
     } catch (error) {
-      logger.error('Stub documentation generation failed', {
-        error,
-        contractId: specification.contractId,
-        serviceName: specification.serviceName,
-      });
+      logger.error('Stub documentation generation failed: ' + error.message);
       throw error;
     }
   }
@@ -327,7 +307,7 @@ export class StubGenerationService {
         logger.warn('Stub generation not found for cancellation', { generationId });
       }
     } catch (error) {
-      logger.error('Failed to cancel stub generation', { error, generationId });
+      logger.error('Failed to cancel stub generation' + ": " + error.message);
       throw error;
     }
   }

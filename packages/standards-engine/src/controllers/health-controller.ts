@@ -317,10 +317,10 @@ export class HealthController {
     features: string[];
   } {
     return {
-      environment: getEnvVar('NODE_ENV', 'development'),
-      port: parseInt(getEnvVar('PORT', '3007'), 10),
-      logLevel: getEnvVar('LOG_LEVEL', 'info'),
-      redisUrl: getEnvVar('REDIS_URL', 'redis://localhost:6379'),
+      environment: getEnvVar('NODE_ENV', 'development')!,
+      port: parseInt(getEnvVar('PORT', '3007')!, 10),
+      logLevel: getEnvVar('LOG_LEVEL', 'info')!,
+      redisUrl: getEnvVar('REDIS_URL', 'redis://localhost:6379')!,
       features: [
         'standards-analysis',
         'compliance-reporting',
@@ -373,6 +373,6 @@ export class HealthController {
    */
   private getServiceVersion(): string {
     // In a real implementation, this would read from package.json
-    return getEnvVar('SERVICE_VERSION', '1.0.0');
+    return getEnvVar('SERVICE_VERSION', '1.0.0')!;
   }
 }

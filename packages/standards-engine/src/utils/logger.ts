@@ -1,8 +1,9 @@
 import winston from 'winston';
+import { FastifyBaseLogger } from 'fastify';
 
 const logLevel = process.env.LOG_LEVEL || 'info';
 
-export const logger = winston.createLogger({
+const winstonLogger = winston.createLogger({
   level: logLevel,
   format: winston.format.combine(
     winston.format.timestamp(),
@@ -20,13 +21,26 @@ export const logger = winston.createLogger({
   ],
 });
 
+// Create a Fastify-compatible logger
+export const logger: FastifyBaseLogger = {
+  fatal: (msg: any, ...args: any[]) => winstonLogger.error(msg, ...args),
+  error: (msg: any, ...args: any[]) => winstonLogger.error(msg, ...args),
+  warn: (msg: any, ...args: any[]) => winstonLogger.warn(msg, ...args),
+  info: (msg: any, ...args: any[]) => winstonLogger.info(msg, ...args),
+  debug: (msg: any, ...args: any[]) => winstonLogger.debug(msg, ...args),
+  trace: (msg: any, ...args: any[]) => winstonLogger.debug(msg, ...args),
+  silent: () => {},
+  level: logLevel,
+  child: () => logger,
+} as FastifyBaseLogger;
+
 // Add file logging in production
 if (process.env.NODE_ENV === 'production') {
-  logger.add(new winston.transports.File({ 
+  winstonLogger.add(new winston.transports.File({ 
     filename: 'logs/error.log', 
     level: 'error' 
   }));
-  logger.add(new winston.transports.File({ 
+  winstonLogger.add(new winston.transports.File({ 
     filename: 'logs/combined.log' 
   }));
 }

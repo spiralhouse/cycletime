@@ -52,7 +52,7 @@ export class ContractGenerationService {
 
       // Start async generation process
       this.generateContractAsync(contractId, request).catch(error => {
-        logger.error('Async contract generation failed', { error, contractId });
+        logger.error('Async contract generation failed' + ": " + error.message);
       });
 
       return {
@@ -62,7 +62,7 @@ export class ContractGenerationService {
         message: 'Contract generation started',
       };
     } catch (error) {
-      logger.error('Contract generation failed', { error, request });
+      logger.error('Contract generation failed' + ": " + error.message);
       throw error;
     }
   }
@@ -97,7 +97,7 @@ export class ContractGenerationService {
               ...specification.metadata,
               validationScore: validationResult.score,
               validationErrors: validationResult.errors,
-            };
+            } as any;
           }
         }
       }
@@ -108,8 +108,8 @@ export class ContractGenerationService {
       // Store final contract
       await this.contractStorage.updateContract(contractId, {
         specification: {
-          openapi: specification.openapi,
-          asyncapi: specification.asyncapi,
+          openapi: specification.openapi as any,
+          asyncapi: specification.asyncapi as any,
           boundaries: specification.boundaries,
         },
         metadata: specification.metadata,
@@ -126,7 +126,7 @@ export class ContractGenerationService {
         contractId,
         serviceName: request.serviceName,
         serviceType: request.serviceType,
-        openapi: specification.openapi,
+        openapi: specification.openapi as any,
         asyncapi: specification.asyncapi,
         boundaries: specification.boundaries,
         generatedAt: new Date().toISOString(),
@@ -137,7 +137,7 @@ export class ContractGenerationService {
       await this.eventService.publishContractGenerated(event);
 
     } catch (error) {
-      logger.error('Contract generation failed', { error, contractId });
+      logger.error('Contract generation failed' + ": " + error.message);
 
       // Update status to failed
       await this.contractStorage.updateContract(contractId, {
@@ -153,7 +153,7 @@ export class ContractGenerationService {
         error: error instanceof Error ? error.message : 'Unknown error',
         errorCode: 'GENERATION_FAILED',
         stage: 'generation',
-        details: { error },
+        details: error.message,
         failedAt: new Date().toISOString(),
         retryable: true,
         retryCount: 0,
@@ -256,7 +256,7 @@ export class ContractGenerationService {
         ...contract.metadata,
         lastValidated: new Date().toISOString(),
         validationResults: results.validationResults,
-      },
+      } as any,
     });
 
     return results;
@@ -297,14 +297,14 @@ export class ContractGenerationService {
           ...contract.metadata,
           lastRefined: new Date().toISOString(),
           refinementHistory: [
-            ...(contract.metadata?.refinementHistory || []),
+            ...(contract.metadata as any)?.refinementHistory || [],
             {
               appliedAt: new Date().toISOString(),
               refinements,
               validationResults,
             },
           ],
-        },
+        } as any,
       });
 
       return {
@@ -315,7 +315,7 @@ export class ContractGenerationService {
         updatedAt: new Date().toISOString(),
       };
     } catch (error) {
-      logger.error('Contract refinement failed', { error, contractId });
+      logger.error('Contract refinement failed' + ": " + error.message);
       throw error;
     }
   }

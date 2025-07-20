@@ -49,7 +49,7 @@ export class ContractController {
 
       reply.code(202).send(response);
     } catch (error) {
-      logger.error('Contract generation failed', { error, body: request.body });
+      logger.error('Contract generation failed' + ": " + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -83,7 +83,7 @@ export class ContractController {
       
       reply.code(200).send(status);
     } catch (error) {
-      logger.error('Failed to get contract status', { error, contractId: request.params.contractId });
+      logger.error('Failed to get contract status' + ": " + error.message);
       
       if (error instanceof Error && error.message.includes('not found')) {
         reply.code(404).send({
@@ -139,11 +139,7 @@ export class ContractController {
         reply.code(200).send(specification);
       }
     } catch (error) {
-      logger.error('Failed to get contract specification', { 
-        error, 
-        contractId: request.params.contractId,
-        format: request.query.format 
-      });
+      logger.error('Failed to get contract specification: ' + error.message);
       
       if (error instanceof Error && error.message.includes('not found')) {
         reply.code(404).send({
@@ -195,10 +191,7 @@ export class ContractController {
       
       reply.code(200).send(validationResult);
     } catch (error) {
-      logger.error('Contract validation failed', { 
-        error, 
-        contractId: request.params.contractId 
-      });
+      logger.error('Contract validation failed: ' + error.message);
       
       if (error instanceof Error && error.message.includes('not found')) {
         reply.code(404).send({
@@ -265,10 +258,7 @@ export class ContractController {
       
       reply.code(200).send(refinementResult);
     } catch (error) {
-      logger.error('Contract refinement failed', { 
-        error, 
-        contractId: request.params.contractId 
-      });
+      logger.error('Contract refinement failed: ' + error.message);
       
       if (error instanceof Error && error.message.includes('not found')) {
         reply.code(404).send({
@@ -318,10 +308,7 @@ export class ContractController {
       
       reply.code(204).send();
     } catch (error) {
-      logger.error('Failed to delete contract', { 
-        error, 
-        contractId: request.params.contractId 
-      });
+      logger.error('Failed to delete contract: ' + error.message);
       
       if (error instanceof Error && error.message.includes('not found')) {
         reply.code(404).send({
@@ -374,7 +361,7 @@ export class ContractController {
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error('Failed to list contracts', { error, query: request.query });
+      logger.error('Failed to list contracts' + ": " + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -423,10 +410,7 @@ export class ContractController {
         generatedAt: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error('Stub generation failed', { 
-        error, 
-        contractId: request.params.contractId 
-      });
+      logger.error('Stub generation failed: ' + error.message);
       
       if (error instanceof Error && error.message.includes('not found')) {
         reply.code(404).send({

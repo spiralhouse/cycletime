@@ -50,7 +50,7 @@ export class StubGenerator {
         documentation,
       };
     } catch (error) {
-      logger.error('Stub generation failed', { error, specification });
+      logger.error('Stub generation failed' + ": " + error.message);
       throw error;
     }
   }
@@ -278,7 +278,7 @@ async function ${handlerName}(
 
     ${responseGenerator}
   } catch (error) {
-    logger.error('Handler error', { error, path: '${path}', method: '${method}' });
+    logger.error('Handler error' + ": " + error.message);
     throw error;
   }
 }`;
@@ -345,7 +345,7 @@ async function ${handlerName}(
   // Error handling
   fastify.setErrorHandler(async (error, request, reply) => {
     logger.error('Request error', {
-      error: error.message,
+      errorMessage: error.message,
       stack: error.stack,
       method: request.method,
       url: request.url,

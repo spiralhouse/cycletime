@@ -464,7 +464,7 @@ export class MockDataService {
   /**
    * Generate improvement suggestions based on violations
    */
-  private generateImprovementSuggestions(violations: StandardsViolation[]): ImprovementSuggestion[] {
+  public generateImprovementSuggestions(violations: StandardsViolation[]): ImprovementSuggestion[] {
     const suggestions: ImprovementSuggestion[] = [];
 
     if (violations.some(v => v.severity === StandardsSeverity.ERROR)) {

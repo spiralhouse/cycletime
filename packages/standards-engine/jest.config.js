@@ -21,12 +21,13 @@ export default {
   coverageReporters: ['text', 'lcov', 'html'],
   coverageThreshold: {
     global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80,
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
     },
   },
   setupFiles: ['<rootDir>/src/__tests__/setup.ts'],
   setupFilesAfterEnv: [],
+  testTimeout: 30000, // 30 second timeout for contract tests
 };

@@ -53,7 +53,7 @@ export class ValidationController {
       
       reply.code(200).send(result);
     } catch (error) {
-      logger.error('Contract validation failed', { error });
+      logger.error('Contract validation failed', error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -107,7 +107,7 @@ export class ValidationController {
       
       reply.code(200).send(result);
     } catch (error) {
-      logger.error('AsyncAPI validation failed', { error });
+      logger.error('AsyncAPI validation failed', error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -170,7 +170,7 @@ export class ValidationController {
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error('Multiple contract validation failed', { error });
+      logger.error('Multiple contract validation failed', error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -226,7 +226,7 @@ export class ValidationController {
       
       reply.code(200).send(report);
     } catch (error) {
-      logger.error('Validation report generation failed', { error });
+      logger.error('Validation report generation failed', error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -252,7 +252,7 @@ export class ValidationController {
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error('Failed to get validation rules', { error });
+      logger.error('Failed to get validation rules', error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -303,7 +303,7 @@ export class ValidationController {
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error('Failed to add validation rule', { error });
+      logger.error('Failed to add validation rule', error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -359,7 +359,7 @@ export class ValidationController {
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error('Failed to update validation rule', { error });
+      logger.error('Failed to update validation rule', error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -393,7 +393,7 @@ export class ValidationController {
       
       reply.code(204).send();
     } catch (error) {
-      logger.error('Failed to delete validation rule', { error });
+      logger.error('Failed to delete validation rule', error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',

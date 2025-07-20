@@ -1,4 +1,4 @@
-import { Redis } from 'redis';
+import { createClient, RedisClientType } from 'redis';
 import { 
   ContractGeneratedEvent, 
   ContractValidatedEvent, 
@@ -7,21 +7,21 @@ import {
 import { logger } from '@cycletime/shared-utils';
 
 export interface EventServiceOptions {
-  redis?: Redis;
+  redis?: RedisClientType;
   eventPrefix?: string;
 }
 
 export class EventService {
-  private redis: Redis;
+  private redis: RedisClientType;
   private eventPrefix: string;
   private eventHandlers: Map<string, Array<(event: any) => Promise<void>>>;
 
   constructor(options: EventServiceOptions = {}) {
-    this.redis = options.redis || new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      retryDelayOnFailover: 100,
-      maxRetriesPerRequest: 3,
+    this.redis = options.redis || createClient({
+      socket: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+      },
     });
 
     this.eventPrefix = options.eventPrefix || 'contract-engine:';
@@ -44,7 +44,7 @@ export class EventService {
         serviceName: event.serviceName 
       });
     } catch (error) {
-      logger.error('Failed to publish contract generated event', { error, event });
+      logger.error('Failed to publish contract generated event' + ": " + error.message);
       throw error;
     }
   }
@@ -67,7 +67,7 @@ export class EventService {
         score: event.score
       });
     } catch (error) {
-      logger.error('Failed to publish contract validated event', { error, event });
+      logger.error('Failed to publish contract validated event' + ": " + error.message);
       throw error;
     }
   }
@@ -90,7 +90,7 @@ export class EventService {
         stage: event.stage
       });
     } catch (error) {
-      logger.error('Failed to publish contract failed event', { error, event });
+      logger.error('Failed to publish contract failed event' + ": " + error.message);
       throw error;
     }
   }
@@ -121,7 +121,7 @@ export class EventService {
         version: event.version
       });
     } catch (error) {
-      logger.error('Failed to publish contract published event', { error, event });
+      logger.error('Failed to publish contract published event' + ": " + error.message);
       throw error;
     }
   }
@@ -152,7 +152,7 @@ export class EventService {
         recommendationCount: event.recommendations.length
       });
     } catch (error) {
-      logger.error('Failed to publish boundary analyzed event', { error, event });
+      logger.error('Failed to publish boundary analyzed event' + ": " + error.message);
       throw error;
     }
   }
@@ -182,7 +182,7 @@ export class EventService {
         stubType: event.stubType
       });
     } catch (error) {
-      logger.error('Failed to publish stub generated event', { error, event });
+      logger.error('Failed to publish stub generated event' + ": " + error.message);
       throw error;
     }
   }
@@ -204,7 +204,7 @@ export class EventService {
       await this.subscribeToEvent('requirement.updated', handler);
       logger.info('Subscribed to requirement updates');
     } catch (error) {
-      logger.error('Failed to subscribe to requirement updates', { error });
+      logger.error('Failed to subscribe to requirement updates', error.message);
       throw error;
     }
   }
@@ -226,7 +226,7 @@ export class EventService {
       await this.subscribeToEvent('architecture.changed', handler);
       logger.info('Subscribed to architecture changes');
     } catch (error) {
-      logger.error('Failed to subscribe to architecture changes', { error });
+      logger.error('Failed to subscribe to architecture changes', error.message);
       throw error;
     }
   }
@@ -249,7 +249,7 @@ export class EventService {
       await this.subscribeToEvent('service.defined', handler);
       logger.info('Subscribed to service definitions');
     } catch (error) {
-      logger.error('Failed to subscribe to service definitions', { error });
+      logger.error('Failed to subscribe to service definitions', error.message);
       throw error;
     }
   }
@@ -269,7 +269,7 @@ export class EventService {
       await this.subscribeToEvent('contract.request', handler);
       logger.info('Subscribed to contract requests');
     } catch (error) {
-      logger.error('Failed to subscribe to contract requests', { error });
+      logger.error('Failed to subscribe to contract requests', error.message);
       throw error;
     }
   }
@@ -287,7 +287,7 @@ export class EventService {
       
       logger.info('Custom event published', { eventType, eventData });
     } catch (error) {
-      logger.error('Failed to publish custom event', { error, eventType, eventData });
+      logger.error('Failed to publish custom event' + ": " + error.message);
       throw error;
     }
   }
@@ -297,7 +297,7 @@ export class EventService {
       await this.subscribeToEvent(eventType, handler);
       logger.info('Subscribed to custom event', { eventType });
     } catch (error) {
-      logger.error('Failed to subscribe to custom event', { error, eventType });
+      logger.error('Failed to subscribe to custom event' + ": " + error.message);
       throw error;
     }
   }
@@ -309,10 +309,10 @@ export class EventService {
     await this.redis.publish(channel, serializedEvent);
     
     // Also store in a stream for replay capability
-    await this.redis.xadd(
+    await this.redis.xAdd(
       this.getEventStream(eventType),
       '*',
-      'event', serializedEvent
+      { event: serializedEvent }
     );
   }
 
@@ -326,7 +326,19 @@ export class EventService {
     this.eventHandlers.get(eventType)!.push(handler);
     
     // Subscribe to Redis channel
-    await this.redis.subscribe(channel);
+    await this.redis.subscribe(channel, async (message, receivedChannel) => {
+      if (receivedChannel === channel) {
+        try {
+          const event = JSON.parse(message);
+          const handlers = this.eventHandlers.get(eventType) || [];
+          
+          // Execute all handlers for this event type
+          await Promise.all(handlers.map(h => h(event)));
+        } catch (error) {
+          logger.error('Failed to handle event' + ": " + error.message);
+        }
+      }
+    });
     
     this.redis.on('message', async (receivedChannel, message) => {
       if (receivedChannel === channel) {
@@ -337,7 +349,7 @@ export class EventService {
           // Execute all handlers for this event type
           await Promise.all(handlers.map(h => h(event)));
         } catch (error) {
-          logger.error('Failed to handle event', { error, eventType, message });
+          logger.error('Failed to handle event' + ": " + error.message);
         }
       }
     });
@@ -356,9 +368,9 @@ export class EventService {
       const count = options.count || 100;
       
       // Get events from stream
-      const events = await this.redis.xrevrange(stream, '+', '-', 'COUNT', count);
+      const events = await this.redis.xRevRange(stream, '+', '-', { COUNT: count });
       
-      return events.map(([id, fields]) => {
+      return (events as any).map(([id, fields]: any) => {
         const [, eventData] = fields;
         return {
           id,
@@ -367,7 +379,7 @@ export class EventService {
         };
       });
     } catch (error) {
-      logger.error('Failed to get event history', { error, eventType, options });
+      logger.error('Failed to get event history' + ": " + error.message);
       throw error;
     }
   }
@@ -389,15 +401,15 @@ export class EventService {
       logger.info('Starting event replay', { eventType, options });
       
       while (true) {
-        const events = await this.redis.xread('STREAMS', stream, lastId, 'COUNT', batchSize);
+        const events = await this.redis.xRead({ key: stream, id: lastId }, { COUNT: batchSize });
         
         if (!events || events.length === 0) {
           break;
         }
         
-        const [, eventList] = events[0];
+        const [, eventList] = (events as any)[0];
         
-        for (const [id, fields] of eventList) {
+        for (const [id, fields] of (eventList as any)) {
           const [, eventData] = fields;
           const event = JSON.parse(eventData);
           
@@ -420,7 +432,7 @@ export class EventService {
       
       logger.info('Event replay completed', { eventType, lastId });
     } catch (error) {
-      logger.error('Failed to replay events', { error, eventType, options });
+      logger.error('Failed to replay events' + ": " + error.message);
       throw error;
     }
   }
@@ -445,7 +457,7 @@ export class EventService {
       const streams = await this.redis.keys(`${this.eventPrefix}stream:*`);
       
       for (const stream of streams) {
-        const streamInfo = await this.redis.xinfo('STREAM', stream);
+        const streamInfo = await this.redis.xInfoStream(stream);
         const length = parseInt(streamInfo[1] as string);
         
         stats.totalEvents += length;
@@ -456,8 +468,8 @@ export class EventService {
         
         // Get oldest and newest events
         if (length > 0) {
-          const oldest = await this.redis.xrange(stream, '-', '+', 'COUNT', 1);
-          const newest = await this.redis.xrevrange(stream, '+', '-', 'COUNT', 1);
+          const oldest = await this.redis.xRange(stream, '-', '+', { COUNT: 1 });
+          const newest = await this.redis.xRevRange(stream, '+', '-', { COUNT: 1 });
           
           if (oldest.length > 0) {
             const oldestTimestamp = this.extractTimestampFromId(oldest[0][0]);
@@ -479,7 +491,7 @@ export class EventService {
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
       
       for (const stream of streams) {
-        const recentEvents = await this.redis.xrevrange(
+        const recentEvents = await this.redis.xRevRange(
           stream,
           '+',
           `(${this.timestampToRedisId(oneHourAgo)}`
@@ -489,7 +501,7 @@ export class EventService {
       
       return stats;
     } catch (error) {
-      logger.error('Failed to get event stats', { error, eventType });
+      logger.error('Failed to get event stats' + ": " + error.message);
       throw error;
     }
   }
@@ -513,12 +525,12 @@ export class EventService {
       const streams = await this.redis.keys(streamPattern);
       
       for (const stream of streams) {
-        const beforeCount = await this.redis.xlen(stream);
+        const beforeCount = await this.redis.xLen(stream);
         
         // Delete old events
-        await this.redis.xtrim(stream, 'MINID', cutoffId);
+        await this.redis.xTrim(stream, 'MINID', cutoffId as any);
         
-        const afterCount = await this.redis.xlen(stream);
+        const afterCount = await this.redis.xLen(stream);
         const deleted = beforeCount - afterCount;
         
         deletedEvents += deleted;
@@ -540,7 +552,7 @@ export class EventService {
       
       return { deletedEvents, processedStreams };
     } catch (error) {
-      logger.error('Failed to cleanup old events', { error, maxAge, eventType });
+      logger.error('Failed to cleanup old events' + ": " + error.message);
       throw error;
     }
   }
@@ -587,7 +599,7 @@ export class EventService {
       
       logger.info('Event service cleanup completed');
     } catch (error) {
-      logger.error('Failed to cleanup event service', { error });
+      logger.error('Failed to cleanup event service', error.message);
     }
   }
 

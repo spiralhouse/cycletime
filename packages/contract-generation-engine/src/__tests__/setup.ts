@@ -1,5 +1,3 @@
-import { Redis } from 'redis';
-
 // Mock Redis for testing
 jest.mock('redis', () => {
   const mockRedis = {
@@ -30,7 +28,7 @@ jest.mock('redis', () => {
   };
 
   return {
-    Redis: jest.fn().mockImplementation(() => mockRedis),
+    createClient: jest.fn().mockImplementation(() => mockRedis),
   };
 });
 

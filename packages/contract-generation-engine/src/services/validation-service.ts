@@ -32,7 +32,7 @@ export class ValidationService {
 
       return result;
     } catch (error) {
-      logger.error('Contract validation failed', { error, contract: contract.info?.title });
+      logger.error('Contract validation failed' + ": " + error.message);
       throw error;
     }
   }
@@ -56,7 +56,7 @@ export class ValidationService {
 
       return result;
     } catch (error) {
-      logger.error('AsyncAPI validation failed', { error, title: asyncApiSpec.info?.title });
+      logger.error('AsyncAPI validation failed' + ": " + error.message);
       throw error;
     }
   }
@@ -83,7 +83,7 @@ export class ValidationService {
 
       return result;
     } catch (error) {
-      logger.error('Custom rule validation failed', { error, customRules: customRules.map(r => r.id) });
+      logger.error('Custom rule validation failed' + ": " + error.message);
       throw error;
     }
   }
@@ -107,7 +107,7 @@ export class ValidationService {
 
       return results;
     } catch (error) {
-      logger.error('Multiple contract validation failed', { error, count: contracts.length });
+      logger.error('Multiple contract validation failed' + ": " + error.message);
       throw error;
     }
   }
@@ -121,7 +121,7 @@ export class ValidationService {
       this.validationEngine.addRule(rule);
       logger.info('Validation rule added', { ruleId: rule.id, ruleName: rule.name });
     } catch (error) {
-      logger.error('Failed to add validation rule', { error, ruleId: rule.id });
+      logger.error('Failed to add validation rule' + ": " + error.message);
       throw error;
     }
   }
@@ -131,7 +131,7 @@ export class ValidationService {
       this.validationEngine.removeRule(ruleId);
       logger.info('Validation rule removed', { ruleId });
     } catch (error) {
-      logger.error('Failed to remove validation rule', { error, ruleId });
+      logger.error('Failed to remove validation rule' + ": " + error.message);
       throw error;
     }
   }
@@ -141,7 +141,7 @@ export class ValidationService {
       this.validationEngine.enableRule(ruleId);
       logger.info('Validation rule enabled', { ruleId });
     } catch (error) {
-      logger.error('Failed to enable validation rule', { error, ruleId });
+      logger.error('Failed to enable validation rule' + ": " + error.message);
       throw error;
     }
   }
@@ -151,7 +151,7 @@ export class ValidationService {
       this.validationEngine.disableRule(ruleId);
       logger.info('Validation rule disabled', { ruleId });
     } catch (error) {
-      logger.error('Failed to disable validation rule', { error, ruleId });
+      logger.error('Failed to disable validation rule' + ": " + error.message);
       throw error;
     }
   }
@@ -180,9 +180,9 @@ export class ValidationService {
       return {
         ...result,
         complianceAnalysis,
-      };
+      } as any;
     } catch (error) {
-      logger.error('Contract compliance validation failed', { error, standards: complianceStandards });
+      logger.error('Contract compliance validation failed' + ": " + error.message);
       throw error;
     }
   }
@@ -204,7 +204,7 @@ export class ValidationService {
       };
 
       if (options.groupByCategory) {
-        report.categorizedResults = this.groupResultsByCategory(validationResults);
+        (report as any).categorizedResults = this.groupResultsByCategory(validationResults);
       }
 
       if (options.format === 'markdown') {
@@ -215,7 +215,7 @@ export class ValidationService {
 
       return report;
     } catch (error) {
-      logger.error('Failed to generate validation report', { error, options });
+      logger.error('Failed to generate validation report' + ": " + error.message);
       throw error;
     }
   }

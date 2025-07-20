@@ -44,7 +44,7 @@ export class BoundaryController {
       
       reply.code(200).send(result);
     } catch (error) {
-      logger.error('System boundary analysis failed', { error, body: request.body });
+      logger.error('System boundary analysis failed' + ": " + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -78,10 +78,7 @@ export class BoundaryController {
       
       reply.code(200).send(result);
     } catch (error) {
-      logger.error('Service dependency analysis failed', { 
-        error, 
-        serviceName: request.params.serviceName 
-      });
+      logger.error('Service dependency analysis failed: ' + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -117,7 +114,7 @@ export class BoundaryController {
       
       reply.code(200).send(result);
     } catch (error) {
-      logger.error('Data flow analysis failed', { error, body: request.body });
+      logger.error('Data flow analysis failed' + ": " + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -153,7 +150,7 @@ export class BoundaryController {
       
       reply.code(200).send(result);
     } catch (error) {
-      logger.error('Performance requirements analysis failed', { error, body: request.body });
+      logger.error('Performance requirements analysis failed' + ": " + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -193,7 +190,7 @@ export class BoundaryController {
       
       reply.code(200).send(result);
     } catch (error) {
-      logger.error('Architectural recommendations generation failed', { error, body: request.body });
+      logger.error('Architectural recommendations generation failed' + ": " + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -243,7 +240,7 @@ export class BoundaryController {
       
       reply.code(200).send(result);
     } catch (error) {
-      logger.error('Service boundary validation failed', { error, body: request.body });
+      logger.error('Service boundary validation failed' + ": " + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -281,7 +278,7 @@ export class BoundaryController {
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error('Failed to cancel analysis', { error, analysisId: request.params.analysisId });
+      logger.error('Failed to cancel analysis' + ": " + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',

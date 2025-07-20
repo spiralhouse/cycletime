@@ -71,7 +71,7 @@ export class ValidationEngine {
         suggestions,
       };
     } catch (error) {
-      logger.error('Contract validation failed', { error, context });
+      logger.error('Contract validation failed' + ": " + error.message);
       return {
         valid: false,
         errors: [{
@@ -204,7 +204,7 @@ export class ValidationEngine {
         const ruleErrors = rule.validate(contract);
         errors.push(...ruleErrors);
       } catch (error) {
-        logger.warn('Rule validation failed', { rule: rule.id, error });
+        logger.warn('Rule validation failed', { rule: rule.id, errorMessage: error.message });
         errors.push({
           code: 'rule-validation-error',
           message: `Rule validation failed: ${rule.id}`,

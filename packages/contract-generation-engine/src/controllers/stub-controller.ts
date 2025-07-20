@@ -62,7 +62,7 @@ export class StubController {
         generatedAt: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error('Stub generation failed', { error, body: request.body });
+      logger.error('Stub generation failed' + ": " + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -142,7 +142,7 @@ export class StubController {
         generatedAt: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error('Customized stub generation failed', { error, body: request.body });
+      logger.error('Customized stub generation failed' + ": " + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -214,7 +214,7 @@ export class StubController {
         generatedAt: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error('Stub bundle generation failed', { error, body: request.body });
+      logger.error('Stub bundle generation failed' + ": " + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -278,7 +278,7 @@ export class StubController {
         generatedAt: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error('Stub test generation failed', { error, body: request.body });
+      logger.error('Stub test generation failed' + ": " + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -357,7 +357,7 @@ export class StubController {
         generatedAt: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error('Stub documentation generation failed', { error, body: request.body });
+      logger.error('Stub documentation generation failed' + ": " + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',
@@ -395,10 +395,7 @@ export class StubController {
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error('Failed to cancel stub generation', { 
-        error, 
-        generationId: request.params.generationId 
-      });
+      logger.error('Failed to cancel stub generation: ' + error.message);
       
       reply.code(500).send({
         error: 'Internal Server Error',

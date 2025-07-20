@@ -28,7 +28,7 @@ async function start(): Promise<void> {
         logger.info('Application closed successfully');
         process.exit(0);
       } catch (error) {
-        logger.error('Error during shutdown', { error });
+        logger.error('Error during shutdown', error.message);
         process.exit(1);
       }
     };
@@ -40,25 +40,25 @@ async function start(): Promise<void> {
 
     // Handle uncaught exceptions
     process.on('uncaughtException', (error) => {
-      logger.error('Uncaught exception', { error });
+      logger.error('Uncaught exception: ' + error.message);
       process.exit(1);
     });
 
     // Handle unhandled promise rejections
     process.on('unhandledRejection', (reason, promise) => {
-      logger.error('Unhandled promise rejection', { reason, promise });
+      logger.error('Unhandled promise rejection: ' + reason);
       process.exit(1);
     });
 
   } catch (error) {
-    logger.error('Failed to start Contract Generation Engine', { error });
+    logger.error('Failed to start Contract Generation Engine: ' + error.message);
     process.exit(1);
   }
 }
 
 // Start the application
 start().catch((error) => {
-  logger.error('Startup failed', { error });
+  logger.error('Startup failed', error.message);
   process.exit(1);
 });
 

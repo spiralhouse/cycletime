@@ -1,24 +1,24 @@
-import { Redis } from 'redis';
+import { createClient, RedisClientType } from 'redis';
 import { StoredContract, ContractStatus } from '../types/contract-types';
 import { logger } from '@cycletime/shared-utils';
 
 export interface ContractStorageOptions {
-  redis?: Redis;
+  redis?: RedisClientType;
   keyPrefix?: string;
   ttl?: number;
 }
 
 export class ContractStorageService {
-  private redis: Redis;
+  private redis: RedisClientType;
   private keyPrefix: string;
   private ttl: number;
 
   constructor(options: ContractStorageOptions = {}) {
-    this.redis = options.redis || new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      retryDelayOnFailover: 100,
-      maxRetriesPerRequest: 3,
+    this.redis = options.redis || createClient({
+      socket: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+      },
     });
     
     this.keyPrefix = options.keyPrefix || 'contract:';
@@ -30,14 +30,14 @@ export class ContractStorageService {
       const key = this.getContractKey(contract.id);
       const serialized = JSON.stringify(this.serializeContract(contract));
       
-      await this.redis.setex(key, this.ttl, serialized);
+      await this.redis.setEx(key, this.ttl, serialized);
       
       // Also store in contract list for listing operations
       await this.addToContractList(contract);
       
       logger.debug('Contract stored', { contractId: contract.id });
     } catch (error) {
-      logger.error('Failed to store contract', { error, contractId: contract.id });
+      logger.error('Failed to store contract' + ": " + error.message);
       throw error;
     }
   }
@@ -53,7 +53,7 @@ export class ContractStorageService {
       
       return this.deserializeContract(JSON.parse(serialized));
     } catch (error) {
-      logger.error('Failed to get contract', { error, contractId });
+      logger.error('Failed to get contract' + ": " + error.message);
       throw error;
     }
   }
@@ -71,7 +71,7 @@ export class ContractStorageService {
       
       logger.debug('Contract updated', { contractId, updates: Object.keys(updates) });
     } catch (error) {
-      logger.error('Failed to update contract', { error, contractId });
+      logger.error('Failed to update contract' + ": " + error.message);
       throw error;
     }
   }
@@ -104,7 +104,7 @@ export class ContractStorageService {
       
       logger.debug('Contract deleted', { contractId });
     } catch (error) {
-      logger.error('Failed to delete contract', { error, contractId });
+      logger.error('Failed to delete contract' + ": " + error.message);
       throw error;
     }
   }
@@ -139,7 +139,7 @@ export class ContractStorageService {
         total: filteredIds.length,
       };
     } catch (error) {
-      logger.error('Failed to list contracts', { error, options });
+      logger.error('Failed to list contracts' + ": " + error.message);
       throw error;
     }
   }
@@ -159,7 +159,7 @@ export class ContractStorageService {
       await this.redis.quit();
       logger.info('Contract storage service cleanup completed');
     } catch (error) {
-      logger.error('Failed to cleanup contract storage service', { error });
+      logger.error('Failed to cleanup contract storage service', error.message);
     }
   }
 
@@ -181,19 +181,19 @@ export class ContractStorageService {
       createdAt: contract.createdAt.toISOString(),
     };
     
-    await this.redis.lpush(listKey, JSON.stringify(contractInfo));
+    await this.redis.lPush(listKey, JSON.stringify(contractInfo));
   }
 
   private async removeFromContractList(contractId: string): Promise<void> {
     const listKey = this.getContractListKey();
-    const allItems = await this.redis.lrange(listKey, 0, -1);
+    const allItems = await this.redis.lRange(listKey, 0, -1);
     
     // Find and remove the item
     for (const item of allItems) {
       try {
         const parsed = JSON.parse(item);
         if (parsed.id === contractId) {
-          await this.redis.lrem(listKey, 1, item);
+          await this.redis.lRem(listKey, 1, item);
           break;
         }
       } catch (error) {
@@ -204,7 +204,7 @@ export class ContractStorageService {
 
   private async getContractList(): Promise<string[]> {
     const listKey = this.getContractListKey();
-    const items = await this.redis.lrange(listKey, 0, -1);
+    const items = await this.redis.lRange(listKey, 0, -1);
     
     return items
       .map(item => {

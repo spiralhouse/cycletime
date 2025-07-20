@@ -48,7 +48,7 @@ export class BoundaryAnalyzer {
         generatedAt: new Date().toISOString(),
       };
     } catch (error) {
-      logger.error('Boundary analysis failed', { error, context: this.context });
+      logger.error('Boundary analysis failed' + ": " + error.message);
       throw error;
     }
   }
@@ -186,8 +186,8 @@ export class BoundaryAnalyzer {
 
   private analyzeScalingCharacteristics(serviceName: string) {
     const characteristics = {
-      pattern: 'mixed' as const,
-      expectedLoad: 'medium' as const,
+      pattern: 'mixed' as 'mixed' | 'cpu-bound' | 'io-bound' | 'memory-bound',
+      expectedLoad: 'medium' as 'medium' | 'high' | 'low',
     };
 
     const name = serviceName.toLowerCase();

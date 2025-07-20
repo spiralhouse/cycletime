@@ -26,7 +26,7 @@
     "redis": "^4.6.11",
     "tiktoken": "^1.0.10",
     "openai": "^4.28.0",
-    "pinecone-client": "^3.0.0",
+    "@pinecone-database/pinecone": "^6.1.1",
     "chromadb": "^1.7.3",
     "langchain": "^0.1.25",
     "natural": "^6.10.0",
@@ -40,7 +40,7 @@
   "devDependencies": {
     "@types/jest": "^29.5.8",
     "@types/node": "^20.10.5",
-    "@types/natural": "^6.0.3",
+    "@types/natural": "^6.0.1",
     "@types/yauzl": "^2.10.3",
     "@typescript-eslint/eslint-plugin": "^8.37.0",
     "@typescript-eslint/parser": "^8.37.0",

@@ -41,7 +41,7 @@ export class BoundaryAnalysisService {
 
       return result;
     } catch (error) {
-      logger.error('Boundary analysis failed', { error, request });
+      logger.error('Boundary analysis failed' + ": " + error.message);
       throw error;
     }
   }
@@ -78,7 +78,7 @@ export class BoundaryAnalysisService {
         analyzedAt: result.generatedAt,
       };
     } catch (error) {
-      logger.error('Service dependency analysis failed', { error, serviceName });
+      logger.error('Service dependency analysis failed' + ": " + error.message);
       throw error;
     }
   }
@@ -116,7 +116,7 @@ export class BoundaryAnalysisService {
         analyzedAt: result.generatedAt,
       };
     } catch (error) {
-      logger.error('Data flow analysis failed', { error, services });
+      logger.error('Data flow analysis failed' + ": " + error.message);
       throw error;
     }
   }
@@ -154,7 +154,7 @@ export class BoundaryAnalysisService {
         analyzedAt: result.generatedAt,
       };
     } catch (error) {
-      logger.error('Performance analysis failed', { error, services });
+      logger.error('Performance analysis failed' + ": " + error.message);
       throw error;
     }
   }
@@ -196,11 +196,7 @@ export class BoundaryAnalysisService {
         analyzedAt: result.generatedAt,
       };
     } catch (error) {
-      logger.error('Architectural recommendation generation failed', { 
-        error, 
-        services, 
-        currentArchitecture 
-      });
+      logger.error('Architectural recommendation generation failed: ' + error.message);
       throw error;
     }
   }
@@ -240,11 +236,7 @@ export class BoundaryAnalysisService {
         validatedAt: new Date().toISOString(),
       };
     } catch (error) {
-      logger.error('Service boundary validation failed', { 
-        error, 
-        services, 
-        proposedBoundaries 
-      });
+      logger.error('Service boundary validation failed: ' + error.message);
       throw error;
     }
   }
@@ -261,7 +253,7 @@ export class BoundaryAnalysisService {
         logger.warn('Analysis not found for cancellation', { analysisId });
       }
     } catch (error) {
-      logger.error('Failed to cancel analysis', { error, analysisId });
+      logger.error('Failed to cancel analysis' + ": " + error.message);
       throw error;
     }
   }

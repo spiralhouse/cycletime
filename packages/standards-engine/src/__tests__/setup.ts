@@ -12,44 +12,16 @@ process.env.PORT = '3007';
 
 // Mock external dependencies
 jest.mock('redis', () => ({
-  createClient: jest.fn().mockReturnValue({
-    connect: jest.fn().mockResolvedValue(undefined),
-    disconnect: jest.fn().mockResolvedValue(undefined),
-    on: jest.fn(),
-    ping: jest.fn().mockResolvedValue('PONG'),
-  }),
+  createClient: jest.fn(),
 }));
 
 jest.mock('openai', () => ({
-  OpenAI: jest.fn().mockImplementation(() => ({
-    chat: {
-      completions: {
-        create: jest.fn().mockResolvedValue({
-          choices: [{ message: { content: 'Mocked response' } }],
-        }),
-      },
-    },
-  })),
+  OpenAI: jest.fn(),
 }));
 
 jest.mock('@anthropic-ai/sdk', () => ({
-  Anthropic: jest.fn().mockImplementation(() => ({
-    messages: {
-      create: jest.fn().mockResolvedValue({
-        content: [{ text: 'Mocked response' }],
-      }),
-    },
-  })),
+  Anthropic: jest.fn(),
 }));
 
 // Setup test timeout
 jest.setTimeout(30000);
-
-// Global test helpers
-global.beforeEach(() => {
-  jest.clearAllMocks();
-});
-
-global.afterEach(() => {
-  jest.restoreAllMocks();
-});

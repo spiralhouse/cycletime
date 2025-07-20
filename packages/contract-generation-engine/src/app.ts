@@ -1,5 +1,5 @@
 import Fastify, { FastifyInstance } from 'fastify';
-import { Redis } from 'redis';
+import { createClient, RedisClientType } from 'redis';
 import { logger } from '@cycletime/shared-utils';
 
 // Import services
@@ -16,7 +16,7 @@ import { HealthController } from './controllers/health-controller';
 
 export interface AppOptions {
   logger?: boolean;
-  redis?: Redis;
+  redis?: RedisClientType;
 }
 
 export async function build(options: AppOptions = {}): Promise<FastifyInstance> {
@@ -93,13 +93,13 @@ export async function build(options: AppOptions = {}): Promise<FastifyInstance> 
     });
 
     // Initialize Redis connection
-    const redis = options.redis || new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
+    const redis = options.redis || createClient({
+      socket: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+      },
       password: process.env.REDIS_PASSWORD,
-      retryDelayOnFailover: 100,
-      maxRetriesPerRequest: 3,
-      lazyConnect: true,
+      database: 0,
     });
 
     // Connect to Redis
@@ -151,7 +151,7 @@ export async function build(options: AppOptions = {}): Promise<FastifyInstance> 
         const result = await boundaryAnalysisService.analyzeSystemBoundaries(request.body as any);
         reply.code(200).send(result);
       } catch (error) {
-        logger.error('Boundary analysis failed', { error });
+        logger.error('Boundary analysis failed', error.message);
         reply.code(500).send({
           error: 'Internal Server Error',
           message: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -181,7 +181,7 @@ export async function build(options: AppOptions = {}): Promise<FastifyInstance> 
         const result = await validationService.validateContract(contract, options);
         reply.code(200).send(result);
       } catch (error) {
-        logger.error('Contract validation failed', { error });
+        logger.error('Contract validation failed', error.message);
         reply.code(500).send({
           error: 'Internal Server Error',
           message: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -211,7 +211,7 @@ export async function build(options: AppOptions = {}): Promise<FastifyInstance> 
         const result = await stubGenerationService.generateStub(specification, options);
         reply.code(200).send(result);
       } catch (error) {
-        logger.error('Stub generation failed', { error });
+        logger.error('Stub generation failed', error.message);
         reply.code(500).send({
           error: 'Internal Server Error',
           message: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -237,12 +237,7 @@ export async function build(options: AppOptions = {}): Promise<FastifyInstance> 
 
     // Error handler
     fastify.setErrorHandler(async (error, request, reply) => {
-      logger.error('Request error', {
-        error: error.message,
-        stack: error.stack,
-        method: request.method,
-        url: request.url,
-      });
+      logger.error(`Request error: ${error.message} [${request.method} ${request.url}]`);
 
       const statusCode = error.statusCode || 500;
       const response = {
@@ -266,7 +261,7 @@ export async function build(options: AppOptions = {}): Promise<FastifyInstance> 
     });
 
     // Add cleanup hook
-    fastify.addHook('onClose', async (instance, done) => {
+    fastify.addHook('onClose', async (instance) => {
       logger.info('Closing application...');
       
       try {
@@ -275,10 +270,8 @@ export async function build(options: AppOptions = {}): Promise<FastifyInstance> 
         await redis.quit();
         logger.info('Application cleanup completed');
       } catch (error) {
-        logger.error('Error during cleanup', { error });
+        logger.error('Error during cleanup', error.message);
       }
-      
-      done();
     });
 
     // Subscribe to events
@@ -325,7 +318,7 @@ export async function build(options: AppOptions = {}): Promise<FastifyInstance> 
 
     return fastify;
   } catch (error) {
-    logger.error('Failed to build application', { error });
+    logger.error('Failed to build application', error.message);
     throw error;
   }
 }

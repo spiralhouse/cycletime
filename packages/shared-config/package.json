@@ -1,6 +1,6 @@
 {
   "name": "@cycletime/shared-config",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Shared configuration management utilities for CycleTime services",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

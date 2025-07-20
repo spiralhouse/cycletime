@@ -20,7 +20,7 @@ export class App {
 
   constructor() {
     this.server = fastify({
-      loggerInstance: logger,
+      logger: process.env.NODE_ENV === 'test' ? false : logger,
     });
 
     // Initialize controllers

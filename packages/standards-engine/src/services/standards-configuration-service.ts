@@ -101,8 +101,24 @@ export class StandardsConfigurationService implements IStandardsConfigurationSer
       const template = templates.find(t => t.id === request.inheritFromTemplate);
       
       if (template) {
-        // Merge template standards with new standards
-        standards.push(...template.standards);
+        // Merge template standards with new standards (ensure type compatibility)
+        const mappedTemplateStandards = template.standards.map(std => ({
+          id: std.id,
+          name: std.name,
+          description: std.description,
+          category: std.category,
+          rules: std.rules.map(rule => ({
+            ...rule,
+            examples: rule.examples || {},
+            autoFixable: rule.autoFixable || false,
+            tags: rule.tags || []
+          })),
+          active: std.active,
+          version: std.version || '1.0.0',
+          createdAt: std.createdAt || new Date().toISOString(),
+          updatedAt: std.updatedAt || new Date().toISOString()
+        }));
+        standards.push(...mappedTemplateStandards);
       }
     }
 
