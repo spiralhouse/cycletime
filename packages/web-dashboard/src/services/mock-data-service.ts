@@ -437,6 +437,7 @@ export class MockDataService {
       pagination: {
         page,
         limit,
+        total: filteredProjects.length,
         totalPages: Math.ceil(filteredProjects.length / limit),
         hasNext: endIndex < filteredProjects.length,
         hasPrevious: page > 1,
@@ -471,6 +472,7 @@ export class MockDataService {
       pagination: {
         page,
         limit,
+        total: filteredTasks.length,
         totalPages: Math.ceil(filteredTasks.length / limit),
         hasNext: endIndex < filteredTasks.length,
         hasPrevious: page > 1,
@@ -563,6 +565,7 @@ export class MockDataService {
       pagination: {
         page,
         limit,
+        total: filteredNotifications.length,
         totalPages: Math.ceil(filteredNotifications.length / limit),
         hasNext: endIndex < filteredNotifications.length,
         hasPrevious: page > 1,
@@ -669,6 +672,7 @@ export class MockDataService {
       pagination: {
         page,
         limit,
+        total: results.length,
         totalPages: Math.ceil(results.length / limit),
         hasNext: endIndex < results.length,
         hasPrevious: page > 1,

@@ -34,7 +34,7 @@ async function start() {
     });
 
   } catch (error) {
-    logger.error(error, 'Failed to start Configuration Service');
+    logger.error('Failed to start Configuration Service', error as Error);
     process.exit(1);
   }
 }

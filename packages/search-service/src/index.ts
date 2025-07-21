@@ -34,7 +34,7 @@ async function start() {
     });
 
   } catch (error) {
-    logger.error(error, 'Failed to start Search Service');
+    logger.error('Failed to start Search Service', error as Error);
     process.exit(1);
   }
 }

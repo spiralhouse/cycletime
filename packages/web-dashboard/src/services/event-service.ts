@@ -29,12 +29,12 @@ export class EventService extends EventEmitter {
   public publishEvent(event: DashboardEvent): void {
     const eventId = randomUUID();
     const fullEvent: BaseEvent = {
+      ...event,
       id: eventId,
       type: event.type,
       timestamp: new Date().toISOString(),
       source: 'web-dashboard-service',
       version: '1.0.0',
-      ...event,
     };
 
     // Store the event

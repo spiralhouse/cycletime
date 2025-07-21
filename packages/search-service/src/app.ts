@@ -4,7 +4,6 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
-import { logger } from '@cycletime/shared-utils';
 import { loadConfig } from '@cycletime/shared-config';
 
 export interface AppOptions {
@@ -44,7 +43,7 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   });
 
   // Initialize services
-  const eventService = { publishEvent: async (type: string, data: any) => {} };
+  const eventService = { publishEvent: async (_type: string, _data: any) => {} };
   const mockDataService = { getHealthStatus: () => ({ status: 'healthy', timestamp: new Date() }) };
 
   // Decorate app
@@ -52,7 +51,7 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   app.decorate('mockDataService', mockDataService);
 
   // Health endpoint
-  app.get('/health', async (request, reply) => {
+  app.get('/health', async (_request, reply) => {
     reply.send({ status: 'healthy', timestamp: new Date(), version: '1.0.0' });
   });
 

@@ -33,7 +33,7 @@ async function start() {
     });
 
   } catch (error) {
-    logger.error(error, 'Failed to start Activity Service');
+    logger.error('Failed to start Activity Service', error as Error);
     process.exit(1);
   }
 }

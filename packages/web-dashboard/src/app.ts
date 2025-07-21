@@ -68,8 +68,6 @@ export class WebDashboardApp {
     await this.fastify.register(rateLimit, {
       max: 100,
       timeWindow: '1 minute',
-      standardHeaders: true,
-      legacyHeaders: false,
     });
 
     // Static files
