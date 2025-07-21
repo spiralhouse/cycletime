@@ -8,8 +8,8 @@
     "build": "tsc",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "start": "node dist/index.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch --passWithNoTests",
     "lint": "eslint src/**/*.ts --no-warn-ignored",
     "typecheck": "tsc --noEmit"
   },
