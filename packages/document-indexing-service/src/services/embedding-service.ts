@@ -51,7 +51,7 @@ export function createEmbeddingService(
     const startTime = Date.now();
     
     try {
-      logger.info({ textLength: text.length, options }, 'Generating embedding');
+      logger.info('Generating embedding', { textLength: text.length, options });
       
       // Validate input
       if (!text || text.trim().length === 0) {
@@ -102,16 +102,16 @@ export function createEmbeddingService(
         metadata,
       });
 
-      logger.info({ 
+      logger.info('Embedding generated successfully', { 
         embeddingId: result.id,
         textLength: text.length,
         dimensions,
         processingTime 
-      }, 'Embedding generated successfully');
+      });
 
       return result;
     } catch (error) {
-      logger.error({ text: text.substring(0, 100), error }, 'Embedding generation failed');
+      logger.error('Embedding generation failed', error as Error, { text: text.substring(0, 100) });
       throw error;
     }
   };
@@ -122,11 +122,11 @@ export function createEmbeddingService(
     const startTime = Date.now();
     const batchId = `batch-${Date.now()}`;
     
-    logger.info({ 
+    logger.info('Starting batch embedding generation', { 
       batchId,
       textCount: request.texts.length,
       options: request.options 
-    }, 'Starting batch embedding generation');
+    });
 
     const results: EmbeddingResult[] = [];
     const errors: string[] = [];
@@ -168,13 +168,13 @@ export function createEmbeddingService(
       errors: errors.length > 0 ? errors : undefined,
     };
 
-    logger.info({ 
+    logger.info('Batch embedding generation completed', { 
       batchId,
       totalTexts: request.texts.length,
       successCount,
       failureCount,
       processingTime 
-    }, 'Batch embedding generation completed');
+    });
 
     return batchResult;
   };
@@ -266,11 +266,11 @@ export function createEmbeddingService(
       threshold = 0.01,
     } = options;
 
-    logger.info({ 
+    logger.info('Starting embedding clustering', { 
       embeddingCount: embeddings.length,
       numClusters,
       maxIterations 
-    }, 'Starting embedding clustering');
+    });
 
     // Initialize clusters with random centroids
     const clusters: EmbeddingCluster[] = [];
@@ -324,10 +324,10 @@ export function createEmbeddingService(
       });
     }
 
-    logger.info({ 
+    logger.info('Clustering completed', { 
       clustersCreated: clusters.length,
       clusterSizes: clusters.map(c => c.size)
-    }, 'Clustering completed');
+    });
 
     return clusters.filter(cluster => cluster.size > 0);
   };
@@ -356,7 +356,7 @@ export function createEmbeddingService(
     
     if (index !== -1) {
       embeddings.splice(index, 1);
-      logger.info({ embeddingId }, 'Embedding deleted');
+      logger.info('Embedding deleted', { embeddingId });
       return true;
     }
     
@@ -372,7 +372,7 @@ export function createEmbeddingService(
     
     if (embedding) {
       Object.assign(embedding, updates);
-      logger.info({ embeddingId, updates: Object.keys(updates) }, 'Embedding updated');
+      logger.info('Embedding updated', { embeddingId, updates: Object.keys(updates) });
       return embedding;
     }
     

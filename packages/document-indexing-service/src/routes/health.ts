@@ -278,7 +278,8 @@ export async function healthRoutes(app: FastifyInstance) {
     ];
 
     const statusCounts = dependencies.reduce((acc, dep) => {
-      acc[dep.status + 'Count']++;
+      const key = `${dep.status}Count` as keyof typeof acc;
+      acc[key]++;
       return acc;
     }, { healthyCount: 0, degradedCount: 0, unhealthyCount: 0 });
 

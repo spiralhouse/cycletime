@@ -57,7 +57,7 @@ export function createIndexingService(
     const startTime = Date.now();
     
     try {
-      logger.info({ documentId, indexId }, 'Starting document indexing');
+      logger.info('Starting document indexing', { documentId, indexId });
       
       // Validate index exists
       const index = mockDataService.getIndex(indexId);
@@ -133,7 +133,7 @@ export function createIndexingService(
         processingTime,
       });
 
-      logger.info({ documentId, indexId, processingTime }, 'Document indexed successfully');
+      logger.info('Document indexed successfully', { documentId, indexId, processingTime });
       
       return result;
     } catch (error) {
@@ -158,7 +158,7 @@ export function createIndexingService(
         code: 'IDX_001',
       }, { indexId });
 
-      logger.error({ documentId, indexId, error }, 'Document indexing failed');
+      logger.error('Document indexing failed', error as Error, { documentId, indexId });
       
       return result;
     }
@@ -174,7 +174,7 @@ export function createIndexingService(
     const startTime = Date.now();
     
     try {
-      logger.info({ documentId, indexId }, 'Starting document reindexing');
+      logger.info('Starting document reindexing', { documentId, indexId });
       
       // Find existing document
       const existingDoc = mockDataService.getDocuments(indexId).find(d => d.documentId === documentId);
@@ -187,7 +187,7 @@ export function createIndexingService(
       const newChecksum = `sha256:${Math.random().toString(36).substring(2, 15)}`;
       
       if (!options.forceReindex && options.compareChecksums && existingDoc.checksum === newChecksum) {
-        logger.info({ documentId, indexId }, 'Document unchanged, skipping reindexing');
+        logger.info('Document unchanged, skipping reindexing', { documentId, indexId });
         return {
           documentId,
           indexId,
@@ -253,7 +253,7 @@ export function createIndexingService(
         processingTime,
       });
 
-      logger.info({ documentId, indexId, processingTime }, 'Document reindexed successfully');
+      logger.info('Document reindexed successfully', { documentId, indexId, processingTime });
       
       return result;
     } catch (error) {
@@ -277,7 +277,7 @@ export function createIndexingService(
         code: 'IDX_002',
       }, { indexId });
 
-      logger.error({ documentId, indexId, error }, 'Document reindexing failed');
+      logger.error('Document reindexing failed', error as Error, { documentId, indexId });
       
       return result;
     }
@@ -285,7 +285,7 @@ export function createIndexingService(
 
   const removeFromIndex = async (documentId: string, indexId: string): Promise<boolean> => {
     try {
-      logger.info({ documentId, indexId }, 'Removing document from index');
+      logger.info('Removing document from index', { documentId, indexId });
       
       const existingDoc = mockDataService.getDocuments(indexId).find(d => d.documentId === documentId);
       if (!existingDoc) {
@@ -296,12 +296,12 @@ export function createIndexingService(
       
       if (success) {
         await eventService.publishDocumentRemoved(documentId, indexId);
-        logger.info({ documentId, indexId }, 'Document removed from index successfully');
+        logger.info('Document removed from index successfully', { documentId, indexId });
       }
       
       return success;
     } catch (error) {
-      logger.error({ documentId, indexId, error }, 'Failed to remove document from index');
+      logger.error('Failed to remove document from index', error as Error, { documentId, indexId });
       return false;
     }
   };
@@ -318,7 +318,7 @@ export function createIndexingService(
     const startTime = Date.now();
     const batchId = `batch-${Date.now()}`;
     
-    logger.info({ batchId, indexId, documentCount: documents.length }, 'Starting bulk indexing');
+    logger.info('Starting bulk indexing', { batchId, indexId, documentCount: documents.length });
     
     const results: IndexingResult[] = [];
     let successCount = 0;
@@ -383,14 +383,14 @@ export function createIndexingService(
       processingTime,
     });
 
-    logger.info({ 
+    logger.info('Bulk indexing completed', { 
       batchId, 
       indexId, 
       totalDocuments: documents.length,
       successCount,
       failureCount,
       processingTime 
-    }, 'Bulk indexing completed');
+    });
     
     return bulkResult;
   };
@@ -456,7 +456,7 @@ export function createIndexingService(
 
   const extractEntities = (content: string): string[] => {
     // Mock entity extraction - in real implementation would use NER
-    const entities = [];
+    const entities: string[] = [];
     const patterns = [
       /\b[A-Z][a-z]+ [A-Z][a-z]+\b/g, // Names
       /\b[A-Z][a-z]+\b/g, // Proper nouns

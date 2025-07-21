@@ -220,7 +220,7 @@ export function createAnalyticsService(
       report.insights = generateInsights(metrics);
     }
 
-    logger.info({ reportId, timeframe }, 'Analytics report generated');
+    logger.info('Analytics report generated', { reportId, timeframe });
     
     return report;
   };
@@ -425,7 +425,7 @@ export function createAnalyticsService(
       data.data.rawEvents = eventService.getEvents(undefined, 1000);
     }
 
-    logger.info({ exportId: data.exportId, format, metrics }, 'Data export generated');
+    logger.info('Data export generated', { exportId: data.exportId, format, metrics });
     
     return data;
   };

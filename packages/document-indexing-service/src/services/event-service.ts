@@ -36,17 +36,17 @@ export function createEventService() {
       try {
         callback(event);
       } catch (error) {
-        logger.error({ error, eventType }, 'Error calling event subscriber');
+        logger.error('Error calling event subscriber', error as Error, { eventType });
       }
     });
 
     // Log event for debugging
-    logger.info({
+    logger.info('Event published', {
       eventType,
       eventId: event.eventId,
       correlationId: event.correlationId,
       dataKeys: Object.keys(data),
-    }, 'Event published');
+    });
 
     return event;
   };

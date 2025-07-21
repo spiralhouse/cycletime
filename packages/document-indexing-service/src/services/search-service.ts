@@ -89,7 +89,7 @@ export function createSearchService(
     const startTime = Date.now();
     
     try {
-      logger.info({ query, options }, 'Starting search');
+      logger.info('Starting search', { query, options });
       
       const {
         indexId,
@@ -196,16 +196,16 @@ export function createSearchService(
         totalResults: total,
       });
 
-      logger.info({ 
+      logger.info('Search completed', { 
         query, 
         searchType, 
         totalResults: total, 
         processingTime 
-      }, 'Search completed');
+      });
 
       return response;
     } catch (error) {
-      logger.error({ query, error }, 'Search failed');
+      logger.error('Search failed', error as Error, { query });
       throw error;
     }
   };

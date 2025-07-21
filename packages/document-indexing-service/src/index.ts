@@ -1,19 +1,24 @@
 import { createApp } from './app';
-import { loadConfig } from '@cycletime/shared-config';
+import { getEnvVar, getEnvVarAsNumber } from '@cycletime/shared-config';
 import { logger } from '@cycletime/shared-utils';
 
 async function start() {
   try {
-    const config = await loadConfig();
+    const config = {
+      PORT: getEnvVarAsNumber('PORT', 3003) ?? 3003,
+      HOST: getEnvVar('HOST', 'localhost') ?? 'localhost',
+      NODE_ENV: getEnvVar('NODE_ENV', 'development') ?? 'development'
+    };
+    
     const app = await createApp({
-      port: config.PORT ? parseInt(config.PORT) : 8005,
-      host: config.HOST || 'localhost',
+      port: config.PORT,
+      host: config.HOST,
       logger: config.NODE_ENV !== 'production',
     });
 
     const address = await app.listen({
-      port: config.PORT ? parseInt(config.PORT) : 8005,
-      host: config.HOST || 'localhost',
+      port: config.PORT,
+      host: config.HOST,
     });
 
     logger.info(`Document Indexing Service started on ${address}`);
@@ -24,7 +29,7 @@ async function start() {
     const indices = app.mockDataService.getIndices();
     const statistics = app.mockDataService.getStatistics();
     
-    logger.info({
+    logger.info('Document Indexing Service startup summary', {
       service: 'document-indexing-service',
       version: '1.0.0',
       status: healthStatus.status,
@@ -33,7 +38,7 @@ async function start() {
       totalEmbeddings: statistics.totalEmbeddings,
       averageIndexingTime: statistics.averageIndexingTime,
       vectorDimensions: statistics.vectorDimensions,
-    }, 'Document Indexing Service startup summary');
+    });
 
     // Publish service startup event
     await app.eventService.publishEvent('document-indexing.service.started', {
@@ -59,23 +64,23 @@ async function start() {
     });
 
   } catch (error) {
-    logger.error(error, 'Failed to start Document Indexing Service');
+    logger.error('Failed to start Document Indexing Service', error as Error);
     process.exit(1);
   }
 }
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error({
+  logger.error('Unhandled promise rejection', undefined, {
     reason,
     promise,
-  }, 'Unhandled promise rejection');
+  });
   process.exit(1);
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-  logger.error(error, 'Uncaught exception');
+  logger.error('Uncaught exception', error);
   process.exit(1);
 });
 
