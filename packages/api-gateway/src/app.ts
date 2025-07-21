@@ -21,7 +21,6 @@ import { metricsPlugin } from './plugins/metrics';
 // Route imports
 import { healthRoutes } from './routes/health';
 import { authRoutes } from './routes/auth';
-import { proxyRoutes } from './routes/proxy';
 import { adminRoutes } from './routes/admin';
 import { metricsRoutes } from './routes/metrics';
 
@@ -109,7 +108,6 @@ export const build = async (): Promise<FastifyInstance> => {
   // Register route handlers
   await app.register(healthRoutes);
   await app.register(authRoutes);
-  await app.register(proxyRoutes);
   await app.register(adminRoutes);
   await app.register(metricsRoutes);
 
