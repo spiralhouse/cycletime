@@ -210,20 +210,16 @@ export class MockDataService {
       const clickedAt = status === 'clicked' 
         ? new Date(baseTime + Math.random() * 1800000) : undefined;
       
-      notifications.push({
+      const templateId = this.templates[Math.floor(Math.random() * this.templates.length)]?.id;
+      
+      const notification: Notification = {
         id: uuidv4(),
         channel,
         recipient: `user${i + 1}@example.com`,
         subject: `Sample ${channel} notification ${i + 1}`,
         content: `This is a sample ${channel} notification content for testing.`,
-        templateId: this.templates[Math.floor(Math.random() * this.templates.length)]?.id,
         status,
         priority,
-        sentAt,
-        deliveredAt,
-        openedAt,
-        clickedAt,
-        failureReason: status === 'failed' ? 'Invalid recipient address' : undefined,
         retryCount: status === 'failed' ? Math.floor(Math.random() * 3) : 0,
         maxRetries: 3,
         metadata: {
@@ -232,7 +228,29 @@ export class MockDataService {
         },
         createdAt,
         updatedAt: deliveredAt || sentAt || createdAt,
-      });
+      };
+      
+      // Add optional properties only if they have values
+      if (templateId) {
+        notification.templateId = templateId;
+      }
+      if (sentAt) {
+        notification.sentAt = sentAt;
+      }
+      if (deliveredAt) {
+        notification.deliveredAt = deliveredAt;
+      }
+      if (openedAt) {
+        notification.openedAt = openedAt;
+      }
+      if (clickedAt) {
+        notification.clickedAt = clickedAt;
+      }
+      if (status === 'failed') {
+        notification.failureReason = 'Invalid recipient address';
+      }
+      
+      notifications.push(notification);
     }
     
     return notifications;
@@ -417,21 +435,37 @@ export class MockDataService {
       recipient: notification.recipient || '',
       subject: notification.subject || '',
       content: notification.content || '',
-      templateId: notification.templateId,
       status: notification.status || 'pending',
       priority: notification.priority || 'normal',
-      scheduledAt: notification.scheduledAt,
-      sentAt: notification.sentAt,
-      deliveredAt: notification.deliveredAt,
-      openedAt: notification.openedAt,
-      clickedAt: notification.clickedAt,
-      failureReason: notification.failureReason,
       retryCount: notification.retryCount || 0,
       maxRetries: notification.maxRetries || 3,
       metadata: notification.metadata || {},
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+    
+    // Add optional properties only if they have values
+    if (notification.templateId) {
+      newNotification.templateId = notification.templateId;
+    }
+    if (notification.scheduledAt) {
+      newNotification.scheduledAt = notification.scheduledAt;
+    }
+    if (notification.sentAt) {
+      newNotification.sentAt = notification.sentAt;
+    }
+    if (notification.deliveredAt) {
+      newNotification.deliveredAt = notification.deliveredAt;
+    }
+    if (notification.openedAt) {
+      newNotification.openedAt = notification.openedAt;
+    }
+    if (notification.clickedAt) {
+      newNotification.clickedAt = notification.clickedAt;
+    }
+    if (notification.failureReason) {
+      newNotification.failureReason = notification.failureReason;
+    }
     
     this.notifications.push(newNotification);
     return newNotification;
@@ -466,7 +500,6 @@ export class MockDataService {
     const newTemplate: NotificationTemplate = {
       id: uuidv4(),
       name: template.name || 'Untitled Template',
-      description: template.description,
       channel: template.channel || 'email',
       category: template.category || 'general',
       subject: template.subject || '',
@@ -477,6 +510,11 @@ export class MockDataService {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+    
+    // Add optional properties only if they have values
+    if (template.description) {
+      newTemplate.description = template.description;
+    }
     
     this.templates.push(newTemplate);
     return newTemplate;

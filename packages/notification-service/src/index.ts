@@ -24,7 +24,7 @@ async function start() {
     const templates = app.mockDataService.getTemplates();
     const notifications = app.mockDataService.getNotifications();
     
-    logger.info({
+    logger.info('Notification Service startup summary', {
       service: 'notification-service',
       version: '1.0.0',
       status: healthStatus.status,
@@ -33,7 +33,7 @@ async function start() {
       totalNotifications: notifications.length,
       pendingNotifications: notifications.filter(n => n.status === 'pending').length,
       channels: ['email', 'sms', 'push', 'in_app'],
-    }, 'Notification Service startup summary');
+    });
 
     // Publish service startup event
     await app.eventService.publishEvent('notification.service.started', {
@@ -57,23 +57,22 @@ async function start() {
     });
 
   } catch (error) {
-    logger.error(error, 'Failed to start Notification Service');
+    logger.error('Failed to start Notification Service', error as Error);
     process.exit(1);
   }
 }
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error({
-    reason,
+  logger.error('Unhandled promise rejection', new Error(`Unhandled promise rejection: ${reason}`), {
     promise,
-  }, 'Unhandled promise rejection');
+  });
   process.exit(1);
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-  logger.error(error, 'Uncaught exception');
+  logger.error('Uncaught exception', error as Error);
   process.exit(1);
 });
 

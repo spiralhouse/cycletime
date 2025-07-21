@@ -18,19 +18,18 @@ export class TemplateService {
 
       await this.eventService.publishTemplateCreated(template);
 
-      logger.info({
+      logger.info('Template created', {
         templateId: template.id,
         name: template.name,
         channel: template.channel,
         category: template.category,
-      }, 'Template created');
+      });
 
       return template;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to create template', error as Error, {
         templateData,
-      }, 'Failed to create template');
+      });
       throw error;
     }
   }
@@ -52,20 +51,19 @@ export class TemplateService {
         const changes = this.getChanges(original, template);
         await this.eventService.publishTemplateUpdated(template, changes);
 
-        logger.info({
+        logger.info('Template updated', {
           templateId,
           name: template.name,
           changes,
-        }, 'Template updated');
+        });
       }
 
       return template;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to update template', error as Error, {
         templateId,
         updates,
-      }, 'Failed to update template');
+      });
       throw error;
     }
   }
@@ -82,18 +80,17 @@ export class TemplateService {
       if (success) {
         await this.eventService.publishTemplateDeleted(template);
 
-        logger.info({
+        logger.info('Template deleted', {
           templateId,
           name: template.name,
-        }, 'Template deleted');
+        });
       }
 
       return success;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to delete template', error as Error, {
         templateId,
-      }, 'Failed to delete template');
+      });
       throw error;
     }
   }
@@ -107,19 +104,18 @@ export class TemplateService {
 
       const preview = this.renderTemplate(template, data);
 
-      logger.debug({
+      logger.debug('Template preview generated', {
         templateId,
         dataKeys: Object.keys(data),
         missingVariables: preview.missingVariables,
-      }, 'Template preview generated');
+      });
 
       return preview;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to preview template', error as Error, {
         templateId,
         data,
-      }, 'Failed to preview template');
+      });
       throw error;
     }
   }

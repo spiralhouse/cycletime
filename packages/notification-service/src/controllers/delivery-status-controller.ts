@@ -1,5 +1,4 @@
 import { FastifyPluginAsync } from 'fastify';
-import { Type } from '@sinclair/typebox';
 
 const deliveryStatusController: FastifyPluginAsync = async (fastify) => {
   // Get delivery status summary
@@ -18,7 +17,7 @@ const deliveryStatusController: FastifyPluginAsync = async (fastify) => {
       const status = await fastify.deliveryTrackingService.getNotificationDeliveryStatus(notificationId);
       reply.send(status);
     } catch (error) {
-      reply.status(404).send({ error: error.message });
+      reply.status(404).send({ error: (error as Error).message });
     }
   });
 };

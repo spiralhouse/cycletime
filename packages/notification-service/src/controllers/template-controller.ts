@@ -1,9 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
-import { Type } from '@sinclair/typebox';
 
 const templateController: FastifyPluginAsync = async (fastify) => {
   // Get all templates
-  fastify.get('/', async (request, reply) => {
+  fastify.get('/', async (_request, reply) => {
     const templates = fastify.mockDataService.getTemplates();
     reply.send({
       templates: templates.map(t => ({
@@ -67,7 +66,7 @@ const templateController: FastifyPluginAsync = async (fastify) => {
       const preview = await fastify.templateService.previewTemplate(templateId, data);
       reply.send(preview);
     } catch (error) {
-      reply.status(400).send({ error: error.message });
+      reply.status(400).send({ error: (error as Error).message });
     }
   });
 };

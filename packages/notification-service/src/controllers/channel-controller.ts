@@ -1,9 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
-import { Type } from '@sinclair/typebox';
 
 const channelController: FastifyPluginAsync = async (fastify) => {
   // Get all channels
-  fastify.get('/', async (request, reply) => {
+  fastify.get('/', async (_request, reply) => {
     const channels = fastify.mockDataService.getChannels();
     reply.send({
       channels: channels.map(c => ({
@@ -38,7 +37,7 @@ const channelController: FastifyPluginAsync = async (fastify) => {
   // Update channel configuration
   fastify.put('/:channelType/config', async (request, reply) => {
     const { channelType } = request.params as { channelType: string };
-    const { config, isEnabled } = request.body as { config: any; isEnabled?: boolean };
+    const { config } = request.body as { config: any; isEnabled?: boolean };
     
     const updatedChannel = fastify.mockDataService.updateChannelConfig(channelType, config);
     if (!updatedChannel) {

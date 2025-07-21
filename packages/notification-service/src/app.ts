@@ -104,16 +104,16 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
       deepLinking: false,
     },
     uiHooks: {
-      onRequest: function (request, reply, next) {
+      onRequest: function (_request, _reply, next) {
         next();
       },
-      preHandler: function (request, reply, next) {
+      preHandler: function (_request, _reply, next) {
         next();
       },
     },
     staticCSP: true,
     transformStaticCSP: (header) => header,
-    transformSpecification: (swaggerObject, request, reply) => {
+    transformSpecification: (swaggerObject, _request, _reply) => {
       return swaggerObject;
     },
     transformSpecificationClone: true,
@@ -145,12 +145,10 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
 
   // Error handler
   app.setErrorHandler(async (error, request, reply) => {
-    logger.error({
-      error: error.message,
-      stack: error.stack,
+    logger.error('Request error', error as Error, {
       url: request.url,
       method: request.method,
-    }, 'Request error');
+    });
 
     if (error.validation) {
       return reply.status(400).send({

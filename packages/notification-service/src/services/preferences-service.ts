@@ -19,19 +19,18 @@ export class PreferencesService {
       if (changes.length > 0) {
         await this.eventService.publishPreferencesUpdated(preferences, changes);
         
-        logger.info({
+        logger.info('User preferences updated', {
           userId,
           changes,
-        }, 'User preferences updated');
+        });
       }
 
       return preferences;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to update preferences', error as Error, {
         userId,
         updates,
-      }, 'Failed to update preferences');
+      });
       throw error;
     }
   }
@@ -66,7 +65,7 @@ export class PreferencesService {
 
 export class DeliveryTrackingService {
   constructor(
-    private eventService: EventService,
+    _eventService: EventService,
     private mockDataService: MockDataService
   ) {}
 
@@ -102,11 +101,10 @@ export class DeliveryTrackingService {
         generatedAt: new Date().toISOString(),
       };
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to get delivery report', error as Error, {
         timeRange,
         channel,
-      }, 'Failed to get delivery report');
+      });
       throw error;
     }
   }
@@ -131,10 +129,9 @@ export class DeliveryTrackingService {
         })),
       };
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to get notification delivery status', error as Error, {
         notificationId,
-      }, 'Failed to get notification delivery status');
+      });
       throw error;
     }
   }

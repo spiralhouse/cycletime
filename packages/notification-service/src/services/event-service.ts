@@ -47,25 +47,24 @@ export class EventService extends EventEmitter {
         const channel = `cycletime:events:${eventType.replace(/\./g, ':')}`;
         await this.redisClient.publish(channel, JSON.stringify(event));
         
-        logger.debug({
+        logger.debug('Event published to Redis', {
           eventType,
           channel,
           eventId: event.eventId,
-        }, 'Event published to Redis');
+        });
       }
 
-      logger.info({
+      logger.info('Event published', {
         eventType,
         eventId: event.eventId,
         timestamp: event.timestamp,
-      }, 'Event published');
+      });
 
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to publish event', error as Error, {
         eventType,
         payload,
-      }, 'Failed to publish event');
+      });
       throw error;
     }
   }

@@ -22,19 +22,18 @@ export class NotificationService {
         await this.processNotification(notification);
       }, 1000);
 
-      logger.info({
+      logger.info('Notification queued for sending', {
         notificationId: notification.id,
         channel: notification.channel,
         recipient: notification.recipient,
         priority: notification.priority,
-      }, 'Notification queued for sending');
+      });
 
       return notification;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to send notification', error as Error, {
         request,
-      }, 'Failed to send notification');
+      });
       throw error;
     }
   }
@@ -58,10 +57,10 @@ export class NotificationService {
         await this.processBulkNotifications(batchId, notifications);
       }, 2000);
 
-      logger.info({
+      logger.info('Bulk notifications queued for processing', {
         batchId,
         totalNotifications: notifications.length,
-      }, 'Bulk notifications queued for processing');
+      });
 
       return {
         batchId,
@@ -72,10 +71,9 @@ export class NotificationService {
         status: 'queued',
       };
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to send bulk notifications', error as Error, {
         request,
-      }, 'Failed to send bulk notifications');
+      });
       throw error;
     }
   }
@@ -111,10 +109,9 @@ export class NotificationService {
         }
       }
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to process notification', error as Error, {
         notificationId: notification.id,
-      }, 'Failed to process notification');
+      });
     }
   }
 
@@ -150,10 +147,9 @@ export class NotificationService {
         }
       }
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to simulate delivery', error as Error, {
         notificationId: notification.id,
-      }, 'Failed to simulate delivery');
+      });
     }
   }
 
@@ -179,10 +175,9 @@ export class NotificationService {
         }
       }
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to simulate opening', error as Error, {
         notificationId: notification.id,
-      }, 'Failed to simulate opening');
+      });
     }
   }
 
@@ -203,10 +198,9 @@ export class NotificationService {
         }
       }
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to simulate clicking', error as Error, {
         notificationId: notification.id,
-      }, 'Failed to simulate clicking');
+      });
     }
   }
 
@@ -245,18 +239,17 @@ export class NotificationService {
         channels: Array.from(channels),
       });
 
-      logger.info({
+      logger.info('Bulk notifications processing completed', {
         batchId,
         totalNotifications: notifications.length,
         successful,
         failed,
         processingTime,
-      }, 'Bulk notifications processing completed');
+      });
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to process bulk notifications', error as Error, {
         batchId,
-      }, 'Failed to process bulk notifications');
+      });
     }
   }
 
@@ -286,18 +279,17 @@ export class NotificationService {
           await this.processNotification(updatedNotification);
         }, 1000);
 
-        logger.info({
+        logger.info('Notification retry initiated', {
           notificationId,
           retryCount: updatedNotification.retryCount,
-        }, 'Notification retry initiated');
+        });
       }
 
       return updatedNotification;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to retry notification', error as Error, {
         notificationId,
-      }, 'Failed to retry notification');
+      });
       throw error;
     }
   }
@@ -318,17 +310,16 @@ export class NotificationService {
       });
 
       if (updatedNotification) {
-        logger.info({
+        logger.info('Notification cancelled', {
           notificationId,
-        }, 'Notification cancelled');
+        });
       }
 
       return updatedNotification;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to cancel notification', error as Error, {
         notificationId,
-      }, 'Failed to cancel notification');
+      });
       throw error;
     }
   }

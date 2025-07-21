@@ -227,7 +227,7 @@ const notificationController: FastifyPluginAsync = async (fastify) => {
         retryCount: notification.retryCount,
       });
     } catch (error) {
-      reply.status(400).send({ error: error.message });
+      reply.status(400).send({ error: (error as Error).message });
     }
   });
 };

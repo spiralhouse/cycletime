@@ -1,9 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
-import { Type } from '@sinclair/typebox';
 
 const preferencesController: FastifyPluginAsync = async (fastify) => {
   // Get all preferences
-  fastify.get('/', async (request, reply) => {
+  fastify.get('/', async (_request, reply) => {
     const preferences = fastify.mockDataService.getUserPreferences();
     reply.send({
       preferences: preferences.map(p => ({

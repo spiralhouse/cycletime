@@ -4,7 +4,7 @@ import { MockDataService } from './mock-data-service';
 
 export class DeliveryTrackingService {
   constructor(
-    private eventService: EventService,
+    _eventService: EventService,
     private mockDataService: MockDataService
   ) {}
 
@@ -40,11 +40,10 @@ export class DeliveryTrackingService {
         generatedAt: new Date().toISOString(),
       };
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to get delivery report', error as Error, {
         timeRange,
         channel,
-      }, 'Failed to get delivery report');
+      });
       throw error;
     }
   }
@@ -69,10 +68,9 @@ export class DeliveryTrackingService {
         })),
       };
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to get notification delivery status', error as Error, {
         notificationId,
-      }, 'Failed to get notification delivery status');
+      });
       throw error;
     }
   }
