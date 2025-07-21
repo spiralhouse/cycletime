@@ -4,6 +4,7 @@ const typescriptParser = require('@typescript-eslint/parser');
 module.exports = [
   {
     files: ['src/**/*.ts'],
+    ignores: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'src/__tests__/**/*'],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
@@ -30,6 +31,29 @@ module.exports = [
       'no-console': 'off',
       'prefer-const': 'error',
       'no-var': 'error',
+    },
+  },
+  {
+    files: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'src/__tests__/**/*'],
+    languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module',
+      },
+      globals: {
+        node: true,
+        es6: true,
+        jest: true,
+      },
+    },
+    plugins: {
+      '@typescript-eslint': typescriptEslint,
+    },
+    rules: {
+      ...typescriptEslint.configs.recommended.rules,
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
   {
