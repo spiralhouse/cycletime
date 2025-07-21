@@ -29,7 +29,7 @@ export class SchedulerService implements TaskSchedulerInterface {
       logger.info('Scheduler service started');
       this.isStarted = true;
     } catch (error) {
-      logger.error('Failed to start scheduler service:', error);
+      logger.error('Failed to start scheduler service:', error as Error);
       throw error;
     }
   }
@@ -55,7 +55,7 @@ export class SchedulerService implements TaskSchedulerInterface {
       logger.info('Scheduler service stopped');
       this.isStarted = false;
     } catch (error) {
-      logger.error('Failed to stop scheduler service:', error);
+      logger.error('Failed to stop scheduler service:', error as Error);
       throw error;
     }
   }
@@ -81,7 +81,7 @@ export class SchedulerService implements TaskSchedulerInterface {
       logger.info(`Task scheduled: ${taskId}`);
       return true;
     } catch (error) {
-      logger.error(`Failed to schedule task ${taskId}:`, error);
+      logger.error(`Failed to schedule task ${taskId}:`, error as Error);
       return false;
     }
   }
@@ -120,7 +120,7 @@ export class SchedulerService implements TaskSchedulerInterface {
         try {
           handler();
         } catch (error) {
-          logger.error(`Cron job ${name} failed:`, error);
+          logger.error(`Cron job ${name} failed:`, error as Error);
         }
       }, intervalMs);
 
@@ -138,7 +138,7 @@ export class SchedulerService implements TaskSchedulerInterface {
       this.cronJobs.set(name, cronJob);
       logger.info(`Cron job added: ${name} (${pattern})`);
     } catch (error) {
-      logger.error(`Failed to add cron job ${name}:`, error);
+      logger.error(`Failed to add cron job ${name}:`, error as Error);
       throw error;
     }
   }
@@ -219,7 +219,7 @@ export class SchedulerService implements TaskSchedulerInterface {
       task.failureCount++;
       task.status = 'failed';
       this.scheduledTasks.set(taskId, task);
-      logger.error(`Scheduled task execution failed for ${taskId}:`, error);
+      logger.error(`Scheduled task execution failed for ${taskId}:`, error as Error);
     }
   }
 

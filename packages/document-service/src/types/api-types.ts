@@ -141,29 +141,7 @@ export interface DocumentCommentsResponse {
   };
 }
 
-export interface SearchResponse {
-  query: string;
-  results: SearchResult[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrevious: boolean;
-  };
-  facets?: {
-    types: Array<{ value: string; count: number }>;
-    statuses: Array<{ value: string; count: number }>;
-    tags: Array<{ value: string; count: number }>;
-    authors: Array<{ value: string; count: number }>;
-  };
-  statistics: {
-    totalDocuments: number;
-    searchTime: number;
-    maxScore: number;
-  };
-}
+// SearchResponse is exported from document-types.ts to avoid duplicate exports
 
 export interface DocumentMetadataResponse {
   documentId: string;

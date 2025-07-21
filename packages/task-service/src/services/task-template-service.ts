@@ -74,7 +74,7 @@ export class TaskTemplateService implements TaskTemplateServiceInterface {
       return template;
       
     } catch (error) {
-      logger.error('Error creating template:', error);
+      logger.error('Error creating template:', error as Error);
       throw error;
     }
   }
@@ -107,7 +107,7 @@ export class TaskTemplateService implements TaskTemplateServiceInterface {
       return template;
       
     } catch (error) {
-      logger.error(`Error retrieving template ${templateId}:`, error);
+      logger.error(`Error retrieving template ${templateId}:`, error as Error);
       throw error;
     }
   }
@@ -145,7 +145,7 @@ export class TaskTemplateService implements TaskTemplateServiceInterface {
       return updatedTemplate;
       
     } catch (error) {
-      logger.error(`Error updating template ${templateId}:`, error);
+      logger.error(`Error updating template ${templateId}:`, error as Error);
       throw error;
     }
   }
@@ -180,7 +180,7 @@ export class TaskTemplateService implements TaskTemplateServiceInterface {
       return success;
       
     } catch (error) {
-      logger.error(`Error deleting template ${templateId}:`, error);
+      logger.error(`Error deleting template ${templateId}:`, error as Error);
       throw error;
     }
   }
@@ -212,7 +212,7 @@ export class TaskTemplateService implements TaskTemplateServiceInterface {
       return enhancedResponse;
       
     } catch (error) {
-      logger.error('Error listing templates:', error);
+      logger.error('Error listing templates:', error as Error);
       throw error;
     }
   }
@@ -257,7 +257,7 @@ export class TaskTemplateService implements TaskTemplateServiceInterface {
       return response;
       
     } catch (error) {
-      logger.error(`Error applying template ${templateId}:`, error);
+      logger.error(`Error applying template ${templateId}:`, error as Error);
       
       // Update usage statistics for failed application
       await this.updateTemplateUsageStats(templateId, false);
@@ -301,7 +301,7 @@ export class TaskTemplateService implements TaskTemplateServiceInterface {
       return suitableTemplates;
       
     } catch (error) {
-      logger.error('Error finding suitable templates:', error);
+      logger.error('Error finding suitable templates:', error as Error);
       throw error;
     }
   }
@@ -350,7 +350,7 @@ export class TaskTemplateService implements TaskTemplateServiceInterface {
       }
       
     } catch (error) {
-      logger.error('Error getting template analytics:', error);
+      logger.error('Error getting template analytics:', error as Error);
       throw error;
     }
   }
@@ -415,7 +415,7 @@ export class TaskTemplateService implements TaskTemplateServiceInterface {
       
       logger.info(`Initialized template cache with ${templates.templates.length} templates`);
     } catch (error) {
-      logger.error('Error initializing template cache:', error);
+      logger.error('Error initializing template cache:', error as Error);
     }
   }
 
@@ -535,7 +535,7 @@ export class TaskTemplateService implements TaskTemplateServiceInterface {
     
     // Tag matching
     if (context?.tags && template.tags) {
-      const tagMatches = context.tags.filter(tag => 
+      const tagMatches = context.tags.filter((tag: string) => 
         template.tags.some(templateTag => 
           templateTag.toLowerCase().includes(tag.toLowerCase())
         )
@@ -714,8 +714,8 @@ export class TaskTemplateService implements TaskTemplateServiceInterface {
           }
         },
         aiProcessing,
-        project: response.createdTasks[0]?.project,
-        assignee: response.createdTasks[0]?.assignee
+        project: response.createdTasks[0]?.project || undefined,
+        assignee: response.createdTasks[0]?.assignee || undefined
       }
     };
 

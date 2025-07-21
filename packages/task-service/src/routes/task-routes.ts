@@ -309,7 +309,7 @@ export async function taskRoutes(fastify: FastifyInstance): Promise<void> {
     const assignRequest = AssignTaskSchema.parse(request.body);
 
     const { result: task, duration } = await measureAsyncDuration(async () => {
-      return await fastify.taskService.assignTask(taskId, assignRequest.assigneeId, assignRequest.comment, userId);
+      return await fastify.taskService.assignTask(taskId, assignRequest.assigneeId, assignRequest.comment || undefined, userId);
     });
 
     if (!task) {

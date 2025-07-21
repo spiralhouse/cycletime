@@ -157,7 +157,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
       metrics?: string[]; 
     };
     
-    const metrics = await app.analyticsService.getMetrics(timeframe as any);
+    const metrics = await app.analyticsService!.getMetrics(timeframe as any);
     
     // Filter metrics if specific ones were requested
     let filteredMetrics = metrics;
@@ -278,7 +278,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const { timeframe, options } = request.body as any;
     
     try {
-      const report = await app.analyticsService.generateReport(timeframe, options);
+      const report = await app.analyticsService!.generateReport(timeframe, options);
       reply.send({ report });
     } catch (error) {
       reply.code(400).send({
@@ -355,7 +355,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
     };
     
     try {
-      const data = await app.analyticsService.getTimeSeriesData(
+      const data = await app.analyticsService!.getTimeSeriesData(
         metric,
         { start: new Date(start), end: new Date(end) },
         interval as any
@@ -437,7 +437,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const { start, end } = request.query as { start: string; end: string };
     
     try {
-      const analytics = await app.analyticsService.getQueryAnalytics(
+      const analytics = await app.analyticsService!.getQueryAnalytics(
         decodeURIComponent(query),
         { start: new Date(start), end: new Date(end) }
       );
@@ -527,7 +527,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const { indexId } = request.params as { indexId: string };
     
     try {
-      const analytics = await app.analyticsService.getIndexAnalytics(indexId);
+      const analytics = await app.analyticsService!.getIndexAnalytics(indexId);
       reply.send(analytics);
     } catch (error) {
       if (error instanceof Error && error.message.includes('not found')) {
@@ -618,7 +618,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
   }, async (request, reply) => {
     const { timeframe } = request.query as { timeframe?: string };
     
-    const metrics = await app.analyticsService.getPerformanceMetrics(timeframe as any);
+    const metrics = await app.analyticsService!.getPerformanceMetrics(timeframe as any);
     reply.send(metrics);
   });
 
@@ -697,7 +697,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
   }, async (request, reply) => {
     const { timeframe } = request.query as { timeframe?: string };
     
-    const stats = await app.analyticsService.getUsageStats(timeframe as any);
+    const stats = await app.analyticsService!.getUsageStats(timeframe as any);
     reply.send(stats);
   });
 
@@ -766,7 +766,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const options = request.body as any;
     
     try {
-      const exportData = await app.analyticsService.exportData(options);
+      const exportData = await app.analyticsService!.exportData(options);
       reply.send(exportData);
     } catch (error) {
       reply.code(400).send({
@@ -805,7 +805,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const health = await app.analyticsService.getSystemHealth();
+    const health = await app.analyticsService!.getSystemHealth();
     reply.send(health);
   });
 
@@ -843,7 +843,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const alerts = await app.analyticsService.checkAlerts();
+    const alerts = await app.analyticsService!.checkAlerts();
     
     reply.send({
       alerts,
@@ -920,7 +920,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const { days } = request.query as { days?: number };
     
     try {
-      const forecast = await app.analyticsService.forecastMetrics(metric, days);
+      const forecast = await app.analyticsService!.forecastMetrics(metric, days);
       reply.send(forecast);
     } catch (error) {
       reply.code(400).send({

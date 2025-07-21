@@ -2,6 +2,7 @@ import { createClient, RedisClientType } from 'redis';
 import { 
   Document, 
   DocumentEvent, 
+  BaseEvent,
   DocumentCreatedEvent, 
   DocumentUpdatedEvent, 
   DocumentDeletedEvent,
@@ -81,7 +82,7 @@ export class EventService {
     }
   }
 
-  private createBaseEvent(eventType: string, correlationId?: string): Partial<DocumentEvent> {
+  private createBaseEvent<T extends string>(eventType: T, correlationId?: string): Partial<BaseEvent> & { eventType: T } {
     return {
       eventId: uuidv4(),
       eventType,
@@ -359,9 +360,9 @@ export class EventService {
         changesCount: 5,
         similarityScore: 0.85
       }
-    };
+    } as any; // Custom event type not in DocumentEvent union
 
-    await this.publishEvent('documents/version/compared', event);
+    await this.publishEvent('documents/version/compared', event as DocumentEvent);
   }
 
   async publishDocumentSearchPerformed(
@@ -385,9 +386,9 @@ export class EventService {
         topResults: [], // Mock top results
         facetsUsed: request.facets || []
       }
-    };
+    } as any; // Custom event type not in DocumentEvent union
 
-    await this.publishEvent('documents/search/performed', event);
+    await this.publishEvent('documents/search/performed', event as DocumentEvent);
   }
 
   async publishDocumentMetadataUpdated(
@@ -417,9 +418,9 @@ export class EventService {
           }
         ]
       }
-    };
+    } as any; // Custom event type not in DocumentEvent union
 
-    await this.publishEvent('documents/metadata/updated', event);
+    await this.publishEvent('documents/metadata/updated', event as DocumentEvent);
   }
 
   async subscribe(channel: string, handler: (event: DocumentEvent) => void): Promise<void> {

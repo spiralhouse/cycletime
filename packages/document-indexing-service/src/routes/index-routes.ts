@@ -61,7 +61,7 @@ export async function indexRoutes(app: FastifyInstance) {
     let indices = app.mockDataService.getIndices();
     
     if (status) {
-      indices = indices.filter(index => index.status === status);
+      indices = indices.filter((index: any) => index.status === status);
     }
     
     reply.send({

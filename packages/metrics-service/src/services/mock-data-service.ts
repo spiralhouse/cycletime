@@ -2,13 +2,11 @@ import { logger } from '@cycletime/shared-utils';
 import { v4 as uuidv4 } from 'uuid';
 import { 
   Metric, 
-  MetricSummary, 
   MetricHistory, 
   DataPoint, 
   Alert, 
   AlertRule, 
   Dashboard, 
-  DashboardSummary, 
   SystemHealth,
   ServiceHealth,
   InfrastructureHealth,
@@ -20,7 +18,7 @@ export class MockDataService {
   private alerts: Alert[] = [];
   private alertRules: AlertRule[] = [];
   private dashboards: Dashboard[] = [];
-  private systemHealth: SystemHealth;
+  private systemHealth!: SystemHealth;
 
   constructor() {
     this.initializeMockData();
@@ -47,8 +45,8 @@ export class MockDataService {
   private generateSampleMetrics(): Metric[] {
     const now = new Date();
     const services = ['api-gateway', 'task-service', 'document-service', 'ai-service'];
-    const metricTypes = ['counter', 'gauge', 'histogram', 'summary'] as const;
-    const categories = ['system', 'application', 'business', 'custom'] as const;
+    // const metricTypes = ['counter', 'gauge', 'histogram', 'summary'] as const;
+    // const categories = ['system', 'application', 'business', 'custom'] as const;
     
     const metrics: Metric[] = [];
     
@@ -352,7 +350,7 @@ export class MockDataService {
       description: metric.description || '',
       category: metric.category || 'custom',
       type: metric.type || 'gauge',
-      unit: metric.unit,
+      unit: metric.unit || '',
       service: metric.service || 'unknown',
       labels: metric.labels || {},
       value: metric.value || 0,
@@ -407,7 +405,7 @@ export class MockDataService {
         description: metric.description,
         category: metric.category,
         type: metric.type,
-        unit: metric.unit,
+        unit: metric.unit || '',
         service: metric.service,
         lastValue: metric.value,
         lastUpdated: metric.updatedAt,
@@ -442,7 +440,7 @@ export class MockDataService {
     const newRule: AlertRule = {
       id: uuidv4(),
       name: rule.name || 'Unnamed Rule',
-      description: rule.description,
+      description: rule.description || '',
       metric: rule.metric || '',
       condition: rule.condition || 'gt',
       threshold: rule.threshold || 0,
@@ -480,7 +478,7 @@ export class MockDataService {
     return true;
   }
 
-  silenceAlert(alertId: string, duration: string, reason: string): Alert | undefined {
+  silenceAlert(alertId: string, duration: string, _reason: string): Alert | undefined {
     const alert = this.getAlertById(alertId);
     if (!alert) return undefined;
     
@@ -515,7 +513,7 @@ export class MockDataService {
     const newDashboard: Dashboard = {
       id: uuidv4(),
       title: dashboard.title || 'Untitled Dashboard',
-      description: dashboard.description,
+      description: dashboard.description || '',
       tags: dashboard.tags || [],
       panels: dashboard.panels || [],
       isStarred: dashboard.isStarred || false,

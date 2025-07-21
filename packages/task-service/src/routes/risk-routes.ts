@@ -183,14 +183,14 @@ export async function riskRoutes(fastify: FastifyInstance): Promise<void> {
 
     fastify.logEvent(request, 'riskAssessed', { 
       taskId, 
-      riskId: result.risk.id, 
-      type: result.risk.type,
-      severity: result.risk.severity 
+      riskId: result.risk?.id, 
+      type: result.risk?.type,
+      severity: result.risk?.severity 
     });
     fastify.logPerformance(request, 'addTaskRisk', duration, { 
       taskId, 
-      riskType: result.risk.type, 
-      severity: result.risk.severity 
+      riskType: result.risk?.type, 
+      severity: result.risk?.severity 
     });
 
     return reply.code(201).send({ risk: result.risk });

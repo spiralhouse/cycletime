@@ -24,12 +24,16 @@ export async function teamRoutes(app: FastifyInstance) {
         200: ProjectTeamResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     
-    const result = await app.services.team.getProjectTeam(params.projectId);
+    const result = await app.services!.team.getProjectTeam(params.projectId);
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Add team member
   app.post('/projects/:projectId/team', {
@@ -48,14 +52,18 @@ export async function teamRoutes(app: FastifyInstance) {
         201: TeamMemberResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const body = request.body as any;
     const userId = 'user-123'; // In real implementation, extract from auth token
     
-    const result = await app.services.team.addTeamMember(params.projectId, body, userId);
+    const result = await app.services!.team.addTeamMember(params.projectId, body, userId);
     return reply.status(201).send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Update team member
   app.put('/projects/:projectId/team/:userId', {
@@ -75,14 +83,18 @@ export async function teamRoutes(app: FastifyInstance) {
         200: TeamMemberResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const body = request.body as any;
     const updatedBy = 'user-123'; // In real implementation, extract from auth token
     
-    const result = await app.services.team.updateTeamMember(params.projectId, params.userId, body, updatedBy);
+    const result = await app.services!.team.updateTeamMember(params.projectId, params.userId, body, updatedBy);
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Remove team member
   app.delete('/projects/:projectId/team/:userId', {
@@ -101,13 +113,17 @@ export async function teamRoutes(app: FastifyInstance) {
         204: { type: 'null' }
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const removedBy = 'user-123'; // In real implementation, extract from auth token
     
-    await app.services.team.removeTeamMember(params.projectId, params.userId, removedBy);
+    await app.services!.team.removeTeamMember(params.projectId, params.userId, removedBy);
     return reply.status(204).send();
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Get team member
   app.get('/projects/:projectId/team/:userId', {
@@ -126,10 +142,14 @@ export async function teamRoutes(app: FastifyInstance) {
         200: TeamMemberResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     
-    const result = await app.services.team.getTeamMember(params.projectId, params.userId);
+    const result = await app.services!.team.getTeamMember(params.projectId, params.userId);
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 }

@@ -26,15 +26,15 @@ async function start() {
     const dashboards = app.mockDataService.getDashboards();
     const alerts = app.mockDataService.getAlerts();
     
-    logger.info({
+    logger.info('Metrics Service startup summary', {
       service: 'metrics-service',
       version: '1.0.0',
       status: healthStatus.status,
       totalMetrics: metrics.length,
-      activeDashboards: dashboards.filter(d => !d.isArchived).length,
-      activeAlerts: alerts.filter(a => a.status === 'active').length,
+      activeDashboards: dashboards.filter((d: any) => !d.isArchived).length,
+      activeAlerts: alerts.filter((a: any) => a.status === 'active').length,
       systemHealth: healthStatus.overall,
-    }, 'Metrics Service startup summary');
+    });
 
     // Publish service startup event
     await app.eventService.publishEvent('metrics.service.started', {
@@ -60,23 +60,23 @@ async function start() {
     });
 
   } catch (error) {
-    logger.error(error, 'Failed to start Metrics Service');
+    logger.error('Failed to start Metrics Service', error as Error);
     process.exit(1);
   }
 }
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error({
+  logger.error('Unhandled promise rejection', undefined, {
     reason,
     promise,
-  }, 'Unhandled promise rejection');
+  });
   process.exit(1);
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-  logger.error(error, 'Uncaught exception');
+  logger.error('Uncaught exception', error);
   process.exit(1);
 });
 

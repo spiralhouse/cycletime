@@ -15,9 +15,7 @@ export async function errorHandler(fastify: FastifyInstance): Promise<void> {
     const requestId = request.headers['x-request-id'] || 'unknown';
     
     // Log error with context
-    logger.error(`Error processing request ${requestId}:`, {
-      error: error.message,
-      stack: error.stack,
+    logger.error(`Error processing request ${requestId}:`, error as Error, {
       url: request.url,
       method: request.method,
       headers: request.headers,

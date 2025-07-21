@@ -102,16 +102,16 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
       deepLinking: false,
     },
     uiHooks: {
-      onRequest: function (request, reply, next) {
+      onRequest: function (_request, _reply, next) {
         next();
       },
-      preHandler: function (request, reply, next) {
+      preHandler: function (_request, _reply, next) {
         next();
       },
     },
     staticCSP: true,
     transformStaticCSP: (header) => header,
-    transformSpecification: (swaggerObject, request, reply) => {
+    transformSpecification: (swaggerObject, _request, _reply) => {
       return swaggerObject;
     },
     transformSpecificationClone: true,
@@ -139,19 +139,17 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   await app.register(systemHealthController, { prefix: '/api/v1/system' });
 
   // Prometheus metrics endpoint
-  app.get('/metrics', async (request, reply) => {
+  app.get('/metrics', async (_request, reply) => {
     const metrics = mockDataService.getPrometheusMetrics();
     reply.type('text/plain').send(metrics);
   });
 
   // Error handler
   app.setErrorHandler(async (error, request, reply) => {
-    logger.error({
-      error: error.message,
-      stack: error.stack,
+    logger.error('Request error', error, {
       url: request.url,
       method: request.method,
-    }, 'Request error');
+    });
 
     if (error.validation) {
       return reply.status(400).send({
@@ -176,11 +174,11 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   return app;
 }
 
-// Type augmentation for Fastify
+// Service-specific type augmentation for Fastify
 declare module 'fastify' {
   interface FastifyInstance {
-    eventService: EventService;
-    mockDataService: MockDataService;
+    eventService: any;
+    mockDataService: any;
     metricsCollectionService: MetricsCollectionService;
     alertingService: AlertingService;
     dashboardService: DashboardService;

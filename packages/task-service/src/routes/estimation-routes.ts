@@ -680,7 +680,7 @@ async function getBatchEstimates(taskIds: string[], includeMetadata: boolean = t
       if (estimate) {
         estimates.push({
           taskId,
-          estimate: estimate.estimate,
+          estimate: estimate.estimate as any,
           status: 'success' as const
         });
         totalHours += estimate.estimate.hours;
@@ -759,7 +759,7 @@ async function createBatchEstimates(request: BatchEstimationRequest, userId: str
       
       estimates.push({
         taskId,
-        estimate,
+        estimate: estimate as any,
         status: 'success' as const
       });
       

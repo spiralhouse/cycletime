@@ -201,8 +201,8 @@ export type UpdateTeamMemberRequest = z.infer<typeof UpdateTeamMemberRequestSche
 export const PaginationSchema = z.object({
   page: z.number().int().positive(),
   limit: z.number().int().positive(),
-  total: z.number().int().non_negative(),
-  totalPages: z.number().int().non_negative(),
+  total: z.number().int().nonnegative(),
+  totalPages: z.number().int().nonnegative(),
   hasNext: z.boolean(),
   hasPrevious: z.boolean()
 });
@@ -228,8 +228,8 @@ export type ProjectResponse = z.infer<typeof ProjectResponseSchema>;
 
 // Team Statistics Schema
 export const TeamStatisticsSchema = z.object({
-  totalMembers: z.number().int().non_negative(),
-  activeMembers: z.number().int().non_negative(),
+  totalMembers: z.number().int().nonnegative(),
+  activeMembers: z.number().int().nonnegative(),
   totalAllocation: z.number().min(0),
   averageAllocation: z.number().min(0)
 });
@@ -263,9 +263,9 @@ export const HealthResponseSchema = z.object({
     queue: HealthStatusSchema.optional()
   }).optional(),
   metrics: z.object({
-    projectsCount: z.number().int().non_negative().optional(),
-    activeProjects: z.number().int().non_negative().optional(),
-    templatesCount: z.number().int().non_negative().optional(),
+    projectsCount: z.number().int().nonnegative().optional(),
+    activeProjects: z.number().int().nonnegative().optional(),
+    templatesCount: z.number().int().nonnegative().optional(),
     averageTeamSize: z.number().min(0).optional()
   }).optional()
 });

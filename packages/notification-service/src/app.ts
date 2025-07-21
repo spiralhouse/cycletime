@@ -173,14 +173,14 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   return app;
 }
 
-// Type augmentation for Fastify
+// Service-specific type augmentation for Fastify
 declare module 'fastify' {
   interface FastifyInstance {
-    eventService: EventService;
-    mockDataService: MockDataService;
-    notificationService: NotificationService;
-    templateService: TemplateService;
-    preferencesService: PreferencesService;
-    deliveryTrackingService: DeliveryTrackingService;
+    eventService?: any;
+    mockDataService?: any;
+    notificationService?: NotificationService;
+    templateService?: TemplateService;
+    preferencesService?: PreferencesService;
+    deliveryTrackingService?: DeliveryTrackingService;
   }
 }

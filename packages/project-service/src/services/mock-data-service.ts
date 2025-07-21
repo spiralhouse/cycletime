@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import * as moment from 'moment';
+import moment from 'moment';
 import * as _ from 'lodash';
 import { 
   Project, 
@@ -292,7 +292,7 @@ export class MockDataService {
     return members;
   }
 
-  private getPermissionsForRole(role: TeamMemberRole): string[] {
+  private getPermissionsForRole(role: TeamMemberRole): ('read' | 'write' | 'delete' | 'manage_team' | 'manage_settings')[] {
     switch (role) {
       case 'owner':
         return ['read', 'write', 'delete', 'manage_team', 'manage_settings'];
@@ -527,7 +527,7 @@ export class MockDataService {
 
     return {
       projectId,
-      insights,
+      insights: insights as any,
       summary: {
         totalInsights: insights.length,
         criticalCount,

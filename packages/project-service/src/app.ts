@@ -131,10 +131,12 @@ export async function createApp(): Promise<FastifyInstance> {
   return app;
 }
 
+// Service-specific type declarations
 declare module 'fastify' {
   interface FastifyInstance {
+    eventService: any;
+    mockDataService: any;
     services: {
-      event: EventService;
       health: HealthService;
       project: ProjectService;
       team: TeamService;
@@ -142,7 +144,6 @@ declare module 'fastify' {
       analytics: AnalyticsService;
       resource: ResourceService;
       insight: InsightService;
-      mockData: MockDataService;
     };
   }
 }

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import * as moment from 'moment';
+import moment from 'moment';
 import { logger } from '@cycletime/shared-utils';
 import { EventService } from './event-service';
 import { MockDataService } from './mock-data-service';
@@ -48,7 +48,7 @@ export class InsightService {
 
       return insights;
     } catch (error) {
-      logger.error('Error getting project insights:', error);
+      logger.error('Error getting project insights:', error as Error);
       throw error;
     }
   }
@@ -109,7 +109,7 @@ export class InsightService {
         summary
       };
     } catch (error) {
-      logger.error('Error generating risk analysis:', error);
+      logger.error('Error generating risk analysis:', error as Error);
       throw error;
     }
   }
@@ -149,7 +149,7 @@ export class InsightService {
       const team = this.mockDataService.getProjectTeam(projectId);
 
       // Generate performance recommendations
-      const recommendations = this.generatePerformanceRecommendations(project, analytics, team);
+      const recommendations = this.createPerformanceRecommendations(project, analytics, team);
       
       // Calculate summary
       const summary = this.calculateRecommendationSummary(recommendations);
@@ -166,7 +166,7 @@ export class InsightService {
         summary
       };
     } catch (error) {
-      logger.error('Error generating performance recommendations:', error);
+      logger.error('Error generating performance recommendations:', error as Error);
       throw error;
     }
   }
@@ -205,7 +205,7 @@ export class InsightService {
       const forecasting = this.mockDataService.generateProjectForecasting(projectId, 90);
 
       // Generate predictive insights
-      const predictions = this.generatePredictiveInsights(project, analytics, forecasting);
+      const predictions = this.createPredictiveInsights(project, analytics, forecasting);
       
       // Calculate summary
       const summary = this.calculatePredictionSummary(predictions);
@@ -222,7 +222,7 @@ export class InsightService {
         summary
       };
     } catch (error) {
-      logger.error('Error generating predictive insights:', error);
+      logger.error('Error generating predictive insights:', error as Error);
       throw error;
     }
   }
@@ -306,13 +306,13 @@ export class InsightService {
     // Calculate risk score (0-100)
     const riskScore = risks.reduce((score, risk) => {
       const severityWeight = { low: 1, medium: 2, high: 3, critical: 4 };
-      return score + (severityWeight[risk.severity] * risk.probability * 25);
+      return score + ((severityWeight as any)[risk.severity] * risk.probability * 25);
     }, 0);
 
     const recommendations = [
       criticalRisks > 0 ? 'Address critical risks immediately' : null,
       highRisks > 2 ? 'Develop mitigation plans for high-severity risks' : null,
-      riskScore > 50 ? 'Consider risk management workshop' : null
+      riskScore > 50 ? 'Consider risk management workshop' : undefined
     ].filter(Boolean);
 
     return {
@@ -327,7 +327,7 @@ export class InsightService {
   /**
    * Generate performance recommendations
    */
-  private generatePerformanceRecommendations(project: any, analytics: any, team: any[]): any[] {
+  private createPerformanceRecommendations(project: any, analytics: any, team: any[]): any[] {
     const recommendations = [];
 
     // Process improvements
@@ -398,7 +398,7 @@ export class InsightService {
   /**
    * Generate predictive insights
    */
-  private generatePredictiveInsights(project: any, analytics: any, forecasting: any): any[] {
+  private createPredictiveInsights(project: any, analytics: any, forecasting: any): any[] {
     const predictions = [];
 
     // Completion date prediction

@@ -21,7 +21,7 @@ import { Task, User, TaskStatus, TaskPriority, DependencyType } from '../types/t
 import { TaskEventPublisherInterface } from '../types/service-types';
 import { logger } from '@cycletime/shared-utils';
 
-export class EventService implements TaskEventPublisherInterface {
+export class EventService {
   private isStarted = false;
   private eventStore: TaskEvent[] = [];
   
@@ -37,7 +37,7 @@ export class EventService implements TaskEventPublisherInterface {
       logger.info('Event service started');
       this.isStarted = true;
     } catch (error) {
-      logger.error('Failed to start event service:', error);
+      logger.error('Failed to start event service:', error as Error);
       throw error;
     }
   }
@@ -52,7 +52,7 @@ export class EventService implements TaskEventPublisherInterface {
       logger.info('Event service stopped');
       this.isStarted = false;
     } catch (error) {
-      logger.error('Failed to stop event service:', error);
+      logger.error('Failed to stop event service:', error as Error);
       throw error;
     }
   }
@@ -67,7 +67,7 @@ export class EventService implements TaskEventPublisherInterface {
       // In a real implementation, this would publish to Redis/message broker
       logger.info(`Event published: ${event}`, { data });
     } catch (error) {
-      logger.error(`Failed to publish event ${event}:`, error);
+      logger.error(`Failed to publish event ${event}:`, error as Error);
       throw error;
     }
   }
@@ -336,7 +336,7 @@ export class EventService implements TaskEventPublisherInterface {
         taskId,
         taskTitle: taskId, // Mock
         dependencyId,
-        dependencyType: 'blocks', // Mock
+        dependencyType: 'blocks' as any, // Mock
         targetTaskId: 'target', // Mock
         targetTaskTitle: 'Target Task' // Mock
       }

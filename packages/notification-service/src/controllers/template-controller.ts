@@ -5,7 +5,7 @@ const templateController: FastifyPluginAsync = async (fastify) => {
   fastify.get('/', async (_request, reply) => {
     const templates = fastify.mockDataService.getTemplates();
     reply.send({
-      templates: templates.map(t => ({
+      templates: templates.map((t: any) => ({
         id: t.id,
         name: t.name,
         description: t.description,
@@ -22,7 +22,7 @@ const templateController: FastifyPluginAsync = async (fastify) => {
   // Create template
   fastify.post('/', async (request, reply) => {
     const templateData = request.body as any;
-    const template = await fastify.templateService.createTemplate(templateData);
+    const template = await fastify.templateService?.createTemplate(templateData);
     reply.status(201).send(template);
   });
 
@@ -40,7 +40,7 @@ const templateController: FastifyPluginAsync = async (fastify) => {
   fastify.put('/:templateId', async (request, reply) => {
     const { templateId } = request.params as { templateId: string };
     const updates = request.body as any;
-    const template = await fastify.templateService.updateTemplate(templateId, updates);
+    const template = await fastify.templateService?.updateTemplate(templateId, updates);
     if (!template) {
       return reply.status(404).send({ error: 'Template not found' });
     }
@@ -50,7 +50,7 @@ const templateController: FastifyPluginAsync = async (fastify) => {
   // Delete template
   fastify.delete('/:templateId', async (request, reply) => {
     const { templateId } = request.params as { templateId: string };
-    const success = await fastify.templateService.deleteTemplate(templateId);
+    const success = await fastify.templateService?.deleteTemplate(templateId);
     if (!success) {
       return reply.status(404).send({ error: 'Template not found' });
     }
@@ -63,7 +63,7 @@ const templateController: FastifyPluginAsync = async (fastify) => {
     const { data } = request.body as { data: Record<string, any> };
     
     try {
-      const preview = await fastify.templateService.previewTemplate(templateId, data);
+      const preview = await fastify.templateService?.previewTemplate(templateId, data);
       reply.send(preview);
     } catch (error) {
       reply.status(400).send({ error: (error as Error).message });

@@ -442,7 +442,7 @@ export async function templateRoutes(fastify: FastifyInstance): Promise<void> {
 
       return reply.code(201).send(applicationResult);
     } catch (error) {
-      logger.error('Template application failed:', error);
+      logger.error('Template application failed:', error as Error);
       
       return reply.code(500).send({
         error: 'Template Application Failed',

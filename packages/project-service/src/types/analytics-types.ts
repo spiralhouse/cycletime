@@ -26,10 +26,10 @@ export type InsightType = z.infer<typeof InsightTypeSchema>;
 
 // Project Analytics Summary Schema
 export const ProjectAnalyticsSummarySchema = z.object({
-  totalTasks: z.number().int().non_negative(),
-  completedTasks: z.number().int().non_negative(),
-  pendingTasks: z.number().int().non_negative(),
-  overdueTasks: z.number().int().non_negative(),
+  totalTasks: z.number().int().nonnegative(),
+  completedTasks: z.number().int().nonnegative(),
+  pendingTasks: z.number().int().nonnegative(),
+  overdueTasks: z.number().int().nonnegative(),
   teamVelocity: z.number().min(0),
   burndownRate: z.number(),
   progressPercentage: z.number().min(0).max(100)
@@ -56,8 +56,8 @@ export type PerformanceMetrics = z.infer<typeof PerformanceMetricsSchema>;
 // Analytics Trend Schema
 export const AnalyticsTrendSchema = z.object({
   date: z.string().date(),
-  completed: z.number().int().non_negative(),
-  created: z.number().int().non_negative(),
+  completed: z.number().int().nonnegative(),
+  created: z.number().int().nonnegative(),
   velocity: z.number().min(0)
 });
 export type AnalyticsTrend = z.infer<typeof AnalyticsTrendSchema>;
@@ -65,7 +65,7 @@ export type AnalyticsTrend = z.infer<typeof AnalyticsTrendSchema>;
 // Team Member Productivity Schema
 export const TeamMemberProductivitySchema = z.object({
   memberId: z.string().uuid(),
-  tasksCompleted: z.number().int().non_negative(),
+  tasksCompleted: z.number().int().nonnegative(),
   hoursWorked: z.number().min(0),
   efficiency: z.number().min(0)
 });
@@ -73,7 +73,7 @@ export type TeamMemberProductivity = z.infer<typeof TeamMemberProductivitySchema
 
 // Team Collaboration Schema
 export const TeamCollaborationSchema = z.object({
-  codeReviews: z.number().int().non_negative(),
+  codeReviews: z.number().int().nonnegative(),
   pairProgramming: z.number().min(0),
   knowledgeSharing: z.number().min(0)
 });
@@ -181,9 +181,9 @@ export type ProjectInsight = z.infer<typeof ProjectInsightSchema>;
 
 // Insights Summary Schema
 export const InsightsSummarySchema = z.object({
-  totalInsights: z.number().int().non_negative(),
-  criticalCount: z.number().int().non_negative(),
-  warningCount: z.number().int().non_negative(),
+  totalInsights: z.number().int().nonnegative(),
+  criticalCount: z.number().int().nonnegative(),
+  warningCount: z.number().int().nonnegative(),
   healthScore: z.number().min(0).max(100),
   trending: TrendDirectionSchema
 });

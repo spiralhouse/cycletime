@@ -5,7 +5,7 @@ const channelController: FastifyPluginAsync = async (fastify) => {
   fastify.get('/', async (_request, reply) => {
     const channels = fastify.mockDataService.getChannels();
     reply.send({
-      channels: channels.map(c => ({
+      channels: channels.map((c: any) => ({
         type: c.type,
         name: c.name,
         description: c.description,

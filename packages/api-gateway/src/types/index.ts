@@ -95,14 +95,14 @@ export interface FastifyRequestContext {
   clientIp: string;
   userAgent: string;
   timestamp: string;
+  route?: {
+    path: string;
+    method: string;
+    targetService: string;
+  };
 }
 
-// Declare module augmentation for Fastify
-declare module 'fastify' {
-  interface FastifyRequest {
-    context: FastifyRequestContext;
-  }
-}
+// Skip type augmentation to avoid conflicts - use runtime casting instead
 
 // Plugin options types
 export interface AuthPluginOptions {

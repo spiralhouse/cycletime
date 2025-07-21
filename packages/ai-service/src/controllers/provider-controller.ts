@@ -45,7 +45,7 @@ const providerController: FastifyPluginAsync = async (fastify) => {
     },
   }, async (_request, _reply) => {
     const providers = fastify.mockDataService.getProviders();
-    const activeProviders = providers.filter(p => p.status === 'active').length;
+    const activeProviders = providers.filter((p: any) => p.status === 'active').length;
 
     return {
       providers,
@@ -125,7 +125,7 @@ const providerController: FastifyPluginAsync = async (fastify) => {
     return {
       ...provider,
       description: `${provider.name} AI provider with advanced capabilities`,
-      models: models.map(model => ({
+      models: models.map((model: any) => ({
         id: model.id,
         name: model.name,
         description: model.description,

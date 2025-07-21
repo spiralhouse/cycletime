@@ -20,20 +20,19 @@ export class MetricsCollectionService {
       // Publish metric collected event
       await this.eventService.publishMetricCollected(metric);
 
-      logger.info({
+      logger.info('Metric collected', {
         metricId: metric.id,
         name: metric.name,
         value: metric.value,
         type: metric.type,
         service: metric.service,
-      }, 'Metric collected');
+      });
 
       return metric;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to collect metric', error as Error, {
         metricRecord,
-      }, 'Failed to collect metric');
+      });
       throw error;
     }
   }
@@ -48,20 +47,19 @@ export class MetricsCollectionService {
       if (metric) {
         await this.eventService.publishMetricCollected(metric);
         
-        logger.debug({
+        logger.debug('Metric updated', {
           metricId,
           value,
           name: metric.name,
-        }, 'Metric updated');
+        });
       }
 
       return metric;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to update metric', error as Error, {
         metricId,
         value,
-      }, 'Failed to update metric');
+      });
       throw error;
     }
   }
@@ -70,12 +68,11 @@ export class MetricsCollectionService {
     try {
       return this.mockDataService.getMetricHistory(metricId, timeRange, resolution);
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to get metric history', error as Error, {
         metricId,
         timeRange,
         resolution,
-      }, 'Failed to get metric history');
+      });
       throw error;
     }
   }
@@ -94,10 +91,9 @@ export class MetricsCollectionService {
 
       return metrics;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to get metrics', error as Error, {
         filters,
-      }, 'Failed to get metrics');
+      });
       throw error;
     }
   }
@@ -131,10 +127,9 @@ export class MetricsCollectionService {
         sum,
       };
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to get metric statistics', error as Error, {
         metricId,
-      }, 'Failed to get metric statistics');
+      });
       throw error;
     }
   }
@@ -149,16 +144,15 @@ export class MetricsCollectionService {
         metrics.push(metric);
       }
 
-      logger.info({
+      logger.info('Metrics batch collected', {
         count: metrics.length,
-      }, 'Metrics batch collected');
+      });
 
       return metrics;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to collect metrics batch', error as Error, {
         count: metricRecords.length,
-      }, 'Failed to collect metrics batch');
+      });
       throw error;
     }
   }
@@ -210,12 +204,11 @@ export class MetricsCollectionService {
         groupBy,
       };
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to get aggregated metrics', error as Error, {
         metricName,
         aggregation,
         timeRange,
-      }, 'Failed to get aggregated metrics');
+      });
       throw error;
     }
   }

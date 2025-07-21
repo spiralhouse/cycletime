@@ -4,7 +4,12 @@
  */
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { z } from 'zod';
+import crypto from 'crypto';
 import { logger } from '../utils/logger';
+import { createJWTService } from '../services/jwt';
+import { createUserService } from '../services/user';
+import { githubAuthService } from '../services/github-auth';
 import { 
   LoginRequest, 
   LoginResponse, 
@@ -66,7 +71,7 @@ setInterval(() => {
 
 export async function authRoutes(fastify: FastifyInstance) {
   const jwtService = createJWTService(fastify);
-  const userService = createUserService(fastify.prisma);
+  const userService = createUserService(fastify.prisma || {} as any);
 
   // POST /auth/github/oauth - Initiate GitHub OAuth flow
   fastify.post('/auth/github/oauth', {

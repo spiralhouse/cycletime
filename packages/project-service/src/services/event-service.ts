@@ -3,7 +3,7 @@ import { ProjectEvent } from '../types/event-types';
 import { config } from '../config';
 
 export class EventService {
-  private events: ProjectEvent[] = [];
+  private events: any[] = [];
   private subscribers: Map<string, Function[]> = new Map();
 
   constructor() {
@@ -13,7 +13,7 @@ export class EventService {
   /**
    * Publish an event to all subscribers
    */
-  async publishEvent(event: ProjectEvent): Promise<void> {
+  async publishEvent(event: any): Promise<void> {
     try {
       // Store event for testing/debugging
       this.events.push(event);
@@ -32,7 +32,7 @@ export class EventService {
         try {
           await subscriber(event);
         } catch (error) {
-          logger.error('Error in event subscriber:', error);
+          logger.error('Error in event subscriber:', error as Error);
         }
       }
 
@@ -42,7 +42,7 @@ export class EventService {
       }
 
     } catch (error) {
-      logger.error('Error publishing event:', error);
+      logger.error('Error publishing event:', error as Error);
       throw error;
     }
   }
@@ -107,7 +107,7 @@ export class EventService {
   /**
    * Publish event to Redis (placeholder for real implementation)
    */
-  private async publishToRedis(event: ProjectEvent): Promise<void> {
+  private async publishToRedis(event: any): Promise<void> {
     // In a real implementation, this would:
     // 1. Connect to Redis
     // 2. Publish to appropriate channels
@@ -140,10 +140,10 @@ export class EventService {
         }
       };
     } catch (error) {
-      logger.error('Event service health check failed:', error);
+      logger.error('Event service health check failed:', error as Error);
       return {
         status: 'unhealthy',
-        details: { error: error.message }
+        details: { error: (error as Error).message }
       };
     }
   }

@@ -38,20 +38,20 @@ const notificationController: FastifyPluginAsync = async (fastify) => {
     let notifications = fastify.mockDataService.getNotifications();
 
     if (channel) {
-      notifications = notifications.filter(n => n.channel === channel);
+      notifications = notifications.filter((n: any) => n.channel === channel);
     }
 
     if (status) {
-      notifications = notifications.filter(n => n.status === status);
+      notifications = notifications.filter((n: any) => n.status === status);
     }
 
     if (recipient) {
-      notifications = notifications.filter(n => n.recipient.includes(recipient));
+      notifications = notifications.filter((n: any) => n.recipient.includes(recipient));
     }
 
     const paginatedNotifications = notifications
       .slice(offset, offset + limit)
-      .map(n => ({
+      .map((n: any) => ({
         id: n.id,
         channel: n.channel,
         recipient: n.recipient,
@@ -101,7 +101,11 @@ const notificationController: FastifyPluginAsync = async (fastify) => {
   }, async (request, reply) => {
     const notificationRequest = request.body as any;
 
-    const notification = await fastify.notificationService.sendNotification(notificationRequest);
+    const notification = await fastify.notificationService?.sendNotification(notificationRequest);
+
+    if (!notification) {
+      return reply.status(500).send({ error: 'Failed to send notification' });
+    }
 
     reply.status(201).send({
       id: notification.id,
@@ -191,7 +195,7 @@ const notificationController: FastifyPluginAsync = async (fastify) => {
   }, async (request, reply) => {
     const bulkRequest = request.body as any;
 
-    const result = await fastify.notificationService.sendBulkNotifications(bulkRequest);
+    const result = await fastify.notificationService?.sendBulkNotifications(bulkRequest);
 
     reply.status(202).send(result);
   });
@@ -216,7 +220,7 @@ const notificationController: FastifyPluginAsync = async (fastify) => {
     const { notificationId } = request.params as { notificationId: string };
 
     try {
-      const notification = await fastify.notificationService.retryNotification(notificationId);
+      const notification = await fastify.notificationService?.retryNotification(notificationId);
       if (!notification) {
         return reply.status(404).send({ error: 'Notification not found' });
       }

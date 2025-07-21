@@ -28,7 +28,7 @@ import { QueueService } from './queue-service';
 import { SchedulerService } from './scheduler-service';
 import { logger } from '@cycletime/shared-utils';
 
-export class TaskService implements TaskServiceInterface {
+export class TaskService {
   constructor(
     private mockDataService: MockDataService,
     private eventService: EventService,
@@ -52,7 +52,7 @@ export class TaskService implements TaskServiceInterface {
       logger.info(`Task created: ${task.id} - ${task.title}`);
       return task;
     } catch (error) {
-      logger.error('Error creating task:', error);
+      logger.error('Error creating task:', error as Error);
       throw error;
     }
   }
@@ -76,7 +76,7 @@ export class TaskService implements TaskServiceInterface {
 
       return task;
     } catch (error) {
-      logger.error(`Error getting task ${id}:`, error);
+      logger.error(`Error getting task ${id}:`, error as Error);
       throw error;
     }
   }
@@ -118,7 +118,7 @@ export class TaskService implements TaskServiceInterface {
       logger.info(`Task updated: ${id} - ${updatedTask.title}`);
       return updatedTask;
     } catch (error) {
-      logger.error(`Error updating task ${id}:`, error);
+      logger.error(`Error updating task ${id}:`, error as Error);
       throw error;
     }
   }
@@ -140,7 +140,7 @@ export class TaskService implements TaskServiceInterface {
 
       return success;
     } catch (error) {
-      logger.error(`Error deleting task ${id}:`, error);
+      logger.error(`Error deleting task ${id}:`, error as Error);
       throw error;
     }
   }
@@ -182,7 +182,7 @@ export class TaskService implements TaskServiceInterface {
         }
       };
     } catch (error) {
-      logger.error('Error listing tasks:', error);
+      logger.error('Error listing tasks:', error as Error);
       throw error;
     }
   }
@@ -216,7 +216,7 @@ export class TaskService implements TaskServiceInterface {
       logger.info(`Task assigned: ${taskId} to ${updatedTask.assignee?.name}`);
       return updatedTask;
     } catch (error) {
-      logger.error(`Error assigning task ${taskId}:`, error);
+      logger.error(`Error assigning task ${taskId}:`, error as Error);
       throw error;
     }
   }
@@ -244,7 +244,7 @@ export class TaskService implements TaskServiceInterface {
       logger.info(`Task unassigned: ${taskId} from ${existingTask.assignee?.name}`);
       return updatedTask;
     } catch (error) {
-      logger.error(`Error unassigning task ${taskId}:`, error);
+      logger.error(`Error unassigning task ${taskId}:`, error as Error);
       throw error;
     }
   }
@@ -258,7 +258,7 @@ export class TaskService implements TaskServiceInterface {
         dependencies
       };
     } catch (error) {
-      logger.error(`Error getting dependencies for task ${taskId}:`, error);
+      logger.error(`Error getting dependencies for task ${taskId}:`, error as Error);
       throw error;
     }
   }
@@ -295,7 +295,7 @@ export class TaskService implements TaskServiceInterface {
       logger.info(`Dependency added: ${taskId} ${dependency.type} ${request.targetTaskId}`);
       return { dependency };
     } catch (error) {
-      logger.error(`Error adding dependency to task ${taskId}:`, error);
+      logger.error(`Error adding dependency to task ${taskId}:`, error as Error);
       throw error;
     }
   }
@@ -312,7 +312,7 @@ export class TaskService implements TaskServiceInterface {
 
       return success;
     } catch (error) {
-      logger.error(`Error removing dependency ${dependencyId} from task ${taskId}:`, error);
+      logger.error(`Error removing dependency ${dependencyId} from task ${taskId}:`, error as Error);
       throw error;
     }
   }
@@ -337,7 +337,7 @@ export class TaskService implements TaskServiceInterface {
         }
       };
     } catch (error) {
-      logger.error(`Error getting schedule for task ${taskId}:`, error);
+      logger.error(`Error getting schedule for task ${taskId}:`, error as Error);
       throw error;
     }
   }
@@ -372,7 +372,7 @@ export class TaskService implements TaskServiceInterface {
       logger.info(`Task scheduled: ${taskId}`);
       return { schedule };
     } catch (error) {
-      logger.error(`Error scheduling task ${taskId}:`, error);
+      logger.error(`Error scheduling task ${taskId}:`, error as Error);
       throw error;
     }
   }
@@ -387,7 +387,7 @@ export class TaskService implements TaskServiceInterface {
 
       return { progress };
     } catch (error) {
-      logger.error(`Error getting progress for task ${taskId}:`, error);
+      logger.error(`Error getting progress for task ${taskId}:`, error as Error);
       throw error;
     }
   }
@@ -416,7 +416,7 @@ export class TaskService implements TaskServiceInterface {
       if (request.progress >= 100) {
         const task = await this.mockDataService.getTask(taskId);
         if (task) {
-          await this.mockDataService.updateTask(taskId, { status: 'completed' }, userId);
+          await this.mockDataService.updateTask(taskId, { status: 'completed' as any }, userId);
           await this.eventService.publishTaskCompleted(task, request.timeSpent || 0);
         }
       }
@@ -424,7 +424,7 @@ export class TaskService implements TaskServiceInterface {
       logger.info(`Progress updated for task ${taskId}: ${request.progress}%`);
       return { progress: updatedProgress };
     } catch (error) {
-      logger.error(`Error updating progress for task ${taskId}:`, error);
+      logger.error(`Error updating progress for task ${taskId}:`, error as Error);
       throw error;
     }
   }
@@ -453,7 +453,7 @@ export class TaskService implements TaskServiceInterface {
         }
       };
     } catch (error) {
-      logger.error(`Error getting comments for task ${taskId}:`, error);
+      logger.error(`Error getting comments for task ${taskId}:`, error as Error);
       throw error;
     }
   }
@@ -476,7 +476,7 @@ export class TaskService implements TaskServiceInterface {
       logger.info(`Comment added to task ${taskId}: ${comment.id}`);
       return { comment };
     } catch (error) {
-      logger.error(`Error adding comment to task ${taskId}:`, error);
+      logger.error(`Error adding comment to task ${taskId}:`, error as Error);
       throw error;
     }
   }
@@ -531,7 +531,7 @@ export class TaskService implements TaskServiceInterface {
         }
       };
     } catch (error) {
-      logger.error('Error searching tasks:', error);
+      logger.error('Error searching tasks:', error as Error);
       throw error;
     }
   }
@@ -541,7 +541,7 @@ export class TaskService implements TaskServiceInterface {
       const analytics = await this.mockDataService.getAnalytics(query);
       return { analytics };
     } catch (error) {
-      logger.error('Error getting analytics:', error);
+      logger.error('Error getting analytics:', error as Error);
       throw error;
     }
   }

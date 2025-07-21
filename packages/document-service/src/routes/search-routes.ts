@@ -113,7 +113,11 @@ export function registerSearchRoutes(
       }
     },
     handler: async (request, reply) => {
-      const { query, filters, pagination = { page: 1, limit: 20 } } = request.body;
+      const { query, filters, pagination = { page: 1, limit: 20 } } = request.body as {
+        query: string;
+        filters?: any;
+        pagination?: { page: number; limit: number };
+      };
 
       // Mock search implementation
       const mockResults = [
@@ -251,7 +255,7 @@ export function registerSearchRoutes(
       }
     },
     handler: async (request, reply) => {
-      const { q, limit = 10 } = request.query;
+      const { q, limit = 10 } = request.query as { q?: string; limit?: number };
 
       // Mock suggestions
       const suggestions = [
@@ -308,7 +312,7 @@ export function registerSearchRoutes(
       }
     },
     handler: async (request, reply) => {
-      const { timeframe = 'week', limit = 10 } = request.query;
+      const { timeframe = 'week', limit = 10 } = request.query as { timeframe?: string; limit?: number };
 
       // Mock popular searches
       const queries = [
@@ -368,7 +372,12 @@ export function registerSearchRoutes(
       }
     },
     handler: async (request, reply) => {
-      const { query, name, filters, notifications } = request.body;
+      const { query, name, filters, notifications } = request.body as {
+        query: string;
+        name: string;
+        filters?: any;
+        notifications?: any;
+      };
 
       // Mock implementation
       const savedSearch = {
@@ -412,7 +421,7 @@ export function registerSearchRoutes(
       }
     },
     handler: async (request, reply) => {
-      const { page = 1, limit = 20 } = request.query;
+      const { page = 1, limit = 20 } = request.query as { page?: number; limit?: number };
 
       // Mock implementation
       const savedSearches = [

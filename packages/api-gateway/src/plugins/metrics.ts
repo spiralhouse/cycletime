@@ -47,7 +47,7 @@ export const metricsPlugin = async (fastify: FastifyInstance) => {
   });
 
   fastify.addHook('onResponse', async (request: FastifyRequest, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
     const responseTime = Date.now() - new Date(context.timestamp).getTime();
     const method = request.method;
     const path = request.url;

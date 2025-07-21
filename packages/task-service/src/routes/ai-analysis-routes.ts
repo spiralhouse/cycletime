@@ -151,7 +151,7 @@ export async function aiAnalysisRoutes(fastify: FastifyInstance): Promise<void> 
 
       return reply.code(200).send({ analysis });
     } catch (error) {
-      logger.error('AI analysis failed', { error, userId, taskId: request.body.taskId });
+      logger.error('AI analysis failed', error as Error, { userId, taskId: request.body.taskId });
       
       return reply.code(503).send({
         error: 'AI Service Unavailable',
@@ -353,7 +353,7 @@ export async function aiAnalysisRoutes(fastify: FastifyInstance): Promise<void> 
 
       return reply.code(201).send({ breakdown });
     } catch (error) {
-      logger.error('Task breakdown creation failed', { error, userId, taskId });
+      logger.error('Task breakdown creation failed', error as Error, { userId, taskId });
       
       return reply.code(503).send({
         error: 'AI Service Unavailable',
@@ -449,7 +449,7 @@ export async function aiAnalysisRoutes(fastify: FastifyInstance): Promise<void> 
 
       return reply.code(200).send(analysis);
     } catch (error) {
-      logger.error('Dependency analysis failed', { error, projectId, taskIds });
+      logger.error('Dependency analysis failed', error as Error, { projectId, taskIds });
       
       return reply.code(503).send({
         error: 'AI Service Unavailable',
@@ -572,7 +572,7 @@ export async function aiAnalysisRoutes(fastify: FastifyInstance): Promise<void> 
 
       return reply.code(200).send({ validation });
     } catch (error) {
-      logger.error('Dependency validation failed', { error, userId });
+      logger.error('Dependency validation failed', error as Error, { userId });
       
       return reply.code(503).send({
         error: 'AI Service Unavailable',
@@ -1148,7 +1148,7 @@ async function validateDependencies(request: DependencyValidationRequest): Promi
   const suggestions = [];
   if (!cyclesPassed) {
     suggestions.push({
-      type: 'restructure' as const,
+      type: 'modify' as const,
       description: 'Remove or restructure dependencies to eliminate circular references',
       affectedDependencies: [0, 1, 2]
     });

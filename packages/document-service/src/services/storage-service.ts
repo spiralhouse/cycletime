@@ -1,4 +1,4 @@
-import { Client } from 'minio';
+import { Client, CopyConditions } from 'minio';
 import { StorageConfig } from '../types';
 import { logger } from '../utils/logger';
 
@@ -163,10 +163,12 @@ export class StorageService {
     logger.info('Copying file in storage', { sourceObjectName, destObjectName });
 
     try {
+      const copyConditions = new CopyConditions();
       await this.client.copyObject(
         this.bucketName, 
         destObjectName, 
-        `${this.bucketName}/${sourceObjectName}`
+        `/${this.bucketName}/${sourceObjectName}`,
+        copyConditions
       );
       
       logger.info('File copied successfully', { sourceObjectName, destObjectName });

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import * as moment from 'moment';
+import moment from 'moment';
 import { logger } from '@cycletime/shared-utils';
 import { EventService } from './event-service';
 import { MockDataService } from './mock-data-service';
@@ -37,7 +37,7 @@ export class ResourceService {
 
       return allocation;
     } catch (error) {
-      logger.error('Error getting resource allocation:', error);
+      logger.error('Error getting resource allocation:', error as Error);
       throw error;
     }
   }
@@ -96,7 +96,7 @@ export class ResourceService {
 
       return allocation;
     } catch (error) {
-      logger.error('Error allocating resources:', error);
+      logger.error('Error allocating resources:', error as Error);
       throw error;
     }
   }
@@ -138,7 +138,7 @@ export class ResourceService {
 
       return allocation;
     } catch (error) {
-      logger.error('Error deallocating resources:', error);
+      logger.error('Error deallocating resources:', error as Error);
       throw error;
     }
   }
@@ -164,7 +164,7 @@ export class ResourceService {
 
       return capacityPlanning;
     } catch (error) {
-      logger.error('Error getting capacity planning:', error);
+      logger.error('Error getting capacity planning:', error as Error);
       throw error;
     }
   }
@@ -235,7 +235,7 @@ export class ResourceService {
         trends
       };
     } catch (error) {
-      logger.error('Error analyzing resource utilization:', error);
+      logger.error('Error analyzing resource utilization:', error as Error);
       throw error;
     }
   }
@@ -302,7 +302,7 @@ export class ResourceService {
         recommendations
       };
     } catch (error) {
-      logger.error('Error optimizing resource allocation:', error);
+      logger.error('Error optimizing resource allocation:', error as Error);
       throw error;
     }
   }

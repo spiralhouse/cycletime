@@ -10,7 +10,7 @@ import { FastifyRequestContext } from '../types';
 export const metricsRoutes = async (fastify: FastifyInstance) => {
   // Get gateway metrics
   fastify.get('/metrics', async (request: FastifyRequest, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
 
     try {
       const metrics = fastify.metrics.getMetrics();
@@ -31,7 +31,7 @@ export const metricsRoutes = async (fastify: FastifyInstance) => {
 
   // Get Prometheus-style metrics
   fastify.get('/metrics/prometheus', async (request: FastifyRequest, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
 
     try {
       const metrics = fastify.metrics.getMetrics();
@@ -86,7 +86,7 @@ gateway_info{version="1.0.0"} 1
 
   // Get metrics summary
   fastify.get('/metrics/summary', async (request: FastifyRequest, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
 
     try {
       const metrics = fastify.metrics.getMetrics();
@@ -124,7 +124,7 @@ gateway_info{version="1.0.0"} 1
 
   // Get top endpoints by request count
   fastify.get('/metrics/top-endpoints', async (request: FastifyRequest<{ Querystring: { limit?: string } }>, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
     const limit = parseInt(request.query.limit || '10', 10);
 
     try {
@@ -160,7 +160,7 @@ gateway_info{version="1.0.0"} 1
 
   // Get error breakdown
   fastify.get('/metrics/errors', async (request: FastifyRequest, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
 
     try {
       const metrics = fastify.metrics.getMetrics();
@@ -197,7 +197,7 @@ gateway_info{version="1.0.0"} 1
 
   // Reset metrics (for testing purposes)
   fastify.post('/metrics/reset', async (request: FastifyRequest, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
 
     try {
       // In a real implementation, this would reset the metrics

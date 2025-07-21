@@ -23,12 +23,16 @@ export async function resourceRoutes(app: FastifyInstance) {
         200: ResourceAllocationResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     
-    const result = await app.services.resource.getResourceAllocation(params.projectId);
+    const result = await app.services!.resource.getResourceAllocation(params.projectId);
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Allocate resources
   app.post('/projects/:projectId/resources', {
@@ -47,14 +51,18 @@ export async function resourceRoutes(app: FastifyInstance) {
         201: ResourceAllocationResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const body = request.body as any;
     const userId = 'user-123'; // In real implementation, extract from auth token
     
-    const result = await app.services.resource.allocateResources(params.projectId, body, userId);
+    const result = await app.services!.resource.allocateResources(params.projectId, body, userId);
     return reply.status(201).send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Deallocate resources
   app.delete('/projects/:projectId/resources', {
@@ -79,14 +87,18 @@ export async function resourceRoutes(app: FastifyInstance) {
         200: ResourceAllocationResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const body = request.body as any;
     const userId = 'user-123'; // In real implementation, extract from auth token
     
-    const result = await app.services.resource.deallocateResources(params.projectId, body.resourceIds, userId);
+    const result = await app.services!.resource.deallocateResources(params.projectId, body.resourceIds, userId);
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Get capacity planning
   app.get('/projects/:projectId/capacity', {
@@ -110,13 +122,17 @@ export async function resourceRoutes(app: FastifyInstance) {
         200: CapacityPlanningResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const query = request.query as any;
     
-    const result = await app.services.resource.getCapacityPlanning(params.projectId, query.timeframe);
+    const result = await app.services!.resource.getCapacityPlanning(params.projectId, query.timeframe);
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Analyze resource utilization
   app.get('/projects/:projectId/utilization', {
@@ -150,7 +166,8 @@ export async function resourceRoutes(app: FastifyInstance) {
         }
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const query = request.query as any;
     
@@ -159,9 +176,12 @@ export async function resourceRoutes(app: FastifyInstance) {
       end: query.end || new Date().toISOString()
     };
     
-    const result = await app.services.resource.analyzeResourceUtilization(params.projectId, timeRange);
+    const result = await app.services!.resource.analyzeResourceUtilization(params.projectId, timeRange);
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Optimize resource allocation
   app.post('/projects/:projectId/optimize', {
@@ -196,11 +216,15 @@ export async function resourceRoutes(app: FastifyInstance) {
         }
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const body = request.body as any;
     
-    const result = await app.services.resource.optimizeResourceAllocation(params.projectId, body);
+    const result = await app.services!.resource.optimizeResourceAllocation(params.projectId, body);
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 }

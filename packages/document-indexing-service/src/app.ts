@@ -146,11 +146,11 @@ export async function createApp(options: AppOptions): Promise<FastifyInstance> {
   return app;
 }
 
-// Type declarations for services
+// Service-specific type declarations for services
 declare module 'fastify' {
   interface FastifyInstance {
-    mockDataService: ReturnType<typeof createMockDataService>;
-    eventService: ReturnType<typeof createEventService>;
+    eventService: any;
+    mockDataService: any;
     indexingService: ReturnType<typeof createIndexingService>;
     searchService: ReturnType<typeof createSearchService>;
     embeddingService: ReturnType<typeof createEmbeddingService>;

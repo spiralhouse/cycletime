@@ -33,12 +33,12 @@ const systemHealthController: FastifyPluginAsync = async (fastify) => {
         }),
       },
     },
-  }, async (request, reply) => {
+  }, async (_request, reply) => {
     const systemHealth = fastify.mockDataService.getSystemHealth();
 
     reply.send({
       overall: systemHealth.overall,
-      services: systemHealth.services.map(service => ({
+      services: systemHealth.services.map((service: any) => ({
         name: service.name,
         status: service.status,
         responseTime: service.responseTime,

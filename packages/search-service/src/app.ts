@@ -58,9 +58,10 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   return app;
 }
 
+// Local Fastify type declarations
 declare module 'fastify' {
   interface FastifyInstance {
-    eventService: any;
-    mockDataService: any;
+    eventService?: any;
+    mockDataService?: any;
   }
 }

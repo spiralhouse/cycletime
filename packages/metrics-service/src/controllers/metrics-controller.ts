@@ -32,10 +32,11 @@ const metricsController: FastifyPluginAsync = async (fastify) => {
   }, async (request, reply) => {
     const { category, service } = request.query as { category?: string; service?: string };
     
-    const metrics = await fastify.metricsCollectionService.getMetrics({
-      category,
-      service,
-    });
+    const filters: { category?: string; service?: string } = {};
+    if (category) filters.category = category;
+    if (service) filters.service = service;
+    
+    const metrics = await fastify.metricsCollectionService.getMetrics(filters);
 
     const metricSummaries = metrics.map(metric => ({
       id: metric.id,
@@ -225,7 +226,7 @@ const metricsController: FastifyPluginAsync = async (fastify) => {
         })),
       });
     } catch (error) {
-      reply.status(404).send({ error: error.message });
+      reply.status(404).send({ error: (error as Error).message });
     }
   });
 };

@@ -23,7 +23,7 @@ const dashboardController: FastifyPluginAsync = async (fastify) => {
         }),
       },
     },
-  }, async (request, reply) => {
+  }, async (_request, reply) => {
     const dashboards = await fastify.dashboardService.getDashboards();
 
     const dashboardSummaries = dashboards.map(dashboard => ({
@@ -291,7 +291,7 @@ const dashboardController: FastifyPluginAsync = async (fastify) => {
       reply.header('Content-Disposition', `attachment; filename="dashboard-${dashboardId}.json"`);
       reply.send(exportData);
     } catch (error) {
-      reply.status(404).send({ error: error.message });
+      reply.status(404).send({ error: (error as Error).message });
     }
   });
 
@@ -331,7 +331,7 @@ const dashboardController: FastifyPluginAsync = async (fastify) => {
         updatedAt: dashboard.updatedAt.toISOString(),
       });
     } catch (error) {
-      reply.status(400).send({ error: error.message });
+      reply.status(400).send({ error: (error as Error).message });
     }
   });
 };

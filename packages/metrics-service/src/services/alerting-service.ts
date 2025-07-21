@@ -13,20 +13,19 @@ export class AlertingService {
     try {
       const rule = this.mockDataService.addAlertRule(ruleData);
 
-      logger.info({
+      logger.info('Alert rule created', {
         ruleId: rule.id,
         name: rule.name,
         metric: rule.metric,
         threshold: rule.threshold,
         severity: rule.severity,
-      }, 'Alert rule created');
+      });
 
       return rule;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to create alert rule', error as Error, {
         ruleData,
-      }, 'Failed to create alert rule');
+      });
       throw error;
     }
   }
@@ -36,20 +35,19 @@ export class AlertingService {
       const rule = this.mockDataService.updateAlertRule(ruleId, updates);
 
       if (rule) {
-        logger.info({
+        logger.info('Alert rule updated', {
           ruleId,
           name: rule.name,
           updates: Object.keys(updates),
-        }, 'Alert rule updated');
+        });
       }
 
       return rule;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to update alert rule', error as Error, {
         ruleId,
         updates,
-      }, 'Failed to update alert rule');
+      });
       throw error;
     }
   }
@@ -59,17 +57,16 @@ export class AlertingService {
       const success = this.mockDataService.deleteAlertRule(ruleId);
 
       if (success) {
-        logger.info({
+        logger.info('Alert rule deleted', {
           ruleId,
-        }, 'Alert rule deleted');
+        });
       }
 
       return success;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to delete alert rule', error as Error, {
         ruleId,
-      }, 'Failed to delete alert rule');
+      });
       throw error;
     }
   }
@@ -86,16 +83,14 @@ export class AlertingService {
         }
       }
 
-      logger.debug({
+      logger.debug('Alert rules evaluated', {
         rulesEvaluated: rules.length,
         alertsTriggered: triggeredAlerts.length,
-      }, 'Alert rules evaluated');
+      });
 
       return triggeredAlerts;
     } catch (error) {
-      logger.error({
-        error: error.message,
-      }, 'Failed to evaluate alert rules');
+      logger.error('Failed to evaluate alert rules', error as Error);
       throw error;
     }
   }
@@ -107,10 +102,10 @@ export class AlertingService {
         .filter(m => m.name === rule.metric);
 
       if (metrics.length === 0) {
-        logger.warn({
+        logger.warn('No metrics found for alert rule', {
           ruleId: rule.id,
           metric: rule.metric,
-        }, 'No metrics found for alert rule');
+        });
         return null;
       }
 
@@ -169,21 +164,20 @@ export class AlertingService {
         notifications: rule.notifications,
       });
 
-      logger.warn({
+      logger.warn('Alert triggered', {
         alertId: alert.id,
         ruleId: rule.id,
         metric: rule.metric,
         value,
         threshold,
         severity: rule.severity,
-      }, 'Alert triggered');
+      });
 
       return alert;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to evaluate alert rule', error as Error, {
         ruleId: rule.id,
-      }, 'Failed to evaluate alert rule');
+      });
       return null;
     }
   }
@@ -206,18 +200,17 @@ export class AlertingService {
         duration: alert.resolvedAt.getTime() - alert.firedAt.getTime(),
       });
 
-      logger.info({
+      logger.info('Alert resolved', {
         alertId,
         resolvedBy,
         duration: alert.resolvedAt.getTime() - alert.firedAt.getTime(),
-      }, 'Alert resolved');
+      });
 
       return alert;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to resolve alert', error as Error, {
         alertId,
-      }, 'Failed to resolve alert');
+      });
       throw error;
     }
   }
@@ -236,22 +229,21 @@ export class AlertingService {
           silencedUntil: alert.silencedUntil,
         });
 
-        logger.info({
+        logger.info('Alert silenced', {
           alertId,
           duration,
           reason,
           silencedBy,
-        }, 'Alert silenced');
+        });
       }
 
       return alert;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to silence alert', error as Error, {
         alertId,
         duration,
         reason,
-      }, 'Failed to silence alert');
+      });
       throw error;
     }
   }
@@ -306,10 +298,9 @@ export class AlertingService {
         history,
       };
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to get alert history', error as Error, {
         alertId,
-      }, 'Failed to get alert history');
+      });
       throw error;
     }
   }
@@ -326,17 +317,16 @@ export class AlertingService {
         }
       }
 
-      logger.info({
+      logger.info('Alerts resolved in batch', {
         count: resolvedAlerts.length,
         resolvedBy,
-      }, 'Alerts resolved in batch');
+      });
 
       return resolvedAlerts;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to resolve alerts batch', error as Error, {
         alertIds,
-      }, 'Failed to resolve alerts batch');
+      });
       throw error;
     }
   }
@@ -366,9 +356,7 @@ export class AlertingService {
 
       return stats;
     } catch (error) {
-      logger.error({
-        error: error.message,
-      }, 'Failed to get alert statistics');
+      logger.error('Failed to get alert statistics', error as Error);
       throw error;
     }
   }

@@ -49,7 +49,7 @@ export const TemplateMetadataSchema = z.object({
   author: z.string().optional(),
   version: z.string().default('1.0.0'),
   tags: z.array(z.string()).default([]),
-  usageCount: z.number().int().non_negative().default(0)
+  usageCount: z.number().int().nonnegative().default(0)
 });
 export type TemplateMetadata = z.infer<typeof TemplateMetadataSchema>;
 
@@ -130,8 +130,8 @@ export const TemplateListResponseSchema = z.object({
   pagination: z.object({
     page: z.number().int().positive(),
     limit: z.number().int().positive(),
-    total: z.number().int().non_negative(),
-    totalPages: z.number().int().non_negative(),
+    total: z.number().int().nonnegative(),
+    totalPages: z.number().int().nonnegative(),
     hasNext: z.boolean(),
     hasPrevious: z.boolean()
   })

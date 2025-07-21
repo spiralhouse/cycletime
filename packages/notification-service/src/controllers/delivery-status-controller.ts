@@ -5,7 +5,7 @@ const deliveryStatusController: FastifyPluginAsync = async (fastify) => {
   fastify.get('/', async (request, reply) => {
     const { timeRange = '24h', channel } = request.query as { timeRange?: string; channel?: string };
     
-    const report = await fastify.deliveryTrackingService.getDeliveryReport(timeRange, channel);
+    const report = await fastify.deliveryTrackingService?.getDeliveryReport(timeRange, channel);
     reply.send(report);
   });
 
@@ -14,7 +14,7 @@ const deliveryStatusController: FastifyPluginAsync = async (fastify) => {
     const { notificationId } = request.params as { notificationId: string };
     
     try {
-      const status = await fastify.deliveryTrackingService.getNotificationDeliveryStatus(notificationId);
+      const status = await fastify.deliveryTrackingService?.getNotificationDeliveryStatus(notificationId);
       reply.send(status);
     } catch (error) {
       reply.status(404).send({ error: (error as Error).message });

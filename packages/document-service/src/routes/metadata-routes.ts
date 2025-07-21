@@ -66,7 +66,7 @@ export function registerMetadataRoutes(
       }
     },
     handler: async (request, reply) => {
-      const { documentId } = request.params;
+      const { documentId } = request.params as { documentId: string };
 
       // Mock implementation
       const metadata = {
@@ -195,8 +195,8 @@ export function registerMetadataRoutes(
       }
     },
     handler: async (request, reply) => {
-      const { documentId } = request.params;
-      const { metadata, systemMetadata } = request.body;
+      const { documentId } = request.params as { documentId: string };
+      const { metadata, systemMetadata } = request.body as { metadata?: any; systemMetadata?: any };
 
       // Mock implementation - merge with existing metadata
       const updatedMetadata = {
@@ -269,8 +269,8 @@ export function registerMetadataRoutes(
       }
     },
     handler: async (request, reply) => {
-      const { documentId } = request.params;
-      const { timeframe = 'month', metrics } = request.query;
+      const { documentId } = request.params as { documentId: string };
+      const { timeframe = 'month', metrics } = request.query as { timeframe?: string; metrics?: string[] };
 
       // Mock analytics data
       const analytics = {
@@ -426,8 +426,15 @@ export function registerMetadataRoutes(
       }
     },
     handler: async (request, reply) => {
-      const { documentId } = request.params;
-      const { page = 1, limit = 20, action, userId, dateFrom, dateTo } = request.query;
+      const { documentId } = request.params as { documentId: string };
+      const { page = 1, limit = 20, action, userId, dateFrom, dateTo } = request.query as {
+        page?: number;
+        limit?: number;
+        action?: string;
+        userId?: string;
+        dateFrom?: string;
+        dateTo?: string;
+      };
 
       // Mock audit log data
       const auditLog = [

@@ -37,7 +37,7 @@ export const build = async (): Promise<FastifyInstance> => {
   });
 
   // Register security plugins
-  await app.register(helmet, {
+  await app.register(helmet as any, {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
@@ -48,13 +48,13 @@ export const build = async (): Promise<FastifyInstance> => {
     },
   });
 
-  await app.register(cors, {
+  await app.register(cors as any, {
     origin: config.server.environment === 'production' ? false : true,
     credentials: true,
   });
 
   // Register JWT plugin
-  await app.register(jwt, {
+  await app.register(jwt as any, {
     secret: config.auth.jwtSecret,
     sign: {
       expiresIn: config.auth.tokenExpirationTime,
@@ -62,7 +62,7 @@ export const build = async (): Promise<FastifyInstance> => {
   });
 
   // Register rate limiting
-  await app.register(rateLimit, {
+  await app.register(rateLimit as any, {
     max: config.rateLimit.global.requestsPerMinute || 100,
     timeWindow: '1 minute',
     errorResponseBuilder: (request: FastifyRequest, context: any) => {
@@ -115,7 +115,7 @@ export const build = async (): Promise<FastifyInstance> => {
 
   // Error handler
   app.setErrorHandler(async (error, request, reply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
     
     logger.error('Request error:', {
       error: error.message,
@@ -153,7 +153,7 @@ export const build = async (): Promise<FastifyInstance> => {
 
   // Not found handler
   app.setNotFoundHandler(async (request, reply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
     
     logger.warn('Route not found:', {
       path: request.url,

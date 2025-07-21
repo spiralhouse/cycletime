@@ -17,11 +17,11 @@ import { logger } from './utils/logger';
 
 export class App {
   private server: FastifyInstance;
-  private documentService: DocumentService;
-  private storageService: StorageService;
-  private eventService: EventService;
-  private mockDataService: MockDataService;
-  private documentController: DocumentController;
+  private documentService!: DocumentService;
+  private storageService!: StorageService;
+  private eventService!: EventService;
+  private mockDataService!: MockDataService;
+  private documentController!: DocumentController;
 
   constructor() {
     this.server = fastify({
@@ -87,9 +87,9 @@ export class App {
         return {
           code: 429,
           error: 'Too Many Requests',
-          message: `Rate limit exceeded, retry in ${context.timeWindow}`,
+          message: `Rate limit exceeded, retry in 1 minute`,
           date: Date.now(),
-          expiresIn: context.timeWindow,
+          expiresIn: '1 minute',
         };
       },
     });

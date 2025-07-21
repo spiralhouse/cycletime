@@ -208,7 +208,7 @@ export async function searchRoutes(app: FastifyInstance) {
     const searchRequest = request.body as any;
     
     try {
-      const response = await app.searchService.search(searchRequest.query, searchRequest);
+      const response = await app.searchService!.search(searchRequest.query, searchRequest);
       reply.send(response);
     } catch (error) {
       reply.code(400).send({
@@ -300,7 +300,7 @@ export async function searchRoutes(app: FastifyInstance) {
     const { embeddings, indexId, limit, threshold, includeMetadata } = request.body as any;
     
     try {
-      const results = await app.searchService.similaritySearch({
+      const results = await app.searchService!.similaritySearch({
         embeddings,
         indexId,
         limit,
@@ -370,7 +370,7 @@ export async function searchRoutes(app: FastifyInstance) {
     const { query, limit } = request.query as { query: string; limit?: number };
     
     try {
-      const suggestions = await app.searchService.searchSuggestions(query, limit);
+      const suggestions = await app.searchService!.searchSuggestions(query, limit);
       
       reply.send({
         suggestions,
@@ -464,7 +464,7 @@ export async function searchRoutes(app: FastifyInstance) {
     const { limit, threshold } = request.query as { limit?: number; threshold?: number };
     
     try {
-      const results = await app.searchService.searchSimilarDocuments(documentId, limit);
+      const results = await app.searchService!.searchSimilarDocuments(documentId, limit);
       
       reply.send({
         results,
@@ -573,7 +573,7 @@ export async function searchRoutes(app: FastifyInstance) {
     };
     
     try {
-      const results = await app.searchService.moreLikeThis(documentId, {
+      const results = await app.searchService!.moreLikeThis(documentId, {
         limit,
         threshold,
         includeContent,
@@ -644,7 +644,7 @@ export async function searchRoutes(app: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const stats = app.searchService.getSearchStats();
+    const stats = app.searchService!.getSearchStats();
     
     reply.send({
       ...stats,
@@ -716,7 +716,7 @@ export async function searchRoutes(app: FastifyInstance) {
   }, async (request, reply) => {
     const { query, searchType, indexId } = request.body as any;
     
-    const explanation = app.searchService.explainQuery(query, { searchType, indexId });
+    const explanation = app.searchService!.explainQuery(query, { searchType, indexId });
     
     reply.send({
       ...explanation,

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import * as moment from 'moment';
+import moment from 'moment';
 import { logger } from '@cycletime/shared-utils';
 import { EventService } from './event-service';
 import { MockDataService } from './mock-data-service';
@@ -42,7 +42,7 @@ export class TeamService {
         statistics
       };
     } catch (error) {
-      logger.error('Error getting project team:', error);
+      logger.error('Error getting project team:', error as Error);
       throw error;
     }
   }
@@ -88,7 +88,7 @@ export class TeamService {
 
       return { member: addedMember };
     } catch (error) {
-      logger.error('Error adding team member:', error);
+      logger.error('Error adding team member:', error as Error);
       throw error;
     }
   }
@@ -140,7 +140,7 @@ export class TeamService {
 
       return { member: updatedMember };
     } catch (error) {
-      logger.error('Error updating team member:', error);
+      logger.error('Error updating team member:', error as Error);
       throw error;
     }
   }
@@ -181,7 +181,7 @@ export class TeamService {
 
       logger.info('Team member removed:', { projectId, userId });
     } catch (error) {
-      logger.error('Error removing team member:', error);
+      logger.error('Error removing team member:', error as Error);
       throw error;
     }
   }
@@ -206,7 +206,7 @@ export class TeamService {
 
       return { member };
     } catch (error) {
-      logger.error('Error getting team member:', error);
+      logger.error('Error getting team member:', error as Error);
       throw error;
     }
   }
@@ -257,9 +257,7 @@ export class TeamService {
           id: member.id,
           name: member.name,
           email: member.email,
-          role: member.role,
-          permissions: member.permissions,
-          allocation: member.allocation
+          role: member.role
         },
         addedBy: {
           id: addedBy,

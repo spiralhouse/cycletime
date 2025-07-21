@@ -146,7 +146,7 @@ const projectController: FastifyPluginAsync = async (fastify) => {
     const insights = fastify.mockDataService.getProjectInsights(projectId, timeframe);
     
     const filteredInsights = category 
-      ? insights.filter(insight => insight.category === category)
+      ? insights.filter((insight: any) => insight.category === category)
       : insights;
     
     // Publish insights generated event
@@ -162,7 +162,7 @@ const projectController: FastifyPluginAsync = async (fastify) => {
       insights: filteredInsights,
       summary: {
         totalInsights: filteredInsights.length,
-        averageConfidence: filteredInsights.reduce((sum, insight) => sum + insight.confidence, 0) / filteredInsights.length,
+        averageConfidence: filteredInsights.reduce((sum: any, insight: any) => sum + insight.confidence, 0) / filteredInsights.length,
         lastAnalyzed: new Date().toISOString(),
       },
       generatedAt: new Date().toISOString(),
@@ -235,16 +235,16 @@ const projectController: FastifyPluginAsync = async (fastify) => {
     
     // Filter by priority if specified
     if (priority) {
-      recommendations = recommendations.filter(rec => rec.priority === priority);
+      recommendations = recommendations.filter((rec: any) => rec.priority === priority);
     }
     
     // Filter by category if specified
     if (category) {
-      recommendations = recommendations.filter(rec => rec.category === category);
+      recommendations = recommendations.filter((rec: any) => rec.category === category);
     }
     
     // Calculate summary
-    const byPriority = recommendations.reduce((acc: any, rec) => {
+    const byPriority = recommendations.reduce((acc: any, rec: any) => {
       acc[rec.priority] = (acc[rec.priority] || 0) + 1;
       return acc;
     }, { critical: 0, high: 0, medium: 0, low: 0 });

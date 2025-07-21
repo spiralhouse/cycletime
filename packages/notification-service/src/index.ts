@@ -29,9 +29,9 @@ async function start() {
       version: '1.0.0',
       status: healthStatus.status,
       totalTemplates: templates.length,
-      activeTemplates: templates.filter(t => t.isActive).length,
+      activeTemplates: templates.filter((t: any) => t.isActive).length,
       totalNotifications: notifications.length,
-      pendingNotifications: notifications.filter(n => n.status === 'pending').length,
+      pendingNotifications: notifications.filter((n: any) => n.status === 'pending').length,
       channels: ['email', 'sms', 'push', 'in_app'],
     });
 

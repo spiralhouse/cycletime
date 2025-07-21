@@ -8,7 +8,7 @@ import { requestLogger } from './request-logger.js';
 
 export const setupMiddleware = async (fastify: FastifyInstance) => {
   // Security headers
-  await fastify.register(helmet, {
+  await fastify.register(helmet as any, {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
@@ -20,8 +20,8 @@ export const setupMiddleware = async (fastify: FastifyInstance) => {
   });
 
   // CORS configuration
-  await fastify.register(cors, {
-    origin: (origin, callback) => {
+  await fastify.register(cors as any, {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) {
         callback(null, true);
@@ -48,14 +48,14 @@ export const setupMiddleware = async (fastify: FastifyInstance) => {
   });
 
   // Rate limiting
-  await fastify.register(rateLimit, {
+  await fastify.register(rateLimit as any, {
     max: config.rateLimitMaxRequests,
     timeWindow: config.rateLimitWindowMs,
-    keyGenerator: (request) => {
+    keyGenerator: (request: any) => {
       // Use user ID if authenticated, otherwise IP address
       return (request as any).user?.id || request.ip;
     },
-    errorResponseBuilder: (request, context) => {
+    errorResponseBuilder: (request: any, context: any) => {
       return {
         error: {
           code: 'RATE_LIMITED',

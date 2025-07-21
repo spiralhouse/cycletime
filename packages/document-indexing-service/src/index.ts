@@ -44,7 +44,7 @@ async function start() {
     await app.eventService.publishEvent('document-indexing.service.started', {
       address,
       version: '1.0.0',
-      indices: indices.map(i => ({ 
+      indices: indices.map((i: any) => ({ 
         id: i.id, 
         name: i.name, 
         status: i.status, 

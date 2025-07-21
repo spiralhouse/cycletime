@@ -52,9 +52,7 @@ export class UnauthorizedError extends ProjectServiceError {
 
 export class ErrorHandler {
   static handle(error: Error, request: FastifyRequest, reply: FastifyReply) {
-    logger.error('Request error:', {
-      error: error.message,
-      stack: error.stack,
+    logger.error('Request error:', error as Error, {
       url: request.url,
       method: request.method,
       params: request.params,

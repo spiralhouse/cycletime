@@ -22,7 +22,7 @@ const healthController: FastifyPluginAsync = async (fastify) => {
         }),
       },
     },
-  }, async (request, reply) => {
+  }, async (_request, reply) => {
     const healthStatus = fastify.mockDataService.getHealthStatus();
     
     reply.send(healthStatus);

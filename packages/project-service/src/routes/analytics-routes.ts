@@ -30,14 +30,18 @@ export async function analyticsRoutes(app: FastifyInstance) {
         200: ProjectAnalyticsResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
-    const params = request.params as any;
-    const query = request.query as any;
-    
-    const metrics = query.metrics ? query.metrics.split(',') : undefined;
-    const result = await app.services.analytics.getProjectAnalytics(params.projectId, query.timeRange, metrics);
-    return reply.send(result);
-  }));
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const params = request.params as any;
+      const query = request.query as any;
+      
+      const metrics = query.metrics ? query.metrics.split(',') : undefined;
+      const result = await app.services!.analytics.getProjectAnalytics(params.projectId, query.timeRange, metrics);
+      return reply.send(result);
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Get project forecasting
   app.get('/projects/:projectId/forecasting', {
@@ -61,13 +65,17 @@ export async function analyticsRoutes(app: FastifyInstance) {
         200: ProjectForecastingResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
-    const params = request.params as any;
-    const query = request.query as any;
-    
-    const result = await app.services.analytics.getProjectForecasting(params.projectId, query.horizon);
-    return reply.send(result);
-  }));
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const params = request.params as any;
+      const query = request.query as any;
+      
+      const result = await app.services!.analytics.getProjectForecasting(params.projectId, query.horizon);
+      return reply.send(result);
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Get project insights
   app.get('/projects/:projectId/insights', {
@@ -91,13 +99,17 @@ export async function analyticsRoutes(app: FastifyInstance) {
         200: ProjectInsightsResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
-    const params = request.params as any;
-    const query = request.query as any;
-    
-    const result = await app.services.insight.getProjectInsights(params.projectId, query.category);
-    return reply.send(result);
-  }));
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const params = request.params as any;
+      const query = request.query as any;
+      
+      const result = await app.services!.insight.getProjectInsights(params.projectId, query.category);
+      return reply.send(result);
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Get team performance analytics
   app.get('/projects/:projectId/analytics/team', {
@@ -129,13 +141,17 @@ export async function analyticsRoutes(app: FastifyInstance) {
         }
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
-    const params = request.params as any;
-    const query = request.query as any;
-    
-    const result = await app.services.analytics.getTeamPerformanceAnalytics(params.projectId, query.timeRange);
-    return reply.send(result);
-  }));
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const params = request.params as any;
+      const query = request.query as any;
+      
+      const result = await app.services!.analytics.getTeamPerformanceAnalytics(params.projectId, query.timeRange);
+      return reply.send(result);
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Get project health score
   app.get('/projects/:projectId/health', {
@@ -161,12 +177,16 @@ export async function analyticsRoutes(app: FastifyInstance) {
         }
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
-    const params = request.params as any;
-    
-    const result = await app.services.analytics.getProjectHealthScore(params.projectId);
-    return reply.send(result);
-  }));
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const params = request.params as any;
+      
+      const result = await app.services!.analytics.getProjectHealthScore(params.projectId);
+      return reply.send(result);
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Get risk analysis
   app.get('/projects/:projectId/risks', {
@@ -191,12 +211,16 @@ export async function analyticsRoutes(app: FastifyInstance) {
         }
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
-    const params = request.params as any;
-    
-    const result = await app.services.insight.generateRiskAnalysis(params.projectId);
-    return reply.send(result);
-  }));
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const params = request.params as any;
+      
+      const result = await app.services!.insight.generateRiskAnalysis(params.projectId);
+      return reply.send(result);
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Get performance recommendations
   app.get('/projects/:projectId/recommendations', {
@@ -221,12 +245,16 @@ export async function analyticsRoutes(app: FastifyInstance) {
         }
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
-    const params = request.params as any;
-    
-    const result = await app.services.insight.generatePerformanceRecommendations(params.projectId);
-    return reply.send(result);
-  }));
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const params = request.params as any;
+      
+      const result = await app.services!.insight.generatePerformanceRecommendations(params.projectId);
+      return reply.send(result);
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Get predictive insights
   app.get('/projects/:projectId/predictions', {
@@ -251,10 +279,14 @@ export async function analyticsRoutes(app: FastifyInstance) {
         }
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
-    const params = request.params as any;
-    
-    const result = await app.services.insight.generatePredictiveInsights(params.projectId);
-    return reply.send(result);
-  }));
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const params = request.params as any;
+      
+      const result = await app.services!.insight.generatePredictiveInsights(params.projectId);
+      return reply.send(result);
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 }

@@ -19,9 +19,9 @@ import { errorHandler } from './middleware/error-handler';
 import { authMiddleware } from './middleware/auth-middleware';
 import { requestLogger } from './middleware/request-logger';
 
-export async function createApp(config: TaskServiceConfiguration): Promise<FastifyInstance> {
+export async function createApp(config: TaskServiceConfiguration): Promise<any> {
   const app = Fastify({
-    logger: logger,
+    logger: false, // Use our custom logger instead
     trustProxy: true,
     ignoreTrailingSlash: true,
     ignoreDuplicateSlashes: true,
@@ -98,7 +98,7 @@ export async function createApp(config: TaskServiceConfiguration): Promise<Fasti
   });
 
   // Initialize services
-  const eventService = new EventService(config.events);
+  const eventService = new EventService(config.events as any);
   const mockDataService = new MockDataService();
   const queueService = new QueueService(config.queue);
   const schedulerService = new SchedulerService(config.scheduler);
@@ -139,7 +139,7 @@ export async function createApp(config: TaskServiceConfiguration): Promise<Fasti
       await healthService.checkReadiness();
       return reply.code(200).send({ status: 'ready' });
     } catch (error) {
-      return reply.code(503).send({ status: 'not ready', error: error.message });
+      return reply.code(503).send({ status: 'not ready', error: (error as Error).message });
     }
   });
 
@@ -193,12 +193,12 @@ export async function createApp(config: TaskServiceConfiguration): Promise<Fasti
   return app;
 }
 
-// Type declarations for Fastify decorators
+// Service-specific type declarations for Fastify decorators
 declare module 'fastify' {
   interface FastifyInstance {
+    eventService: any;
+    mockDataService: any;
     taskService: TaskService;
-    eventService: EventService;
-    mockDataService: MockDataService;
     queueService: QueueService;
     schedulerService: SchedulerService;
     healthService: HealthService;

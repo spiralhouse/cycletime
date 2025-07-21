@@ -43,14 +43,14 @@ export const proxyPlugin = async (fastify: FastifyInstance, options: ProxyPlugin
 
   // Register proxy routes for each service
   for (const service of options.services) {
-    await fastify.register(httpProxy, {
+    await fastify.register(httpProxy as any, {
       upstream: service.upstream,
       prefix: service.prefix,
       rewritePrefix: service.rewritePrefix || service.prefix,
       timeout: options.timeout,
       retries: options.retries,
       preHandler: async (request: FastifyRequest, reply: FastifyReply) => {
-        const context = request.context as FastifyRequestContext;
+        const context = (request as any).context as FastifyRequestContext;
         const circuitBreaker = circuitBreakers.get(service.name);
 
         // Check circuit breaker
@@ -119,8 +119,8 @@ export const proxyPlugin = async (fastify: FastifyInstance, options: ProxyPlugin
         });
       },
       replyOptions: {
-        rewriteRequestHeaders: (originalReq, headers) => {
-          const context = originalReq.context as FastifyRequestContext;
+        rewriteRequestHeaders: (originalReq: any, headers: any) => {
+          const context = (originalReq as any).context as FastifyRequestContext;
           
           // Add request ID to upstream headers
           headers['x-request-id'] = context.requestId;
@@ -136,7 +136,7 @@ export const proxyPlugin = async (fastify: FastifyInstance, options: ProxyPlugin
         },
       },
       onError: async (request: FastifyRequest, reply: FastifyReply, error: Error) => {
-        const context = request.context as FastifyRequestContext;
+        const context = (request as any).context as FastifyRequestContext;
         const circuitBreaker = circuitBreakers.get(service.name);
 
         if (circuitBreaker) {
@@ -220,7 +220,7 @@ export const proxyPlugin = async (fastify: FastifyInstance, options: ProxyPlugin
 
     // Add response hook for this service
     fastify.addHook('onResponse', async (request: FastifyRequest, reply: FastifyReply) => {
-      const context = request.context as FastifyRequestContext;
+      const context = (request as any).context as FastifyRequestContext;
       
       // Only handle responses for this service
       if (context.route?.targetService === service.name) {

@@ -54,7 +54,7 @@ export async function embeddingRoutes(app: FastifyInstance) {
     const { text, model, dimensions, normalize, metadata } = request.body as any;
     
     try {
-      const embedding = await app.embeddingService.generateEmbedding(text, {
+      const embedding = await app.embeddingService!.generateEmbedding(text, {
         model,
         dimensions,
         normalize,
@@ -145,7 +145,7 @@ export async function embeddingRoutes(app: FastifyInstance) {
     const { texts, options } = request.body as any;
     
     try {
-      const result = await app.embeddingService.generateBatchEmbeddings({
+      const result = await app.embeddingService!.generateBatchEmbeddings({
         texts,
         options,
       });
@@ -215,7 +215,7 @@ export async function embeddingRoutes(app: FastifyInstance) {
     const { embedding1, embedding2, method } = request.body as any;
     
     try {
-      const comparison = await app.embeddingService.compareEmbeddings(
+      const comparison = await app.embeddingService!.compareEmbeddings(
         embedding1,
         embedding2,
         method
@@ -308,7 +308,7 @@ export async function embeddingRoutes(app: FastifyInstance) {
     
     try {
       const startTime = Date.now();
-      const similar = await app.embeddingService.findSimilarEmbeddings(targetEmbedding, {
+      const similar = await app.embeddingService!.findSimilarEmbeddings(targetEmbedding, {
         limit,
         threshold,
         method,
@@ -407,7 +407,7 @@ export async function embeddingRoutes(app: FastifyInstance) {
     
     try {
       const startTime = Date.now();
-      const clusters = await app.embeddingService.clusterEmbeddings(embeddings, options);
+      const clusters = await app.embeddingService!.clusterEmbeddings(embeddings, options);
       const processingTime = Date.now() - startTime;
       
       reply.send({
@@ -470,7 +470,7 @@ export async function embeddingRoutes(app: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const stats = await app.embeddingService.getEmbeddingStats();
+    const stats = await app.embeddingService!.getEmbeddingStats();
     const modelDistribution: Record<string, number> = {};
     const dimensionDistribution: Record<string, number> = {};
     
@@ -519,7 +519,7 @@ export async function embeddingRoutes(app: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const models = app.embeddingService.getSupportedModels();
+    const models = app.embeddingService!.getSupportedModels();
     reply.send({ models });
   });
 
@@ -569,7 +569,7 @@ export async function embeddingRoutes(app: FastifyInstance) {
     const { embedding } = request.body as any;
     
     try {
-      const analysis = await app.embeddingService.analyzeEmbeddingQuality(embedding);
+      const analysis = await app.embeddingService!.analyzeEmbeddingQuality(embedding);
       reply.send(analysis);
     } catch (error) {
       reply.code(400).send({
@@ -611,7 +611,7 @@ export async function embeddingRoutes(app: FastifyInstance) {
     const { embeddingId } = request.params as { embeddingId: string };
     
     try {
-      const success = await app.embeddingService.deleteEmbedding(embeddingId);
+      const success = await app.embeddingService!.deleteEmbedding(embeddingId);
       
       if (!success) {
         return reply.code(404).send({
@@ -664,7 +664,7 @@ export async function embeddingRoutes(app: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const metrics = app.embeddingService.getPerformanceMetrics();
+    const metrics = app.embeddingService!.getPerformanceMetrics();
     
     reply.send({
       ...metrics,

@@ -32,7 +32,7 @@ export class HealthService {
         metrics
       };
     } catch (error) {
-      logger.error('Health check failed:', error);
+      logger.error('Health check failed:', error as Error);
       return {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
@@ -76,7 +76,7 @@ export class HealthService {
     try {
       dependencies.redis = await this.checkRedis();
     } catch (error) {
-      logger.error('Redis health check failed:', error);
+      logger.error('Redis health check failed:', error as Error);
       dependencies.redis = 'unhealthy';
     }
 
@@ -84,7 +84,7 @@ export class HealthService {
     try {
       dependencies.queue = await this.checkQueue();
     } catch (error) {
-      logger.error('Queue health check failed:', error);
+      logger.error('Queue health check failed:', error as Error);
       dependencies.queue = 'unhealthy';
     }
 
@@ -236,7 +236,7 @@ export class HealthService {
       const health = await this.getHealth();
       return health.status === 'healthy' || health.status === 'degraded';
     } catch (error) {
-      logger.error('Readiness check failed:', error);
+      logger.error('Readiness check failed:', error as Error);
       return false;
     }
   }
@@ -249,7 +249,7 @@ export class HealthService {
       // Basic liveness check - just verify the service is responding
       return true;
     } catch (error) {
-      logger.error('Liveness check failed:', error);
+      logger.error('Liveness check failed:', error as Error);
       return false;
     }
   }

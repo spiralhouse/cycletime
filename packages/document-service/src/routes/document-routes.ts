@@ -1,5 +1,12 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { DocumentController } from '../controllers/document-controller';
+import { 
+  CreateDocumentRequest, 
+  UpdateDocumentRequest, 
+  DocumentListQuery,
+  DocumentQuery,
+  DocumentContentQuery
+} from '../types';
 
 export function registerDocumentRoutes(
   server: FastifyInstance,
@@ -47,7 +54,7 @@ export function registerDocumentRoutes(
         }
       }
     },
-    handler: (request, reply) => documentController.createDocument(request, reply)
+    handler: (request: FastifyRequest, reply: FastifyReply) => documentController.createDocument(request as any, reply)
   });
 
   // Get document
@@ -81,7 +88,7 @@ export function registerDocumentRoutes(
         }
       }
     },
-    handler: (request, reply) => documentController.getDocument(request, reply)
+    handler: (request: FastifyRequest, reply: FastifyReply) => documentController.getDocument(request as any, reply)
   });
 
   // Update document
@@ -128,7 +135,7 @@ export function registerDocumentRoutes(
         }
       }
     },
-    handler: (request, reply) => documentController.updateDocument(request, reply)
+    handler: (request: FastifyRequest, reply: FastifyReply) => documentController.updateDocument(request as any, reply)
   });
 
   // Delete document
@@ -156,7 +163,7 @@ export function registerDocumentRoutes(
         }
       }
     },
-    handler: (request, reply) => documentController.deleteDocument(request, reply)
+    handler: (request: FastifyRequest, reply: FastifyReply) => documentController.deleteDocument(request as any, reply)
   });
 
   // List documents
@@ -211,7 +218,7 @@ export function registerDocumentRoutes(
         }
       }
     },
-    handler: (request, reply) => documentController.listDocuments(request, reply)
+    handler: (request: FastifyRequest, reply: FastifyReply) => documentController.listDocuments(request as any, reply)
   });
 
   // Get document content
@@ -241,6 +248,6 @@ export function registerDocumentRoutes(
         }
       }
     },
-    handler: (request, reply) => documentController.getDocumentContent(request, reply)
+    handler: (request: FastifyRequest, reply: FastifyReply) => documentController.getDocumentContent(request as any, reply)
   });
 }

@@ -133,6 +133,22 @@ export const ProjectDeletedEventSchema = BaseEventPayloadSchema.extend({
 });
 export type ProjectDeletedEvent = z.infer<typeof ProjectDeletedEventSchema>;
 
+// Project Status Changed Event Schema
+export const ProjectStatusChangedEventSchema = BaseEventPayloadSchema.extend({
+  eventType: z.literal('project.status_changed'),
+  data: ProjectEventDataSchema.extend({
+    oldStatus: z.string(),
+    newStatus: z.string(),
+    statusChangedAt: z.string().datetime(),
+    changedBy: z.object({
+      id: z.string().uuid(),
+      name: z.string(),
+      email: z.string()
+    })
+  })
+});
+export type ProjectStatusChangedEvent = z.infer<typeof ProjectStatusChangedEventSchema>;
+
 // Team Member Added Event Schema
 export const TeamMemberAddedEventSchema = BaseEventPayloadSchema.extend({
   eventType: z.literal('project.team.member_added'),
@@ -163,9 +179,9 @@ export const TemplateAppliedEventSchema = BaseEventPayloadSchema.extend({
       customizations: z.record(z.any()).optional()
     }).optional(),
     results: z.object({
-      tasksCreated: z.number().int().non_negative(),
-      milestonesAdded: z.number().int().non_negative(),
-      rolesConfigured: z.number().int().non_negative()
+      tasksCreated: z.number().int().nonnegative(),
+      milestonesAdded: z.number().int().nonnegative(),
+      rolesConfigured: z.number().int().nonnegative()
     }).optional()
   })
 });
@@ -295,9 +311,9 @@ export const TemplateCreatedEventSchema = BaseEventPayloadSchema.extend({
       email: z.string()
     }),
     configuration: z.object({
-      phases: z.number().int().non_negative(),
-      taskTemplates: z.number().int().non_negative(),
-      roles: z.number().int().non_negative()
+      phases: z.number().int().nonnegative(),
+      taskTemplates: z.number().int().nonnegative(),
+      roles: z.number().int().nonnegative()
     }),
     metadata: z.object({
       tags: z.array(z.string()).optional(),
@@ -312,6 +328,7 @@ export const ProjectEventSchema = z.union([
   ProjectCreatedEventSchema,
   ProjectUpdatedEventSchema,
   ProjectDeletedEventSchema,
+  ProjectStatusChangedEventSchema,
   TeamMemberAddedEventSchema,
   TemplateAppliedEventSchema,
   MilestoneReachedEventSchema,

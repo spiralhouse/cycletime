@@ -5,7 +5,7 @@ const preferencesController: FastifyPluginAsync = async (fastify) => {
   fastify.get('/', async (_request, reply) => {
     const preferences = fastify.mockDataService.getUserPreferences();
     reply.send({
-      preferences: preferences.map(p => ({
+      preferences: preferences.map((p: any) => ({
         userId: p.userId,
         channels: p.channels,
         categories: p.categories,
@@ -31,7 +31,7 @@ const preferencesController: FastifyPluginAsync = async (fastify) => {
   fastify.put('/:userId', async (request, reply) => {
     const { userId } = request.params as { userId: string };
     const updates = request.body as any;
-    const preferences = await fastify.preferencesService.updatePreferences(userId, updates);
+    const preferences = await fastify.preferencesService?.updatePreferences(userId, updates);
     reply.send(preferences);
   });
 };

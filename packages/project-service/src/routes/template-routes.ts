@@ -29,7 +29,8 @@ export async function templateRoutes(app: FastifyInstance) {
         200: TemplateListResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const query = request.query as any;
     const options = {
       page: query.page,
@@ -41,9 +42,12 @@ export async function templateRoutes(app: FastifyInstance) {
       }
     };
 
-    const result = await app.services.template.getTemplates(options);
+    const result = await app.services!.template.getTemplates(options);
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Create template
   app.post('/templates', {
@@ -55,13 +59,17 @@ export async function templateRoutes(app: FastifyInstance) {
         201: TemplateResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const body = request.body as any;
     const userId = 'user-123'; // In real implementation, extract from auth token
     
-    const result = await app.services.template.createTemplate(body, userId);
+    const result = await app.services!.template.createTemplate(body, userId);
     return reply.status(201).send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Get template by ID
   app.get('/templates/:templateId', {
@@ -79,12 +87,16 @@ export async function templateRoutes(app: FastifyInstance) {
         200: TemplateResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     
-    const result = await app.services.template.getTemplateById(params.templateId);
+    const result = await app.services!.template.getTemplateById(params.templateId);
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Update template
   app.put('/templates/:templateId', {
@@ -103,14 +115,18 @@ export async function templateRoutes(app: FastifyInstance) {
         200: TemplateResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const body = request.body as any;
     const userId = 'user-123'; // In real implementation, extract from auth token
     
-    const result = await app.services.template.updateTemplate(params.templateId, body, userId);
+    const result = await app.services!.template.updateTemplate(params.templateId, body, userId);
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Delete template
   app.delete('/templates/:templateId', {
@@ -128,13 +144,17 @@ export async function templateRoutes(app: FastifyInstance) {
         204: { type: 'null' }
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const userId = 'user-123'; // In real implementation, extract from auth token
     
-    await app.services.template.deleteTemplate(params.templateId, userId);
+    await app.services!.template.deleteTemplate(params.templateId, userId);
     return reply.status(204).send();
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Get project templates
   app.get('/projects/:projectId/templates', {
@@ -158,13 +178,17 @@ export async function templateRoutes(app: FastifyInstance) {
         200: ProjectTemplatesResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const query = request.query as any;
     
-    const result = await app.services.template.getProjectTemplates(params.projectId, query.category);
+    const result = await app.services!.template.getProjectTemplates(params.projectId, query.category);
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Apply template to project
   app.post('/projects/:projectId/templates', {
@@ -183,12 +207,16 @@ export async function templateRoutes(app: FastifyInstance) {
         200: { type: 'object', properties: { message: { type: 'string' } } }
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const body = request.body as any;
     const userId = 'user-123'; // In real implementation, extract from auth token
     
-    await app.services.template.applyTemplate(params.projectId, body, userId);
+    await app.services!.template.applyTemplate(params.projectId, body, userId);
     return reply.send({ message: 'Template applied successfully' });
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 }

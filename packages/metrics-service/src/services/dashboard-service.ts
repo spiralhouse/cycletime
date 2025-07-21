@@ -16,19 +16,18 @@ export class DashboardService {
       // Publish dashboard created event
       await this.eventService.publishDashboardCreated(dashboard);
 
-      logger.info({
+      logger.info('Dashboard created', {
         dashboardId: dashboard.id,
         title: dashboard.title,
         panelCount: dashboard.panels.length,
         tags: dashboard.tags,
-      }, 'Dashboard created');
+      });
 
       return dashboard;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to create dashboard', error as Error, {
         dashboardData,
-      }, 'Failed to create dashboard');
+      });
       throw error;
     }
   }
@@ -61,20 +60,19 @@ export class DashboardService {
         // Publish dashboard updated event
         await this.eventService.publishDashboardUpdated(dashboard, changes);
 
-        logger.info({
+        logger.info('Dashboard updated', {
           dashboardId,
           title: dashboard.title,
           changes,
-        }, 'Dashboard updated');
+        });
       }
 
       return dashboard;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to update dashboard', error as Error, {
         dashboardId,
         updates,
-      }, 'Failed to update dashboard');
+      });
       throw error;
     }
   }
@@ -89,18 +87,17 @@ export class DashboardService {
       const success = this.mockDataService.deleteDashboard(dashboardId);
 
       if (success) {
-        logger.info({
+        logger.info('Dashboard deleted', {
           dashboardId,
           title: dashboard.title,
-        }, 'Dashboard deleted');
+        });
       }
 
       return success;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to delete dashboard', error as Error, {
         dashboardId,
-      }, 'Failed to delete dashboard');
+      });
       throw error;
     }
   }
@@ -109,10 +106,9 @@ export class DashboardService {
     try {
       return this.mockDataService.getDashboardById(dashboardId);
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to get dashboard', error as Error, {
         dashboardId,
-      }, 'Failed to get dashboard');
+      });
       throw error;
     }
   }
@@ -133,10 +129,9 @@ export class DashboardService {
 
       return dashboards;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to get dashboards', error as Error, {
         filters,
-      }, 'Failed to get dashboards');
+      });
       throw error;
     }
   }
@@ -154,21 +149,20 @@ export class DashboardService {
       });
 
       if (updated) {
-        logger.info({
+        logger.info('Panel added to dashboard', {
           dashboardId,
           panelId: panel.id,
           panelTitle: panel.title,
           panelType: panel.type,
-        }, 'Panel added to dashboard');
+        });
       }
 
       return updated;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to add panel to dashboard', error as Error, {
         dashboardId,
         panel,
-      }, 'Failed to add panel to dashboard');
+      });
       throw error;
     }
   }
@@ -196,21 +190,20 @@ export class DashboardService {
       });
 
       if (updated) {
-        logger.info({
+        logger.info('Panel updated in dashboard', {
           dashboardId,
           panelId,
           updates: Object.keys(updates),
-        }, 'Panel updated in dashboard');
+        });
       }
 
       return updated;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to update panel in dashboard', error as Error, {
         dashboardId,
         panelId,
         updates,
-      }, 'Failed to update panel in dashboard');
+      });
       throw error;
     }
   }
@@ -228,19 +221,18 @@ export class DashboardService {
       });
 
       if (updated) {
-        logger.info({
+        logger.info('Panel removed from dashboard', {
           dashboardId,
           panelId,
-        }, 'Panel removed from dashboard');
+        });
       }
 
       return updated;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to remove panel from dashboard', error as Error, {
         dashboardId,
         panelId,
-      }, 'Failed to remove panel from dashboard');
+      });
       throw error;
     }
   }
@@ -252,18 +244,17 @@ export class DashboardService {
       });
 
       if (updated) {
-        logger.info({
+        logger.info('Dashboard starred', {
           dashboardId,
           title: updated.title,
-        }, 'Dashboard starred');
+        });
       }
 
       return updated;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to star dashboard', error as Error, {
         dashboardId,
-      }, 'Failed to star dashboard');
+      });
       throw error;
     }
   }
@@ -275,18 +266,17 @@ export class DashboardService {
       });
 
       if (updated) {
-        logger.info({
+        logger.info('Dashboard unstarred', {
           dashboardId,
           title: updated.title,
-        }, 'Dashboard unstarred');
+        });
       }
 
       return updated;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to unstar dashboard', error as Error, {
         dashboardId,
-      }, 'Failed to unstar dashboard');
+      });
       throw error;
     }
   }
@@ -298,9 +288,8 @@ export class DashboardService {
         return undefined;
       }
 
-      const duplicated = await this.createDashboard({
+      const dashboardData: Partial<Dashboard> = {
         title: newTitle || `${original.title} (Copy)`,
-        description: original.description,
         tags: [...original.tags],
         panels: original.panels.map(panel => ({
           ...panel,
@@ -308,21 +297,26 @@ export class DashboardService {
         })),
         isStarred: false,
         createdBy: original.createdBy,
-      });
+      };
+      
+      if (original.description) {
+        dashboardData.description = original.description;
+      }
+      
+      const duplicated = await this.createDashboard(dashboardData);
 
-      logger.info({
+      logger.info('Dashboard duplicated', {
         originalId: dashboardId,
         duplicatedId: duplicated.id,
         title: duplicated.title,
-      }, 'Dashboard duplicated');
+      });
 
       return duplicated;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to duplicate dashboard', error as Error, {
         dashboardId,
         newTitle,
-      }, 'Failed to duplicate dashboard');
+      });
       throw error;
     }
   }
@@ -345,23 +339,22 @@ export class DashboardService {
         },
       };
 
-      logger.info({
+      logger.info('Dashboard exported', {
         dashboardId,
         title: dashboard.title,
         panelCount: dashboard.panels.length,
-      }, 'Dashboard exported');
+      });
 
       return exportData;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to export dashboard', error as Error, {
         dashboardId,
-      }, 'Failed to export dashboard');
+      });
       throw error;
     }
   }
 
-  async importDashboard(importData: any, importOptions?: { overwrite?: boolean }): Promise<Dashboard> {
+  async importDashboard(importData: any, _importOptions?: { overwrite?: boolean }): Promise<Dashboard> {
     try {
       if (!importData.dashboard) {
         throw new Error('Invalid import data: missing dashboard');
@@ -383,18 +376,17 @@ export class DashboardService {
         createdBy: 'import',
       });
 
-      logger.info({
+      logger.info('Dashboard imported', {
         dashboardId: dashboard.id,
         title: dashboard.title,
         panelCount: panels.length,
-      }, 'Dashboard imported');
+      });
 
       return dashboard;
     } catch (error) {
-      logger.error({
-        error: error.message,
+      logger.error('Failed to import dashboard', error as Error, {
         importData,
-      }, 'Failed to import dashboard');
+      });
       throw error;
     }
   }
@@ -417,9 +409,7 @@ export class DashboardService {
 
       return stats;
     } catch (error) {
-      logger.error({
-        error: error.message,
-      }, 'Failed to get dashboard statistics');
+      logger.error('Failed to get dashboard statistics', error as Error);
       throw error;
     }
   }

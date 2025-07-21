@@ -16,7 +16,7 @@ declare module 'fastify' {
 class InMemoryServiceDiscovery implements ServiceDiscovery {
   private services: Map<string, ServiceInfo> = new Map();
   private healthStatuses: Map<string, ServiceHealthStatus> = new Map();
-  private healthCheckInterval: NodeJS.Timer | null = null;
+  private healthCheckInterval: NodeJS.Timeout | null = null;
   private options: ServiceDiscoveryPluginOptions;
 
   constructor(options: ServiceDiscoveryPluginOptions) {
@@ -36,7 +36,7 @@ class InMemoryServiceDiscovery implements ServiceDiscovery {
 
     this.services.set(service.id, serviceInfo);
     this.healthStatuses.set(service.id, {
-      status: 'unknown',
+      status: 'unhealthy' as const,
       responseTime: 0,
       lastCheck: new Date().toISOString(),
     });
@@ -73,10 +73,16 @@ class InMemoryServiceDiscovery implements ServiceDiscovery {
 
     try {
       if (service.healthCheckUrl) {
+        // Use AbortController for timeout instead of fetch timeout property
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this.options.serviceTimeout);
+        
         const response = await fetch(service.healthCheckUrl, {
           method: 'GET',
-          timeout: this.options.serviceTimeout,
+          signal: controller.signal,
         });
+        
+        clearTimeout(timeoutId);
 
         responseTime = Date.now() - startTime;
 

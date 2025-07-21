@@ -1,5 +1,6 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { DocumentController } from '../controllers/document-controller';
+import { DocumentDownloadQuery } from '../types';
 
 export function registerFileRoutes(
   server: FastifyInstance,
@@ -147,7 +148,7 @@ export function registerFileRoutes(
         }
       }
     },
-    handler: (request, reply) => documentController.downloadDocument(request, reply)
+    handler: (request: FastifyRequest, reply: FastifyReply) => documentController.downloadDocument(request as any, reply)
   });
 
   // Bulk upload documents
@@ -250,8 +251,9 @@ export function registerFileRoutes(
     },
     handler: async (request, reply) => {
       // Mock implementation
+      const { uploadId } = request.params as { uploadId: string };
       reply.send({
-        uploadId: request.params.uploadId,
+        uploadId,
         status: 'completed',
         progress: 100,
         bytesUploaded: 1024 * 1024,

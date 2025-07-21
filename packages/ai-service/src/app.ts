@@ -22,7 +22,7 @@ import { requestController } from './controllers/request-controller';
 // Import services
 import { EventService } from './services/event-service';
 import { MockDataService } from './services/mock-data-service';
-import { MessageBrokerManager, createMessageBroker } from './services/message-broker';
+import { createMessageBroker } from './services/message-broker';
 
 // Import middleware
 import { authPlugin } from './middleware/auth-middleware';
@@ -250,11 +250,11 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   return app;
 }
 
-// Add type declarations for decorated properties
+// Local Fastify type declarations
 declare module 'fastify' {
   interface FastifyInstance {
-    eventService: EventService;
-    mockDataService: MockDataService;
-    messageBroker: MessageBrokerManager;
+    eventService?: any;
+    mockDataService?: any;
+    messageBroker?: any;
   }
 }

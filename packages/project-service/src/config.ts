@@ -1,9 +1,7 @@
-import { loadConfig } from '@cycletime/shared-config';
-
-export const config = loadConfig({
+export const config = {
   serviceName: 'project-service',
-  port: 8006,
-  host: '0.0.0.0',
+  port: parseInt(process.env.PORT || '8006', 10),
+  host: process.env.HOST || '0.0.0.0',
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
@@ -46,4 +44,4 @@ export const config = loadConfig({
       signingSecret: process.env.SLACK_SIGNING_SECRET
     }
   }
-});
+};

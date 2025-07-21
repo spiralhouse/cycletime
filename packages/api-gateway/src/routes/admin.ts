@@ -15,7 +15,7 @@ import {
 export const adminRoutes = async (fastify: FastifyInstance) => {
   // List all registered services
   fastify.get('/admin/services', async (request: FastifyRequest, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
 
     try {
       const services = await fastify.serviceDiscovery.listServices();
@@ -42,7 +42,7 @@ export const adminRoutes = async (fastify: FastifyInstance) => {
 
   // Get service details
   fastify.get('/admin/services/:serviceId', async (request: FastifyRequest<{ Params: { serviceId: string } }>, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
     const { serviceId } = request.params;
 
     try {
@@ -69,8 +69,8 @@ export const adminRoutes = async (fastify: FastifyInstance) => {
         },
         {
           path: '/api/v1/*',
-          method: '*' as const,
-          description: 'Main API endpoints',
+          method: 'GET' as const,
+          description: 'Main API endpoints (GET)',
           rateLimitEnabled: true,
         },
       ];
@@ -114,7 +114,7 @@ export const adminRoutes = async (fastify: FastifyInstance) => {
 
   // Get rate limit configuration
   fastify.get('/admin/rate-limits', async (request: FastifyRequest, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
 
     try {
       const { config } = await import('../config/gateway-config');
@@ -178,7 +178,7 @@ export const adminRoutes = async (fastify: FastifyInstance) => {
       },
     },
   }, async (request: FastifyRequest<{ Body: RateLimitConfig }>, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
     const newConfig = request.body;
 
     try {
@@ -222,7 +222,7 @@ export const adminRoutes = async (fastify: FastifyInstance) => {
 
   // Get circuit breaker status
   fastify.get('/admin/circuit-breakers', async (request: FastifyRequest, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
 
     try {
       const circuitBreakerStatus = fastify.getCircuitBreakerStatus();
@@ -246,7 +246,7 @@ export const adminRoutes = async (fastify: FastifyInstance) => {
 
   // Reset circuit breaker
   fastify.post('/admin/circuit-breakers/:serviceId/reset', async (request: FastifyRequest<{ Params: { serviceId: string } }>, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
     const { serviceId } = request.params;
 
     try {
@@ -276,7 +276,7 @@ export const adminRoutes = async (fastify: FastifyInstance) => {
 
   // Get gateway configuration
   fastify.get('/admin/config', async (request: FastifyRequest, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
 
     try {
       const { config } = await import('../config/gateway-config');

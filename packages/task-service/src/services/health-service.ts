@@ -36,7 +36,7 @@ export class HealthService {
         metrics
       };
     } catch (error) {
-      logger.error('Error getting health status:', error);
+      logger.error('Error getting health status:', error as Error);
       return {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
@@ -102,7 +102,7 @@ task_service_dependency_status{dependency="queue"} ${this.dependencyStatusToNumb
 task_service_dependency_status{dependency="scheduler"} ${this.dependencyStatusToNumber(health.dependencies.scheduler)}
       `.trim();
     } catch (error) {
-      logger.error('Error generating metrics:', error);
+      logger.error('Error generating metrics:', error as Error);
       return '# Error generating metrics';
     }
   }
@@ -133,7 +133,7 @@ task_service_dependency_status{dependency="scheduler"} ${this.dependencyStatusTo
       
       return 'healthy';
     } catch (error) {
-      logger.error('Redis health check failed:', error);
+      logger.error('Redis health check failed:', error as Error);
       return 'unhealthy';
     }
   }
@@ -150,7 +150,7 @@ task_service_dependency_status{dependency="scheduler"} ${this.dependencyStatusTo
       
       return 'healthy';
     } catch (error) {
-      logger.error('Queue health check failed:', error);
+      logger.error('Queue health check failed:', error as Error);
       return 'unhealthy';
     }
   }
@@ -167,7 +167,7 @@ task_service_dependency_status{dependency="scheduler"} ${this.dependencyStatusTo
       
       return 'healthy';
     } catch (error) {
-      logger.error('Scheduler health check failed:', error);
+      logger.error('Scheduler health check failed:', error as Error);
       return 'unhealthy';
     }
   }
@@ -193,7 +193,7 @@ task_service_dependency_status{dependency="scheduler"} ${this.dependencyStatusTo
         averageCompletionTime
       };
     } catch (error) {
-      logger.error('Error collecting metrics:', error);
+      logger.error('Error collecting metrics:', error as Error);
       return {
         tasksCount: 0,
         pendingTasks: 0,

@@ -30,7 +30,8 @@ export async function projectRoutes(app: FastifyInstance) {
         200: ProjectListResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const query = request.query as any;
     const options = {
       page: query.page,
@@ -45,9 +46,12 @@ export async function projectRoutes(app: FastifyInstance) {
       }
     };
 
-    const result = await app.services.project.getProjects(options);
+    const result = await app.services!.project.getProjects(options);
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Create project
   app.post('/projects', {
@@ -59,13 +63,17 @@ export async function projectRoutes(app: FastifyInstance) {
         201: ProjectResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const body = request.body as any;
     const userId = 'user-123'; // In real implementation, extract from auth token
     
-    const result = await app.services.project.createProject(body, userId);
+    const result = await app.services!.project.createProject(body, userId);
     return reply.status(201).send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Get project by ID
   app.get('/projects/:projectId', {
@@ -90,26 +98,30 @@ export async function projectRoutes(app: FastifyInstance) {
         200: ProjectResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const query = request.query as any;
     
-    const result = await app.services.project.getProjectById(params.projectId);
+    const result = await app.services!.project.getProjectById(params.projectId);
     
     // If includeTeam is requested, add team data
     if (query.includeTeam) {
-      const team = await app.services.team.getProjectTeam(params.projectId);
+      const team = await app.services!.team.getProjectTeam(params.projectId);
       result.project.team = team.team;
     }
     
     // If includeAnalytics is requested, add analytics data
     if (query.includeAnalytics) {
-      const analytics = await app.services.analytics.getProjectAnalytics(params.projectId);
+      const analytics = await app.services!.analytics.getProjectAnalytics(params.projectId);
       (result.project as any).analytics = analytics;
     }
     
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Update project
   app.put('/projects/:projectId', {
@@ -128,14 +140,18 @@ export async function projectRoutes(app: FastifyInstance) {
         200: ProjectResponseSchema
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const body = request.body as any;
     const userId = 'user-123'; // In real implementation, extract from auth token
     
-    const result = await app.services.project.updateProject(params.projectId, body, userId);
+    const result = await app.services!.project.updateProject(params.projectId, body, userId);
     return reply.send(result);
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 
   // Delete project
   app.delete('/projects/:projectId', {
@@ -159,12 +175,16 @@ export async function projectRoutes(app: FastifyInstance) {
         204: { type: 'null' }
       }
     }
-  }, ErrorHandler.handleAsync(async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
     const params = request.params as any;
     const query = request.query as any;
     const userId = 'user-123'; // In real implementation, extract from auth token
     
-    await app.services.project.deleteProject(params.projectId, query.permanent, userId);
+    await app.services!.project.deleteProject(params.projectId, query.permanent, userId);
     return reply.status(204).send();
-  }));
+    } catch (error) {
+      return ErrorHandler.handle(error as Error, request, reply);
+    }
+  });
 }

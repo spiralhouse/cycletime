@@ -69,7 +69,7 @@ export async function authMiddleware(fastify: FastifyInstance): Promise<void> {
       });
 
     } catch (error) {
-      logger.error('Authentication error:', error);
+      logger.error('Authentication error:', error as Error);
       
       return reply.code(401).send({
         error: 'Unauthorized',
@@ -114,7 +114,7 @@ export async function authMiddleware(fastify: FastifyInstance): Promise<void> {
       }
 
     } catch (error) {
-      logger.error('Authorization error:', error);
+      logger.error('Authorization error:', error as Error);
       
       return reply.code(403).send({
         error: 'Forbidden',
@@ -182,7 +182,7 @@ async function validateToken(token: string): Promise<AuthContext | null> {
 
     return null;
   } catch (error) {
-    logger.error('Token validation error:', error);
+    logger.error('Token validation error:', error as Error);
     return null;
   }
 }

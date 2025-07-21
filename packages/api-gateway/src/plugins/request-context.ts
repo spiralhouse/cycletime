@@ -25,7 +25,7 @@ export const requestContextPlugin = async (fastify: FastifyInstance) => {
     };
 
     // Add context to request
-    request.context = context;
+    (request as any).context = context;
 
     // Add request ID to response headers
     reply.header('x-request-id', requestId);

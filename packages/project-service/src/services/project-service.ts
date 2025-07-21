@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import * as moment from 'moment';
+import moment from 'moment';
 import { logger } from '@cycletime/shared-utils';
 import { EventService } from './event-service';
 import { MockDataService } from './mock-data-service';
@@ -86,7 +86,7 @@ export class ProjectService {
         }
       };
     } catch (error) {
-      logger.error('Error getting projects:', error);
+      logger.error('Error getting projects:', error as Error);
       throw error;
     }
   }
@@ -104,7 +104,7 @@ export class ProjectService {
 
       return { project };
     } catch (error) {
-      logger.error('Error getting project:', error);
+      logger.error('Error getting project:', error as Error);
       throw error;
     }
   }
@@ -184,7 +184,7 @@ export class ProjectService {
 
       return { project: createdProject };
     } catch (error) {
-      logger.error('Error creating project:', error);
+      logger.error('Error creating project:', error as Error);
       throw error;
     }
   }
@@ -252,7 +252,7 @@ export class ProjectService {
 
       return { project: updatedProject };
     } catch (error) {
-      logger.error('Error updating project:', error);
+      logger.error('Error updating project:', error as Error);
       throw error;
     }
   }
@@ -289,7 +289,7 @@ export class ProjectService {
 
       logger.info('Project deleted:', { projectId: id, permanent });
     } catch (error) {
-      logger.error('Error deleting project:', error);
+      logger.error('Error deleting project:', error as Error);
       throw error;
     }
   }
@@ -383,15 +383,22 @@ export class ProjectService {
       userId,
       data: {
         projectId: project.id,
-        name: project.name,
+        projectName: project.name,
         description: project.description,
         status: project.status,
         visibility: project.visibility,
         priority: project.priority,
         owner: project.owner,
         template: project.template || undefined,
-        timeline: project.timeline,
-        resources: project.resources,
+        timeline: project.timeline ? {
+          startDate: project.timeline.startDate || undefined,
+          endDate: project.timeline.endDate || undefined,
+          dueDate: project.timeline.dueDate || undefined
+        } : undefined,
+        resources: project.resources ? {
+          budget: project.resources.budget || undefined,
+          estimatedHours: project.resources.estimatedHours || undefined
+        } : undefined,
         tags: project.tags
       }
     };
@@ -486,6 +493,7 @@ export class ProjectService {
         oldStatus,
         newStatus,
         statusChangedAt: moment().toISOString(),
+        changedBy: project.owner,
         owner: project.owner
       }
     };

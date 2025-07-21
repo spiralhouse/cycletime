@@ -76,7 +76,7 @@ export async function requestLogger(fastify: FastifyInstance): Promise<void> {
 
     // Log different levels based on status code
     if (reply.statusCode >= 500) {
-      logger.error('Request completed with server error', logData);
+      logger.error('Request completed with server error', undefined, logData);
     } else if (reply.statusCode >= 400) {
       logger.warn('Request completed with client error', logData);
     } else {
@@ -88,13 +88,11 @@ export async function requestLogger(fastify: FastifyInstance): Promise<void> {
   fastify.addHook('onError', async (request: FastifyRequest, reply: FastifyReply, error: Error) => {
     const duration = Date.now() - (request.context?.startTime || Date.now());
     
-    logger.error('Request failed with error', {
+    logger.error('Request failed with error', error, {
       requestId: request.context?.requestId,
       correlationId: request.context?.correlationId,
       method: request.method,
       url: request.url,
-      error: error.message,
-      errorStack: error.stack,
       duration: `${duration}ms`,
       ip: request.ip,
       userId: request.auth?.userId,

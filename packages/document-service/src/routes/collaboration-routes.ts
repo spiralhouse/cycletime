@@ -99,7 +99,7 @@ export function registerCollaborationRoutes(
     handler: async (request, reply) => {
       // Mock implementation
       reply.send({
-        documentId: request.params.documentId,
+        documentId: (request.params as { documentId: string }).documentId,
         public: false,
         permissions: [
           {
@@ -228,13 +228,13 @@ export function registerCollaborationRoutes(
       reply.code(201).send({
         comment: {
           id: '550e8400-e29b-41d4-a716-446655440004',
-          content: request.body.content,
+          content: (request.body as { content: string; position?: any }).content,
           author: {
             id: 'current-user-id',
             name: 'Current User',
             email: 'user@example.com'
           },
-          position: request.body.position,
+          position: (request.body as { content: string; position?: any }).position,
           status: 'active',
           createdAt: new Date(),
           updatedAt: new Date()
@@ -282,9 +282,9 @@ export function registerCollaborationRoutes(
       // Mock implementation
       reply.send({
         comment: {
-          id: request.params.commentId,
-          content: request.body.content,
-          status: request.body.status || 'active',
+          id: (request.params as { commentId: string }).commentId,
+          content: (request.body as { content: string; status?: string }).content,
+          status: (request.body as { content: string; status?: string }).status || 'active',
           updatedAt: new Date()
         }
       });

@@ -421,6 +421,11 @@ export class MockDataService {
       if (aValue instanceof Date) aValue = aValue.getTime();
       if (bValue instanceof Date) bValue = bValue.getTime();
 
+      // Handle undefined values
+      if (aValue === undefined && bValue === undefined) return 0;
+      if (aValue === undefined) return sortOrder === 'asc' ? -1 : 1;
+      if (bValue === undefined) return sortOrder === 'asc' ? 1 : -1;
+
       if (sortOrder === 'asc') {
         return aValue > bValue ? 1 : -1;
       } else {

@@ -75,7 +75,7 @@ export async function documentRoutes(app: FastifyInstance) {
     const { documentId, indexId, content, metadata = {}, options = {} } = request.body as any;
     
     try {
-      const result = await app.indexingService.indexDocument(
+      const result = await app.indexingService!.indexDocument(
         documentId,
         indexId,
         content,
@@ -190,7 +190,7 @@ export async function documentRoutes(app: FastifyInstance) {
     const { indexId, documents, options = {} } = request.body as any;
     
     try {
-      const result = await app.indexingService.bulkIndex(documents, indexId, options);
+      const result = await app.indexingService!.bulkIndex(documents, indexId, options);
       
       reply.code(202).send({ result });
     } catch (error) {
@@ -283,7 +283,7 @@ export async function documentRoutes(app: FastifyInstance) {
     const { indexId, content, metadata = {}, options = {} } = request.body as any;
     
     try {
-      const result = await app.indexingService.reindexDocument(
+      const result = await app.indexingService!.reindexDocument(
         documentId,
         indexId,
         content,
@@ -348,7 +348,7 @@ export async function documentRoutes(app: FastifyInstance) {
     const { indexId } = request.query as { indexId: string };
     
     try {
-      const success = await app.indexingService.removeFromIndex(documentId, indexId);
+      const success = await app.indexingService!.removeFromIndex(documentId, indexId);
       
       if (!success) {
         return reply.code(404).send({
@@ -424,7 +424,7 @@ export async function documentRoutes(app: FastifyInstance) {
     const { indexId } = request.query as { indexId: string };
     
     try {
-      const status = await app.indexingService.getIndexingStatus(documentId, indexId);
+      const status = await app.indexingService!.getIndexingStatus(documentId, indexId);
       
       if (!status) {
         return reply.code(404).send({
@@ -465,7 +465,7 @@ export async function documentRoutes(app: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const queueStatus = app.indexingService.getIndexingQueue();
+    const queueStatus = app.indexingService!.getIndexingQueue();
     
     reply.send({
       ...queueStatus,

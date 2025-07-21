@@ -144,7 +144,7 @@ export async function healthRoutes(app: FastifyInstance) {
     },
   }, async (request, reply) => {
     const healthStatus = app.mockDataService.getHealthStatus();
-    const systemHealth = await app.analyticsService.getSystemHealth();
+    const systemHealth = await app.analyticsService!.getSystemHealth();
     
     const detailedHealth = {
       ...healthStatus,

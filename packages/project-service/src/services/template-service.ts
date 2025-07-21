@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import * as moment from 'moment';
+import moment from 'moment';
 import { logger } from '@cycletime/shared-utils';
 import { EventService } from './event-service';
 import { MockDataService } from './mock-data-service';
@@ -74,7 +74,7 @@ export class TemplateService {
         }
       };
     } catch (error) {
-      logger.error('Error getting templates:', error);
+      logger.error('Error getting templates:', error as Error);
       throw error;
     }
   }
@@ -92,7 +92,7 @@ export class TemplateService {
 
       return { template };
     } catch (error) {
-      logger.error('Error getting template:', error);
+      logger.error('Error getting template:', error as Error);
       throw error;
     }
   }
@@ -145,7 +145,7 @@ export class TemplateService {
 
       return { template: createdTemplate };
     } catch (error) {
-      logger.error('Error creating template:', error);
+      logger.error('Error creating template:', error as Error);
       throw error;
     }
   }
@@ -175,6 +175,9 @@ export class TemplateService {
       const updatedTemplate = this.mockDataService.updateTemplate(id, {
         ...request,
         metadata: {
+          version: existingTemplate.metadata?.version || '1.0.0',
+          tags: existingTemplate.metadata?.tags || [],
+          usageCount: existingTemplate.metadata?.usageCount || 0,
           ...existingTemplate.metadata,
           ...request.metadata
         },
@@ -193,7 +196,7 @@ export class TemplateService {
 
       return { template: updatedTemplate };
     } catch (error) {
-      logger.error('Error updating template:', error);
+      logger.error('Error updating template:', error as Error);
       throw error;
     }
   }
@@ -222,7 +225,7 @@ export class TemplateService {
 
       logger.info('Template deleted:', { templateId: id });
     } catch (error) {
-      logger.error('Error deleting template:', error);
+      logger.error('Error deleting template:', error as Error);
       throw error;
     }
   }
@@ -255,7 +258,7 @@ export class TemplateService {
         recommendations
       };
     } catch (error) {
-      logger.error('Error getting project templates:', error);
+      logger.error('Error getting project templates:', error as Error);
       throw error;
     }
   }
@@ -299,8 +302,10 @@ export class TemplateService {
       // Update template usage count
       this.mockDataService.updateTemplate(request.templateId, {
         metadata: {
-          ...template.metadata,
-          usageCount: (template.metadata?.usageCount || 0) + 1
+          version: template.metadata?.version || '1.0.0',
+          tags: template.metadata?.tags || [],
+          usageCount: (template.metadata?.usageCount || 0) + 1,
+          ...template.metadata
         }
       });
 
@@ -309,7 +314,7 @@ export class TemplateService {
 
       logger.info('Template applied to project:', { projectId, templateId: request.templateId });
     } catch (error) {
-      logger.error('Error applying template:', error);
+      logger.error('Error applying template:', error as Error);
       throw error;
     }
   }
@@ -460,7 +465,7 @@ export class TemplateService {
         projectId: project.id,
         projectName: project.name,
         template: {
-          id: template.id,
+          templateId: template.id,
           name: template.name,
           category: template.category,
           version: template.metadata?.version || '1.0.0'

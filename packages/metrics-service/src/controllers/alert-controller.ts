@@ -37,14 +37,14 @@ const alertController: FastifyPluginAsync = async (fastify) => {
     let alerts = fastify.mockDataService.getAlerts();
 
     if (status) {
-      alerts = alerts.filter(a => a.status === status);
+      alerts = alerts.filter((a: any) => a.status === status);
     }
 
     if (severity) {
-      alerts = alerts.filter(a => a.severity === severity);
+      alerts = alerts.filter((a: any) => a.severity === severity);
     }
 
-    const alertSummaries = alerts.map(alert => ({
+    const alertSummaries = alerts.map((alert: any) => ({
       id: alert.id,
       name: alert.name,
       status: alert.status,
@@ -61,9 +61,9 @@ const alertController: FastifyPluginAsync = async (fastify) => {
     reply.send({
       alerts: alertSummaries,
       total: alerts.length,
-      activeCount: allAlerts.filter(a => a.status === 'active').length,
-      resolvedCount: allAlerts.filter(a => a.status === 'resolved').length,
-      silencedCount: allAlerts.filter(a => a.status === 'silenced').length,
+      activeCount: allAlerts.filter((a: any) => a.status === 'active').length,
+      resolvedCount: allAlerts.filter((a: any) => a.status === 'resolved').length,
+      silencedCount: allAlerts.filter((a: any) => a.status === 'silenced').length,
     });
   });
 
@@ -356,7 +356,7 @@ const alertController: FastifyPluginAsync = async (fastify) => {
         })),
       });
     } catch (error) {
-      reply.status(404).send({ error: error.message });
+      reply.status(404).send({ error: (error as Error).message });
     }
   });
 };

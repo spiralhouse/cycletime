@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import * as moment from 'moment';
+import moment from 'moment';
 import { logger } from '@cycletime/shared-utils';
 import { EventService } from './event-service';
 import { MockDataService } from './mock-data-service';
@@ -50,7 +50,7 @@ export class AnalyticsService {
 
       return analytics;
     } catch (error) {
-      logger.error('Error getting project analytics:', error);
+      logger.error('Error getting project analytics:', error as Error);
       throw error;
     }
   }
@@ -87,7 +87,7 @@ export class AnalyticsService {
 
       return forecasting;
     } catch (error) {
-      logger.error('Error getting project forecasting:', error);
+      logger.error('Error getting project forecasting:', error as Error);
       throw error;
     }
   }
@@ -107,7 +107,7 @@ export class AnalyticsService {
           const analytics = await this.getProjectAnalytics(projectId, timeRange);
           results.push({ projectId, analytics });
         } catch (error) {
-          logger.error(`Error getting analytics for project ${projectId}:`, error);
+          logger.error(`Error getting analytics for project ${projectId}:`, error as Error);
           // Continue with other projects
         }
       }
@@ -120,7 +120,7 @@ export class AnalyticsService {
 
       return results;
     } catch (error) {
-      logger.error('Error getting multi-project analytics:', error);
+      logger.error('Error getting multi-project analytics:', error as Error);
       throw error;
     }
   }
@@ -145,7 +145,7 @@ export class AnalyticsService {
       // Extract team metrics
       const teamMetrics = analytics.teamMetrics;
       if (!teamMetrics) {
-        return { projectId, teamMetrics: null };
+        return { projectId, teamMetrics: undefined };
       }
 
       // Calculate additional team insights
@@ -160,7 +160,7 @@ export class AnalyticsService {
         insights: teamInsights
       };
     } catch (error) {
-      logger.error('Error getting team performance analytics:', error);
+      logger.error('Error getting team performance analytics:', error as Error);
       throw error;
     }
   }
@@ -235,7 +235,7 @@ export class AnalyticsService {
         recommendations
       };
     } catch (error) {
-      logger.error('Error getting project health score:', error);
+      logger.error('Error getting project health score:', error as Error);
       throw error;
     }
   }
@@ -266,7 +266,7 @@ export class AnalyticsService {
       recommendations: [
         avgEfficiency < 0.8 ? 'Consider team capacity planning and workload redistribution' : null,
         collaboration.pairProgramming < 0.2 ? 'Encourage more pair programming sessions' : null,
-        lowPerformers.length > highPerformers.length ? 'Focus on team skill development and mentoring' : null
+        lowPerformers.length > highPerformers.length ? 'Focus on team skill development and mentoring' : undefined
       ].filter(Boolean)
     };
   }
@@ -332,10 +332,10 @@ export class AnalyticsService {
         analyticsType,
         timeRange,
         metrics: {
-          previousValue: null,
+          previousValue: undefined,
           currentValue: typeof metrics === 'object' ? Object.keys(metrics).length : metrics,
           trend: 'stable',
-          percentageChange: null
+          percentageChange: undefined
         },
         insights: [],
         generatedAt: moment().toISOString()

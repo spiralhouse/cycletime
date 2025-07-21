@@ -10,7 +10,7 @@ import { AuthPluginOptions, JWTPayload, FastifyRequestContext } from '../types';
 export const authenticationPlugin = async (fastify: FastifyInstance, options: AuthPluginOptions) => {
   // Authentication hook - runs before route handlers
   fastify.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
-    const context = request.context as FastifyRequestContext;
+    const context = (request as any).context as FastifyRequestContext;
     
     // Skip authentication for excluded routes
     const excludedRoutes = [
@@ -62,7 +62,7 @@ export const authenticationPlugin = async (fastify: FastifyInstance, options: Au
       }
 
       // Verify and decode JWT token
-      const payload = fastify.jwt.verify(token) as JWTPayload;
+      const payload = (fastify as any).jwt.verify(token) as JWTPayload;
       
       // Add user info to context
       context.user = {
@@ -109,7 +109,7 @@ export const authenticationPlugin = async (fastify: FastifyInstance, options: Au
   // Helper function to check user roles
   fastify.decorate('checkRole', (requiredRoles: string[]) => {
     return async (request: FastifyRequest, reply: FastifyReply) => {
-      const context = request.context as FastifyRequestContext;
+      const context = (request as any).context as FastifyRequestContext;
       const user = context.user;
 
       if (!user) {
@@ -142,7 +142,7 @@ export const authenticationPlugin = async (fastify: FastifyInstance, options: Au
   // Helper function to check user permissions
   fastify.decorate('checkPermission', (requiredPermissions: string[]) => {
     return async (request: FastifyRequest, reply: FastifyReply) => {
-      const context = request.context as FastifyRequestContext;
+      const context = (request as any).context as FastifyRequestContext;
       const user = context.user;
 
       if (!user) {

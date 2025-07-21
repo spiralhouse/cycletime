@@ -74,7 +74,7 @@ export async function authMiddleware(fastify: FastifyInstance) {
       await userService.updateLastActive(user.id);
 
       // Attach user to request
-      request.user = {
+      (request as any).user = {
         id: user.id,
         email: user.email,
         githubUsername: user.githubUsername,
@@ -110,7 +110,7 @@ export async function authMiddleware(fastify: FastifyInstance) {
  * Utility function to check if user is authenticated
  */
 export function requireAuth(request: FastifyRequest, reply: FastifyReply): UserContext {
-  if (!request.user) {
+  if (!(request as any).user) {
     reply.code(401).send({
       error: {
         code: 'AUTH_REQUIRED',
@@ -121,5 +121,5 @@ export function requireAuth(request: FastifyRequest, reply: FastifyReply): UserC
     throw new Error('Authentication required');
   }
   
-  return request.user;
+  return (request as any).user;
 }
