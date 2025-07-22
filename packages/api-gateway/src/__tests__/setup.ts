@@ -11,6 +11,9 @@ process.env.GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || 'test_client_id';
 process.env.GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || 'test_client_secret';
 process.env.GITHUB_REDIRECT_URI = process.env.GITHUB_REDIRECT_URI || 'http://localhost:3000/auth/callback';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_that_is_long_enough_for_testing_purposes_with_minimum_32_chars';
+process.env.MOCK_RESPONSES_ENABLED = 'true'; // Enable mock responses for testing
+process.env.MOCK_RESPONSE_DELAY = '0'; // No delay for faster tests
+process.env.MOCK_ERROR_RATE = '0'; // No artificial errors in tests
 
 // Mock the config module to avoid environment validation issues
 jest.unstable_mockModule('../config.js', () => ({
