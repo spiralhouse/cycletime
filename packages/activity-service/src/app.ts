@@ -70,7 +70,7 @@ interface MockDataService {
 // Local Fastify type declarations
 declare module 'fastify' {
   interface FastifyInstance {
-    eventService?: EventService;
-    mockDataService?: MockDataService;
+    eventService: EventService;
+    mockDataService: MockDataService;
   }
 }
