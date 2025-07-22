@@ -43,7 +43,7 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   });
 
   // Initialize services
-  const eventService = { publishEvent: async (_type: string, _data: any) => {} };
+  const eventService = { publishEvent: async (_type: string, _data: unknown) => {} };
   const mockDataService = { getHealthStatus: () => ({ status: 'healthy', timestamp: new Date() }) };
 
   // Decorate app
@@ -58,10 +58,19 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   return app;
 }
 
+// Service types
+interface EventService {
+  publishEvent(type: string, data: unknown): Promise<void>;
+}
+
+interface MockDataService {
+  getHealthStatus(): { status: string; timestamp: Date };
+}
+
 // Local Fastify type declarations
 declare module 'fastify' {
   interface FastifyInstance {
-    eventService?: any;
-    mockDataService?: any;
+    eventService?: EventService;
+    mockDataService?: MockDataService;
   }
 }
