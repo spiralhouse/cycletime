@@ -131,7 +131,7 @@ export class WebDashboardApp {
     // Health check
     this.fastify.get('/health', async (request, reply) => {
       const health = await this.dashboardService.getHealthStatus();
-      reply.code(200).send(health.data);
+      reply.code(200).send(health);
     });
 
     // Authentication routes
