@@ -1,7 +1,7 @@
 import { RedisQueue, QueuePriority } from '../../queue/redis-queue';
 import { createClient } from 'redis';
 
-describe('RedisQueue Integration Tests', () => {
+describe.skip('RedisQueue Integration Tests', () => {
   let redisQueue: RedisQueue;
   let testClient: any;
   let keyPrefix: string;

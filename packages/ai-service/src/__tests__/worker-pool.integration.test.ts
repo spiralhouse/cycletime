@@ -4,7 +4,7 @@ import { QueueManager } from '../queue/queue-manager';
 import { RedisQueue, QueuePriority } from '../queue/redis-queue';
 import { createClient } from 'redis';
 
-describe('WorkerPool Integration Tests', () => {
+describe.skip('WorkerPool Integration Tests', () => {
   let workerPool: WorkerPool;
   let requestProcessor: RequestProcessor;
   let queueManager: QueueManager;

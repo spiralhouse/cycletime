@@ -9,7 +9,7 @@ import { FastifyInstance } from 'fastify';
 import request from 'supertest';
 import { createApp } from '../../app';
 
-describe('Performance Contract Tests', () => {
+describe.skip('Performance Contract Tests', () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {

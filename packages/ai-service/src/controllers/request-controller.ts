@@ -2,8 +2,78 @@ import { FastifyPluginAsync } from 'fastify';
 import { Type } from '@sinclair/typebox';
 
 const requestController: FastifyPluginAsync = async (fastify) => {
+  // Create AI request
+  fastify.post('/api/v1/ai/requests', {
+    schema: {
+      summary: 'Create AI request',
+      description: 'Submit a new AI request for processing',
+      tags: ['AI Request Management'],
+      body: Type.Object({
+        type: Type.Union([
+          Type.Literal('chat_completion'),
+          Type.Literal('chat_completion_stream'),
+          Type.Literal('embedding'),
+          Type.Literal('context_analysis'),
+          Type.Literal('project_analysis'),
+        ]),
+        provider: Type.Optional(Type.String()),
+        model: Type.Optional(Type.String()),
+        priority: Type.Optional(Type.Union([
+          Type.Literal('low'),
+          Type.Literal('medium'),
+          Type.Literal('high'),
+          Type.Literal('urgent'),
+        ])),
+        sessionId: Type.Optional(Type.String()),
+        projectId: Type.Optional(Type.String()),
+        data: Type.Any(),
+      }),
+      response: {
+        201: Type.Object({
+          id: Type.String(),
+          status: Type.Literal('pending'),
+          type: Type.String(),
+          provider: Type.String(),
+          model: Type.String(),
+          priority: Type.String(),
+          createdAt: Type.String({ format: 'date-time' }),
+          estimatedCompletion: Type.Optional(Type.String({ format: 'date-time' })),
+        }),
+        400: Type.Object({
+          error: Type.String(),
+          message: Type.String(),
+          timestamp: Type.String({ format: 'date-time' }),
+        }),
+      },
+    },
+  }, async (request, reply) => {
+    const body = request.body as any;
+    
+    try {
+      const aiRequest = fastify.mockDataService.createAIRequest(body);
+      
+      reply.status(201);
+      return {
+        id: aiRequest.id,
+        status: aiRequest.status,
+        type: aiRequest.type,
+        provider: aiRequest.provider,
+        model: aiRequest.model,
+        priority: aiRequest.priority,
+        createdAt: aiRequest.createdAt,
+        estimatedCompletion: aiRequest.estimatedCompletion,
+      };
+    } catch (error) {
+      return reply.status(400).send({
+        error: 'Invalid request',
+        message: 'Failed to create AI request',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
   // Get AI request details
-  fastify.get('/api/v1/requests/:requestId', {
+  fastify.get('/api/v1/ai/requests/:requestId', {
     schema: {
       summary: 'Get AI request details',
       description: 'Get details and status of an AI request',
@@ -88,55 +158,8 @@ const requestController: FastifyPluginAsync = async (fastify) => {
     };
   });
 
-  // Get AI request response
-  fastify.get('/api/v1/requests/:requestId/response', {
-    schema: {
-      summary: 'Get AI request response',
-      description: 'Get the response data for a completed AI request',
-      tags: ['Requests'],
-      params: Type.Object({
-        requestId: Type.String({ format: 'uuid' }),
-      }),
-      response: {
-        200: Type.Any(),
-        404: Type.Object({
-          error: Type.String(),
-          message: Type.String(),
-          timestamp: Type.String({ format: 'date-time' }),
-        }),
-        409: Type.Object({
-          error: Type.String(),
-          message: Type.String(),
-          timestamp: Type.String({ format: 'date-time' }),
-        }),
-      },
-    },
-  }, async (request, reply) => {
-    const { requestId } = request.params as { requestId: string };
-    
-    const aiRequest = fastify.mockDataService.getAIRequest(requestId);
-    
-    if (!aiRequest) {
-      return reply.status(404).send({
-        error: 'Request not found',
-        message: `AI request ${requestId} not found`,
-        timestamp: new Date().toISOString(),
-      });
-    }
-    
-    if (aiRequest.status !== 'completed') {
-      return reply.status(409).send({
-        error: 'Request not completed',
-        message: `AI request ${requestId} is not yet completed (status: ${aiRequest.status})`,
-        timestamp: new Date().toISOString(),
-      });
-    }
-    
-    return aiRequest.responseData;
-  });
-
-  // Cancel AI request
-  fastify.delete('/api/v1/requests/:requestId', {
+  // Cancel AI request (must come before /response route)
+  fastify.delete('/api/v1/ai/requests/:requestId', {
     schema: {
       summary: 'Cancel AI request',
       description: 'Cancel a pending AI request',
@@ -202,8 +225,55 @@ const requestController: FastifyPluginAsync = async (fastify) => {
     }
   });
 
+  // Get AI request response
+  fastify.get('/api/v1/ai/requests/:requestId/response', {
+    schema: {
+      summary: 'Get AI request response',
+      description: 'Get the response data for a completed AI request',
+      tags: ['Requests'],
+      params: Type.Object({
+        requestId: Type.String({ format: 'uuid' }),
+      }),
+      response: {
+        200: Type.Any(),
+        404: Type.Object({
+          error: Type.String(),
+          message: Type.String(),
+          timestamp: Type.String({ format: 'date-time' }),
+        }),
+        409: Type.Object({
+          error: Type.String(),
+          message: Type.String(),
+          timestamp: Type.String({ format: 'date-time' }),
+        }),
+      },
+    },
+  }, async (request, reply) => {
+    const { requestId } = request.params as { requestId: string };
+    
+    const aiRequest = fastify.mockDataService.getAIRequest(requestId);
+    
+    if (!aiRequest) {
+      return reply.status(404).send({
+        error: 'Request not found',
+        message: `AI request ${requestId} not found`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    
+    if (aiRequest.status !== 'completed') {
+      return reply.status(409).send({
+        error: 'Request not completed',
+        message: `AI request ${requestId} is not yet completed (status: ${aiRequest.status})`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    
+    return aiRequest.responseData;
+  });
+
   // Get request status
-  fastify.get('/api/v1/requests/:requestId/status', {
+  fastify.get('/api/v1/ai/requests/:requestId/status', {
     schema: {
       summary: 'Get AI request status',
       description: 'Get the current status of an AI request',
