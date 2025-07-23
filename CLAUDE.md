@@ -118,13 +118,74 @@
   - Keep main branch always in a releasable state
 
 ### Quality Assurance
-- **ALWAYS run comprehensive quality checks before pushing to origin**
-  - `turbo lint` - ESLint validation across all packages
-  - `turbo typecheck` - TypeScript type checking across all packages
-  - `turbo test` - Unit and integration tests across all packages
-  - Package-specific coverage: `npm run test --workspace=@cycletime/package-name -- --coverage`
-  - Fix all issues before pushing to prevent CI failures
-  - Use `git status` and `git diff` to review changes before commit
+
+#### Local-First Testing Methodology
+
+**ALWAYS test locally before pushing** to prevent CI failures and reduce feedback cycles.
+
+- **Local Quality Pipeline**:
+  ```bash
+  # 1. Run linting across all packages
+  turbo lint
+  
+  # 2. Run type checking across all packages  
+  turbo typecheck
+  
+  # 3. Run all tests across packages
+  turbo test
+  
+  # 4. Package-specific testing with coverage
+  npm run test --workspace=@cycletime/package-name -- --coverage
+  ```
+
+- **Individual Package Testing**:
+  ```bash
+  # Test specific package
+  cd packages/api-gateway
+  npm test
+  
+  # Run specific test suite
+  npm test -- --testNamePattern="Authentication"
+  
+  # Run with coverage
+  npm run test:coverage
+  
+  # Run in watch mode for development
+  npm run test:watch
+  ```
+
+#### Local CI Simulation with nektos/act
+
+Use nektos/act to simulate GitHub Actions locally before pushing:
+
+```bash
+# Install nektos/act (macOS)
+brew install act
+
+# Run full CI pipeline locally
+act --container-architecture linux/amd64 -j test --artifact-server-path /tmp/artifacts
+
+# Monitor specific package results
+act --container-architecture linux/amd64 -j test --artifact-server-path /tmp/artifacts 2>&1 | grep api-gateway
+
+# Run with timeout for long-running tests
+timeout 300 act --container-architecture linux/amd64 -j test --artifact-server-path /tmp/artifacts
+```
+
+#### Benefits of Local-First Testing
+
+1. **Faster Feedback** - Immediate results vs waiting for CI (minutes vs seconds)
+2. **Cost Effective** - Reduces CI compute usage and GitHub Actions minutes
+3. **Better Debugging** - Full local access to logs, state, and debugging tools
+4. **Higher Confidence** - Verify fixes work before pushing to shared repository
+5. **Reduced Context Switching** - Stay in development flow without CI interruptions
+
+#### Quality Gates
+
+- **Fix all issues locally** before pushing to prevent CI failures
+- **Use `git status` and `git diff`** to review changes before commit
+- **Verify tests pass** with nektos/act simulation when making testing changes
+- **Check coverage thresholds** meet package-specific requirements
 
 ## Commands
 
@@ -157,6 +218,40 @@ cd packages/shared-utils
 npm test
 npm run build
 npm run lint
+```
+
+### Testing Commands
+```bash
+# Local-first testing workflow
+turbo lint && turbo typecheck && turbo test
+
+# Package-specific testing
+npm run test --workspace=@cycletime/api-gateway
+npm run test --workspace=@cycletime/api-gateway -- --coverage
+npm run test --workspace=@cycletime/api-gateway -- --testNamePattern="Authentication"
+
+# Local CI simulation with nektos/act
+act --container-architecture linux/amd64 -j test --artifact-server-path /tmp/artifacts
+
+# Debug failing tests locally
+cd packages/api-gateway
+npm test -- --verbose
+npm run test:watch
+
+# Test coverage analysis
+npm run test:coverage --workspace=@cycletime/api-gateway
+```
+
+### Troubleshooting Testing Issues
+```bash
+# For hanging tests or external dependency issues
+npm test -- --detectOpenHandles --forceExit
+
+# For authentication or mock service issues
+NODE_ENV=test MOCK_RESPONSES_ENABLED=true npm test
+
+# For debugging circuit breaker decorator issues
+npm test -- --testNamePattern="circuit-breaker" --verbose
 ```
 
 ### Git Workflow

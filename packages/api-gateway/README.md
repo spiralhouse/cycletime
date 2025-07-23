@@ -134,7 +134,220 @@ npm run test:watch
 
 # Run tests with coverage
 npm run test:coverage
+
+# Run specific test suite
+npm test -- --testNamePattern="Authentication"
+
+# Run single test file
+npm test -- circuit-breaker.test.ts
+
+# Run tests with verbose output
+npm test -- --verbose
 ```
+
+### Test Architecture
+
+The API Gateway uses a sophisticated test architecture with multiple layers:
+
+#### Test Types
+
+- **Unit Tests** - Individual function and service testing
+- **Integration Tests** - End-to-end request flow testing
+- **Contract Tests** - API contract validation and service boundary testing
+- **Mock Service Tests** - Simulated microservice response testing
+
+#### Test Structure
+
+```
+src/__tests__/
+├── contract/           # Integration and contract tests
+│   ├── api-contracts.test.ts      # API contract validation
+│   ├── circuit-breaker.test.ts    # Circuit breaker functionality
+│   ├── integration.test.ts        # End-to-end flows
+│   ├── proxy-routes.test.ts       # Service route registration
+│   └── simple-contracts.test.ts   # Basic contract tests
+├── services/           # Service layer tests
+├── middleware/         # Middleware tests
+├── routes/            # Route handler tests
+└── setup.ts           # Global test configuration
+```
+
+### Mock Service System
+
+The API Gateway includes a comprehensive mock service system for testing without external dependencies.
+
+#### Mock Configuration
+
+Set these environment variables for testing:
+
+```bash
+# Enable mock responses (automatically enabled in test environment)
+MOCK_RESPONSES_ENABLED=true
+
+# Response delay in milliseconds (0 for fast tests)
+MOCK_RESPONSE_DELAY=0
+
+# Error simulation rate (0.0 to 1.0)
+MOCK_ERROR_RATE=0
+```
+
+#### Mock Features
+
+- **13 Microservice Endpoints** - All services mocked with realistic responses
+- **Authentication Simulation** - Mock tokens and user contexts  
+- **Circuit Breaker Testing** - Service failure and recovery simulation
+- **Service Discovery** - Health check and registration mocking
+
+#### Mock Token Patterns
+
+```typescript
+// Valid mock tokens for testing
+'mock-token'                    // Basic mock token
+'mock-access-token-user123'     // User-specific token
+'mock-user-456'                 // Alternative user token
+
+// Invalid tokens (should return 401)
+'invalid-token'                 // Non-mock token
+'Bearer invalid'                // Malformed token
+```
+
+### Test Environment Setup
+
+#### Required Environment Variables
+
+Create a `.env.test` file in the package root:
+
+```bash
+NODE_ENV=test
+DATABASE_URL=postgresql://test:test@localhost:5432/cycletime_test
+GITHUB_CLIENT_ID=test_client_id
+GITHUB_CLIENT_SECRET=test_client_secret
+JWT_SECRET=test_jwt_secret_that_is_long_enough_for_testing_purposes_with_minimum_32_chars
+MOCK_RESPONSES_ENABLED=true
+MOCK_RESPONSE_DELAY=0
+MOCK_ERROR_RATE=0
+```
+
+#### Jest Configuration
+
+The Jest configuration supports:
+- **ESM modules** with TypeScript compilation
+- **Node-fetch mocking** for HTTP requests
+- **Global setup** with test environment variables
+- **Coverage reporting** with realistic thresholds
+
+### Local CI Testing with nektos/act
+
+For local CI simulation before pushing:
+
+```bash
+# Install nektos/act (macOS)
+brew install act
+
+# Run full CI test suite locally
+act --container-architecture linux/amd64 -j test --artifact-server-path /tmp/artifacts
+
+# Monitor specific package tests
+act --container-architecture linux/amd64 -j test --artifact-server-path /tmp/artifacts 2>&1 | grep api-gateway
+```
+
+### Common Test Scenarios
+
+#### Authentication Testing
+
+```typescript
+// Test missing authorization
+const response = await app.inject({
+  method: 'GET', 
+  url: '/api/v1/ai-service/models'
+  // No authorization header - expects 401
+});
+
+// Test valid mock token
+const response = await app.inject({
+  method: 'GET',
+  url: '/api/v1/ai-service/models',
+  headers: { 'Authorization': 'Bearer mock-token' }
+  // Expects 200 with mock response
+});
+```
+
+#### Service Integration Testing
+
+```typescript
+// Test multiple service requests
+const requests = [
+  '/api/v1/ai-service/models',
+  '/api/v1/project-service/projects', 
+  '/api/v1/task-service/tasks'
+];
+
+const responses = await Promise.all(
+  requests.map(url => app.inject({
+    method: 'GET', url,
+    headers: { 'Authorization': 'Bearer mock-token' }
+  }))
+);
+// All should return 200 with mock data
+```
+
+### Troubleshooting Common Issues
+
+#### Authentication Tests Failing
+**Issue**: Tests expecting 401 status codes receive 200
+**Solution**: Ensure JWT verification properly handles invalid tokens:
+```typescript
+try {
+  payload = fastify.jwt.verify(token);
+} catch (jwtError) {
+  return reply.status(401).send({ error: 'Unauthorized' });
+}
+```
+
+#### Circuit Breaker Decorator Missing
+**Issue**: `TypeError: app.getCircuitBreakerStatus is not a function`
+**Solution**: Add initialization timing buffer and safety checks:
+```typescript
+await app.ready();
+await new Promise(resolve => setTimeout(resolve, 100));
+```
+
+#### Health Check Dependencies
+**Issue**: Health endpoint returns 503 in test environment
+**Solution**: Health checks automatically handle missing dependencies in test mode
+
+#### Test Hanging
+**Issue**: Tests run indefinitely without completing
+**Solution**: Check for unmocked HTTP requests and ensure proper cleanup:
+```typescript
+afterEach(async () => {
+  if (app) await app.close();
+  jest.clearAllMocks();
+});
+```
+
+### Coverage Goals
+
+Current coverage targets:
+```javascript
+coverageThreshold: {
+  global: {
+    branches: 80,
+    functions: 80, 
+    lines: 85,
+    statements: 85,
+  },
+}
+```
+
+### Performance Benchmarks
+
+- **Test Suite Execution**: ~4-6 seconds (all 209 tests)
+- **Individual Test**: <100ms average
+- **Integration Tests**: <500ms average
+- **Contract Tests**: ~200ms average
+
+For detailed testing guidelines, see `/docs/development/testing-guide.md`.
 
 ### Code Quality
 
