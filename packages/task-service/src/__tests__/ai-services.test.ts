@@ -4,6 +4,7 @@ import { TaskTemplateService } from '../services/task-template-service';
 import { TaskRiskService } from '../services/task-risk-service';
 import { MockDataService } from '../services/mock-data-service';
 import { EventService } from '../services/event-service';
+import { TaskType } from '../types/task-types';
 
 // Mock external dependencies
 jest.mock('bull', () => ({
@@ -39,9 +40,21 @@ describe('AI Services Integration', () => {
     // Initialize services
     mockDataService = new MockDataService();
     eventService = new EventService({
-      enabled: true,
       redis: { host: 'localhost', port: 6379, db: 0 },
-      publisher: { maxRetries: 3, retryDelay: 1000 }
+      channels: {
+        tasks: 'tasks',
+        notifications: 'notifications',
+        analytics: 'analytics'
+      },
+      serialization: {
+        format: 'json',
+        compression: false
+      },
+      retries: {
+        maxRetries: 3,
+        retryDelay: 1000,
+        exponentialBackoff: false
+      }
     });
     
     await eventService.start();
@@ -95,7 +108,7 @@ describe('AI Services Integration', () => {
       const task = await mockDataService.createTask({
         title: 'Test Feature Implementation',
         description: 'Test feature for breakdown analysis',
-        type: 'feature',
+        type: TaskType.FEATURE,
         estimatedHours: 32
       }, 'test-user');
 
@@ -163,7 +176,7 @@ describe('AI Services Integration', () => {
       const task2 = await mockDataService.createTask({
         title: 'Bug Fix B',
         description: 'Critical bug fix',
-        type: 'bug'
+        type: TaskType.BUG
       }, 'test-user');
 
       const request = {
@@ -283,7 +296,7 @@ describe('AI Services Integration', () => {
       const task = await mockDataService.createTask({
         title: 'Complex Integration Task',
         description: 'Integrate multiple external APIs with legacy system',
-        type: 'feature',
+        type: TaskType.FEATURE,
         estimatedHours: 40
       }, 'test-user');
 
@@ -327,7 +340,7 @@ describe('AI Services Integration', () => {
       const task = await mockDataService.createTask({
         title: 'Migration Project',
         description: 'Migrate legacy system to new platform with tight deadline',
-        type: 'feature',
+        type: TaskType.FEATURE,
         estimatedHours: 80,
         schedule: {
           startDate: new Date().toISOString(),
@@ -351,7 +364,7 @@ describe('AI Services Integration', () => {
       const task = await mockDataService.createTask({
         title: 'Performance Optimization',
         description: 'Optimize database queries for better performance',
-        type: 'feature',
+        type: TaskType.FEATURE,
         estimatedHours: 24
       }, 'test-user');
 
@@ -386,7 +399,7 @@ describe('AI Services Integration', () => {
       const task = await mockDataService.createTask({
         title: 'E-commerce Checkout System',
         description: 'Build complete checkout flow with payment processing',
-        type: 'feature',
+        type: TaskType.FEATURE,
         estimatedHours: 60
       }, 'test-user');
 
