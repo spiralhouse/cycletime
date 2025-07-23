@@ -43,7 +43,7 @@ export class MockDataService {
     // Initialize users
     const users = [
       {
-        id: randomUUID(),
+        id: process.env.NODE_ENV === 'test' ? 'test-user-123' : randomUUID(),
         email: 'john.doe@cycletime.dev',
         name: 'John Doe',
         avatar: 'https://api.dicebear.com/7.x/avatars/svg?seed=john',
@@ -55,7 +55,7 @@ export class MockDataService {
         language: 'en',
       },
       {
-        id: randomUUID(),
+        id: process.env.NODE_ENV === 'test' ? 'test-user-456' : randomUUID(),
         email: 'jane.smith@cycletime.dev',
         name: 'Jane Smith',
         avatar: 'https://api.dicebear.com/7.x/avatars/svg?seed=jane',
@@ -67,7 +67,7 @@ export class MockDataService {
         language: 'en',
       },
       {
-        id: randomUUID(),
+        id: process.env.NODE_ENV === 'test' ? 'test-user-789' : randomUUID(),
         email: 'mike.johnson@cycletime.dev',
         name: 'Mike Johnson',
         avatar: 'https://api.dicebear.com/7.x/avatars/svg?seed=mike',

@@ -57,9 +57,14 @@ export class AuthService {
   public validateAccessToken(token: string): { valid: boolean; userId?: string; sessionId?: string } {
     // In test environment, handle mock tokens directly
     if (process.env.NODE_ENV === 'test' && token.startsWith('mock-access-token-')) {
-      const parts = token.split('-');
-      if (parts.length >= 4) {
-        const userId = parts[3]; // Extract user ID from mock-access-token-{userId}-{timestamp}
+      // Extract user ID from mock-access-token-{userId}-{timestamp}
+      // Handle user IDs that may contain hyphens
+      const prefix = 'mock-access-token-';
+      const afterPrefix = token.substring(prefix.length);
+      const lastHyphenIndex = afterPrefix.lastIndexOf('-');
+      
+      if (lastHyphenIndex > 0) {
+        const userId = afterPrefix.substring(0, lastHyphenIndex);
         return {
           valid: true,
           userId: userId,
