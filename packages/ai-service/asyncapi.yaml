@@ -50,31 +50,31 @@ channels:
     description: Published when an AI request is received
     messages:
       aiRequestReceived:
-        $ref: '#/components/messages/AIRequestReceived'
+        $ref: '#/components/messages/AiRequestReceived'
 
   ai/request/processing:
     description: Published when an AI request starts processing
     messages:
       aiRequestProcessing:
-        $ref: '#/components/messages/AIRequestProcessing'
+        $ref: '#/components/messages/AiRequestProcessing'
 
   ai/request/completed:
     description: Published when an AI request is completed successfully
     messages:
       aiRequestCompleted:
-        $ref: '#/components/messages/AIRequestCompleted'
+        $ref: '#/components/messages/AiRequestCompleted'
 
   ai/request/failed:
     description: Published when an AI request fails
     messages:
       aiRequestFailed:
-        $ref: '#/components/messages/AIRequestFailed'
+        $ref: '#/components/messages/AiRequestFailed'
 
   ai/response/generated:
     description: Published when an AI response is generated
     messages:
       aiResponseGenerated:
-        $ref: '#/components/messages/AIResponseGenerated'
+        $ref: '#/components/messages/AiResponseGenerated'
 
   ai/context/analysis/started:
     description: Published when context analysis starts
@@ -88,11 +88,11 @@ channels:
       contextAnalysisCompleted:
         $ref: '#/components/messages/ContextAnalysisCompleted'
 
-  ai/context/optimized:
+  ai/context/optimization/results:
     description: Published when context optimization completes
     messages:
-      contextOptimized:
-        $ref: '#/components/messages/ContextOptimized'
+      contextOptimizationResults:
+        $ref: '#/components/messages/ContextOptimizationResults'
 
   ai/provider/health/changed:
     description: Published when provider health status changes
@@ -100,11 +100,11 @@ channels:
       providerHealthChanged:
         $ref: '#/components/messages/ProviderHealthChanged'
 
-  ai/provider/configured:
+  ai/provider/configuration/updated:
     description: Published when a provider is configured
     messages:
-      providerConfigured:
-        $ref: '#/components/messages/ProviderConfigured'
+      providerConfigurationUpdated:
+        $ref: '#/components/messages/ProviderConfigurationUpdated'
 
   ai/provider/error:
     description: Published when a provider encounters an error
@@ -118,53 +118,53 @@ channels:
       modelAvailabilityChanged:
         $ref: '#/components/messages/ModelAvailabilityChanged'
 
-  ai/analysis/project/started:
+  ai/project/analysis/started:
     description: Published when project analysis starts
     messages:
       projectAnalysisStarted:
         $ref: '#/components/messages/ProjectAnalysisStarted'
 
-  ai/analysis/project/completed:
+  ai/project/analysis/completed:
     description: Published when project analysis completes
     messages:
       projectAnalysisCompleted:
         $ref: '#/components/messages/ProjectAnalysisCompleted'
 
-  ai/analysis/insights/generated:
+  ai/project/insights/generated:
     description: Published when project insights are generated
     messages:
       projectInsightsGenerated:
         $ref: '#/components/messages/ProjectInsightsGenerated'
 
-  ai/analysis/recommendations/generated:
+  ai/project/recommendations/generated:
     description: Published when project recommendations are generated
     messages:
       projectRecommendationsGenerated:
         $ref: '#/components/messages/ProjectRecommendationsGenerated'
 
-  ai/embedding/generated:
+  ai/embedding/completion:
     description: Published when embeddings are generated
     messages:
-      embeddingGenerated:
-        $ref: '#/components/messages/EmbeddingGenerated'
+      embeddingCompletion:
+        $ref: '#/components/messages/EmbeddingCompletion'
 
-  ai/usage/tracked:
+  ai/usage/tracking:
     description: Published when AI usage is tracked
     messages:
-      usageTracked:
-        $ref: '#/components/messages/UsageTracked'
+      usageTracking:
+        $ref: '#/components/messages/UsageTracking'
 
-  ai/rate-limit/exceeded:
+  ai/rate/limit/status:
     description: Published when rate limit is exceeded
     messages:
-      rateLimitExceeded:
-        $ref: '#/components/messages/RateLimitExceeded'
+      rateLimitStatus:
+        $ref: '#/components/messages/RateLimitStatus'
 
-  ai/service/health/changed:
+  ai/service/health/check:
     description: Published when service health changes
     messages:
-      serviceHealthChanged:
-        $ref: '#/components/messages/ServiceHealthChanged'
+      serviceHealthCheck:
+        $ref: '#/components/messages/ServiceHealthCheck'
 
   ai/provider/connection/lost:
     description: Published when provider connection is lost
@@ -289,7 +289,7 @@ operations:
     summary: Publish context analysis completed event
     description: Publishes an event when context analysis completes
 
-  publishContextOptimized:
+  publishContextOptimizationResults:
     action: send
     channel:
       $ref: '#/channels/ai~1context~1optimized'
@@ -303,7 +303,7 @@ operations:
     summary: Publish provider health changed event
     description: Publishes an event when provider health status changes
 
-  publishProviderConfigured:
+  publishProviderConfigurationUpdated:
     action: send
     channel:
       $ref: '#/channels/ai~1provider~1configured'
@@ -352,28 +352,28 @@ operations:
     summary: Publish project recommendations generated event
     description: Publishes an event when project recommendations are generated
 
-  publishEmbeddingGenerated:
+  publishEmbeddingCompletion:
     action: send
     channel:
       $ref: '#/channels/ai~1embedding~1generated'
     summary: Publish embedding generated event
     description: Publishes an event when embeddings are generated
 
-  publishUsageTracked:
+  publishUsageTracking:
     action: send
     channel:
       $ref: '#/channels/ai~1usage~1tracked'
     summary: Publish usage tracked event
     description: Publishes an event when AI usage is tracked
 
-  publishRateLimitExceeded:
+  publishRateLimitStatus:
     action: send
     channel:
       $ref: '#/channels/ai~1rate-limit~1exceeded'
     summary: Publish rate limit exceeded event
     description: Publishes an event when rate limit is exceeded
 
-  publishServiceHealthChanged:
+  publishServiceHealthCheck:
     action: send
     channel:
       $ref: '#/channels/ai~1service~1health~1changed'
@@ -467,45 +467,45 @@ operations:
 
 components:
   messages:
-    AIRequestReceived:
+    AiRequestReceived:
       name: AIRequestReceived
       title: AI Request Received
       summary: An AI request has been received
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/AIRequestReceivedPayload'
+        $ref: '#/components/schemas/AiRequestReceivedPayload'
 
-    AIRequestProcessing:
+    AiRequestProcessing:
       name: AIRequestProcessing
       title: AI Request Processing
       summary: An AI request has started processing
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/AIRequestProcessingPayload'
+        $ref: '#/components/schemas/AiRequestProcessingPayload'
 
-    AIRequestCompleted:
+    AiRequestCompleted:
       name: AIRequestCompleted
       title: AI Request Completed
       summary: An AI request has been completed successfully
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/AIRequestCompletedPayload'
+        $ref: '#/components/schemas/AiRequestCompletedPayload'
 
-    AIRequestFailed:
+    AiRequestFailed:
       name: AIRequestFailed
       title: AI Request Failed
       summary: An AI request has failed
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/AIRequestFailedPayload'
+        $ref: '#/components/schemas/AiRequestFailedPayload'
 
-    AIResponseGenerated:
+    AiResponseGenerated:
       name: AIResponseGenerated
       title: AI Response Generated
       summary: An AI response has been generated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/AIResponseGeneratedPayload'
+        $ref: '#/components/schemas/AiResponseGeneratedPayload'
 
     ContextAnalysisStarted:
       name: ContextAnalysisStarted
@@ -523,7 +523,7 @@ components:
       payload:
         $ref: '#/components/schemas/ContextAnalysisCompletedPayload'
 
-    ContextOptimized:
+    ContextOptimizationResults:
       name: ContextOptimized
       title: Context Optimized
       summary: Context optimization has completed
@@ -539,7 +539,7 @@ components:
       payload:
         $ref: '#/components/schemas/ProviderHealthChangedPayload'
 
-    ProviderConfigured:
+    ProviderConfigurationUpdated:
       name: ProviderConfigured
       title: Provider Configured
       summary: A provider has been configured
@@ -595,7 +595,7 @@ components:
       payload:
         $ref: '#/components/schemas/ProjectRecommendationsGeneratedPayload'
 
-    EmbeddingGenerated:
+    EmbeddingCompletion:
       name: EmbeddingGenerated
       title: Embedding Generated
       summary: Embeddings have been generated
@@ -603,7 +603,7 @@ components:
       payload:
         $ref: '#/components/schemas/EmbeddingGeneratedPayload'
 
-    UsageTracked:
+    UsageTracking:
       name: UsageTracked
       title: Usage Tracked
       summary: AI usage has been tracked
@@ -611,7 +611,7 @@ components:
       payload:
         $ref: '#/components/schemas/UsageTrackedPayload'
 
-    RateLimitExceeded:
+    RateLimitStatus:
       name: RateLimitExceeded
       title: Rate Limit Exceeded
       summary: Rate limit has been exceeded
@@ -619,7 +619,7 @@ components:
       payload:
         $ref: '#/components/schemas/RateLimitExceededPayload'
 
-    ServiceHealthChanged:
+    ServiceHealthCheck:
       name: ServiceHealthChanged
       title: Service Health Changed
       summary: Service health has changed
@@ -770,7 +770,7 @@ components:
         - source
         - version
 
-    AIRequestReceivedPayload:
+    AiRequestReceivedPayload:
       allOf:
         - $ref: '#/components/schemas/BaseEvent'
         - type: object
@@ -802,7 +802,7 @@ components:
             - requestId
             - requestType
 
-    AIRequestProcessingPayload:
+    AiRequestProcessingPayload:
       allOf:
         - $ref: '#/components/schemas/BaseEvent'
         - type: object
@@ -836,7 +836,7 @@ components:
             - model
             - processingStarted
 
-    AIRequestCompletedPayload:
+    AiRequestCompletedPayload:
       allOf:
         - $ref: '#/components/schemas/BaseEvent'
         - type: object
@@ -879,7 +879,7 @@ components:
             - processingTime
             - tokens
 
-    AIRequestFailedPayload:
+    AiRequestFailedPayload:
       allOf:
         - $ref: '#/components/schemas/BaseEvent'
         - type: object
@@ -914,7 +914,7 @@ components:
             - requestId
             - error
 
-    AIResponseGeneratedPayload:
+    AiResponseGeneratedPayload:
       allOf:
         - $ref: '#/components/schemas/BaseEvent'
         - type: object
