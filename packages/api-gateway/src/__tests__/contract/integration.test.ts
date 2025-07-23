@@ -44,6 +44,7 @@ describe('Integration Contract Tests', () => {
         }
       });
 
+      
       expect(response.statusCode).toBe(200);
       expect(response.headers['x-request-id']).toBe('test-request-123');
       

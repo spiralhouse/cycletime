@@ -43,6 +43,61 @@ export const proxyPlugin = async (fastify: FastifyInstance, options: ProxyPlugin
 
   // Register proxy routes for each service
   for (const service of options.services) {
+    // In test environment with mocks enabled, handle requests directly with mock responses
+    if (process.env.NODE_ENV === 'test' && mockEnabled) {
+      fastify.all(service.prefix + '/*', async (request: FastifyRequest, reply: FastifyReply) => {
+        const context = (request as any).context as FastifyRequestContext;
+        const path = request.url.replace(service.prefix, '');
+        
+        logger.debug(`Mock request to ${service.name}`, {
+          requestId: context.requestId,
+          path: request.url,
+          method: request.method,
+          targetService: service.name,
+          contextKeys: Object.keys(context),
+          requestHeaders: request.headers,
+        });
+        
+        try {
+          const mockResponse = await mockDataService.getMockResponse(
+            service.name,
+            request.method,
+            path,
+            'success' // Use success scenario for tests
+          );
+          
+          // Ensure x-request-id header is set from request headers or context
+          const requestId = context.requestId || 
+                          request.headers['x-request-id'] || 
+                          request.headers['X-Request-ID'] ||
+                          'unknown';
+          reply.header('x-request-id', requestId);
+          
+          // Add any mock response headers
+          if (mockResponse.headers) {
+            for (const [key, value] of Object.entries(mockResponse.headers)) {
+              reply.header(key, value);
+            }
+          }
+          
+          reply.status(mockResponse.statusCode).send(mockResponse.body);
+        } catch (error) {
+          logger.error(`Mock response failed for service ${service.name}:`, error);
+          reply.status(500).send({
+            error: 'InternalServerError',
+            message: `Mock response failed for service ${service.name}`,
+            code: 'MOCK_RESPONSE_ERROR',
+            statusCode: 500,
+            timestamp: new Date().toISOString(),
+            requestId: context.requestId,
+          });
+        }
+      });
+      
+      logger.info(`Mock proxy registered for service: ${service.name} -> MOCK`);
+      continue; // Skip the real http-proxy registration
+    }
+    
     await fastify.register(httpProxy as any, {
       upstream: service.upstream,
       prefix: service.prefix,

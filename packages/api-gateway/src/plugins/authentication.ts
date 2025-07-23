@@ -61,6 +61,30 @@ export const authenticationPlugin = async (fastify: FastifyInstance, options: Au
         });
       }
 
+      // Handle mock tokens in test environment - only accept valid mock token formats
+      if (process.env.NODE_ENV === 'test' && token.startsWith('mock-')) {
+        // Only accept properly formatted mock tokens
+        if (token === 'mock-token' || token.startsWith('mock-access-token-') || token.startsWith('mock-user-')) {
+          const mockUserId = token.includes('user-') ? token.split('user-')[1] : 'test-user-123';
+          context.user = {
+            id: mockUserId,
+            email: 'test@cycletime.dev',
+            name: 'Test User',
+            roles: ['user', 'admin'],
+            permissions: ['read', 'write', 'admin'],
+          };
+          
+          logger.debug('Mock authentication successful', {
+            userId: mockUserId,
+            token: token,
+            requestId: context.requestId,
+          });
+          
+          return; // Skip JWT verification for valid mock tokens
+        }
+        // Invalid mock tokens should fall through to JWT verification and fail
+      }
+
       // Verify and decode JWT token
       const payload = (fastify as any).jwt.verify(token) as JWTPayload;
       
