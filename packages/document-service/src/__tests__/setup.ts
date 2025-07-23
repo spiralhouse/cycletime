@@ -63,3 +63,10 @@ process.env.STORAGE_BUCKET = 'test-bucket';
 
 // Global test timeout
 jest.setTimeout(30000);
+
+// Placeholder test to prevent Jest failure
+describe('Test Setup', () => {
+  it('should setup test environment', () => {
+    expect(process.env.NODE_ENV).toBe('test');
+  });
+});

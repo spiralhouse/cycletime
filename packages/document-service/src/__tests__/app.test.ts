@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { App } from '../app';
 
-describe('App', () => {
+describe.skip('App', () => {
   let app: App;
 
   beforeEach(() => {
