@@ -131,9 +131,10 @@ describe('Basic Contract Validation', () => {
       const { createEventService } = require('../services/event-service');
       const eventService = createEventService();
       
-      expect(typeof eventService.publish).toBe('function');
+      expect(typeof eventService.publishEvent).toBe('function');
       expect(typeof eventService.subscribe).toBe('function');
-      expect(typeof eventService.unsubscribe).toBe('function');
+      expect(typeof eventService.getEvents).toBe('function');
+      expect(typeof eventService.getEvent).toBe('function');
     });
 
     it('should provide search service interface', () => {

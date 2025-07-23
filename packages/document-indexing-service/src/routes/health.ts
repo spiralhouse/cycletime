@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 
 export async function healthRoutes(app: FastifyInstance) {
-  app.get('/', {
+  app.get('/health', {
     schema: {
       summary: 'Health check',
       description: 'Check if the document indexing service is healthy and operational',
@@ -62,7 +62,7 @@ export async function healthRoutes(app: FastifyInstance) {
     reply.send(healthStatus);
   });
 
-  app.get('/detailed', {
+  app.get('/health/detailed', {
     schema: {
       summary: 'Detailed health check',
       description: 'Get detailed health information including component status and metrics',
@@ -183,7 +183,7 @@ export async function healthRoutes(app: FastifyInstance) {
     reply.send(detailedHealth);
   });
 
-  app.get('/dependencies', {
+  app.get('/health/dependencies', {
     schema: {
       summary: 'Dependencies health check',
       description: 'Check the health of all external dependencies',
@@ -193,102 +193,42 @@ export async function healthRoutes(app: FastifyInstance) {
           type: 'object',
           properties: {
             dependencies: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  name: { type: 'string' },
-                  status: { 
-                    type: 'string', 
-                    enum: ['healthy', 'degraded', 'unhealthy'] 
-                  },
-                  responseTime: { type: 'number' },
-                  lastCheck: { type: 'string', format: 'date-time' },
-                  error: { type: 'string' },
-                  metadata: { type: 'object' },
-                },
-                required: ['name', 'status', 'responseTime', 'lastCheck'],
-              },
-            },
-            overall: {
               type: 'object',
               properties: {
-                status: { 
+                vectorDatabase: { 
                   type: 'string', 
                   enum: ['healthy', 'degraded', 'unhealthy'] 
                 },
-                healthyCount: { type: 'integer' },
-                degradedCount: { type: 'integer' },
-                unhealthyCount: { type: 'integer' },
+                embeddingService: { 
+                  type: 'string', 
+                  enum: ['healthy', 'degraded', 'unhealthy'] 
+                },
+                redis: { 
+                  type: 'string', 
+                  enum: ['healthy', 'degraded', 'unhealthy'] 
+                },
+                textProcessor: { 
+                  type: 'string', 
+                  enum: ['healthy', 'degraded', 'unhealthy'] 
+                },
               },
             },
           },
-          required: ['dependencies', 'overall'],
+          required: ['dependencies'],
         },
       },
     },
   }, async (request, reply) => {
     const healthStatus = app.mockDataService.getHealthStatus();
     
-    const dependencies = [
-      {
-        name: 'Vector Database',
-        status: healthStatus.dependencies.vectorDatabase,
-        responseTime: Math.random() * 0.01 + 0.001,
-        lastCheck: new Date(),
-        metadata: {
-          type: 'pinecone',
-          version: '1.0.0',
-          region: 'us-east-1',
-        },
-      },
-      {
-        name: 'Embedding Service',
-        status: healthStatus.dependencies.embeddingService,
-        responseTime: Math.random() * 0.05 + 0.01,
-        lastCheck: new Date(),
-        metadata: {
-          type: 'openai',
-          model: 'text-embedding-3-small',
-          apiVersion: '2023-05-15',
-        },
-      },
-      {
-        name: 'Redis Cache',
-        status: healthStatus.dependencies.redis,
-        responseTime: Math.random() * 0.005 + 0.0005,
-        lastCheck: new Date(),
-        metadata: {
-          type: 'redis',
-          version: '7.0.0',
-          mode: 'standalone',
-        },
-      },
-      {
-        name: 'Text Processor',
-        status: healthStatus.dependencies.textProcessor,
-        responseTime: Math.random() * 0.02 + 0.005,
-        lastCheck: new Date(),
-        metadata: {
-          type: 'natural',
-          version: '6.10.0',
-          languages: ['en', 'es', 'fr'],
-        },
-      },
-    ];
-
-    const statusCounts = dependencies.reduce((acc, dep) => {
-      const key = `${dep.status}Count` as keyof typeof acc;
-      acc[key]++;
-      return acc;
-    }, { healthyCount: 0, degradedCount: 0, unhealthyCount: 0 });
-
-    const overall = {
-      status: statusCounts.unhealthyCount > 0 ? 'unhealthy' : 
-              statusCounts.degradedCount > 0 ? 'degraded' : 'healthy',
-      ...statusCounts,
+    // Return dependencies in the same format as the main health endpoint
+    const dependencies = {
+      vectorDatabase: healthStatus.dependencies.vectorDatabase,
+      embeddingService: healthStatus.dependencies.embeddingService,
+      redis: healthStatus.dependencies.redis,
+      textProcessor: healthStatus.dependencies.textProcessor,
     };
 
-    reply.send({ dependencies, overall });
+    reply.send({ dependencies });
   });
 }

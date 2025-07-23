@@ -1,10 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
+import { FastifyInstance } from 'fastify';
+import { createApp } from '../app';
 
 describe('Contract Validation Tests', () => {
   let openApiSpec: any;
   let asyncApiSpec: any;
+  let app: FastifyInstance;
 
   beforeAll(async () => {
     // Load OpenAPI specification
@@ -16,6 +19,21 @@ describe('Contract Validation Tests', () => {
     const asyncApiPath = path.join(__dirname, '../../asyncapi.yaml');
     const asyncApiContent = fs.readFileSync(asyncApiPath, 'utf8');
     asyncApiSpec = yaml.load(asyncApiContent);
+
+    // Create and configure the Fastify app for testing
+    app = await createApp({
+      port: 0,
+      host: 'localhost',
+      logger: false,
+    });
+
+    await app.ready();
+  });
+
+  afterAll(async () => {
+    if (app) {
+      await app.close();
+    }
   });
 
   describe('OpenAPI Contract Validation', () => {

@@ -7,8 +7,8 @@ import { embeddingRoutes } from './embedding-routes';
 import { analyticsRoutes } from './analytics-routes';
 
 export async function registerRoutes(app: FastifyInstance) {
-  // Health check routes
-  await app.register(healthRoutes, { prefix: '/health' });
+  // Health check routes (no prefix since they define their own paths)
+  await app.register(healthRoutes);
   
   // API routes
   await app.register(indexRoutes, { prefix: '/api/v1/indices' });

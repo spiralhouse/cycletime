@@ -137,11 +137,7 @@ export async function createApp(options: AppOptions): Promise<FastifyInstance> {
     reply.status(statusCode).send(response);
   });
 
-  // Health check endpoint
-  app.get('/health', async (request, reply) => {
-    const healthStatus = mockDataService.getHealthStatus();
-    reply.send(healthStatus);
-  });
+  // Health check endpoint is handled by health routes
 
   return app;
 }
