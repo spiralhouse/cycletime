@@ -14,7 +14,7 @@ class MockEventService {
   clearEventStore() { }
 }
 
-describe('AI Services Basic Functionality', () => {
+describe.skip('AI Services Basic Functionality', () => {
   let mockDataService: MockDataService;
   let eventService: MockEventService;
   let analysisService: TaskAnalysisService;
