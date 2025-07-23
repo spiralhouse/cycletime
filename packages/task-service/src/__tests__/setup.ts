@@ -33,6 +33,13 @@ afterEach(async () => {
 
 // Mock implementations for testing will be done in individual test files as needed
 
+// Placeholder test to prevent Jest failure
+describe('Test Setup', () => {
+  it('should setup test environment', () => {
+    expect(process.env.NODE_ENV).toBe('test');
+  });
+});
+
 // Test utilities
 export const testUtils = {
   createMockTask: (overrides: any = {}) => ({

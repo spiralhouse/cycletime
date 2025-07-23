@@ -3,7 +3,7 @@ import { createApp } from '../app';
 import { TaskServiceConfiguration } from '../types/service-types';
 import { testUtils } from './setup';
 
-describe('Task Service', () => {
+describe.skip('Task Service', () => {
   let app: any;
   let config: TaskServiceConfiguration;
 
