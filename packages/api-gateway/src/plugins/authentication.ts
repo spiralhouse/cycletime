@@ -86,7 +86,23 @@ export const authenticationPlugin = async (fastify: FastifyInstance, options: Au
       }
 
       // Verify and decode JWT token
-      const payload = (fastify as any).jwt.verify(token) as JWTPayload;
+      let payload: JWTPayload;
+      try {
+        payload = (fastify as any).jwt.verify(token) as JWTPayload;
+      } catch (jwtError) {
+        // JWT verification failed - this should always throw for invalid tokens
+        const errorMessage = jwtError instanceof Error ? jwtError.message : 'Token verification failed';
+        await publishAuthFailedEvent(fastify, context, 'invalid_token', errorMessage);
+        
+        return reply.status(401).send({
+          error: 'Unauthorized',
+          message: 'Invalid token',
+          code: 'INVALID_TOKEN', 
+          statusCode: 401,
+          timestamp: new Date().toISOString(),
+          requestId: context.requestId,
+        });
+      }
       
       // Add user info to context
       context.user = {
