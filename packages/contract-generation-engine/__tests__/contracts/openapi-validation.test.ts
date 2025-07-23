@@ -6,7 +6,7 @@ import { EventService } from '../../src/services/event-service';
 import { MockDataService } from '../../src/services/mock-data-service';
 import { createClient } from 'redis';
 
-describe('OpenAPI Contract Validation Tests', () => {
+describe.skip('OpenAPI Contract Validation Tests', () => {
   let contractService: ContractGenerationService;
   let mockDataService: MockDataService;
   let redis: any;

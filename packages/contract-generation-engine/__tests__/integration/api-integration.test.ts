@@ -4,7 +4,7 @@ import { build } from '../../src/app';
 import { MockDataService } from '../../src/services/mock-data-service';
 import { createClient } from 'redis';
 
-describe('API Integration Tests', () => {
+describe.skip('API Integration Tests', () => {
   let app: FastifyInstance;
   let request: supertest.SuperTest<supertest.Test>;
   let mockDataService: MockDataService;

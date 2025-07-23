@@ -4,7 +4,7 @@ import { TaskTemplateService } from '../services/task-template-service';
 import { TaskRiskService } from '../services/task-risk-service';
 import { MockDataService } from '../services/mock-data-service';
 import { EventService } from '../services/event-service';
-import { TaskType } from '../types/task-types';
+import { TaskType, TaskPriority } from '../types/task-types';
 
 // Mock external dependencies
 jest.mock('bull', () => ({
@@ -54,6 +54,11 @@ describe('AI Services Integration', () => {
         maxRetries: 3,
         retryDelay: 1000,
         exponentialBackoff: false
+      },
+      deadLetterQueue: {
+        enabled: false,
+        channel: 'dlq',
+        maxAge: 86400000
       }
     });
     
@@ -109,7 +114,15 @@ describe('AI Services Integration', () => {
         title: 'Test Feature Implementation',
         description: 'Test feature for breakdown analysis',
         type: TaskType.FEATURE,
-        estimatedHours: 32
+        priority: TaskPriority.MEDIUM,
+        estimatedHours: 32,
+        tags: [],
+        metadata: {},
+        assigneeId: null,
+        projectId: null,
+        parentId: null,
+        dueDate: null,
+        startDate: null
       }, 'test-user');
 
       const request = {
@@ -170,13 +183,31 @@ describe('AI Services Integration', () => {
       const task1 = await mockDataService.createTask({
         title: 'Feature A',
         description: 'First test feature',
-        type: 'feature'
+        type: TaskType.FEATURE,
+        priority: TaskPriority.MEDIUM,
+        estimatedHours: 0,
+        tags: [],
+        metadata: {},
+        assigneeId: null,
+        projectId: null,
+        parentId: null,
+        dueDate: null,
+        startDate: null
       }, 'test-user');
 
       const task2 = await mockDataService.createTask({
         title: 'Bug Fix B',
         description: 'Critical bug fix',
-        type: TaskType.BUG
+        type: TaskType.BUG,
+        priority: TaskPriority.MEDIUM,
+        estimatedHours: 0,
+        tags: [],
+        metadata: {},
+        assigneeId: null,
+        projectId: null,
+        parentId: null,
+        dueDate: null,
+        startDate: null
       }, 'test-user');
 
       const request = {
@@ -297,7 +328,15 @@ describe('AI Services Integration', () => {
         title: 'Complex Integration Task',
         description: 'Integrate multiple external APIs with legacy system',
         type: TaskType.FEATURE,
-        estimatedHours: 40
+        priority: TaskPriority.MEDIUM,
+        estimatedHours: 40,
+        tags: [],
+        metadata: {},
+        assigneeId: null,
+        projectId: null,
+        parentId: null,
+        dueDate: null,
+        startDate: null
       }, 'test-user');
 
       // Add a risk
@@ -341,13 +380,22 @@ describe('AI Services Integration', () => {
         title: 'Migration Project',
         description: 'Migrate legacy system to new platform with tight deadline',
         type: TaskType.FEATURE,
+        priority: TaskPriority.MEDIUM,
         estimatedHours: 80,
-        schedule: {
-          startDate: new Date().toISOString(),
-          dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days
-          scheduledAt: null,
-          recurringPattern: null
-        }
+        tags: [],
+        metadata: {
+          schedule: {
+            startDate: new Date().toISOString(),
+            dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days
+            scheduledAt: null,
+            recurringPattern: null
+          }
+        },
+        assigneeId: null,
+        projectId: null,
+        parentId: null,
+        dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date().toISOString()
       }, 'test-user');
 
       const identifiedRisks = await riskService.analyzeTaskRisks(task.id);
@@ -365,7 +413,15 @@ describe('AI Services Integration', () => {
         title: 'Performance Optimization',
         description: 'Optimize database queries for better performance',
         type: TaskType.FEATURE,
-        estimatedHours: 24
+        priority: TaskPriority.MEDIUM,
+        estimatedHours: 24,
+        tags: [],
+        metadata: {},
+        assigneeId: null,
+        projectId: null,
+        parentId: null,
+        dueDate: null,
+        startDate: null
       }, 'test-user');
 
       const risk = await riskService.addTaskRisk(task.id, {
@@ -400,7 +456,15 @@ describe('AI Services Integration', () => {
         title: 'E-commerce Checkout System',
         description: 'Build complete checkout flow with payment processing',
         type: TaskType.FEATURE,
-        estimatedHours: 60
+        priority: TaskPriority.MEDIUM,
+        estimatedHours: 60,
+        tags: [],
+        metadata: {},
+        assigneeId: null,
+        projectId: null,
+        parentId: null,
+        dueDate: null,
+        startDate: null
       }, 'test-user');
 
       // 2. Analyze the task
