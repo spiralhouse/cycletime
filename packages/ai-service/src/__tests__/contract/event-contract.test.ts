@@ -10,7 +10,7 @@ import path from 'path';
 import yaml from 'js-yaml';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { EventEmitter } from 'events';
+import { randomUUID } from 'crypto';
 import { EventService } from '../../services/event-service';
 import { MessageBrokerManager, createMessageBroker } from '../../services/message-broker';
 
@@ -257,10 +257,10 @@ describe('Event Contract Tests', () => {
       const correlationId = 'test-correlation-123';
       let publishedEvent: any = null;
 
-      // Mock event listener
-      const mockListener = (event: any) => {
+      // Set up event listener
+      eventService.on('ai/request/received', (event: any) => {
         publishedEvent = event;
-      };
+      });
 
       // Test publishing an AI request event
       await eventService.publishEvent('ai/request/received', {
@@ -275,13 +275,13 @@ describe('Event Contract Tests', () => {
     });
 
     it('should publish events with required timestamp', async () => {
-      const beforeTimestamp = new Date().toISOString();
+      const beforeTime = new Date();
       let publishedEvent: any = null;
 
-      // Mock event listener  
-      const mockListener = (event: any) => {
+      // Set up event listener
+      eventService.on('ai/request/processing', (event: any) => {
         publishedEvent = event;
-      };
+      });
 
       await eventService.publishEvent('ai/request/processing', {
         requestId: 'test-request-789',
@@ -289,12 +289,12 @@ describe('Event Contract Tests', () => {
         provider: 'openai'
       });
 
-      const afterTimestamp = new Date().toISOString();
+      const afterTime = new Date();
       
       // Verify timestamp is included and within reasonable range
       expect(publishedEvent?.timestamp).toBeDefined();
-      expect(publishedEvent?.timestamp).toBeGreaterThanOrEqual(beforeTimestamp);
-      expect(publishedEvent?.timestamp).toBeLessThanOrEqual(afterTimestamp);
+      expect(new Date(publishedEvent?.timestamp).getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
+      expect(new Date(publishedEvent?.timestamp).getTime()).toBeLessThanOrEqual(afterTime.getTime());
     });
   });
 
@@ -305,15 +305,19 @@ describe('Event Contract Tests', () => {
 
     it('should handle event publishing through broker', async () => {
       const eventData = {
+        eventId: randomUUID(),
+        eventType: 'ai/request/received',
+        timestamp: new Date().toISOString(),
+        source: 'ai-service',
+        version: '1.0.0',
         requestId: 'broker-test-123',
         type: 'embedding',
-        provider: 'openai',
-        timestamp: new Date().toISOString()
+        provider: 'openai'
       };
 
       // Should not throw an error
       await expect(
-        messageBroker.publish('ai/request/received', eventData)
+        messageBroker.getBroker().publish('ai/request/received', eventData)
       ).resolves.not.toThrow();
     });
 
@@ -321,13 +325,20 @@ describe('Event Contract Tests', () => {
       let receivedEvent: any = null;
       
       // Set up subscription
-      await messageBroker.subscribe('test/event', (event) => {
+      await messageBroker.getBroker().subscribe('test/event', async (event: any) => {
         receivedEvent = event;
       });
 
-      // Publish test event
-      const testEvent = { message: 'test', timestamp: new Date().toISOString() };
-      await messageBroker.publish('test/event', testEvent);
+      // Publish test event with required AIEvent properties
+      const testEvent = {
+        eventId: randomUUID(),
+        eventType: 'test/event',
+        timestamp: new Date().toISOString(),
+        source: 'ai-service',
+        version: '1.0.0',
+        message: 'test'
+      };
+      await messageBroker.getBroker().publish('test/event', testEvent);
 
       // Give some time for event processing
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -343,10 +354,10 @@ describe('Event Contract Tests', () => {
       
       const events: any[] = [];
       
-      // Mock event collection
-      const eventCollector = (event: any) => {
+      // Set up event collection
+      eventService.on('*', (event: any) => {
         events.push(event);
-      };
+      });
 
       // Simulate request lifecycle events
       await eventService.publishEvent('ai/request/received', {

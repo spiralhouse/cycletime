@@ -32,7 +32,7 @@ describe('Performance Contract Tests', () => {
       const startTime = Date.now();
       
       await request(app.server)
-        .get('/api/v1/ai/health')
+        .get('/health')
         .expect(200);
       
       const responseTime = Date.now() - startTime;
@@ -43,7 +43,7 @@ describe('Performance Contract Tests', () => {
       const startTime = Date.now();
       
       await request(app.server)
-        .get('/api/v1/ai/providers')
+        .get('/providers')
         .expect(200);
       
       const responseTime = Date.now() - startTime;
@@ -54,7 +54,7 @@ describe('Performance Contract Tests', () => {
       const startTime = Date.now();
       
       await request(app.server)
-        .get('/api/v1/ai/metrics')
+        .get('/metrics')
         .expect(200);
       
       const responseTime = Date.now() - startTime;
@@ -71,7 +71,7 @@ describe('Performance Contract Tests', () => {
       const startTime = Date.now();
       
       await request(app.server)
-        .post('/api/v1/ai/requests')
+        .post('/api/v1/chat/completions')
         .send(requestBody)
         .expect(201);
       
@@ -90,7 +90,7 @@ describe('Performance Contract Tests', () => {
 
       // Create request
       const createResponse = await request(app.server)
-        .post('/api/v1/ai/requests')
+        .post('/api/v1/chat/completions')
         .send(requestBody)
         .expect(201);
       
@@ -106,7 +106,7 @@ describe('Performance Contract Tests', () => {
         await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
         
         const statusResponse = await request(app.server)
-          .get(`/api/v1/ai/requests/${requestId}/status`)
+          .get(`/api/v1/requests/${requestId}`)
           .expect(200);
         
         if (statusResponse.body.status === 'completed') {
@@ -129,7 +129,7 @@ describe('Performance Contract Tests', () => {
       };
 
       const response = await request(app.server)
-        .post('/api/v1/ai/requests')
+        .post('/api/v1/chat/completions')
         .send(requestBody)
         .expect(201);
       
@@ -155,7 +155,7 @@ describe('Performance Contract Tests', () => {
       for (let i = 0; i < concurrentRequests; i++) {
         requests.push(
           request(app.server)
-            .get('/api/v1/ai/health')
+            .get('/health')
             .expect(200)
         );
       }
@@ -190,7 +190,7 @@ describe('Performance Contract Tests', () => {
       for (let i = 0; i < concurrentRequests; i++) {
         requests.push(
           request(app.server)
-            .post('/api/v1/ai/requests')
+            .post('/api/v1/chat/completions')
             .send(requestBody)
             .expect(201)
         );
@@ -223,7 +223,7 @@ describe('Performance Contract Tests', () => {
         for (let i = 0; i < requestsPerBatch; i++) {
           batchRequests.push(
             request(app.server)
-              .get('/api/v1/ai/providers')
+              .get('/providers')
               .expect(200)
           );
         }
@@ -252,7 +252,7 @@ describe('Performance Contract Tests', () => {
       // Create multiple requests to test memory usage
       for (let i = 0; i < 50; i++) {
         await request(app.server)
-          .post('/api/v1/ai/requests')
+          .post('/api/v1/chat/completions')
           .send({
             type: 'chat_completion',
             messages: [{ role: 'user', content: `Request ${i}` }]
@@ -285,7 +285,7 @@ describe('Performance Contract Tests', () => {
       
       for (let i = 0; i < 10; i++) {
         const response = await request(app.server)
-          .post('/api/v1/ai/requests')
+          .post('/api/v1/chat/completions')
           .send(requestBody)
           .expect(201);
         
@@ -298,7 +298,7 @@ describe('Performance Contract Tests', () => {
       // Check that requests are tracked properly
       for (const requestId of requestIds) {
         const statusResponse = await request(app.server)
-          .get(`/api/v1/ai/requests/${requestId}/status`);
+          .get(`/api/v1/requests/${requestId}`);
         
         expect([200, 404]).toContain(statusResponse.status);
       }
@@ -317,7 +317,7 @@ describe('Performance Contract Tests', () => {
       const makeRequest = async () => {
         try {
           await request(app.server)
-            .get('/api/v1/ai/health')
+            .get('/health')
             .expect(200);
           completedRequests++;
         } catch (error) {

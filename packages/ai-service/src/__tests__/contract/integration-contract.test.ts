@@ -6,6 +6,7 @@
 
 import { FastifyInstance } from 'fastify';
 import request from 'supertest';
+import { randomUUID } from 'crypto';
 import { createApp } from '../../app';
 import { MessageBrokerManager, createMessageBroker } from '../../services/message-broker';
 
@@ -127,30 +128,38 @@ describe('Integration Contract Tests', () => {
 
     it('should handle event publishing without errors', async () => {
       const testEvent = {
+        eventId: randomUUID(),
+        eventType: 'test/integration',
+        timestamp: new Date().toISOString(),
+        source: 'ai-service',
+        version: '1.0.0',
         type: 'test',
-        data: 'integration test',
-        timestamp: new Date().toISOString()
+        data: 'integration test'
       };
 
       await expect(
-        messageBroker.publish('test/integration', testEvent)
+        messageBroker.getBroker().publish('test/integration', testEvent)
       ).resolves.not.toThrow();
     });
 
     it('should handle event subscription and delivery', async () => {
       let receivedEvent: any = null;
       const testEvent = {
-        message: 'subscription test',
-        timestamp: new Date().toISOString()
+        eventId: randomUUID(),
+        eventType: 'test/subscription',
+        timestamp: new Date().toISOString(),
+        source: 'ai-service',
+        version: '1.0.0',
+        message: 'subscription test'
       };
 
       // Set up subscription
-      await messageBroker.subscribe('test/subscription', (event) => {
+      await messageBroker.getBroker().subscribe('test/subscription', async (event: any) => {
         receivedEvent = event;
       });
 
       // Publish event
-      await messageBroker.publish('test/subscription', testEvent);
+      await messageBroker.getBroker().publish('test/subscription', testEvent);
 
       // Wait for delivery
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -163,8 +172,17 @@ describe('Integration Contract Tests', () => {
       expect(messageBroker.isConnected()).toBe(true);
       
       // Test basic operations work with memory broker
+      const testEvent = {
+        eventId: randomUUID(),
+        eventType: 'test/fallback',
+        timestamp: new Date().toISOString(),
+        source: 'ai-service',
+        version: '1.0.0',
+        test: true
+      };
+      
       await expect(
-        messageBroker.publish('test/fallback', { test: true })
+        messageBroker.getBroker().publish('test/fallback', testEvent)
       ).resolves.not.toThrow();
     });
   });
