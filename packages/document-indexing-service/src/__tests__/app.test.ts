@@ -232,7 +232,7 @@ describe('Application Integration Tests', () => {
         }
       });
 
-      expect(response.statusCode).toBe(400);
+      expect(response.statusCode).toBe(415);
     });
   });
 

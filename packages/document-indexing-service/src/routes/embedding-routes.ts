@@ -22,22 +22,17 @@ export async function embeddingRoutes(app: FastifyInstance) {
         200: {
           type: 'object',
           properties: {
-            embedding: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' },
-                text: { type: 'string' },
-                embeddings: {
-                  type: 'array',
-                  items: { type: 'number' },
-                },
-                model: { type: 'string' },
-                dimensions: { type: 'integer' },
-                tokens: { type: 'integer' },
-                processingTime: { type: 'number' },
-                createdAt: { type: 'string', format: 'date-time' },
-              },
+            id: { type: 'string' },
+            text: { type: 'string' },
+            embeddings: {
+              type: 'array',
+              items: { type: 'number' },
             },
+            model: { type: 'string' },
+            dimensions: { type: 'integer' },
+            tokens: { type: 'integer' },
+            processingTime: { type: 'number' },
+            createdAt: { type: 'string', format: 'date-time' },
           },
         },
         400: {
@@ -61,7 +56,7 @@ export async function embeddingRoutes(app: FastifyInstance) {
         metadata,
       });
       
-      reply.send({ embedding });
+      reply.send(embedding);
     } catch (error) {
       reply.code(400).send({
         error: 'Embedding Generation Failed',

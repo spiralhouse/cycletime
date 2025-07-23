@@ -20,6 +20,15 @@ interface AppOptions {
 export async function createApp(options: AppOptions): Promise<FastifyInstance> {
   const app = fastify({
     logger: options.logger,
+    schemaErrorFormatter: (errors, dataVar) => {
+      const errorMessage = errors.map(e => e.message).join(', ');
+      const error = new Error(errorMessage);
+      error.name = 'Bad Request';
+      // Add custom properties to the error object
+      (error as any).error = 'Bad Request';
+      (error as any).timestamp = new Date().toISOString();
+      return error;
+    },
   });
 
   // Register plugins
@@ -48,6 +57,12 @@ export async function createApp(options: AppOptions): Promise<FastifyInstance> {
   app.decorate('searchService', searchService);
   app.decorate('embeddingService', embeddingService);
   app.decorate('analyticsService', analyticsService);
+
+  // Add API version header to all responses
+  app.addHook('onSend', async (request, reply, payload) => {
+    reply.header('api-version', '1.0.0');
+    return payload;
+  });
 
   // Register routes
   await registerRoutes(app);

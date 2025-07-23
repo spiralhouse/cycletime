@@ -1,6 +1,71 @@
 import { FastifyInstance } from 'fastify';
 
 export async function documentRoutes(app: FastifyInstance) {
+  // List documents
+  app.get('/', {
+    schema: {
+      summary: 'List documents',
+      description: 'Get a list of indexed documents',
+      tags: ['Document Management'],
+      querystring: {
+        type: 'object',
+        properties: {
+          indexId: { type: 'string' },
+          status: { type: 'string', enum: ['indexed', 'indexing', 'failed', 'pending'] },
+          offset: { type: 'integer', default: 0 },
+          limit: { type: 'integer', default: 50 },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            documents: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  documentId: { type: 'string' },
+                  title: { type: 'string' },
+                  content: { type: 'string' },
+                  metadata: { type: 'object' },
+                  status: { type: 'string' },
+                  indexedAt: { type: 'string', format: 'date-time' },
+                },
+              },
+            },
+            total: { type: 'integer' },
+            offset: { type: 'integer' },
+            limit: { type: 'integer' },
+          },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const { indexId, status, offset = 0, limit = 50 } = request.query as any;
+    
+    let documents = app.mockDataService.getDocuments();
+    
+    if (indexId) {
+      documents = documents.filter((doc: any) => doc.indexId === indexId);
+    }
+    
+    if (status) {
+      documents = documents.filter((doc: any) => doc.status === status);
+    }
+    
+    // Apply pagination
+    const paginatedDocuments = documents.slice(offset, offset + limit);
+    
+    reply.send({
+      documents: paginatedDocuments,
+      total: documents.length,
+      offset,
+      limit,
+    });
+  });
+
   // Index document
   app.post('/', {
     schema: {
@@ -12,6 +77,7 @@ export async function documentRoutes(app: FastifyInstance) {
         properties: {
           documentId: { type: 'string' },
           indexId: { type: 'string' },
+          title: { type: 'string' },
           content: { type: 'string' },
           metadata: { type: 'object' },
           options: {
@@ -38,27 +104,14 @@ export async function documentRoutes(app: FastifyInstance) {
         201: {
           type: 'object',
           properties: {
-            result: {
-              type: 'object',
-              properties: {
-                documentId: { type: 'string' },
-                indexId: { type: 'string' },
-                status: { 
-                  type: 'string', 
-                  enum: ['success', 'failed', 'partial'] 
-                },
-                processingTime: { type: 'number' },
-                chunksCreated: { type: 'integer' },
-                embeddingsGenerated: { type: 'integer' },
-                keywordsExtracted: { type: 'integer' },
-                entitiesExtracted: { type: 'integer' },
-                errors: {
-                  type: 'array',
-                  items: { type: 'string' },
-                },
-                metadata: { type: 'object' },
-              },
-            },
+            id: { type: 'string' },
+            indexId: { type: 'string' },
+            documentId: { type: 'string' },
+            title: { type: 'string' },
+            content: { type: 'string' },
+            metadata: { type: 'object' },
+            status: { type: 'string' },
+            indexedAt: { type: 'string', format: 'date-time' },
           },
         },
         400: {
@@ -72,7 +125,7 @@ export async function documentRoutes(app: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const { documentId, indexId, content, metadata = {}, options = {} } = request.body as any;
+    const { documentId, indexId, content, metadata = {}, title, options = {} } = request.body as any;
     
     try {
       const result = await app.indexingService!.indexDocument(
@@ -83,7 +136,17 @@ export async function documentRoutes(app: FastifyInstance) {
         options
       );
       
-      reply.code(201).send({ result });
+      // Create and return the document object instead of just the result
+      const document = app.mockDataService.addDocument({
+        documentId,
+        indexId,
+        title: title || 'Untitled Document',
+        content,
+        metadata,
+        status: 'indexed',
+      });
+      
+      reply.code(201).send(document);
     } catch (error) {
       reply.code(400).send({
         error: 'Indexing Failed',
@@ -91,6 +154,58 @@ export async function documentRoutes(app: FastifyInstance) {
         timestamp: new Date().toISOString(),
       });
     }
+  });
+
+  // Get document
+  app.get('/:documentId', {
+    schema: {
+      summary: 'Get document',
+      description: 'Get details of a specific indexed document',
+      tags: ['Document Management'],
+      params: {
+        type: 'object',
+        properties: {
+          documentId: { type: 'string' },
+        },
+        required: ['documentId'],
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            documentId: { type: 'string' },
+            title: { type: 'string' },
+            content: { type: 'string' },
+            metadata: { type: 'object' },
+            status: { type: 'string' },
+            indexedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+        404: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' },
+            timestamp: { type: 'string', format: 'date-time' },
+          },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const { documentId } = request.params as { documentId: string };
+    
+    const document = app.mockDataService.getDocument(documentId);
+    
+    if (!document) {
+      return reply.code(404).send({
+        error: 'Document Not Found',
+        message: `Document with id ${documentId} not found`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    
+    reply.send(document);
   });
 
   // Bulk index documents

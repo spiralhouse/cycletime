@@ -10,7 +10,7 @@ info:
     name: MIT
 
 servers:
-  - url: http://localhost:8005
+  - url: http://localhost:3003
     description: Development server
   - url: https://api.cycletime.dev/document-indexing
     description: Production server
@@ -29,7 +29,49 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                  dependencies:
+                    type: object
+                    properties:
+                      vectorDatabase:
+                        type: string
+                        enum: [healthy, degraded, unhealthy]
+                      embeddingService:
+                        type: string
+                        enum: [healthy, degraded, unhealthy]
+                      redis:
+                        type: string
+                        enum: [healthy, degraded, unhealthy]
+                      textProcessor:
+                        type: string
+                        enum: [healthy, degraded, unhealthy]
+                  metrics:
+                    type: object
+                    properties:
+                      indexCount:
+                        type: integer
+                      totalDocuments:
+                        type: integer
+                      averageResponseTime:
+                        type: number
+                      memoryUsage:
+                        type: number
+                      diskUsage:
+                        type: number
+                required:
+                  - status
+                  - timestamp
+                  - dependencies
+                  - metrics
 
   /health/detailed:
     get:
@@ -45,6 +87,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DetailedHealthResponse'
+
+  /health/dependencies:
+    get:
+      summary: Check dependencies health
+      description: Check the health status of all service dependencies
+      operationId: checkDependenciesHealth
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Dependencies health information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dependencies:
+                    type: object
+                    properties:
+                      vectorDatabase:
+                        type: string
+                        enum: [healthy, degraded, unhealthy]
+                      embeddingService:
+                        type: string
+                        enum: [healthy, degraded, unhealthy]
+                      redis:
+                        type: string
+                        enum: [healthy, degraded, unhealthy]
+                      textProcessor:
+                        type: string
+                        enum: [healthy, degraded, unhealthy]
+                required:
+                  - dependencies
 
   /api/v1/indices:
     get:
@@ -94,7 +169,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/v1/indices/{indexId}:
+  /api/v1/indices/{id}:
     get:
       summary: Get index
       description: Get details of a specific index
@@ -102,7 +177,7 @@ paths:
       tags:
         - Index Management
       parameters:
-        - name: indexId
+        - name: id
           in: path
           required: true
           description: Index ID
@@ -129,7 +204,7 @@ paths:
       tags:
         - Index Management
       parameters:
-        - name: indexId
+        - name: id
           in: path
           required: true
           description: Index ID
@@ -168,7 +243,7 @@ paths:
       tags:
         - Index Management
       parameters:
-        - name: indexId
+        - name: id
           in: path
           required: true
           description: Index ID
@@ -184,7 +259,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/v1/indices/{indexId}/stats:
+  /api/v1/indices/{id}/stats:
     get:
       summary: Get index statistics
       description: Get statistics for a specific index
@@ -192,7 +267,7 @@ paths:
       tags:
         - Index Management
       parameters:
-        - name: indexId
+        - name: id
           in: path
           required: true
           description: Index ID
@@ -266,7 +341,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/v1/documents/{documentId}:
+  /api/v1/documents/{id}:
     put:
       summary: Reindex document
       description: Reindex an existing document
@@ -274,7 +349,7 @@ paths:
       tags:
         - Document Indexing
       parameters:
-        - name: documentId
+        - name: id
           in: path
           required: true
           description: Document ID
@@ -313,13 +388,13 @@ paths:
       tags:
         - Document Indexing
       parameters:
-        - name: documentId
+        - name: id
           in: path
           required: true
           description: Document ID
           schema:
             type: string
-        - name: indexId
+        - name: id
           in: query
           required: true
           description: Index ID
@@ -335,7 +410,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/v1/documents/{documentId}/status:
+  /api/v1/documents/{id}/status:
     get:
       summary: Get indexing status
       description: Get the indexing status of a document
@@ -343,13 +418,13 @@ paths:
       tags:
         - Document Indexing
       parameters:
-        - name: documentId
+        - name: id
           in: path
           required: true
           description: Document ID
           schema:
             type: string
-        - name: indexId
+        - name: id
           in: query
           required: true
           description: Index ID
@@ -459,13 +534,29 @@ paths:
       description: Generate embeddings for text content
       operationId: generateEmbeddings
       tags:
-        - Embedding Management
+        - Embedding Operations
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GenerateEmbeddingsRequest'
+              type: object
+              properties:
+                text:
+                  type: string
+                model:
+                  type: string
+                  default: text-embedding-3-small
+                dimensions:
+                  type: integer
+                  default: 1536
+                normalize:
+                  type: boolean
+                  default: true
+                metadata:
+                  type: object
+              required:
+                - text
       responses:
         '200':
           description: Embeddings generated successfully
@@ -486,7 +577,7 @@ paths:
       description: Generate embeddings for multiple texts
       operationId: generateBatchEmbeddings
       tags:
-        - Embedding Management
+        - Embedding Operations
       requestBody:
         required: true
         content:
@@ -513,7 +604,7 @@ paths:
       description: Compare two embeddings and get similarity score
       operationId: compareEmbeddings
       tags:
-        - Embedding Management
+        - Embedding Operations
       requestBody:
         required: true
         content:
@@ -534,9 +625,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/v1/analytics:
+  /api/v1/analytics/statistics:
     get:
-      summary: Get analytics metrics
+      summary: Get analytics statistics
       description: Get analytics and metrics for the document indexing service
       operationId: getAnalytics
       tags:
@@ -565,9 +656,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/AnalyticsResponse'
 
-  /api/v1/analytics/report:
+  /api/v1/analytics/reports:
     post:
-      summary: Generate analytics report
+      summary: Generate analytics reports
       description: Generate a comprehensive analytics report
       operationId: generateAnalyticsReport
       tags:
@@ -637,6 +728,8 @@ components:
         - status
         - timestamp
         - version
+        - dependencies
+        - metrics
 
     DetailedHealthResponse:
       allOf:
@@ -1084,6 +1177,113 @@ components:
         - indexId
         - status
 
+    IndexedDocument:
+      type: object
+      properties:
+        id:
+          type: string
+        indexId:
+          type: string
+        documentId:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        status:
+          type: string
+          enum: [indexed, indexing, failed, pending]
+        embeddings:
+          type: array
+          items:
+            type: number
+        chunks:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              content:
+                type: string
+              embedding:
+                type: array
+                items:
+                  type: number
+        metadata:
+          type: object
+        keywords:
+          type: array
+          items:
+            type: string
+        entities:
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+              type:
+                type: string
+              confidence:
+                type: number
+        indexedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - indexId
+        - documentId
+        - title
+        - content
+        - status
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        dependencies:
+          type: object
+          properties:
+            vectorDatabase:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            embeddingService:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            redis:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            textProcessor:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+        metrics:
+          type: object
+          properties:
+            responseTime:
+              type: number
+            uptime:
+              type: number
+            memoryUsage:
+              type: number
+            diskUsage:
+              type: number
+      required:
+        - status
+        - timestamp
+        - dependencies
+        - metrics
+
     SearchRequest:
       type: object
       properties:
@@ -1229,6 +1429,8 @@ components:
           type: object
         score:
           type: number
+          minimum: 0
+          maximum: 1
         highlights:
           type: array
           items:
@@ -1252,6 +1454,8 @@ components:
                 type: number
         similarity:
           type: number
+          minimum: 0
+          maximum: 1
         relevanceScore:
           type: number
         matchType:
@@ -1777,7 +1981,7 @@ tags:
     description: Document indexing operations
   - name: Search Operations
     description: Document search and discovery
-  - name: Embedding Management
+  - name: Embedding Operations
     description: Vector embedding operations
   - name: Analytics
     description: Service analytics and metrics

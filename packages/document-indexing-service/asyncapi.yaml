@@ -1,6 +1,6 @@
 asyncapi: 3.0.0
 info:
-  title: Document Indexing Service Events API
+  title: Document Indexing Service Events
   version: 1.0.0
   description: |
     Events published by the Document Indexing Service for real-time notifications and system integration.
@@ -34,35 +34,53 @@ servers:
 defaultContentType: application/json
 
 channels:
-  document-indexing/document/indexed:
+  documents/indexed:
     description: Published when a document is successfully indexed
     messages:
       documentIndexed:
         $ref: '#/components/messages/DocumentIndexed'
 
-  document-indexing/document/reindexed:
+  documents/updated:
     description: Published when a document is reindexed
     messages:
-      documentReindexed:
-        $ref: '#/components/messages/DocumentReindexed'
+      documentUpdated:
+        $ref: '#/components/messages/DocumentUpdated'
 
-  document-indexing/document/removed:
+  documents/deleted:
     description: Published when a document is removed from index
     messages:
-      documentRemoved:
-        $ref: '#/components/messages/DocumentRemoved'
+      documentDeleted:
+        $ref: '#/components/messages/DocumentDeleted'
 
-  document-indexing/search/query/executed:
+  search/performed:
     description: Published when a search query is executed
     messages:
-      searchQueryExecuted:
-        $ref: '#/components/messages/SearchQueryExecuted'
+      searchPerformed:
+        $ref: '#/components/messages/SearchPerformed'
 
-  document-indexing/embedding/generated:
+  embeddings/generated:
     description: Published when embeddings are generated
     messages:
       embeddingGenerated:
         $ref: '#/components/messages/EmbeddingGenerated'
+
+  search/failed:
+    description: Published when a search operation fails
+    messages:
+      searchFailed:
+        $ref: '#/components/messages/SearchFailed'
+
+  embeddings/failed:
+    description: Published when embedding generation fails
+    messages:
+      embeddingFailed:
+        $ref: '#/components/messages/EmbeddingFailed'
+
+  analytics/report-generated:
+    description: Published when an analytics report is generated
+    messages:
+      reportGenerated:
+        $ref: '#/components/messages/ReportGenerated'
 
   document-indexing/index/updated:
     description: Published when an index is created, updated, or deleted
@@ -199,9 +217,22 @@ components:
       summary: A document has been successfully indexed
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/DocumentIndexedPayload'
+        type: object
+        properties:
+          documentId:
+            type: string
+          indexId:
+            type: string
+          title:
+            type: string
+          processingTime:
+            type: number
+          chunkCount:
+            type: integer
+          embeddingModel:
+            type: string
 
-    DocumentReindexed:
+    DocumentUpdated:
       name: DocumentReindexed
       title: Document Reindexed
       summary: A document has been reindexed
@@ -209,7 +240,7 @@ components:
       payload:
         $ref: '#/components/schemas/DocumentReindexedPayload'
 
-    DocumentRemoved:
+    DocumentDeleted:
       name: DocumentRemoved
       title: Document Removed
       summary: A document has been removed from index
@@ -217,13 +248,24 @@ components:
       payload:
         $ref: '#/components/schemas/DocumentRemovedPayload'
 
-    SearchQueryExecuted:
+    SearchPerformed:
       name: SearchQueryExecuted
       title: Search Query Executed
       summary: A search query has been executed
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/SearchQueryExecutedPayload'
+        type: object
+        properties:
+          query:
+            type: string
+          searchType:
+            type: string
+          resultCount:
+            type: integer
+          processingTime:
+            type: number
+          threshold:
+            type: number
 
     EmbeddingGenerated:
       name: EmbeddingGenerated
@@ -231,7 +273,20 @@ components:
       summary: Embeddings have been generated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/EmbeddingGeneratedPayload'
+        type: object
+        properties:
+          embeddingId:
+            type: string
+          textLength:
+            type: integer
+          model:
+            type: string
+          dimensions:
+            type: integer
+          tokens:
+            type: integer
+          processingTime:
+            type: number
 
     IndexUpdated:
       name: IndexUpdated
@@ -288,6 +343,30 @@ components:
       contentType: application/json
       payload:
         $ref: '#/components/schemas/PerformanceAlertPayload'
+
+    SearchFailed:
+      name: SearchFailed
+      title: Search Failed
+      summary: A search operation has failed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SearchFailedPayload'
+
+    EmbeddingFailed:
+      name: EmbeddingFailed
+      title: Embedding Failed
+      summary: An embedding generation has failed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/EmbeddingFailedPayload'
+
+    ReportGenerated:
+      name: ReportGenerated
+      title: Report Generated
+      summary: An analytics report has been generated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ReportGeneratedPayload'
 
   schemas:
     BaseEvent:
@@ -1033,3 +1112,104 @@ components:
     userCorrelation:
       description: Correlation ID for tracking user-related events
       location: $message.payload.metadata.userId
+
+    SearchFailedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            query:
+              type: string
+              description: The search query that failed
+            error:
+              type: object
+              properties:
+                type:
+                  type: string
+                message:
+                  type: string
+                code:
+                  type: string
+              required:
+                - type
+                - message
+                - code
+            failedAt:
+              type: string
+              format: date-time
+              description: When the search failed
+            retryable:
+              type: boolean
+              description: Whether the search can be retried
+          required:
+            - query
+            - error
+            - failedAt
+            - retryable
+
+    EmbeddingFailedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            text:
+              type: string
+              description: The text that failed to be embedded
+            error:
+              type: object
+              properties:
+                type:
+                  type: string
+                message:
+                  type: string
+                code:
+                  type: string
+              required:
+                - type
+                - message
+                - code
+            failedAt:
+              type: string
+              format: date-time
+              description: When the embedding failed
+            retryable:
+              type: boolean
+              description: Whether the embedding can be retried
+          required:
+            - text
+            - error
+            - failedAt
+            - retryable
+
+    ReportGeneratedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            reportId:
+              type: string
+              description: ID of the generated report
+            type:
+              type: string
+              description: Type of report generated
+            generatedAt:
+              type: string
+              format: date-time
+              description: When the report was generated
+            dataPoints:
+              type: integer
+              description: Number of data points in the report
+            timeframe:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: date-time
+                end:
+                  type: string
+                  format: date-time
+          required:
+            - reportId
+            - type
+            - generatedAt
+            - dataPoints

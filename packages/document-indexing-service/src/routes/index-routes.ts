@@ -14,6 +14,8 @@ export async function indexRoutes(app: FastifyInstance) {
             type: 'string',
             enum: ['active', 'inactive', 'creating', 'updating', 'deleting'],
           },
+          offset: { type: 'integer', default: 0 },
+          limit: { type: 'integer', default: 50 },
         },
       },
       response: {
@@ -51,12 +53,18 @@ export async function indexRoutes(app: FastifyInstance) {
               },
             },
             total: { type: 'integer' },
+            offset: { type: 'integer' },
+            limit: { type: 'integer' },
           },
         },
       },
     },
   }, async (request, reply) => {
-    const { status } = request.query as { status?: string };
+    const { status, offset = 0, limit = 50 } = request.query as { 
+      status?: string; 
+      offset?: number; 
+      limit?: number; 
+    };
     
     let indices = app.mockDataService.getIndices();
     
@@ -64,9 +72,14 @@ export async function indexRoutes(app: FastifyInstance) {
       indices = indices.filter((index: any) => index.status === status);
     }
     
+    // Apply pagination
+    const paginatedIndices = indices.slice(offset, offset + limit);
+    
     reply.send({
-      indices,
+      indices: paginatedIndices,
       total: indices.length,
+      offset,
+      limit,
     });
   });
 
@@ -100,21 +113,16 @@ export async function indexRoutes(app: FastifyInstance) {
         201: {
           type: 'object',
           properties: {
-            index: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' },
-                name: { type: 'string' },
-                description: { type: 'string' },
-                status: { type: 'string' },
-                documentCount: { type: 'integer' },
-                vectorDimensions: { type: 'integer' },
-                embeddingModel: { type: 'string' },
-                createdAt: { type: 'string', format: 'date-time' },
-                updatedAt: { type: 'string', format: 'date-time' },
-                settings: { type: 'object' },
-              },
-            },
+            id: { type: 'string' },
+            name: { type: 'string' },
+            description: { type: 'string' },
+            status: { type: 'string' },
+            documentCount: { type: 'integer' },
+            vectorDimensions: { type: 'integer' },
+            embeddingModel: { type: 'string' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+            settings: { type: 'object' },
           },
         },
       },
@@ -132,7 +140,7 @@ export async function indexRoutes(app: FastifyInstance) {
       embeddingModel: index.embeddingModel,
     });
     
-    reply.code(201).send({ index });
+    reply.code(201).send(index);
   });
 
   // Get index
@@ -152,21 +160,16 @@ export async function indexRoutes(app: FastifyInstance) {
         200: {
           type: 'object',
           properties: {
-            index: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' },
-                name: { type: 'string' },
-                description: { type: 'string' },
-                status: { type: 'string' },
-                documentCount: { type: 'integer' },
-                vectorDimensions: { type: 'integer' },
-                embeddingModel: { type: 'string' },
-                createdAt: { type: 'string', format: 'date-time' },
-                updatedAt: { type: 'string', format: 'date-time' },
-                settings: { type: 'object' },
-              },
-            },
+            id: { type: 'string' },
+            name: { type: 'string' },
+            description: { type: 'string' },
+            status: { type: 'string' },
+            documentCount: { type: 'integer' },
+            vectorDimensions: { type: 'integer' },
+            embeddingModel: { type: 'string' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+            settings: { type: 'object' },
           },
         },
         404: {
@@ -192,7 +195,7 @@ export async function indexRoutes(app: FastifyInstance) {
       });
     }
     
-    reply.send({ index });
+    reply.send(index);
   });
 
   // Update index
@@ -229,21 +232,16 @@ export async function indexRoutes(app: FastifyInstance) {
         200: {
           type: 'object',
           properties: {
-            index: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' },
-                name: { type: 'string' },
-                description: { type: 'string' },
-                status: { type: 'string' },
-                documentCount: { type: 'integer' },
-                vectorDimensions: { type: 'integer' },
-                embeddingModel: { type: 'string' },
-                createdAt: { type: 'string', format: 'date-time' },
-                updatedAt: { type: 'string', format: 'date-time' },
-                settings: { type: 'object' },
-              },
-            },
+            id: { type: 'string' },
+            name: { type: 'string' },
+            description: { type: 'string' },
+            status: { type: 'string' },
+            documentCount: { type: 'integer' },
+            vectorDimensions: { type: 'integer' },
+            embeddingModel: { type: 'string' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+            settings: { type: 'object' },
           },
         },
         404: {
@@ -278,7 +276,7 @@ export async function indexRoutes(app: FastifyInstance) {
       embeddingModel: index.embeddingModel,
     });
     
-    reply.send({ index });
+    reply.send(index);
   });
 
   // Delete index

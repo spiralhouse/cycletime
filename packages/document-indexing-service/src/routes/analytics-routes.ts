@@ -1,6 +1,179 @@
 import { FastifyInstance } from 'fastify';
 
 export async function analyticsRoutes(app: FastifyInstance) {
+  // Get statistics (alias for main analytics endpoint)
+  app.get('/statistics', {
+    schema: {
+      summary: 'Get analytics statistics',
+      description: 'Get comprehensive analytics statistics for the document indexing service',
+      tags: ['Analytics'],
+      querystring: {
+        type: 'object',
+        properties: {
+          timeframe: {
+            type: 'string',
+            enum: ['hour', 'day', 'week', 'month'],
+            default: 'day',
+          },
+          metrics: {
+            type: 'array',
+            items: {
+              type: 'string',
+              enum: ['indexing', 'search', 'embeddings', 'performance', 'storage', 'users'],
+            },
+          },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            totalDocuments: { type: 'integer' },
+            totalEmbeddings: { type: 'integer' },
+            totalChunks: { type: 'integer' },
+            averageIndexingTime: { type: 'number' },
+            vectorDimensions: { type: 'integer' },
+            storageUsed: { type: 'number' },
+            queryCount: { type: 'integer' },
+            averageQueryTime: { type: 'number' },
+            successRate: { type: 'number' },
+            errorRate: { type: 'number' },
+            lastIndexed: { type: 'string', format: 'date-time' },
+            popularQueries: {
+              type: 'array',
+              items: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const statistics = app.mockDataService.getStatistics();
+    reply.send(statistics);
+  });
+
+  // Generate reports (alias for /report endpoint)
+  app.post('/reports', {
+    schema: {
+      summary: 'Generate analytics reports',
+      description: 'Generate a comprehensive analytics report',
+      tags: ['Analytics'],
+      body: {
+        type: 'object',
+        properties: {
+          type: { type: 'string' },
+          timeframe: {
+            type: 'object',
+            properties: {
+              start: { type: 'string', format: 'date-time' },
+              end: { type: 'string', format: 'date-time' },
+            },
+            required: ['start', 'end'],
+          },
+          options: {
+            type: 'object',
+            properties: {
+              includeInsights: { type: 'boolean', default: true },
+              includeTrends: { type: 'boolean', default: true },
+              includeRecommendations: { type: 'boolean', default: true },
+            },
+          },
+        },
+        required: ['timeframe'],
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            reportId: { type: 'string' },
+            type: { type: 'string' },
+            title: { type: 'string' },
+            description: { type: 'string' },
+            timeframe: {
+              type: 'object',
+              properties: {
+                start: { type: 'string', format: 'date-time' },
+                end: { type: 'string', format: 'date-time' },
+              },
+            },
+            data: { type: 'object' },
+            metrics: { type: 'object' },
+            trends: {
+              type: 'object',
+              properties: {
+                indexingTrend: { 
+                  type: 'string', 
+                  enum: ['increasing', 'decreasing', 'stable'] 
+                },
+                searchTrend: { 
+                  type: 'string', 
+                  enum: ['increasing', 'decreasing', 'stable'] 
+                },
+                performanceTrend: { 
+                  type: 'string', 
+                  enum: ['improving', 'degrading', 'stable'] 
+                },
+              },
+            },
+            insights: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  type: { 
+                    type: 'string', 
+                    enum: ['positive', 'negative', 'neutral'] 
+                  },
+                  title: { type: 'string' },
+                  description: { type: 'string' },
+                  impact: { 
+                    type: 'string', 
+                    enum: ['high', 'medium', 'low'] 
+                  },
+                  recommendation: { type: 'string' },
+                },
+              },
+            },
+            generatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+        400: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' },
+            timestamp: { type: 'string', format: 'date-time' },
+          },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const { timeframe, options } = request.body as any;
+    
+    try {
+      const report = await app.analyticsService!.generateReport(timeframe, options);
+      // Return report directly instead of wrapped in { report }
+      reply.send({
+        reportId: report.id,
+        type: (request.body as any).type || 'comprehensive',
+        title: report.title,
+        description: report.description,
+        timeframe: report.timeframe,
+        data: report.metrics,
+        metrics: report.metrics,
+        trends: report.trends,
+        insights: report.insights,
+        generatedAt: report.generatedAt,
+      });
+    } catch (error) {
+      reply.code(400).send({
+        error: 'Report Generation Failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
   // Get analytics metrics
   app.get('/', {
     schema: {
