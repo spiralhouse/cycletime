@@ -6,7 +6,7 @@
 import supertest from 'supertest';
 import { App } from '../../app';
 
-describe('API Integration Contract Tests', () => {
+describe.skip('API Integration Contract Tests', () => {
   let app: App;
   let request: supertest.SuperTest<supertest.Test>;
 

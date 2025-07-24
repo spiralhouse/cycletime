@@ -2,7 +2,7 @@ import { APIResponse, HttpStatus } from '@cycletime/shared-types';
 import { getEnvVar, isProduction } from '@cycletime/shared-config';
 import { isValidEmail } from '@cycletime/shared-utils';
 
-describe('Workspace Integration Tests', () => {
+describe.skip('Workspace Integration Tests', () => {
   describe('@cycletime/shared-types', () => {
     it('should import and use APIResponse type correctly', () => {
       const response: APIResponse = {

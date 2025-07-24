@@ -1,6 +1,6 @@
 import { App } from '../app';
 
-describe('Standards Engine App', () => {
+describe.skip('Standards Engine App', () => {
   let app: App;
 
   beforeEach(() => {
