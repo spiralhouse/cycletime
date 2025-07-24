@@ -7,17 +7,16 @@ import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals
 import { FastifyInstance } from 'fastify';
 import { build } from '../../app';
 
-describe('Integration Contract Tests', () => {
+const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+
+// Skip entire test suite in CI environment to prevent hanging
+const describeMethod = isCI ? describe.skip : describe;
+
+describeMethod('Integration Contract Tests', () => {
   let app: FastifyInstance;
   const originalEnv = process.env;
-  const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
 
   beforeEach(async () => {
-    if (isCI) {
-      console.log('Skipping integration test setup in CI environment');
-      return;
-    }
-
     // Set up test environment
     process.env = {
       ...originalEnv,
@@ -47,11 +46,6 @@ describe('Integration Contract Tests', () => {
 
   describe('Request Flow Integration', () => {
     it('should handle complete request lifecycle', async () => {
-      if (isCI || !app) {
-        console.log('Skipping integration test in CI environment or app not initialized');
-        return;
-      }
-
       const response = await app.inject({
         method: 'GET',
         url: '/api/v1/ai-service/models',
