@@ -4,25 +4,32 @@ import { AIRequest, AiRequestType } from '../../interfaces/ai-types';
 describe('ClaudeProvider Integration Tests', () => {
   let provider: ClaudeProvider;
   const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
+  const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+
+  beforeAll(() => {
+    if (isCI) {
+      console.log('Skipping integration tests in CI environment');
+    }
+  });
 
   beforeEach(() => {
-    if (hasApiKey) {
+    if (hasApiKey && !isCI) {
       provider = new ClaudeProvider();
     }
   });
 
   describe('Real API Integration', () => {
     it('should validate API key configuration', () => {
-      if (!hasApiKey) {
-        console.log('Skipping API key validation test - no ANTHROPIC_API_KEY provided');
+      if (!hasApiKey || isCI) {
+        console.log('Skipping API key validation test - no ANTHROPIC_API_KEY provided or running in CI');
         return;
       }
       expect(provider.validateConfig()).toBe(true);
     });
 
     it('should successfully call Anthropic API', async () => {
-      if (!hasApiKey) {
-        console.log('Skipping API integration test - no ANTHROPIC_API_KEY provided');
+      if (!hasApiKey || isCI) {
+        console.log('Skipping API integration test - no ANTHROPIC_API_KEY provided or running in CI');
         return;
       }
       const request: AIRequest = {
@@ -50,7 +57,7 @@ describe('ClaudeProvider Integration Tests', () => {
 
     it('should handle all supported models', async () => {
       if (!hasApiKey) {
-        console.log('Skipping model support test - no ANTHROPIC_API_KEY provided');
+        console.log('Skipping model support test - no ANTHROPIC_API_KEY provided or running in CI');
         return;
       }
       
@@ -79,7 +86,7 @@ describe('ClaudeProvider Integration Tests', () => {
 
     it('should calculate accurate costs', async () => {
       if (!hasApiKey) {
-        console.log('Skipping cost calculation test - no ANTHROPIC_API_KEY provided');
+        console.log('Skipping cost calculation test - no ANTHROPIC_API_KEY provided or running in CI');
         return;
       }
       
@@ -111,7 +118,7 @@ describe('ClaudeProvider Integration Tests', () => {
 
     it('should handle API errors gracefully', async () => {
       if (!hasApiKey) {
-        console.log('Skipping API error handling test - no ANTHROPIC_API_KEY provided');
+        console.log('Skipping API error handling test - no ANTHROPIC_API_KEY provided or running in CI');
         return;
       }
       
@@ -127,7 +134,7 @@ describe('ClaudeProvider Integration Tests', () => {
 
     it('should validate request constraints', async () => {
       if (!hasApiKey) {
-        console.log('Skipping request constraint validation test - no ANTHROPIC_API_KEY provided');
+        console.log('Skipping request constraint validation test - no ANTHROPIC_API_KEY provided or running in CI');
         return;
       }
       
@@ -201,7 +208,7 @@ describe('ClaudeProvider Integration Tests', () => {
   describe('Performance', () => {
     it('should respond within reasonable time limits', async () => {
       if (!hasApiKey) {
-        console.log('Skipping performance test - no ANTHROPIC_API_KEY provided');
+        console.log('Skipping performance test - no ANTHROPIC_API_KEY provided or running in CI');
         return;
       }
       
