@@ -12,6 +12,8 @@
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch --passWithNoTests",
     "test:coverage": "jest --coverage --passWithNoTests",
+    "test:unit": "jest --testPathIgnorePatterns=integration --passWithNoTests",
+    "test:integration": "jest --testPathPattern=integration --passWithNoTests",
     "lint": "eslint src/**/*.ts --no-warn-ignored",
     "typecheck": "tsc --noEmit"
   },

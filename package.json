@@ -81,7 +81,8 @@
     "onboard": "./scripts/onboard-developer.sh",
     "build": "turbo run build",
     "test": "turbo run test",
-    "test:integration": "echo \"Integration tests not yet implemented\" && exit 1",
+    "test:unit": "turbo run test:unit",
+    "test:integration": "turbo run test:integration",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck"
   },
