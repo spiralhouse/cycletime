@@ -1,0 +1,1215 @@
+asyncapi: 3.0.0
+info:
+  title: Document Indexing Service Events
+  version: 1.0.0
+  description: |
+    Events published by the Document Indexing Service for real-time notifications and system integration.
+    
+    This service publishes events for:
+    - Document lifecycle (indexed, reindexed, removed)
+    - Search operations (query executed, results generated)
+    - Embedding operations (generated, compared)
+    - Index management (created, updated, deleted)
+    - Analytics and metrics updates
+    - System health and performance changes
+    
+    Events are published to Redis channels and can be consumed by other services
+    for monitoring, analytics, and workflow automation.
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  development:
+    host: localhost:6379
+    protocol: redis
+    description: Development Redis server
+  production:
+    host: redis.cycletime.dev:6379
+    protocol: redis
+    description: Production Redis server
+
+defaultContentType: application/json
+
+channels:
+  documents/indexed:
+    description: Published when a document is successfully indexed
+    messages:
+      documentIndexed:
+        $ref: '#/components/messages/DocumentIndexed'
+
+  documents/updated:
+    description: Published when a document is reindexed
+    messages:
+      documentUpdated:
+        $ref: '#/components/messages/DocumentUpdated'
+
+  documents/deleted:
+    description: Published when a document is removed from index
+    messages:
+      documentDeleted:
+        $ref: '#/components/messages/DocumentDeleted'
+
+  search/performed:
+    description: Published when a search query is executed
+    messages:
+      searchPerformed:
+        $ref: '#/components/messages/SearchPerformed'
+
+  embeddings/generated:
+    description: Published when embeddings are generated
+    messages:
+      embeddingGenerated:
+        $ref: '#/components/messages/EmbeddingGenerated'
+
+  search/failed:
+    description: Published when a search operation fails
+    messages:
+      searchFailed:
+        $ref: '#/components/messages/SearchFailed'
+
+  embeddings/failed:
+    description: Published when embedding generation fails
+    messages:
+      embeddingFailed:
+        $ref: '#/components/messages/EmbeddingFailed'
+
+  analytics/report-generated:
+    description: Published when an analytics report is generated
+    messages:
+      reportGenerated:
+        $ref: '#/components/messages/ReportGenerated'
+
+  document-indexing/index/updated:
+    description: Published when an index is created, updated, or deleted
+    messages:
+      indexUpdated:
+        $ref: '#/components/messages/IndexUpdated'
+
+  document-indexing/indexing/error:
+    description: Published when an indexing operation fails
+    messages:
+      indexingError:
+        $ref: '#/components/messages/IndexingError'
+
+  document-indexing/bulk/operation/completed:
+    description: Published when a bulk operation completes
+    messages:
+      bulkOperationCompleted:
+        $ref: '#/components/messages/BulkOperationCompleted'
+
+  document-indexing/analytics/updated:
+    description: Published when analytics metrics are updated
+    messages:
+      analyticsUpdated:
+        $ref: '#/components/messages/AnalyticsUpdated'
+
+  document-indexing/service/started:
+    description: Published when the service starts
+    messages:
+      serviceStarted:
+        $ref: '#/components/messages/ServiceStarted'
+
+  document-indexing/service/health/changed:
+    description: Published when service health changes
+    messages:
+      serviceHealthChanged:
+        $ref: '#/components/messages/ServiceHealthChanged'
+
+  document-indexing/performance/alert:
+    description: Published when performance thresholds are exceeded
+    messages:
+      performanceAlert:
+        $ref: '#/components/messages/PerformanceAlert'
+
+operations:
+  publishDocumentIndexed:
+    action: send
+    channel:
+      $ref: '#/channels/document-indexing~1document~1indexed'
+    summary: Publish document indexed event
+    description: Publishes an event when a document is successfully indexed
+
+  publishDocumentReindexed:
+    action: send
+    channel:
+      $ref: '#/channels/document-indexing~1document~1reindexed'
+    summary: Publish document reindexed event
+    description: Publishes an event when a document is reindexed
+
+  publishDocumentRemoved:
+    action: send
+    channel:
+      $ref: '#/channels/document-indexing~1document~1removed'
+    summary: Publish document removed event
+    description: Publishes an event when a document is removed from index
+
+  publishSearchQueryExecuted:
+    action: send
+    channel:
+      $ref: '#/channels/document-indexing~1search~1query~1executed'
+    summary: Publish search query executed event
+    description: Publishes an event when a search query is executed
+
+  publishEmbeddingGenerated:
+    action: send
+    channel:
+      $ref: '#/channels/document-indexing~1embedding~1generated'
+    summary: Publish embedding generated event
+    description: Publishes an event when embeddings are generated
+
+  publishIndexUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/document-indexing~1index~1updated'
+    summary: Publish index updated event
+    description: Publishes an event when an index is created, updated, or deleted
+
+  publishIndexingError:
+    action: send
+    channel:
+      $ref: '#/channels/document-indexing~1indexing~1error'
+    summary: Publish indexing error event
+    description: Publishes an event when an indexing operation fails
+
+  publishBulkOperationCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/document-indexing~1bulk~1operation~1completed'
+    summary: Publish bulk operation completed event
+    description: Publishes an event when a bulk operation completes
+
+  publishAnalyticsUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/document-indexing~1analytics~1updated'
+    summary: Publish analytics updated event
+    description: Publishes an event when analytics metrics are updated
+
+  publishServiceStarted:
+    action: send
+    channel:
+      $ref: '#/channels/document-indexing~1service~1started'
+    summary: Publish service started event
+    description: Publishes an event when the service starts
+
+  publishServiceHealthChanged:
+    action: send
+    channel:
+      $ref: '#/channels/document-indexing~1service~1health~1changed'
+    summary: Publish service health changed event
+    description: Publishes an event when service health changes
+
+  publishPerformanceAlert:
+    action: send
+    channel:
+      $ref: '#/channels/document-indexing~1performance~1alert'
+    summary: Publish performance alert event
+    description: Publishes an event when performance thresholds are exceeded
+
+components:
+  messages:
+    DocumentIndexed:
+      name: DocumentIndexed
+      title: Document Indexed
+      summary: A document has been successfully indexed
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          documentId:
+            type: string
+          indexId:
+            type: string
+          title:
+            type: string
+          processingTime:
+            type: number
+          chunkCount:
+            type: integer
+          embeddingModel:
+            type: string
+
+    DocumentUpdated:
+      name: DocumentReindexed
+      title: Document Reindexed
+      summary: A document has been reindexed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentReindexedPayload'
+
+    DocumentDeleted:
+      name: DocumentRemoved
+      title: Document Removed
+      summary: A document has been removed from index
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentRemovedPayload'
+
+    SearchPerformed:
+      name: SearchQueryExecuted
+      title: Search Query Executed
+      summary: A search query has been executed
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          query:
+            type: string
+          searchType:
+            type: string
+          resultCount:
+            type: integer
+          processingTime:
+            type: number
+          threshold:
+            type: number
+
+    EmbeddingGenerated:
+      name: EmbeddingGenerated
+      title: Embedding Generated
+      summary: Embeddings have been generated
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          embeddingId:
+            type: string
+          textLength:
+            type: integer
+          model:
+            type: string
+          dimensions:
+            type: integer
+          tokens:
+            type: integer
+          processingTime:
+            type: number
+
+    IndexUpdated:
+      name: IndexUpdated
+      title: Index Updated
+      summary: An index has been created, updated, or deleted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/IndexUpdatedPayload'
+
+    IndexingError:
+      name: IndexingError
+      title: Indexing Error
+      summary: An indexing operation has failed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/IndexingErrorPayload'
+
+    BulkOperationCompleted:
+      name: BulkOperationCompleted
+      title: Bulk Operation Completed
+      summary: A bulk operation has completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/BulkOperationCompletedPayload'
+
+    AnalyticsUpdated:
+      name: AnalyticsUpdated
+      title: Analytics Updated
+      summary: Analytics metrics have been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AnalyticsUpdatedPayload'
+
+    ServiceStarted:
+      name: ServiceStarted
+      title: Service Started
+      summary: The document indexing service has started
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ServiceStartedPayload'
+
+    ServiceHealthChanged:
+      name: ServiceHealthChanged
+      title: Service Health Changed
+      summary: Service health status has changed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ServiceHealthChangedPayload'
+
+    PerformanceAlert:
+      name: PerformanceAlert
+      title: Performance Alert
+      summary: Performance thresholds have been exceeded
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PerformanceAlertPayload'
+
+    SearchFailed:
+      name: SearchFailed
+      title: Search Failed
+      summary: A search operation has failed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SearchFailedPayload'
+
+    EmbeddingFailed:
+      name: EmbeddingFailed
+      title: Embedding Failed
+      summary: An embedding generation has failed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/EmbeddingFailedPayload'
+
+    ReportGenerated:
+      name: ReportGenerated
+      title: Report Generated
+      summary: An analytics report has been generated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ReportGeneratedPayload'
+
+  schemas:
+    BaseEvent:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for the event
+        eventType:
+          type: string
+          description: Type of the event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        source:
+          type: string
+          description: Service that generated the event
+          default: document-indexing-service
+        version:
+          type: string
+          description: Event schema version
+          default: "1.0.0"
+        correlationId:
+          type: string
+          format: uuid
+          description: Correlation ID for tracking related events
+        metadata:
+          type: object
+          description: Additional event metadata
+          properties:
+            userId:
+              type: string
+            sessionId:
+              type: string
+            projectId:
+              type: string
+            requestId:
+              type: string
+            indexId:
+              type: string
+      required:
+        - eventId
+        - eventType
+        - timestamp
+        - source
+        - version
+
+    DocumentIndexedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              description: ID of the indexed document
+            indexId:
+              type: string
+              description: ID of the index
+            indexedAt:
+              type: string
+              format: date-time
+              description: When the document was indexed
+            processingTime:
+              type: number
+              description: Time taken to index the document in milliseconds
+            chunksCreated:
+              type: integer
+              description: Number of chunks created
+            embeddingsGenerated:
+              type: integer
+              description: Number of embeddings generated
+            status:
+              type: string
+              enum: [completed, failed, partial]
+            documentInfo:
+              type: object
+              properties:
+                title:
+                  type: string
+                contentLength:
+                  type: integer
+                language:
+                  type: string
+                wordCount:
+                  type: integer
+                keywordsCount:
+                  type: integer
+                entitiesCount:
+                  type: integer
+            performance:
+              type: object
+              properties:
+                chunkingTime:
+                  type: number
+                embeddingTime:
+                  type: number
+                indexingTime:
+                  type: number
+          required:
+            - documentId
+            - indexId
+            - indexedAt
+            - processingTime
+            - chunksCreated
+            - embeddingsGenerated
+            - status
+
+    DocumentReindexedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              description: ID of the reindexed document
+            indexId:
+              type: string
+              description: ID of the index
+            reindexedAt:
+              type: string
+              format: date-time
+              description: When the document was reindexed
+            processingTime:
+              type: number
+              description: Time taken to reindex the document in milliseconds
+            chunksUpdated:
+              type: integer
+              description: Number of chunks updated
+            embeddingsUpdated:
+              type: integer
+              description: Number of embeddings updated
+            changesDetected:
+              type: integer
+              description: Number of changes detected
+            status:
+              type: string
+              enum: [completed, failed, partial, skipped]
+            changeInfo:
+              type: object
+              properties:
+                contentChanged:
+                  type: boolean
+                metadataChanged:
+                  type: boolean
+                previousVersion:
+                  type: string
+                newVersion:
+                  type: string
+                changeReason:
+                  type: string
+                  enum: [content_update, metadata_update, forced_reindex, version_update]
+          required:
+            - documentId
+            - indexId
+            - reindexedAt
+            - processingTime
+            - chunksUpdated
+            - embeddingsUpdated
+            - changesDetected
+            - status
+
+    DocumentRemovedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              description: ID of the removed document
+            indexId:
+              type: string
+              description: ID of the index
+            removedAt:
+              type: string
+              format: date-time
+              description: When the document was removed
+            chunksDeleted:
+              type: integer
+              description: Number of chunks deleted
+            embeddingsDeleted:
+              type: integer
+              description: Number of embeddings deleted
+            status:
+              type: string
+              enum: [completed, failed]
+            documentInfo:
+              type: object
+              properties:
+                title:
+                  type: string
+                contentLength:
+                  type: integer
+                indexedAt:
+                  type: string
+                  format: date-time
+                version:
+                  type: string
+          required:
+            - documentId
+            - indexId
+            - removedAt
+            - chunksDeleted
+            - embeddingsDeleted
+            - status
+
+    SearchQueryExecutedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            query:
+              type: string
+              description: The search query
+            resultsCount:
+              type: integer
+              description: Number of results returned
+            executedAt:
+              type: string
+              format: date-time
+              description: When the query was executed
+            processingTime:
+              type: number
+              description: Time taken to execute the query in milliseconds
+            searchType:
+              type: string
+              enum: [semantic, keyword, hybrid]
+              description: Type of search performed
+            indexId:
+              type: string
+              description: ID of the index searched
+            filters:
+              type: object
+              description: Filters applied to the search
+            similarityThreshold:
+              type: number
+              description: Similarity threshold used
+            highestScore:
+              type: number
+              description: Highest relevance score in results
+            averageScore:
+              type: number
+              description: Average relevance score of results
+            performance:
+              type: object
+              properties:
+                embeddingTime:
+                  type: number
+                searchTime:
+                  type: number
+                filteringTime:
+                  type: number
+                rankingTime:
+                  type: number
+          required:
+            - query
+            - resultsCount
+            - executedAt
+            - processingTime
+            - searchType
+
+    EmbeddingGeneratedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            embeddingId:
+              type: string
+              format: uuid
+              description: ID of the generated embedding
+            text:
+              type: string
+              description: Text that was embedded
+            dimensions:
+              type: integer
+              description: Number of dimensions in the embedding
+            generatedAt:
+              type: string
+              format: date-time
+              description: When the embedding was generated
+            processingTime:
+              type: number
+              description: Time taken to generate the embedding in milliseconds
+            model:
+              type: string
+              description: Model used for embedding generation
+            tokens:
+              type: integer
+              description: Number of tokens in the input text
+            cost:
+              type: number
+              description: Estimated cost of generating the embedding
+            batchInfo:
+              type: object
+              properties:
+                batchId:
+                  type: string
+                batchSize:
+                  type: integer
+                batchIndex:
+                  type: integer
+          required:
+            - embeddingId
+            - text
+            - dimensions
+            - generatedAt
+            - processingTime
+            - model
+            - tokens
+            - cost
+
+    IndexUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            indexId:
+              type: string
+              description: ID of the updated index
+            changeType:
+              type: string
+              enum: [created, updated, deleted]
+              description: Type of change
+            updatedAt:
+              type: string
+              format: date-time
+              description: When the index was updated
+            documentCount:
+              type: integer
+              description: Number of documents in the index
+            vectorDimensions:
+              type: integer
+              description: Dimensions of the vector space
+            embeddingModel:
+              type: string
+              description: Embedding model used
+            status:
+              type: string
+              enum: [active, inactive, creating, updating, deleting]
+              description: Current status of the index
+            indexInfo:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                settings:
+                  type: object
+                  properties:
+                    chunkSize:
+                      type: integer
+                    chunkOverlap:
+                      type: integer
+                    similarityThreshold:
+                      type: number
+                    enableHybridSearch:
+                      type: boolean
+                    enableKeywordSearch:
+                      type: boolean
+            performance:
+              type: object
+              properties:
+                averageIndexingTime:
+                  type: number
+                averageQueryTime:
+                  type: number
+                storageSize:
+                  type: integer
+          required:
+            - indexId
+            - changeType
+            - updatedAt
+            - documentCount
+            - vectorDimensions
+            - embeddingModel
+            - status
+
+    IndexingErrorPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            documentId:
+              type: string
+              description: ID of the document that failed to index
+            error:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [processing_error, embedding_error, storage_error, validation_error, timeout_error]
+                message:
+                  type: string
+                code:
+                  type: string
+                details:
+                  type: object
+              required:
+                - type
+                - message
+                - code
+            occurredAt:
+              type: string
+              format: date-time
+              description: When the error occurred
+            retryable:
+              type: boolean
+              description: Whether the operation can be retried
+            retryCount:
+              type: integer
+              description: Number of retry attempts
+            indexId:
+              type: string
+              description: ID of the index
+            documentInfo:
+              type: object
+              properties:
+                title:
+                  type: string
+                contentLength:
+                  type: integer
+                contentType:
+                  type: string
+            performance:
+              type: object
+              properties:
+                failedStage:
+                  type: string
+                  enum: [validation, chunking, embedding, storage, indexing]
+                processingTime:
+                  type: number
+          required:
+            - documentId
+            - error
+            - occurredAt
+            - retryable
+            - retryCount
+
+    BulkOperationCompletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            operationType:
+              type: string
+              enum: [bulk_index, bulk_reindex, bulk_delete]
+              description: Type of bulk operation
+            completedAt:
+              type: string
+              format: date-time
+              description: When the operation completed
+            totalItems:
+              type: integer
+              description: Total number of items processed
+            successCount:
+              type: integer
+              description: Number of successful operations
+            failureCount:
+              type: integer
+              description: Number of failed operations
+            processingTime:
+              type: number
+              description: Total processing time in milliseconds
+            batchId:
+              type: string
+              description: ID of the batch operation
+            indexId:
+              type: string
+              description: ID of the index
+            performance:
+              type: object
+              properties:
+                averageItemTime:
+                  type: number
+                throughput:
+                  type: number
+                peakMemoryUsage:
+                  type: number
+                errors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      documentId:
+                        type: string
+                      error:
+                        type: string
+                      stage:
+                        type: string
+          required:
+            - operationType
+            - completedAt
+            - totalItems
+            - successCount
+            - failureCount
+            - processingTime
+            - batchId
+
+    AnalyticsUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            metrics:
+              type: object
+              description: Updated metrics
+              properties:
+                queryCount:
+                  type: integer
+                averageResponseTime:
+                  type: number
+                popularQueries:
+                  type: array
+                  items:
+                    type: string
+                errorRate:
+                  type: number
+                throughput:
+                  type: number
+            updatedAt:
+              type: string
+              format: date-time
+              description: When metrics were updated
+            timeframe:
+              type: string
+              enum: [hour, day, week, month]
+              description: Timeframe for the metrics
+            indexId:
+              type: string
+              description: ID of the index (if specific to an index)
+            trends:
+              type: object
+              properties:
+                queryTrend:
+                  type: string
+                  enum: [increasing, decreasing, stable]
+                performanceTrend:
+                  type: string
+                  enum: [improving, degrading, stable]
+                errorTrend:
+                  type: string
+                  enum: [increasing, decreasing, stable]
+          required:
+            - metrics
+            - updatedAt
+            - timeframe
+
+    ServiceStartedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            address:
+              type: string
+              description: Service address
+            version:
+              type: string
+              description: Service version
+            indices:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  status:
+                    type: string
+                  documentCount:
+                    type: integer
+              description: Available indices
+            statistics:
+              type: object
+              properties:
+                totalDocuments:
+                  type: integer
+                totalEmbeddings:
+                  type: integer
+                averageIndexingTime:
+                  type: number
+                vectorDimensions:
+                  type: integer
+              description: Service statistics
+            features:
+              type: array
+              items:
+                type: string
+              description: Available features
+            configuration:
+              type: object
+              properties:
+                maxConcurrentIndexing:
+                  type: integer
+                defaultEmbeddingModel:
+                  type: string
+                supportedLanguages:
+                  type: array
+                  items:
+                    type: string
+          required:
+            - address
+            - version
+            - indices
+            - statistics
+            - features
+
+    ServiceHealthChangedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            previousHealth:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            currentHealth:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            components:
+              type: object
+              properties:
+                vectorDatabase:
+                  type: string
+                  enum: [healthy, degraded, unhealthy]
+                embeddingService:
+                  type: string
+                  enum: [healthy, degraded, unhealthy]
+                redis:
+                  type: string
+                  enum: [healthy, degraded, unhealthy]
+                textProcessor:
+                  type: string
+                  enum: [healthy, degraded, unhealthy]
+            metrics:
+              type: object
+              properties:
+                responseTime:
+                  type: number
+                errorRate:
+                  type: number
+                throughput:
+                  type: number
+                memoryUsage:
+                  type: number
+                diskUsage:
+                  type: number
+                activeConnections:
+                  type: integer
+            impact:
+              type: object
+              properties:
+                affectedFeatures:
+                  type: array
+                  items:
+                    type: string
+                estimatedRecovery:
+                  type: string
+                  format: date-time
+                severity:
+                  type: string
+                  enum: [low, medium, high, critical]
+          required:
+            - previousHealth
+            - currentHealth
+            - components
+            - metrics
+
+    PerformanceAlertPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            alertType:
+              type: string
+              enum: [high_response_time, high_error_rate, high_memory_usage, high_disk_usage, low_throughput]
+            severity:
+              type: string
+              enum: [warning, critical]
+            metric:
+              type: string
+              description: The metric that triggered the alert
+            currentValue:
+              type: number
+              description: Current value of the metric
+            threshold:
+              type: number
+              description: Threshold that was exceeded
+            duration:
+              type: number
+              description: How long the threshold has been exceeded (in seconds)
+            triggeredAt:
+              type: string
+              format: date-time
+              description: When the alert was triggered
+            affectedComponents:
+              type: array
+              items:
+                type: string
+              description: Components affected by the performance issue
+            recommendedActions:
+              type: array
+              items:
+                type: string
+              description: Recommended actions to resolve the issue
+            historicalData:
+              type: object
+              properties:
+                average:
+                  type: number
+                peak:
+                  type: number
+                trend:
+                  type: string
+                  enum: [increasing, decreasing, stable]
+          required:
+            - alertType
+            - severity
+            - metric
+            - currentValue
+            - threshold
+            - duration
+            - triggeredAt
+
+  correlationIds:
+    requestCorrelation:
+      description: Correlation ID for tracking request lifecycle
+      location: $message.payload.correlationId
+
+    documentCorrelation:
+      description: Correlation ID for tracking document-related events
+      location: $message.payload.documentId
+
+    indexCorrelation:
+      description: Correlation ID for tracking index-related events
+      location: $message.payload.indexId
+
+    batchCorrelation:
+      description: Correlation ID for tracking batch operation events
+      location: $message.payload.batchId
+
+    userCorrelation:
+      description: Correlation ID for tracking user-related events
+      location: $message.payload.metadata.userId
+
+    SearchFailedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            query:
+              type: string
+              description: The search query that failed
+            error:
+              type: object
+              properties:
+                type:
+                  type: string
+                message:
+                  type: string
+                code:
+                  type: string
+              required:
+                - type
+                - message
+                - code
+            failedAt:
+              type: string
+              format: date-time
+              description: When the search failed
+            retryable:
+              type: boolean
+              description: Whether the search can be retried
+          required:
+            - query
+            - error
+            - failedAt
+            - retryable
+
+    EmbeddingFailedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            text:
+              type: string
+              description: The text that failed to be embedded
+            error:
+              type: object
+              properties:
+                type:
+                  type: string
+                message:
+                  type: string
+                code:
+                  type: string
+              required:
+                - type
+                - message
+                - code
+            failedAt:
+              type: string
+              format: date-time
+              description: When the embedding failed
+            retryable:
+              type: boolean
+              description: Whether the embedding can be retried
+          required:
+            - text
+            - error
+            - failedAt
+            - retryable
+
+    ReportGeneratedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            reportId:
+              type: string
+              description: ID of the generated report
+            type:
+              type: string
+              description: Type of report generated
+            generatedAt:
+              type: string
+              format: date-time
+              description: When the report was generated
+            dataPoints:
+              type: integer
+              description: Number of data points in the report
+            timeframe:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: date-time
+                end:
+                  type: string
+                  format: date-time
+          required:
+            - reportId
+            - type
+            - generatedAt
+            - dataPoints

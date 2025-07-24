@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  document-indexing-service:
+    build:
+      context: ../../
+      dockerfile: packages/document-indexing-service/Dockerfile.dev
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - HOST=0.0.0.0
+      - LOG_LEVEL=debug
+      - REDIS_URL=redis://redis:6379
+      - VECTOR_DB_URL=http://vector-db:8000
+    volumes:
+      - ./src:/app/packages/document-indexing-service/src:ro
+      - ./package.json:/app/packages/document-indexing-service/package.json:ro
+      - vector_data:/app/data
+    depends_on:
+      - redis
+      - vector-db
+    networks:
+      - cycletime-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - cycletime-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  vector-db:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - vector_db_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    networks:
+      - cycletime-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  redis_data:
+    driver: local
+  vector_db_data:
+    driver: local
+  vector_data:
+    driver: local
+
+networks:
+  cycletime-network:
+    driver: bridge
+    name: cycletime-network

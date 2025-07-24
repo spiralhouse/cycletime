@@ -1,0 +1,2101 @@
+asyncapi: 3.0.0
+info:
+  title: AI Service Events API
+  version: 1.0.0
+  description: |
+    Comprehensive AsyncAPI specification for AI Service event-driven communication.
+    
+    **Published Events (25 types):**
+    - AI Request Lifecycle: received, processing, completed, failed, response generated
+    - Context Management: analysis started/completed, optimization results
+    - Provider Management: health changes, configuration, errors, connection status
+    - Project Analysis: started, completed, insights/recommendations generated
+    - Embedding Generation: embedding completion events
+    - Usage & Monitoring: usage tracking, threshold alerts, rate limits
+    - Service Health: health checks, service-level errors, shutdown notifications
+    - Model Management: availability changes
+    
+    **Consumed Events (6 types):**
+    - Project Management: created, updated, deleted
+    - Context Management: updated, analysis requested
+    - System Configuration: config updates
+    
+    **Message Broker Support:**
+    - Primary: Redis pub/sub (production)
+    - Fallback: In-memory EventEmitter (development)
+    - Dual server configuration for development and production environments
+    
+    Events enable real-time monitoring, analytics, workflow automation, and
+    service integration across the CycleTime platform.
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  development:
+    host: localhost:6379
+    protocol: redis
+    description: Development Redis server
+  production:
+    host: redis.cycletime.dev:6379
+    protocol: redis
+    description: Production Redis server
+
+defaultContentType: application/json
+
+channels:
+  ai/request/received:
+    description: Published when an AI request is received
+    messages:
+      aiRequestReceived:
+        $ref: '#/components/messages/AiRequestReceived'
+
+  ai/request/processing:
+    description: Published when an AI request starts processing
+    messages:
+      aiRequestProcessing:
+        $ref: '#/components/messages/AiRequestProcessing'
+
+  ai/request/completed:
+    description: Published when an AI request is completed successfully
+    messages:
+      aiRequestCompleted:
+        $ref: '#/components/messages/AiRequestCompleted'
+
+  ai/request/failed:
+    description: Published when an AI request fails
+    messages:
+      aiRequestFailed:
+        $ref: '#/components/messages/AiRequestFailed'
+
+  ai/response/generated:
+    description: Published when an AI response is generated
+    messages:
+      aiResponseGenerated:
+        $ref: '#/components/messages/AiResponseGenerated'
+
+  ai/context/analysis/started:
+    description: Published when context analysis starts
+    messages:
+      contextAnalysisStarted:
+        $ref: '#/components/messages/ContextAnalysisStarted'
+
+  ai/context/analysis/completed:
+    description: Published when context analysis completes
+    messages:
+      contextAnalysisCompleted:
+        $ref: '#/components/messages/ContextAnalysisCompleted'
+
+  ai/context/optimization/results:
+    description: Published when context optimization completes
+    messages:
+      contextOptimizationResults:
+        $ref: '#/components/messages/ContextOptimizationResults'
+
+  ai/provider/health/changed:
+    description: Published when provider health status changes
+    messages:
+      providerHealthChanged:
+        $ref: '#/components/messages/ProviderHealthChanged'
+
+  ai/provider/configuration/updated:
+    description: Published when a provider is configured
+    messages:
+      providerConfigurationUpdated:
+        $ref: '#/components/messages/ProviderConfigurationUpdated'
+
+  ai/provider/error:
+    description: Published when a provider encounters an error
+    messages:
+      providerError:
+        $ref: '#/components/messages/ProviderError'
+
+  ai/model/availability/changed:
+    description: Published when model availability changes
+    messages:
+      modelAvailabilityChanged:
+        $ref: '#/components/messages/ModelAvailabilityChanged'
+
+  ai/project/analysis/started:
+    description: Published when project analysis starts
+    messages:
+      projectAnalysisStarted:
+        $ref: '#/components/messages/ProjectAnalysisStarted'
+
+  ai/project/analysis/completed:
+    description: Published when project analysis completes
+    messages:
+      projectAnalysisCompleted:
+        $ref: '#/components/messages/ProjectAnalysisCompleted'
+
+  ai/project/insights/generated:
+    description: Published when project insights are generated
+    messages:
+      projectInsightsGenerated:
+        $ref: '#/components/messages/ProjectInsightsGenerated'
+
+  ai/project/recommendations/generated:
+    description: Published when project recommendations are generated
+    messages:
+      projectRecommendationsGenerated:
+        $ref: '#/components/messages/ProjectRecommendationsGenerated'
+
+  ai/embedding/completion:
+    description: Published when embeddings are generated
+    messages:
+      embeddingCompletion:
+        $ref: '#/components/messages/EmbeddingCompletion'
+
+  ai/usage/tracking:
+    description: Published when AI usage is tracked
+    messages:
+      usageTracking:
+        $ref: '#/components/messages/UsageTracking'
+
+  ai/rate/limit/status:
+    description: Published when rate limit is exceeded
+    messages:
+      rateLimitStatus:
+        $ref: '#/components/messages/RateLimitStatus'
+
+  ai/service/health/check:
+    description: Published when service health changes
+    messages:
+      serviceHealthCheck:
+        $ref: '#/components/messages/ServiceHealthCheck'
+
+  ai/provider/connection/lost:
+    description: Published when provider connection is lost
+    messages:
+      providerConnectionLost:
+        $ref: '#/components/messages/ProviderConnectionLost'
+
+  ai/provider/connection/restored:
+    description: Published when provider connection is restored
+    messages:
+      providerConnectionRestored:
+        $ref: '#/components/messages/ProviderConnectionRestored'
+
+  ai/usage/threshold/reached:
+    description: Published when usage threshold is exceeded
+    messages:
+      usageThresholdReached:
+        $ref: '#/components/messages/UsageThresholdReached'
+
+  ai/health/checked:
+    description: Published when health check is performed
+    messages:
+      healthChecked:
+        $ref: '#/components/messages/HealthChecked'
+
+  ai/service/error:
+    description: Published when service-level errors occur
+    messages:
+      serviceError:
+        $ref: '#/components/messages/ServiceError'
+
+  ai/service/shutdown:
+    description: Published when service shutdown is initiated
+    messages:
+      serviceShutdown:
+        $ref: '#/components/messages/ServiceShutdown'
+
+  # Consumed Events
+  project/created:
+    description: Consumed when a new project is created
+    messages:
+      projectCreated:
+        $ref: '#/components/messages/ProjectCreated'
+
+  project/updated:
+    description: Consumed when a project is updated
+    messages:
+      projectUpdated:
+        $ref: '#/components/messages/ProjectUpdated'
+
+  project/deleted:
+    description: Consumed when a project is deleted
+    messages:
+      projectDeleted:
+        $ref: '#/components/messages/ProjectDeleted'
+
+  context/updated:
+    description: Consumed when project context is updated
+    messages:
+      contextUpdated:
+        $ref: '#/components/messages/ContextUpdated'
+
+  context/analysis/requested:
+    description: Consumed when context analysis is requested
+    messages:
+      contextAnalysisRequested:
+        $ref: '#/components/messages/ContextAnalysisRequested'
+
+  system/config/updated:
+    description: Consumed when system configuration is updated
+    messages:
+      systemConfigUpdated:
+        $ref: '#/components/messages/SystemConfigUpdated'
+
+operations:
+  publishAiRequestReceived:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1request~1received'
+    summary: Publish AI request received event
+    description: Publishes an event when an AI request is received by the service
+
+  publishAiRequestProcessing:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1request~1processing'
+    summary: Publish AI request processing event
+    description: Publishes an event when an AI request starts processing
+
+  publishAiRequestCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1request~1completed'
+    summary: Publish AI request completed event
+    description: Publishes an event when an AI request is completed successfully
+
+  publishAiRequestFailed:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1request~1failed'
+    summary: Publish AI request failed event
+    description: Publishes an event when an AI request fails
+
+  publishAiResponseGenerated:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1response~1generated'
+    summary: Publish AI response generated event
+    description: Publishes an event when an AI response is generated
+
+  publishContextAnalysisStarted:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1context~1analysis~1started'
+    summary: Publish context analysis started event
+    description: Publishes an event when context analysis starts
+
+  publishContextAnalysisCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1context~1analysis~1completed'
+    summary: Publish context analysis completed event
+    description: Publishes an event when context analysis completes
+
+  publishContextOptimizationResults:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1context~1optimization~1results'
+    summary: Publish context optimization results event
+    description: Publishes an event when context optimization completes
+
+  publishProviderHealthChanged:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1provider~1health~1changed'
+    summary: Publish provider health changed event
+    description: Publishes an event when provider health status changes
+
+  publishProviderConfigurationUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1provider~1configuration~1updated'
+    summary: Publish provider configuration updated event
+    description: Publishes an event when a provider is configured
+
+  publishProviderError:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1provider~1error'
+    summary: Publish provider error event
+    description: Publishes an event when a provider encounters an error
+
+  publishModelAvailabilityChanged:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1model~1availability~1changed'
+    summary: Publish model availability changed event
+    description: Publishes an event when model availability changes
+
+  publishProjectAnalysisStarted:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1project~1analysis~1started'
+    summary: Publish project analysis started event
+    description: Publishes an event when project analysis starts
+
+  publishProjectAnalysisCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1project~1analysis~1completed'
+    summary: Publish project analysis completed event
+    description: Publishes an event when project analysis completes
+
+  publishProjectInsightsGenerated:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1project~1insights~1generated'
+    summary: Publish project insights generated event
+    description: Publishes an event when project insights are generated
+
+  publishProjectRecommendationsGenerated:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1project~1recommendations~1generated'
+    summary: Publish project recommendations generated event
+    description: Publishes an event when project recommendations are generated
+
+  publishEmbeddingCompletion:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1embedding~1completion'
+    summary: Publish embedding completion event
+    description: Publishes an event when embeddings are generated
+
+  publishUsageTracking:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1usage~1tracking'
+    summary: Publish usage tracking event
+    description: Publishes an event when AI usage is tracked
+
+  publishRateLimitStatus:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1rate~1limit~1status'
+    summary: Publish rate limit status event
+    description: Publishes an event when rate limit status changes
+
+  publishServiceHealthCheck:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1service~1health~1check'
+    summary: Publish service health check event
+    description: Publishes an event when service health is checked
+
+  publishProviderConnectionLost:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1provider~1connection~1lost'
+    summary: Publish provider connection lost event
+    description: Publishes an event when provider connection is lost
+
+  publishProviderConnectionRestored:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1provider~1connection~1restored'
+    summary: Publish provider connection restored event
+    description: Publishes an event when provider connection is restored
+
+  publishUsageThresholdReached:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1usage~1threshold~1reached'
+    summary: Publish usage threshold reached event
+    description: Publishes an event when usage threshold is exceeded
+
+  publishHealthChecked:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1health~1checked'
+    summary: Publish health checked event
+    description: Publishes an event when health check is performed
+
+  publishServiceError:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1service~1error'
+    summary: Publish service error event
+    description: Publishes an event when service-level errors occur
+
+  publishServiceShutdown:
+    action: send
+    channel:
+      $ref: '#/channels/ai~1service~1shutdown'
+    summary: Publish service shutdown event
+    description: Publishes an event when service shutdown is initiated
+
+  # Consumed Event Operations
+  consumeProjectCreated:
+    action: receive
+    channel:
+      $ref: '#/channels/project~1created'
+    summary: Consume project created event
+    description: Handles events when a new project is created
+
+  consumeProjectUpdated:
+    action: receive
+    channel:
+      $ref: '#/channels/project~1updated'
+    summary: Consume project updated event
+    description: Handles events when a project is updated
+
+  consumeProjectDeleted:
+    action: receive
+    channel:
+      $ref: '#/channels/project~1deleted'
+    summary: Consume project deleted event
+    description: Handles events when a project is deleted
+
+  consumeContextUpdated:
+    action: receive
+    channel:
+      $ref: '#/channels/context~1updated'
+    summary: Consume context updated event
+    description: Handles events when project context is updated
+
+  consumeContextAnalysisRequested:
+    action: receive
+    channel:
+      $ref: '#/channels/context~1analysis~1requested'
+    summary: Consume context analysis requested event
+    description: Handles events when context analysis is requested
+
+  consumeSystemConfigUpdated:
+    action: receive
+    channel:
+      $ref: '#/channels/system~1config~1updated'
+    summary: Consume system config updated event
+    description: Handles events when system configuration is updated
+
+components:
+  messages:
+    AiRequestReceived:
+      name: AiRequestReceived
+      title: AI Request Received
+      summary: An AI request has been received
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AiRequestReceivedPayload'
+
+    AiRequestProcessing:
+      name: AiRequestProcessing
+      title: AI Request Processing
+      summary: An AI request has started processing
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AiRequestProcessingPayload'
+
+    AiRequestCompleted:
+      name: AiRequestCompleted
+      title: AI Request Completed
+      summary: An AI request has been completed successfully
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AiRequestCompletedPayload'
+
+    AiRequestFailed:
+      name: AiRequestFailed
+      title: AI Request Failed
+      summary: An AI request has failed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AiRequestFailedPayload'
+
+    AiResponseGenerated:
+      name: AiResponseGenerated
+      title: AI Response Generated
+      summary: An AI response has been generated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AiResponseGeneratedPayload'
+
+    ContextAnalysisStarted:
+      name: ContextAnalysisStarted
+      title: Context Analysis Started
+      summary: Context analysis has started
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextAnalysisStartedPayload'
+
+    ContextAnalysisCompleted:
+      name: ContextAnalysisCompleted
+      title: Context Analysis Completed
+      summary: Context analysis has completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextAnalysisCompletedPayload'
+
+    ContextOptimizationResults:
+      name: ContextOptimizationResults
+      title: Context Optimization Results
+      summary: Context optimization has completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextOptimizationResultsPayload'
+
+    ProviderHealthChanged:
+      name: ProviderHealthChanged
+      title: Provider Health Changed
+      summary: Provider health status has changed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProviderHealthChangedPayload'
+
+    ProviderConfigurationUpdated:
+      name: ProviderConfigurationUpdated
+      title: Provider Configuration Updated
+      summary: A provider has been configured
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProviderConfigurationUpdatedPayload'
+
+    ProviderError:
+      name: ProviderError
+      title: Provider Error
+      summary: A provider has encountered an error
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProviderErrorPayload'
+
+    ModelAvailabilityChanged:
+      name: ModelAvailabilityChanged
+      title: Model Availability Changed
+      summary: Model availability has changed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ModelAvailabilityChangedPayload'
+
+    ProjectAnalysisStarted:
+      name: ProjectAnalysisStarted
+      title: Project Analysis Started
+      summary: Project analysis has started
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectAnalysisStartedPayload'
+
+    ProjectAnalysisCompleted:
+      name: ProjectAnalysisCompleted
+      title: Project Analysis Completed
+      summary: Project analysis has completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectAnalysisCompletedPayload'
+
+    ProjectInsightsGenerated:
+      name: ProjectInsightsGenerated
+      title: Project Insights Generated
+      summary: Project insights have been generated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectInsightsGeneratedPayload'
+
+    ProjectRecommendationsGenerated:
+      name: ProjectRecommendationsGenerated
+      title: Project Recommendations Generated
+      summary: Project recommendations have been generated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectRecommendationsGeneratedPayload'
+
+    EmbeddingCompletion:
+      name: EmbeddingCompletion
+      title: Embedding Completion
+      summary: Embeddings have been generated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/EmbeddingCompletionPayload'
+
+    UsageTracking:
+      name: UsageTracking
+      title: Usage Tracking
+      summary: AI usage has been tracked
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UsageTrackingPayload'
+
+    RateLimitStatus:
+      name: RateLimitStatus
+      title: Rate Limit Status
+      summary: Rate limit status has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RateLimitStatusPayload'
+
+    ServiceHealthCheck:
+      name: ServiceHealthCheck
+      title: Service Health Check
+      summary: Service health has been checked
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ServiceHealthCheckPayload'
+
+    ProviderConnectionLost:
+      name: ProviderConnectionLost
+      title: Provider Connection Lost
+      summary: Provider connection has been lost
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProviderConnectionLostPayload'
+
+    ProviderConnectionRestored:
+      name: ProviderConnectionRestored
+      title: Provider Connection Restored
+      summary: Provider connection has been restored
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProviderConnectionRestoredPayload'
+
+    UsageThresholdReached:
+      name: UsageThresholdReached
+      title: Usage Threshold Reached
+      summary: Usage threshold has been exceeded
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UsageThresholdReachedPayload'
+
+    HealthChecked:
+      name: HealthChecked
+      title: Health Checked
+      summary: Health check has been performed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HealthCheckedPayload'
+
+    ServiceError:
+      name: ServiceError
+      title: Service Error
+      summary: Service-level error has occurred
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ServiceErrorPayload'
+
+    ServiceShutdown:
+      name: ServiceShutdown
+      title: Service Shutdown
+      summary: Service shutdown has been initiated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ServiceShutdownPayload'
+
+    # Consumed Event Messages
+    ProjectCreated:
+      name: ProjectCreated
+      title: Project Created
+      summary: A new project has been created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectCreatedPayload'
+
+    ProjectUpdated:
+      name: ProjectUpdated
+      title: Project Updated
+      summary: A project has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectUpdatedPayload'
+
+    ProjectDeleted:
+      name: ProjectDeleted
+      title: Project Deleted
+      summary: A project has been deleted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectDeletedPayload'
+
+    ContextUpdated:
+      name: ContextUpdated
+      title: Context Updated
+      summary: Project context has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextUpdatedPayload'
+
+    ContextAnalysisRequested:
+      name: ContextAnalysisRequested
+      title: Context Analysis Requested
+      summary: Context analysis has been requested
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextAnalysisRequestedPayload'
+
+    SystemConfigUpdated:
+      name: SystemConfigUpdated
+      title: System Config Updated
+      summary: System configuration has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SystemConfigUpdatedPayload'
+
+  schemas:
+    BaseEvent:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for the event
+        eventType:
+          type: string
+          description: Type of the event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        source:
+          type: string
+          description: Service that generated the event
+          default: ai-service
+        version:
+          type: string
+          description: Event schema version
+          default: "1.0.0"
+        correlationId:
+          type: string
+          format: uuid
+          description: Correlation ID for tracking related events
+        metadata:
+          type: object
+          description: Additional event metadata
+          properties:
+            userId:
+              type: string
+            sessionId:
+              type: string
+            projectId:
+              type: string
+            requestId:
+              type: string
+      required:
+        - eventId
+        - eventType
+        - timestamp
+        - source
+        - version
+
+    AiRequestReceivedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            requestId:
+              type: string
+              format: uuid
+            requestType:
+              type: string
+              enum: [chat_completion, embedding, analysis]
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            model:
+              type: string
+            tokens:
+              type: object
+              properties:
+                estimated:
+                  type: integer
+                maxTokens:
+                  type: integer
+            priority:
+              type: string
+              enum: [low, medium, high, urgent]
+            queuePosition:
+              type: integer
+          required:
+            - requestId
+            - requestType
+
+    AiRequestProcessingPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            requestId:
+              type: string
+              format: uuid
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            model:
+              type: string
+            processingStarted:
+              type: string
+              format: date-time
+            estimatedCompletion:
+              type: string
+              format: date-time
+            contextOptimization:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+                originalTokens:
+                  type: integer
+                optimizedTokens:
+                  type: integer
+          required:
+            - requestId
+            - provider
+            - model
+            - processingStarted
+
+    AiRequestCompletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            requestId:
+              type: string
+              format: uuid
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            model:
+              type: string
+            processingTime:
+              type: number
+              description: Processing time in milliseconds
+            tokens:
+              type: object
+              properties:
+                prompt:
+                  type: integer
+                completion:
+                  type: integer
+                total:
+                  type: integer
+            cost:
+              type: number
+            quality:
+              type: object
+              properties:
+                score:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                feedback:
+                  type: string
+          required:
+            - requestId
+            - provider
+            - model
+            - processingTime
+            - tokens
+
+    AiRequestFailedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            requestId:
+              type: string
+              format: uuid
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            model:
+              type: string
+            error:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [rate_limit, authentication, model_error, network_error, internal_error]
+                message:
+                  type: string
+                code:
+                  type: string
+                details:
+                  type: object
+            processingTime:
+              type: number
+            retryable:
+              type: boolean
+            retryAttempt:
+              type: integer
+          required:
+            - requestId
+            - error
+
+    AiResponseGeneratedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            requestId:
+              type: string
+              format: uuid
+            responseId:
+              type: string
+              format: uuid
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            model:
+              type: string
+            responseLength:
+              type: integer
+            tokens:
+              type: object
+              properties:
+                generated:
+                  type: integer
+                total:
+                  type: integer
+            quality:
+              type: object
+              properties:
+                coherence:
+                  type: number
+                relevance:
+                  type: number
+                accuracy:
+                  type: number
+            finishReason:
+              type: string
+              enum: [stop, length, function_call, tool_calls, content_filter]
+          required:
+            - requestId
+            - responseId
+            - provider
+            - model
+            - responseLength
+            - tokens
+
+    ContextAnalysisStartedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            contextId:
+              type: string
+              format: uuid
+            documentsCount:
+              type: integer
+            analysisType:
+              type: string
+              enum: [full, incremental, targeted]
+            estimatedCompletion:
+              type: string
+              format: date-time
+            configuration:
+              type: object
+              properties:
+                chunkingStrategy:
+                  type: string
+                targetModel:
+                  type: string
+                maxChunkSize:
+                  type: integer
+          required:
+            - contextId
+            - documentsCount
+            - analysisType
+
+    ContextAnalysisCompletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            contextId:
+              type: string
+              format: uuid
+            documentsCount:
+              type: integer
+            chunksGenerated:
+              type: integer
+            totalTokens:
+              type: integer
+            processingTime:
+              type: number
+            quality:
+              type: object
+              properties:
+                averageRelevance:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                chunksOptimized:
+                  type: integer
+                tokensReduced:
+                  type: integer
+          required:
+            - contextId
+            - documentsCount
+            - chunksGenerated
+            - totalTokens
+            - processingTime
+
+    ContextOptimizationResultsPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            contextId:
+              type: string
+              format: uuid
+            targetModel:
+              type: string
+            optimization:
+              type: object
+              properties:
+                originalTokens:
+                  type: integer
+                optimizedTokens:
+                  type: integer
+                compressionRatio:
+                  type: number
+                chunksReduced:
+                  type: integer
+                relevancePreserved:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+            processingTime:
+              type: number
+          required:
+            - contextId
+            - targetModel
+            - optimization
+
+    ProviderHealthChangedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            previousHealth:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            currentHealth:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            healthCheck:
+              type: object
+              properties:
+                responseTime:
+                  type: number
+                errorRate:
+                  type: number
+                availability:
+                  type: number
+                lastSuccessful:
+                  type: string
+                  format: date-time
+                errors:
+                  type: array
+                  items:
+                    type: string
+            impact:
+              type: object
+              properties:
+                affectedModels:
+                  type: array
+                  items:
+                    type: string
+                estimatedDowntime:
+                  type: number
+                mitigationStrategy:
+                  type: string
+          required:
+            - provider
+            - previousHealth
+            - currentHealth
+            - healthCheck
+
+    ProviderConfigurationUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            configuration:
+              type: object
+              properties:
+                modelsEnabled:
+                  type: array
+                  items:
+                    type: string
+                defaultModel:
+                  type: string
+                rateLimit:
+                  type: object
+                  properties:
+                    requestsPerMinute:
+                      type: integer
+                    tokensPerMinute:
+                      type: integer
+                region:
+                  type: string
+            testResult:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                responseTime:
+                  type: number
+                modelsAvailable:
+                  type: integer
+          required:
+            - provider
+            - configuration
+            - testResult
+
+    ProviderErrorPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            error:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [authentication, rate_limit, model_error, network_error, configuration_error]
+                message:
+                  type: string
+                code:
+                  type: string
+                details:
+                  type: object
+            impact:
+              type: object
+              properties:
+                severity:
+                  type: string
+                  enum: [low, medium, high, critical]
+                affectedRequests:
+                  type: integer
+                estimatedResolution:
+                  type: string
+                  format: date-time
+            recovery:
+              type: object
+              properties:
+                automatic:
+                  type: boolean
+                strategy:
+                  type: string
+                fallbackProvider:
+                  type: string
+          required:
+            - provider
+            - error
+            - impact
+
+    ModelAvailabilityChangedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            model:
+              type: string
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            previousStatus:
+              type: string
+              enum: [available, unavailable, deprecated, beta]
+            currentStatus:
+              type: string
+              enum: [available, unavailable, deprecated, beta]
+            reason:
+              type: string
+            impact:
+              type: object
+              properties:
+                activeRequests:
+                  type: integer
+                fallbackModel:
+                  type: string
+                migrationRequired:
+                  type: boolean
+          required:
+            - model
+            - provider
+            - previousStatus
+            - currentStatus
+
+    ProjectAnalysisStartedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            analysisId:
+              type: string
+              format: uuid
+            analysisType:
+              type: string
+              enum: [full, incremental, targeted]
+            scope:
+              type: array
+              items:
+                type: string
+            estimatedCompletion:
+              type: string
+              format: date-time
+            configuration:
+              type: object
+              properties:
+                depth:
+                  type: string
+                  enum: [shallow, medium, deep]
+                includeArchived:
+                  type: boolean
+                maxComplexity:
+                  type: number
+          required:
+            - analysisId
+            - analysisType
+            - scope
+
+    ProjectAnalysisCompletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            analysisId:
+              type: string
+              format: uuid
+            processingTime:
+              type: number
+            results:
+              type: object
+              properties:
+                insights:
+                  type: integer
+                recommendations:
+                  type: integer
+                metrics:
+                  type: integer
+                complexity:
+                  type: number
+                quality:
+                  type: number
+            statistics:
+              type: object
+              properties:
+                filesAnalyzed:
+                  type: integer
+                linesOfCode:
+                  type: integer
+                tokensProcessed:
+                  type: integer
+                modelsUsed:
+                  type: array
+                  items:
+                    type: string
+          required:
+            - analysisId
+            - processingTime
+            - results
+
+    ProjectInsightsGeneratedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            insightsCount:
+              type: integer
+            categories:
+              type: array
+              items:
+                type: string
+            averageConfidence:
+              type: number
+              minimum: 0
+              maximum: 1
+            highImpactInsights:
+              type: integer
+            actionableInsights:
+              type: integer
+            trends:
+              type: array
+              items:
+                type: object
+                properties:
+                  metric:
+                    type: string
+                  trend:
+                    type: string
+                    enum: [improving, stable, declining]
+                  confidence:
+                    type: number
+          required:
+            - insightsCount
+            - categories
+            - averageConfidence
+
+    ProjectRecommendationsGeneratedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            recommendationsCount:
+              type: integer
+            categories:
+              type: array
+              items:
+                type: string
+            priorities:
+              type: object
+              properties:
+                critical:
+                  type: integer
+                high:
+                  type: integer
+                medium:
+                  type: integer
+                low:
+                  type: integer
+            averageConfidence:
+              type: number
+              minimum: 0
+              maximum: 1
+            implementationEffort:
+              type: object
+              properties:
+                low:
+                  type: integer
+                medium:
+                  type: integer
+                high:
+                  type: integer
+          required:
+            - recommendationsCount
+            - categories
+            - priorities
+            - averageConfidence
+
+    EmbeddingCompletionPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            embeddingId:
+              type: string
+              format: uuid
+            inputCount:
+              type: integer
+            model:
+              type: string
+            provider:
+              type: string
+            dimensions:
+              type: integer
+            tokens:
+              type: object
+              properties:
+                total:
+                  type: integer
+                perInput:
+                  type: array
+                  items:
+                    type: integer
+            processingTime:
+              type: number
+            cost:
+              type: number
+            purpose:
+              type: string
+              enum: [search, similarity, clustering, classification]
+          required:
+            - embeddingId
+            - inputCount
+            - model
+            - provider
+            - dimensions
+            - tokens
+            - processingTime
+
+    UsageTrackingPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            usageId:
+              type: string
+              format: uuid
+            provider:
+              type: string
+            model:
+              type: string
+            requestType:
+              type: string
+              enum: [chat_completion, embedding, analysis]
+            tokens:
+              type: object
+              properties:
+                input:
+                  type: integer
+                output:
+                  type: integer
+                total:
+                  type: integer
+            cost:
+              type: number
+            duration:
+              type: number
+            success:
+              type: boolean
+            quality:
+              type: object
+              properties:
+                rating:
+                  type: number
+                  minimum: 1
+                  maximum: 5
+                feedback:
+                  type: string
+          required:
+            - usageId
+            - provider
+            - model
+            - requestType
+            - tokens
+            - cost
+            - duration
+            - success
+
+    RateLimitStatusPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            limitType:
+              type: string
+              enum: [requests_per_minute, tokens_per_minute, requests_per_day, tokens_per_day]
+            current:
+              type: integer
+            limit:
+              type: integer
+            resetTime:
+              type: string
+              format: date-time
+            requestsQueued:
+              type: integer
+            estimatedDelay:
+              type: number
+            fallbackProvider:
+              type: string
+          required:
+            - provider
+            - limitType
+            - current
+            - limit
+            - resetTime
+
+    ServiceHealthCheckPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            previousHealth:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            currentHealth:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            components:
+              type: object
+              properties:
+                redis:
+                  type: string
+                  enum: [healthy, degraded, unhealthy]
+                providers:
+                  type: object
+                  properties:
+                    openai:
+                      type: string
+                    anthropic:
+                      type: string
+                    google:
+                      type: string
+                    azure:
+                      type: string
+                contextService:
+                  type: string
+                  enum: [healthy, degraded, unhealthy]
+            metrics:
+              type: object
+              properties:
+                responseTime:
+                  type: number
+                errorRate:
+                  type: number
+                throughput:
+                  type: number
+                activeConnections:
+                  type: integer
+            impact:
+              type: object
+              properties:
+                affectedFeatures:
+                  type: array
+                  items:
+                    type: string
+                estimatedRecovery:
+                  type: string
+                  format: date-time
+          required:
+            - previousHealth
+            - currentHealth
+            - components
+            - metrics
+
+    ProviderConnectionLostPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            reason:
+              type: string
+              enum: [network_error, authentication_failed, timeout, rate_limit, server_error]
+            lastSuccessful:
+              type: string
+              format: date-time
+            connectionAttempts:
+              type: integer
+            impact:
+              type: object
+              properties:
+                activeRequests:
+                  type: integer
+                queuedRequests:
+                  type: integer
+                fallbackProvider:
+                  type: string
+            retryStrategy:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+                nextRetry:
+                  type: string
+                  format: date-time
+                maxRetries:
+                  type: integer
+          required:
+            - provider
+            - reason
+            - lastSuccessful
+            - connectionAttempts
+
+    ProviderConnectionRestoredPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            downtime:
+              type: number
+              description: Downtime duration in milliseconds
+            restoredAt:
+              type: string
+              format: date-time
+            healthCheck:
+              type: object
+              properties:
+                responseTime:
+                  type: number
+                success:
+                  type: boolean
+                modelsAvailable:
+                  type: integer
+            impact:
+              type: object
+              properties:
+                requestsProcessed:
+                  type: integer
+                queueCleared:
+                  type: boolean
+                fallbackDeactivated:
+                  type: boolean
+          required:
+            - provider
+            - downtime
+            - restoredAt
+            - healthCheck
+
+    UsageThresholdReachedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            provider:
+              type: string
+              enum: [openai, anthropic, google, azure]
+            thresholdType:
+              type: string
+              enum: [tokens, requests, cost, rate_limit]
+            current:
+              type: number
+            threshold:
+              type: number
+            timeframe:
+              type: string
+              enum: [minute, hour, day, month]
+            severity:
+              type: string
+              enum: [warning, critical]
+            action:
+              type: string
+              enum: [throttle, block, fallback, alert]
+            impact:
+              type: object
+              properties:
+                affectedUsers:
+                  type: integer
+                queuedRequests:
+                  type: integer
+                estimatedDelay:
+                  type: number
+          required:
+            - provider
+            - thresholdType
+            - current
+            - threshold
+            - timeframe
+            - severity
+            - action
+
+    HealthCheckedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            component:
+              type: string
+              enum: [service, redis, providers, context_service]
+            status:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            responseTime:
+              type: number
+            checks:
+              type: object
+              properties:
+                database:
+                  type: boolean
+                redis:
+                  type: boolean
+                providers:
+                  type: object
+                  properties:
+                    openai:
+                      type: boolean
+                    anthropic:
+                      type: boolean
+                    google:
+                      type: boolean
+                    azure:
+                      type: boolean
+                externalServices:
+                  type: boolean
+            metrics:
+              type: object
+              properties:
+                uptime:
+                  type: number
+                requestCount:
+                  type: integer
+                errorRate:
+                  type: number
+                averageResponseTime:
+                  type: number
+          required:
+            - component
+            - status
+            - responseTime
+            - checks
+
+    ServiceErrorPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            error:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [internal_error, configuration_error, dependency_error, resource_exhausted]
+                message:
+                  type: string
+                code:
+                  type: string
+                stack:
+                  type: string
+                details:
+                  type: object
+            context:
+              type: object
+              properties:
+                component:
+                  type: string
+                operation:
+                  type: string
+                requestId:
+                  type: string
+                userId:
+                  type: string
+            impact:
+              type: object
+              properties:
+                severity:
+                  type: string
+                  enum: [low, medium, high, critical]
+                affectedFeatures:
+                  type: array
+                  items:
+                    type: string
+                userImpact:
+                  type: string
+                  enum: [none, minimal, moderate, severe]
+            recovery:
+              type: object
+              properties:
+                automatic:
+                  type: boolean
+                action:
+                  type: string
+                estimatedTime:
+                  type: number
+          required:
+            - error
+            - context
+            - impact
+
+    ServiceShutdownPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            reason:
+              type: string
+              enum: [planned_maintenance, configuration_reload, critical_error, resource_exhaustion]
+            graceful:
+              type: boolean
+            timeout:
+              type: number
+              description: Shutdown timeout in milliseconds
+            activeConnections:
+              type: integer
+            pendingRequests:
+              type: integer
+            status:
+              type: object
+              properties:
+                database:
+                  type: string
+                  enum: [disconnected, draining, closed]
+                redis:
+                  type: string
+                  enum: [disconnected, draining, closed]
+                providers:
+                  type: string
+                  enum: [disconnected, draining, closed]
+            estimatedDowntime:
+              type: number
+              description: Expected downtime in milliseconds
+          required:
+            - reason
+            - graceful
+            - timeout
+            - activeConnections
+            - pendingRequests
+
+    # Consumed Event Schemas
+    ProjectCreatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            projectId:
+              type: string
+              format: uuid
+            name:
+              type: string
+            description:
+              type: string
+            owner:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: string
+            repository:
+              type: object
+              properties:
+                url:
+                  type: string
+                branch:
+                  type: string
+                provider:
+                  type: string
+                  enum: [github, gitlab, bitbucket]
+            configuration:
+              type: object
+              properties:
+                language:
+                  type: string
+                framework:
+                  type: string
+                aiEnabled:
+                  type: boolean
+                contextAnalysisEnabled:
+                  type: boolean
+          required:
+            - projectId
+            - name
+            - owner
+
+    ProjectUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            projectId:
+              type: string
+              format: uuid
+            changes:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  oldValue:
+                    type: string
+                  newValue:
+                    type: string
+            updatedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+            configuration:
+              type: object
+              properties:
+                contextAnalysisEnabled:
+                  type: boolean
+                aiEnabled:
+                  type: boolean
+                analysisDepth:
+                  type: string
+                  enum: [shallow, medium, deep]
+          required:
+            - projectId
+            - changes
+            - updatedBy
+
+    ProjectDeletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            projectId:
+              type: string
+              format: uuid
+            name:
+              type: string
+            deletedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+            cleanup:
+              type: object
+              properties:
+                contextRemoved:
+                  type: boolean
+                analysisDataRemoved:
+                  type: boolean
+                modelsCleared:
+                  type: boolean
+                cacheCleared:
+                  type: boolean
+          required:
+            - projectId
+            - name
+            - deletedBy
+            - cleanup
+
+    ContextUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            contextId:
+              type: string
+              format: uuid
+            projectId:
+              type: string
+              format: uuid
+            updateType:
+              type: string
+              enum: [incremental, full, reindexed]
+            changes:
+              type: object
+              properties:
+                documentsAdded:
+                  type: integer
+                documentsRemoved:
+                  type: integer
+                documentsModified:
+                  type: integer
+                totalDocuments:
+                  type: integer
+            impact:
+              type: object
+              properties:
+                reanalysisRequired:
+                  type: boolean
+                modelsAffected:
+                  type: array
+                  items:
+                    type: string
+                cacheInvalidated:
+                  type: boolean
+          required:
+            - contextId
+            - projectId
+            - updateType
+            - changes
+
+    ContextAnalysisRequestedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            requestId:
+              type: string
+              format: uuid
+            contextId:
+              type: string
+              format: uuid
+            projectId:
+              type: string
+              format: uuid
+            analysisType:
+              type: string
+              enum: [full, incremental, targeted, performance]
+            priority:
+              type: string
+              enum: [low, medium, high, urgent]
+            scope:
+              type: array
+              items:
+                type: string
+            configuration:
+              type: object
+              properties:
+                depth:
+                  type: string
+                  enum: [shallow, medium, deep]
+                includeTests:
+                  type: boolean
+                includeDocs:
+                  type: boolean
+                maxFiles:
+                  type: integer
+            requestedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                source:
+                  type: string
+                  enum: [user, system, scheduled]
+          required:
+            - requestId
+            - contextId
+            - projectId
+            - analysisType
+            - priority
+
+    SystemConfigUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            configSection:
+              type: string
+              enum: [providers, redis, rate_limits, analysis, logging]
+            changes:
+              type: array
+              items:
+                type: object
+                properties:
+                  key:
+                    type: string
+                  oldValue:
+                    type: string
+                  newValue:
+                    type: string
+                  type:
+                    type: string
+                    enum: [added, modified, removed]
+            updatedBy:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                source:
+                  type: string
+                  enum: [admin, system, deployment]
+            impact:
+              type: object
+              properties:
+                restartRequired:
+                  type: boolean
+                affectedServices:
+                  type: array
+                  items:
+                    type: string
+                cacheCleared:
+                  type: boolean
+                providersReconfigured:
+                  type: boolean
+          required:
+            - configSection
+            - changes
+            - updatedBy
+            - impact
+
+  correlationIds:
+    requestCorrelation:
+      description: Correlation ID for tracking request lifecycle
+      location: $message.payload.correlationId
+
+    projectCorrelation:
+      description: Correlation ID for tracking project-related events
+      location: $message.payload.metadata.projectId
+
+    userCorrelation:
+      description: Correlation ID for tracking user-related events
+      location: $message.payload.metadata.userId

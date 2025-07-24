@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { config } from '../config.js';
+import { config } from '../config';
 
 export interface JWTPayload {
   userId: string;
@@ -33,12 +33,12 @@ export class JWTService {
       githubUsername,
     };
 
-    const accessToken = this.fastify.jwt.sign(
+    const accessToken = (this.fastify as any).jwt.sign(
       { ...basePayload, type: 'access' },
       { expiresIn: config.jwtAccessExpiry }
     );
 
-    const refreshToken = this.fastify.jwt.sign(
+    const refreshToken = (this.fastify as any).jwt.sign(
       { ...basePayload, type: 'refresh' },
       { expiresIn: config.jwtRefreshExpiry }
     );
@@ -58,7 +58,7 @@ export class JWTService {
    */
   async verifyToken(token: string): Promise<JWTPayload> {
     try {
-      const payload = this.fastify.jwt.verify(token) as JWTPayload;
+      const payload = (this.fastify as any).jwt.verify(token) as JWTPayload;
       return payload;
     } catch (error) {
       throw new Error('Invalid or expired token');

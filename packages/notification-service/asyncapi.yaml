@@ -1,0 +1,611 @@
+asyncapi: 3.0.0
+info:
+  title: Notification Service Events API
+  version: 1.0.0
+  description: |
+    Events published by the Notification Service for real-time updates on notification delivery and status.
+    
+    This service publishes events for:
+    - Notification lifecycle (sent, delivered, failed, opened, clicked)
+    - Template management events
+    - User preference changes
+    - Channel configuration updates
+    - Delivery status changes
+    
+    Events are published to Redis channels and can be consumed by other services
+    for analytics, monitoring, and workflow automation.
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  development:
+    host: localhost:6379
+    protocol: redis
+    description: Development Redis server
+  production:
+    host: redis.cycletime.dev:6379
+    protocol: redis
+    description: Production Redis server
+
+defaultContentType: application/json
+
+channels:
+  notifications/sent:
+    description: Published when a notification is sent
+    messages:
+      notificationSent:
+        $ref: '#/components/messages/NotificationSent'
+
+  notifications/delivered:
+    description: Published when a notification is delivered
+    messages:
+      notificationDelivered:
+        $ref: '#/components/messages/NotificationDelivered'
+
+  notifications/failed:
+    description: Published when a notification fails to deliver
+    messages:
+      notificationFailed:
+        $ref: '#/components/messages/NotificationFailed'
+
+  notifications/opened:
+    description: Published when a notification is opened by recipient
+    messages:
+      notificationOpened:
+        $ref: '#/components/messages/NotificationOpened'
+
+  notifications/clicked:
+    description: Published when a notification link is clicked
+    messages:
+      notificationClicked:
+        $ref: '#/components/messages/NotificationClicked'
+
+  templates/created:
+    description: Published when a new template is created
+    messages:
+      templateCreated:
+        $ref: '#/components/messages/TemplateCreated'
+
+  templates/updated:
+    description: Published when a template is updated
+    messages:
+      templateUpdated:
+        $ref: '#/components/messages/TemplateUpdated'
+
+  templates/deleted:
+    description: Published when a template is deleted
+    messages:
+      templateDeleted:
+        $ref: '#/components/messages/TemplateDeleted'
+
+  preferences/updated:
+    description: Published when user preferences are updated
+    messages:
+      preferencesUpdated:
+        $ref: '#/components/messages/PreferencesUpdated'
+
+  channels/config/updated:
+    description: Published when channel configuration is updated
+    messages:
+      channelConfigUpdated:
+        $ref: '#/components/messages/ChannelConfigUpdated'
+
+  bulk/notifications/completed:
+    description: Published when bulk notification processing is completed
+    messages:
+      bulkNotificationsCompleted:
+        $ref: '#/components/messages/BulkNotificationsCompleted'
+
+operations:
+  publishNotificationSent:
+    action: send
+    channel:
+      $ref: '#/channels/notifications~1sent'
+    summary: Publish notification sent event
+    description: Publishes when a notification is successfully sent
+
+  publishNotificationDelivered:
+    action: send
+    channel:
+      $ref: '#/channels/notifications~1delivered'
+    summary: Publish notification delivered event
+    description: Publishes when a notification is delivered to recipient
+
+  publishNotificationFailed:
+    action: send
+    channel:
+      $ref: '#/channels/notifications~1failed'
+    summary: Publish notification failed event
+    description: Publishes when a notification fails to deliver
+
+  publishNotificationOpened:
+    action: send
+    channel:
+      $ref: '#/channels/notifications~1opened'
+    summary: Publish notification opened event
+    description: Publishes when a notification is opened by recipient
+
+  publishNotificationClicked:
+    action: send
+    channel:
+      $ref: '#/channels/notifications~1clicked'
+    summary: Publish notification clicked event
+    description: Publishes when a notification link is clicked
+
+  publishTemplateCreated:
+    action: send
+    channel:
+      $ref: '#/channels/templates~1created'
+    summary: Publish template created event
+    description: Publishes when a new template is created
+
+  publishTemplateUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/templates~1updated'
+    summary: Publish template updated event
+    description: Publishes when a template is updated
+
+  publishTemplateDeleted:
+    action: send
+    channel:
+      $ref: '#/channels/templates~1deleted'
+    summary: Publish template deleted event
+    description: Publishes when a template is deleted
+
+  publishPreferencesUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/preferences~1updated'
+    summary: Publish preferences updated event
+    description: Publishes when user preferences are updated
+
+  publishChannelConfigUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/channels~1config~1updated'
+    summary: Publish channel config updated event
+    description: Publishes when channel configuration is updated
+
+  publishBulkNotificationsCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/bulk~1notifications~1completed'
+    summary: Publish bulk notifications completed event
+    description: Publishes when bulk notification processing is completed
+
+components:
+  messages:
+    NotificationSent:
+      name: NotificationSent
+      title: Notification Sent
+      summary: A notification has been sent
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/NotificationSentPayload'
+
+    NotificationDelivered:
+      name: NotificationDelivered
+      title: Notification Delivered
+      summary: A notification has been delivered
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/NotificationDeliveredPayload'
+
+    NotificationFailed:
+      name: NotificationFailed
+      title: Notification Failed
+      summary: A notification has failed to deliver
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/NotificationFailedPayload'
+
+    NotificationOpened:
+      name: NotificationOpened
+      title: Notification Opened
+      summary: A notification has been opened
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/NotificationOpenedPayload'
+
+    NotificationClicked:
+      name: NotificationClicked
+      title: Notification Clicked
+      summary: A notification link has been clicked
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/NotificationClickedPayload'
+
+    TemplateCreated:
+      name: TemplateCreated
+      title: Template Created
+      summary: A new template has been created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TemplateCreatedPayload'
+
+    TemplateUpdated:
+      name: TemplateUpdated
+      title: Template Updated
+      summary: A template has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TemplateUpdatedPayload'
+
+    TemplateDeleted:
+      name: TemplateDeleted
+      title: Template Deleted
+      summary: A template has been deleted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TemplateDeletedPayload'
+
+    PreferencesUpdated:
+      name: PreferencesUpdated
+      title: Preferences Updated
+      summary: User preferences have been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PreferencesUpdatedPayload'
+
+    ChannelConfigUpdated:
+      name: ChannelConfigUpdated
+      title: Channel Config Updated
+      summary: Channel configuration has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ChannelConfigUpdatedPayload'
+
+    BulkNotificationsCompleted:
+      name: BulkNotificationsCompleted
+      title: Bulk Notifications Completed
+      summary: Bulk notification processing has completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/BulkNotificationsCompletedPayload'
+
+  schemas:
+    NotificationSentPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        notification:
+          type: object
+          properties:
+            id:
+              type: string
+            channel:
+              type: string
+              enum: [email, sms, push, in_app]
+            recipient:
+              type: string
+            subject:
+              type: string
+            templateId:
+              type: string
+            priority:
+              type: string
+              enum: [low, normal, high, urgent]
+            metadata:
+              type: object
+              additionalProperties: true
+        service:
+          type: string
+        environment:
+          type: string
+
+    NotificationDeliveredPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        notification:
+          type: object
+          properties:
+            id:
+              type: string
+            channel:
+              type: string
+            recipient:
+              type: string
+            subject:
+              type: string
+            deliveredAt:
+              type: string
+              format: date-time
+            deliveryLatency:
+              type: number
+              description: Time from sent to delivered in milliseconds
+        service:
+          type: string
+        environment:
+          type: string
+
+    NotificationFailedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        notification:
+          type: object
+          properties:
+            id:
+              type: string
+            channel:
+              type: string
+            recipient:
+              type: string
+            subject:
+              type: string
+            failureReason:
+              type: string
+            errorCode:
+              type: string
+            retryCount:
+              type: integer
+            willRetry:
+              type: boolean
+        service:
+          type: string
+        environment:
+          type: string
+
+    NotificationOpenedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        notification:
+          type: object
+          properties:
+            id:
+              type: string
+            channel:
+              type: string
+            recipient:
+              type: string
+            subject:
+              type: string
+            openedAt:
+              type: string
+              format: date-time
+            userAgent:
+              type: string
+            ipAddress:
+              type: string
+        service:
+          type: string
+        environment:
+          type: string
+
+    NotificationClickedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        notification:
+          type: object
+          properties:
+            id:
+              type: string
+            channel:
+              type: string
+            recipient:
+              type: string
+            subject:
+              type: string
+            clickedAt:
+              type: string
+              format: date-time
+            clickedLink:
+              type: string
+            userAgent:
+              type: string
+            ipAddress:
+              type: string
+        service:
+          type: string
+        environment:
+          type: string
+
+    TemplateCreatedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        template:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            channel:
+              type: string
+            category:
+              type: string
+            createdBy:
+              type: string
+        service:
+          type: string
+        environment:
+          type: string
+
+    TemplateUpdatedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        template:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            channel:
+              type: string
+            category:
+              type: string
+            updatedBy:
+              type: string
+        changes:
+          type: array
+          items:
+            type: string
+        service:
+          type: string
+        environment:
+          type: string
+
+    TemplateDeletedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        template:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            channel:
+              type: string
+            category:
+              type: string
+            deletedBy:
+              type: string
+        service:
+          type: string
+        environment:
+          type: string
+
+    PreferencesUpdatedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        preferences:
+          type: object
+          properties:
+            userId:
+              type: string
+            channels:
+              type: array
+              items:
+                type: string
+            categories:
+              type: array
+              items:
+                type: string
+            updatedBy:
+              type: string
+        changes:
+          type: array
+          items:
+            type: string
+        service:
+          type: string
+        environment:
+          type: string
+
+    ChannelConfigUpdatedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        channel:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [email, sms, push, in_app]
+            isEnabled:
+              type: boolean
+            configKeys:
+              type: array
+              items:
+                type: string
+            updatedBy:
+              type: string
+        service:
+          type: string
+        environment:
+          type: string
+
+    BulkNotificationsCompletedPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        bulk:
+          type: object
+          properties:
+            batchId:
+              type: string
+            totalNotifications:
+              type: integer
+            successfulNotifications:
+              type: integer
+            failedNotifications:
+              type: integer
+            processingTime:
+              type: number
+              description: Processing time in milliseconds
+            channels:
+              type: array
+              items:
+                type: string
+        service:
+          type: string
+        environment:
+          type: string

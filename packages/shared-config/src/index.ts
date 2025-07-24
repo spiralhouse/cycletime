@@ -27,6 +27,7 @@ export {
   loadConfigurationFromSchema,
   createConfigurationSummary,
   validateConfigurationHealth,
+  loadConfig,
 } from './loaders';
 
 export {

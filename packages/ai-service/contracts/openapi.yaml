@@ -1,0 +1,1826 @@
+openapi: 3.0.3
+info:
+  title: AI Service API
+  description: |
+    Multi-provider AI orchestration service with context optimization and intelligent project analysis.
+    
+    This service provides unified access to multiple AI providers (OpenAI, Anthropic, Google, Azure) with:
+    - Intelligent context optimization
+    - Project analysis and insights
+    - Performance analytics and monitoring
+    - Embedding generation
+    - Provider management and health monitoring
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8003
+    description: Development server
+  - url: https://ai-service-staging.cycletime.dev
+    description: Staging server
+  - url: https://ai-service.cycletime.dev
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health monitoring
+  - name: Provider Management
+    description: AI provider configuration and management
+  - name: Model Management
+    description: Available AI models and capabilities
+  - name: Chat
+    description: Chat completion and streaming
+  - name: Context Optimization
+    description: Context analysis and optimization
+  - name: Embeddings
+    description: Text embedding generation
+  - name: Project Analysis
+    description: Intelligent project analysis and insights
+  - name: Analytics
+    description: Usage analytics and performance metrics
+
+paths:
+  # Health Controller
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Check if the AI service is healthy and operational
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  # Provider Controller
+  /api/v1/providers:
+    get:
+      tags: [Provider Management]
+      summary: List AI providers
+      description: Get list of available AI providers and their status
+      operationId: listProviders
+      responses:
+        '200':
+          description: List of AI providers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProvidersResponse'
+
+  /api/v1/providers/{providerId}:
+    get:
+      tags: [Provider Management]
+      summary: Get provider details
+      description: Get details of a specific AI provider
+      operationId: getProvider
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ProviderId'
+      responses:
+        '200':
+          description: Provider details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderDetails'
+        '404':
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/providers/{providerId}/configure:
+    post:
+      tags: [Provider Management]
+      summary: Configure AI provider
+      description: Configure API keys and settings for an AI provider
+      operationId: configureProvider
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ProviderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderConfiguration'
+      responses:
+        '200':
+          description: Provider configured successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationResponse'
+        '400':
+          description: Invalid configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/providers/{providerId}/test:
+    post:
+      tags: [Provider Management]
+      summary: Test AI provider
+      description: Test connectivity and functionality of an AI provider
+      operationId: testProvider
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ProviderId'
+      responses:
+        '200':
+          description: Provider test results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResponse'
+        '400':
+          description: Test failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Model Controller
+  /api/v1/models:
+    get:
+      tags: [Model Management]
+      summary: List available models
+      description: Get list of available AI models across all providers
+      operationId: listModels
+      parameters:
+        - name: provider
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ProviderId'
+        - name: capability
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ModelCapability'
+      responses:
+        '200':
+          description: List of available models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelsResponse'
+
+  /api/v1/models/{modelId}:
+    get:
+      tags: [Model Management]
+      summary: Get model details
+      description: Get details of a specific AI model
+      operationId: getModel
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Model details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelDetails'
+        '404':
+          description: Model not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Chat Controller
+  /api/v1/chat/completions:
+    post:
+      tags: [Chat]
+      summary: Chat completion
+      description: Generate chat completion using the best available model
+      operationId: createChatCompletion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatCompletionRequest'
+      responses:
+        '200':
+          description: Chat completion response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatCompletionResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/chat/completions/stream:
+    post:
+      tags: [Chat]
+      summary: Streaming chat completion
+      description: Generate streaming chat completion
+      operationId: createStreamingChatCompletion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StreamingChatCompletionRequest'
+      responses:
+        '200':
+          description: Streaming chat completion response
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Context Controller
+  /api/v1/context/analyze:
+    post:
+      tags: [Context Optimization]
+      summary: Analyze context
+      description: Analyze context and optimize for AI consumption
+      operationId: analyzeContext
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContextAnalysisRequest'
+      responses:
+        '202':
+          description: Context analysis started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextAnalysisResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/context/{contextId}/optimize:
+    post:
+      tags: [Context Optimization]
+      summary: Optimize context
+      description: Optimize context for specific model and use case
+      operationId: optimizeContext
+      parameters:
+        - name: contextId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContextOptimizationRequest'
+      responses:
+        '200':
+          description: Context optimization completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextOptimizationResponse'
+        '404':
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/context/{contextId}/chunks:
+    get:
+      tags: [Context Optimization]
+      summary: Get context chunks
+      description: Get optimized context chunks for AI consumption
+      operationId: getContextChunks
+      parameters:
+        - name: contextId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: maxTokens
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 100
+            maximum: 200000
+            default: 8000
+        - name: priority
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+            default: 0.5
+      responses:
+        '200':
+          description: Context chunks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextChunksResponse'
+        '404':
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Embedding Controller
+  /api/v1/embeddings:
+    post:
+      tags: [Embeddings]
+      summary: Generate embeddings
+      description: Generate embeddings for text content
+      operationId: createEmbeddings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmbeddingRequest'
+      responses:
+        '200':
+          description: Generated embeddings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmbeddingResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Project Controller
+  /api/v1/projects/{projectId}/analyze:
+    post:
+      tags: [Project Analysis]
+      summary: Analyze project
+      description: Perform intelligent analysis of a project
+      operationId: analyzeProject
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectAnalysisRequest'
+      responses:
+        '202':
+          description: Project analysis started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectAnalysisResponse'
+
+  /api/v1/projects/{projectId}/insights:
+    get:
+      tags: [Project Analysis]
+      summary: Get project insights
+      description: Get AI-generated insights for a project
+      operationId: getProjectInsights
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: timeframe
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Timeframe'
+        - name: category
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/InsightCategory'
+      responses:
+        '200':
+          description: Project insights
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectInsightsResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects/{projectId}/recommendations:
+    get:
+      tags: [Project Analysis]
+      summary: Get project recommendations
+      description: Get AI-generated recommendations for a project
+      operationId: getProjectRecommendations
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: priority
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/RecommendationPriority'
+        - name: category
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/RecommendationCategory'
+      responses:
+        '200':
+          description: Project recommendations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectRecommendationsResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects/{projectId}/metrics:
+    get:
+      tags: [Project Analysis]
+      summary: Get project metrics
+      description: Get AI-analyzed metrics for a project
+      operationId: getProjectMetrics
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: timeframe
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Timeframe'
+        - name: metric
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/MetricType'
+      responses:
+        '200':
+          description: Project metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMetricsResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Analytics Controller
+  /api/v1/analytics:
+    get:
+      tags: [Analytics]
+      summary: Get AI service analytics
+      description: Get analytics and metrics for AI service usage
+      operationId: getAnalytics
+      parameters:
+        - name: timeframe
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/AnalyticsTimeframe'
+        - name: provider
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ProviderId'
+        - name: model
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Common enums and types
+    ProviderId:
+      type: string
+      enum: [openai, anthropic, google, azure]
+
+    ModelCapability:
+      type: string
+      enum: [text-generation, code-generation, embedding, vision, function-calling]
+
+    Timeframe:
+      type: string
+      enum: [day, week, month, quarter, year]
+      default: month
+
+    AnalyticsTimeframe:
+      type: string
+      enum: [hour, day, week, month]
+      default: day
+
+    InsightCategory:
+      type: string
+      enum: [performance, quality, complexity, trends, recommendations]
+
+    RecommendationPriority:
+      type: string
+      enum: [low, medium, high, critical]
+
+    RecommendationCategory:
+      type: string
+      enum: [performance, security, maintainability, scalability, architecture]
+
+    MetricType:
+      type: string
+      enum: [complexity, velocity, quality, technical-debt, performance]
+
+    # Health schemas
+    HealthStatus:
+      type: object
+      required: [status, timestamp, version, dependencies]
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        dependencies:
+          type: object
+          required: [redis, providers, contextService]
+          properties:
+            redis:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            providers:
+              type: object
+              required: [openai, anthropic, google, azure]
+              properties:
+                openai:
+                  type: string
+                  enum: [healthy, degraded, unhealthy]
+                anthropic:
+                  type: string
+                  enum: [healthy, degraded, unhealthy]
+                google:
+                  type: string
+                  enum: [healthy, degraded, unhealthy]
+                azure:
+                  type: string
+                  enum: [healthy, degraded, unhealthy]
+            contextService:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+
+    # Provider schemas
+    Provider:
+      type: object
+      required: [id, name, status, health, lastHealthCheck, capabilities, models, configuration, metrics]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, error, configuring]
+        health:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        lastHealthCheck:
+          type: string
+          format: date-time
+        capabilities:
+          type: array
+          items:
+            type: string
+        models:
+          type: array
+          items:
+            type: string
+        configuration:
+          type: object
+          required: [configured]
+          properties:
+            configured:
+              type: boolean
+            lastConfigured:
+              type: string
+              format: date-time
+        metrics:
+          type: object
+          required: [requestCount, errorRate, averageResponseTime]
+          properties:
+            requestCount:
+              type: integer
+            errorRate:
+              type: number
+            averageResponseTime:
+              type: number
+
+    ProvidersResponse:
+      type: object
+      required: [providers, totalProviders, activeProviders, lastUpdated]
+      properties:
+        providers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Provider'
+        totalProviders:
+          type: integer
+        activeProviders:
+          type: integer
+        lastUpdated:
+          type: string
+          format: date-time
+
+    ProviderDetails:
+      type: object
+      required: [id, name, description, status, health, lastHealthCheck, capabilities, models, configuration, metrics]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        health:
+          type: string
+        lastHealthCheck:
+          type: string
+          format: date-time
+        capabilities:
+          type: array
+          items:
+            type: string
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelInfo'
+        configuration:
+          type: object
+          required: [configured, requiredFields]
+          properties:
+            configured:
+              type: boolean
+            lastConfigured:
+              type: string
+              format: date-time
+            requiredFields:
+              type: array
+              items:
+                type: string
+        metrics:
+          type: object
+          required: [requestCount, successRate, errorRate, averageResponseTime, totalTokensUsed, costEstimate]
+          properties:
+            requestCount:
+              type: integer
+            successRate:
+              type: number
+            errorRate:
+              type: number
+            averageResponseTime:
+              type: number
+            totalTokensUsed:
+              type: integer
+            costEstimate:
+              type: number
+
+    ModelInfo:
+      type: object
+      required: [id, name, description, capabilities, contextWindow, maxTokens, status]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        contextWindow:
+          type: integer
+        maxTokens:
+          type: integer
+        status:
+          type: string
+
+    ProviderConfiguration:
+      type: object
+      required: [apiKey]
+      properties:
+        apiKey:
+          type: string
+        baseUrl:
+          type: string
+        organization:
+          type: string
+        project:
+          type: string
+        region:
+          type: string
+        rateLimit:
+          type: object
+          properties:
+            requestsPerMinute:
+              type: integer
+            tokensPerMinute:
+              type: integer
+        defaultModel:
+          type: string
+        maxRetries:
+          type: integer
+          default: 3
+        timeout:
+          type: integer
+          default: 30000
+
+    ConfigurationResponse:
+      type: object
+      required: [providerId, configured, message, testResult, configuredAt]
+      properties:
+        providerId:
+          type: string
+        configured:
+          type: boolean
+        message:
+          type: string
+        testResult:
+          $ref: '#/components/schemas/TestResult'
+        configuredAt:
+          type: string
+          format: date-time
+
+    TestResult:
+      type: object
+      required: [success, responseTime]
+      properties:
+        success:
+          type: boolean
+        responseTime:
+          type: number
+        error:
+          type: string
+
+    TestResponse:
+      type: object
+      required: [providerId, success, responseTime, message, testDetails, testedAt]
+      properties:
+        providerId:
+          type: string
+        success:
+          type: boolean
+        responseTime:
+          type: number
+        message:
+          type: string
+        testDetails:
+          type: object
+          required: [modelsAvailable, testModel, testQuery, testResponse]
+          properties:
+            modelsAvailable:
+              type: integer
+            testModel:
+              type: string
+            testQuery:
+              type: string
+            testResponse:
+              type: string
+        testedAt:
+          type: string
+          format: date-time
+        error:
+          type: string
+
+    # Model schemas
+    Model:
+      type: object
+      required: [id, name, description, provider, capabilities, contextWindow, maxTokens, costPerInputToken, costPerOutputToken, status]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        provider:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        contextWindow:
+          type: integer
+        maxTokens:
+          type: integer
+        costPerInputToken:
+          type: number
+        costPerOutputToken:
+          type: number
+        status:
+          type: string
+
+    ModelsResponse:
+      type: object
+      required: [models, totalModels, lastUpdated]
+      properties:
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/Model'
+        totalModels:
+          type: integer
+        lastUpdated:
+          type: string
+          format: date-time
+
+    ModelDetails:
+      type: object
+      required: [id, name, description, provider, capabilities, contextWindow, maxTokens, costPerInputToken, costPerOutputToken, status, lastUpdated]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        provider:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        contextWindow:
+          type: integer
+        maxTokens:
+          type: integer
+        costPerInputToken:
+          type: number
+        costPerOutputToken:
+          type: number
+        status:
+          type: string
+        lastUpdated:
+          type: string
+          format: date-time
+
+    # Chat schemas
+    ChatMessage:
+      type: object
+      required: [role, content]
+      properties:
+        role:
+          type: string
+          enum: [system, user, assistant, tool]
+        content:
+          type: string
+        name:
+          type: string
+        toolCallId:
+          type: string
+
+    ContextOptimizationConfig:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        maxContextTokens:
+          type: integer
+          default: 8000
+        priority:
+          type: string
+          enum: [speed, quality, balanced]
+          default: balanced
+
+    RequestMetadata:
+      type: object
+      properties:
+        userId:
+          type: string
+        sessionId:
+          type: string
+        projectId:
+          type: string
+        contextId:
+          type: string
+
+    ChatCompletionRequest:
+      type: object
+      required: [messages]
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        model:
+          type: string
+        provider:
+          $ref: '#/components/schemas/ProviderId'
+        maxTokens:
+          type: integer
+          minimum: 1
+          maximum: 200000
+          default: 1000
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+          default: 1
+        topP:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 1
+        frequencyPenalty:
+          type: number
+          minimum: -2
+          maximum: 2
+          default: 0
+        presencePenalty:
+          type: number
+          minimum: -2
+          maximum: 2
+          default: 0
+        stream:
+          type: boolean
+          default: false
+        contextOptimization:
+          $ref: '#/components/schemas/ContextOptimizationConfig'
+        metadata:
+          $ref: '#/components/schemas/RequestMetadata'
+
+    StreamingChatCompletionRequest:
+      type: object
+      required: [messages, stream]
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        model:
+          type: string
+        provider:
+          type: string
+        maxTokens:
+          type: integer
+          minimum: 1
+          maximum: 200000
+          default: 1000
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+          default: 1
+        stream:
+          type: boolean
+          enum: [true]
+        metadata:
+          $ref: '#/components/schemas/RequestMetadata'
+
+    ChatChoice:
+      type: object
+      required: [index, message, finishReason]
+      properties:
+        index:
+          type: integer
+        message:
+          type: object
+          required: [role, content]
+          properties:
+            role:
+              type: string
+            content:
+              type: string
+        finishReason:
+          type: string
+          enum: [stop, length, function_call, tool_calls, content_filter]
+
+    UsageInfo:
+      type: object
+      required: [promptTokens, completionTokens, totalTokens, estimatedCost]
+      properties:
+        promptTokens:
+          type: integer
+        completionTokens:
+          type: integer
+        totalTokens:
+          type: integer
+        estimatedCost:
+          type: number
+
+    ChatCompletionResponse:
+      type: object
+      required: [id, object, created, model, provider, choices, usage, metadata]
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+          enum: [chat.completion]
+        created:
+          type: integer
+        model:
+          type: string
+        provider:
+          type: string
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatChoice'
+        usage:
+          $ref: '#/components/schemas/UsageInfo'
+        metadata:
+          type: object
+          required: [processingTime, contextOptimizationUsed, originalContextTokens, optimizedContextTokens, providerResponseTime]
+          properties:
+            processingTime:
+              type: number
+            contextOptimizationUsed:
+              type: boolean
+            originalContextTokens:
+              type: integer
+            optimizedContextTokens:
+              type: integer
+            providerResponseTime:
+              type: number
+
+    # Context schemas
+    Document:
+      type: object
+      required: [id, content, title, type]
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+          enum: [markdown, text, code, json, yaml, typescript, javascript, python, java, go, rust]
+        language:
+          type: string
+        metadata:
+          type: object
+        lastModified:
+          type: string
+          format: date-time
+        priority:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.5
+
+    OptimizationConfig:
+      type: object
+      properties:
+        targetModel:
+          type: string
+        maxTokens:
+          type: integer
+        chunkingStrategy:
+          type: string
+          enum: [semantic, fixed, adaptive]
+          default: semantic
+        priority:
+          type: string
+          enum: [speed, quality, balanced]
+          default: balanced
+
+    ContextAnalysisRequest:
+      type: object
+      required: [projectId, documents]
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        analysisType:
+          type: string
+          enum: [full, incremental, targeted]
+          default: full
+        optimization:
+          $ref: '#/components/schemas/OptimizationConfig'
+
+    ContextAnalysisResponse:
+      type: object
+      required: [contextId, projectId, status, documentsCount, estimatedChunks, estimatedCompletion, processingStage, createdAt]
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        documentsCount:
+          type: integer
+        estimatedChunks:
+          type: integer
+        estimatedCompletion:
+          type: string
+          format: date-time
+        processingStage:
+          type: string
+          enum: [queued, tokenizing, chunking, analyzing, optimizing, completed]
+        createdAt:
+          type: string
+          format: date-time
+
+    ContextOptimizationRequest:
+      type: object
+      required: [targetModel, maxTokens]
+      properties:
+        targetModel:
+          type: string
+        maxTokens:
+          type: integer
+          minimum: 100
+          maximum: 200000
+        useCase:
+          type: string
+          enum: [code_generation, documentation, debugging, analysis, chat]
+        priority:
+          type: string
+          enum: [speed, quality, balanced]
+          default: balanced
+        preserveStructure:
+          type: boolean
+          default: true
+        compressionLevel:
+          type: string
+          enum: [none, light, medium, aggressive]
+          default: medium
+
+    OptimizationMetrics:
+      type: object
+      required: [originalTokens, optimizedTokens, compressionRatio, chunksReduced, relevancePreserved]
+      properties:
+        originalTokens:
+          type: integer
+        optimizedTokens:
+          type: integer
+        compressionRatio:
+          type: number
+        chunksReduced:
+          type: integer
+        relevancePreserved:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    ContextOptimizationResponse:
+      type: object
+      required: [contextId, optimizedAt, optimization, metadata]
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        optimizedAt:
+          type: string
+          format: date-time
+        optimization:
+          $ref: '#/components/schemas/OptimizationMetrics'
+        metadata:
+          type: object
+          required: [targetModel, processingTime]
+          properties:
+            targetModel:
+              type: string
+            useCase:
+              type: string
+            processingTime:
+              type: number
+
+    ContextChunk:
+      type: object
+      required: [id, content, tokens, relevanceScore, priority, documentId, documentTitle, documentType, chunkIndex, metadata]
+      properties:
+        id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        tokens:
+          type: integer
+        relevanceScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        priority:
+          type: number
+          minimum: 0
+          maximum: 1
+        documentId:
+          type: string
+        documentTitle:
+          type: string
+        documentType:
+          type: string
+        chunkIndex:
+          type: integer
+        metadata:
+          type: object
+          required: [keywords, entities, concepts, complexity]
+          properties:
+            keywords:
+              type: array
+              items:
+                type: string
+            entities:
+              type: array
+              items:
+                type: string
+            concepts:
+              type: array
+              items:
+                type: string
+            complexity:
+              type: number
+              minimum: 0
+              maximum: 1
+
+    ContextChunksResponse:
+      type: object
+      required: [contextId, chunks, totalTokens, totalChunks, generatedAt]
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        chunks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextChunk'
+        totalTokens:
+          type: integer
+        totalChunks:
+          type: integer
+        generatedAt:
+          type: string
+          format: date-time
+
+    # Embedding schemas
+    EmbeddingRequest:
+      type: object
+      required: [input]
+      properties:
+        input:
+          type: array
+          items:
+            type: string
+          maxItems: 100
+        model:
+          type: string
+          default: text-embedding-3-small
+        provider:
+          type: string
+          enum: [openai, azure]
+        dimensions:
+          type: integer
+          minimum: 1
+          maximum: 3072
+        encoding_format:
+          type: string
+          enum: [float, base64]
+          default: float
+        metadata:
+          type: object
+          properties:
+            userId:
+              type: string
+            projectId:
+              type: string
+            purpose:
+              type: string
+              enum: [search, similarity, clustering, classification]
+
+    EmbeddingData:
+      type: object
+      required: [object, embedding, index]
+      properties:
+        object:
+          type: string
+          enum: [embedding]
+        embedding:
+          type: array
+          items:
+            type: number
+        index:
+          type: integer
+
+    EmbeddingResponse:
+      type: object
+      required: [object, data, model, provider, usage, processingTime]
+      properties:
+        object:
+          type: string
+          enum: [list]
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmbeddingData'
+        model:
+          type: string
+        provider:
+          type: string
+        usage:
+          type: object
+          required: [promptTokens, totalTokens, estimatedCost]
+          properties:
+            promptTokens:
+              type: integer
+            totalTokens:
+              type: integer
+            estimatedCost:
+              type: number
+        processingTime:
+          type: number
+
+    # Project Analysis schemas
+    ProjectAnalysisRequest:
+      type: object
+      properties:
+        analysisType:
+          type: string
+          enum: [full, incremental, targeted]
+          default: full
+        scope:
+          type: array
+          items:
+            type: string
+            enum: [code, documentation, issues, metrics, performance, security]
+          default: [code, documentation, issues, metrics]
+        timeframe:
+          $ref: '#/components/schemas/Timeframe'
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          default: medium
+
+    ProjectAnalysisResponse:
+      type: object
+      required: [analysisId, projectId, status, analysisType, scope, estimatedCompletion, createdAt]
+      properties:
+        analysisId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        analysisType:
+          type: string
+        scope:
+          type: array
+          items:
+            type: string
+        estimatedCompletion:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    ProjectInsight:
+      type: object
+      required: [id, category, title, description, confidence, impact, trend, actionable, generatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        category:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        impact:
+          type: string
+        trend:
+          type: string
+        actionable:
+          type: boolean
+        generatedAt:
+          type: string
+          format: date-time
+
+    ProjectInsightsResponse:
+      type: object
+      required: [projectId, timeframe, insights, summary, generatedAt]
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        timeframe:
+          type: string
+        insights:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectInsight'
+        summary:
+          type: object
+          required: [totalInsights, averageConfidence, lastAnalyzed]
+          properties:
+            totalInsights:
+              type: integer
+            averageConfidence:
+              type: number
+              minimum: 0
+              maximum: 1
+            lastAnalyzed:
+              type: string
+              format: date-time
+        generatedAt:
+          type: string
+          format: date-time
+
+    ProjectRecommendation:
+      type: object
+      required: [id, title, description, category, priority, effort, impact, confidence, reasoning, actionItems, generatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        priority:
+          type: string
+        effort:
+          type: string
+        impact:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        reasoning:
+          type: string
+        actionItems:
+          type: array
+          items:
+            type: string
+        generatedAt:
+          type: string
+          format: date-time
+
+    ProjectRecommendationsResponse:
+      type: object
+      required: [projectId, recommendations, summary, generatedAt]
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectRecommendation'
+        summary:
+          type: object
+          required: [totalRecommendations, byPriority]
+          properties:
+            totalRecommendations:
+              type: integer
+            byPriority:
+              type: object
+              required: [critical, high, medium, low]
+              properties:
+                critical:
+                  type: integer
+                high:
+                  type: integer
+                medium:
+                  type: integer
+                low:
+                  type: integer
+        generatedAt:
+          type: string
+          format: date-time
+
+    ProjectMetricsResponse:
+      type: object
+      required: [projectId, timeframe, metrics, trends, generatedAt]
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        timeframe:
+          type: string
+        metrics:
+          type: object
+          properties:
+            complexity:
+              type: object
+              properties:
+                cyclomaticComplexity:
+                  type: number
+                cognitiveComplexity:
+                  type: number
+                maintainabilityIndex:
+                  type: number
+                technicalDebtRatio:
+                  type: number
+                codeSmells:
+                  type: integer
+                duplicatedLines:
+                  type: integer
+                linesOfCode:
+                  type: integer
+                files:
+                  type: integer
+                functions:
+                  type: integer
+                classes:
+                  type: integer
+            velocity:
+              type: object
+              properties:
+                commitsPerDay:
+                  type: number
+                linesAddedPerDay:
+                  type: number
+                linesDeletedPerDay:
+                  type: number
+                filesChangedPerDay:
+                  type: number
+                issuesClosedPerDay:
+                  type: number
+                pullRequestsPerDay:
+                  type: number
+                averageLeadTime:
+                  type: number
+                averageCycleTime:
+                  type: number
+                deploymentFrequency:
+                  type: number
+            quality:
+              type: object
+              properties:
+                testCoverage:
+                  type: number
+                passedTests:
+                  type: integer
+                failedTests:
+                  type: integer
+                skippedTests:
+                  type: integer
+                bugs:
+                  type: integer
+                vulnerabilities:
+                  type: integer
+                codeReviewCoverage:
+                  type: number
+                documentationCoverage:
+                  type: number
+                qualityGateStatus:
+                  type: string
+        trends:
+          type: object
+          required: [complexity, velocity, quality]
+          properties:
+            complexity:
+              type: string
+              enum: [improving, stable, declining]
+            velocity:
+              type: string
+              enum: [improving, stable, declining]
+            quality:
+              type: string
+              enum: [improving, stable, declining]
+        generatedAt:
+          type: string
+          format: date-time
+
+    # Analytics schemas
+    AnalyticsOverview:
+      type: object
+      required: [totalRequests, totalTokens, totalCost, successRate, averageResponseTime]
+      properties:
+        totalRequests:
+          type: integer
+        totalTokens:
+          type: integer
+        totalCost:
+          type: number
+        successRate:
+          type: number
+          minimum: 0
+          maximum: 1
+        averageResponseTime:
+          type: number
+
+    ProviderAnalytics:
+      type: object
+      required: [provider, requests, tokens, cost, successRate, averageResponseTime]
+      properties:
+        provider:
+          type: string
+        requests:
+          type: integer
+        tokens:
+          type: integer
+        cost:
+          type: number
+        successRate:
+          type: number
+        averageResponseTime:
+          type: number
+
+    ModelAnalytics:
+      type: object
+      required: [model, provider, requests, tokens, cost, successRate, averageResponseTime]
+      properties:
+        model:
+          type: string
+        provider:
+          type: string
+        requests:
+          type: integer
+        tokens:
+          type: integer
+        cost:
+          type: number
+        successRate:
+          type: number
+        averageResponseTime:
+          type: number
+
+    UsageAnalytics:
+      type: object
+      required: [peakHours, usageByDay, topUsers]
+      properties:
+        peakHours:
+          type: array
+          items:
+            type: integer
+        usageByDay:
+          type: object
+          additionalProperties: true
+        topUsers:
+          type: array
+          items:
+            type: object
+            required: [userId, requests, tokens]
+            properties:
+              userId:
+                type: string
+              requests:
+                type: integer
+              tokens:
+                type: integer
+
+    ErrorAnalytics:
+      type: object
+      required: [totalErrors, errorRate, errorsByType, errorsByProvider]
+      properties:
+        totalErrors:
+          type: integer
+        errorRate:
+          type: number
+        errorsByType:
+          type: object
+          additionalProperties: true
+        errorsByProvider:
+          type: object
+          additionalProperties: true
+
+    AnalyticsResponse:
+      type: object
+      required: [timeframe, overview, providers, models, usage, errors, generatedAt]
+      properties:
+        timeframe:
+          type: string
+        overview:
+          $ref: '#/components/schemas/AnalyticsOverview'
+        providers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProviderAnalytics'
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelAnalytics'
+        usage:
+          $ref: '#/components/schemas/UsageAnalytics'
+        errors:
+          $ref: '#/components/schemas/ErrorAnalytics'
+        generatedAt:
+          type: string
+          format: date-time
+
+    # Error response schema
+    ErrorResponse:
+      type: object
+      required: [error, message, timestamp]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time

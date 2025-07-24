@@ -1,0 +1,4116 @@
+openapi: 3.0.3
+info:
+  title: Task Service API
+  description: Task lifecycle management service with dependency tracking, scheduling, and execution monitoring
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8005
+    description: Development server
+  - url: https://api.cycletime.dev/tasks
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the task service is healthy and operational
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/tasks:
+    get:
+      summary: List tasks
+      description: Get a paginated list of tasks with optional filtering
+      operationId: listTasks
+      tags:
+        - Tasks
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of tasks per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: search
+          in: query
+          description: Search query for task title and description
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by task status
+          schema:
+            type: string
+            enum: [pending, in_progress, completed, failed, cancelled, blocked]
+        - name: priority
+          in: query
+          description: Filter by task priority
+          schema:
+            type: string
+            enum: [low, medium, high, urgent]
+        - name: assignee
+          in: query
+          description: Filter by assignee ID
+          schema:
+            type: string
+            format: uuid
+        - name: project
+          in: query
+          description: Filter by project ID
+          schema:
+            type: string
+            format: uuid
+        - name: dueDate
+          in: query
+          description: Filter by due date (ISO 8601 format)
+          schema:
+            type: string
+            format: date
+        - name: tags
+          in: query
+          description: Filter by tags (comma-separated)
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [createdAt, updatedAt, dueDate, priority, status, title]
+            default: createdAt
+        - name: sortOrder
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create task
+      description: Create a new task
+      operationId: createTask
+      tags:
+        - Tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Task already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/{taskId}:
+    get:
+      summary: Get task
+      description: Get task details and metadata
+      operationId: getTask
+      tags:
+        - Tasks
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+        - name: includeHistory
+          in: query
+          description: Include task history in response
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update task
+      description: Update task details and metadata
+      operationId: updateTask
+      tags:
+        - Tasks
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Task conflict (version mismatch)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete task
+      description: Delete a task (soft delete by default)
+      operationId: deleteTask
+      tags:
+        - Tasks
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+        - name: permanent
+          in: query
+          description: Permanently delete the task
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '204':
+          description: Task deleted successfully
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/{taskId}/assign:
+    post:
+      summary: Assign task
+      description: Assign a task to a user
+      operationId: assignTask
+      tags:
+        - Task Assignment
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignTaskRequest'
+      responses:
+        '200':
+          description: Task assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/{taskId}/unassign:
+    post:
+      summary: Unassign task
+      description: Unassign a task from its current assignee
+      operationId: unassignTask
+      tags:
+        - Task Assignment
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task unassigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/{taskId}/dependencies:
+    get:
+      summary: Get task dependencies
+      description: Get all dependencies for a task
+      operationId: getTaskDependencies
+      tags:
+        - Dependencies
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          description: Filter by dependency type
+          schema:
+            type: string
+            enum: [blocks, depends_on, subtask, parent]
+      responses:
+        '200':
+          description: Task dependencies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDependenciesResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Add task dependency
+      description: Add a dependency between tasks
+      operationId: addTaskDependency
+      tags:
+        - Dependencies
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddDependencyRequest'
+      responses:
+        '201':
+          description: Dependency added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDependencyResponse'
+        '400':
+          description: Invalid request or circular dependency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/{taskId}/dependencies/{dependencyId}:
+    delete:
+      summary: Remove task dependency
+      description: Remove a dependency between tasks
+      operationId: removeTaskDependency
+      tags:
+        - Dependencies
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+        - name: dependencyId
+          in: path
+          required: true
+          description: Dependency ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Dependency removed successfully
+        '404':
+          description: Task or dependency not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/{taskId}/schedule:
+    get:
+      summary: Get task schedule
+      description: Get scheduling information for a task
+      operationId: getTaskSchedule
+      tags:
+        - Scheduling
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task schedule information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskScheduleResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Schedule task
+      description: Schedule a task for execution
+      operationId: scheduleTask
+      tags:
+        - Scheduling
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleTaskRequest'
+      responses:
+        '200':
+          description: Task scheduled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskScheduleResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/{taskId}/progress:
+    get:
+      summary: Get task progress
+      description: Get progress tracking information for a task
+      operationId: getTaskProgress
+      tags:
+        - Progress Tracking
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task progress information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskProgressResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Update task progress
+      description: Update progress tracking for a task
+      operationId: updateTaskProgress
+      tags:
+        - Progress Tracking
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProgressRequest'
+      responses:
+        '200':
+          description: Progress updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskProgressResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/search:
+    post:
+      summary: Search tasks
+      description: Advanced task search with filters and facets
+      operationId: searchTasks
+      tags:
+        - Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchTasksRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchTasksResponse'
+        '400':
+          description: Invalid search request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/analytics:
+    get:
+      summary: Get task analytics
+      description: Get analytics and metrics for tasks
+      operationId: getTaskAnalytics
+      tags:
+        - Analytics
+      parameters:
+        - name: timeRange
+          in: query
+          description: Time range for analytics
+          schema:
+            type: string
+            enum: [day, week, month, quarter, year]
+            default: week
+        - name: groupBy
+          in: query
+          description: Group analytics by field
+          schema:
+            type: string
+            enum: [status, priority, assignee, project, tag]
+            default: status
+        - name: project
+          in: query
+          description: Filter by project ID
+          schema:
+            type: string
+            format: uuid
+        - name: assignee
+          in: query
+          description: Filter by assignee ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAnalyticsResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/analyze:
+    post:
+      summary: AI-assisted task analysis
+      description: Analyze task complexity, identify risks, and get AI-powered insights
+      operationId: analyzeTask
+      tags:
+        - AI Analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskAnalysisRequest'
+      responses:
+        '200':
+          description: Analysis completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAnalysisResponse'
+        '400':
+          description: Invalid analysis request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Analysis failed due to insufficient data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: AI service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/{taskId}/breakdown:
+    get:
+      summary: Get task breakdown
+      description: Get AI-generated task breakdown with subtasks and dependencies
+      operationId: getTaskBreakdown
+      tags:
+        - AI Analysis
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task breakdown retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskBreakdownResponse'
+        '404':
+          description: Task or breakdown not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create task breakdown
+      description: Generate AI-assisted task breakdown with subtasks and dependencies
+      operationId: createTaskBreakdown
+      tags:
+        - AI Analysis
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskBreakdownRequest'
+      responses:
+        '201':
+          description: Task breakdown created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskBreakdownResponse'
+        '400':
+          description: Invalid breakdown request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Breakdown already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: AI service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/estimate:
+    post:
+      summary: AI-assisted effort estimation
+      description: Get AI-powered effort estimation for a task or set of tasks
+      operationId: estimateTask
+      tags:
+        - AI Estimation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskEstimationRequest'
+      responses:
+        '200':
+          description: Estimation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskEstimationResponse'
+        '400':
+          description: Invalid estimation request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Estimation failed due to insufficient data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: AI service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/{taskId}/estimate:
+    get:
+      summary: Get task estimate
+      description: Get existing effort estimate for a task
+      operationId: getTaskEstimate
+      tags:
+        - AI Estimation
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task estimate retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskEstimationResponse'
+        '404':
+          description: Task or estimate not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update task estimate
+      description: Update or refine existing task estimate
+      operationId: updateTaskEstimate
+      tags:
+        - AI Estimation
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskEstimateRequest'
+      responses:
+        '200':
+          description: Task estimate updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskEstimationResponse'
+        '400':
+          description: Invalid estimate update request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task or estimate not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Estimate conflict (version mismatch)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/estimates/batch:
+    get:
+      summary: Get batch estimates
+      description: Get effort estimates for multiple tasks
+      operationId: getBatchEstimates
+      tags:
+        - AI Estimation
+      parameters:
+        - name: taskIds
+          in: query
+          required: true
+          description: Comma-separated list of task IDs
+          schema:
+            type: string
+        - name: includeDetails
+          in: query
+          description: Include detailed breakdown in response
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Batch estimates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchEstimationResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: One or more tasks not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create batch estimates
+      description: Generate effort estimates for multiple tasks
+      operationId: createBatchEstimates
+      tags:
+        - AI Estimation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchEstimationRequest'
+      responses:
+        '201':
+          description: Batch estimates created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchEstimationResponse'
+        '400':
+          description: Invalid batch estimation request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Estimation failed for one or more tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: AI service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/dependencies/analyze:
+    get:
+      summary: Analyze dependencies
+      description: Analyze task dependencies and detect potential issues
+      operationId: analyzeDependencies
+      tags:
+        - AI Analysis
+      parameters:
+        - name: projectId
+          in: query
+          description: Filter by project ID
+          schema:
+            type: string
+            format: uuid
+        - name: taskIds
+          in: query
+          description: Comma-separated list of task IDs to analyze
+          schema:
+            type: string
+        - name: includeRecommendations
+          in: query
+          description: Include AI-generated recommendations
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Dependency analysis completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DependencyAnalysisResponse'
+        '400':
+          description: Invalid analysis request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: AI service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/dependencies/validate:
+    post:
+      summary: Validate dependencies
+      description: Validate proposed task dependencies for conflicts and cycles
+      operationId: validateDependencies
+      tags:
+        - AI Analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DependencyValidationRequest'
+      responses:
+        '200':
+          description: Dependency validation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DependencyValidationResponse'
+        '400':
+          description: Invalid validation request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: AI service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/templates:
+    get:
+      summary: Get task templates
+      description: Get available task templates for task creation
+      operationId: getTaskTemplates
+      tags:
+        - Templates
+      parameters:
+        - name: category
+          in: query
+          description: Filter by template category
+          schema:
+            type: string
+            enum: [feature, bug, maintenance, research, documentation]
+        - name: search
+          in: query
+          description: Search templates by name or description
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of templates per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskTemplateListResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create task template
+      description: Create a new task template
+      operationId: createTaskTemplate
+      tags:
+        - Templates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskTemplateRequest'
+      responses:
+        '201':
+          description: Template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskTemplateResponse'
+        '400':
+          description: Invalid template request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Template already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/templates/{templateId}:
+    get:
+      summary: Get specific template
+      description: Get details of a specific task template
+      operationId: getTaskTemplate
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: Template ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskTemplateResponse'
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update template
+      description: Update an existing task template
+      operationId: updateTaskTemplate
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: Template ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskTemplateRequest'
+      responses:
+        '200':
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskTemplateResponse'
+        '400':
+          description: Invalid template update request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Template conflict (version mismatch)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete template
+      description: Delete a task template
+      operationId: deleteTaskTemplate
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: Template ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Template deleted successfully
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Template is in use and cannot be deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/templates/{templateId}/apply:
+    post:
+      summary: Apply template
+      description: Apply a task template to create new tasks
+      operationId: applyTaskTemplate
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: Template ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyTaskTemplateRequest'
+      responses:
+        '201':
+          description: Template applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplyTaskTemplateResponse'
+        '400':
+          description: Invalid template application request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Template application failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/{taskId}/risks:
+    get:
+      summary: Get task risks
+      description: Get risk assessments for a task
+      operationId: getTaskRisks
+      tags:
+        - Risk Assessment
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+        - name: includeHistory
+          in: query
+          description: Include risk assessment history
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Task risks retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskRisksResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Add risk assessment
+      description: Add AI-powered risk assessment to a task
+      operationId: addTaskRisk
+      tags:
+        - Risk Assessment
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddTaskRiskRequest'
+      responses:
+        '201':
+          description: Risk assessment added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskRiskResponse'
+        '400':
+          description: Invalid risk assessment request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: AI service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/{taskId}/risks/{riskId}:
+    put:
+      summary: Update risk
+      description: Update an existing risk assessment
+      operationId: updateTaskRisk
+      tags:
+        - Risk Assessment
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+        - name: riskId
+          in: path
+          required: true
+          description: Risk ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRiskRequest'
+      responses:
+        '200':
+          description: Risk assessment updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskRiskResponse'
+        '400':
+          description: Invalid risk update request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task or risk not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Risk conflict (version mismatch)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete risk
+      description: Delete a risk assessment
+      operationId: deleteTaskRisk
+      tags:
+        - Risk Assessment
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+        - name: riskId
+          in: path
+          required: true
+          description: Risk ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Risk assessment deleted successfully
+        '404':
+          description: Task or risk not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tasks/{taskId}/comments:
+    get:
+      summary: Get task comments
+      description: Get comments for a task
+      operationId: getTaskComments
+      tags:
+        - Comments
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of comments per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Task comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskCommentsResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Add task comment
+      description: Add a comment to a task
+      operationId: addTaskComment
+      tags:
+        - Comments
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddCommentRequest'
+      responses:
+        '201':
+          description: Comment added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskCommentResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        dependencies:
+          type: object
+          properties:
+            redis:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            queue:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            scheduler:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+        metrics:
+          type: object
+          properties:
+            tasksCount:
+              type: integer
+            pendingTasks:
+              type: integer
+            completedTasks:
+              type: integer
+            averageCompletionTime:
+              type: number
+      required:
+        - status
+        - timestamp
+        - version
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, cancelled, blocked]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        type:
+          type: string
+          enum: [feature, bug, maintenance, research, documentation]
+        estimatedHours:
+          type: number
+          minimum: 0
+        actualHours:
+          type: number
+          minimum: 0
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          description: Custom metadata fields
+        assignee:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+          nullable: true
+        project:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+          nullable: true
+        dependencies:
+          type: object
+          properties:
+            blocks:
+              type: array
+              items:
+                type: string
+                format: uuid
+            dependsOn:
+              type: array
+              items:
+                type: string
+                format: uuid
+            subtasks:
+              type: array
+              items:
+                type: string
+                format: uuid
+            parent:
+              type: string
+              format: uuid
+              nullable: true
+        schedule:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date-time
+              nullable: true
+            dueDate:
+              type: string
+              format: date-time
+              nullable: true
+            scheduledAt:
+              type: string
+              format: date-time
+              nullable: true
+            recurringPattern:
+              type: string
+              nullable: true
+        audit:
+          type: object
+          properties:
+            createdBy:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedBy:
+              type: string
+              format: uuid
+            updatedAt:
+              type: string
+              format: date-time
+            version:
+              type: integer
+        history:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              action:
+                type: string
+                enum: [created, updated, assigned, unassigned, completed, failed, cancelled]
+              field:
+                type: string
+                nullable: true
+              oldValue:
+                type: string
+                nullable: true
+              newValue:
+                type: string
+                nullable: true
+              timestamp:
+                type: string
+                format: date-time
+              userId:
+                type: string
+                format: uuid
+              comment:
+                type: string
+                nullable: true
+      required:
+        - id
+        - title
+        - status
+        - priority
+        - type
+        - audit
+
+    TaskResponse:
+      type: object
+      properties:
+        task:
+          $ref: '#/components/schemas/Task'
+      required:
+        - task
+
+    TaskListResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrevious:
+              type: boolean
+        filters:
+          type: object
+          properties:
+            status:
+              type: string
+            priority:
+              type: string
+            assignee:
+              type: string
+            project:
+              type: string
+            search:
+              type: string
+        facets:
+          type: object
+          properties:
+            statuses:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+            priorities:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+      required:
+        - tasks
+        - pagination
+
+    CreateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          default: medium
+        type:
+          type: string
+          enum: [feature, bug, maintenance, research, documentation]
+          default: feature
+        estimatedHours:
+          type: number
+          minimum: 0
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          description: Custom metadata fields
+        assigneeId:
+          type: string
+          format: uuid
+          nullable: true
+        projectId:
+          type: string
+          format: uuid
+          nullable: true
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - title
+        - type
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, cancelled, blocked]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        type:
+          type: string
+          enum: [feature, bug, maintenance, research, documentation]
+        estimatedHours:
+          type: number
+          minimum: 0
+        actualHours:
+          type: number
+          minimum: 0
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          description: Custom metadata fields
+        assigneeId:
+          type: string
+          format: uuid
+          nullable: true
+        projectId:
+          type: string
+          format: uuid
+          nullable: true
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+        version:
+          type: integer
+          description: Current version for optimistic locking
+
+    AssignTaskRequest:
+      type: object
+      properties:
+        assigneeId:
+          type: string
+          format: uuid
+        comment:
+          type: string
+          nullable: true
+      required:
+        - assigneeId
+
+    TaskDependency:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [blocks, depends_on, subtask, parent]
+        sourceTaskId:
+          type: string
+          format: uuid
+        targetTaskId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          format: uuid
+      required:
+        - id
+        - type
+        - sourceTaskId
+        - targetTaskId
+        - createdAt
+        - createdBy
+
+    TaskDependenciesResponse:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        dependencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskDependency'
+      required:
+        - taskId
+        - dependencies
+
+    TaskDependencyResponse:
+      type: object
+      properties:
+        dependency:
+          $ref: '#/components/schemas/TaskDependency'
+      required:
+        - dependency
+
+    AddDependencyRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [blocks, depends_on, subtask, parent]
+        targetTaskId:
+          type: string
+          format: uuid
+        comment:
+          type: string
+          nullable: true
+      required:
+        - type
+        - targetTaskId
+
+    TaskSchedule:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        recurringPattern:
+          type: string
+          nullable: true
+        nextExecution:
+          type: string
+          format: date-time
+          nullable: true
+        executionHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              executedAt:
+                type: string
+                format: date-time
+              status:
+                type: string
+                enum: [success, failure, skipped]
+              duration:
+                type: number
+                description: Execution duration in milliseconds
+              result:
+                type: string
+                nullable: true
+      required:
+        - taskId
+
+    TaskScheduleResponse:
+      type: object
+      properties:
+        schedule:
+          $ref: '#/components/schemas/TaskSchedule'
+      required:
+        - schedule
+
+    ScheduleTaskRequest:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        recurringPattern:
+          type: string
+          nullable: true
+          description: Cron-like pattern for recurring tasks
+
+    TaskProgress:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        timeSpent:
+          type: number
+          minimum: 0
+          description: Time spent in hours
+        timeRemaining:
+          type: number
+          minimum: 0
+          description: Estimated time remaining in hours
+        completedSubtasks:
+          type: integer
+          minimum: 0
+        totalSubtasks:
+          type: integer
+          minimum: 0
+        milestones:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              title:
+                type: string
+              completed:
+                type: boolean
+              completedAt:
+                type: string
+                format: date-time
+                nullable: true
+        progressHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              progress:
+                type: number
+              comment:
+                type: string
+                nullable: true
+              updatedBy:
+                type: string
+                format: uuid
+      required:
+        - taskId
+        - progress
+
+    TaskProgressResponse:
+      type: object
+      properties:
+        progress:
+          $ref: '#/components/schemas/TaskProgress'
+      required:
+        - progress
+
+    UpdateProgressRequest:
+      type: object
+      properties:
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        timeSpent:
+          type: number
+          minimum: 0
+        comment:
+          type: string
+          nullable: true
+      required:
+        - progress
+
+    SearchTasksRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Search query
+        filters:
+          type: object
+          properties:
+            status:
+              type: array
+              items:
+                type: string
+            priority:
+              type: array
+              items:
+                type: string
+            type:
+              type: array
+              items:
+                type: string
+            assignee:
+              type: array
+              items:
+                type: string
+                format: uuid
+            project:
+              type: array
+              items:
+                type: string
+                format: uuid
+            tags:
+              type: array
+              items:
+                type: string
+            dateRange:
+              type: object
+              properties:
+                from:
+                  type: string
+                  format: date-time
+                to:
+                  type: string
+                  format: date-time
+        facets:
+          type: array
+          items:
+            type: string
+            enum: [status, priority, type, assignee, project, tags, dueDate]
+        sort:
+          type: object
+          properties:
+            field:
+              type: string
+              enum: [relevance, createdAt, updatedAt, dueDate, priority, status, title]
+            order:
+              type: string
+              enum: [asc, desc]
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              minimum: 1
+              default: 1
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+              default: 20
+      required:
+        - query
+
+    SearchTasksResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              task:
+                $ref: '#/components/schemas/Task'
+              score:
+                type: number
+                description: Relevance score
+              highlights:
+                type: object
+                properties:
+                  title:
+                    type: array
+                    items:
+                      type: string
+                  description:
+                    type: array
+                    items:
+                      type: string
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrevious:
+              type: boolean
+        facets:
+          type: object
+          properties:
+            statuses:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+            priorities:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+            types:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+        statistics:
+          type: object
+          properties:
+            totalTasks:
+              type: integer
+            searchTime:
+              type: number
+              description: Search time in milliseconds
+            maxScore:
+              type: number
+      required:
+        - query
+        - results
+        - pagination
+        - statistics
+
+    TaskAnalytics:
+      type: object
+      properties:
+        timeRange:
+          type: string
+        summary:
+          type: object
+          properties:
+            totalTasks:
+              type: integer
+            completedTasks:
+              type: integer
+            pendingTasks:
+              type: integer
+            overdueTasks:
+              type: integer
+            averageCompletionTime:
+              type: number
+            averageProgress:
+              type: number
+        breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              count:
+                type: integer
+              percentage:
+                type: number
+        trends:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              created:
+                type: integer
+              completed:
+                type: integer
+              pending:
+                type: integer
+        performance:
+          type: object
+          properties:
+            velocityTrend:
+              type: array
+              items:
+                type: object
+                properties:
+                  period:
+                    type: string
+                  tasksCompleted:
+                    type: integer
+                  storyPoints:
+                    type: number
+            burndownRate:
+              type: number
+            cycleTime:
+              type: number
+              description: Average cycle time in hours
+            leadTime:
+              type: number
+              description: Average lead time in hours
+      required:
+        - timeRange
+        - summary
+        - breakdown
+        - trends
+        - performance
+
+    TaskAnalyticsResponse:
+      type: object
+      properties:
+        analytics:
+          $ref: '#/components/schemas/TaskAnalytics'
+      required:
+        - analytics
+
+    TaskComment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        author:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        thread:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              content:
+                type: string
+              author:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  email:
+                    type: string
+              createdAt:
+                type: string
+                format: date-time
+              updatedAt:
+                type: string
+                format: date-time
+        attachments:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              filename:
+                type: string
+              size:
+                type: integer
+              mimeType:
+                type: string
+              url:
+                type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - content
+        - author
+        - createdAt
+        - updatedAt
+
+    TaskCommentResponse:
+      type: object
+      properties:
+        comment:
+          $ref: '#/components/schemas/TaskComment'
+      required:
+        - comment
+
+    TaskCommentsResponse:
+      type: object
+      properties:
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskComment'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrevious:
+              type: boolean
+      required:
+        - comments
+        - pagination
+
+    AddCommentRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent comment ID for threaded comments
+        attachments:
+          type: array
+          items:
+            type: object
+            properties:
+              filename:
+                type: string
+              data:
+                type: string
+                format: base64
+              mimeType:
+                type: string
+      required:
+        - content
+
+    TaskAnalysisRequest:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific task ID to analyze (optional for new tasks)
+        title:
+          type: string
+          description: Task title
+        description:
+          type: string
+          description: Task description
+        type:
+          type: string
+          enum: [feature, bug, maintenance, research, documentation]
+        requirements:
+          type: array
+          items:
+            type: string
+          description: List of requirements or acceptance criteria
+        context:
+          type: object
+          properties:
+            projectId:
+              type: string
+              format: uuid
+            teamSize:
+              type: integer
+              minimum: 1
+            techStack:
+              type: array
+              items:
+                type: string
+            constraints:
+              type: array
+              items:
+                type: string
+        options:
+          type: object
+          properties:
+            includeBreakdown:
+              type: boolean
+              default: false
+            includeRisks:
+              type: boolean
+              default: true
+            includeEstimate:
+              type: boolean
+              default: true
+            analyzeComplexity:
+              type: boolean
+              default: true
+      required:
+        - title
+        - type
+
+    TaskAnalysisResponse:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+          nullable: true
+        analysis:
+          type: object
+          properties:
+            complexity:
+              type: object
+              properties:
+                score:
+                  type: number
+                  minimum: 0
+                  maximum: 10
+                level:
+                  type: string
+                  enum: [low, medium, high, very_high]
+                factors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      factor:
+                        type: string
+                      impact:
+                        type: string
+                        enum: [low, medium, high]
+                      description:
+                        type: string
+            risks:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  type:
+                    type: string
+                    enum: [technical, resource, timeline, dependency, quality]
+                  severity:
+                    type: string
+                    enum: [low, medium, high, critical]
+                  probability:
+                    type: number
+                    minimum: 0
+                    maximum: 1
+                  description:
+                    type: string
+                  mitigation:
+                    type: string
+                  impact:
+                    type: string
+            estimate:
+              type: object
+              properties:
+                hours:
+                  type: number
+                  minimum: 0
+                storyPoints:
+                  type: number
+                  minimum: 0
+                confidence:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                breakdown:
+                  type: object
+                  properties:
+                    design:
+                      type: number
+                    implementation:
+                      type: number
+                    testing:
+                      type: number
+                    review:
+                      type: number
+                    deployment:
+                      type: number
+            breakdown:
+              type: object
+              properties:
+                subtasks:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                      description:
+                        type: string
+                      type:
+                        type: string
+                        enum: [feature, bug, maintenance, research, documentation]
+                      priority:
+                        type: string
+                        enum: [low, medium, high, urgent]
+                      estimatedHours:
+                        type: number
+                        minimum: 0
+                      dependencies:
+                        type: array
+                        items:
+                          type: string
+                dependencies:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: [blocks, depends_on, requires]
+                      description:
+                        type: string
+                      external:
+                        type: boolean
+                      critical:
+                        type: boolean
+            insights:
+              type: object
+              properties:
+                recommendations:
+                  type: array
+                  items:
+                    type: string
+                patterns:
+                  type: array
+                  items:
+                    type: string
+                concerns:
+                  type: array
+                  items:
+                    type: string
+                opportunities:
+                  type: array
+                  items:
+                    type: string
+        metadata:
+          type: object
+          properties:
+            analyzedAt:
+              type: string
+              format: date-time
+            version:
+              type: string
+            confidence:
+              type: number
+              minimum: 0
+              maximum: 1
+            processingTime:
+              type: number
+              description: Analysis processing time in milliseconds
+      required:
+        - analysis
+        - metadata
+
+    TaskBreakdownRequest:
+      type: object
+      properties:
+        granularity:
+          type: string
+          enum: [high, medium, low]
+          default: medium
+          description: Level of detail for breakdown
+        includeEstimates:
+          type: boolean
+          default: true
+        includeDependencies:
+          type: boolean
+          default: true
+        maxSubtasks:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        context:
+          type: object
+          properties:
+            methodology:
+              type: string
+              enum: [agile, waterfall, kanban]
+            sprintDuration:
+              type: integer
+              minimum: 1
+              maximum: 4
+            teamVelocity:
+              type: number
+              minimum: 0
+
+    TaskBreakdownResponse:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        breakdown:
+          type: object
+          properties:
+            subtasks:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                  description:
+                    type: string
+                  type:
+                    type: string
+                    enum: [feature, bug, maintenance, research, documentation]
+                  priority:
+                    type: string
+                    enum: [low, medium, high, urgent]
+                  estimatedHours:
+                    type: number
+                    minimum: 0
+                  storyPoints:
+                    type: number
+                    minimum: 0
+                  order:
+                    type: integer
+                    minimum: 1
+                  dependencies:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+                  acceptanceCriteria:
+                    type: array
+                    items:
+                      type: string
+                  tags:
+                    type: array
+                    items:
+                      type: string
+            dependencies:
+              type: array
+              items:
+                type: object
+                properties:
+                  sourceId:
+                    type: string
+                    format: uuid
+                  targetId:
+                    type: string
+                    format: uuid
+                  type:
+                    type: string
+                    enum: [blocks, depends_on, subtask]
+                  description:
+                    type: string
+            summary:
+              type: object
+              properties:
+                totalSubtasks:
+                  type: integer
+                totalEstimatedHours:
+                  type: number
+                totalStoryPoints:
+                  type: number
+                criticalPath:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                estimatedDuration:
+                  type: number
+                  description: Estimated duration in days
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            version:
+              type: string
+            confidence:
+              type: number
+              minimum: 0
+              maximum: 1
+            methodology:
+              type: string
+      required:
+        - taskId
+        - breakdown
+        - metadata
+
+    TaskEstimationRequest:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                nullable: true
+              title:
+                type: string
+              description:
+                type: string
+              type:
+                type: string
+                enum: [feature, bug, maintenance, research, documentation]
+              requirements:
+                type: array
+                items:
+                  type: string
+              complexity:
+                type: string
+                enum: [low, medium, high, very_high]
+                nullable: true
+        context:
+          type: object
+          properties:
+            teamExperience:
+              type: string
+              enum: [junior, intermediate, senior, expert]
+            techStack:
+              type: array
+              items:
+                type: string
+            projectType:
+              type: string
+              enum: [greenfield, brownfield, maintenance, migration]
+            constraints:
+              type: array
+              items:
+                type: string
+        options:
+          type: object
+          properties:
+            unit:
+              type: string
+              enum: [hours, story_points, days]
+              default: hours
+            includeBuffer:
+              type: boolean
+              default: true
+            bufferPercentage:
+              type: number
+              minimum: 0
+              maximum: 100
+              default: 20
+            includeBreakdown:
+              type: boolean
+              default: true
+            confidenceLevel:
+              type: string
+              enum: [low, medium, high]
+              default: medium
+      required:
+        - tasks
+
+    TaskEstimationResponse:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+          nullable: true
+        estimate:
+          type: object
+          properties:
+            hours:
+              type: number
+              minimum: 0
+            storyPoints:
+              type: number
+              minimum: 0
+            confidence:
+              type: number
+              minimum: 0
+              maximum: 1
+            range:
+              type: object
+              properties:
+                min:
+                  type: number
+                  minimum: 0
+                max:
+                  type: number
+                  minimum: 0
+                mostLikely:
+                  type: number
+                  minimum: 0
+            breakdown:
+              type: object
+              properties:
+                analysis:
+                  type: number
+                  minimum: 0
+                design:
+                  type: number
+                  minimum: 0
+                implementation:
+                  type: number
+                  minimum: 0
+                testing:
+                  type: number
+                  minimum: 0
+                review:
+                  type: number
+                  minimum: 0
+                deployment:
+                  type: number
+                  minimum: 0
+                buffer:
+                  type: number
+                  minimum: 0
+            factors:
+              type: array
+              items:
+                type: object
+                properties:
+                  factor:
+                    type: string
+                  impact:
+                    type: string
+                    enum: [decreases, neutral, increases]
+                  multiplier:
+                    type: number
+                    minimum: 0
+                  description:
+                    type: string
+            comparisons:
+              type: array
+              items:
+                type: object
+                properties:
+                  taskId:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                  similarity:
+                    type: number
+                    minimum: 0
+                    maximum: 1
+                  actualHours:
+                    type: number
+                    minimum: 0
+                  variance:
+                    type: number
+        metadata:
+          type: object
+          properties:
+            estimatedAt:
+              type: string
+              format: date-time
+            version:
+              type: string
+            method:
+              type: string
+              enum: [ai_analysis, historical_comparison, expert_judgment, hybrid]
+            confidence:
+              type: number
+              minimum: 0
+              maximum: 1
+      required:
+        - estimate
+        - metadata
+
+    UpdateTaskEstimateRequest:
+      type: object
+      properties:
+        hours:
+          type: number
+          minimum: 0
+        storyPoints:
+          type: number
+          minimum: 0
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        notes:
+          type: string
+        version:
+          type: integer
+          description: Current version for optimistic locking
+      required:
+        - version
+
+    BatchEstimationRequest:
+      type: object
+      properties:
+        taskIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        context:
+          type: object
+          properties:
+            teamExperience:
+              type: string
+              enum: [junior, intermediate, senior, expert]
+            projectType:
+              type: string
+              enum: [greenfield, brownfield, maintenance, migration]
+            methodology:
+              type: string
+              enum: [agile, waterfall, kanban]
+        options:
+          type: object
+          properties:
+            unit:
+              type: string
+              enum: [hours, story_points, days]
+              default: hours
+            includeBuffer:
+              type: boolean
+              default: true
+            includeBreakdown:
+              type: boolean
+              default: false
+      required:
+        - taskIds
+
+    BatchEstimationResponse:
+      type: object
+      properties:
+        estimates:
+          type: array
+          items:
+            type: object
+            properties:
+              taskId:
+                type: string
+                format: uuid
+              estimate:
+                $ref: '#/components/schemas/TaskEstimationResponse'
+              status:
+                type: string
+                enum: [success, failed, skipped]
+              error:
+                type: string
+                nullable: true
+        summary:
+          type: object
+          properties:
+            totalTasks:
+              type: integer
+            successfulEstimates:
+              type: integer
+            failedEstimates:
+              type: integer
+            totalHours:
+              type: number
+              minimum: 0
+            totalStoryPoints:
+              type: number
+              minimum: 0
+            averageConfidence:
+              type: number
+              minimum: 0
+              maximum: 1
+        metadata:
+          type: object
+          properties:
+            estimatedAt:
+              type: string
+              format: date-time
+            processingTime:
+              type: number
+              description: Processing time in milliseconds
+      required:
+        - estimates
+        - summary
+        - metadata
+
+    DependencyAnalysisResponse:
+      type: object
+      properties:
+        analysis:
+          type: object
+          properties:
+            totalDependencies:
+              type: integer
+            circularDependencies:
+              type: array
+              items:
+                type: object
+                properties:
+                  cycle:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+                  severity:
+                    type: string
+                    enum: [low, medium, high, critical]
+                  description:
+                    type: string
+            criticalPath:
+              type: array
+              items:
+                type: string
+                format: uuid
+            bottlenecks:
+              type: array
+              items:
+                type: object
+                properties:
+                  taskId:
+                    type: string
+                    format: uuid
+                  dependentCount:
+                    type: integer
+                  impact:
+                    type: string
+                    enum: [low, medium, high, critical]
+                  description:
+                    type: string
+            risks:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [circular, bottleneck, external, timing, resource]
+                  severity:
+                    type: string
+                    enum: [low, medium, high, critical]
+                  affectedTasks:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+                  description:
+                    type: string
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [optimization, restructure, parallel, buffer]
+              priority:
+                type: string
+                enum: [low, medium, high, urgent]
+              description:
+                type: string
+              affectedTasks:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+              estimatedImpact:
+                type: string
+                enum: [low, medium, high]
+        metadata:
+          type: object
+          properties:
+            analyzedAt:
+              type: string
+              format: date-time
+            version:
+              type: string
+            confidence:
+              type: number
+              minimum: 0
+              maximum: 1
+      required:
+        - analysis
+        - metadata
+
+    DependencyValidationRequest:
+      type: object
+      properties:
+        dependencies:
+          type: array
+          items:
+            type: object
+            properties:
+              sourceTaskId:
+                type: string
+                format: uuid
+              targetTaskId:
+                type: string
+                format: uuid
+              type:
+                type: string
+                enum: [blocks, depends_on, subtask]
+              description:
+                type: string
+                nullable: true
+        context:
+          type: object
+          properties:
+            projectId:
+              type: string
+              format: uuid
+            validateCycles:
+              type: boolean
+              default: true
+            validateCapacity:
+              type: boolean
+              default: true
+            validateTiming:
+              type: boolean
+              default: true
+      required:
+        - dependencies
+
+    DependencyValidationResponse:
+      type: object
+      properties:
+        isValid:
+          type: boolean
+        validation:
+          type: object
+          properties:
+            cycleCheck:
+              type: object
+              properties:
+                passed:
+                  type: boolean
+                cycles:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      cycle:
+                        type: array
+                        items:
+                          type: string
+                          format: uuid
+                      severity:
+                        type: string
+                        enum: [warning, error, critical]
+            capacityCheck:
+              type: object
+              properties:
+                passed:
+                  type: boolean
+                conflicts:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      taskId:
+                        type: string
+                        format: uuid
+                      issue:
+                        type: string
+                      severity:
+                        type: string
+                        enum: [warning, error, critical]
+            timingCheck:
+              type: object
+              properties:
+                passed:
+                  type: boolean
+                conflicts:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      sourceTaskId:
+                        type: string
+                        format: uuid
+                      targetTaskId:
+                        type: string
+                        format: uuid
+                      issue:
+                        type: string
+                      severity:
+                        type: string
+                        enum: [warning, error, critical]
+        suggestions:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [remove, modify, reorder, split]
+              description:
+                type: string
+              affectedDependencies:
+                type: array
+                items:
+                  type: integer
+                  description: Index of dependency in original request
+        metadata:
+          type: object
+          properties:
+            validatedAt:
+              type: string
+              format: date-time
+            version:
+              type: string
+      required:
+        - isValid
+        - validation
+        - metadata
+
+    TaskTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [feature, bug, maintenance, research, documentation]
+        tags:
+          type: array
+          items:
+            type: string
+        template:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            type:
+              type: string
+              enum: [feature, bug, maintenance, research, documentation]
+            priority:
+              type: string
+              enum: [low, medium, high, urgent]
+            estimatedHours:
+              type: number
+              minimum: 0
+            acceptanceCriteria:
+              type: array
+              items:
+                type: string
+            subtasks:
+              type: array
+              items:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  description:
+                    type: string
+                  type:
+                    type: string
+                    enum: [feature, bug, maintenance, research, documentation]
+                  priority:
+                    type: string
+                    enum: [low, medium, high, urgent]
+                  estimatedHours:
+                    type: number
+                    minimum: 0
+            dependencies:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [blocks, depends_on, external]
+                  description:
+                    type: string
+            metadata:
+              type: object
+              description: Template-specific metadata
+        usage:
+          type: object
+          properties:
+            timesUsed:
+              type: integer
+              minimum: 0
+            lastUsed:
+              type: string
+              format: date-time
+              nullable: true
+            averageRating:
+              type: number
+              minimum: 0
+              maximum: 5
+              nullable: true
+        audit:
+          type: object
+          properties:
+            createdBy:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedBy:
+              type: string
+              format: uuid
+            updatedAt:
+              type: string
+              format: date-time
+            version:
+              type: integer
+      required:
+        - id
+        - name
+        - category
+        - template
+        - audit
+
+    TaskTemplateResponse:
+      type: object
+      properties:
+        template:
+          $ref: '#/components/schemas/TaskTemplate'
+      required:
+        - template
+
+    TaskTemplateListResponse:
+      type: object
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskTemplate'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrevious:
+              type: boolean
+        facets:
+          type: object
+          properties:
+            categories:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+            tags:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                  count:
+                    type: integer
+      required:
+        - templates
+        - pagination
+
+    CreateTaskTemplateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [feature, bug, maintenance, research, documentation]
+        tags:
+          type: array
+          items:
+            type: string
+        template:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            type:
+              type: string
+              enum: [feature, bug, maintenance, research, documentation]
+            priority:
+              type: string
+              enum: [low, medium, high, urgent]
+              default: medium
+            estimatedHours:
+              type: number
+              minimum: 0
+            acceptanceCriteria:
+              type: array
+              items:
+                type: string
+            subtasks:
+              type: array
+              items:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  description:
+                    type: string
+                  type:
+                    type: string
+                    enum: [feature, bug, maintenance, research, documentation]
+                  priority:
+                    type: string
+                    enum: [low, medium, high, urgent]
+                  estimatedHours:
+                    type: number
+                    minimum: 0
+            dependencies:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [blocks, depends_on, external]
+                  description:
+                    type: string
+            metadata:
+              type: object
+      required:
+        - name
+        - category
+        - template
+
+    UpdateTaskTemplateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [feature, bug, maintenance, research, documentation]
+        tags:
+          type: array
+          items:
+            type: string
+        template:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            type:
+              type: string
+              enum: [feature, bug, maintenance, research, documentation]
+            priority:
+              type: string
+              enum: [low, medium, high, urgent]
+            estimatedHours:
+              type: number
+              minimum: 0
+            acceptanceCriteria:
+              type: array
+              items:
+                type: string
+            subtasks:
+              type: array
+              items:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  description:
+                    type: string
+                  type:
+                    type: string
+                    enum: [feature, bug, maintenance, research, documentation]
+                  priority:
+                    type: string
+                    enum: [low, medium, high, urgent]
+                  estimatedHours:
+                    type: number
+                    minimum: 0
+            dependencies:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [blocks, depends_on, external]
+                  description:
+                    type: string
+            metadata:
+              type: object
+        version:
+          type: integer
+          description: Current version for optimistic locking
+      required:
+        - version
+
+    ApplyTaskTemplateRequest:
+      type: object
+      properties:
+        variables:
+          type: object
+          description: Variables to substitute in template
+        projectId:
+          type: string
+          format: uuid
+          nullable: true
+        assigneeId:
+          type: string
+          format: uuid
+          nullable: true
+        parentTaskId:
+          type: string
+          format: uuid
+          nullable: true
+        options:
+          type: object
+          properties:
+            createSubtasks:
+              type: boolean
+              default: true
+            createDependencies:
+              type: boolean
+              default: true
+            applyEstimates:
+              type: boolean
+              default: true
+            overrides:
+              type: object
+              properties:
+                priority:
+                  type: string
+                  enum: [low, medium, high, urgent]
+                dueDate:
+                  type: string
+                  format: date-time
+                tags:
+                  type: array
+                  items:
+                    type: string
+
+    ApplyTaskTemplateResponse:
+      type: object
+      properties:
+        createdTasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        createdDependencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskDependency'
+        summary:
+          type: object
+          properties:
+            totalTasks:
+              type: integer
+            totalDependencies:
+              type: integer
+            estimatedTotalHours:
+              type: number
+              minimum: 0
+            variables:
+              type: object
+              description: Variables used in template application
+        metadata:
+          type: object
+          properties:
+            appliedAt:
+              type: string
+              format: date-time
+            templateId:
+              type: string
+              format: uuid
+            templateVersion:
+              type: integer
+      required:
+        - createdTasks
+        - summary
+        - metadata
+
+    TaskRisk:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [technical, resource, timeline, dependency, quality, scope, external]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        impact:
+          type: string
+          enum: [low, medium, high, critical]
+        title:
+          type: string
+        description:
+          type: string
+        mitigation:
+          type: object
+          properties:
+            strategy:
+              type: string
+              enum: [avoid, mitigate, transfer, accept]
+            actions:
+              type: array
+              items:
+                type: object
+                properties:
+                  action:
+                    type: string
+                  assigneeId:
+                    type: string
+                    format: uuid
+                    nullable: true
+                  dueDate:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  status:
+                    type: string
+                    enum: [pending, in_progress, completed, cancelled]
+                  notes:
+                    type: string
+                    nullable: true
+            contingency:
+              type: string
+              nullable: true
+        status:
+          type: string
+          enum: [open, monitoring, mitigated, closed]
+        owner:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+          nullable: true
+        history:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              action:
+                type: string
+                enum: [created, updated, mitigated, escalated, closed]
+              userId:
+                type: string
+                format: uuid
+              comment:
+                type: string
+                nullable: true
+              previousValue:
+                type: string
+                nullable: true
+              newValue:
+                type: string
+                nullable: true
+        audit:
+          type: object
+          properties:
+            createdBy:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedBy:
+              type: string
+              format: uuid
+            updatedAt:
+              type: string
+              format: date-time
+            version:
+              type: integer
+      required:
+        - id
+        - type
+        - severity
+        - probability
+        - impact
+        - title
+        - description
+        - status
+        - audit
+
+    TaskRiskResponse:
+      type: object
+      properties:
+        risk:
+          $ref: '#/components/schemas/TaskRisk'
+      required:
+        - risk
+
+    TaskRisksResponse:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        risks:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskRisk'
+        summary:
+          type: object
+          properties:
+            totalRisks:
+              type: integer
+            risksByType:
+              type: object
+              properties:
+                technical:
+                  type: integer
+                resource:
+                  type: integer
+                timeline:
+                  type: integer
+                dependency:
+                  type: integer
+                quality:
+                  type: integer
+                scope:
+                  type: integer
+                external:
+                  type: integer
+            risksBySeverity:
+              type: object
+              properties:
+                low:
+                  type: integer
+                medium:
+                  type: integer
+                high:
+                  type: integer
+                critical:
+                  type: integer
+            overallRiskScore:
+              type: number
+              minimum: 0
+              maximum: 10
+              description: Calculated overall risk score
+      required:
+        - taskId
+        - risks
+        - summary
+
+    AddTaskRiskRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [technical, resource, timeline, dependency, quality, scope, external]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        impact:
+          type: string
+          enum: [low, medium, high, critical]
+        title:
+          type: string
+        description:
+          type: string
+        mitigation:
+          type: object
+          properties:
+            strategy:
+              type: string
+              enum: [avoid, mitigate, transfer, accept]
+            actions:
+              type: array
+              items:
+                type: object
+                properties:
+                  action:
+                    type: string
+                  assigneeId:
+                    type: string
+                    format: uuid
+                    nullable: true
+                  dueDate:
+                    type: string
+                    format: date-time
+                    nullable: true
+            contingency:
+              type: string
+              nullable: true
+        ownerId:
+          type: string
+          format: uuid
+          nullable: true
+        autoAnalyze:
+          type: boolean
+          default: true
+          description: Whether to run AI analysis on the risk
+      required:
+        - type
+        - severity
+        - probability
+        - impact
+        - title
+        - description
+
+    UpdateTaskRiskRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [technical, resource, timeline, dependency, quality, scope, external]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        impact:
+          type: string
+          enum: [low, medium, high, critical]
+        title:
+          type: string
+        description:
+          type: string
+        mitigation:
+          type: object
+          properties:
+            strategy:
+              type: string
+              enum: [avoid, mitigate, transfer, accept]
+            actions:
+              type: array
+              items:
+                type: object
+                properties:
+                  action:
+                    type: string
+                  assigneeId:
+                    type: string
+                    format: uuid
+                    nullable: true
+                  dueDate:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  status:
+                    type: string
+                    enum: [pending, in_progress, completed, cancelled]
+                  notes:
+                    type: string
+                    nullable: true
+            contingency:
+              type: string
+              nullable: true
+        status:
+          type: string
+          enum: [open, monitoring, mitigated, closed]
+        ownerId:
+          type: string
+          format: uuid
+          nullable: true
+        version:
+          type: integer
+          description: Current version for optimistic locking
+      required:
+        - version
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        details:
+          type: object
+      required:
+        - error
+        - message
+        - timestamp
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health and status
+  - name: Tasks
+    description: Task management operations
+  - name: Task Assignment
+    description: Task assignment and user management
+  - name: Dependencies
+    description: Task dependency management
+  - name: Scheduling
+    description: Task scheduling and timing
+  - name: Progress Tracking
+    description: Task progress and milestone tracking
+  - name: Search
+    description: Task search and discovery
+  - name: Analytics
+    description: Task analytics and reporting
+  - name: Comments
+    description: Task comments and collaboration
+  - name: AI Analysis
+    description: AI-powered task analysis and insights
+  - name: AI Estimation
+    description: AI-assisted effort estimation
+  - name: Templates
+    description: Task templates for standardized workflows
+  - name: Risk Assessment
+    description: AI-powered risk assessment and mitigation

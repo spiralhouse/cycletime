@@ -1,0 +1,154 @@
+asyncapi: 3.0.0
+info:
+  title: Activity Service Events API
+  version: 1.0.0
+  description: |
+    Events published by the Activity Service for real-time activity tracking and audit logging.
+    
+    This service publishes events for:
+    - Activity creation and updates
+    - Audit record creation
+    - Real-time activity feeds
+    - Analytics and trend notifications
+    
+    Events are published to Redis channels for real-time processing.
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  development:
+    host: localhost:6379
+    protocol: redis
+    description: Development Redis server
+  production:
+    host: redis.cycletime.dev:6379
+    protocol: redis
+    description: Production Redis server
+
+defaultContentType: application/json
+
+channels:
+  activities/logged:
+    description: Published when a new activity is logged
+    messages:
+      activityLogged:
+        $ref: '#/components/messages/ActivityLogged'
+
+  activities/aggregated:
+    description: Published when activities are aggregated for analytics
+    messages:
+      activityAggregated:
+        $ref: '#/components/messages/ActivityAggregated'
+
+  audit/created:
+    description: Published when an audit record is created
+    messages:
+      auditCreated:
+        $ref: '#/components/messages/AuditCreated'
+
+components:
+  messages:
+    ActivityLogged:
+      name: ActivityLogged
+      title: Activity Logged
+      summary: A new activity has been logged
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          eventId:
+            type: string
+            format: uuid
+          timestamp:
+            type: string
+            format: date-time
+          activity:
+            type: object
+            properties:
+              id:
+                type: string
+              userId:
+                type: string
+              action:
+                type: string
+              entityType:
+                type: string
+              entityId:
+                type: string
+              severity:
+                type: string
+          service:
+            type: string
+          environment:
+            type: string
+
+    ActivityAggregated:
+      name: ActivityAggregated
+      title: Activity Aggregated
+      summary: Activities have been aggregated for analytics
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          eventId:
+            type: string
+            format: uuid
+          timestamp:
+            type: string
+            format: date-time
+          aggregation:
+            type: object
+            properties:
+              timeRange:
+                type: string
+              totalActivities:
+                type: integer
+              uniqueUsers:
+                type: integer
+              topActions:
+                type: array
+                items:
+                  type: string
+          service:
+            type: string
+          environment:
+            type: string
+
+    AuditCreated:
+      name: AuditCreated
+      title: Audit Created
+      summary: An audit record has been created
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          eventId:
+            type: string
+            format: uuid
+          timestamp:
+            type: string
+            format: date-time
+          audit:
+            type: object
+            properties:
+              id:
+                type: string
+              userId:
+                type: string
+              action:
+                type: string
+              entityType:
+                type: string
+              entityId:
+                type: string
+              severity:
+                type: string
+              compliance:
+                type: object
+          service:
+            type: string
+          environment:
+            type: string

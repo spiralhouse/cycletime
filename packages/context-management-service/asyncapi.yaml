@@ -1,0 +1,1045 @@
+asyncapi: 2.6.0
+info:
+  title: Context Management Service Events
+  version: 1.0.0
+  description: Event-driven communication for the Context Management Service
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  development:
+    url: localhost:6379
+    protocol: redis
+    description: Development Redis server
+  production:
+    url: redis.cycletime.dev:6379
+    protocol: redis
+    description: Production Redis server
+
+defaultContentType: application/json
+
+channels:
+  context/analyzed:
+    description: Context analysis completed
+    publish:
+      operationId: publishContextAnalyzed
+      message:
+        $ref: '#/components/messages/ContextAnalyzed'
+
+  context/chunks/updated:
+    description: Context chunks have been updated
+    publish:
+      operationId: publishContextChunksUpdated
+      message:
+        $ref: '#/components/messages/ContextChunksUpdated'
+
+  context/relevance/scored:
+    description: Context relevance scores calculated
+    publish:
+      operationId: publishContextRelevanceScored
+      message:
+        $ref: '#/components/messages/ContextRelevanceScored'
+
+  context/optimized:
+    description: Context has been optimized
+    publish:
+      operationId: publishContextOptimized
+      message:
+        $ref: '#/components/messages/ContextOptimized'
+
+  context/usage/tracked:
+    description: Context usage has been tracked
+    publish:
+      operationId: publishContextUsageTracked
+      message:
+        $ref: '#/components/messages/ContextUsageTracked'
+
+  context/feedback/received:
+    description: Context feedback has been received
+    publish:
+      operationId: publishContextFeedbackReceived
+      message:
+        $ref: '#/components/messages/ContextFeedbackReceived'
+
+  context/learning/updated:
+    description: Context learning models have been updated
+    publish:
+      operationId: publishContextLearningUpdated
+      message:
+        $ref: '#/components/messages/ContextLearningUpdated'
+
+  context/expired:
+    description: Context has expired and been cleaned up
+    publish:
+      operationId: publishContextExpired
+      message:
+        $ref: '#/components/messages/ContextExpired'
+
+  document/updated:
+    description: Document has been updated
+    subscribe:
+      operationId: handleDocumentUpdated
+      message:
+        $ref: '#/components/messages/DocumentUpdated'
+
+  document/deleted:
+    description: Document has been deleted
+    subscribe:
+      operationId: handleDocumentDeleted
+      message:
+        $ref: '#/components/messages/DocumentDeleted'
+
+  document/indexed:
+    description: Document has been indexed
+    subscribe:
+      operationId: handleDocumentIndexed
+      message:
+        $ref: '#/components/messages/DocumentIndexed'
+
+  ai/request/started:
+    description: AI request has started
+    subscribe:
+      operationId: handleAIRequestStarted
+      message:
+        $ref: '#/components/messages/AIRequestStarted'
+
+  ai/request/completed:
+    description: AI request has completed
+    subscribe:
+      operationId: handleAIRequestCompleted
+      message:
+        $ref: '#/components/messages/AIRequestCompleted'
+
+  project/updated:
+    description: Project has been updated
+    subscribe:
+      operationId: handleProjectUpdated
+      message:
+        $ref: '#/components/messages/ProjectUpdated'
+
+components:
+  messages:
+    ContextAnalyzed:
+      name: context.analyzed
+      title: Context Analyzed
+      summary: Context analysis has been completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextAnalyzedPayload'
+
+    ContextChunksUpdated:
+      name: context.chunks.updated
+      title: Context Chunks Updated
+      summary: Context chunks have been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextChunksUpdatedPayload'
+
+    ContextRelevanceScored:
+      name: context.relevance.scored
+      title: Context Relevance Scored
+      summary: Context relevance scores have been calculated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextRelevanceScoredPayload'
+
+    ContextOptimized:
+      name: context.optimized
+      title: Context Optimized
+      summary: Context has been optimized for AI consumption
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextOptimizedPayload'
+
+    ContextUsageTracked:
+      name: context.usage.tracked
+      title: Context Usage Tracked
+      summary: Context usage has been tracked
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextUsageTrackedPayload'
+
+    ContextFeedbackReceived:
+      name: context.feedback.received
+      title: Context Feedback Received
+      summary: Feedback has been received for context chunks
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextFeedbackReceivedPayload'
+
+    ContextLearningUpdated:
+      name: context.learning.updated
+      title: Context Learning Updated
+      summary: Context learning models have been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextLearningUpdatedPayload'
+
+    ContextExpired:
+      name: context.expired
+      title: Context Expired
+      summary: Context has expired and been cleaned up
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextExpiredPayload'
+
+    DocumentUpdated:
+      name: document.updated
+      title: Document Updated
+      summary: A document has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentUpdatedPayload'
+
+    DocumentDeleted:
+      name: document.deleted
+      title: Document Deleted
+      summary: A document has been deleted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentDeletedPayload'
+
+    DocumentIndexed:
+      name: document.indexed
+      title: Document Indexed
+      summary: A document has been indexed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DocumentIndexedPayload'
+
+    AIRequestStarted:
+      name: ai.request.started
+      title: AI Request Started
+      summary: An AI request has started
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AIRequestStartedPayload'
+
+    AIRequestCompleted:
+      name: ai.request.completed
+      title: AI Request Completed
+      summary: An AI request has completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AIRequestCompletedPayload'
+
+    ProjectUpdated:
+      name: project.updated
+      title: Project Updated
+      summary: A project has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectUpdatedPayload'
+
+  schemas:
+    ContextAnalyzedPayload:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+          description: Unique context identifier
+        projectId:
+          type: string
+          format: uuid
+          description: Project identifier
+        documentsCount:
+          type: integer
+          description: Number of documents analyzed
+        chunksCount:
+          type: integer
+          description: Number of chunks created
+        totalTokens:
+          type: integer
+          description: Total tokens in all chunks
+        averageRelevance:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Average relevance score
+        processingTime:
+          type: number
+          description: Processing time in seconds
+        chunkingStrategy:
+          type: string
+          enum: [semantic, fixed, adaptive]
+          description: Chunking strategy used
+        targetModel:
+          type: string
+          description: Target AI model
+        analyzedAt:
+          type: string
+          format: date-time
+          description: When analysis was completed
+        analyzedBy:
+          type: string
+          description: Service or user that triggered analysis
+        configuration:
+          type: object
+          description: Analysis configuration used
+        statistics:
+          type: object
+          properties:
+            documentTypes:
+              type: object
+              additionalProperties:
+                type: integer
+            languageDistribution:
+              type: object
+              additionalProperties:
+                type: integer
+            averageChunkSize:
+              type: number
+            tokenDistribution:
+              type: object
+              properties:
+                min:
+                  type: integer
+                max:
+                  type: integer
+                mean:
+                  type: number
+                median:
+                  type: number
+      required:
+        - contextId
+        - projectId
+        - documentsCount
+        - chunksCount
+        - totalTokens
+        - averageRelevance
+        - processingTime
+        - chunkingStrategy
+        - targetModel
+        - analyzedAt
+        - analyzedBy
+
+    ContextChunksUpdatedPayload:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        updateType:
+          type: string
+          enum: [added, modified, removed, reordered]
+        affectedChunks:
+          type: array
+          items:
+            type: string
+            format: uuid
+        chunksCount:
+          type: integer
+        totalTokens:
+          type: integer
+        averageRelevance:
+          type: number
+          minimum: 0
+          maximum: 1
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        reason:
+          type: string
+          enum: [document_change, optimization, user_feedback, learning_update]
+        impact:
+          type: object
+          properties:
+            tokensChanged:
+              type: integer
+            relevanceChange:
+              type: number
+            chunksAffected:
+              type: integer
+      required:
+        - contextId
+        - projectId
+        - updateType
+        - affectedChunks
+        - chunksCount
+        - totalTokens
+        - updatedAt
+        - updatedBy
+        - reason
+
+    ContextRelevanceScoredPayload:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        query:
+          type: string
+          description: Query used for relevance scoring
+        scoringMethod:
+          type: string
+          enum: [semantic_similarity, keyword_matching, ml_model, hybrid]
+        chunksScored:
+          type: integer
+        averageRelevance:
+          type: number
+          minimum: 0
+          maximum: 1
+        highRelevanceChunks:
+          type: integer
+          description: Number of chunks with relevance > 0.7
+        lowRelevanceChunks:
+          type: integer
+          description: Number of chunks with relevance < 0.3
+        scoredAt:
+          type: string
+          format: date-time
+        scoredBy:
+          type: string
+        processingTime:
+          type: number
+          description: Scoring time in milliseconds
+        topChunks:
+          type: array
+          items:
+            type: object
+            properties:
+              chunkId:
+                type: string
+                format: uuid
+              relevanceScore:
+                type: number
+                minimum: 0
+                maximum: 1
+              confidence:
+                type: number
+                minimum: 0
+                maximum: 1
+          maxItems: 10
+      required:
+        - contextId
+        - projectId
+        - query
+        - scoringMethod
+        - chunksScored
+        - averageRelevance
+        - highRelevanceChunks
+        - lowRelevanceChunks
+        - scoredAt
+        - scoredBy
+        - processingTime
+
+    ContextOptimizedPayload:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        targetModel:
+          type: string
+          description: Target AI model
+        maxTokens:
+          type: integer
+          description: Maximum tokens constraint
+        useCase:
+          type: string
+          enum: [code_generation, documentation, debugging, analysis, chat]
+        optimizationType:
+          type: string
+          enum: [token_reduction, relevance_boost, structure_preservation]
+        originalChunks:
+          type: integer
+        optimizedChunks:
+          type: integer
+        tokenReduction:
+          type: number
+          description: Percentage of tokens reduced
+        relevancePreserved:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Relevance preservation ratio
+        compressionRatio:
+          type: number
+          description: Compression ratio achieved
+        optimizedAt:
+          type: string
+          format: date-time
+        optimizedBy:
+          type: string
+        processingTime:
+          type: number
+          description: Optimization time in seconds
+        performance:
+          type: object
+          properties:
+            memoryUsed:
+              type: number
+              description: Memory used in MB
+            cpuTime:
+              type: number
+              description: CPU time in seconds
+            algorithmUsed:
+              type: string
+      required:
+        - contextId
+        - projectId
+        - targetModel
+        - maxTokens
+        - useCase
+        - optimizationType
+        - originalChunks
+        - optimizedChunks
+        - tokenReduction
+        - relevancePreserved
+        - compressionRatio
+        - optimizedAt
+        - optimizedBy
+        - processingTime
+
+    ContextUsageTrackedPayload:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+        aiModel:
+          type: string
+        usageType:
+          type: string
+          enum: [generation, analysis, chat, debugging]
+        tokensUsed:
+          type: integer
+        chunksUsed:
+          type: integer
+        responseTime:
+          type: number
+          description: Response time in milliseconds
+        effectiveness:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Effectiveness score
+        feedback:
+          type: string
+          enum: [helpful, partially_helpful, not_helpful, irrelevant]
+        usedAt:
+          type: string
+          format: date-time
+        contextAge:
+          type: number
+          description: Age of context in hours
+        chunkUtilization:
+          type: object
+          properties:
+            totalChunks:
+              type: integer
+            usedChunks:
+              type: integer
+            utilizationRate:
+              type: number
+              minimum: 0
+              maximum: 1
+            highValueChunks:
+              type: integer
+              description: Number of high-value chunks used
+      required:
+        - contextId
+        - projectId
+        - sessionId
+        - userId
+        - aiModel
+        - usageType
+        - tokensUsed
+        - chunksUsed
+        - responseTime
+        - usedAt
+        - contextAge
+
+    ContextFeedbackReceivedPayload:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        chunkId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+        feedback:
+          type: string
+          enum: [relevant, irrelevant, outdated, incorrect, helpful, confusing]
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        improvementSuggestion:
+          type: string
+        feedbackType:
+          type: string
+          enum: [explicit, implicit, automated]
+        sessionId:
+          type: string
+          format: uuid
+        receivedAt:
+          type: string
+          format: date-time
+        previousRating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        context:
+          type: object
+          properties:
+            usageType:
+              type: string
+            aiModel:
+              type: string
+            queryContext:
+              type: string
+      required:
+        - contextId
+        - projectId
+        - chunkId
+        - userId
+        - feedback
+        - rating
+        - feedbackType
+        - receivedAt
+
+    ContextLearningUpdatedPayload:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        learningType:
+          type: string
+          enum: [relevance_model, chunking_strategy, optimization_parameters, user_preferences]
+        updateTrigger:
+          type: string
+          enum: [feedback_threshold, usage_pattern, scheduled_training, manual_trigger]
+        modelVersion:
+          type: string
+        improvementMetrics:
+          type: object
+          properties:
+            accuracyImprovement:
+              type: number
+              description: Accuracy improvement percentage
+            precisionImprovement:
+              type: number
+              description: Precision improvement percentage
+            recallImprovement:
+              type: number
+              description: Recall improvement percentage
+            userSatisfactionImprovement:
+              type: number
+              description: User satisfaction improvement percentage
+        trainingData:
+          type: object
+          properties:
+            feedbackSamples:
+              type: integer
+            usageSamples:
+              type: integer
+            trainingTime:
+              type: number
+              description: Training time in minutes
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        affectedContexts:
+          type: integer
+          description: Number of contexts affected by learning update
+        rollbackAvailable:
+          type: boolean
+          description: Whether rollback to previous model is available
+      required:
+        - contextId
+        - projectId
+        - learningType
+        - updateTrigger
+        - modelVersion
+        - improvementMetrics
+        - trainingData
+        - updatedAt
+        - updatedBy
+        - affectedContexts
+
+    ContextExpiredPayload:
+      type: object
+      properties:
+        contextId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        age:
+          type: number
+          description: Age of context in hours
+        lastAccessedAt:
+          type: string
+          format: date-time
+        usage:
+          type: object
+          properties:
+            totalAccesses:
+              type: integer
+            totalTokensUsed:
+              type: integer
+            averageEffectiveness:
+              type: number
+              minimum: 0
+              maximum: 1
+            lastUsageType:
+              type: string
+        expirationReason:
+          type: string
+          enum: [age_limit, inactivity, resource_cleanup, manual_deletion]
+        expiredAt:
+          type: string
+          format: date-time
+        cleanupActions:
+          type: array
+          items:
+            type: string
+            enum: [chunks_deleted, cache_cleared, metadata_archived, analytics_preserved]
+        archiveLocation:
+          type: string
+          description: Location where context was archived
+        dataRetentionPeriod:
+          type: number
+          description: Retention period in days
+      required:
+        - contextId
+        - projectId
+        - age
+        - lastAccessedAt
+        - usage
+        - expirationReason
+        - expiredAt
+        - cleanupActions
+
+    DocumentUpdatedPayload:
+      type: object
+      properties:
+        documentId:
+          type: string
+        projectId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          type: string
+        type:
+          type: string
+          enum: [markdown, text, code, json, yaml]
+        language:
+          type: string
+        changeType:
+          type: string
+          enum: [created, modified, moved, renamed]
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        previousVersion:
+          type: string
+        metadata:
+          type: object
+      required:
+        - documentId
+        - projectId
+        - title
+        - content
+        - type
+        - changeType
+        - updatedAt
+        - updatedBy
+
+    DocumentDeletedPayload:
+      type: object
+      properties:
+        documentId:
+          type: string
+        projectId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        type:
+          type: string
+        deletedAt:
+          type: string
+          format: date-time
+        deletedBy:
+          type: string
+        reason:
+          type: string
+          enum: [user_request, cleanup, migration, error_correction]
+        backupLocation:
+          type: string
+        affectedContexts:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+        - documentId
+        - projectId
+        - title
+        - type
+        - deletedAt
+        - deletedBy
+        - reason
+        - affectedContexts
+
+    DocumentIndexedPayload:
+      type: object
+      properties:
+        documentId:
+          type: string
+        projectId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        type:
+          type: string
+        indexedAt:
+          type: string
+          format: date-time
+        indexedBy:
+          type: string
+        vectorEmbeddings:
+          type: object
+          properties:
+            model:
+              type: string
+            dimensions:
+              type: integer
+            similarity:
+              type: string
+              enum: [cosine, euclidean, dot_product]
+        metadata:
+          type: object
+          properties:
+            keywords:
+              type: array
+              items:
+                type: string
+            entities:
+              type: array
+              items:
+                type: string
+            concepts:
+              type: array
+              items:
+                type: string
+        searchability:
+          type: object
+          properties:
+            indexed:
+              type: boolean
+            searchable:
+              type: boolean
+            relevanceScore:
+              type: number
+              minimum: 0
+              maximum: 1
+      required:
+        - documentId
+        - projectId
+        - title
+        - type
+        - indexedAt
+        - indexedBy
+        - vectorEmbeddings
+        - searchability
+
+    AIRequestStartedPayload:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+        aiModel:
+          type: string
+        requestType:
+          type: string
+          enum: [generation, analysis, chat, debugging]
+        contextRequired:
+          type: boolean
+        maxTokens:
+          type: integer
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        startedAt:
+          type: string
+          format: date-time
+        estimatedDuration:
+          type: number
+          description: Estimated duration in seconds
+        contextPreferences:
+          type: object
+          properties:
+            includeRecent:
+              type: boolean
+            includeRelated:
+              type: boolean
+            maxContextTokens:
+              type: integer
+            relevanceThreshold:
+              type: number
+              minimum: 0
+              maximum: 1
+      required:
+        - requestId
+        - projectId
+        - userId
+        - aiModel
+        - requestType
+        - contextRequired
+        - startedAt
+
+    AIRequestCompletedPayload:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+        aiModel:
+          type: string
+        requestType:
+          type: string
+        success:
+          type: boolean
+        completedAt:
+          type: string
+          format: date-time
+        duration:
+          type: number
+          description: Actual duration in seconds
+        tokensUsed:
+          type: integer
+        contextUsed:
+          type: object
+          properties:
+            contextId:
+              type: string
+              format: uuid
+            chunksUsed:
+              type: integer
+            tokensFromContext:
+              type: integer
+            relevanceScore:
+              type: number
+              minimum: 0
+              maximum: 1
+        error:
+          type: string
+        metrics:
+          type: object
+          properties:
+            responseTime:
+              type: number
+            quality:
+              type: number
+              minimum: 0
+              maximum: 1
+            relevance:
+              type: number
+              minimum: 0
+              maximum: 1
+      required:
+        - requestId
+        - projectId
+        - userId
+        - aiModel
+        - requestType
+        - success
+        - completedAt
+        - duration
+        - tokensUsed
+
+    ProjectUpdatedPayload:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        changeType:
+          type: string
+          enum: [metadata, configuration, documents, team_members]
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        affectedContexts:
+          type: array
+          items:
+            type: string
+            format: uuid
+        contextUpdateRequired:
+          type: boolean
+        priority:
+          type: string
+          enum: [low, medium, high]
+        metadata:
+          type: object
+      required:
+        - projectId
+        - name
+        - changeType
+        - updatedAt
+        - updatedBy
+        - affectedContexts
+        - contextUpdateRequired

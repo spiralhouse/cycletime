@@ -1,0 +1,572 @@
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Dashboard</h1>
+        <div class="dashboard-actions">
+            <button class="btn btn-primary" id="refresh-btn">Refresh</button>
+            <select id="timeframe-select" class="form-select">
+                <option value="day">Today</option>
+                <option value="week">This Week</option>
+                <option value="month" selected>This Month</option>
+                <option value="quarter">This Quarter</option>
+                <option value="year">This Year</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="dashboard-content">
+        <div class="dashboard-grid">
+            <!-- Overview Cards -->
+            <div class="card overview-card">
+                <h3>Projects</h3>
+                <div class="metric-value" id="total-projects">Loading...</div>
+                <div class="metric-label">Total Projects</div>
+            </div>
+            
+            <div class="card overview-card">
+                <h3>Tasks</h3>
+                <div class="metric-value" id="total-tasks">Loading...</div>
+                <div class="metric-label">Total Tasks</div>
+            </div>
+            
+            <div class="card overview-card">
+                <h3>Completed</h3>
+                <div class="metric-value" id="completed-tasks">Loading...</div>
+                <div class="metric-label">Completed Tasks</div>
+            </div>
+            
+            <div class="card overview-card">
+                <h3>Team</h3>
+                <div class="metric-value" id="team-members">Loading...</div>
+                <div class="metric-label">Team Members</div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card activity-card">
+                <h3>Recent Activity</h3>
+                <div class="activity-list" id="recent-activity">
+                    <div class="loading">Loading activities...</div>
+                </div>
+            </div>
+            
+            <!-- Upcoming Deadlines -->
+            <div class="card deadlines-card">
+                <h3>Upcoming Deadlines</h3>
+                <div class="deadlines-list" id="upcoming-deadlines">
+                    <div class="loading">Loading deadlines...</div>
+                </div>
+            </div>
+            
+            <!-- Performance Metrics -->
+            <div class="card metrics-card">
+                <h3>Performance Metrics</h3>
+                <div class="metrics-grid" id="performance-metrics">
+                    <div class="loading">Loading metrics...</div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card actions-card">
+                <h3>Quick Actions</h3>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="createProject()">
+                        <span>+</span>
+                        New Project
+                    </button>
+                    <button class="action-btn" onclick="createTask()">
+                        <span>+</span>
+                        New Task
+                    </button>
+                    <button class="action-btn" onclick="viewReports()">
+                        <span>📊</span>
+                        View Reports
+                    </button>
+                    <button class="action-btn" onclick="manageTeam()">
+                        <span>👥</span>
+                        Manage Team
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    font-family: 'Inter', sans-serif;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #1a1a1a;
+}
+
+.dashboard-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5a67d8;
+}
+
+.form-select {
+    padding: 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    font-weight: 500;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    grid-auto-rows: min-content;
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.card h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.overview-card {
+    text-align: center;
+}
+
+.metric-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.activity-card {
+    grid-column: span 2;
+}
+
+.activity-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 500;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.activity-meta {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.deadlines-card {
+    grid-column: span 1;
+}
+
+.deadline-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.deadline-item:last-child {
+    border-bottom: none;
+}
+
+.deadline-title {
+    font-weight: 500;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.deadline-meta {
+    font-size: 0.875rem;
+    color: #6b7280;
+    display: flex;
+    justify-content: space-between;
+}
+
+.deadline-priority {
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.deadline-priority.high {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.deadline-priority.medium {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.deadline-priority.low {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.metrics-card {
+    grid-column: span 2;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.metric-box {
+    text-align: center;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.metric-box .value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.metric-box .label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+}
+
+.metric-box .trend {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.trend.up {
+    color: #059669;
+}
+
+.trend.down {
+    color: #dc2626;
+}
+
+.trend.stable {
+    color: #6b7280;
+}
+
+.actions-card {
+    grid-column: span 1;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+    color: #374151;
+}
+
+.action-btn:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+.action-btn span {
+    font-size: 1.5rem;
+}
+
+.loading {
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .dashboard-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .dashboard-actions {
+        justify-content: center;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .activity-card,
+    .metrics-card {
+        grid-column: span 1;
+    }
+    
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+// Dashboard functionality
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    
+    // Refresh button
+    document.getElementById('refresh-btn').addEventListener('click', loadDashboardData);
+    
+    // Timeframe select
+    document.getElementById('timeframe-select').addEventListener('change', function() {
+        loadDashboardData();
+    });
+    
+    // Real-time updates
+    if (window.io) {
+        const socket = io();
+        
+        socket.on('dashboard.data.updated', function(data) {
+            loadDashboardData();
+        });
+        
+        socket.on('notification', function(data) {
+            showNotification(data.message);
+        });
+    }
+});
+
+async function loadDashboardData() {
+    try {
+        const timeframe = document.getElementById('timeframe-select').value;
+        const token = localStorage.getItem('authToken');
+        
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        const response = await fetch(`/api/v1/dashboard/overview?timeframe=${timeframe}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            updateDashboard(result.data);
+        } else {
+            console.error('Failed to load dashboard data:', result.error);
+        }
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+}
+
+function updateDashboard(data) {
+    // Update overview cards
+    document.getElementById('total-projects').textContent = data.summary.totalProjects;
+    document.getElementById('total-tasks').textContent = data.summary.totalTasks;
+    document.getElementById('completed-tasks').textContent = data.summary.completedTasks;
+    document.getElementById('team-members').textContent = data.summary.teamMembers;
+    
+    // Update recent activity
+    const activityList = document.getElementById('recent-activity');
+    activityList.innerHTML = '';
+    
+    data.recentActivity.forEach(activity => {
+        const item = document.createElement('div');
+        item.className = 'activity-item';
+        item.innerHTML = `
+            <div class="activity-icon">${getActivityIcon(activity.type)}</div>
+            <div class="activity-content">
+                <div class="activity-title">${activity.title}</div>
+                <div class="activity-meta">${activity.user?.name || 'System'} • ${formatDate(activity.timestamp)}</div>
+            </div>
+        `;
+        activityList.appendChild(item);
+    });
+    
+    // Update upcoming deadlines
+    const deadlinesList = document.getElementById('upcoming-deadlines');
+    deadlinesList.innerHTML = '';
+    
+    data.upcomingDeadlines.forEach(deadline => {
+        const item = document.createElement('div');
+        item.className = 'deadline-item';
+        item.innerHTML = `
+            <div class="deadline-title">${deadline.title}</div>
+            <div class="deadline-meta">
+                <span>${formatDate(deadline.dueDate)}</span>
+                <span class="deadline-priority ${deadline.priority}">${deadline.priority}</span>
+            </div>
+        `;
+        deadlinesList.appendChild(item);
+    });
+    
+    // Update performance metrics
+    const metricsGrid = document.getElementById('performance-metrics');
+    metricsGrid.innerHTML = `
+        <div class="metric-box">
+            <div class="value">${data.performanceMetrics.completionRate ? (data.performanceMetrics.completionRate * 100).toFixed(1) + '%' : 'N/A'}</div>
+            <div class="label">Completion Rate</div>
+            <div class="trend ${data.performanceMetrics.velocityTrend}">${data.performanceMetrics.velocityTrend}</div>
+        </div>
+        <div class="metric-box">
+            <div class="value">${data.performanceMetrics.averageCycleTime ? data.performanceMetrics.averageCycleTime.toFixed(1) + 'd' : 'N/A'}</div>
+            <div class="label">Avg Cycle Time</div>
+            <div class="trend ${data.performanceMetrics.velocityTrend}">${data.performanceMetrics.velocityTrend}</div>
+        </div>
+    `;
+}
+
+function getActivityIcon(type) {
+    switch (type) {
+        case 'task_created': return '📝';
+        case 'task_completed': return '✅';
+        case 'project_updated': return '📋';
+        case 'user_joined': return '👤';
+        case 'comment_added': return '💬';
+        default: return '📄';
+    }
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString();
+}
+
+function showNotification(message) {
+    // Simple notification implementation
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #10b981;
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Quick action functions
+function createProject() {
+    alert('Create Project functionality would be implemented here');
+}
+
+function createTask() {
+    alert('Create Task functionality would be implemented here');
+}
+
+function viewReports() {
+    window.location.href = '/analytics';
+}
+
+function manageTeam() {
+    alert('Manage Team functionality would be implemented here');
+}
+</script>

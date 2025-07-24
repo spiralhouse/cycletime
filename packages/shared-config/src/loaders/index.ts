@@ -412,3 +412,20 @@ export async function validateConfigurationHealth(
     issues,
   };
 }
+
+/**
+ * Simple configuration loader for backward compatibility
+ * Returns a simple object with environment variables for legacy services
+ */
+export async function loadConfig(): Promise<Record<string, string | undefined>> {
+  return {
+    PORT: process.env.PORT,
+    HOST: process.env.HOST || 'localhost',
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    DATABASE_URL: process.env.DATABASE_URL,
+    REDIS_URL: process.env.REDIS_URL,
+    JWT_SECRET: process.env.JWT_SECRET,
+    LOG_LEVEL: process.env.LOG_LEVEL || 'info',
+    // Add other common environment variables as needed
+  };
+}

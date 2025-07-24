@@ -1,0 +1,363 @@
+import { logger } from '@cycletime/shared-utils';
+import { EventService } from './event-service';
+import { MockDataService } from './mock-data-service';
+import { Alert, AlertRule } from '../types';
+
+export class AlertingService {
+  constructor(
+    private eventService: EventService,
+    private mockDataService: MockDataService
+  ) {}
+
+  async createAlertRule(ruleData: Partial<AlertRule>): Promise<AlertRule> {
+    try {
+      const rule = this.mockDataService.addAlertRule(ruleData);
+
+      logger.info('Alert rule created', {
+        ruleId: rule.id,
+        name: rule.name,
+        metric: rule.metric,
+        threshold: rule.threshold,
+        severity: rule.severity,
+      });
+
+      return rule;
+    } catch (error) {
+      logger.error('Failed to create alert rule', error as Error, {
+        ruleData,
+      });
+      throw error;
+    }
+  }
+
+  async updateAlertRule(ruleId: string, updates: Partial<AlertRule>): Promise<AlertRule | undefined> {
+    try {
+      const rule = this.mockDataService.updateAlertRule(ruleId, updates);
+
+      if (rule) {
+        logger.info('Alert rule updated', {
+          ruleId,
+          name: rule.name,
+          updates: Object.keys(updates),
+        });
+      }
+
+      return rule;
+    } catch (error) {
+      logger.error('Failed to update alert rule', error as Error, {
+        ruleId,
+        updates,
+      });
+      throw error;
+    }
+  }
+
+  async deleteAlertRule(ruleId: string): Promise<boolean> {
+    try {
+      const success = this.mockDataService.deleteAlertRule(ruleId);
+
+      if (success) {
+        logger.info('Alert rule deleted', {
+          ruleId,
+        });
+      }
+
+      return success;
+    } catch (error) {
+      logger.error('Failed to delete alert rule', error as Error, {
+        ruleId,
+      });
+      throw error;
+    }
+  }
+
+  async evaluateAlertRules(): Promise<Alert[]> {
+    try {
+      const rules = this.mockDataService.getAlertRules().filter(r => r.isEnabled);
+      const triggeredAlerts: Alert[] = [];
+
+      for (const rule of rules) {
+        const triggered = await this.evaluateRule(rule);
+        if (triggered) {
+          triggeredAlerts.push(triggered);
+        }
+      }
+
+      logger.debug('Alert rules evaluated', {
+        rulesEvaluated: rules.length,
+        alertsTriggered: triggeredAlerts.length,
+      });
+
+      return triggeredAlerts;
+    } catch (error) {
+      logger.error('Failed to evaluate alert rules', error as Error);
+      throw error;
+    }
+  }
+
+  private async evaluateRule(rule: AlertRule): Promise<Alert | null> {
+    try {
+      // Get current metric value
+      const metrics = this.mockDataService.getMetrics()
+        .filter(m => m.name === rule.metric);
+
+      if (metrics.length === 0) {
+        logger.warn('No metrics found for alert rule', {
+          ruleId: rule.id,
+          metric: rule.metric,
+        });
+        return null;
+      }
+
+      const latestMetric = metrics[metrics.length - 1];
+      const value = latestMetric.value;
+      const threshold = rule.threshold;
+
+      // Check if condition is met
+      let conditionMet = false;
+      switch (rule.condition) {
+        case 'gt':
+          conditionMet = value > threshold;
+          break;
+        case 'lt':
+          conditionMet = value < threshold;
+          break;
+        case 'gte':
+          conditionMet = value >= threshold;
+          break;
+        case 'lte':
+          conditionMet = value <= threshold;
+          break;
+        case 'eq':
+          conditionMet = value === threshold;
+          break;
+        case 'ne':
+          conditionMet = value !== threshold;
+          break;
+      }
+
+      if (!conditionMet) {
+        return null;
+      }
+
+      // Create alert
+      const alert: Alert = {
+        id: `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        ruleId: rule.id,
+        name: rule.name,
+        status: 'active',
+        severity: rule.severity,
+        metric: rule.metric,
+        value,
+        threshold,
+        condition: rule.condition,
+        message: `${rule.name}: ${rule.metric} is ${value} (threshold: ${threshold})`,
+        labels: rule.labels,
+        firedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      // Publish alert triggered event
+      await this.eventService.publishAlertTriggered({
+        ...alert,
+        notifications: rule.notifications,
+      });
+
+      logger.warn('Alert triggered', {
+        alertId: alert.id,
+        ruleId: rule.id,
+        metric: rule.metric,
+        value,
+        threshold,
+        severity: rule.severity,
+      });
+
+      return alert;
+    } catch (error) {
+      logger.error('Failed to evaluate alert rule', error as Error, {
+        ruleId: rule.id,
+      });
+      return null;
+    }
+  }
+
+  async resolveAlert(alertId: string, resolvedBy: 'auto' | 'manual' = 'manual'): Promise<Alert | undefined> {
+    try {
+      const alert = this.mockDataService.getAlertById(alertId);
+      if (!alert) {
+        return undefined;
+      }
+
+      alert.status = 'resolved';
+      alert.resolvedAt = new Date();
+      alert.updatedAt = new Date();
+
+      // Publish alert resolved event
+      await this.eventService.publishAlertResolved({
+        ...alert,
+        resolvedBy,
+        duration: alert.resolvedAt.getTime() - alert.firedAt.getTime(),
+      });
+
+      logger.info('Alert resolved', {
+        alertId,
+        resolvedBy,
+        duration: alert.resolvedAt.getTime() - alert.firedAt.getTime(),
+      });
+
+      return alert;
+    } catch (error) {
+      logger.error('Failed to resolve alert', error as Error, {
+        alertId,
+      });
+      throw error;
+    }
+  }
+
+  async silenceAlert(alertId: string, duration: string, reason: string, silencedBy: string): Promise<Alert | undefined> {
+    try {
+      const alert = this.mockDataService.silenceAlert(alertId, duration, reason);
+      
+      if (alert) {
+        // Publish alert silenced event
+        await this.eventService.publishAlertSilenced(alert, {
+          duration,
+          reason,
+          silencedBy,
+          silencedAt: new Date(),
+          silencedUntil: alert.silencedUntil,
+        });
+
+        logger.info('Alert silenced', {
+          alertId,
+          duration,
+          reason,
+          silencedBy,
+        });
+      }
+
+      return alert;
+    } catch (error) {
+      logger.error('Failed to silence alert', error as Error, {
+        alertId,
+        duration,
+        reason,
+      });
+      throw error;
+    }
+  }
+
+  async getActiveAlerts(): Promise<Alert[]> {
+    return this.mockDataService.getAlertsByStatus('active');
+  }
+
+  async getAlertsByStatus(status: string): Promise<Alert[]> {
+    return this.mockDataService.getAlertsByStatus(status);
+  }
+
+  async getAlertHistory(alertId: string) {
+    try {
+      const alert = this.mockDataService.getAlertById(alertId);
+      if (!alert) {
+        throw new Error(`Alert not found: ${alertId}`);
+      }
+
+      // Mock history data
+      const history = [];
+      let currentTime = alert.firedAt;
+      
+      history.push({
+        timestamp: currentTime,
+        status: 'triggered',
+        value: alert.value,
+        message: `Alert triggered: ${alert.message}`,
+      });
+
+      // Add some sample status changes
+      if (alert.status === 'resolved' && alert.resolvedAt) {
+        history.push({
+          timestamp: alert.resolvedAt,
+          status: 'resolved',
+          value: alert.threshold * 0.8, // Below threshold
+          message: `Alert resolved: metric returned to normal`,
+        });
+      }
+
+      if (alert.status === 'silenced' && alert.silencedUntil) {
+        history.push({
+          timestamp: new Date(alert.firedAt.getTime() + 300000), // 5 minutes after trigger
+          status: 'silenced',
+          value: alert.value,
+          message: `Alert silenced until ${alert.silencedUntil.toISOString()}`,
+        });
+      }
+
+      return {
+        alert,
+        history,
+      };
+    } catch (error) {
+      logger.error('Failed to get alert history', error as Error, {
+        alertId,
+      });
+      throw error;
+    }
+  }
+
+  // Bulk operations
+  async resolveAlertsBatch(alertIds: string[], resolvedBy: 'auto' | 'manual' = 'manual'): Promise<Alert[]> {
+    try {
+      const resolvedAlerts: Alert[] = [];
+      
+      for (const alertId of alertIds) {
+        const alert = await this.resolveAlert(alertId, resolvedBy);
+        if (alert) {
+          resolvedAlerts.push(alert);
+        }
+      }
+
+      logger.info('Alerts resolved in batch', {
+        count: resolvedAlerts.length,
+        resolvedBy,
+      });
+
+      return resolvedAlerts;
+    } catch (error) {
+      logger.error('Failed to resolve alerts batch', error as Error, {
+        alertIds,
+      });
+      throw error;
+    }
+  }
+
+  // Alert statistics
+  async getAlertStatistics() {
+    try {
+      const alerts = this.mockDataService.getAlerts();
+      const now = new Date();
+      const oneDayAgo = new Date(now.getTime() - 86400000);
+      const oneWeekAgo = new Date(now.getTime() - 604800000);
+
+      const stats = {
+        total: alerts.length,
+        active: alerts.filter(a => a.status === 'active').length,
+        resolved: alerts.filter(a => a.status === 'resolved').length,
+        silenced: alerts.filter(a => a.status === 'silenced').length,
+        last24h: alerts.filter(a => a.firedAt > oneDayAgo).length,
+        lastWeek: alerts.filter(a => a.firedAt > oneWeekAgo).length,
+        bySeverity: {
+          critical: alerts.filter(a => a.severity === 'critical').length,
+          high: alerts.filter(a => a.severity === 'high').length,
+          medium: alerts.filter(a => a.severity === 'medium').length,
+          low: alerts.filter(a => a.severity === 'low').length,
+        },
+      };
+
+      return stats;
+    } catch (error) {
+      logger.error('Failed to get alert statistics', error as Error);
+      throw error;
+    }
+  }
+}

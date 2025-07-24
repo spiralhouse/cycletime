@@ -1,0 +1,230 @@
+import fastify, { FastifyInstance } from 'fastify';
+import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
+
+import { APIResponse, HttpStatus } from '@cycletime/shared-types';
+import { getEnvVar, getEnvVarAsNumber, isProduction } from '@cycletime/shared-config';
+import { logger } from './utils/logger';
+import { StandardsController } from './controllers/standards-controller.js';
+import { ComplianceController } from './controllers/compliance-controller.js';
+import { HealthController } from './controllers/health-controller.js';
+
+export class App {
+  private server: FastifyInstance;
+  private standardsController: StandardsController;
+  private complianceController: ComplianceController;
+  private healthController: HealthController;
+
+  constructor() {
+    this.server = fastify({
+      logger: process.env.NODE_ENV === 'test' ? false : logger,
+    });
+
+    // Initialize controllers
+    this.standardsController = new StandardsController();
+    this.complianceController = new ComplianceController();
+    this.healthController = new HealthController();
+
+    this.registerPlugins();
+    this.registerRoutes();
+    this.registerErrorHandlers();
+  }
+
+  private async registerPlugins(): Promise<void> {
+    // Register CORS
+    await this.server.register(cors, {
+      origin: isProduction() 
+        ? ['https://app.cycletime.dev', 'https://cycletime.dev']
+        : true,
+      credentials: true,
+    });
+
+    // Register Helmet for security
+    await this.server.register(helmet, {
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", "data:", "https:"],
+        },
+      },
+    });
+
+    // Register rate limiting
+    await this.server.register(rateLimit, {
+      max: 100,
+      timeWindow: '1 minute',
+      errorResponseBuilder: (request, context) => {
+        return {
+          code: 429,
+          error: 'Too Many Requests',
+          message: `Rate limit exceeded, retry in 1 minute`,
+          date: Date.now(),
+          expiresIn: '1 minute',
+        };
+      },
+    });
+
+    // Register Swagger for API documentation
+    await this.server.register(swagger, {
+      openapi: {
+        openapi: '3.0.0',
+        info: {
+          title: 'Standards Engine API',
+          description: 'Development standards management and delivery system for AI-assisted development',
+          version: '1.0.0',
+          contact: {
+            name: 'CycleTime Team',
+            email: 'team@cycletime.dev',
+          },
+          license: {
+            name: 'MIT',
+          },
+        },
+        servers: [
+          {
+            url: `http://localhost:${getEnvVarAsNumber('PORT', 3007)}`,
+            description: 'Development server',
+          },
+          {
+            url: 'https://api.cycletime.dev/standards',
+            description: 'Production server',
+          },
+        ],
+        components: {
+          securitySchemes: {
+            bearerAuth: {
+              type: 'http',
+              scheme: 'bearer',
+              bearerFormat: 'JWT',
+            },
+          },
+        },
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+      },
+    });
+
+    // Register Swagger UI
+    await this.server.register(swaggerUi, {
+      routePrefix: '/docs',
+      uiConfig: {
+        docExpansion: 'full',
+        deepLinking: false,
+      },
+      staticCSP: true,
+    });
+
+    logger.info('Fastify plugins registered successfully');
+  }
+
+  private registerRoutes(): void {
+    // Health endpoints
+    this.server.get('/health', this.healthController.healthCheck.bind(this.healthController));
+    this.server.get('/health/detailed', this.healthController.detailedHealthCheck.bind(this.healthController));
+    this.server.get('/health/dependencies', this.healthController.dependencyCheck.bind(this.healthController));
+    this.server.get('/health/readiness', this.healthController.readinessProbe.bind(this.healthController));
+    this.server.get('/health/liveness', this.healthController.livenessProbe.bind(this.healthController));
+
+    // Standards endpoints
+    this.server.post('/api/v1/standards/validate', this.standardsController.validateCode.bind(this.standardsController));
+    this.server.get('/api/v1/standards/team/:teamId/rules', this.standardsController.getTeamStandards.bind(this.standardsController));
+    this.server.post('/api/v1/standards/configure', this.standardsController.configureStandards.bind(this.standardsController));
+    this.server.get('/api/v1/standards/templates', this.standardsController.getStandardsTemplates.bind(this.standardsController));
+    this.server.post('/api/v1/standards/analyze/code', this.standardsController.analyzeCodeCompliance.bind(this.standardsController));
+    this.server.delete('/api/v1/standards/rule/:ruleId', this.standardsController.deleteStandardsRule.bind(this.standardsController));
+    this.server.put('/api/v1/standards/enforcement/level', this.standardsController.setEnforcementLevel.bind(this.standardsController));
+
+    // Compliance endpoints
+    this.server.get('/api/v1/compliance/report/:commitId', this.complianceController.getComplianceReport.bind(this.complianceController));
+    this.server.get('/api/v1/compliance/metrics/:projectId', this.complianceController.getComplianceMetrics.bind(this.complianceController));
+    this.server.get('/api/v1/compliance/trends/:projectId', this.complianceController.getComplianceTrends.bind(this.complianceController));
+    this.server.get('/api/v1/compliance/alerts/:projectId', this.complianceController.getComplianceAlerts.bind(this.complianceController));
+    this.server.get('/api/v1/compliance/summary', this.complianceController.getMultiProjectSummary.bind(this.complianceController));
+    this.server.get('/api/v1/compliance/export/:projectId', this.complianceController.exportComplianceData.bind(this.complianceController));
+    this.server.get('/api/v1/compliance/historical/:projectId', this.complianceController.getHistoricalComparison.bind(this.complianceController));
+
+    logger.info('Routes registered successfully');
+  }
+
+  private registerErrorHandlers(): void {
+    this.server.setErrorHandler(async (error, request, reply) => {
+      logger.error('Unhandled error', { 
+        error: error.message, 
+        stack: error.stack,
+        url: request.url,
+        method: request.method 
+      });
+
+      if (error.statusCode) {
+        reply.status(error.statusCode).send({
+          error: error.name,
+          message: error.message,
+          statusCode: error.statusCode,
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        reply.status(500).send({
+          error: 'Internal Server Error',
+          message: 'An unexpected error occurred',
+          statusCode: 500,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    });
+
+    this.server.setNotFoundHandler(async (request, reply) => {
+      reply.status(404).send({
+        error: 'Not Found',
+        message: `Route ${request.method} ${request.url} not found`,
+        statusCode: 404,
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    logger.info('Error handlers registered successfully');
+  }
+
+  public async start(): Promise<void> {
+    try {
+      const port = getEnvVarAsNumber('PORT', 3007);
+      const host = getEnvVar('HOST', '0.0.0.0');
+      
+      await this.server.listen({ port, host });
+      
+      logger.info(`Standards Engine started successfully`, {
+        port,
+        host,
+        environment: getEnvVar('NODE_ENV', 'development')
+      });
+
+      // Log available routes
+      logger.info('Available routes:');
+      this.server.printRoutes();
+    } catch (error) {
+      logger.error('Failed to start server', { error });
+      process.exit(1);
+    }
+  }
+
+  public async stop(): Promise<void> {
+    try {
+      await this.server.close();
+      logger.info('Standards Engine stopped successfully');
+    } catch (error) {
+      logger.error('Failed to stop server gracefully', { error });
+      process.exit(1);
+    }
+  }
+
+  public getServer(): FastifyInstance {
+    return this.server;
+  }
+}

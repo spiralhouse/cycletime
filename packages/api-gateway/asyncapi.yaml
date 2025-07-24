@@ -1,0 +1,935 @@
+asyncapi: 3.0.0
+info:
+  title: CycleTime API Gateway Events
+  description: Event-driven architecture for API Gateway operations, monitoring, and service coordination
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  development:
+    host: localhost:6379
+    protocol: redis
+    description: Development Redis server
+  production:
+    host: redis.cycletime.dev:6379
+    protocol: redis
+    description: Production Redis server
+
+defaultContentType: application/json
+
+channels:
+  gateway/requests:
+    address: gateway.requests
+    messages:
+      gateway.request.received:
+        $ref: '#/components/messages/GatewayRequestReceived'
+      gateway.request.routed:
+        $ref: '#/components/messages/GatewayRequestRouted'
+      gateway.request.completed:
+        $ref: '#/components/messages/GatewayRequestCompleted'
+      gateway.request.failed:
+        $ref: '#/components/messages/GatewayRequestFailed'
+
+  gateway/auth:
+    address: gateway.auth
+    messages:
+      gateway.auth.success:
+        $ref: '#/components/messages/GatewayAuthSuccess'
+      gateway.auth.failed:
+        $ref: '#/components/messages/GatewayAuthFailed'
+      gateway.auth.token.refreshed:
+        $ref: '#/components/messages/GatewayAuthTokenRefreshed'
+      gateway.auth.logout:
+        $ref: '#/components/messages/GatewayAuthLogout'
+
+  gateway/rate-limits:
+    address: gateway.rate-limits
+    messages:
+      gateway.rate.limit.exceeded:
+        $ref: '#/components/messages/GatewayRateLimitExceeded'
+      gateway.rate.limit.warning:
+        $ref: '#/components/messages/GatewayRateLimitWarning'
+      gateway.rate.limit.reset:
+        $ref: '#/components/messages/GatewayRateLimitReset'
+
+  gateway/services:
+    address: gateway.services
+    messages:
+      service.health.changed:
+        $ref: '#/components/messages/ServiceHealthChanged'
+      service.registered:
+        $ref: '#/components/messages/ServiceRegistered'
+      service.deregistered:
+        $ref: '#/components/messages/ServiceDeregistered'
+      service.discovery.updated:
+        $ref: '#/components/messages/ServiceDiscoveryUpdated'
+
+  gateway/admin:
+    address: gateway.admin
+    messages:
+      gateway.config.updated:
+        $ref: '#/components/messages/GatewayConfigUpdated'
+      gateway.metrics.snapshot:
+        $ref: '#/components/messages/GatewayMetricsSnapshot'
+      gateway.alert.triggered:
+        $ref: '#/components/messages/GatewayAlertTriggered'
+
+operations:
+  publishRequestReceived:
+    action: send
+    channel:
+      $ref: '#/channels/gateway~1requests'
+    messages:
+      - $ref: '#/components/messages/GatewayRequestReceived'
+    description: Publish when a request is received by the gateway
+
+  publishRequestRouted:
+    action: send
+    channel:
+      $ref: '#/channels/gateway~1requests'
+    messages:
+      - $ref: '#/components/messages/GatewayRequestRouted'
+    description: Publish when a request is successfully routed to a service
+
+  publishRequestCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/gateway~1requests'
+    messages:
+      - $ref: '#/components/messages/GatewayRequestCompleted'
+    description: Publish when a request is completed successfully
+
+  publishRequestFailed:
+    action: send
+    channel:
+      $ref: '#/channels/gateway~1requests'
+    messages:
+      - $ref: '#/components/messages/GatewayRequestFailed'
+    description: Publish when a request fails
+
+  publishAuthSuccess:
+    action: send
+    channel:
+      $ref: '#/channels/gateway~1auth'
+    messages:
+      - $ref: '#/components/messages/GatewayAuthSuccess'
+    description: Publish when authentication succeeds
+
+  publishAuthFailed:
+    action: send
+    channel:
+      $ref: '#/channels/gateway~1auth'
+    messages:
+      - $ref: '#/components/messages/GatewayAuthFailed'
+    description: Publish when authentication fails
+
+  publishRateLimitExceeded:
+    action: send
+    channel:
+      $ref: '#/channels/gateway~1rate-limits'
+    messages:
+      - $ref: '#/components/messages/GatewayRateLimitExceeded'
+    description: Publish when rate limit is exceeded
+
+  publishServiceHealthChanged:
+    action: send
+    channel:
+      $ref: '#/channels/gateway~1services'
+    messages:
+      - $ref: '#/components/messages/ServiceHealthChanged'
+    description: Publish when service health status changes
+
+  subscribeToServiceEvents:
+    action: receive
+    channel:
+      $ref: '#/channels/gateway~1services'
+    messages:
+      - $ref: '#/components/messages/ServiceRegistered'
+      - $ref: '#/components/messages/ServiceDeregistered'
+    description: Subscribe to service registration events
+
+components:
+  messages:
+    GatewayRequestReceived:
+      name: gateway.request.received
+      title: Gateway Request Received
+      description: Event published when a request is received by the API Gateway
+      payload:
+        $ref: '#/components/schemas/GatewayRequestPayload'
+      examples:
+        - name: HTTP Request Example
+          payload:
+            requestId: "req_123456789"
+            method: "GET"
+            path: "/api/v1/ai-service/models"
+            headers:
+              "authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+              "user-agent": "CycleTime-Client/1.0"
+            query: {}
+            clientIp: "192.168.1.100"
+            userAgent: "CycleTime-Client/1.0"
+            timestamp: "2024-01-15T10:30:00Z"
+            userId: "user_987654321"
+
+    GatewayRequestRouted:
+      name: gateway.request.routed
+      title: Gateway Request Routed
+      description: Event published when a request is successfully routed to a backend service
+      payload:
+        $ref: '#/components/schemas/GatewayRequestRoutedPayload'
+      examples:
+        - name: Service Routing Example
+          payload:
+            requestId: "req_123456789"
+            targetService: "ai-service"
+            targetUrl: "http://ai-service:8080/api/v1/models"
+            routingRule: "path-based"
+            routingTime: 5
+            timestamp: "2024-01-15T10:30:00.005Z"
+
+    GatewayRequestCompleted:
+      name: gateway.request.completed
+      title: Gateway Request Completed
+      description: Event published when a request is completed successfully
+      payload:
+        $ref: '#/components/schemas/GatewayRequestCompletedPayload'
+      examples:
+        - name: Successful Request Example
+          payload:
+            requestId: "req_123456789"
+            statusCode: 200
+            responseTime: 150
+            bytesOut: 1024
+            timestamp: "2024-01-15T10:30:00.155Z"
+
+    GatewayRequestFailed:
+      name: gateway.request.failed
+      title: Gateway Request Failed
+      description: Event published when a request fails
+      payload:
+        $ref: '#/components/schemas/GatewayRequestFailedPayload'
+      examples:
+        - name: Service Error Example
+          payload:
+            requestId: "req_123456789"
+            statusCode: 502
+            errorCode: "SERVICE_UNAVAILABLE"
+            errorMessage: "Target service is not responding"
+            responseTime: 30000
+            timestamp: "2024-01-15T10:30:30.000Z"
+
+    GatewayAuthSuccess:
+      name: gateway.auth.success
+      title: Gateway Authentication Success
+      description: Event published when authentication succeeds
+      payload:
+        $ref: '#/components/schemas/GatewayAuthPayload'
+      examples:
+        - name: Login Success Example
+          payload:
+            userId: "user_987654321"
+            email: "john.doe@example.com"
+            authMethod: "jwt"
+            timestamp: "2024-01-15T10:30:00Z"
+            clientIp: "192.168.1.100"
+            userAgent: "CycleTime-Client/1.0"
+
+    GatewayAuthFailed:
+      name: gateway.auth.failed
+      title: Gateway Authentication Failed
+      description: Event published when authentication fails
+      payload:
+        $ref: '#/components/schemas/GatewayAuthFailedPayload'
+      examples:
+        - name: Invalid Token Example
+          payload:
+            reason: "invalid_token"
+            message: "JWT token has expired"
+            timestamp: "2024-01-15T10:30:00Z"
+            clientIp: "192.168.1.100"
+            userAgent: "CycleTime-Client/1.0"
+            attemptedPath: "/api/v1/ai-service/models"
+
+    GatewayAuthTokenRefreshed:
+      name: gateway.auth.token.refreshed
+      title: Gateway Authentication Token Refreshed
+      description: Event published when a JWT token is refreshed
+      payload:
+        $ref: '#/components/schemas/GatewayAuthTokenRefreshedPayload'
+      examples:
+        - name: Token Refresh Example
+          payload:
+            userId: "user_987654321"
+            oldTokenId: "token_123456789"
+            newTokenId: "token_987654321"
+            timestamp: "2024-01-15T10:30:00Z"
+            clientIp: "192.168.1.100"
+
+    GatewayAuthLogout:
+      name: gateway.auth.logout
+      title: Gateway Authentication Logout
+      description: Event published when a user logs out
+      payload:
+        $ref: '#/components/schemas/GatewayAuthLogoutPayload'
+      examples:
+        - name: Logout Example
+          payload:
+            userId: "user_987654321"
+            tokenId: "token_123456789"
+            timestamp: "2024-01-15T10:30:00Z"
+            clientIp: "192.168.1.100"
+
+    GatewayRateLimitExceeded:
+      name: gateway.rate.limit.exceeded
+      title: Gateway Rate Limit Exceeded
+      description: Event published when rate limit is exceeded
+      payload:
+        $ref: '#/components/schemas/GatewayRateLimitPayload'
+      examples:
+        - name: Rate Limit Example
+          payload:
+            clientIp: "192.168.1.100"
+            endpoint: "/api/v1/ai-service/models"
+            method: "GET"
+            userId: "user_987654321"
+            limitType: "per_minute"
+            limit: 100
+            currentCount: 101
+            resetTime: "2024-01-15T10:31:00Z"
+            timestamp: "2024-01-15T10:30:00Z"
+
+    GatewayRateLimitWarning:
+      name: gateway.rate.limit.warning
+      title: Gateway Rate Limit Warning
+      description: Event published when approaching rate limit threshold
+      payload:
+        $ref: '#/components/schemas/GatewayRateLimitWarningPayload'
+      examples:
+        - name: Rate Limit Warning Example
+          payload:
+            clientIp: "192.168.1.100"
+            endpoint: "/api/v1/ai-service/models"
+            method: "GET"
+            userId: "user_987654321"
+            limitType: "per_minute"
+            limit: 100
+            currentCount: 90
+            thresholdPercentage: 90
+            resetTime: "2024-01-15T10:31:00Z"
+            timestamp: "2024-01-15T10:30:00Z"
+
+    GatewayRateLimitReset:
+      name: gateway.rate.limit.reset
+      title: Gateway Rate Limit Reset
+      description: Event published when rate limit counters are reset
+      payload:
+        $ref: '#/components/schemas/GatewayRateLimitResetPayload'
+      examples:
+        - name: Rate Limit Reset Example
+          payload:
+            limitType: "per_minute"
+            resetTime: "2024-01-15T10:31:00Z"
+            timestamp: "2024-01-15T10:31:00Z"
+
+    ServiceHealthChanged:
+      name: service.health.changed
+      title: Service Health Changed
+      description: Event published when a service health status changes
+      payload:
+        $ref: '#/components/schemas/ServiceHealthPayload'
+      examples:
+        - name: Service Down Example
+          payload:
+            serviceId: "ai-service"
+            serviceName: "AI Service"
+            previousStatus: "healthy"
+            currentStatus: "unhealthy"
+            healthCheckUrl: "http://ai-service:8080/health"
+            responseTime: 30000
+            errorMessage: "Connection timeout"
+            timestamp: "2024-01-15T10:30:00Z"
+
+    ServiceRegistered:
+      name: service.registered
+      title: Service Registered
+      description: Event published when a new service is registered
+      payload:
+        $ref: '#/components/schemas/ServiceRegisteredPayload'
+      examples:
+        - name: New Service Example
+          payload:
+            serviceId: "new-service"
+            serviceName: "New Service"
+            serviceUrl: "http://new-service:8080"
+            healthCheckUrl: "http://new-service:8080/health"
+            version: "1.0.0"
+            metadata:
+              team: "backend"
+              environment: "production"
+            timestamp: "2024-01-15T10:30:00Z"
+
+    ServiceDeregistered:
+      name: service.deregistered
+      title: Service Deregistered
+      description: Event published when a service is deregistered
+      payload:
+        $ref: '#/components/schemas/ServiceDeregisteredPayload'
+      examples:
+        - name: Service Removal Example
+          payload:
+            serviceId: "old-service"
+            serviceName: "Old Service"
+            reason: "planned_maintenance"
+            timestamp: "2024-01-15T10:30:00Z"
+
+    ServiceDiscoveryUpdated:
+      name: service.discovery.updated
+      title: Service Discovery Updated
+      description: Event published when service discovery information is updated
+      payload:
+        $ref: '#/components/schemas/ServiceDiscoveryPayload'
+      examples:
+        - name: Discovery Update Example
+          payload:
+            updateType: "health_check"
+            affectedServices: ["ai-service", "context-management-service"]
+            timestamp: "2024-01-15T10:30:00Z"
+
+    GatewayConfigUpdated:
+      name: gateway.config.updated
+      title: Gateway Configuration Updated
+      description: Event published when gateway configuration is updated
+      payload:
+        $ref: '#/components/schemas/GatewayConfigPayload'
+      examples:
+        - name: Config Update Example
+          payload:
+            configSection: "rate_limits"
+            updatedBy: "admin_user_123"
+            changes:
+              - field: "global.requestsPerMinute"
+                oldValue: 1000
+                newValue: 1500
+            timestamp: "2024-01-15T10:30:00Z"
+
+    GatewayMetricsSnapshot:
+      name: gateway.metrics.snapshot
+      title: Gateway Metrics Snapshot
+      description: Event published with periodic metrics snapshot
+      payload:
+        $ref: '#/components/schemas/GatewayMetricsPayload'
+      examples:
+        - name: Metrics Snapshot Example
+          payload:
+            totalRequests: 10000
+            totalErrors: 50
+            averageResponseTime: 150
+            activeConnections: 25
+            rateLimitViolations: 5
+            topEndpoints:
+              - endpoint: "/api/v1/ai-service/models"
+                requests: 2500
+              - endpoint: "/api/v1/context-management/contexts"
+                requests: 1800
+            timestamp: "2024-01-15T10:30:00Z"
+
+    GatewayAlertTriggered:
+      name: gateway.alert.triggered
+      title: Gateway Alert Triggered
+      description: Event published when a monitoring alert is triggered
+      payload:
+        $ref: '#/components/schemas/GatewayAlertPayload'
+      examples:
+        - name: High Error Rate Alert
+          payload:
+            alertType: "high_error_rate"
+            severity: "warning"
+            message: "Error rate exceeded 5% threshold"
+            currentValue: 7.5
+            threshold: 5.0
+            affectedServices: ["ai-service"]
+            timestamp: "2024-01-15T10:30:00Z"
+
+  schemas:
+    GatewayRequestPayload:
+      type: object
+      properties:
+        requestId:
+          type: string
+          description: Unique request identifier
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS]
+        path:
+          type: string
+          description: Request path
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        query:
+          type: object
+          additionalProperties:
+            type: string
+        body:
+          type: object
+          description: Request body (for POST/PUT requests)
+        clientIp:
+          type: string
+          description: Client IP address
+        userAgent:
+          type: string
+          description: User agent string
+        timestamp:
+          type: string
+          format: date-time
+        userId:
+          type: string
+          description: Authenticated user ID (if available)
+      required:
+        - requestId
+        - method
+        - path
+        - clientIp
+        - timestamp
+
+    GatewayRequestRoutedPayload:
+      type: object
+      properties:
+        requestId:
+          type: string
+        targetService:
+          type: string
+          description: Target service name
+        targetUrl:
+          type: string
+          description: Target service URL
+        routingRule:
+          type: string
+          description: Routing rule used
+        routingTime:
+          type: number
+          description: Time taken to route request in milliseconds
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - requestId
+        - targetService
+        - targetUrl
+        - routingRule
+        - routingTime
+        - timestamp
+
+    GatewayRequestCompletedPayload:
+      type: object
+      properties:
+        requestId:
+          type: string
+        statusCode:
+          type: integer
+          description: HTTP status code
+        responseTime:
+          type: number
+          description: Total response time in milliseconds
+        bytesIn:
+          type: number
+          description: Request body size in bytes
+        bytesOut:
+          type: number
+          description: Response body size in bytes
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - requestId
+        - statusCode
+        - responseTime
+        - timestamp
+
+    GatewayRequestFailedPayload:
+      type: object
+      properties:
+        requestId:
+          type: string
+        statusCode:
+          type: integer
+          description: HTTP status code
+        errorCode:
+          type: string
+          description: Error code
+        errorMessage:
+          type: string
+          description: Error message
+        responseTime:
+          type: number
+          description: Time until failure in milliseconds
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - requestId
+        - statusCode
+        - errorCode
+        - errorMessage
+        - responseTime
+        - timestamp
+
+    GatewayAuthPayload:
+      type: object
+      properties:
+        userId:
+          type: string
+        email:
+          type: string
+          format: email
+        authMethod:
+          type: string
+          enum: [jwt, oauth2, api_key]
+        timestamp:
+          type: string
+          format: date-time
+        clientIp:
+          type: string
+        userAgent:
+          type: string
+      required:
+        - userId
+        - authMethod
+        - timestamp
+        - clientIp
+
+    GatewayAuthFailedPayload:
+      type: object
+      properties:
+        reason:
+          type: string
+          enum: [invalid_token, expired_token, invalid_credentials, missing_token, insufficient_permissions]
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        clientIp:
+          type: string
+        userAgent:
+          type: string
+        attemptedPath:
+          type: string
+      required:
+        - reason
+        - message
+        - timestamp
+        - clientIp
+
+    GatewayAuthTokenRefreshedPayload:
+      type: object
+      properties:
+        userId:
+          type: string
+        oldTokenId:
+          type: string
+        newTokenId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        clientIp:
+          type: string
+      required:
+        - userId
+        - oldTokenId
+        - newTokenId
+        - timestamp
+        - clientIp
+
+    GatewayAuthLogoutPayload:
+      type: object
+      properties:
+        userId:
+          type: string
+        tokenId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        clientIp:
+          type: string
+      required:
+        - userId
+        - tokenId
+        - timestamp
+        - clientIp
+
+    GatewayRateLimitPayload:
+      type: object
+      properties:
+        clientIp:
+          type: string
+        endpoint:
+          type: string
+        method:
+          type: string
+        userId:
+          type: string
+        limitType:
+          type: string
+          enum: [per_second, per_minute, per_hour, per_day]
+        limit:
+          type: number
+        currentCount:
+          type: number
+        resetTime:
+          type: string
+          format: date-time
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - clientIp
+        - endpoint
+        - method
+        - limitType
+        - limit
+        - currentCount
+        - resetTime
+        - timestamp
+
+    GatewayRateLimitWarningPayload:
+      type: object
+      properties:
+        clientIp:
+          type: string
+        endpoint:
+          type: string
+        method:
+          type: string
+        userId:
+          type: string
+        limitType:
+          type: string
+          enum: [per_second, per_minute, per_hour, per_day]
+        limit:
+          type: number
+        currentCount:
+          type: number
+        thresholdPercentage:
+          type: number
+        resetTime:
+          type: string
+          format: date-time
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - clientIp
+        - endpoint
+        - method
+        - limitType
+        - limit
+        - currentCount
+        - thresholdPercentage
+        - resetTime
+        - timestamp
+
+    GatewayRateLimitResetPayload:
+      type: object
+      properties:
+        limitType:
+          type: string
+          enum: [per_second, per_minute, per_hour, per_day]
+        resetTime:
+          type: string
+          format: date-time
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - limitType
+        - resetTime
+        - timestamp
+
+    ServiceHealthPayload:
+      type: object
+      properties:
+        serviceId:
+          type: string
+        serviceName:
+          type: string
+        previousStatus:
+          type: string
+          enum: [healthy, degraded, unhealthy, unknown]
+        currentStatus:
+          type: string
+          enum: [healthy, degraded, unhealthy, unknown]
+        healthCheckUrl:
+          type: string
+        responseTime:
+          type: number
+          description: Health check response time in milliseconds
+        errorMessage:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - serviceId
+        - serviceName
+        - previousStatus
+        - currentStatus
+        - timestamp
+
+    ServiceRegisteredPayload:
+      type: object
+      properties:
+        serviceId:
+          type: string
+        serviceName:
+          type: string
+        serviceUrl:
+          type: string
+        healthCheckUrl:
+          type: string
+        version:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - serviceId
+        - serviceName
+        - serviceUrl
+        - version
+        - timestamp
+
+    ServiceDeregisteredPayload:
+      type: object
+      properties:
+        serviceId:
+          type: string
+        serviceName:
+          type: string
+        reason:
+          type: string
+          enum: [planned_maintenance, service_shutdown, health_check_failed, manual_removal]
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - serviceId
+        - serviceName
+        - reason
+        - timestamp
+
+    ServiceDiscoveryPayload:
+      type: object
+      properties:
+        updateType:
+          type: string
+          enum: [health_check, configuration, routing_rules, load_balancer]
+        affectedServices:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - updateType
+        - affectedServices
+        - timestamp
+
+    GatewayConfigPayload:
+      type: object
+      properties:
+        configSection:
+          type: string
+        updatedBy:
+          type: string
+        changes:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              oldValue:
+                type: string
+              newValue:
+                type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - configSection
+        - updatedBy
+        - changes
+        - timestamp
+
+    GatewayMetricsPayload:
+      type: object
+      properties:
+        totalRequests:
+          type: number
+        totalErrors:
+          type: number
+        averageResponseTime:
+          type: number
+        activeConnections:
+          type: number
+        rateLimitViolations:
+          type: number
+        topEndpoints:
+          type: array
+          items:
+            type: object
+            properties:
+              endpoint:
+                type: string
+              requests:
+                type: number
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - totalRequests
+        - totalErrors
+        - averageResponseTime
+        - activeConnections
+        - rateLimitViolations
+        - timestamp
+
+    GatewayAlertPayload:
+      type: object
+      properties:
+        alertType:
+          type: string
+          enum: [high_error_rate, high_response_time, service_down, rate_limit_abuse, security_threat]
+        severity:
+          type: string
+          enum: [info, warning, error, critical]
+        message:
+          type: string
+        currentValue:
+          type: number
+        threshold:
+          type: number
+        affectedServices:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - alertType
+        - severity
+        - message
+        - timestamp

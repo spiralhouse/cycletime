@@ -1,0 +1,470 @@
+openapi: 3.0.3
+info:
+  title: Search Service API
+  description: Global search service with Elasticsearch integration for comprehensive entity search across CycleTime
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8011
+    description: Development server
+  - url: https://api.cycletime.dev/search
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, unhealthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                  dependencies:
+                    type: object
+                    properties:
+                      elasticsearch:
+                        type: string
+                      redis:
+                        type: string
+
+  /api/v1/search:
+    get:
+      summary: Global search
+      operationId: globalSearch
+      tags:
+        - Search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query
+          schema:
+            type: string
+        - name: types
+          in: query
+          description: Comma-separated entity types to search
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of results
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          description: Number of results to skip
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [relevance, date_asc, date_desc, name_asc, name_desc]
+            default: relevance
+        - name: filters
+          in: query
+          description: JSON object with filter criteria
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+
+  /api/v1/search/suggest:
+    get:
+      summary: Search suggestions
+      operationId: searchSuggestions
+      tags:
+        - Search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Partial search query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of suggestions
+          schema:
+            type: integer
+            default: 10
+            maximum: 20
+      responses:
+        '200':
+          description: Search suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suggestions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        text:
+                          type: string
+                        score:
+                          type: number
+                        type:
+                          type: string
+
+  /api/v1/search/facets:
+    get:
+      summary: Search facets
+      operationId: searchFacets
+      tags:
+        - Search
+      parameters:
+        - name: q
+          in: query
+          description: Search query for facet context
+          schema:
+            type: string
+        - name: types
+          in: query
+          description: Entity types to get facets for
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search facets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  facets:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          value:
+                            type: string
+                          count:
+                            type: integer
+
+  /api/v1/index:
+    post:
+      summary: Index document
+      operationId: indexDocument
+      tags:
+        - Indexing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexDocumentRequest'
+      responses:
+        '201':
+          description: Document indexed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  indexed:
+                    type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/v1/index/bulk:
+    post:
+      summary: Bulk index documents
+      operationId: bulkIndexDocuments
+      tags:
+        - Indexing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                documents:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/IndexDocumentRequest'
+      responses:
+        '202':
+          description: Bulk indexing initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  batchId:
+                    type: string
+                  totalDocuments:
+                    type: integer
+                  status:
+                    type: string
+
+  /api/v1/index/{id}:
+    put:
+      summary: Update indexed document
+      operationId: updateIndexedDocument
+      tags:
+        - Indexing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexDocumentRequest'
+      responses:
+        '200':
+          description: Document updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  updated:
+                    type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
+
+    delete:
+      summary: Remove document from index
+      operationId: removeFromIndex
+      tags:
+        - Indexing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Document ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Document removed from index
+
+  /api/v1/analytics:
+    get:
+      summary: Search analytics
+      operationId: getSearchAnalytics
+      tags:
+        - Analytics
+      parameters:
+        - name: timeRange
+          in: query
+          description: Time range for analytics
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d, 30d]
+            default: 7d
+        - name: metrics
+          in: query
+          description: Comma-separated metrics to include
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timeRange:
+                    type: string
+                  metrics:
+                    type: object
+                    properties:
+                      totalSearches:
+                        type: integer
+                      uniqueUsers:
+                        type: integer
+                      averageResultsPerSearch:
+                        type: number
+                      topQueries:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            query:
+                              type: string
+                            count:
+                              type: integer
+                      clickThroughRate:
+                        type: number
+                      zeroResultsRate:
+                        type: number
+
+components:
+  schemas:
+    SearchResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+        hasMore:
+          type: boolean
+        facets:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: object
+              properties:
+                value:
+                  type: string
+                count:
+                  type: integer
+        executionTime:
+          type: number
+        searchId:
+          type: string
+
+    SearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+        score:
+          type: number
+        highlights:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    IndexDocumentRequest:
+      type: object
+      required:
+        - id
+        - type
+        - title
+        - content
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        content:
+          type: string
+        url:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        permissions:
+          type: object
+          properties:
+            users:
+              type: array
+              items:
+                type: string
+            groups:
+              type: array
+              items:
+                type: string
+            public:
+              type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health and status
+  - name: Search
+    description: Search operations
+  - name: Indexing
+    description: Document indexing operations
+  - name: Analytics
+    description: Search analytics and insights

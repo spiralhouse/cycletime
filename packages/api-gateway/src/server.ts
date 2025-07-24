@@ -46,7 +46,8 @@ const start = async () => {
     fastify.log.info('Database connected successfully');
 
     // Register JWT plugin
-    await fastify.register(import('@fastify/jwt'), {
+    const jwt = await import('@fastify/jwt');
+    await fastify.register(jwt.default as any, {
       secret: config.jwtSecret,
       sign: {
         algorithm: 'HS256',

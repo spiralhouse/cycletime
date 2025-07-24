@@ -1,6 +1,14 @@
+/**
+ * API Gateway TypeScript type definitions
+ * Centralized export for all gateway-related types
+ */
+
 import { FastifyRequest } from 'fastify';
 
-// User context for authenticated requests
+// Re-export all gateway types from gateway-types.ts
+export * from './gateway-types';
+
+// Legacy types (preserve existing functionality)
 export interface UserContext {
   id: string;
   email: string;
@@ -9,7 +17,6 @@ export interface UserContext {
   avatarUrl: string;
 }
 
-// API Key context for machine-to-machine requests
 export interface APIKeyContext {
   id: string;
   user_id: string;
@@ -18,17 +25,6 @@ export interface APIKeyContext {
   last_used_at: Date;
 }
 
-// JWT payload structure
-export interface JWTPayload {
-  sub: string;        // User ID
-  email: string;      // User email
-  github_id: number;  // GitHub user ID
-  github_username: string;
-  iat: number;        // Issued at
-  exp: number;        // Expires at
-}
-
-// Project permission structure
 export interface ProjectPermission {
   project_id: string;
   user_id: string;
@@ -41,7 +37,6 @@ export interface ProjectPermission {
   };
 }
 
-// API Key permission types
 export type APIKeyPermission = 
   | 'projects:read'
   | 'projects:write'
@@ -52,7 +47,6 @@ export type APIKeyPermission =
   | 'linear:read'
   | 'linear:write';
 
-// Standard API error response
 export interface APIErrorResponse {
   error: {
     code: string;
@@ -61,3 +55,143 @@ export interface APIErrorResponse {
     request_id: string;
   };
 }
+
+// Enhanced JWT payload structure (merging legacy and new)
+export interface JWTPayload {
+  sub: string;        // User ID
+  email: string;      // User email
+  name: string;       // User name
+  roles: string[];    // User roles
+  permissions: string[]; // User permissions
+  github_id?: number;  // GitHub user ID (optional for backwards compatibility)
+  github_username?: string; // GitHub username (optional for backwards compatibility)
+  iat: number;        // Issued at
+  exp: number;        // Expires at
+  aud: string;        // Audience
+  iss: string;        // Issuer
+  jti: string;        // JWT ID
+}
+
+// Refresh token payload
+export interface RefreshTokenPayload {
+  sub: string; // user id
+  tokenId: string;
+  iat: number;
+  exp: number;
+  aud: string;
+  iss: string;
+}
+
+// Fastify-specific types
+export interface FastifyRequestContext {
+  requestId: string;
+  user?: {
+    id: string;
+    email: string;
+    name: string;
+    roles: string[];
+    permissions: string[];
+  };
+  clientIp: string;
+  userAgent: string;
+  timestamp: string;
+  route?: {
+    path: string;
+    method: string;
+    targetService: string;
+  };
+}
+
+// Skip type augmentation to avoid conflicts - use runtime casting instead
+
+// Plugin options types
+export interface AuthPluginOptions {
+  jwtSecret: string;
+  tokenExpirationTime: number;
+  refreshTokenExpirationTime: number;
+  excludedRoutes?: string[];
+}
+
+export interface RateLimitPluginOptions {
+  global: {
+    max: number;
+    timeWindow: number;
+  };
+  endpoints: Array<{
+    path: string;
+    method: string;
+    max: number;
+    timeWindow: number;
+  }>;
+  keyGenerator?: (request: any) => string;
+  errorResponse?: (request: any, context: any) => any;
+}
+
+export interface ServiceDiscoveryPluginOptions {
+  consulUrl?: string;
+  etcdUrl?: string;
+  healthCheckInterval: number;
+  serviceTimeout: number;
+  retryAttempts: number;
+}
+
+export interface ProxyPluginOptions {
+  services: Array<{
+    name: string;
+    prefix: string;
+    upstream: string;
+    rewritePrefix?: string;
+    healthCheckPath?: string;
+  }>;
+  timeout: number;
+  retries: number;
+  mockResponses?: {
+    enabled: boolean;
+    defaultDelay?: number;
+    errorRate?: number;
+  };
+}
+
+// Validation schema types
+export interface ValidationSchema {
+  body?: any;
+  querystring?: any;
+  params?: any;
+  headers?: any;
+  response?: Record<string, any>;
+}
+
+// Common response wrappers
+export interface ApiResponse<T = any> {
+  data: T;
+  message?: string;
+  timestamp: string;
+  requestId: string;
+}
+
+export interface ApiError {
+  error: string;
+  message: string;
+  code?: string;
+  statusCode: number;
+  timestamp: string;
+  requestId: string;
+  details?: Record<string, any>;
+}
+
+export interface PaginatedApiResponse<T = any> extends ApiResponse<T[]> {
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
+
+// Utility types
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
+export type ServiceStatus = 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
+export type AlertSeverity = 'info' | 'warning' | 'error' | 'critical';
+export type RateLimitType = 'per_second' | 'per_minute' | 'per_hour' | 'per_day';

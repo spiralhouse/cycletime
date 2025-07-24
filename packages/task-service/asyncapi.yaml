@@ -1,0 +1,2684 @@
+asyncapi: 3.0.0
+info:
+  title: Task Service Events
+  description: Task lifecycle management events for real-time notifications and integrations
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  development:
+    host: localhost:6379
+    protocol: redis
+    description: Development Redis server
+  production:
+    host: redis.cycletime.dev:6379
+    protocol: redis
+    description: Production Redis server
+
+channels:
+  task/created:
+    address: task.created
+    description: Task created events
+    messages:
+      TaskCreated:
+        $ref: '#/components/messages/TaskCreated'
+
+  task/updated:
+    address: task.updated
+    description: Task updated events
+    messages:
+      TaskUpdated:
+        $ref: '#/components/messages/TaskUpdated'
+
+  task/deleted:
+    address: task.deleted
+    description: Task deleted events
+    messages:
+      TaskDeleted:
+        $ref: '#/components/messages/TaskDeleted'
+
+  task/assigned:
+    address: task.assigned
+    description: Task assigned events
+    messages:
+      TaskAssigned:
+        $ref: '#/components/messages/TaskAssigned'
+
+  task/unassigned:
+    address: task.unassigned
+    description: Task unassigned events
+    messages:
+      TaskUnassigned:
+        $ref: '#/components/messages/TaskUnassigned'
+
+  task/status_changed:
+    address: task.status_changed
+    description: Task status changed events
+    messages:
+      TaskStatusChanged:
+        $ref: '#/components/messages/TaskStatusChanged'
+
+  task/priority_changed:
+    address: task.priority_changed
+    description: Task priority changed events
+    messages:
+      TaskPriorityChanged:
+        $ref: '#/components/messages/TaskPriorityChanged'
+
+  task/progress_updated:
+    address: task.progress_updated
+    description: Task progress updated events
+    messages:
+      TaskProgressUpdated:
+        $ref: '#/components/messages/TaskProgressUpdated'
+
+  task/completed:
+    address: task.completed
+    description: Task completed events
+    messages:
+      TaskCompleted:
+        $ref: '#/components/messages/TaskCompleted'
+
+  task/failed:
+    address: task.failed
+    description: Task failed events
+    messages:
+      TaskFailed:
+        $ref: '#/components/messages/TaskFailed'
+
+  task/overdue:
+    address: task.overdue
+    description: Task overdue events
+    messages:
+      TaskOverdue:
+        $ref: '#/components/messages/TaskOverdue'
+
+  task/dependency_added:
+    address: task.dependency_added
+    description: Task dependency added events
+    messages:
+      TaskDependencyAdded:
+        $ref: '#/components/messages/TaskDependencyAdded'
+
+  task/dependency_removed:
+    address: task.dependency_removed
+    description: Task dependency removed events
+    messages:
+      TaskDependencyRemoved:
+        $ref: '#/components/messages/TaskDependencyRemoved'
+
+  task/dependency_resolved:
+    address: task.dependency_resolved
+    description: Task dependency resolved events
+    messages:
+      TaskDependencyResolved:
+        $ref: '#/components/messages/TaskDependencyResolved'
+
+  task/scheduled:
+    address: task.scheduled
+    description: Task scheduled events
+    messages:
+      TaskScheduled:
+        $ref: '#/components/messages/TaskScheduled'
+
+  task/schedule_updated:
+    address: task.schedule_updated
+    description: Task schedule updated events
+    messages:
+      TaskScheduleUpdated:
+        $ref: '#/components/messages/TaskScheduleUpdated'
+
+  task/comment_added:
+    address: task.comment_added
+    description: Task comment added events
+    messages:
+      TaskCommentAdded:
+        $ref: '#/components/messages/TaskCommentAdded'
+
+  task/comment_updated:
+    address: task.comment_updated
+    description: Task comment updated events
+    messages:
+      TaskCommentUpdated:
+        $ref: '#/components/messages/TaskCommentUpdated'
+
+  task/comment_deleted:
+    address: task.comment_deleted
+    description: Task comment deleted events
+    messages:
+      TaskCommentDeleted:
+        $ref: '#/components/messages/TaskCommentDeleted'
+
+  task/batch_updated:
+    address: task.batch_updated
+    description: Multiple tasks updated in batch
+    messages:
+      TaskBatchUpdated:
+        $ref: '#/components/messages/TaskBatchUpdated'
+
+  task/analyzed:
+    address: task.analyzed
+    description: Task analysis completed by AI
+    messages:
+      TaskAnalyzed:
+        $ref: '#/components/messages/TaskAnalyzed'
+
+  task/estimated:
+    address: task.estimated
+    description: Task effort estimation completed by AI
+    messages:
+      TaskEstimated:
+        $ref: '#/components/messages/TaskEstimated'
+
+  task/breakdown_completed:
+    address: task.breakdown_completed
+    description: Task breakdown into subtasks completed by AI
+    messages:
+      TaskBreakdownCompleted:
+        $ref: '#/components/messages/TaskBreakdownCompleted'
+
+  task/dependencies_mapped:
+    address: task.dependencies_mapped
+    description: Task dependencies mapped by AI
+    messages:
+      TaskDependenciesMapped:
+        $ref: '#/components/messages/TaskDependenciesMapped'
+
+  task/risk_identified:
+    address: task.risk_identified
+    description: Task risk identified by AI
+    messages:
+      TaskRiskIdentified:
+        $ref: '#/components/messages/TaskRiskIdentified'
+
+  task/template_applied:
+    address: task.template_applied
+    description: Task template applied by AI
+    messages:
+      TaskTemplateApplied:
+        $ref: '#/components/messages/TaskTemplateApplied'
+
+operations:
+  publishTaskCreated:
+    action: send
+    channel:
+      $ref: '#/channels/task~1created'
+    summary: Publish task created event
+    description: Publishes an event when a new task is created
+
+  publishTaskUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/task~1updated'
+    summary: Publish task updated event
+    description: Publishes an event when a task is updated
+
+  publishTaskDeleted:
+    action: send
+    channel:
+      $ref: '#/channels/task~1deleted'
+    summary: Publish task deleted event
+    description: Publishes an event when a task is deleted
+
+  publishTaskAssigned:
+    action: send
+    channel:
+      $ref: '#/channels/task~1assigned'
+    summary: Publish task assigned event
+    description: Publishes an event when a task is assigned to a user
+
+  publishTaskUnassigned:
+    action: send
+    channel:
+      $ref: '#/channels/task~1unassigned'
+    summary: Publish task unassigned event
+    description: Publishes an event when a task is unassigned
+
+  publishTaskStatusChanged:
+    action: send
+    channel:
+      $ref: '#/channels/task~1status_changed'
+    summary: Publish task status changed event
+    description: Publishes an event when a task status changes
+
+  publishTaskPriorityChanged:
+    action: send
+    channel:
+      $ref: '#/channels/task~1priority_changed'
+    summary: Publish task priority changed event
+    description: Publishes an event when a task priority changes
+
+  publishTaskProgressUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/task~1progress_updated'
+    summary: Publish task progress updated event
+    description: Publishes an event when task progress is updated
+
+  publishTaskCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/task~1completed'
+    summary: Publish task completed event
+    description: Publishes an event when a task is completed
+
+  publishTaskFailed:
+    action: send
+    channel:
+      $ref: '#/channels/task~1failed'
+    summary: Publish task failed event
+    description: Publishes an event when a task fails
+
+  publishTaskOverdue:
+    action: send
+    channel:
+      $ref: '#/channels/task~1overdue'
+    summary: Publish task overdue event
+    description: Publishes an event when a task becomes overdue
+
+  publishTaskDependencyAdded:
+    action: send
+    channel:
+      $ref: '#/channels/task~1dependency_added'
+    summary: Publish task dependency added event
+    description: Publishes an event when a task dependency is added
+
+  publishTaskDependencyRemoved:
+    action: send
+    channel:
+      $ref: '#/channels/task~1dependency_removed'
+    summary: Publish task dependency removed event
+    description: Publishes an event when a task dependency is removed
+
+  publishTaskDependencyResolved:
+    action: send
+    channel:
+      $ref: '#/channels/task~1dependency_resolved'
+    summary: Publish task dependency resolved event
+    description: Publishes an event when a task dependency is resolved
+
+  publishTaskScheduled:
+    action: send
+    channel:
+      $ref: '#/channels/task~1scheduled'
+    summary: Publish task scheduled event
+    description: Publishes an event when a task is scheduled
+
+  publishTaskScheduleUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/task~1schedule_updated'
+    summary: Publish task schedule updated event
+    description: Publishes an event when a task schedule is updated
+
+  publishTaskCommentAdded:
+    action: send
+    channel:
+      $ref: '#/channels/task~1comment_added'
+    summary: Publish task comment added event
+    description: Publishes an event when a comment is added to a task
+
+  publishTaskCommentUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/task~1comment_updated'
+    summary: Publish task comment updated event
+    description: Publishes an event when a task comment is updated
+
+  publishTaskCommentDeleted:
+    action: send
+    channel:
+      $ref: '#/channels/task~1comment_deleted'
+    summary: Publish task comment deleted event
+    description: Publishes an event when a task comment is deleted
+
+  publishTaskBatchUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/task~1batch_updated'
+    summary: Publish task batch updated event
+    description: Publishes an event when multiple tasks are updated in batch
+
+  publishTaskAnalyzed:
+    action: send
+    channel:
+      $ref: '#/channels/task~1analyzed'
+    summary: Publish task analyzed event
+    description: Publishes an event when AI task analysis is completed
+
+  publishTaskEstimated:
+    action: send
+    channel:
+      $ref: '#/channels/task~1estimated'
+    summary: Publish task estimated event
+    description: Publishes an event when AI task effort estimation is completed
+
+  publishTaskBreakdownCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/task~1breakdown_completed'
+    summary: Publish task breakdown completed event
+    description: Publishes an event when AI task breakdown is completed
+
+  publishTaskDependenciesMapped:
+    action: send
+    channel:
+      $ref: '#/channels/task~1dependencies_mapped'
+    summary: Publish task dependencies mapped event
+    description: Publishes an event when AI task dependencies mapping is completed
+
+  publishTaskRiskIdentified:
+    action: send
+    channel:
+      $ref: '#/channels/task~1risk_identified'
+    summary: Publish task risk identified event
+    description: Publishes an event when AI identifies a risk for a task
+
+  publishTaskTemplateApplied:
+    action: send
+    channel:
+      $ref: '#/channels/task~1template_applied'
+    summary: Publish task template applied event
+    description: Publishes an event when AI applies a template to a task
+
+components:
+  messages:
+    TaskCreated:
+      name: TaskCreated
+      summary: Task created
+      description: Event fired when a new task is created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskCreatedPayload'
+
+    TaskUpdated:
+      name: TaskUpdated
+      summary: Task updated
+      description: Event fired when a task is updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskUpdatedPayload'
+
+    TaskDeleted:
+      name: TaskDeleted
+      summary: Task deleted
+      description: Event fired when a task is deleted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskDeletedPayload'
+
+    TaskAssigned:
+      name: TaskAssigned
+      summary: Task assigned
+      description: Event fired when a task is assigned to a user
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskAssignedPayload'
+
+    TaskUnassigned:
+      name: TaskUnassigned
+      summary: Task unassigned
+      description: Event fired when a task is unassigned
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskUnassignedPayload'
+
+    TaskStatusChanged:
+      name: TaskStatusChanged
+      summary: Task status changed
+      description: Event fired when a task status changes
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskStatusChangedPayload'
+
+    TaskPriorityChanged:
+      name: TaskPriorityChanged
+      summary: Task priority changed
+      description: Event fired when a task priority changes
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskPriorityChangedPayload'
+
+    TaskProgressUpdated:
+      name: TaskProgressUpdated
+      summary: Task progress updated
+      description: Event fired when task progress is updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskProgressUpdatedPayload'
+
+    TaskCompleted:
+      name: TaskCompleted
+      summary: Task completed
+      description: Event fired when a task is completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskCompletedPayload'
+
+    TaskFailed:
+      name: TaskFailed
+      summary: Task failed
+      description: Event fired when a task fails
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskFailedPayload'
+
+    TaskOverdue:
+      name: TaskOverdue
+      summary: Task overdue
+      description: Event fired when a task becomes overdue
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskOverduePayload'
+
+    TaskDependencyAdded:
+      name: TaskDependencyAdded
+      summary: Task dependency added
+      description: Event fired when a task dependency is added
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskDependencyAddedPayload'
+
+    TaskDependencyRemoved:
+      name: TaskDependencyRemoved
+      summary: Task dependency removed
+      description: Event fired when a task dependency is removed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskDependencyRemovedPayload'
+
+    TaskDependencyResolved:
+      name: TaskDependencyResolved
+      summary: Task dependency resolved
+      description: Event fired when a task dependency is resolved
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskDependencyResolvedPayload'
+
+    TaskScheduled:
+      name: TaskScheduled
+      summary: Task scheduled
+      description: Event fired when a task is scheduled
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskScheduledPayload'
+
+    TaskScheduleUpdated:
+      name: TaskScheduleUpdated
+      summary: Task schedule updated
+      description: Event fired when a task schedule is updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskScheduleUpdatedPayload'
+
+    TaskCommentAdded:
+      name: TaskCommentAdded
+      summary: Task comment added
+      description: Event fired when a comment is added to a task
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskCommentAddedPayload'
+
+    TaskCommentUpdated:
+      name: TaskCommentUpdated
+      summary: Task comment updated
+      description: Event fired when a task comment is updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskCommentUpdatedPayload'
+
+    TaskCommentDeleted:
+      name: TaskCommentDeleted
+      summary: Task comment deleted
+      description: Event fired when a task comment is deleted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskCommentDeletedPayload'
+
+    TaskBatchUpdated:
+      name: TaskBatchUpdated
+      summary: Task batch updated
+      description: Event fired when multiple tasks are updated in batch
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskBatchUpdatedPayload'
+
+    TaskAnalyzed:
+      name: TaskAnalyzed
+      summary: Task analyzed
+      description: Event fired when AI task analysis is completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskAnalyzedPayload'
+
+    TaskEstimated:
+      name: TaskEstimated
+      summary: Task estimated
+      description: Event fired when AI task effort estimation is completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskEstimatedPayload'
+
+    TaskBreakdownCompleted:
+      name: TaskBreakdownCompleted
+      summary: Task breakdown completed
+      description: Event fired when AI task breakdown is completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskBreakdownCompletedPayload'
+
+    TaskDependenciesMapped:
+      name: TaskDependenciesMapped
+      summary: Task dependencies mapped
+      description: Event fired when AI task dependencies mapping is completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskDependenciesMappedPayload'
+
+    TaskRiskIdentified:
+      name: TaskRiskIdentified
+      summary: Task risk identified
+      description: Event fired when AI identifies a risk for a task
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskRiskIdentifiedPayload'
+
+    TaskTemplateApplied:
+      name: TaskTemplateApplied
+      summary: Task template applied
+      description: Event fired when AI applies a template to a task
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TaskTemplateAppliedPayload'
+
+  schemas:
+    BaseEventPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for the event
+        eventType:
+          type: string
+          description: Type of the event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        source:
+          type: string
+          description: Source service that generated the event
+          default: task-service
+        version:
+          type: string
+          description: Event schema version
+          default: "1.0"
+        userId:
+          type: string
+          format: uuid
+          description: User who triggered the event
+        correlationId:
+          type: string
+          format: uuid
+          description: Correlation ID for tracing
+        metadata:
+          type: object
+          description: Additional event metadata
+      required:
+        - eventId
+        - eventType
+        - timestamp
+        - source
+        - version
+
+    TaskCreatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.created]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                title:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                priority:
+                  type: string
+                type:
+                  type: string
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+                project:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                  nullable: true
+                dueDate:
+                  type: string
+                  format: date-time
+                  nullable: true
+                estimatedHours:
+                  type: number
+                  nullable: true
+                tags:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - taskId
+                - title
+                - status
+                - priority
+                - type
+          required:
+            - data
+
+    TaskUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.updated]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                changes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      field:
+                        type: string
+                      oldValue:
+                        type: string
+                        nullable: true
+                      newValue:
+                        type: string
+                        nullable: true
+                currentState:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    status:
+                      type: string
+                    priority:
+                      type: string
+                    progress:
+                      type: number
+                    assignee:
+                      type: object
+                      nullable: true
+                    dueDate:
+                      type: string
+                      format: date-time
+                      nullable: true
+              required:
+                - taskId
+                - changes
+                - currentState
+          required:
+            - data
+
+    TaskDeletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.deleted]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                title:
+                  type: string
+                permanent:
+                  type: boolean
+                  description: Whether the task was permanently deleted
+                deletedAt:
+                  type: string
+                  format: date-time
+              required:
+                - taskId
+                - title
+                - permanent
+                - deletedAt
+          required:
+            - data
+
+    TaskAssignedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.assigned]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                previousAssignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+                comment:
+                  type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - assignee
+          required:
+            - data
+
+    TaskUnassignedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.unassigned]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                previousAssignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+              required:
+                - taskId
+                - taskTitle
+                - previousAssignee
+          required:
+            - data
+
+    TaskStatusChangedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.status_changed]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                oldStatus:
+                  type: string
+                newStatus:
+                  type: string
+                statusChangedAt:
+                  type: string
+                  format: date-time
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - oldStatus
+                - newStatus
+                - statusChangedAt
+          required:
+            - data
+
+    TaskPriorityChangedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.priority_changed]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                oldPriority:
+                  type: string
+                newPriority:
+                  type: string
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - oldPriority
+                - newPriority
+          required:
+            - data
+
+    TaskProgressUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.progress_updated]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                oldProgress:
+                  type: number
+                newProgress:
+                  type: number
+                timeSpent:
+                  type: number
+                  nullable: true
+                comment:
+                  type: string
+                  nullable: true
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - oldProgress
+                - newProgress
+          required:
+            - data
+
+    TaskCompletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.completed]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                completedAt:
+                  type: string
+                  format: date-time
+                completionTime:
+                  type: number
+                  description: Time taken to complete in hours
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+                project:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                  nullable: true
+                actualHours:
+                  type: number
+                  nullable: true
+                estimatedHours:
+                  type: number
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - completedAt
+          required:
+            - data
+
+    TaskFailedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.failed]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                failedAt:
+                  type: string
+                  format: date-time
+                reason:
+                  type: string
+                  nullable: true
+                errorDetails:
+                  type: object
+                  nullable: true
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+                retryCount:
+                  type: integer
+                  default: 0
+              required:
+                - taskId
+                - taskTitle
+                - failedAt
+          required:
+            - data
+
+    TaskOverduePayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.overdue]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                dueDate:
+                  type: string
+                  format: date-time
+                overdueDays:
+                  type: integer
+                  description: Number of days overdue
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+                project:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - dueDate
+                - overdueDays
+          required:
+            - data
+
+    TaskDependencyAddedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.dependency_added]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                dependencyId:
+                  type: string
+                  format: uuid
+                dependencyType:
+                  type: string
+                  enum: [blocks, depends_on, subtask, parent]
+                targetTaskId:
+                  type: string
+                  format: uuid
+                targetTaskTitle:
+                  type: string
+                comment:
+                  type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - dependencyId
+                - dependencyType
+                - targetTaskId
+                - targetTaskTitle
+          required:
+            - data
+
+    TaskDependencyRemovedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.dependency_removed]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                dependencyId:
+                  type: string
+                  format: uuid
+                dependencyType:
+                  type: string
+                  enum: [blocks, depends_on, subtask, parent]
+                targetTaskId:
+                  type: string
+                  format: uuid
+                targetTaskTitle:
+                  type: string
+              required:
+                - taskId
+                - taskTitle
+                - dependencyId
+                - dependencyType
+                - targetTaskId
+                - targetTaskTitle
+          required:
+            - data
+
+    TaskDependencyResolvedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.dependency_resolved]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                dependencyId:
+                  type: string
+                  format: uuid
+                dependencyType:
+                  type: string
+                  enum: [blocks, depends_on, subtask, parent]
+                resolvedTaskId:
+                  type: string
+                  format: uuid
+                resolvedTaskTitle:
+                  type: string
+                resolvedAt:
+                  type: string
+                  format: date-time
+                unblockingTasks:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      title:
+                        type: string
+                  description: Tasks that are now unblocked
+              required:
+                - taskId
+                - taskTitle
+                - dependencyId
+                - dependencyType
+                - resolvedTaskId
+                - resolvedTaskTitle
+                - resolvedAt
+          required:
+            - data
+
+    TaskScheduledPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.scheduled]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                scheduledAt:
+                  type: string
+                  format: date-time
+                startDate:
+                  type: string
+                  format: date-time
+                  nullable: true
+                dueDate:
+                  type: string
+                  format: date-time
+                  nullable: true
+                recurringPattern:
+                  type: string
+                  nullable: true
+                nextExecution:
+                  type: string
+                  format: date-time
+                  nullable: true
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - scheduledAt
+          required:
+            - data
+
+    TaskScheduleUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.schedule_updated]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                oldSchedule:
+                  type: object
+                  properties:
+                    startDate:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    dueDate:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    scheduledAt:
+                      type: string
+                      format: date-time
+                      nullable: true
+                newSchedule:
+                  type: object
+                  properties:
+                    startDate:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    dueDate:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    scheduledAt:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    recurringPattern:
+                      type: string
+                      nullable: true
+                    nextExecution:
+                      type: string
+                      format: date-time
+                      nullable: true
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - oldSchedule
+                - newSchedule
+          required:
+            - data
+
+    TaskCommentAddedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.comment_added]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                commentId:
+                  type: string
+                  format: uuid
+                content:
+                  type: string
+                author:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                parentCommentId:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: Parent comment ID for threaded comments
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - commentId
+                - content
+                - author
+          required:
+            - data
+
+    TaskCommentUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.comment_updated]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                commentId:
+                  type: string
+                  format: uuid
+                oldContent:
+                  type: string
+                newContent:
+                  type: string
+                author:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+              required:
+                - taskId
+                - taskTitle
+                - commentId
+                - oldContent
+                - newContent
+                - author
+          required:
+            - data
+
+    TaskCommentDeletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.comment_deleted]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                commentId:
+                  type: string
+                  format: uuid
+                content:
+                  type: string
+                author:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                deletedAt:
+                  type: string
+                  format: date-time
+              required:
+                - taskId
+                - taskTitle
+                - commentId
+                - content
+                - author
+                - deletedAt
+          required:
+            - data
+
+    TaskBatchUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.batch_updated]
+            data:
+              type: object
+              properties:
+                batchId:
+                  type: string
+                  format: uuid
+                operation:
+                  type: string
+                  enum: [bulk_update, bulk_assign, bulk_status_change, bulk_priority_change]
+                taskIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                changes:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                    oldValue:
+                      type: string
+                      nullable: true
+                    newValue:
+                      type: string
+                      nullable: true
+                successCount:
+                  type: integer
+                failureCount:
+                  type: integer
+                errors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      taskId:
+                        type: string
+                        format: uuid
+                      error:
+                        type: string
+              required:
+                - batchId
+                - operation
+                - taskIds
+                - changes
+                - successCount
+                - failureCount
+          required:
+            - data
+
+    TaskAnalyzedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.analyzed]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                analysisId:
+                  type: string
+                  format: uuid
+                  description: Unique identifier for this analysis
+                analysis:
+                  type: object
+                  properties:
+                    complexity:
+                      type: object
+                      properties:
+                        score:
+                          type: number
+                          minimum: 0
+                          maximum: 10
+                          description: Complexity score from 0-10
+                        level:
+                          type: string
+                          enum: [trivial, simple, moderate, complex, very_complex]
+                        factors:
+                          type: array
+                          items:
+                            type: string
+                          description: Factors contributing to complexity
+                    effort:
+                      type: object
+                      properties:
+                        estimatedHours:
+                          type: number
+                          minimum: 0
+                          description: Estimated effort in hours
+                        confidenceLevel:
+                          type: number
+                          minimum: 0
+                          maximum: 1
+                          description: Confidence level (0-1)
+                        range:
+                          type: object
+                          properties:
+                            min:
+                              type: number
+                            max:
+                              type: number
+                    skillsRequired:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          skill:
+                            type: string
+                          level:
+                            type: string
+                            enum: [beginner, intermediate, advanced, expert]
+                          importance:
+                            type: string
+                            enum: [low, medium, high, critical]
+                    riskFactors:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                            enum: [technical, schedule, resource, dependency, scope]
+                          severity:
+                            type: string
+                            enum: [low, medium, high, critical]
+                          description:
+                            type: string
+                          mitigation:
+                            type: string
+                            nullable: true
+                    categories:
+                      type: array
+                      items:
+                        type: string
+                      description: Task categories identified by AI
+                    tags:
+                      type: array
+                      items:
+                        type: string
+                      description: Suggested tags for the task
+                aiProcessing:
+                  type: object
+                  properties:
+                    model:
+                      type: string
+                      description: AI model used for analysis
+                    processingTime:
+                      type: number
+                      description: Processing time in milliseconds
+                    confidenceScore:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                      description: Overall confidence in analysis
+                    dataQuality:
+                      type: object
+                      properties:
+                        score:
+                          type: number
+                          minimum: 0
+                          maximum: 1
+                        issues:
+                          type: array
+                          items:
+                            type: string
+                project:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                  nullable: true
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - analysisId
+                - analysis
+                - aiProcessing
+          required:
+            - data
+
+    TaskEstimatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.estimated]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                estimationId:
+                  type: string
+                  format: uuid
+                  description: Unique identifier for this estimation
+                estimation:
+                  type: object
+                  properties:
+                    effort:
+                      type: object
+                      properties:
+                        hours:
+                          type: number
+                          minimum: 0
+                          description: Estimated effort in hours
+                        storyPoints:
+                          type: number
+                          minimum: 0
+                          description: Story points estimation
+                        confidenceLevel:
+                          type: number
+                          minimum: 0
+                          maximum: 1
+                          description: Confidence level (0-1)
+                        range:
+                          type: object
+                          properties:
+                            optimistic:
+                              type: number
+                            mostLikely:
+                              type: number
+                            pessimistic:
+                              type: number
+                    methodology:
+                      type: string
+                      enum: [historical, similarity, bottom_up, three_point, planning_poker]
+                      description: Estimation methodology used
+                    basedOn:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                            enum: [similar_task, historical_data, expert_judgment, decomposition]
+                          reference:
+                            type: string
+                          similarity:
+                            type: number
+                            minimum: 0
+                            maximum: 1
+                            nullable: true
+                    adjustments:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          factor:
+                            type: string
+                          adjustment:
+                            type: number
+                          reason:
+                            type: string
+                    accuracy:
+                      type: object
+                      properties:
+                        historicalAccuracy:
+                          type: number
+                          minimum: 0
+                          maximum: 1
+                          nullable: true
+                        modelPerformance:
+                          type: number
+                          minimum: 0
+                          maximum: 1
+                aiProcessing:
+                  type: object
+                  properties:
+                    model:
+                      type: string
+                      description: AI model used for estimation
+                    processingTime:
+                      type: number
+                      description: Processing time in milliseconds
+                    confidenceScore:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                      description: Overall confidence in estimation
+                    dataPoints:
+                      type: integer
+                      description: Number of data points used
+                project:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                  nullable: true
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - estimationId
+                - estimation
+                - aiProcessing
+          required:
+            - data
+
+    TaskBreakdownCompletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.breakdown_completed]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                breakdownId:
+                  type: string
+                  format: uuid
+                  description: Unique identifier for this breakdown
+                breakdown:
+                  type: object
+                  properties:
+                    subtasks:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          title:
+                            type: string
+                          description:
+                            type: string
+                          type:
+                            type: string
+                          priority:
+                            type: string
+                          estimatedHours:
+                            type: number
+                            minimum: 0
+                          storyPoints:
+                            type: number
+                            minimum: 0
+                          dependencies:
+                            type: array
+                            items:
+                              type: string
+                              format: uuid
+                            description: IDs of dependent subtasks
+                          skillsRequired:
+                            type: array
+                            items:
+                              type: string
+                          order:
+                            type: integer
+                            description: Suggested execution order
+                          acceptanceCriteria:
+                            type: array
+                            items:
+                              type: string
+                          testCases:
+                            type: array
+                            items:
+                              type: string
+                            nullable: true
+                    totalEstimatedHours:
+                      type: number
+                      minimum: 0
+                    totalStoryPoints:
+                      type: number
+                      minimum: 0
+                    methodology:
+                      type: string
+                      enum: [wbs, user_story, feature_driven, component_based]
+                      description: Breakdown methodology used
+                    decompositionLevel:
+                      type: integer
+                      minimum: 1
+                      description: Depth of decomposition
+                    parallelizable:
+                      type: boolean
+                      description: Whether subtasks can be executed in parallel
+                    criticalPath:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      description: IDs of subtasks on critical path
+                aiProcessing:
+                  type: object
+                  properties:
+                    model:
+                      type: string
+                      description: AI model used for breakdown
+                    processingTime:
+                      type: number
+                      description: Processing time in milliseconds
+                    confidenceScore:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                      description: Overall confidence in breakdown
+                    completeness:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                      description: Estimated completeness of breakdown
+                project:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                  nullable: true
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - breakdownId
+                - breakdown
+                - aiProcessing
+          required:
+            - data
+
+    TaskDependenciesMappedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.dependencies_mapped]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                mappingId:
+                  type: string
+                  format: uuid
+                  description: Unique identifier for this mapping
+                dependencies:
+                  type: object
+                  properties:
+                    blockedBy:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          taskId:
+                            type: string
+                            format: uuid
+                          taskTitle:
+                            type: string
+                          dependencyType:
+                            type: string
+                            enum: [hard, soft, external, internal]
+                          reason:
+                            type: string
+                          criticality:
+                            type: string
+                            enum: [low, medium, high, critical]
+                          estimatedImpact:
+                            type: object
+                            properties:
+                              delayDays:
+                                type: number
+                                minimum: 0
+                              effortIncrease:
+                                type: number
+                                minimum: 0
+                                description: Percentage increase in effort
+                    blocking:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          taskId:
+                            type: string
+                            format: uuid
+                          taskTitle:
+                            type: string
+                          dependencyType:
+                            type: string
+                            enum: [hard, soft, external, internal]
+                          reason:
+                            type: string
+                          criticality:
+                            type: string
+                            enum: [low, medium, high, critical]
+                    external:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          type:
+                            type: string
+                            enum: [api, service, resource, approval, decision]
+                          provider:
+                            type: string
+                          status:
+                            type: string
+                            enum: [available, pending, blocked, unknown]
+                          sla:
+                            type: string
+                            nullable: true
+                          criticality:
+                            type: string
+                            enum: [low, medium, high, critical]
+                    transitive:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          taskId:
+                            type: string
+                            format: uuid
+                          taskTitle:
+                            type: string
+                          path:
+                            type: array
+                            items:
+                              type: string
+                              format: uuid
+                            description: Path of dependency chain
+                          depth:
+                            type: integer
+                            minimum: 1
+                analysis:
+                  type: object
+                  properties:
+                    criticalPath:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      description: Critical path through dependencies
+                    bottlenecks:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          taskId:
+                            type: string
+                            format: uuid
+                          taskTitle:
+                            type: string
+                          fanOut:
+                            type: integer
+                            description: Number of tasks this blocks
+                          severity:
+                            type: string
+                            enum: [low, medium, high, critical]
+                    riskAssessment:
+                      type: object
+                      properties:
+                        overallRisk:
+                          type: string
+                          enum: [low, medium, high, critical]
+                        riskFactors:
+                          type: array
+                          items:
+                            type: string
+                        mitigationSuggestions:
+                          type: array
+                          items:
+                            type: string
+                    parallelizationOpportunities:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          taskIds:
+                            type: array
+                            items:
+                              type: string
+                              format: uuid
+                          benefit:
+                            type: string
+                            enum: [low, medium, high]
+                          requirements:
+                            type: array
+                            items:
+                              type: string
+                aiProcessing:
+                  type: object
+                  properties:
+                    model:
+                      type: string
+                      description: AI model used for mapping
+                    processingTime:
+                      type: number
+                      description: Processing time in milliseconds
+                    confidenceScore:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                      description: Overall confidence in mapping
+                    coverage:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                      description: Estimated coverage of dependency mapping
+                project:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                  nullable: true
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - mappingId
+                - dependencies
+                - analysis
+                - aiProcessing
+          required:
+            - data
+
+    TaskRiskIdentifiedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.risk_identified]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                riskId:
+                  type: string
+                  format: uuid
+                  description: Unique identifier for this risk
+                risk:
+                  type: object
+                  properties:
+                    category:
+                      type: string
+                      enum: [technical, schedule, resource, dependency, scope, quality, security, compliance]
+                    severity:
+                      type: string
+                      enum: [low, medium, high, critical]
+                    probability:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                      description: Probability of risk occurrence (0-1)
+                    impact:
+                      type: object
+                      properties:
+                        schedule:
+                          type: object
+                          properties:
+                            delayDays:
+                              type: number
+                              minimum: 0
+                            confidence:
+                              type: number
+                              minimum: 0
+                              maximum: 1
+                        cost:
+                          type: object
+                          properties:
+                            additionalHours:
+                              type: number
+                              minimum: 0
+                            additionalCost:
+                              type: number
+                              minimum: 0
+                            confidence:
+                              type: number
+                              minimum: 0
+                              maximum: 1
+                        quality:
+                          type: object
+                          properties:
+                            score:
+                              type: number
+                              minimum: 0
+                              maximum: 10
+                            areas:
+                              type: array
+                              items:
+                                type: string
+                    description:
+                      type: string
+                    indicators:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                          value:
+                            type: string
+                          significance:
+                            type: string
+                            enum: [low, medium, high]
+                    triggers:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          condition:
+                            type: string
+                          metric:
+                            type: string
+                          threshold:
+                            type: string
+                mitigation:
+                  type: object
+                  properties:
+                    strategies:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                            enum: [avoid, transfer, mitigate, accept]
+                          description:
+                            type: string
+                          effort:
+                            type: number
+                            minimum: 0
+                            description: Effort required in hours
+                          cost:
+                            type: number
+                            minimum: 0
+                            description: Cost of mitigation
+                          effectiveness:
+                            type: number
+                            minimum: 0
+                            maximum: 1
+                            description: Effectiveness of mitigation (0-1)
+                          priority:
+                            type: string
+                            enum: [low, medium, high, critical]
+                    recommendations:
+                      type: array
+                      items:
+                        type: string
+                    contingencyPlans:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          trigger:
+                            type: string
+                          action:
+                            type: string
+                          owner:
+                            type: string
+                            nullable: true
+                monitoring:
+                  type: object
+                  properties:
+                    metrics:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          type:
+                            type: string
+                          threshold:
+                            type: string
+                          frequency:
+                            type: string
+                    reviewSchedule:
+                      type: string
+                      nullable: true
+                    escalationPath:
+                      type: array
+                      items:
+                        type: string
+                      nullable: true
+                aiProcessing:
+                  type: object
+                  properties:
+                    model:
+                      type: string
+                      description: AI model used for risk identification
+                    processingTime:
+                      type: number
+                      description: Processing time in milliseconds
+                    confidenceScore:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                      description: Overall confidence in risk identification
+                    dataSources:
+                      type: array
+                      items:
+                        type: string
+                      description: Data sources used for risk analysis
+                project:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                  nullable: true
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - riskId
+                - risk
+                - mitigation
+                - aiProcessing
+          required:
+            - data
+
+    TaskTemplateAppliedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            eventType:
+              type: string
+              enum: [task.template_applied]
+            data:
+              type: object
+              properties:
+                taskId:
+                  type: string
+                  format: uuid
+                taskTitle:
+                  type: string
+                templateId:
+                  type: string
+                  format: uuid
+                  description: Unique identifier for the template
+                template:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    version:
+                      type: string
+                    category:
+                      type: string
+                      enum: [development, testing, deployment, documentation, review, research]
+                    description:
+                      type: string
+                    matchingCriteria:
+                      type: object
+                      properties:
+                        taskType:
+                          type: string
+                        keywords:
+                          type: array
+                          items:
+                            type: string
+                        complexity:
+                          type: string
+                        domain:
+                          type: string
+                        matchScore:
+                          type: number
+                          minimum: 0
+                          maximum: 1
+                application:
+                  type: object
+                  properties:
+                    changes:
+                      type: object
+                      properties:
+                        structure:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              field:
+                                type: string
+                              oldValue:
+                                type: string
+                                nullable: true
+                              newValue:
+                                type: string
+                              reason:
+                                type: string
+                        subtasks:
+                          type: object
+                          properties:
+                            added:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  title:
+                                    type: string
+                                  description:
+                                    type: string
+                                  type:
+                                    type: string
+                                  priority:
+                                    type: string
+                                  estimatedHours:
+                                    type: number
+                            modified:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                    format: uuid
+                                  changes:
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        field:
+                                          type: string
+                                        oldValue:
+                                          type: string
+                                        newValue:
+                                          type: string
+                        checklists:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              items:
+                                type: array
+                                items:
+                                  type: string
+                              category:
+                                type: string
+                        acceptanceCriteria:
+                          type: array
+                          items:
+                            type: string
+                        testCases:
+                          type: array
+                          items:
+                            type: string
+                        documentation:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              type:
+                                type: string
+                              title:
+                                type: string
+                              description:
+                                type: string
+                    customizations:
+                      type: object
+                      properties:
+                        applied:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              type:
+                                type: string
+                              description:
+                                type: string
+                              reason:
+                                type: string
+                        skipped:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              type:
+                                type: string
+                              reason:
+                                type: string
+                    validation:
+                      type: object
+                      properties:
+                        completeness:
+                          type: number
+                          minimum: 0
+                          maximum: 1
+                          description: Completeness of template application
+                        consistency:
+                          type: number
+                          minimum: 0
+                          maximum: 1
+                          description: Consistency with template
+                        issues:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              type:
+                                type: string
+                                enum: [warning, error, info]
+                              description:
+                                type: string
+                              suggestion:
+                                type: string
+                                nullable: true
+                aiProcessing:
+                  type: object
+                  properties:
+                    model:
+                      type: string
+                      description: AI model used for template application
+                    processingTime:
+                      type: number
+                      description: Processing time in milliseconds
+                    confidenceScore:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                      description: Overall confidence in template application
+                    adaptationLevel:
+                      type: string
+                      enum: [none, minimal, moderate, significant, custom]
+                      description: Level of adaptation applied
+                project:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                  nullable: true
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    email:
+                      type: string
+                  nullable: true
+              required:
+                - taskId
+                - taskTitle
+                - templateId
+                - template
+                - application
+                - aiProcessing
+          required:
+            - data

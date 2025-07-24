@@ -1,0 +1,1026 @@
+asyncapi: 2.6.0
+info:
+  title: AI Service Events API
+  version: 1.0.0
+  description: |
+    Event-driven communication specification for the AI Service.
+    
+    This service publishes events for:
+    - AI request lifecycle (received, processing, completed, failed)
+    - Context analysis and optimization
+    - Project analysis and insights
+    - Provider configuration and health
+    - Service health monitoring
+    - Response generation and quality metrics
+    
+    The service also consumes events from other services for:
+    - Configuration updates
+    - System health monitoring
+    - Cross-service analytics aggregation
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  production:
+    url: redis://ai-service-redis.cycletime.dev:6379
+    protocol: redis
+    description: Production Redis server for event streaming
+  staging:
+    url: redis://ai-service-redis-staging.cycletime.dev:6379
+    protocol: redis
+    description: Staging Redis server for event streaming
+  development:
+    url: redis://localhost:6379
+    protocol: redis
+    description: Local development Redis server
+
+defaultContentType: application/json
+
+channels:
+  # AI Request Lifecycle Events
+  ai/requests/received:
+    description: AI request received and queued for processing
+    publish:
+      summary: AI request received
+      operationId: publishAIRequestReceived
+      message:
+        $ref: '#/components/messages/AIRequestReceived'
+
+  ai/requests/processing:
+    description: AI request is being processed
+    publish:
+      summary: AI request processing started
+      operationId: publishAIRequestProcessing
+      message:
+        $ref: '#/components/messages/AIRequestProcessing'
+
+  ai/requests/completed:
+    description: AI request completed successfully
+    publish:
+      summary: AI request completed
+      operationId: publishAIRequestCompleted
+      message:
+        $ref: '#/components/messages/AIRequestCompleted'
+
+  ai/requests/failed:
+    description: AI request failed with error
+    publish:
+      summary: AI request failed
+      operationId: publishAIRequestFailed
+      message:
+        $ref: '#/components/messages/AIRequestFailed'
+
+  # Response Generation Events
+  ai/responses/generated:
+    description: AI response generated successfully
+    publish:
+      summary: AI response generated
+      operationId: publishAIResponseGenerated
+      message:
+        $ref: '#/components/messages/AIResponseGenerated'
+
+  # Embedding Events
+  ai/embeddings/generated:
+    description: Embeddings generated for input text
+    publish:
+      summary: Embeddings generated
+      operationId: publishEmbeddingGenerated
+      message:
+        $ref: '#/components/messages/EmbeddingGenerated'
+
+  # Context Optimization Events
+  ai/context/analysis-started:
+    description: Context analysis started for project documents
+    publish:
+      summary: Context analysis started
+      operationId: publishContextAnalysisStarted
+      message:
+        $ref: '#/components/messages/ContextAnalysisStarted'
+
+  ai/context/optimized:
+    description: Context optimization completed
+    publish:
+      summary: Context optimized
+      operationId: publishContextOptimized
+      message:
+        $ref: '#/components/messages/ContextOptimized'
+
+  # Project Analysis Events
+  ai/projects/analysis-started:
+    description: Project analysis started
+    publish:
+      summary: Project analysis started
+      operationId: publishProjectAnalysisStarted
+      message:
+        $ref: '#/components/messages/ProjectAnalysisStarted'
+
+  ai/projects/insights-generated:
+    description: Project insights generated
+    publish:
+      summary: Project insights generated
+      operationId: publishProjectInsightsGenerated
+      message:
+        $ref: '#/components/messages/ProjectInsightsGenerated'
+
+  ai/projects/recommendations-generated:
+    description: Project recommendations generated
+    publish:
+      summary: Project recommendations generated
+      operationId: publishProjectRecommendationsGenerated
+      message:
+        $ref: '#/components/messages/ProjectRecommendationsGenerated'
+
+  # Provider Events
+  ai/providers/configured:
+    description: AI provider configuration updated
+    publish:
+      summary: Provider configured
+      operationId: publishProviderConfigured
+      message:
+        $ref: '#/components/messages/ProviderConfigured'
+
+  ai/providers/health-checked:
+    description: Provider health check completed
+    publish:
+      summary: Provider health checked
+      operationId: publishProviderHealthChecked
+      message:
+        $ref: '#/components/messages/ProviderHealthChecked'
+
+  # Service Health Events
+  ai/service/startup:
+    description: AI service started up
+    publish:
+      summary: Service startup
+      operationId: publishServiceStartup
+      message:
+        $ref: '#/components/messages/ServiceStartup'
+
+  ai/service/shutdown:
+    description: AI service shutting down
+    publish:
+      summary: Service shutdown
+      operationId: publishServiceShutdown
+      message:
+        $ref: '#/components/messages/ServiceShutdown'
+
+  ai/service/error:
+    description: Service error occurred
+    publish:
+      summary: Service error
+      operationId: publishServiceError
+      message:
+        $ref: '#/components/messages/ServiceError'
+
+  ai/health/checked:
+    description: Service health check performed
+    publish:
+      summary: Health check performed
+      operationId: publishHealthChecked
+      message:
+        $ref: '#/components/messages/HealthChecked'
+
+  # Consumed Events (from other services)
+  system/config/updated:
+    description: System configuration updated
+    subscribe:
+      summary: Configuration update received
+      operationId: handleConfigurationUpdate
+      message:
+        $ref: '#/components/messages/ConfigurationUpdate'
+
+  system/health/monitor:
+    description: System health monitoring request
+    subscribe:
+      summary: Health monitoring request
+      operationId: handleHealthMonitorRequest
+      message:
+        $ref: '#/components/messages/HealthMonitorRequest'
+
+  analytics/aggregation/request:
+    description: Analytics aggregation request from analytics service
+    subscribe:
+      summary: Analytics aggregation request
+      operationId: handleAnalyticsAggregationRequest
+      message:
+        $ref: '#/components/messages/AnalyticsAggregationRequest'
+
+  providers/status/broadcast:
+    description: Provider status broadcast from external services
+    subscribe:
+      summary: Provider status update
+      operationId: handleProviderStatusBroadcast
+      message:
+        $ref: '#/components/messages/ProviderStatusBroadcast'
+
+  rate-limit/threshold/exceeded:
+    description: Rate limit threshold exceeded notification
+    subscribe:
+      summary: Rate limit exceeded
+      operationId: handleRateLimitExceeded
+      message:
+        $ref: '#/components/messages/RateLimitExceeded'
+
+  quality/feedback/received:
+    description: Quality feedback received from users or systems
+    subscribe:
+      summary: Quality feedback received
+      operationId: handleQualityFeedback
+      message:
+        $ref: '#/components/messages/QualityFeedback'
+
+components:
+  messages:
+    # AI Request Messages
+    AIRequestReceived:
+      name: AIRequestReceived
+      title: AI Request Received
+      summary: An AI request has been received and queued
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AIRequestReceivedPayload'
+
+    AIRequestProcessing:
+      name: AIRequestProcessing
+      title: AI Request Processing
+      summary: An AI request is being processed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AIRequestProcessingPayload'
+
+    AIRequestCompleted:
+      name: AIRequestCompleted
+      title: AI Request Completed
+      summary: An AI request has been completed successfully
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AIRequestCompletedPayload'
+
+    AIRequestFailed:
+      name: AIRequestFailed
+      title: AI Request Failed
+      summary: An AI request has failed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AIRequestFailedPayload'
+
+    AIResponseGenerated:
+      name: AIResponseGenerated
+      title: AI Response Generated
+      summary: An AI response has been generated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AIResponseGeneratedPayload'
+
+    # Embedding Messages
+    EmbeddingGenerated:
+      name: EmbeddingGenerated
+      title: Embedding Generated
+      summary: Text embeddings have been generated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/EmbeddingGeneratedPayload'
+
+    # Context Messages
+    ContextAnalysisStarted:
+      name: ContextAnalysisStarted
+      title: Context Analysis Started
+      summary: Context analysis has been started
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextAnalysisStartedPayload'
+
+    ContextOptimized:
+      name: ContextOptimized
+      title: Context Optimized
+      summary: Context optimization has been completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContextOptimizedPayload'
+
+    # Project Analysis Messages
+    ProjectAnalysisStarted:
+      name: ProjectAnalysisStarted
+      title: Project Analysis Started
+      summary: Project analysis has been started
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectAnalysisStartedPayload'
+
+    ProjectInsightsGenerated:
+      name: ProjectInsightsGenerated
+      title: Project Insights Generated
+      summary: Project insights have been generated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectInsightsGeneratedPayload'
+
+    ProjectRecommendationsGenerated:
+      name: ProjectRecommendationsGenerated
+      title: Project Recommendations Generated
+      summary: Project recommendations have been generated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectRecommendationsGeneratedPayload'
+
+    # Provider Messages
+    ProviderConfigured:
+      name: ProviderConfigured
+      title: Provider Configured
+      summary: AI provider has been configured
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProviderConfiguredPayload'
+
+    ProviderHealthChecked:
+      name: ProviderHealthChecked
+      title: Provider Health Checked
+      summary: Provider health check has been performed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProviderHealthCheckedPayload'
+
+    # Service Messages
+    ServiceStartup:
+      name: ServiceStartup
+      title: Service Startup
+      summary: AI service has started up
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ServiceStartupPayload'
+
+    ServiceShutdown:
+      name: ServiceShutdown
+      title: Service Shutdown
+      summary: AI service is shutting down
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ServiceShutdownPayload'
+
+    ServiceError:
+      name: ServiceError
+      title: Service Error
+      summary: A service error has occurred
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ServiceErrorPayload'
+
+    HealthChecked:
+      name: HealthChecked
+      title: Health Checked
+      summary: Service health check has been performed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HealthCheckedPayload'
+
+    # Consumed Event Messages
+    ConfigurationUpdate:
+      name: ConfigurationUpdate
+      title: Configuration Update
+      summary: System configuration has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ConfigurationUpdatePayload'
+
+    HealthMonitorRequest:
+      name: HealthMonitorRequest
+      title: Health Monitor Request
+      summary: Health monitoring request from system
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HealthMonitorRequestPayload'
+
+    AnalyticsAggregationRequest:
+      name: AnalyticsAggregationRequest
+      title: Analytics Aggregation Request
+      summary: Request for analytics data aggregation
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AnalyticsAggregationRequestPayload'
+
+    ProviderStatusBroadcast:
+      name: ProviderStatusBroadcast
+      title: Provider Status Broadcast
+      summary: Provider status update broadcast
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProviderStatusBroadcastPayload'
+
+    RateLimitExceeded:
+      name: RateLimitExceeded
+      title: Rate Limit Exceeded
+      summary: Rate limit threshold has been exceeded
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RateLimitExceededPayload'
+
+    QualityFeedback:
+      name: QualityFeedback
+      title: Quality Feedback
+      summary: Quality feedback received for AI responses
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/QualityFeedbackPayload'
+
+  schemas:
+    # Common schemas
+    EventMetadata:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        service:
+          type: string
+          default: ai-service
+        version:
+          type: string
+        correlationId:
+          type: string
+        userId:
+          type: string
+        sessionId:
+          type: string
+        requestId:
+          type: string
+
+    # AI Request Event Payloads
+    AIRequestReceivedPayload:
+      type: object
+      required: [requestId, requestType, metadata]
+      properties:
+        requestId:
+          type: string
+        requestType:
+          type: string
+          enum: [chat_completion, chat_completion_stream, embedding, context_analysis, project_analysis]
+        provider:
+          type: string
+          enum: [openai, anthropic, google, azure]
+        model:
+          type: string
+        tokens:
+          type: object
+          properties:
+            estimated:
+              type: integer
+            maxTokens:
+              type: integer
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        queuePosition:
+          type: integer
+        userId:
+          type: string
+        sessionId:
+          type: string
+        projectId:
+          type: string
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    AIRequestProcessingPayload:
+      type: object
+      required: [requestId, provider, model, metadata]
+      properties:
+        requestId:
+          type: string
+        provider:
+          type: string
+        model:
+          type: string
+        estimatedMs:
+          type: integer
+        contextOptimization:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            maxContextTokens:
+              type: integer
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    AIRequestCompletedPayload:
+      type: object
+      required: [requestId, processingTime, tokens, cost, metadata]
+      properties:
+        requestId:
+          type: string
+        processingTime:
+          type: number
+        tokens:
+          type: object
+          required: [promptTokens, completionTokens, totalTokens, estimatedCost]
+          properties:
+            promptTokens:
+              type: integer
+            completionTokens:
+              type: integer
+            totalTokens:
+              type: integer
+            estimatedCost:
+              type: number
+        cost:
+          type: number
+        quality:
+          type: object
+          properties:
+            score:
+              type: number
+              minimum: 0
+              maximum: 1
+            feedback:
+              type: string
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    AIRequestFailedPayload:
+      type: object
+      required: [requestId, error, metadata]
+      properties:
+        requestId:
+          type: string
+        error:
+          type: object
+          required: [type, message, code, retryable]
+          properties:
+            type:
+              type: string
+              enum: [rate_limit, authentication, internal_error, validation_error, provider_error]
+            message:
+              type: string
+            code:
+              type: string
+            retryable:
+              type: boolean
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    AIResponseGeneratedPayload:
+      type: object
+      required: [requestId, response, metadata]
+      properties:
+        requestId:
+          type: string
+        response:
+          type: object
+          required: [id, model, provider, choices, usage]
+          properties:
+            id:
+              type: string
+            model:
+              type: string
+            provider:
+              type: string
+            choices:
+              type: array
+              items:
+                type: object
+            usage:
+              type: object
+              properties:
+                promptTokens:
+                  type: integer
+                completionTokens:
+                  type: integer
+                totalTokens:
+                  type: integer
+                estimatedCost:
+                  type: number
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    # Embedding Event Payloads
+    EmbeddingGeneratedPayload:
+      type: object
+      required: [embeddingId, inputCount, model, provider, metadata]
+      properties:
+        embeddingId:
+          type: string
+        inputCount:
+          type: integer
+        model:
+          type: string
+        provider:
+          type: string
+        dimensions:
+          type: integer
+        tokens:
+          type: object
+          properties:
+            promptTokens:
+              type: integer
+            totalTokens:
+              type: integer
+            estimatedCost:
+              type: number
+        processingTime:
+          type: number
+        cost:
+          type: number
+        purpose:
+          type: string
+          enum: [search, similarity, clustering, classification]
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    # Context Event Payloads
+    ContextAnalysisStartedPayload:
+      type: object
+      required: [contextId, documentsCount, analysisType, metadata]
+      properties:
+        contextId:
+          type: string
+        documentsCount:
+          type: integer
+        analysisType:
+          type: string
+          enum: [full, incremental, targeted]
+        estimatedMs:
+          type: integer
+        configuration:
+          type: object
+          properties:
+            targetModel:
+              type: string
+            chunkingStrategy:
+              type: string
+            priority:
+              type: string
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    ContextOptimizedPayload:
+      type: object
+      required: [contextId, optimization, metadata]
+      properties:
+        contextId:
+          type: string
+        optimization:
+          type: object
+          required: [originalTokens, optimizedTokens, compressionRatio, chunksReduced, relevancePreserved]
+          properties:
+            originalTokens:
+              type: integer
+            optimizedTokens:
+              type: integer
+            compressionRatio:
+              type: number
+            chunksReduced:
+              type: integer
+            relevancePreserved:
+              type: number
+              minimum: 0
+              maximum: 1
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    # Project Analysis Event Payloads
+    ProjectAnalysisStartedPayload:
+      type: object
+      required: [analysisId, analysisType, scope, metadata]
+      properties:
+        analysisId:
+          type: string
+        analysisType:
+          type: string
+          enum: [full, incremental, targeted]
+        scope:
+          type: array
+          items:
+            type: string
+            enum: [code, documentation, issues, metrics, performance, security]
+        estimatedMs:
+          type: integer
+        configuration:
+          type: object
+          properties:
+            depth:
+              type: string
+            includeArchived:
+              type: boolean
+            maxComplexity:
+              type: integer
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    ProjectInsightsGeneratedPayload:
+      type: object
+      required: [insights, metadata]
+      properties:
+        insights:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              category:
+                type: string
+              title:
+                type: string
+              confidence:
+                type: number
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    ProjectRecommendationsGeneratedPayload:
+      type: object
+      required: [recommendations, metadata]
+      properties:
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+              category:
+                type: string
+              priority:
+                type: string
+              confidence:
+                type: number
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    # Provider Event Payloads
+    ProviderConfiguredPayload:
+      type: object
+      required: [providerId, configuration, metadata]
+      properties:
+        providerId:
+          type: string
+        configuration:
+          type: object
+          properties:
+            baseUrl:
+              type: string
+            organization:
+              type: string
+            region:
+              type: string
+            rateLimit:
+              type: object
+            defaultModel:
+              type: string
+        testResult:
+          type: object
+          properties:
+            success:
+              type: boolean
+            responseTime:
+              type: number
+            error:
+              type: string
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    ProviderHealthCheckedPayload:
+      type: object
+      required: [providerId, health, metadata]
+      properties:
+        providerId:
+          type: string
+        health:
+          type: object
+          required: [status, responseTime, lastCheck]
+          properties:
+            status:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            responseTime:
+              type: number
+            lastCheck:
+              type: string
+              format: date-time
+            errors:
+              type: array
+              items:
+                type: string
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    # Service Event Payloads
+    ServiceStartupPayload:
+      type: object
+      required: [version, environment, metadata]
+      properties:
+        version:
+          type: string
+        environment:
+          type: string
+        port:
+          type: integer
+        startupTime:
+          type: number
+        features:
+          type: array
+          items:
+            type: string
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    ServiceShutdownPayload:
+      type: object
+      required: [signal, metadata]
+      properties:
+        signal:
+          type: string
+        reason:
+          type: string
+        graceful:
+          type: boolean
+        uptime:
+          type: number
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    ServiceErrorPayload:
+      type: object
+      required: [errorId, error, metadata]
+      properties:
+        errorId:
+          type: string
+        error:
+          type: object
+          required: [message, url, method, statusCode]
+          properties:
+            message:
+              type: string
+            url:
+              type: string
+            method:
+              type: string
+            statusCode:
+              type: integer
+            stack:
+              type: string
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    HealthCheckedPayload:
+      type: object
+      required: [status, metadata]
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        requestId:
+          type: string
+        dependencies:
+          type: object
+          properties:
+            redis:
+              type: string
+            providers:
+              type: object
+            contextService:
+              type: string
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    # Consumed Event Payloads
+    ConfigurationUpdatePayload:
+      type: object
+      required: [configType, changes, metadata]
+      properties:
+        configType:
+          type: string
+          enum: [providers, rate_limits, models, features]
+        changes:
+          type: object
+        version:
+          type: string
+        effective:
+          type: string
+          format: date-time
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    HealthMonitorRequestPayload:
+      type: object
+      required: [requestId, monitorType, metadata]
+      properties:
+        requestId:
+          type: string
+        monitorType:
+          type: string
+          enum: [full, dependencies, providers, performance]
+        timeout:
+          type: integer
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    AnalyticsAggregationRequestPayload:
+      type: object
+      required: [aggregationId, timeframe, metrics, metadata]
+      properties:
+        aggregationId:
+          type: string
+        timeframe:
+          type: object
+          required: [start, end]
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        metrics:
+          type: array
+          items:
+            type: string
+            enum: [requests, tokens, costs, errors, latency, providers, models]
+        filters:
+          type: object
+          properties:
+            providers:
+              type: array
+              items:
+                type: string
+            models:
+              type: array
+              items:
+                type: string
+            users:
+              type: array
+              items:
+                type: string
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    ProviderStatusBroadcastPayload:
+      type: object
+      required: [providerId, status, metadata]
+      properties:
+        providerId:
+          type: string
+        status:
+          type: object
+          required: [health, availability]
+          properties:
+            health:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+            availability:
+              type: number
+              minimum: 0
+              maximum: 1
+            lastUpdate:
+              type: string
+              format: date-time
+            region:
+              type: string
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    RateLimitExceededPayload:
+      type: object
+      required: [limitType, current, threshold, metadata]
+      properties:
+        limitType:
+          type: string
+          enum: [requests_per_minute, tokens_per_minute, cost_per_hour, requests_per_user]
+        current:
+          type: number
+        threshold:
+          type: number
+        windowStart:
+          type: string
+          format: date-time
+        windowEnd:
+          type: string
+          format: date-time
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'
+
+    QualityFeedbackPayload:
+      type: object
+      required: [feedbackId, requestId, rating, metadata]
+      properties:
+        feedbackId:
+          type: string
+        requestId:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        feedback:
+          type: string
+        category:
+          type: string
+          enum: [accuracy, helpfulness, speed, relevance, safety]
+        automated:
+          type: boolean
+        metadata:
+          $ref: '#/components/schemas/EventMetadata'

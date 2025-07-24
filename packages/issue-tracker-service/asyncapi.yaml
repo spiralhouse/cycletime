@@ -1,0 +1,752 @@
+asyncapi: 2.6.0
+info:
+  title: Issue Tracker Service Events
+  version: 1.0.0
+  description: Event-driven communication for the Issue Tracker Service
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  development:
+    url: localhost:6379
+    protocol: redis
+    description: Development Redis server
+  production:
+    url: redis.cycletime.dev:6379
+    protocol: redis
+    description: Production Redis server
+
+defaultContentType: application/json
+
+channels:
+  issue/created:
+    description: Issue created event
+    publish:
+      operationId: publishIssueCreated
+      message:
+        $ref: '#/components/messages/IssueCreated'
+
+  issue/updated:
+    description: Issue updated event
+    publish:
+      operationId: publishIssueUpdated
+      message:
+        $ref: '#/components/messages/IssueUpdated'
+
+  issue/status/changed:
+    description: Issue status changed event
+    publish:
+      operationId: publishIssueStatusChanged
+      message:
+        $ref: '#/components/messages/IssueStatusChanged'
+
+  issue/assigned:
+    description: Issue assigned event
+    publish:
+      operationId: publishIssueAssigned
+      message:
+        $ref: '#/components/messages/IssueAssigned'
+
+  issue/commented:
+    description: Issue commented event
+    publish:
+      operationId: publishIssueCommented
+      message:
+        $ref: '#/components/messages/IssueCommented'
+
+  issue/labeled:
+    description: Issue labeled event
+    publish:
+      operationId: publishIssueLabeled
+      message:
+        $ref: '#/components/messages/IssueLabeled'
+
+  issue/linked:
+    description: Issue linked event
+    publish:
+      operationId: publishIssueLinked
+      message:
+        $ref: '#/components/messages/IssueLinked'
+
+  issue/synchronized:
+    description: Issue synchronized event
+    publish:
+      operationId: publishIssueSynchronized
+      message:
+        $ref: '#/components/messages/IssueSynchronized'
+
+  issue/metrics/updated:
+    description: Issue metrics updated event
+    publish:
+      operationId: publishIssueMetricsUpdated
+      message:
+        $ref: '#/components/messages/IssueMetricsUpdated'
+
+  project/created:
+    description: Project created event
+    subscribe:
+      operationId: handleProjectCreated
+      message:
+        $ref: '#/components/messages/ProjectCreated'
+
+  project/updated:
+    description: Project updated event
+    subscribe:
+      operationId: handleProjectUpdated
+      message:
+        $ref: '#/components/messages/ProjectUpdated'
+
+  notification/send:
+    description: Send notification event
+    subscribe:
+      operationId: handleNotificationSend
+      message:
+        $ref: '#/components/messages/NotificationSend'
+
+components:
+  messages:
+    IssueCreated:
+      name: issue.created
+      title: Issue Created
+      summary: A new issue has been created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/IssueCreatedPayload'
+
+    IssueUpdated:
+      name: issue.updated
+      title: Issue Updated
+      summary: An issue has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/IssueUpdatedPayload'
+
+    IssueStatusChanged:
+      name: issue.status.changed
+      title: Issue Status Changed
+      summary: An issue status has changed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/IssueStatusChangedPayload'
+
+    IssueAssigned:
+      name: issue.assigned
+      title: Issue Assigned
+      summary: An issue has been assigned to a user
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/IssueAssignedPayload'
+
+    IssueCommented:
+      name: issue.commented
+      title: Issue Commented
+      summary: A comment has been added to an issue
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/IssueCommentedPayload'
+
+    IssueLabeled:
+      name: issue.labeled
+      title: Issue Labeled
+      summary: Labels have been added or removed from an issue
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/IssueLabeledPayload'
+
+    IssueLinked:
+      name: issue.linked
+      title: Issue Linked
+      summary: An issue has been linked to another issue
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/IssueLinkedPayload'
+
+    IssueSynchronized:
+      name: issue.synchronized
+      title: Issue Synchronized
+      summary: An issue has been synchronized with external platform
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/IssueSynchronizedPayload'
+
+    IssueMetricsUpdated:
+      name: issue.metrics.updated
+      title: Issue Metrics Updated
+      summary: Issue metrics have been recalculated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/IssueMetricsUpdatedPayload'
+
+    ProjectCreated:
+      name: project.created
+      title: Project Created
+      summary: A new project has been created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectCreatedPayload'
+
+    ProjectUpdated:
+      name: project.updated
+      title: Project Updated
+      summary: A project has been updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProjectUpdatedPayload'
+
+    NotificationSend:
+      name: notification.send
+      title: Send Notification
+      summary: Send a notification about an issue event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/NotificationSendPayload'
+
+  schemas:
+    IssueCreatedPayload:
+      type: object
+      properties:
+        issueId:
+          type: string
+          description: Unique issue identifier
+        platformId:
+          type: string
+          description: Platform-specific issue ID
+        platform:
+          type: string
+          enum: [linear, github, jira]
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        assignee:
+          $ref: '#/components/schemas/UserPayload'
+        reporter:
+          $ref: '#/components/schemas/UserPayload'
+        project:
+          $ref: '#/components/schemas/ProjectPayload'
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelPayload'
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        metadata:
+          type: object
+      required:
+        - issueId
+        - platformId
+        - platform
+        - title
+        - status
+        - createdAt
+        - createdBy
+
+    IssueUpdatedPayload:
+      type: object
+      properties:
+        issueId:
+          type: string
+        platformId:
+          type: string
+        platform:
+          type: string
+          enum: [linear, github, jira]
+        changes:
+          type: object
+          properties:
+            title:
+              type: object
+              properties:
+                from:
+                  type: string
+                to:
+                  type: string
+            description:
+              type: object
+              properties:
+                from:
+                  type: string
+                to:
+                  type: string
+            status:
+              type: object
+              properties:
+                from:
+                  type: string
+                to:
+                  type: string
+            assignee:
+              type: object
+              properties:
+                from:
+                  $ref: '#/components/schemas/UserPayload'
+                to:
+                  $ref: '#/components/schemas/UserPayload'
+            labels:
+              type: object
+              properties:
+                added:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/LabelPayload'
+                removed:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/LabelPayload'
+            priority:
+              type: object
+              properties:
+                from:
+                  type: string
+                to:
+                  type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        metadata:
+          type: object
+      required:
+        - issueId
+        - platformId
+        - platform
+        - changes
+        - updatedAt
+        - updatedBy
+
+    IssueStatusChangedPayload:
+      type: object
+      properties:
+        issueId:
+          type: string
+        platformId:
+          type: string
+        platform:
+          type: string
+          enum: [linear, github, jira]
+        title:
+          type: string
+        previousStatus:
+          type: string
+        newStatus:
+          type: string
+        assignee:
+          $ref: '#/components/schemas/UserPayload'
+        project:
+          $ref: '#/components/schemas/ProjectPayload'
+        changedAt:
+          type: string
+          format: date-time
+        changedBy:
+          type: string
+        comment:
+          type: string
+        metadata:
+          type: object
+      required:
+        - issueId
+        - platformId
+        - platform
+        - title
+        - previousStatus
+        - newStatus
+        - changedAt
+        - changedBy
+
+    IssueAssignedPayload:
+      type: object
+      properties:
+        issueId:
+          type: string
+        platformId:
+          type: string
+        platform:
+          type: string
+          enum: [linear, github, jira]
+        title:
+          type: string
+        previousAssignee:
+          $ref: '#/components/schemas/UserPayload'
+        newAssignee:
+          $ref: '#/components/schemas/UserPayload'
+        project:
+          $ref: '#/components/schemas/ProjectPayload'
+        assignedAt:
+          type: string
+          format: date-time
+        assignedBy:
+          type: string
+        metadata:
+          type: object
+      required:
+        - issueId
+        - platformId
+        - platform
+        - title
+        - newAssignee
+        - assignedAt
+        - assignedBy
+
+    IssueCommentedPayload:
+      type: object
+      properties:
+        issueId:
+          type: string
+        platformId:
+          type: string
+        platform:
+          type: string
+          enum: [linear, github, jira]
+        title:
+          type: string
+        comment:
+          type: object
+          properties:
+            id:
+              type: string
+            body:
+              type: string
+            author:
+              $ref: '#/components/schemas/UserPayload'
+            createdAt:
+              type: string
+              format: date-time
+        project:
+          $ref: '#/components/schemas/ProjectPayload'
+        metadata:
+          type: object
+      required:
+        - issueId
+        - platformId
+        - platform
+        - title
+        - comment
+
+    IssueLabeledPayload:
+      type: object
+      properties:
+        issueId:
+          type: string
+        platformId:
+          type: string
+        platform:
+          type: string
+          enum: [linear, github, jira]
+        title:
+          type: string
+        labelsAdded:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelPayload'
+        labelsRemoved:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelPayload'
+        project:
+          $ref: '#/components/schemas/ProjectPayload'
+        labeledAt:
+          type: string
+          format: date-time
+        labeledBy:
+          type: string
+        metadata:
+          type: object
+      required:
+        - issueId
+        - platformId
+        - platform
+        - title
+        - labeledAt
+        - labeledBy
+
+    IssueLinkedPayload:
+      type: object
+      properties:
+        issueId:
+          type: string
+        platformId:
+          type: string
+        platform:
+          type: string
+          enum: [linear, github, jira]
+        title:
+          type: string
+        linkedIssue:
+          type: object
+          properties:
+            id:
+              type: string
+            platformId:
+              type: string
+            platform:
+              type: string
+            title:
+              type: string
+            linkType:
+              type: string
+              enum: [blocks, blocked_by, relates_to, duplicates, duplicated_by]
+        project:
+          $ref: '#/components/schemas/ProjectPayload'
+        linkedAt:
+          type: string
+          format: date-time
+        linkedBy:
+          type: string
+        metadata:
+          type: object
+      required:
+        - issueId
+        - platformId
+        - platform
+        - title
+        - linkedIssue
+        - linkedAt
+        - linkedBy
+
+    IssueSynchronizedPayload:
+      type: object
+      properties:
+        issueId:
+          type: string
+        platformId:
+          type: string
+        platform:
+          type: string
+          enum: [linear, github, jira]
+        title:
+          type: string
+        syncResult:
+          type: string
+          enum: [success, partial, failed]
+        changes:
+          type: object
+          description: Changes made during synchronization
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+              code:
+                type: string
+        synchronizedAt:
+          type: string
+          format: date-time
+        synchronizedBy:
+          type: string
+        metadata:
+          type: object
+      required:
+        - issueId
+        - platformId
+        - platform
+        - title
+        - syncResult
+        - synchronizedAt
+        - synchronizedBy
+
+    IssueMetricsUpdatedPayload:
+      type: object
+      properties:
+        metricType:
+          type: string
+          enum: [status_distribution, priority_distribution, resolution_time, creation_trend]
+        timeframe:
+          type: string
+          enum: [day, week, month, quarter, year]
+        platform:
+          type: string
+          enum: [linear, github, jira, all]
+        project:
+          type: string
+        metrics:
+          type: object
+          description: Updated metrics data
+        calculatedAt:
+          type: string
+          format: date-time
+        calculatedBy:
+          type: string
+        metadata:
+          type: object
+      required:
+        - metricType
+        - timeframe
+        - platform
+        - metrics
+        - calculatedAt
+        - calculatedBy
+
+    ProjectCreatedPayload:
+      type: object
+      properties:
+        projectId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        platform:
+          type: string
+        platformId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        metadata:
+          type: object
+      required:
+        - projectId
+        - name
+        - platform
+        - createdAt
+        - createdBy
+
+    ProjectUpdatedPayload:
+      type: object
+      properties:
+        projectId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        platform:
+          type: string
+        platformId:
+          type: string
+        changes:
+          type: object
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        metadata:
+          type: object
+      required:
+        - projectId
+        - name
+        - platform
+        - changes
+        - updatedAt
+        - updatedBy
+
+    NotificationSendPayload:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [issue_created, issue_updated, issue_assigned, issue_commented, issue_status_changed]
+        recipients:
+          type: array
+          items:
+            type: string
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [email, slack, teams, webhook, in_app]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        issueId:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        url:
+          type: string
+          format: uri
+        metadata:
+          type: object
+      required:
+        - notificationId
+        - type
+        - recipients
+        - channels
+        - priority
+        - issueId
+        - title
+        - message
+
+    UserPayload:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        avatar:
+          type: string
+          format: uri
+        platform:
+          type: string
+        platformId:
+          type: string
+      required:
+        - id
+        - name
+        - platform
+
+    ProjectPayload:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        platform:
+          type: string
+        platformId:
+          type: string
+        url:
+          type: string
+          format: uri
+      required:
+        - id
+        - name
+        - platform
+
+    LabelPayload:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+        description:
+          type: string
+        platform:
+          type: string
+      required:
+        - id
+        - name
+        - platform

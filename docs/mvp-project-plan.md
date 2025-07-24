@@ -9,6 +9,8 @@
 
 This document outlines the MVP project plan for CycleTime - an intelligent project orchestration platform. The MVP focuses on local Docker deployment with GitHub and Linear integration only, targeting single-user use cases. **Scope Update**: Limited to Anthropic's Claude 4 Sonnet for all AI tasks to reduce complexity and accelerate development.
 
+**Note**: The engineering workflows described in `/docs/engineering-planning-process.md` represent the target product functionality that CycleTime will provide to users, not the development methodology for building CycleTime itself. This MVP implements the core capabilities needed to deliver those AI-assisted planning workflows.
+
 ## Linear Project Structure
 
 **Project**: CycleTime MVP  

@@ -1,0 +1,1115 @@
+openapi: 3.0.3
+info:
+  title: Notification Service API
+  description: Multi-channel notification service supporting email, SMS, push, and in-app notifications with template management
+  version: 1.0.0
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8008
+    description: Development server
+  - url: https://api.cycletime.dev/notifications
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the notification service is healthy and operational
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/notifications:
+    get:
+      summary: List notifications
+      description: Get list of notifications with optional filtering
+      operationId: listNotifications
+      tags:
+        - Notifications
+      parameters:
+        - name: channel
+          in: query
+          description: Filter by notification channel
+          schema:
+            type: string
+            enum: [email, sms, push, in_app]
+        - name: status
+          in: query
+          description: Filter by delivery status
+          schema:
+            type: string
+            enum: [pending, sent, delivered, failed, opened, clicked]
+        - name: recipient
+          in: query
+          description: Filter by recipient
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of notifications to return
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: Number of notifications to skip
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationsResponse'
+
+    post:
+      summary: Send notification
+      description: Send a new notification through specified channels
+      operationId: sendNotification
+      tags:
+        - Notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+      responses:
+        '201':
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+
+  /api/v1/notifications/{notificationId}:
+    get:
+      summary: Get notification details
+      description: Get detailed information about a specific notification
+      operationId: getNotification
+      tags:
+        - Notifications
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          description: Notification identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+
+  /api/v1/notifications/{notificationId}/retry:
+    post:
+      summary: Retry failed notification
+      description: Retry sending a failed notification
+      operationId: retryNotification
+      tags:
+        - Notifications
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          description: Notification identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification retry initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+
+  /api/v1/notifications/{notificationId}/cancel:
+    post:
+      summary: Cancel pending notification
+      description: Cancel a pending notification
+      operationId: cancelNotification
+      tags:
+        - Notifications
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          description: Notification identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+
+  /api/v1/notifications/bulk:
+    post:
+      summary: Send bulk notifications
+      description: Send multiple notifications at once
+      operationId: sendBulkNotifications
+      tags:
+        - Notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkNotificationRequest'
+      responses:
+        '202':
+          description: Bulk notifications queued successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkNotificationResponse'
+
+  /api/v1/templates:
+    get:
+      summary: List notification templates
+      description: Get list of notification templates
+      operationId: listTemplates
+      tags:
+        - Templates
+      parameters:
+        - name: channel
+          in: query
+          description: Filter by template channel
+          schema:
+            type: string
+            enum: [email, sms, push, in_app]
+        - name: category
+          in: query
+          description: Filter by template category
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplatesResponse'
+
+    post:
+      summary: Create notification template
+      description: Create a new notification template
+      operationId: createTemplate
+      tags:
+        - Templates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateRequest'
+      responses:
+        '201':
+          description: Template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+
+  /api/v1/templates/{templateId}:
+    get:
+      summary: Get template details
+      description: Get detailed information about a specific template
+      operationId: getTemplate
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: Template identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Template details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+
+    put:
+      summary: Update template
+      description: Update an existing notification template
+      operationId: updateTemplate
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: Template identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateRequest'
+      responses:
+        '200':
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+
+    delete:
+      summary: Delete template
+      description: Delete a notification template
+      operationId: deleteTemplate
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: Template identifier
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Template deleted successfully
+
+  /api/v1/templates/{templateId}/preview:
+    post:
+      summary: Preview template
+      description: Generate a preview of the template with sample data
+      operationId: previewTemplate
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: Template identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplatePreviewRequest'
+      responses:
+        '200':
+          description: Template preview generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplatePreviewResponse'
+
+  /api/v1/preferences:
+    get:
+      summary: List notification preferences
+      description: Get notification preferences for users
+      operationId: listPreferences
+      tags:
+        - Preferences
+      parameters:
+        - name: userId
+          in: query
+          description: Filter by user ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreferencesResponse'
+
+    post:
+      summary: Create notification preferences
+      description: Create notification preferences for a user
+      operationId: createPreferences
+      tags:
+        - Preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreferencesRequest'
+      responses:
+        '201':
+          description: Preferences created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreferencesResponse'
+
+  /api/v1/preferences/{userId}:
+    get:
+      summary: Get user preferences
+      description: Get notification preferences for a specific user
+      operationId: getUserPreferences
+      tags:
+        - Preferences
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: User identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreferencesResponse'
+
+    put:
+      summary: Update user preferences
+      description: Update notification preferences for a user
+      operationId: updateUserPreferences
+      tags:
+        - Preferences
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: User identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreferencesRequest'
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreferencesResponse'
+
+  /api/v1/delivery-status:
+    get:
+      summary: Get delivery status summary
+      description: Get summary of notification delivery status
+      operationId: getDeliveryStatus
+      tags:
+        - Delivery Status
+      parameters:
+        - name: timeRange
+          in: query
+          description: Time range for status summary
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d, 30d]
+            default: 24h
+        - name: channel
+          in: query
+          description: Filter by notification channel
+          schema:
+            type: string
+            enum: [email, sms, push, in_app]
+      responses:
+        '200':
+          description: Delivery status summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryStatusResponse'
+
+  /api/v1/delivery-status/{notificationId}:
+    get:
+      summary: Get notification delivery status
+      description: Get detailed delivery status for a specific notification
+      operationId: getNotificationDeliveryStatus
+      tags:
+        - Delivery Status
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          description: Notification identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification delivery status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationDeliveryStatusResponse'
+
+  /api/v1/channels:
+    get:
+      summary: List notification channels
+      description: Get list of configured notification channels
+      operationId: listChannels
+      tags:
+        - Channels
+      responses:
+        '200':
+          description: List of channels
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelsResponse'
+
+  /api/v1/channels/{channelType}/config:
+    get:
+      summary: Get channel configuration
+      description: Get configuration for a specific notification channel
+      operationId: getChannelConfig
+      tags:
+        - Channels
+      parameters:
+        - name: channelType
+          in: path
+          required: true
+          description: Channel type
+          schema:
+            type: string
+            enum: [email, sms, push, in_app]
+      responses:
+        '200':
+          description: Channel configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelConfigResponse'
+
+    put:
+      summary: Update channel configuration
+      description: Update configuration for a specific notification channel
+      operationId: updateChannelConfig
+      tags:
+        - Channels
+      parameters:
+        - name: channelType
+          in: path
+          required: true
+          description: Channel type
+          schema:
+            type: string
+            enum: [email, sms, push, in_app]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChannelConfigRequest'
+      responses:
+        '200':
+          description: Channel configuration updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelConfigResponse'
+
+  /api/v1/channels/{channelType}/test:
+    post:
+      summary: Test channel configuration
+      description: Test a notification channel configuration
+      operationId: testChannel
+      tags:
+        - Channels
+      parameters:
+        - name: channelType
+          in: path
+          required: true
+          description: Channel type
+          schema:
+            type: string
+            enum: [email, sms, push, in_app]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChannelTestRequest'
+      responses:
+        '200':
+          description: Channel test result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelTestResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime:
+          type: number
+        dependencies:
+          type: object
+          properties:
+            redis:
+              type: string
+              enum: [connected, disconnected]
+            email:
+              type: string
+              enum: [connected, disconnected]
+            sms:
+              type: string
+              enum: [connected, disconnected]
+            push:
+              type: string
+              enum: [connected, disconnected]
+
+    NotificationsResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationSummary'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    NotificationSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        channel:
+          type: string
+          enum: [email, sms, push, in_app]
+        recipient:
+          type: string
+        subject:
+          type: string
+        status:
+          type: string
+          enum: [pending, sent, delivered, failed, opened, clicked]
+        sentAt:
+          type: string
+          format: date-time
+        deliveredAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    NotificationRequest:
+      type: object
+      required:
+        - channel
+        - recipient
+        - templateId
+      properties:
+        channel:
+          type: string
+          enum: [email, sms, push, in_app]
+        recipient:
+          type: string
+        templateId:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        scheduledAt:
+          type: string
+          format: date-time
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          default: normal
+        metadata:
+          type: object
+          additionalProperties: true
+
+    NotificationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        channel:
+          type: string
+        recipient:
+          type: string
+        subject:
+          type: string
+        content:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        sentAt:
+          type: string
+          format: date-time
+        deliveredAt:
+          type: string
+          format: date-time
+        failureReason:
+          type: string
+        retryCount:
+          type: integer
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    BulkNotificationRequest:
+      type: object
+      required:
+        - notifications
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationRequest'
+        batchSize:
+          type: integer
+          default: 100
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          default: normal
+
+    BulkNotificationResponse:
+      type: object
+      properties:
+        batchId:
+          type: string
+        totalNotifications:
+          type: integer
+        queuedNotifications:
+          type: integer
+        failedNotifications:
+          type: integer
+        estimatedProcessingTime:
+          type: string
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+
+    TemplatesResponse:
+      type: object
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateSummary'
+        total:
+          type: integer
+
+    TemplateSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        channel:
+          type: string
+        category:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TemplateRequest:
+      type: object
+      required:
+        - name
+        - channel
+        - subject
+        - content
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        channel:
+          type: string
+          enum: [email, sms, push, in_app]
+        category:
+          type: string
+        subject:
+          type: string
+        content:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+          default: true
+        metadata:
+          type: object
+          additionalProperties: true
+
+    TemplateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        channel:
+          type: string
+        category:
+          type: string
+        subject:
+          type: string
+        content:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TemplatePreviewRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          additionalProperties: true
+
+    TemplatePreviewResponse:
+      type: object
+      properties:
+        subject:
+          type: string
+        content:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+        missingVariables:
+          type: array
+          items:
+            type: string
+
+    PreferencesResponse:
+      type: object
+      properties:
+        preferences:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserPreferences'
+
+    UserPreferences:
+      type: object
+      properties:
+        userId:
+          type: string
+        channels:
+          type: object
+          properties:
+            email:
+              $ref: '#/components/schemas/ChannelPreferences'
+            sms:
+              $ref: '#/components/schemas/ChannelPreferences'
+            push:
+              $ref: '#/components/schemas/ChannelPreferences'
+            in_app:
+              $ref: '#/components/schemas/ChannelPreferences'
+        categories:
+          type: object
+          additionalProperties:
+            type: boolean
+        timezone:
+          type: string
+        quietHours:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            start:
+              type: string
+            end:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ChannelPreferences:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        address:
+          type: string
+        verified:
+          type: boolean
+        frequency:
+          type: string
+          enum: [immediate, daily, weekly, never]
+
+    PreferencesRequest:
+      type: object
+      required:
+        - userId
+      properties:
+        userId:
+          type: string
+        channels:
+          type: object
+          properties:
+            email:
+              $ref: '#/components/schemas/ChannelPreferences'
+            sms:
+              $ref: '#/components/schemas/ChannelPreferences'
+            push:
+              $ref: '#/components/schemas/ChannelPreferences'
+            in_app:
+              $ref: '#/components/schemas/ChannelPreferences'
+        categories:
+          type: object
+          additionalProperties:
+            type: boolean
+        timezone:
+          type: string
+        quietHours:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            start:
+              type: string
+            end:
+              type: string
+
+    DeliveryStatusResponse:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            total:
+              type: integer
+            sent:
+              type: integer
+            delivered:
+              type: integer
+            failed:
+              type: integer
+            pending:
+              type: integer
+            opened:
+              type: integer
+            clicked:
+              type: integer
+        byChannel:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              total:
+                type: integer
+              sent:
+                type: integer
+              delivered:
+                type: integer
+              failed:
+                type: integer
+        timeRange:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+
+    NotificationDeliveryStatusResponse:
+      type: object
+      properties:
+        notificationId:
+          type: string
+        status:
+          type: string
+        deliveryHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              status:
+                type: string
+              message:
+                type: string
+              metadata:
+                type: object
+                additionalProperties: true
+
+    ChannelsResponse:
+      type: object
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChannelInfo'
+
+    ChannelInfo:
+      type: object
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        isEnabled:
+          type: boolean
+        isConfigured:
+          type: boolean
+        lastTestedAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, inactive, error]
+
+    ChannelConfigResponse:
+      type: object
+      properties:
+        channelType:
+          type: string
+        config:
+          type: object
+          additionalProperties: true
+        isEnabled:
+          type: boolean
+        lastUpdated:
+          type: string
+          format: date-time
+
+    ChannelConfigRequest:
+      type: object
+      required:
+        - config
+      properties:
+        config:
+          type: object
+          additionalProperties: true
+        isEnabled:
+          type: boolean
+          default: true
+
+    ChannelTestRequest:
+      type: object
+      required:
+        - recipient
+      properties:
+        recipient:
+          type: string
+        message:
+          type: string
+          default: "Test message from CycleTime Notification Service"
+
+    ChannelTestResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        testId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+          additionalProperties: true
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health and status
+  - name: Notifications
+    description: Notification management and delivery
+  - name: Templates
+    description: Notification template management
+  - name: Preferences
+    description: User notification preferences
+  - name: Delivery Status
+    description: Notification delivery tracking
+  - name: Channels
+    description: Notification channel configuration

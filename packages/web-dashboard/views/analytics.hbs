@@ -1,0 +1,576 @@
+<div class="analytics-container">
+    <div class="analytics-header">
+        <h1>Analytics</h1>
+        <div class="analytics-actions">
+            <select id="timeframe-select" class="form-select">
+                <option value="day">Today</option>
+                <option value="week">This Week</option>
+                <option value="month" selected>This Month</option>
+                <option value="quarter">This Quarter</option>
+                <option value="year">This Year</option>
+            </select>
+            <button class="btn btn-primary" id="refresh-btn">Refresh</button>
+        </div>
+    </div>
+    
+    <div class="analytics-content">
+        <div class="analytics-grid">
+            <!-- Velocity Metrics -->
+            <div class="card velocity-card">
+                <h3>Velocity Metrics</h3>
+                <div class="metric-row">
+                    <div class="metric-item">
+                        <div class="metric-value" id="current-velocity">Loading...</div>
+                        <div class="metric-label">Current Velocity</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="velocity-trend">Loading...</div>
+                        <div class="metric-label">Trend</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="velocity-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Quality Metrics -->
+            <div class="card quality-card">
+                <h3>Quality Metrics</h3>
+                <div class="metric-row">
+                    <div class="metric-item">
+                        <div class="metric-value" id="quality-score">Loading...</div>
+                        <div class="metric-label">Quality Score</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="test-coverage">Loading...</div>
+                        <div class="metric-label">Test Coverage</div>
+                    </div>
+                </div>
+                <div class="quality-breakdown" id="quality-breakdown">
+                    Loading...
+                </div>
+            </div>
+            
+            <!-- Performance Metrics -->
+            <div class="card performance-card">
+                <h3>Performance Metrics</h3>
+                <div class="metric-row">
+                    <div class="metric-item">
+                        <div class="metric-value" id="cycle-time">Loading...</div>
+                        <div class="metric-label">Cycle Time</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="lead-time">Loading...</div>
+                        <div class="metric-label">Lead Time</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="throughput">Loading...</div>
+                        <div class="metric-label">Throughput</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Team Activity -->
+            <div class="card team-card">
+                <h3>Team Activity</h3>
+                <div class="metric-row">
+                    <div class="metric-item">
+                        <div class="metric-value" id="active-members">Loading...</div>
+                        <div class="metric-label">Active Members</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="commits-per-day">Loading...</div>
+                        <div class="metric-label">Commits/Day</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="collaboration-score">Loading...</div>
+                        <div class="metric-label">Collaboration</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Burndown Chart -->
+            <div class="card burndown-card">
+                <h3>Burndown Chart</h3>
+                <div class="chart-container">
+                    <canvas id="burndown-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Insights -->
+            <div class="card insights-card">
+                <h3>Key Insights</h3>
+                <div class="insights-list" id="insights-list">
+                    <div class="loading">Loading insights...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.analytics-container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    font-family: 'Inter', sans-serif;
+}
+
+.analytics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.analytics-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #1a1a1a;
+}
+
+.analytics-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.form-select {
+    padding: 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5a67d8;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.card h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.metric-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.metric-item {
+    text-align: center;
+    flex: 1;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    color: #6b7280;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.chart-container {
+    height: 200px;
+    margin-top: 1rem;
+}
+
+.velocity-card {
+    grid-column: span 2;
+}
+
+.burndown-card {
+    grid-column: span 2;
+}
+
+.insights-card {
+    grid-column: span 2;
+}
+
+.quality-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.quality-item {
+    text-align: center;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.quality-item .value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.quality-item .label {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.insights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.insight-item {
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.insight-title {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.insight-description {
+    color: #6b7280;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.insight-impact {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.insight-impact.high {
+    color: #dc2626;
+}
+
+.insight-impact.medium {
+    color: #d97706;
+}
+
+.insight-impact.low {
+    color: #059669;
+}
+
+.trend-up {
+    color: #059669;
+}
+
+.trend-down {
+    color: #dc2626;
+}
+
+.trend-stable {
+    color: #6b7280;
+}
+
+.loading {
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .analytics-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .analytics-actions {
+        justify-content: center;
+    }
+    
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .velocity-card,
+    .burndown-card,
+    .insights-card {
+        grid-column: span 1;
+    }
+    
+    .metric-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadAnalytics();
+    
+    // Event listeners
+    document.getElementById('refresh-btn').addEventListener('click', loadAnalytics);
+    document.getElementById('timeframe-select').addEventListener('change', loadAnalytics);
+});
+
+async function loadAnalytics() {
+    try {
+        const token = localStorage.getItem('authToken');
+        
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        const timeframe = document.getElementById('timeframe-select').value;
+        
+        const response = await fetch(`/api/v1/dashboard/analytics?timeframe=${timeframe}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            updateAnalytics(result.data);
+        } else {
+            console.error('Failed to load analytics:', result.error);
+        }
+    } catch (error) {
+        console.error('Error loading analytics:', error);
+    }
+}
+
+function updateAnalytics(data) {
+    // Update velocity metrics
+    document.getElementById('current-velocity').textContent = data.metrics.velocity.current.toFixed(1);
+    document.getElementById('velocity-trend').innerHTML = `
+        <span class="trend-${data.metrics.velocity.trend}">${data.metrics.velocity.trend} ${data.metrics.velocity.change.toFixed(1)}%</span>
+    `;
+    
+    // Update quality metrics
+    document.getElementById('quality-score').textContent = data.metrics.quality.score.toFixed(1);
+    document.getElementById('test-coverage').textContent = data.metrics.quality.metrics.testCoverage.toFixed(1) + '%';
+    
+    // Update quality breakdown
+    const qualityBreakdown = document.getElementById('quality-breakdown');
+    qualityBreakdown.innerHTML = `
+        <div class="quality-item">
+            <div class="value">${data.metrics.quality.metrics.testCoverage.toFixed(1)}%</div>
+            <div class="label">Test Coverage</div>
+        </div>
+        <div class="quality-item">
+            <div class="value">${data.metrics.quality.metrics.bugRate.toFixed(1)}%</div>
+            <div class="label">Bug Rate</div>
+        </div>
+        <div class="quality-item">
+            <div class="value">${data.metrics.quality.metrics.codeReviewRate.toFixed(1)}%</div>
+            <div class="label">Code Review Rate</div>
+        </div>
+    `;
+    
+    // Update performance metrics
+    document.getElementById('cycle-time').textContent = data.metrics.performance.cycleTime.toFixed(1) + 'd';
+    document.getElementById('lead-time').textContent = data.metrics.performance.leadTime.toFixed(1) + 'd';
+    document.getElementById('throughput').textContent = data.metrics.performance.throughput.toFixed(1);
+    
+    // Update team activity
+    document.getElementById('active-members').textContent = data.metrics.teamActivity.activeMembers;
+    document.getElementById('commits-per-day').textContent = data.metrics.teamActivity.commitsPerDay.toFixed(1);
+    document.getElementById('collaboration-score').textContent = data.metrics.teamActivity.collaborationScore.toFixed(1);
+    
+    // Update insights
+    updateInsights(data);
+    
+    // Update charts
+    updateCharts(data);
+}
+
+function updateInsights(data) {
+    const insightsList = document.getElementById('insights-list');
+    
+    // Generate mock insights based on the data
+    const insights = [
+        {
+            title: 'Velocity Trend',
+            description: `Team velocity is ${data.metrics.velocity.trend}. Current velocity is ${data.metrics.velocity.current.toFixed(1)} points per sprint.`,
+            impact: data.metrics.velocity.trend === 'up' ? 'high' : data.metrics.velocity.trend === 'down' ? 'medium' : 'low'
+        },
+        {
+            title: 'Quality Score',
+            description: `Quality score is ${data.metrics.quality.score.toFixed(1)}. Test coverage is at ${data.metrics.quality.metrics.testCoverage.toFixed(1)}%.`,
+            impact: data.metrics.quality.score > 80 ? 'low' : data.metrics.quality.score > 60 ? 'medium' : 'high'
+        },
+        {
+            title: 'Cycle Time',
+            description: `Average cycle time is ${data.metrics.performance.cycleTime.toFixed(1)} days. Consider optimizing workflow to reduce cycle time.`,
+            impact: data.metrics.performance.cycleTime > 5 ? 'high' : data.metrics.performance.cycleTime > 3 ? 'medium' : 'low'
+        },
+        {
+            title: 'Team Collaboration',
+            description: `Collaboration score is ${data.metrics.teamActivity.collaborationScore.toFixed(1)}. Team is ${data.metrics.teamActivity.collaborationScore > 80 ? 'highly collaborative' : 'moderately collaborative'}.`,
+            impact: data.metrics.teamActivity.collaborationScore > 80 ? 'low' : 'medium'
+        }
+    ];
+    
+    insightsList.innerHTML = '';
+    insights.forEach(insight => {
+        const item = document.createElement('div');
+        item.className = 'insight-item';
+        item.innerHTML = `
+            <div class="insight-title">${insight.title}</div>
+            <div class="insight-description">${insight.description}</div>
+            <div class="insight-impact ${insight.impact}">Impact: ${insight.impact}</div>
+        `;
+        insightsList.appendChild(item);
+    });
+}
+
+function updateCharts(data) {
+    // Simple chart implementation using HTML5 Canvas
+    drawVelocityChart(data.charts.velocityChart);
+    drawBurndownChart(data.charts.burndownChart);
+}
+
+function drawVelocityChart(velocityData) {
+    const canvas = document.getElementById('velocity-chart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw simple line chart
+    const padding = 40;
+    const chartWidth = canvas.width - 2 * padding;
+    const chartHeight = canvas.height - 2 * padding;
+    
+    const maxValue = Math.max(...velocityData.map(d => d.value));
+    const minValue = Math.min(...velocityData.map(d => d.value));
+    
+    ctx.strokeStyle = '#667eea';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    
+    velocityData.forEach((point, index) => {
+        const x = padding + (index / (velocityData.length - 1)) * chartWidth;
+        const y = padding + (1 - (point.value - minValue) / (maxValue - minValue)) * chartHeight;
+        
+        if (index === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    });
+    
+    ctx.stroke();
+    
+    // Draw points
+    ctx.fillStyle = '#667eea';
+    velocityData.forEach((point, index) => {
+        const x = padding + (index / (velocityData.length - 1)) * chartWidth;
+        const y = padding + (1 - (point.value - minValue) / (maxValue - minValue)) * chartHeight;
+        
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, 2 * Math.PI);
+        ctx.fill();
+    });
+}
+
+function drawBurndownChart(burndownData) {
+    const canvas = document.getElementById('burndown-chart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw simple area chart
+    const padding = 40;
+    const chartWidth = canvas.width - 2 * padding;
+    const chartHeight = canvas.height - 2 * padding;
+    
+    const maxValue = Math.max(...burndownData.map(d => Math.max(d.remaining, d.completed)));
+    
+    // Draw remaining work
+    ctx.fillStyle = 'rgba(220, 38, 38, 0.2)';
+    ctx.strokeStyle = '#dc2626';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    
+    burndownData.forEach((point, index) => {
+        const x = padding + (index / (burndownData.length - 1)) * chartWidth;
+        const y = padding + (1 - point.remaining / maxValue) * chartHeight;
+        
+        if (index === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    });
+    
+    ctx.stroke();
+    
+    // Draw completed work
+    ctx.fillStyle = 'rgba(5, 150, 105, 0.2)';
+    ctx.strokeStyle = '#059669';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    
+    burndownData.forEach((point, index) => {
+        const x = padding + (index / (burndownData.length - 1)) * chartWidth;
+        const y = padding + (1 - point.completed / maxValue) * chartHeight;
+        
+        if (index === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    });
+    
+    ctx.stroke();
+}
+</script>

@@ -1,0 +1,1285 @@
+asyncapi: 3.0.0
+info:
+  title: Standards Engine Event API
+  version: 1.0.0
+  description: Event-driven architecture for Standards Engine service supporting real-time standards delivery and compliance monitoring
+  contact:
+    name: CycleTime Team
+    email: team@cycletime.dev
+  license:
+    name: MIT
+
+servers:
+  development:
+    host: localhost:6379
+    protocol: redis
+    description: Development Redis server for event streaming
+    tags:
+      - name: env:development
+  production:
+    host: redis.cycletime.dev:6379
+    protocol: redis
+    description: Production Redis server for event streaming
+    tags:
+      - name: env:production
+
+defaultContentType: application/json
+
+channels:
+  standards/analyzed:
+    description: Channel for standards analysis completion events
+    messages:
+      StandardsAnalyzed:
+        $ref: '#/components/messages/StandardsAnalyzed'
+
+  compliance/violation:
+    description: Channel for standards violation events
+    messages:
+      ComplianceViolation:
+        $ref: '#/components/messages/ComplianceViolation'
+
+  compliance/passed:
+    description: Channel for compliance success events
+    messages:
+      CompliancePassed:
+        $ref: '#/components/messages/CompliancePassed'
+
+  standards/updated:
+    description: Channel for team standards configuration updates
+    messages:
+      StandardsUpdated:
+        $ref: '#/components/messages/StandardsUpdated'
+
+  standards/guidance/delivered:
+    description: Channel for real-time guidance delivery events
+    messages:
+      GuidanceDelivered:
+        $ref: '#/components/messages/GuidanceDelivered'
+
+  code/committed:
+    description: Channel for code commit events
+    messages:
+      CodeCommitted:
+        $ref: '#/components/messages/CodeCommitted'
+
+  pull-request/opened:
+    description: Channel for pull request opened events
+    messages:
+      PullRequestOpened:
+        $ref: '#/components/messages/PullRequestOpened'
+
+  ai/request/started:
+    description: Channel for AI agent guidance requests
+    messages:
+      AIRequestStarted:
+        $ref: '#/components/messages/AIRequestStarted'
+
+  team/configuration/updated:
+    description: Channel for team configuration change events
+    messages:
+      TeamConfigurationUpdated:
+        $ref: '#/components/messages/TeamConfigurationUpdated'
+
+  mcp/standards/requested:
+    description: Channel for MCP server standards requests
+    messages:
+      MCPStandardsRequested:
+        $ref: '#/components/messages/MCPStandardsRequested'
+
+  standards/template/used:
+    description: Channel for standards template usage events
+    messages:
+      TemplateUsed:
+        $ref: '#/components/messages/TemplateUsed'
+
+  standards/enforcement/triggered:
+    description: Channel for enforcement action events
+    messages:
+      EnforcementTriggered:
+        $ref: '#/components/messages/EnforcementTriggered'
+
+operations:
+  # Published Events (Standards Engine produces these)
+  publishStandardsAnalyzed:
+    action: send
+    channel:
+      $ref: '#/channels/standards~1analyzed'
+    summary: Publish standards analysis completion
+    description: Emit event when code standards analysis is completed
+    tags:
+      - name: publish
+      - name: analysis
+
+  publishComplianceViolation:
+    action: send
+    channel:
+      $ref: '#/channels/compliance~1violation'
+    summary: Publish compliance violation detected
+    description: Emit event when standards violations are detected
+    tags:
+      - name: publish
+      - name: compliance
+
+  publishCompliancePassed:
+    action: send
+    channel:
+      $ref: '#/channels/compliance~1passed'
+    summary: Publish compliance success
+    description: Emit event when code passes all standards checks
+    tags:
+      - name: publish
+      - name: compliance
+
+  publishStandardsUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/standards~1updated'
+    summary: Publish standards configuration update
+    description: Emit event when team standards are updated
+    tags:
+      - name: publish
+      - name: configuration
+
+  publishGuidanceDelivered:
+    action: send
+    channel:
+      $ref: '#/channels/standards~1guidance~1delivered'
+    summary: Publish guidance delivery
+    description: Emit event when real-time guidance is delivered to AI agents
+    tags:
+      - name: publish
+      - name: guidance
+
+  publishTemplateUsed:
+    action: send
+    channel:
+      $ref: '#/channels/standards~1template~1used'
+    summary: Publish template usage
+    description: Emit event when a standards template is applied
+    tags:
+      - name: publish
+      - name: templates
+
+  publishEnforcementTriggered:
+    action: send
+    channel:
+      $ref: '#/channels/standards~1enforcement~1triggered'
+    summary: Publish enforcement action
+    description: Emit event when standards enforcement is triggered
+    tags:
+      - name: publish
+      - name: enforcement
+
+  # Consumed Events (Standards Engine subscribes to these)
+  subscribeCodeCommitted:
+    action: receive
+    channel:
+      $ref: '#/channels/code~1committed'
+    summary: Subscribe to code commit events
+    description: Listen for code commit events to trigger standards analysis
+    tags:
+      - name: subscribe
+      - name: triggers
+
+  subscribePullRequestOpened:
+    action: receive
+    channel:
+      $ref: '#/channels/pull-request~1opened'
+    summary: Subscribe to pull request events
+    description: Listen for PR events to perform compliance analysis
+    tags:
+      - name: subscribe
+      - name: triggers
+
+  subscribeAIRequestStarted:
+    action: receive
+    channel:
+      $ref: '#/channels/ai~1request~1started'
+    summary: Subscribe to AI guidance requests
+    description: Listen for AI agent requests for standards guidance
+    tags:
+      - name: subscribe
+      - name: ai
+
+  subscribeTeamConfigurationUpdated:
+    action: receive
+    channel:
+      $ref: '#/channels/team~1configuration~1updated'
+    summary: Subscribe to team configuration changes
+    description: Listen for team setting changes that affect standards
+    tags:
+      - name: subscribe
+      - name: configuration
+
+  subscribeMCPStandardsRequested:
+    action: receive
+    channel:
+      $ref: '#/channels/mcp~1standards~1requested'
+    summary: Subscribe to MCP standards requests
+    description: Listen for MCP server requests for standards delivery
+    tags:
+      - name: subscribe
+      - name: mcp
+
+components:
+  messages:
+    StandardsAnalyzed:
+      name: StandardsAnalyzed
+      title: Standards Analysis Completed
+      summary: Standards analysis has been completed for code
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/StandardsAnalyzedPayload'
+      examples:
+        - name: TypeScript Analysis
+          summary: TypeScript file analysis completed
+          payload:
+            eventId: "evt_standards_001"
+            timestamp: "2025-01-20T10:30:00Z"
+            correlationId: "corr_abc123"
+            source: "standards-engine"
+            data:
+              analysisId: "analysis_789"
+              teamId: "team_456"
+              projectId: "proj_123"
+              files:
+                - path: "src/utils/helper.ts"
+                  language: "typescript"
+                  score: 85
+                  violations_count: 2
+              overall_score: 85
+              total_violations: 2
+              analysis_duration_ms: 1250
+              triggered_by: "commit:abc123def"
+
+    ComplianceViolation:
+      name: ComplianceViolation
+      title: Standards Violation Detected
+      summary: One or more standards violations have been detected
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/ComplianceViolationPayload'
+      examples:
+        - name: ESLint Violation
+          summary: ESLint rule violation detected
+          payload:
+            eventId: "evt_violation_001"
+            timestamp: "2025-01-20T10:30:05Z"
+            correlationId: "corr_abc123"
+            source: "standards-engine"
+            data:
+              violationId: "viol_001"
+              teamId: "team_456"
+              projectId: "proj_123"
+              standardId: "std_eslint_001"
+              ruleId: "no-var"
+              severity: "error"
+              message: "Use 'const' or 'let' instead of 'var'"
+              file_path: "src/utils/helper.ts"
+              line: 15
+              column: 5
+              fix_available: true
+              auto_fixable: true
+              enforcement_level: "blocking"
+
+    CompliancePassed:
+      name: CompliancePassed
+      title: Compliance Check Passed
+      summary: Code has passed all standards compliance checks
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/CompliancePassedPayload'
+      examples:
+        - name: Clean Code
+          summary: All standards checks passed
+          payload:
+            eventId: "evt_passed_001"
+            timestamp: "2025-01-20T10:30:10Z"
+            correlationId: "corr_abc123"
+            source: "standards-engine"
+            data:
+              checkId: "check_001"
+              teamId: "team_456"
+              projectId: "proj_123"
+              files_checked: 5
+              rules_passed: 25
+              overall_score: 95
+              previous_score: 87
+              improvement: 8
+
+    StandardsUpdated:
+      name: StandardsUpdated
+      title: Team Standards Updated
+      summary: Team standards configuration has been modified
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/StandardsUpdatedPayload'
+      examples:
+        - name: Rule Added
+          summary: New coding standard rule added
+          payload:
+            eventId: "evt_updated_001"
+            timestamp: "2025-01-20T10:35:00Z"
+            correlationId: "corr_def456"
+            source: "standards-engine"
+            data:
+              teamId: "team_456"
+              updateType: "rules_added"
+              updatedBy: "user_789"
+              changes:
+                added_rules: 2
+                removed_rules: 0
+                modified_rules: 1
+              enforcement_level: "warning"
+              affected_projects: ["proj_123", "proj_456"]
+
+    GuidanceDelivered:
+      name: GuidanceDelivered
+      title: Real-time Guidance Delivered
+      summary: Standards guidance has been delivered to AI agent
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/GuidanceDeliveredPayload'
+      examples:
+        - name: MCP Guidance
+          summary: Guidance delivered via MCP
+          payload:
+            eventId: "evt_guidance_001"
+            timestamp: "2025-01-20T10:40:00Z"
+            correlationId: "corr_ghi789"
+            source: "standards-engine"
+            data:
+              guidanceId: "guid_001"
+              requestId: "req_456"
+              teamId: "team_456"
+              delivery_method: "mcp"
+              guidance_type: "real_time"
+              language: "typescript"
+              context: "code_completion"
+              standards_applied: ["std_001", "std_002"]
+              response_time_ms: 150
+
+    CodeCommitted:
+      name: CodeCommitted
+      title: Code Committed
+      summary: New code has been committed to repository
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/CodeCommittedPayload'
+      examples:
+        - name: Feature Commit
+          summary: Feature development commit
+          payload:
+            eventId: "evt_commit_001"
+            timestamp: "2025-01-20T10:25:00Z"
+            correlationId: "corr_commit_001"
+            source: "git-service"
+            data:
+              commitId: "abc123def456"
+              repository: "cycletime/standards-engine"
+              branch: "feature/new-validation"
+              author: "developer@cycletime.dev"
+              message: "Add new validation rules"
+              files_changed: 3
+              lines_added: 125
+              lines_deleted: 15
+              teamId: "team_456"
+              projectId: "proj_123"
+
+    PullRequestOpened:
+      name: PullRequestOpened
+      title: Pull Request Opened
+      summary: A new pull request has been opened
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/PullRequestOpenedPayload'
+      examples:
+        - name: Feature PR
+          summary: Feature pull request opened
+          payload:
+            eventId: "evt_pr_001"
+            timestamp: "2025-01-20T10:45:00Z"
+            correlationId: "corr_pr_001"
+            source: "git-service"
+            data:
+              pullRequestId: "pr_456"
+              repository: "cycletime/standards-engine"
+              number: 42
+              title: "Add new validation framework"
+              author: "developer@cycletime.dev"
+              source_branch: "feature/validation-framework"
+              target_branch: "main"
+              files_changed: 8
+              teamId: "team_456"
+              projectId: "proj_123"
+              requires_compliance_check: true
+
+    AIRequestStarted:
+      name: AIRequestStarted
+      title: AI Guidance Request Started
+      summary: AI agent has requested standards guidance
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/AIRequestStartedPayload'
+      examples:
+        - name: Code Completion Request
+          summary: AI requesting guidance for code completion
+          payload:
+            eventId: "evt_ai_001"
+            timestamp: "2025-01-20T10:40:00Z"
+            correlationId: "corr_ai_001"
+            source: "ai-service"
+            data:
+              requestId: "req_789"
+              agentId: "claude_coding_agent"
+              teamId: "team_456"
+              projectId: "proj_123"
+              request_type: "code_completion"
+              language: "typescript"
+              context:
+                file_path: "src/services/validator.ts"
+                line: 45
+                column: 12
+                surrounding_code: "function validateInput("
+              urgency: "real_time"
+
+    TeamConfigurationUpdated:
+      name: TeamConfigurationUpdated
+      title: Team Configuration Updated
+      summary: Team configuration settings have been modified
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/TeamConfigurationUpdatedPayload'
+      examples:
+        - name: Enforcement Level Change
+          summary: Team enforcement level changed
+          payload:
+            eventId: "evt_config_001"
+            timestamp: "2025-01-20T11:00:00Z"
+            correlationId: "corr_config_001"
+            source: "team-service"
+            data:
+              teamId: "team_456"
+              updatedBy: "admin@cycletime.dev"
+              changes:
+                enforcement_level:
+                  previous: "warning"
+                  current: "blocking"
+                notification_settings:
+                  slack_enabled: true
+                  email_enabled: false
+              affected_services: ["standards-engine", "notification-service"]
+
+    MCPStandardsRequested:
+      name: MCPStandardsRequested
+      title: MCP Standards Requested
+      summary: MCP server has requested standards for AI agent
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/MCPStandardsRequestedPayload'
+      examples:
+        - name: Real-time Standards Request
+          summary: MCP requesting standards for coding session
+          payload:
+            eventId: "evt_mcp_001"
+            timestamp: "2025-01-20T10:38:00Z"
+            correlationId: "corr_mcp_001"
+            source: "mcp-server"
+            data:
+              requestId: "mcp_req_456"
+              sessionId: "session_789"
+              teamId: "team_456"
+              projectId: "proj_123"
+              toolId: "claude_code"
+              request_context:
+                language: "typescript"
+                file_type: "service"
+                task_type: "implementation"
+              standards_types: ["coding", "testing", "documentation"]
+              response_format: "contextual_guidance"
+
+    TemplateUsed:
+      name: TemplateUsed
+      title: Standards Template Used
+      summary: A standards template has been applied to a team
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/TemplateUsedPayload'
+      examples:
+        - name: TypeScript Template Applied
+          summary: TypeScript best practices template applied
+          payload:
+            eventId: "evt_template_001"
+            timestamp: "2025-01-20T11:15:00Z"
+            correlationId: "corr_template_001"
+            source: "standards-engine"
+            data:
+              templateId: "tmpl_typescript_001"
+              templateName: "TypeScript Best Practices"
+              teamId: "team_456"
+              appliedBy: "admin@cycletime.dev"
+              rules_added: 15
+              customizations: 3
+              inheritance_mode: "merge"
+
+    EnforcementTriggered:
+      name: EnforcementTriggered
+      title: Standards Enforcement Triggered
+      summary: Standards enforcement action has been triggered
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/EnforcementTriggeredPayload'
+      examples:
+        - name: PR Blocked
+          summary: Pull request blocked due to violations
+          payload:
+            eventId: "evt_enforcement_001"
+            timestamp: "2025-01-20T11:20:00Z"
+            correlationId: "corr_enforcement_001"
+            source: "standards-engine"
+            data:
+              enforcementId: "enf_001"
+              teamId: "team_456"
+              projectId: "proj_123"
+              action: "block_pr"
+              reason: "standards_violations"
+              target:
+                type: "pull_request"
+                id: "pr_456"
+              violations:
+                error: 3
+                warning: 7
+                info: 2
+              enforcement_level: "blocking"
+              auto_fixable_violations: 2
+
+  schemas:
+    # Common Event Metadata
+    BaseEventPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          description: Unique event identifier
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        correlationId:
+          type: string
+          description: Correlation ID for tracking related events
+        source:
+          type: string
+          description: Service that generated the event
+        version:
+          type: string
+          default: "1.0"
+          description: Event schema version
+      required:
+        - eventId
+        - timestamp
+        - source
+
+    # Standards Analysis Events
+    StandardsAnalyzedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                analysisId:
+                  type: string
+                  description: Unique analysis identifier
+                teamId:
+                  type: string
+                  format: uuid
+                projectId:
+                  type: string
+                  format: uuid
+                files:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      path:
+                        type: string
+                      language:
+                        type: string
+                      score:
+                        type: number
+                        minimum: 0
+                        maximum: 100
+                      violations_count:
+                        type: integer
+                        minimum: 0
+                    required:
+                      - path
+                      - language
+                      - score
+                      - violations_count
+                overall_score:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                total_violations:
+                  type: integer
+                  minimum: 0
+                analysis_duration_ms:
+                  type: number
+                triggered_by:
+                  type: string
+                  description: What triggered this analysis
+              required:
+                - analysisId
+                - teamId
+                - projectId
+                - files
+                - overall_score
+                - total_violations
+
+    # Compliance Events
+    ComplianceViolationPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                violationId:
+                  type: string
+                teamId:
+                  type: string
+                  format: uuid
+                projectId:
+                  type: string
+                  format: uuid
+                standardId:
+                  type: string
+                ruleId:
+                  type: string
+                severity:
+                  type: string
+                  enum: [error, warning, info]
+                message:
+                  type: string
+                file_path:
+                  type: string
+                line:
+                  type: integer
+                  minimum: 1
+                column:
+                  type: integer
+                  minimum: 1
+                fix_available:
+                  type: boolean
+                auto_fixable:
+                  type: boolean
+                enforcement_level:
+                  type: string
+                  enum: [advisory, warning, blocking]
+                suggested_fix:
+                  type: string
+                context:
+                  type: object
+                  properties:
+                    commit_id:
+                      type: string
+                    pull_request_id:
+                      type: string
+                    branch:
+                      type: string
+              required:
+                - violationId
+                - teamId
+                - standardId
+                - ruleId
+                - severity
+                - message
+                - enforcement_level
+
+    CompliancePassedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                checkId:
+                  type: string
+                teamId:
+                  type: string
+                  format: uuid
+                projectId:
+                  type: string
+                  format: uuid
+                files_checked:
+                  type: integer
+                  minimum: 0
+                rules_passed:
+                  type: integer
+                  minimum: 0
+                overall_score:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                previous_score:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                improvement:
+                  type: number
+                  description: Score improvement from previous check
+                context:
+                  type: object
+                  properties:
+                    commit_id:
+                      type: string
+                    pull_request_id:
+                      type: string
+                    analysis_duration_ms:
+                      type: number
+              required:
+                - checkId
+                - teamId
+                - files_checked
+                - rules_passed
+                - overall_score
+
+    # Standards Management Events
+    StandardsUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                teamId:
+                  type: string
+                  format: uuid
+                updateType:
+                  type: string
+                  enum: [rules_added, rules_removed, rules_modified, enforcement_changed, template_applied]
+                updatedBy:
+                  type: string
+                  description: User ID who made the update
+                changes:
+                  type: object
+                  properties:
+                    added_rules:
+                      type: integer
+                    removed_rules:
+                      type: integer
+                    modified_rules:
+                      type: integer
+                  additionalProperties: true
+                enforcement_level:
+                  type: string
+                  enum: [advisory, warning, blocking]
+                affected_projects:
+                  type: array
+                  items:
+                    type: string
+                notification_sent:
+                  type: boolean
+                  default: false
+              required:
+                - teamId
+                - updateType
+                - updatedBy
+                - enforcement_level
+
+    # Guidance Events
+    GuidanceDeliveredPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                guidanceId:
+                  type: string
+                requestId:
+                  type: string
+                  description: Original request ID that triggered guidance
+                teamId:
+                  type: string
+                  format: uuid
+                delivery_method:
+                  type: string
+                  enum: [mcp, api, webhook]
+                guidance_type:
+                  type: string
+                  enum: [real_time, on_demand, scheduled]
+                language:
+                  type: string
+                context:
+                  type: string
+                  enum: [code_completion, code_review, documentation, testing]
+                standards_applied:
+                  type: array
+                  items:
+                    type: string
+                response_time_ms:
+                  type: number
+                cache_hit:
+                  type: boolean
+                  default: false
+              required:
+                - guidanceId
+                - requestId
+                - teamId
+                - delivery_method
+                - guidance_type
+                - response_time_ms
+
+    # Trigger Events
+    CodeCommittedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                commitId:
+                  type: string
+                repository:
+                  type: string
+                branch:
+                  type: string
+                author:
+                  type: string
+                  format: email
+                message:
+                  type: string
+                files_changed:
+                  type: integer
+                  minimum: 0
+                lines_added:
+                  type: integer
+                  minimum: 0
+                lines_deleted:
+                  type: integer
+                  minimum: 0
+                teamId:
+                  type: string
+                  format: uuid
+                projectId:
+                  type: string
+                  format: uuid
+                parents:
+                  type: array
+                  items:
+                    type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - commitId
+                - repository
+                - branch
+                - author
+                - message
+                - teamId
+                - projectId
+
+    PullRequestOpenedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                pullRequestId:
+                  type: string
+                repository:
+                  type: string
+                number:
+                  type: integer
+                title:
+                  type: string
+                description:
+                  type: string
+                author:
+                  type: string
+                  format: email
+                source_branch:
+                  type: string
+                target_branch:
+                  type: string
+                files_changed:
+                  type: integer
+                  minimum: 0
+                teamId:
+                  type: string
+                  format: uuid
+                projectId:
+                  type: string
+                  format: uuid
+                requires_compliance_check:
+                  type: boolean
+                  default: true
+                draft:
+                  type: boolean
+                  default: false
+                labels:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - pullRequestId
+                - repository
+                - number
+                - title
+                - author
+                - source_branch
+                - target_branch
+                - teamId
+                - projectId
+
+    AIRequestStartedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                requestId:
+                  type: string
+                agentId:
+                  type: string
+                teamId:
+                  type: string
+                  format: uuid
+                projectId:
+                  type: string
+                  format: uuid
+                request_type:
+                  type: string
+                  enum: [code_completion, code_review, documentation, refactoring, debugging]
+                language:
+                  type: string
+                context:
+                  type: object
+                  properties:
+                    file_path:
+                      type: string
+                    line:
+                      type: integer
+                    column:
+                      type: integer
+                    surrounding_code:
+                      type: string
+                    intent:
+                      type: string
+                  additionalProperties: true
+                urgency:
+                  type: string
+                  enum: [real_time, normal, low]
+                  default: normal
+                preferences:
+                  type: object
+                  additionalProperties: true
+              required:
+                - requestId
+                - agentId
+                - teamId
+                - request_type
+                - urgency
+
+    TeamConfigurationUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                teamId:
+                  type: string
+                  format: uuid
+                updatedBy:
+                  type: string
+                  format: email
+                changes:
+                  type: object
+                  additionalProperties: true
+                affected_services:
+                  type: array
+                  items:
+                    type: string
+                notification_channels:
+                  type: array
+                  items:
+                    type: string
+                    enum: [slack, email, webhook]
+              required:
+                - teamId
+                - updatedBy
+                - changes
+                - affected_services
+
+    MCPStandardsRequestedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                requestId:
+                  type: string
+                sessionId:
+                  type: string
+                teamId:
+                  type: string
+                  format: uuid
+                projectId:
+                  type: string
+                  format: uuid
+                toolId:
+                  type: string
+                  enum: [claude_code, cursor, vscode, jetbrains]
+                request_context:
+                  type: object
+                  properties:
+                    language:
+                      type: string
+                    file_type:
+                      type: string
+                    task_type:
+                      type: string
+                      enum: [implementation, testing, documentation, refactoring]
+                    complexity:
+                      type: string
+                      enum: [simple, medium, complex]
+                  required:
+                    - language
+                    - task_type
+                standards_types:
+                  type: array
+                  items:
+                    type: string
+                    enum: [coding, testing, documentation, architecture, security]
+                response_format:
+                  type: string
+                  enum: [contextual_guidance, rule_list, examples, templates]
+                  default: contextual_guidance
+                cache_preference:
+                  type: string
+                  enum: [prefer_cache, fresh_only, cache_fallback]
+                  default: prefer_cache
+              required:
+                - requestId
+                - sessionId
+                - teamId
+                - toolId
+                - request_context
+                - standards_types
+                - response_format
+
+    TemplateUsedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                templateId:
+                  type: string
+                templateName:
+                  type: string
+                templateVersion:
+                  type: string
+                teamId:
+                  type: string
+                  format: uuid
+                appliedBy:
+                  type: string
+                  format: email
+                rules_added:
+                  type: integer
+                  minimum: 0
+                rules_overridden:
+                  type: integer
+                  minimum: 0
+                customizations:
+                  type: integer
+                  minimum: 0
+                inheritance_mode:
+                  type: string
+                  enum: [replace, merge, overlay]
+                  default: merge
+                success:
+                  type: boolean
+                errors:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - templateId
+                - templateName
+                - teamId
+                - appliedBy
+                - rules_added
+                - inheritance_mode
+                - success
+
+    EnforcementTriggeredPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventPayload'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                enforcementId:
+                  type: string
+                teamId:
+                  type: string
+                  format: uuid
+                projectId:
+                  type: string
+                  format: uuid
+                action:
+                  type: string
+                  enum: [block_pr, block_commit, notify_only, auto_fix, escalate]
+                reason:
+                  type: string
+                  enum: [standards_violations, policy_breach, security_concern, quality_threshold]
+                target:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [pull_request, commit, deployment, release]
+                    id:
+                      type: string
+                  required:
+                    - type
+                    - id
+                violations:
+                  type: object
+                  properties:
+                    error:
+                      type: integer
+                    warning:
+                      type: integer
+                    info:
+                      type: integer
+                  required:
+                    - error
+                    - warning
+                    - info
+                enforcement_level:
+                  type: string
+                  enum: [advisory, warning, blocking]
+                auto_fixable_violations:
+                  type: integer
+                  minimum: 0
+                manual_review_required:
+                  type: boolean
+                escalation_contacts:
+                  type: array
+                  items:
+                    type: string
+                    format: email
+              required:
+                - enforcementId
+                - teamId
+                - action
+                - reason
+                - target
+                - violations
+                - enforcement_level
+
+  messageTraits:
+    commonHeaders:
+      headers:
+        type: object
+        properties:
+          eventType:
+            type: string
+            description: Type of event being published
+          eventVersion:
+            type: string
+            description: Version of the event schema
+            default: "1.0"
+          priority:
+            type: string
+            enum: [low, normal, high, critical]
+            default: normal
+            description: Event processing priority
+          retry:
+            type: boolean
+            default: true
+            description: Whether this event should be retried on failure
+          ttl:
+            type: integer
+            description: Time to live in seconds
+            default: 3600
+        required:
+          - eventType
+
+tags:
+  - name: publish
+    description: Events published by Standards Engine
+  - name: subscribe
+    description: Events consumed by Standards Engine
+  - name: analysis
+    description: Code analysis related events
+  - name: compliance
+    description: Compliance monitoring events
+  - name: guidance
+    description: Real-time guidance delivery
+  - name: configuration
+    description: Team and standards configuration
+  - name: triggers
+    description: Events that trigger standards processing
+  - name: ai
+    description: AI agent integration events
+  - name: mcp
+    description: MCP server integration events
+  - name: templates
+    description: Standards template usage
+  - name: enforcement
+    description: Standards enforcement actions
+
+externalDocs:
+  description: Standards Engine Event Architecture Documentation
+  url: https://docs.cycletime.dev/standards-engine/events

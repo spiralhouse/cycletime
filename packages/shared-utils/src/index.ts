@@ -80,7 +80,11 @@ export {
   minLength,
   maxLength,
   email,
-  url,
+  url
+} from './validation';
+
+// Export types separately to satisfy isolatedModules requirement
+export type {
   ValidationFunction,
   ValidationResult,
   PasswordStrength
