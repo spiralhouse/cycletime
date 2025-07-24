@@ -268,16 +268,36 @@ jobs:
             echo "Using cached dependencies"
           fi
 
+      - name: Generate Prisma client (if needed)
+        run: |
+          if [ ! -d "node_modules/.prisma" ]; then
+            echo "Generating Prisma client"
+            npx prisma generate
+          else
+            echo "Prisma client already generated"
+          fi
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
+
+      - name: Build packages (if needed)
+        run: |
+          if [ ! -d "packages/shared-utils/dist" ] || [ ! -d "packages/shared-types/dist" ]; then
+            echo "Building shared packages for tests"
+            npm run build
+          else
+            echo "Shared packages already built"
+          fi
+
       - name: Run unit tests
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "Running unit tests for affected packages only"
             # Ensure we have the base branch for comparison
             git fetch origin ${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }}
-            npm run test:unit -- --filter="...[origin/${{ github.event.pull_request.base.ref }}]" -- --maxWorkers=2
+            npm run test:unit -- --filter="...[origin/${{ github.event.pull_request.base.ref }}]" --continue -- --maxWorkers=2
           else
             echo "Running all unit tests for push to main"
-            npm run test:unit -- --maxWorkers=2
+            npm run test:unit -- --continue -- --maxWorkers=2
           fi
         env:
           NODE_ENV: test
@@ -355,10 +375,10 @@ jobs:
             echo "Running integration tests for affected packages only"
             # Ensure we have the base branch for comparison
             git fetch origin ${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }}
-            npm run test:integration -- --filter="...[origin/${{ github.event.pull_request.base.ref }}]" -- --maxWorkers=2
+            npm run test:integration -- --filter="...[origin/${{ github.event.pull_request.base.ref }}]" --continue -- --maxWorkers=2
           else
             echo "Running all integration tests for push to main"
-            npm run test:integration -- --maxWorkers=2
+            npm run test:integration -- --continue -- --maxWorkers=2
           fi
         env:
           NODE_ENV: test
