@@ -65,6 +65,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -105,7 +107,7 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "Building only affected packages for PR"
-            npm run build -- --filter="[origin/${{ github.event.pull_request.base.ref }}]"
+            npm run build -- --filter="[HEAD^1]"
           else
             echo "Building all packages for push to main"
             npm run build
@@ -158,7 +160,7 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "Linting only affected packages for PR"
-            npm run lint -- --filter="[origin/${{ github.event.pull_request.base.ref }}]"
+            npm run lint -- --filter="[HEAD^1]"
           else
             echo "Linting all packages for push to main"
             npm run lint
@@ -197,7 +199,7 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "Type checking only affected packages for PR"
-            npm run typecheck -- --filter="[origin/${{ github.event.pull_request.base.ref }}]"
+            npm run typecheck -- --filter="[HEAD^1]"
           else
             echo "Type checking all packages for push to main"
             npm run typecheck
@@ -237,7 +239,7 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "Running unit tests for affected packages only"
-            npm run test:unit -- --filter="[origin/${{ github.event.pull_request.base.ref }}]" -- --maxWorkers=2
+            npm run test:unit -- --filter="[HEAD^1]" -- --maxWorkers=2
           else
             echo "Running all unit tests for push to main"
             npm run test:unit -- --maxWorkers=2
@@ -307,7 +309,7 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "Running integration tests for affected packages only"
-            npm run test:integration -- --filter="[origin/${{ github.event.pull_request.base.ref }}]" -- --maxWorkers=2
+            npm run test:integration -- --filter="[HEAD^1]" -- --maxWorkers=2
           else
             echo "Running all integration tests for push to main"
             npm run test:integration -- --maxWorkers=2
