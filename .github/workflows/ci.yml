@@ -156,6 +156,15 @@ jobs:
             .turbo
           key: build-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
 
+      - name: Install dependencies (if cache miss)
+        run: |
+          if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
+            echo "Cache miss detected, installing dependencies"
+            npm ci
+          else
+            echo "Using cached dependencies"
+          fi
+
       - name: Run lint
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -194,6 +203,15 @@ jobs:
             packages/*/node_modules/.cache
             .turbo
           key: build-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
+
+      - name: Install dependencies (if cache miss)
+        run: |
+          if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
+            echo "Cache miss detected, installing dependencies"
+            npm ci
+          else
+            echo "Using cached dependencies"
+          fi
 
       - name: Run type check
         run: |
@@ -234,6 +252,15 @@ jobs:
             packages/*/node_modules/.cache
             .turbo
           key: build-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
+
+      - name: Install dependencies (if cache miss)
+        run: |
+          if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
+            echo "Cache miss detected, installing dependencies"
+            npm ci
+          else
+            echo "Using cached dependencies"
+          fi
 
       - name: Run unit tests
         run: |
@@ -299,6 +326,15 @@ jobs:
             packages/*/node_modules/.cache
             .turbo
           key: build-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
+
+      - name: Install dependencies (if cache miss)
+        run: |
+          if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
+            echo "Cache miss detected, installing dependencies"
+            npm ci
+          else
+            echo "Using cached dependencies"
+          fi
 
       - name: Run database migrations
         run: npx prisma migrate deploy
