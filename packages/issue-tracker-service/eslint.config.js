@@ -1,5 +1,6 @@
 const typescriptEslint = require('@typescript-eslint/eslint-plugin');
 const typescriptParser = require('@typescript-eslint/parser');
+const globals = require('globals');
 
 module.exports = [
   {
@@ -12,9 +13,9 @@ module.exports = [
         project: './tsconfig.json',
       },
       globals: {
-        node: true,
-        es6: true,
-        jest: true,
+        ...globals.node,
+        ...globals.es2022,
+        ...globals.jest,
       },
     },
     plugins: {
