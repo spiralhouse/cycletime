@@ -282,6 +282,7 @@ This checklist provides a step-by-step process for migrating Docker services to 
 - [ ] **Verify build dependencies**
   - [ ] Check `turbo.json` includes new package
   - [ ] Verify dependency graph is correct
+  - [ ] See [Build System Documentation](../development/build-system.md) for detailed configuration
   - [ ] Test parallel builds work correctly
 
 - [ ] **Test build commands**

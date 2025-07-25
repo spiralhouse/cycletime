@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides standardized templates and patterns for creating new TypeScript packages in the CycleTime monorepo. These templates ensure consistency, maintainability, and proper integration with the TurboRepo build system.
+This document provides standardized templates and patterns for creating new TypeScript packages in the CycleTime monorepo. These templates ensure consistency, maintainability, and proper integration with the TurboRepo build system. For detailed TurboRepo configuration, see [Build System Documentation](../development/build-system.md).
 
 ## Standard Package Templates
 
@@ -692,6 +692,8 @@ echo "   4. Update Docker Compose if needed"
 
 ## Related Documentation
 
-- [Service Migration Guide](./service-migration-guide.md)
-- [Migration Checklist](./migration-checklist.md)
-- [TurboRepo Monorepo Strategy](./monorepo-strategy.md)
+- [Service Migration Guide](./service-migration-guide.md) - Migration strategy and approach
+- [Migration Checklist](./migration-checklist.md) - Step-by-step migration process
+- [Monorepo Strategy](./monorepo-strategy.md) - Strategic monorepo overview
+- [Build System](../development/build-system.md) - TurboRepo configuration and usage
+- [Testing Guide](../development/testing-guide.md) - Package testing patterns

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide provides comprehensive patterns and guidelines for migrating Docker-based services to TypeScript packages within the CycleTime TurboRepo monorepo structure. The migration enables better code sharing, type safety, and development workflows while maintaining service isolation.
+This guide provides comprehensive patterns and guidelines for migrating Docker-based services to TypeScript packages within the CycleTime TurboRepo monorepo structure. The migration enables better code sharing, type safety, and development workflows while maintaining service isolation. For detailed TurboRepo configuration, see [Build System Documentation](../development/build-system.md).
 
 ## Migration Strategy
 
@@ -361,5 +361,7 @@ The migration templates directory contains ready-to-use templates:
 - [Package Creation Patterns](./package-creation-patterns.md) - Detailed templates and patterns
 - [Migration Checklist](./migration-checklist.md) - Step-by-step migration process
 - [Migration Examples](./migration-examples.md) - Real-world migration examples
-- [TurboRepo Monorepo Strategy](./monorepo-strategy.md) - Build system strategy
-- [CI/CD Pipeline](./ci-cd-pipeline.md) - Deployment automation
+- [Monorepo Strategy](./monorepo-strategy.md) - Strategic monorepo overview
+- [Build System](../development/build-system.md) - TurboRepo configuration and usage
+- [CI/CD Pipeline](./ci-cd-pipeline.md) - GitHub Actions automation
+- [Testing Guide](../development/testing-guide.md) - Local-first testing methodology
