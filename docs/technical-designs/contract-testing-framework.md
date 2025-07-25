@@ -473,61 +473,6 @@ For each service package:
 
 ## CI/CD Integration Requirements
 
-### GitHub Actions Workflow Integration
-
-#### Contract Testing Workflow
-
-```yaml
-name: Contract Testing
-
-on: [push, pull_request]
-
-jobs:
-  contract-tests:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        package: [ai-service, api-gateway, document-service, ...]
-    
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build shared testing framework
-        run: npm run build --workspace=@cycletime/shared-testing
-      
-      - name: Run contract tests
-        run: npm run test:contract --workspace=@cycletime/${{ matrix.package }}
-      
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
-        with:
-          directory: packages/${{ matrix.package }}/coverage
-```
-
-#### Quality Gates
-
-**Pre-commit Validation**:
-- Contract tests must pass before commit allowed
-- Coverage threshold (80%) must be maintained
-- No contract specification violations permitted
-
-**Pull Request Validation**:
-- All contract tests pass for changed services
-- Contract compatibility validated across service boundaries  
-- Performance regression testing for contract test execution
-
-**Deployment Validation**:
-- Contract tests pass for all services before staging deployment
-- Cross-environment contract validation (staging contracts work in production)
-- Contract specification versioning validated
-
 ### TurboRepo Integration
 
 #### Updated turbo.json Configuration
@@ -536,19 +481,133 @@ jobs:
 {
   "tasks": {
     "test:contract": {
-      "dependsOn": ["build", "^build"],
+      "dependsOn": ["build"],
       "outputs": ["coverage/**"],
       "cache": true,
-      "env": ["NODE_ENV"]
+      "passThroughEnv": ["NODE_ENV"]
     },
     "test:all": {
-      "dependsOn": ["test:contract", "test:unit"],
+      "dependsOn": ["test:contract", "test:unit", "test:integration"],
       "outputs": ["coverage/**"],
       "cache": true
     }
   }
 }
 ```
+
+**Task Dependencies**:
+- `test:contract` depends on `build` to ensure shared packages are available
+- No `^build` dependency needed since contract tests are schema-only with mocks
+- Caching enabled for contract test results and coverage artifacts
+
+### GitHub Actions Workflow Integration
+
+#### Integration with Existing CI Pipeline
+
+Add contract testing as a new parallel job to the existing `.github/workflows/ci.yml`:
+
+```yaml
+# Add to existing jobs section alongside unit-tests and integration-tests
+contract-tests:
+  name: Contract Tests
+  runs-on: ubuntu-latest
+  needs: [changes, build]
+  if: needs.changes.outputs.docs-only != 'true'
+  
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+
+    - name: Restore build artifacts
+      uses: actions/cache@v4
+      with:
+        path: |
+          node_modules
+          packages/*/dist
+          packages/*/node_modules/.cache
+          .turbo
+        key: build-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
+
+    - name: Install dependencies (if cache miss)
+      run: |
+        if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
+          echo "Cache miss detected, installing dependencies"
+          npm ci
+        else
+          echo "Using cached dependencies"
+        fi
+
+    - name: Build packages (if needed)
+      run: |
+        if [ ! -d "packages/shared-testing/dist" ] || [ ! -d "packages/shared-utils/dist" ]; then
+          echo "Building shared packages for contract tests"
+          npm run build
+        else
+          echo "Shared packages already built"
+        fi
+
+    - name: Run contract tests
+      run: |
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          echo "Running contract tests for affected packages only"
+          # Ensure we have the base branch for comparison
+          git fetch origin ${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }}
+          npm run test:contract -- --filter="...[origin/${{ github.event.pull_request.base.ref }}]" --continue -- --maxWorkers=2
+        else
+          echo "Running all contract tests for push to main"
+          npm run test:contract -- --continue -- --maxWorkers=2
+        fi
+      env:
+        NODE_ENV: test
+
+    - name: Upload coverage reports
+      run: echo "Coverage reporting not yet configured - skipping for now"
+      # TODO: Enable when test coverage is configured
+      # uses: codecov/codecov-action@v4
+      # with:
+      #   token: ${{ secrets.CODECOV_TOKEN }}
+      #   fail_ci_if_error: false
+```
+
+#### Key Integration Points
+
+**Affected Package Filtering**:
+- Contract tests use same PR optimization as unit/integration tests
+- Only run contract tests for packages changed in PR
+- Full contract test suite runs on main branch pushes
+
+**Build Dependencies**:
+- Contract tests require shared packages (`shared-testing`, `shared-utils`, `shared-types`) to be built
+- Uses existing build artifact caching strategy
+- No service dependencies (PostgreSQL/Redis) required - mock-only testing
+
+**Performance Considerations**:
+- Uses `maxWorkers=2` like other test jobs for consistent resource usage
+- Runs in parallel with unit and integration tests for faster CI feedback
+- Leverages TurboRepo caching for contract test results
+
+### Quality Gates
+
+**Pre-commit Validation**:
+- Contract tests must pass before commit allowed (via git hooks)
+- No contract specification violations permitted
+- OpenAPI/AsyncAPI schema validation required
+
+**Pull Request Validation**:
+- Contract tests pass for all affected packages
+- Contract compatibility validated across service boundaries  
+- Integrated with existing docs-only change detection for performance
+
+**Deployment Validation**:
+- Contract tests pass for all services before staging deployment
+- Contract specification versioning validated
+- No live service dependencies ensure consistent test environment
 
 ## Monitoring and Alerting
 
