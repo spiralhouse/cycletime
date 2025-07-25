@@ -33,4 +33,9 @@ export default {
   },
   setupFiles: ['<rootDir>/src/__tests__/setup.ts'],
   setupFilesAfterEnv: [],
+  testTimeout: 15000, // Reduced timeout for faster CI failure detection
+  // Force exit after tests to prevent hanging
+  forceExit: true,
+  // Detect open handles that might cause hanging
+  detectOpenHandles: true
 };

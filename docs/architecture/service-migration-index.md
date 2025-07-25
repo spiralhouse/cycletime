@@ -242,9 +242,11 @@ When updating migration documentation:
 
 ## Related Architecture Documentation
 
-- [TurboRepo Monorepo Strategy](./monorepo-strategy.md)
-- [CI/CD Pipeline](./ci-cd-pipeline.md)
-- [System Overview](./system-overview.md)
+- [Monorepo Strategy](./monorepo-strategy.md) - Strategic overview of monorepo architecture
+- [Build System](../development/build-system.md) - TurboRepo configuration and usage
+- [CI/CD Pipeline](./ci-cd-pipeline.md) - Automated testing and deployment
+- [Testing Guide](../development/testing-guide.md) - Local-first testing methodology
+- [System Overview](./system-overview.md) - Overall system architecture
 
 ---
 

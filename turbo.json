@@ -6,11 +6,32 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "coverage/**"]
+      "outputs": ["dist/**", "coverage/**"],
+      "cache": true
     },
     "test": {
       "dependsOn": ["build"],
-      "outputs": ["coverage/**"]
+      "outputs": ["coverage/**"],
+      "cache": true
+    },
+    "test:unit": {
+      "outputs": ["coverage/**"],
+      "cache": true,
+      "passThroughEnv": ["NODE_ENV"]
+    },
+    "test:integration": {
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**"],
+      "cache": true,
+      "passThroughEnv": [
+        "NODE_ENV",
+        "DATABASE_URL",
+        "REDIS_URL",
+        "GITHUB_CLIENT_ID",
+        "GITHUB_CLIENT_SECRET",
+        "GITHUB_REDIRECT_URI",
+        "JWT_SECRET"
+      ]
     },
     "lint": {
       "cache": true

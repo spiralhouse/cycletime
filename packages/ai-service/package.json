@@ -10,6 +10,8 @@
     "start": "node dist/index.js",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:unit": "jest --testPathIgnorePatterns=contract --testPathIgnorePatterns=integration",
+    "test:integration": "jest --testPathPattern=integration",
     "test:contract": "jest --testPathPattern=contract",
     "test:all": "jest && npm run test:contract",
     "lint": "eslint src/**/*.ts --no-warn-ignored",

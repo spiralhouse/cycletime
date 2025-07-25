@@ -1,5 +1,5 @@
 name: CI
-# CI pipeline with NODE_ENV=test fix for proper test isolation
+# Optimized CI pipeline with parallel job execution for faster feedback
 
 on:
   push:
@@ -7,10 +7,309 @@ on:
   pull_request:
     branches: [ main ]
 
+# Skip CI for docs-only changes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
-    name: Test
+  # Check if we can skip CI for docs-only changes
+  changes:
+    name: Detect Changes
     runs-on: ubuntu-latest
+    outputs:
+      docs-only: ${{ steps.changes.outputs.docs-only }}
+      has-code: ${{ steps.changes.outputs.has-code }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD)
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD~1)
+          fi
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          # Check if only docs were changed
+          DOCS_ONLY=true
+          HAS_CODE=false
+          
+          while read -r file; do
+            if [[ "$file" =~ ^(docs/|\.md$|README|LICENSE|\.gitignore|\.github/workflows/(?!ci\.yml)) ]]; then
+              echo "Docs file: $file"
+            else
+              echo "Code file: $file"
+              DOCS_ONLY=false
+              HAS_CODE=true
+            fi
+          done <<< "$CHANGED_FILES"
+          
+          echo "docs-only=$DOCS_ONLY" >> $GITHUB_OUTPUT
+          echo "has-code=$HAS_CODE" >> $GITHUB_OUTPUT
+
+  # Setup and build job - foundation for other jobs
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.docs-only != 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Prisma client
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.prisma
+            packages/*/node_modules/.prisma
+          key: prisma-${{ runner.os }}-${{ hashFiles('**/schema.prisma') }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            prisma-${{ runner.os }}-${{ hashFiles('**/schema.prisma') }}-
+            prisma-${{ runner.os }}-
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
+
+      - name: Build packages
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Building only affected packages for PR"
+            # Ensure we have the base branch for comparison
+            git fetch origin ${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }}
+            npm run build -- --filter="...[origin/${{ github.event.pull_request.base.ref }}]"
+          else
+            echo "Building all packages for push to main"
+            npm run build
+          fi
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+      - name: Cache build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            packages/*/dist
+            packages/*/node_modules/.cache
+            .turbo
+          key: build-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            build-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
+            build-${{ runner.os }}-
+
+  # Quality checks that can run in parallel
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    needs: [changes, build]
+    if: needs.changes.outputs.docs-only != 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Restore build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            packages/*/dist
+            packages/*/node_modules/.cache
+            .turbo
+          key: build-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
+
+      - name: Install dependencies (if cache miss)
+        run: |
+          if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
+            echo "Cache miss detected, installing dependencies"
+            npm ci
+          else
+            echo "Using cached dependencies"
+          fi
+
+      - name: Run lint
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Linting only affected packages for PR"
+            # Ensure we have the base branch for comparison
+            git fetch origin ${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }}
+            npm run lint -- --filter="...[origin/${{ github.event.pull_request.base.ref }}]"
+          else
+            echo "Linting all packages for push to main"
+            npm run lint
+          fi
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    needs: [changes, build]
+    if: needs.changes.outputs.docs-only != 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Restore build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            packages/*/dist
+            packages/*/node_modules/.cache
+            .turbo
+          key: build-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
+
+      - name: Install dependencies (if cache miss)
+        run: |
+          if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
+            echo "Cache miss detected, installing dependencies"
+            npm ci
+          else
+            echo "Using cached dependencies"
+          fi
+
+      - name: Run type check
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Type checking only affected packages for PR"
+            # Ensure we have the base branch for comparison
+            git fetch origin ${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }}
+            npm run typecheck -- --filter="...[origin/${{ github.event.pull_request.base.ref }}]"
+          else
+            echo "Type checking all packages for push to main"
+            npm run typecheck
+          fi
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+  # Unit tests - fast tests without external dependencies
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: [changes, build]
+    if: needs.changes.outputs.docs-only != 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Restore build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            packages/*/dist
+            packages/*/node_modules/.cache
+            .turbo
+          key: build-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
+
+      - name: Install dependencies (if cache miss)
+        run: |
+          if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
+            echo "Cache miss detected, installing dependencies"
+            npm ci
+          else
+            echo "Using cached dependencies"
+          fi
+
+      - name: Generate Prisma client (if needed)
+        run: |
+          if [ ! -d "node_modules/.prisma" ]; then
+            echo "Generating Prisma client"
+            npx prisma generate
+          else
+            echo "Prisma client already generated"
+          fi
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
+
+      - name: Build packages (if needed)
+        run: |
+          if [ ! -d "packages/shared-utils/dist" ] || [ ! -d "packages/shared-types/dist" ]; then
+            echo "Building shared packages for tests"
+            npm run build
+          else
+            echo "Shared packages already built"
+          fi
+
+      - name: Run unit tests
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Running unit tests for affected packages only"
+            # Ensure we have the base branch for comparison
+            git fetch origin ${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }}
+            npm run test:unit -- --filter="...[origin/${{ github.event.pull_request.base.ref }}]" --continue -- --maxWorkers=2
+          else
+            echo "Running all unit tests for push to main"
+            npm run test:unit -- --continue -- --maxWorkers=2
+          fi
+        env:
+          NODE_ENV: test
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+  # Integration tests - slower tests with database/redis dependencies
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [changes, build]
+    if: needs.changes.outputs.docs-only != 'true'
     
     services:
       postgres:
@@ -20,9 +319,9 @@ jobs:
           POSTGRES_DB: cycletime_test
         options: >-
           --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
         ports:
           - 5432:5432
 
@@ -30,9 +329,9 @@ jobs:
         image: redis:8
         options: >-
           --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
         ports:
           - 6379:6379
 
@@ -46,39 +345,41 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Restore build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            packages/*/dist
+            packages/*/node_modules/.cache
+            .turbo
+          key: build-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
 
-      - name: Generate Prisma client
-        run: npx prisma generate
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
+      - name: Install dependencies (if cache miss)
+        run: |
+          if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
+            echo "Cache miss detected, installing dependencies"
+            npm ci
+          else
+            echo "Using cached dependencies"
+          fi
 
       - name: Run database migrations
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cycletime_test
 
-      - name: Build packages
-        run: npm run build
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-
-      - name: Run lint
-        run: npm run lint
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-
-      - name: Run type check
-        run: npm run typecheck
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-
-      - name: Run tests
-        run: npm test
+      - name: Run integration tests
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Running integration tests for affected packages only"
+            # Ensure we have the base branch for comparison
+            git fetch origin ${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }}
+            npm run test:integration -- --filter="...[origin/${{ github.event.pull_request.base.ref }}]" --continue -- --maxWorkers=2
+          else
+            echo "Running all integration tests for push to main"
+            npm run test:integration -- --continue -- --maxWorkers=2
+          fi
         env:
           NODE_ENV: test
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}

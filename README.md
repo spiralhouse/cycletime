@@ -180,9 +180,32 @@ npm run adminer:web        # Open Adminer database admin
 npm run redis-insight:web  # Open Redis Insight
 ```
 
+## 📚 Documentation
+
+CycleTime maintains comprehensive documentation to support development workflows, architecture decisions, and project planning.
+
+### 📖 **[Documentation Index](./docs/INDEX.md)**
+Complete organized guide to all project documentation with helpful descriptions and target audiences.
+
+### 🚀 **Quick Start Docs**
+Essential reading for new contributors:
+- **[Build System Guide](./docs/development/build-system.md)** - TurboRepo workflows and package management
+- **[Testing Guide](./docs/development/testing-guide.md)** - Local-first testing with nektos/act CI simulation
+- **[Docker Development Environment](./docs/technical-designs/docker-development-environment.md)** - Local development setup
+
+### 🏗️ **Architecture Overview**
+- **[System Overview](./docs/architecture/system-overview.md)** - Complete system architecture
+- **[CI/CD Pipeline](./docs/architecture/ci-cd-pipeline.md)** - GitHub Actions parallel architecture
+- **[Monorepo Strategy](./docs/architecture/monorepo-strategy.md)** - Strategic approach and achievements
+
+### ⚙️ **Development Workflows**
+- **[MCP Setup](./docs/development/mcp-setup.md)** - AI coding tool integration
+- **[Service Migration Guide](./docs/architecture/service-migration-guide.md)** - Docker to TypeScript migration
+- **[Package Creation Patterns](./docs/architecture/package-creation-patterns.md)** - Standardized templates
+
 ### Project Structure
 
-- `/docs/` - Documentation and technical designs
+- `/docs/` - [Comprehensive documentation](./docs/INDEX.md) organized by category
 - `/database/` - Database initialization scripts
 - `/packages/` - Individual service packages (planned)
 - `/src/` - Core application code (planned)

@@ -15,5 +15,14 @@ module.exports = {
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
-  testTimeout: 30000
+  testTimeout: 15000, // Reduced timeout for faster CI failure detection
+  // Add specific timeout for integration tests
+  testMatch: [
+    '**/__tests__/**/*.ts',
+    '**/?(*.)+(spec|test).ts'
+  ],
+  // Force exit after tests to prevent hanging
+  forceExit: true,
+  // Detect open handles that might cause hanging
+  detectOpenHandles: true
 };

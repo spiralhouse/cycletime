@@ -235,9 +235,12 @@ npx turbo login
 4. **Analytics Review**: Regular review of cache hit ratios and performance
 
 ## Related Documentation
-- [TurboRepo Monorepo Strategy](./monorepo-strategy.md)
-- [CI/CD Pipeline Architecture](../architecture/ci-cd-pipeline.md)
-- [Development Environment Setup](../development/docker-development-environment.md)
+- [Monorepo Strategy](../architecture/monorepo-strategy.md) - Strategic overview of monorepo architecture
+- [Build System](../development/build-system.md) - Comprehensive TurboRepo configuration and usage
+- [CI/CD Pipeline Architecture](../architecture/ci-cd-pipeline.md) - GitHub Actions automation
+- [Development Environment Setup](../development/docker-development-environment.md) - Local development setup
+
+**Note**: This document is retained for historical reference. Current TurboRepo configuration and remote caching setup is documented in [Build System Documentation](../development/build-system.md).
 
 ## References
 - [TurboRepo Remote Caching Documentation](https://turbo.build/repo/docs/core-concepts/remote-caching)
