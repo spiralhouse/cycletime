@@ -2,7 +2,7 @@
 
 **Epic**: SPI-138  
 **Design Task**: SPI-188  
-**Author**: Development Team  
+**Author**: John Burbridge  
 **Date**: 2025-07-25  
 **Status**: Draft  
 

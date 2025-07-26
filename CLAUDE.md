@@ -92,6 +92,12 @@
   - Ensure comprehensive test coverage
   - Never skip the refactor step - clean code is maintainable code
 
+### Documentation Authorship
+- **Use "John Burbridge" as author** for all technical design documents
+- **Use "John Burbridge" as author** for formal documentation (architectural docs, specifications)
+- This ensures consistent authorship attribution across project documentation
+- Applied to documents in `/docs/technical-designs/` and `/docs/architecture/`
+
 ### Git Workflow
 - **Use Conventional Commits with specific types**:
   - `feat:` - New features or functionality
