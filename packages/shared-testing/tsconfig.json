@@ -7,6 +7,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "strict": true,
+    "noEmit": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "exactOptionalPropertyTypes": true,

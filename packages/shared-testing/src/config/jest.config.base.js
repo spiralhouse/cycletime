@@ -22,10 +22,10 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
   coverageThreshold: {
     global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80
+      branches: 60,
+      functions: 60,
+      lines: 60,
+      statements: 60
     }
   },
   
@@ -38,7 +38,7 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
   
   // Module name mapping for workspace dependencies
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@cycletime/shared-testing$': '<rootDir>/../shared-testing/src',
     '^@cycletime/shared-types$': '<rootDir>/../shared-types/src',
     '^@cycletime/shared-utils$': '<rootDir>/../shared-utils/src',

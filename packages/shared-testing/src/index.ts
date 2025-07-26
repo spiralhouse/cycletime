@@ -39,6 +39,5 @@ export type {
   PerformanceMetrics
 } from './types';
 
-// Re-export configuration files for external use
-export const JestBaseConfig = require('./config/jest.config.base.js');
-export const JestContractConfig = require('./config/jest.config.contract.js');
+// Configuration files are CommonJS modules - consumers should import them directly
+// Example: const baseConfig = require('@cycletime/shared-testing/dist/config/jest.config.base.js');
