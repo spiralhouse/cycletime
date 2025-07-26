@@ -167,7 +167,7 @@ export class TestDataGenerator {
         case 'url':
           return 'https://example.com';
         case 'date':
-          return new Date().toISOString().split('T')[0];
+          return new Date().toISOString().split('T')[0] || 'YYYY-MM-DD';
         case 'date-time':
           return new Date().toISOString();
         case 'uuid':

@@ -76,7 +76,7 @@ export interface MockEventBroker {
 
 export interface TestEnvironment {
   services: MockService[];
-  eventBroker?: MockEventBroker;
+  eventBroker?: MockEventBroker | undefined;
   cleanup(): Promise<void>;
 }
 

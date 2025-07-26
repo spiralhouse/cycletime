@@ -53,7 +53,7 @@ export function extendExpect(): void {
  */
 function toMatchContract(
   received: ValidationResult,
-  expected?: any
+  _expected?: any
 ): ContractMatcherResult {
   const pass = received.valid === true;
 

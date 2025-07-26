@@ -9,11 +9,12 @@ import { ValidationResult, CorrelationReport, EventSequence, ContractValidationO
 export class EventValidator {
   private asyncApiSpec: any = null;
   private specPath: string;
-  private options: ContractValidationOptions;
+  // @ts-ignore - Unused but kept for future validation features
+  private _options: ContractValidationOptions;
 
   constructor(specPath: string, options: ContractValidationOptions = {}) {
     this.specPath = specPath;
-    this.options = {
+    this._options = {
       strictMode: true,
       allowAdditionalProperties: false,
       validateExamples: true,
@@ -40,7 +41,7 @@ export class EventValidator {
   /**
    * Validate a published event against the AsyncAPI specification
    */
-  validatePublishedEvent(eventName: string, payload: any): ValidationResult {
+  validatePublishedEvent(eventName: string, _payload: any): ValidationResult {
     if (!this.asyncApiSpec) {
       return {
         valid: false,

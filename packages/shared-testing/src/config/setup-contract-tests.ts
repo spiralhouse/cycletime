@@ -26,7 +26,7 @@ afterAll(() => {
 });
 
 // Global error handler for contract test failures
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason, _promise) => {
   console.error('Unhandled Rejection in contract test:', reason);
   // Don't exit the process in test environment
 });

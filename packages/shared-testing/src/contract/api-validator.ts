@@ -6,7 +6,7 @@
 
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { ValidationResult, ValidationError, EndpointReport, ContractValidationOptions } from '../types';
+import { ValidationResult, EndpointReport, ContractValidationOptions } from '../types';
 
 export class ApiValidator {
   private ajv: Ajv;
@@ -63,7 +63,7 @@ export class ApiValidator {
   /**
    * Validate a request against the OpenAPI specification
    */
-  validateRequest(path: string, method: string, data: any): ValidationResult {
+  validateRequest(path: string, method: string, _data: any): ValidationResult {
     if (!this.openApiSpec) {
       return {
         valid: false,
@@ -115,7 +115,7 @@ export class ApiValidator {
   /**
    * Validate a response against the OpenAPI specification
    */
-  validateResponse(path: string, method: string, statusCode: number, data: any): ValidationResult {
+  validateResponse(_path: string, _method: string, _statusCode: number, _data: any): ValidationResult {
     if (!this.openApiSpec) {
       return {
         valid: false,
@@ -137,7 +137,7 @@ export class ApiValidator {
   /**
    * Validate endpoint availability
    */
-  async validateEndpointAvailability(baseUrl: string): Promise<EndpointReport[]> {
+  async validateEndpointAvailability(_baseUrl: string): Promise<EndpointReport[]> {
     if (!this.openApiSpec) {
       throw new Error('OpenAPI specification not loaded. Call loadSpecification() first.');
     }

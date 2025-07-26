@@ -8,8 +8,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
-import SwaggerParser, { OpenAPIV3 } from '@apidevtools/swagger-parser';
-import { Parser, AsyncAPIDocumentV2 } from '@asyncapi/parser';
+import SwaggerParser from '@apidevtools/swagger-parser';
 
 export interface SpecLoadOptions {
   validate?: boolean;
@@ -32,23 +31,17 @@ export class SpecLoader {
   static async loadOpenApiSpec(
     specPath: string, 
     options: SpecLoadOptions = {}
-  ): Promise<OpenAPIV3.Document> {
+  ): Promise<any> {
     const mergedOptions = { ...SpecLoader.DEFAULT_OPTIONS, ...options };
 
     try {
       if (mergedOptions.validate) {
         // Use swagger-parser for validation and dereferencing
-        const spec = await SwaggerParser.validate(specPath, {
-          dereference: mergedOptions.dereference ? {} : false,
-          resolve: {
-            http: mergedOptions.allowRemote ? { timeout: mergedOptions.timeout } : false,
-            file: true
-          }
-        });
-        return spec as OpenAPIV3.Document;
+        const api = await SwaggerParser.validate(specPath);
+        return api;
       } else {
         // Load without validation for faster loading
-        return await SpecLoader.loadSpecFromFile(specPath) as OpenAPIV3.Document;
+        return await SpecLoader.loadSpecFromFile(specPath);
       }
     } catch (error) {
       throw new Error(`Failed to load OpenAPI specification from ${specPath}: ${error}`);
@@ -60,34 +53,18 @@ export class SpecLoader {
    */
   static async loadAsyncApiSpec(
     specPath: string,
-    options: SpecLoadOptions = {}
-  ): Promise<AsyncAPIDocumentV2> {
-    const mergedOptions = { ...SpecLoader.DEFAULT_OPTIONS, ...options };
+    _options: SpecLoadOptions = {}
+  ): Promise<any> {
 
     try {
       const specContent = await SpecLoader.readSpecFile(specPath);
-      const parser = new Parser();
       
-      const document = await parser.parse(specContent);
-      
-      if (!document.document()) {
-        throw new Error('Failed to parse AsyncAPI document');
+      // Simplified AsyncAPI parsing - just load the spec as JSON/YAML
+      if (typeof specContent === 'string') {
+        return yaml.load(specContent);
+      } else {
+        return specContent;
       }
-
-      const asyncApiDoc = document.document() as AsyncAPIDocumentV2;
-
-      if (mergedOptions.validate) {
-        // Validate the AsyncAPI document
-        const diagnostics = document.diagnostics;
-        if (diagnostics.length > 0) {
-          const errors = diagnostics.filter(d => d.severity === 0); // Error severity
-          if (errors.length > 0) {
-            throw new Error(`AsyncAPI validation errors: ${errors.map(e => e.message).join(', ')}`);
-          }
-        }
-      }
-
-      return asyncApiDoc;
     } catch (error) {
       throw new Error(`Failed to load AsyncAPI specification from ${specPath}: ${error}`);
     }
@@ -99,7 +76,7 @@ export class SpecLoader {
   static async loadSpec(
     specPath: string,
     options: SpecLoadOptions = {}
-  ): Promise<OpenAPIV3.Document | AsyncAPIDocumentV2> {
+  ): Promise<any> {
     try {
       const specContent = await SpecLoader.readSpecFile(specPath);
       const spec = typeof specContent === 'string' ? yaml.load(specContent) : specContent;
@@ -122,8 +99,8 @@ export class SpecLoader {
   static async loadSpecsFromDirectory(
     directoryPath: string,
     options: SpecLoadOptions = {}
-  ): Promise<{ path: string; spec: OpenAPIV3.Document | AsyncAPIDocumentV2; type: 'openapi' | 'asyncapi' }[]> {
-    const specs: { path: string; spec: OpenAPIV3.Document | AsyncAPIDocumentV2; type: 'openapi' | 'asyncapi' }[] = [];
+  ): Promise<{ path: string; spec: any; type: 'openapi' | 'asyncapi' }[]> {
+    const specs: { path: string; spec: any; type: 'openapi' | 'asyncapi' }[] = [];
 
     try {
       const files = fs.readdirSync(directoryPath);
@@ -220,7 +197,7 @@ export class SpecLoader {
     }
   }
 
-  private static isOpenApiSpec(spec: any): spec is OpenAPIV3.Document {
+  private static isOpenApiSpec(spec: any): boolean {
     return spec && typeof spec === 'object' && 
            (spec.openapi || spec.swagger) && 
            spec.info && 

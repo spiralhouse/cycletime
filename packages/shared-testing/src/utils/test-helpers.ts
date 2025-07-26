@@ -46,7 +46,7 @@ export class TestHelpers {
 
     // Set Jest timeouts if in Jest environment
     if (typeof jest !== 'undefined') {
-      jest.setTimeout(mergedConfig.timeout.test);
+      jest.setTimeout(mergedConfig.timeout.test!);
     }
 
     return mergedConfig;
@@ -65,12 +65,12 @@ export class TestHelpers {
 
     describe(suiteName, () => {
       beforeAll(async () => {
-        jest.setTimeout(mergedConfig.timeout.setup);
+        jest.setTimeout(mergedConfig.timeout.setup!);
         await setupFn();
       }, mergedConfig.timeout.setup);
 
       afterAll(async () => {
-        jest.setTimeout(mergedConfig.timeout.teardown);
+        jest.setTimeout(mergedConfig.timeout.teardown!);
         if (mergedConfig.cleanup) {
           await teardownFn();
         }
@@ -160,12 +160,12 @@ export class TestHelpers {
     operationName: string = 'Operation'
   ): Promise<{ result: T; metrics: PerformanceMetrics }> {
     const startTime = Date.now();
-    const startMemory = process.memoryUsage();
+    // const _startMemory = process.memoryUsage(); // Future use for memory metrics
 
     try {
       const result = await operation();
       const endTime = Date.now();
-      const endMemory = process.memoryUsage();
+      // const _endMemory = process.memoryUsage(); // Future use for memory metrics
 
       const metrics: PerformanceMetrics = {
         responseTime: endTime - startTime,

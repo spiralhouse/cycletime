@@ -101,34 +101,38 @@ export class MockOrchestrator {
  * Basic mock service implementation
  */
 class BasicMockService implements MockService {
-  private spec: any;
-  private options: MockOptions;
-  private isRunning: boolean = false;
+  // @ts-ignore - Unused but kept for future implementation
+  private _spec: any;
+  // @ts-ignore - Unused but kept for future configuration features
+  private _options: MockOptions;
+  // @ts-ignore - Unused but kept for future state management
+  private _isRunning: boolean = false;
   private baseUrl: string;
 
-  constructor(spec: any, options: MockOptions) {
-    this.spec = spec;
-    this.options = options;
+  constructor(_spec: any, options: MockOptions) {
+    // Store for potential future use
+    this._spec = _spec;
+    this._options = options;
     this.baseUrl = options.baseUrl || 'http://localhost:3000';
   }
 
   async start(): Promise<void> {
-    this.isRunning = true;
+    this._isRunning = true;
   }
 
   async stop(): Promise<void> {
-    this.isRunning = false;
+    this._isRunning = false;
   }
 
   getBaseUrl(): string {
     return this.baseUrl;
   }
 
-  addEndpoint(path: string, method: string, response: any): void {
+  addEndpoint(_path: string, _method: string, _response: any): void {
     // Mock implementation
   }
 
-  removeEndpoint(path: string, method: string): void {
+  removeEndpoint(_path: string, _method: string): void {
     // Mock implementation
   }
 }
@@ -137,27 +141,31 @@ class BasicMockService implements MockService {
  * Basic mock event broker implementation
  */
 class BasicMockEventBroker implements MockEventBroker {
-  private spec: any;
-  private options: MockOptions;
-  private isRunning: boolean = false;
+  // @ts-ignore - Unused but kept for future implementation
+  private _spec: any;
+  // @ts-ignore - Unused but kept for future configuration features
+  private _options: MockOptions;
+  // @ts-ignore - Unused but kept for future state management
+  private _isRunning: boolean = false;
   private subscribers: Map<string, ((payload: any) => void)[]> = new Map();
 
-  constructor(spec: any, options: MockOptions) {
-    this.spec = spec;
-    this.options = options;
+  constructor(_spec: any, _options: MockOptions) {
+    // Store for potential future use
+    this._spec = _spec;
+    this._options = _options;
   }
 
   async start(): Promise<void> {
-    this.isRunning = true;
+    this._isRunning = true;
   }
 
   async stop(): Promise<void> {
-    this.isRunning = false;
+    this._isRunning = false;
     this.subscribers.clear();
   }
 
   async publish(eventName: string, payload: any): Promise<void> {
-    if (!this.isRunning) {
+    if (!this._isRunning) {
       throw new Error('Mock event broker is not running');
     }
 
@@ -186,7 +194,9 @@ class BasicTestEnvironment implements TestEnvironment {
 
   constructor(services: MockService[], eventBroker?: MockEventBroker) {
     this.services = services;
-    this.eventBroker = eventBroker;
+    if (eventBroker) {
+      this.eventBroker = eventBroker;
+    }
   }
 
   async cleanup(): Promise<void> {

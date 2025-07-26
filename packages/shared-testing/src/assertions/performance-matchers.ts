@@ -70,7 +70,10 @@ export class PerformanceMatchers {
 
     for (const percentile of percentiles) {
       const index = Math.ceil((percentile / 100) * sortedByResponseTime.length) - 1;
-      result[percentile] = sortedByResponseTime[Math.max(0, index)];
+      const metric = sortedByResponseTime[Math.max(0, index)];
+      if (metric) {
+        result[percentile] = metric;
+      }
     }
 
     return result;
@@ -107,16 +110,16 @@ export class PerformanceMatchers {
         timestamp: Date.now()
       },
       min: {
-        responseTime: responseTimeSorted[0].responseTime,
-        throughput: throughputSorted[0].throughput,
-        errorRate: errorRateSorted[0].errorRate,
+        responseTime: responseTimeSorted[0]?.responseTime ?? 0,
+        throughput: throughputSorted[0]?.throughput ?? 0,
+        errorRate: errorRateSorted[0]?.errorRate ?? 0,
         concurrency: Math.min(...metrics.map(m => m.concurrency)),
         timestamp: Math.min(...metrics.map(m => m.timestamp))
       },
       max: {
-        responseTime: responseTimeSorted[responseTimeSorted.length - 1].responseTime,
-        throughput: throughputSorted[throughputSorted.length - 1].throughput,
-        errorRate: errorRateSorted[errorRateSorted.length - 1].errorRate,
+        responseTime: responseTimeSorted[responseTimeSorted.length - 1]?.responseTime ?? 0,
+        throughput: throughputSorted[throughputSorted.length - 1]?.throughput ?? 0,
+        errorRate: errorRateSorted[errorRateSorted.length - 1]?.errorRate ?? 0,
         concurrency: Math.max(...metrics.map(m => m.concurrency)),
         timestamp: Math.max(...metrics.map(m => m.timestamp))
       },
