@@ -224,12 +224,12 @@ describe('SpecLoader', () => {
         .mockReturnValueOnce('api content')
         .mockReturnValueOnce('events content');
       
-      // Mock YAML parsing for each file
+      // Mock YAML parsing for each file - calls for auto-detection and loading
       mockYaml.load
-        .mockReturnValueOnce(openApiSpec)
-        .mockReturnValueOnce(openApiSpec)  // First call for auto-detection
-        .mockReturnValueOnce(asyncApiSpec)
-        .mockReturnValueOnce(asyncApiSpec); // Second call for auto-detection
+        .mockReturnValueOnce(openApiSpec)  // First file auto-detection
+        .mockReturnValueOnce(openApiSpec)  // First file loading  
+        .mockReturnValueOnce(asyncApiSpec) // Second file auto-detection
+        .mockReturnValueOnce(asyncApiSpec); // Second file loading
       
       // Mock swagger validation for OpenAPI spec
       mockSwaggerParser.validate.mockResolvedValueOnce(openApiSpec);
@@ -256,8 +256,21 @@ describe('SpecLoader', () => {
         paths: {}
       };
 
+      const asyncApiSpec = {
+        asyncapi: '2.6.0',
+        info: { title: 'Events', version: '1.0.0' },
+        channels: {}
+      };
+
       mockFs.readFileSync.mockReturnValue('content');
-      mockYaml.load.mockReturnValue(openApiSpec);
+      // Mock different specs for different calls - 2 calls per file (detect + load)
+      mockYaml.load
+        .mockReturnValueOnce(openApiSpec)  // api.yaml detect
+        .mockReturnValueOnce(openApiSpec)  // api.yaml load
+        .mockReturnValueOnce(asyncApiSpec) // events.yml detect
+        .mockReturnValueOnce(asyncApiSpec) // events.yml load
+        .mockReturnValueOnce(openApiSpec)  // config.json detect
+        .mockReturnValueOnce(openApiSpec); // config.json load
       mockSwaggerParser.validate.mockResolvedValue(openApiSpec);
 
       const result = await SpecLoader.loadSpecsFromDirectory('/test/specs');
@@ -316,7 +329,9 @@ describe('SpecLoader', () => {
       };
 
       mockFs.readFileSync.mockReturnValue('valid content');
-      mockYaml.load.mockReturnValue(validSpec);
+      mockYaml.load
+        .mockReturnValueOnce(validSpec)  // First call for detection
+        .mockReturnValueOnce(validSpec); // Second call for loading (if needed)
       mockSwaggerParser.validate.mockResolvedValue(validSpec);
 
       const result = await SpecLoader.validateSpec('/test/valid.yaml');

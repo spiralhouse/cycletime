@@ -26,7 +26,9 @@ export class BaseError extends Error {
     this.statusCode = statusCode;
     this.isOperational = isOperational;
     this.timestamp = new Date();
-    this.context = context;
+    if (context !== undefined) {
+      this.context = context;
+    }
 
     Error.captureStackTrace(this, this.constructor);
   }
@@ -54,8 +56,12 @@ export class ValidationError extends BaseError {
 
   constructor(message: string, field?: string, value?: any, context?: Record<string, any>) {
     super(message, 'VALIDATION_ERROR', 400, true, context);
-    this.field = field;
-    this.value = value;
+    if (field !== undefined) {
+      this.field = field;
+    }
+    if (value !== undefined) {
+      this.value = value;
+    }
   }
 }
 
@@ -68,8 +74,12 @@ export class NotFoundError extends BaseError {
 
   constructor(message: string, resource?: string, id?: string | number, context?: Record<string, any>) {
     super(message, 'NOT_FOUND', 404, true, context);
-    this.resource = resource;
-    this.id = id;
+    if (resource !== undefined) {
+      this.resource = resource;
+    }
+    if (id !== undefined) {
+      this.id = id;
+    }
   }
 }
 
@@ -99,7 +109,9 @@ export class ConflictError extends BaseError {
 
   constructor(message: string, conflictingResource?: string, context?: Record<string, any>) {
     super(message, 'CONFLICT', 409, true, context);
-    this.conflictingResource = conflictingResource;
+    if (conflictingResource !== undefined) {
+      this.conflictingResource = conflictingResource;
+    }
   }
 }
 
@@ -111,7 +123,9 @@ export class RateLimitError extends BaseError {
 
   constructor(message = 'Rate limit exceeded', retryAfter?: number, context?: Record<string, any>) {
     super(message, 'RATE_LIMIT_EXCEEDED', 429, true, context);
-    this.retryAfter = retryAfter;
+    if (retryAfter !== undefined) {
+      this.retryAfter = retryAfter;
+    }
   }
 }
 
@@ -133,8 +147,12 @@ export class DatabaseError extends BaseError {
 
   constructor(message: string, query?: string, table?: string, context?: Record<string, any>) {
     super(message, 'DATABASE_ERROR', 500, false, context);
-    this.query = query;
-    this.table = table;
+    if (query !== undefined) {
+      this.query = query;
+    }
+    if (table !== undefined) {
+      this.table = table;
+    }
   }
 }
 
@@ -147,8 +165,12 @@ export class ExternalServiceError extends BaseError {
 
   constructor(message: string, service?: string, originalError?: Error, context?: Record<string, any>) {
     super(message, 'EXTERNAL_SERVICE_ERROR', 502, true, context);
-    this.service = service;
-    this.originalError = originalError;
+    if (service !== undefined) {
+      this.service = service;
+    }
+    if (originalError !== undefined) {
+      this.originalError = originalError;
+    }
   }
 }
 
@@ -410,6 +432,10 @@ export class CircuitBreaker<T> {
 
   getFailureCount(): number {
     return this.failureCount;
+  }
+
+  getLastFailureTime(): number {
+    return this.lastFailureTime;
   }
 }
 

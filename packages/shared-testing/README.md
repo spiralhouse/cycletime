@@ -1,6 +1,6 @@
 # CycleTime Shared Contract Testing Framework
 
-A comprehensive contract testing framework for the CycleTime monorepo that provides standardized OpenAPI/AsyncAPI validation and testing utilities.
+A comprehensive contract testing framework for the CycleTime monorepo, enabling standardized OpenAPI/AsyncAPI validation and contract-first testing patterns across all services.
 
 ## Overview
 

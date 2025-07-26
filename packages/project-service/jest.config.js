@@ -1,23 +1,16 @@
-const baseConfig = require('@cycletime/shared-config/jest.config.js');
+const baseConfig = require('@cycletime/shared-testing/dist/config/jest.config.base.js');
 
 module.exports = {
   ...baseConfig,
-  displayName: 'project-service',
-  setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
-  testTimeout: 10000,
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.d.ts',
-    '!src/**/__tests__/**',
-    '!src/**/index.ts',
-    '!src/**/*.types.ts'
+  displayName: 'Project Service',
+  
+  // Override testMatch to exclude setup files
+  testMatch: [
+    '**/__tests__/**/*.test.ts',
+    '**/__tests__/**/*.spec.ts',
+    '**/?(*.)+(spec|test).ts'
   ],
-  coverageThreshold: {
-    global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80
-    }
-  }
+  
+  // Remove setupFilesAfterEnv since this package doesn't have proper setup file
+  setupFilesAfterEnv: undefined
 };

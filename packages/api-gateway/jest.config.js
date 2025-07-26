@@ -1,41 +1,35 @@
-export default {
+const baseConfig = require('@cycletime/shared-testing/dist/config/jest.config.base.js');
+
+module.exports = {
+  ...baseConfig,
+  displayName: 'API Gateway',
+  
+  // ESM-specific configurations
   preset: 'ts-jest/presets/default-esm',
-  testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
+  
+  // API Gateway specific module mapping
   moduleNameMapper: {
+    ...baseConfig.moduleNameMapper,
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^node-fetch$': '<rootDir>/src/__tests__/__mocks__/node-fetch.js',
   },
+  
+  // ESM transform configuration
   transform: {
     '^.+\\.ts$': ['ts-jest', {
       useESM: true,
     }],
   },
+  
   transformIgnorePatterns: [
     'node_modules/(?!(node-fetch|fetch-blob|formdata-polyfill|data-uri-to-buffer)/)',
   ],
-  roots: ['<rootDir>/src'],
+  
+  // API Gateway specific test patterns
   testMatch: ['**/__tests__/**/*.test.ts'],
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.d.ts',
-    '!src/__tests__/**',
-  ],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
-  coverageThreshold: {
-    global: {
-      branches: 80,
-      functions: 80,
-      lines: 85,
-      statements: 85,
-    },
-  },
+  
+  // Override setup files configuration for ESM
   setupFiles: ['<rootDir>/src/__tests__/setup.ts'],
-  setupFilesAfterEnv: [],
-  testTimeout: 15000, // Reduced timeout for faster CI failure detection
-  // Force exit after tests to prevent hanging
-  forceExit: true,
-  // Detect open handles that might cause hanging
-  detectOpenHandles: true
+  setupFilesAfterEnv: []
 };

@@ -21,9 +21,10 @@ describe('Contract Matchers', () => {
 
       extendExpect();
 
-      expect(console.warn).toHaveBeenCalledWith('Jest expect not available - contract matchers not installed');
-
+      // Restore expect first so we can use it in the assertion
       global.expect = originalExpect;
+      
+      expect(console.warn).toHaveBeenCalledWith('Jest expect not available - contract matchers not installed');
     });
   });
 

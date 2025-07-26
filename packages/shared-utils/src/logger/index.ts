@@ -134,10 +134,10 @@ export class Logger {
       timestamp: new Date(),
       level,
       message,
-      context,
-      error,
-      source,
-      requestId
+      ...(context !== undefined && { context }),
+      ...(error !== undefined && { error }),
+      ...(source !== undefined && { source }),
+      ...(requestId !== undefined && { requestId })
     };
 
     if (this.config.output) {
@@ -266,10 +266,11 @@ export class Logger {
 
     childConfig.output = (entry: LogEntry) => {
       const mergedContext = { ...context, ...(entry.context || {}) };
+      const finalSource = source || entry.source;
       const childEntry: LogEntry = {
         ...entry,
         context: mergedContext,
-        source: source || entry.source
+        ...(finalSource !== undefined && { source: finalSource })
       };
       originalOutput(childEntry);
     };
