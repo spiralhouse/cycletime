@@ -1,33 +1,31 @@
-export default {
+const baseConfig = require('@cycletime/shared-testing/dist/config/jest.config.base.js');
+
+module.exports = {
+  ...baseConfig,
+  displayName: 'Standards Engine',
+  
+  // ESM-specific configurations
   preset: 'ts-jest/presets/default-esm',
-  testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
+  
+  // Module mapping for ESM
   moduleNameMapper: {
+    ...baseConfig.moduleNameMapper,
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
+  
+  // ESM transform configuration
   transform: {
     '^.+\\.ts$': ['ts-jest', {
       useESM: true,
     }],
   },
-  roots: ['<rootDir>/src'],
+  
+  // Standards Engine specific test patterns
   testMatch: ['**/__tests__/**/*.test.ts'],
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.d.ts',
-    '!src/__tests__/**',
-  ],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
-  coverageThreshold: {
-    global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70,
-    },
-  },
+  testTimeout: 30000, // Extended timeout for contract tests
+  
+  // Override setup files configuration for ESM
   setupFiles: ['<rootDir>/src/__tests__/setup.ts'],
-  setupFilesAfterEnv: [],
-  testTimeout: 30000, // 30 second timeout for contract tests
+  setupFilesAfterEnv: []
 };

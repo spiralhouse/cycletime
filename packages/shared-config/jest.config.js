@@ -1,24 +1,9 @@
+const baseConfig = require('@cycletime/shared-testing/dist/config/jest.config.base.js');
+
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/src'],
-  testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts', '!**/__tests__/setup.ts'],
-  transform: {
-    '^.+\\.ts$': 'ts-jest',
-  },
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.d.ts',
-    '!src/**/__tests__/**'
-  ],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
-  coverageThreshold: {
-    global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80
-    }
-  }
+  ...baseConfig,
+  displayName: 'Shared Config',
+  
+  // Remove setupFilesAfterEnv since this package doesn't have a setup file
+  setupFilesAfterEnv: undefined
 };
