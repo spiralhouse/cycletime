@@ -239,6 +239,10 @@ module.exports = {
   // Contract-specific test patterns
   testMatch: ['**/__tests__/contract/**/*.test.ts'],
   
+  // Disable coverage collection for contract tests
+  collectCoverage: false,
+  coverageThreshold: undefined,
+  
   // Additional setup for contract testing
   setupFilesAfterEnv: [
     ...baseConfig.setupFilesAfterEnv,
@@ -442,12 +446,36 @@ For each service package:
 
 ## Success Metrics
 
+### Test Metrics Classification
+
+**Code Coverage (Unit Tests)**:
+- **Purpose**: Measure how much production code is exercised by unit tests
+- **Target**: 80% minimum across all packages  
+- **Scope**: Business logic, utility functions, service implementations
+- **Reporting**: Coverage percentages (lines, branches, functions, statements)
+
+**Contract Validation (Contract Tests)**:
+- **Purpose**: Validate API specification compliance and schema conformance
+- **Target**: 100% specification coverage (all endpoints/events validated)
+- **Scope**: OpenAPI/AsyncAPI specification adherence
+- **Reporting**: Pass/fail validation, specification compliance status
+
+**Integration Testing**:
+- **Purpose**: Validate service interactions and data flow
+- **Target**: Critical user journeys and service boundaries
+- **Scope**: Cross-service communication, database operations
+- **Reporting**: Test pass rates, integration point validation
+
 ### Quantitative Metrics
 
-**Coverage and Quality**:
-- ✅ **100% contract testing coverage** across all 18+ packages
-- ✅ **80% minimum test coverage** achieved and maintained
+**Contract Validation**:
+- ✅ **100% contract validation coverage** across all 18+ packages
+- ✅ **Zero contract specification violations** in production deployments
 - ✅ **50% reduction in testing code duplication** through shared utilities
+
+**Code Coverage (Unit Tests Only)**:
+- ✅ **80% minimum code coverage** achieved and maintained via unit tests
+- ✅ **Consistent coverage reporting** across all packages
 
 **Performance**:
 - ✅ **Contract test execution under 2 minutes** per service
@@ -482,13 +510,18 @@ For each service package:
   "tasks": {
     "test:contract": {
       "dependsOn": ["build"],
+      "outputs": ["reports/contract/**", "test-results/**"],
+      "cache": true,
+      "passThroughEnv": ["NODE_ENV"]
+    },
+    "test:unit": {
       "outputs": ["coverage/**"],
       "cache": true,
       "passThroughEnv": ["NODE_ENV"]
     },
     "test:all": {
       "dependsOn": ["test:contract", "test:unit", "test:integration"],
-      "outputs": ["coverage/**"],
+      "outputs": ["coverage/**", "reports/**", "test-results/**"],
       "cache": true
     }
   }
@@ -497,8 +530,9 @@ For each service package:
 
 **Task Dependencies**:
 - `test:contract` depends on `build` to ensure shared packages are available
-- No `^build` dependency needed since contract tests are schema-only with mocks
-- Caching enabled for contract test results and coverage artifacts
+- Contract tests output validation reports, not code coverage
+- Only unit tests contribute to code coverage (`coverage/**` output)
+- Caching enabled for contract validation results and reports
 
 ### GitHub Actions Workflow Integration
 
@@ -566,13 +600,12 @@ contract-tests:
       env:
         NODE_ENV: test
 
-    - name: Upload coverage reports
-      run: echo "Coverage reporting not yet configured - skipping for now"
-      # TODO: Enable when test coverage is configured
-      # uses: codecov/codecov-action@v4
-      # with:
-      #   token: ${{ secrets.CODECOV_TOKEN }}
-      #   fail_ci_if_error: false
+    - name: Generate contract validation report
+      run: echo "Contract validation reporting not yet implemented - skipping for now"
+      # TODO: Implement contract validation reporting
+      # - API specification compliance summary
+      # - Contract violation reports
+      # - Schema validation results
 ```
 
 #### Key Integration Points
@@ -590,7 +623,13 @@ contract-tests:
 **Performance Considerations**:
 - Uses `maxWorkers=2` like other test jobs for consistent resource usage
 - Runs in parallel with unit and integration tests for faster CI feedback
-- Leverages TurboRepo caching for contract test results
+- Leverages TurboRepo caching for contract validation results
+
+**Coverage vs Validation Separation**:
+- Contract tests generate validation reports, not code coverage
+- Only unit tests contribute to the 80% code coverage threshold
+- Contract tests provide pass/fail validation of API specifications
+- Different metrics: coverage percentage vs contract compliance status
 
 ### Quality Gates
 
