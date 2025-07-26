@@ -19,7 +19,7 @@ jobs:
         id: extract-issue
         run: |
           BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
-          if [[ $BRANCH_NAME =~ feature/([A-Z]+-[0-9]+) ]]; then
+          if [[ $BRANCH_NAME =~ feature/([A-Za-z]+-[0-9]+) ]]; then
             echo "issue_id=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
             echo "Found Linear issue: ${BASH_REMATCH[1]}"
           else
