@@ -158,7 +158,7 @@ npm run test --workspace=@cycletime/shared-config
 npm run test --workspace=@cycletime/shared-types
 
 # 5. CI Simulation (Optional - when making testing infrastructure changes)
-act --container-architecture linux/amd64 -j test --artifact-server-path /tmp/artifacts
+act --container-architecture linux/amd64 -W .github/workflows/ci.yml --artifact-server-path /tmp/artifacts
 ```
 
 **One-Line Quality Check**:
