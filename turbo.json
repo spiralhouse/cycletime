@@ -33,6 +33,12 @@
         "JWT_SECRET"
       ]
     },
+    "test:contract": {
+      "dependsOn": ["build", "^test:contract"],
+      "outputs": ["coverage/**"],
+      "cache": true,
+      "passThroughEnv": ["NODE_ENV"]
+    },
     "lint": {
       "cache": true
     },

@@ -45,8 +45,10 @@ export class TestHelpers {
     };
 
     // Set Jest timeouts if in Jest environment
-    if (typeof jest !== 'undefined') {
+    if (typeof jest !== 'undefined' && jest.setTimeout) {
       jest.setTimeout(mergedConfig.timeout.test!);
+    } else if ((global as any).jest && (global as any).jest.setTimeout) {
+      (global as any).jest.setTimeout(mergedConfig.timeout.test!);
     }
 
     return mergedConfig;
