@@ -13,12 +13,15 @@
 
 The system operates on a project-centric model where every development effort begins with an **Inception Phase** - either through an interactive requirements gathering interview or by accepting a user-provided PRD. JCVD then orchestrates the entire development lifecycle through intelligent issue tracking systems, ensuring structured progression from high-level design through proof-of-concept delivery.
 
-**Core Value Propositions:**
-- **Complete Project Orchestration**: From requirements gathering to deployment-ready code
-- **Artifact Generation**: Auto-creates all necessary documentation, specifications, and project structure
+**Primary Value Proposition:**
+Transform Claude Code from a coding assistant into a complete software development partner that orchestrates the entire project lifecycle from requirements gathering to deployment-ready code.
+
+**Supporting Benefits:**
+- **Comprehensive Artifact Generation**: Auto-creates all necessary documentation, specifications, and project structure
 - **Issue-Driven Workflow**: Uses Agile structure (Epic → Story → Subtasks) for comprehensive project tracking
-- **Phase-Based Development**: Structured progression through Inception, Development/Alpha, and delivery phases
 - **Intelligent Task Orchestration**: LLM-powered analysis of issue dependency graphs to determine optimal next actions
+- **Phase-Based Development**: Structured progression through Inception, Development/Alpha, and delivery phases
+- **Developer-Controlled Architecture**: Open source, provider-agnostic design with complete data portability
 
 ## Project Vision
 
@@ -34,6 +37,8 @@ Current AI coding assistants focus on individual coding tasks but fail to addres
 - **Phase Management Gaps**: No structured approach to project phases (inception, development, deployment)
 - **Greenfield Project Challenges**: Starting new projects requires extensive manual setup and planning
 - **Context Loss**: Project knowledge and progress scattered across conversations, files, and tools
+- **Vendor Lock-in Concerns**: Proprietary AI assistants create dependency on external services with limited transparency or control
+- **Lack of Customization**: Closed-source solutions can't be adapted to specific workflows or extended with custom functionality
 
 ### Solution Overview
 
@@ -41,11 +46,13 @@ JCVD provides a **comprehensive project orchestration platform** that:
 
 1. **Inception Phase Management**: Interactive requirements gathering or PRD acceptance, followed by systematic project setup
 2. **Complete Artifact Generation**: Creates all necessary documentation, specifications, and project structure in standardized locations
-3. **Issue-Based Orchestration**: Uses Epic → Story → Subtasks hierarchy for complete project tracking and dependency management
+3. **Issue-Driven Orchestration**: Uses Epic → Story → Subtasks hierarchy for complete project tracking and dependency management
 4. **Intelligent Task Sequencing**: LLM-powered analysis of project issues to determine optimal next actions based on dependencies, priorities, and project context
 5. **Phase-Based Progression**: Structured movement through Inception → Development/Alpha → subsequent phases using project milestones
 6. **Repository Convention Enforcement**: Standardized `docs/` directory structure and project organization patterns
 7. **Test-Driven Development Integration**: TDD practices built into all applicable workflows and task generation
+8. **Open Source Transparency**: Full source code visibility enabling custom extensions, security auditing, and community contributions
+9. **No Vendor Lock-in**: Complete data portability and provider-agnostic architecture ensuring long-term flexibility
 
 ## Target Users
 
@@ -59,6 +66,30 @@ JCVD provides a **comprehensive project orchestration platform** that:
 - Startups needing rapid project setup and structured development workflows
 - Small consulting teams who want to standardize their project delivery approach
 - Teams who want to use issue tracking effectively for Agile development practices
+
+## Developer Experience Philosophy
+
+JCVD is designed around core principles that prioritize developer autonomy, simplicity, and long-term sustainability:
+
+**Developer Control First**
+- All project data remains under developer control (local files, standard formats, portable data)
+- No forced cloud dependencies or external service requirements for core functionality
+- Complete transparency into system behavior through open source architecture
+
+**Simplicity Over Complexity**
+- Single command setup with sensible defaults that work immediately
+- Progressive disclosure: basic functionality accessible immediately, advanced features discoverable
+- Convention over configuration: follow established patterns while allowing customization
+
+**Long-term Sustainability**
+- Provider-agnostic architecture prevents tool lock-in
+- Standard file formats and database schemas enable easy migration
+- Open source ensures continuity regardless of commercial changes
+
+**Professional Without Bureaucracy**
+- Structured workflows that enhance rather than impede development velocity
+- Intelligent defaults that minimize configuration while maximizing utility
+- Focus on delivering value quickly while maintaining professional project standards
 
 ## Core Functional Requirements
 
@@ -110,11 +141,11 @@ JCVD provides a **comprehensive project orchestration platform** that:
 - Version control integration for all documentation artifacts
 - Template-based document generation with project-specific customization
 
-**FR3.2: Living Documentation System**
-- Keep documentation synchronized with implementation progress
-- Update specifications and architecture docs as implementation evolves
-- Generate decision logs and architectural decision records (ADRs)
-- Maintain traceability between requirements, design, and implementation
+**FR3.2: Documentation Maintenance System**
+- Provide AI suggestions for keeping documentation synchronized with implementation progress
+- Support manual updates to specifications and architecture docs as implementation evolves
+- Generate decision logs and architectural decision records (ADRs) templates
+- Maintain traceability between requirements, design, and implementation through structured links
 
 ### FR4: Development Methodology Integration
 
@@ -208,7 +239,7 @@ interface Issue {
   title: string
   description?: string
   stateId: string               // 'backlog', 'todo', 'in_progress', 'done', etc.
-  priority: number              // 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low
+  priority: number              // 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low (Linear uses 0-4 scale)
   estimate?: number             // Story points (Fibonacci scale)
   issueType: 'epic' | 'story' | 'subtask'
   assigneeId?: string
@@ -224,10 +255,10 @@ interface Issue {
 
 ### Embedded Database Schema (SQLite)
 
-The embedded SQLite provider uses an optimized schema that follows standard issue tracking patterns with Linear compatibility for seamless migration:
+The embedded SQLite provider uses an optimized schema that follows common issue tracking patterns with Linear-inspired structure for easy migration:
 
 ```sql
--- Projects (compatible with Linear Projects)
+-- Projects (Linear-inspired structure)
 CREATE TABLE projects (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -247,7 +278,7 @@ CREATE TABLE workflow_states (
   color TEXT DEFAULT '#000000'
 );
 
--- Issues (standard issue tracking schema with Linear compatibility)
+-- Issues (standard issue tracking schema with Linear-inspired structure)
 CREATE TABLE issues (
   id TEXT PRIMARY KEY,
   project_id TEXT REFERENCES projects(id),
@@ -402,9 +433,9 @@ User discovers JCVD through:
 - GitHub repository or documentation
 - Developer community recommendations
 
-Installation options:
-1. Via Claude Code: "Add MCP Server" → Search "JCVD" → Install
-2. Manual: npm install -g @jcvd/mcp-server && claude-code add-mcp jcvd
+Installation options (coming soon):
+1. Via Claude Code: Browse MCP servers → Search "JCVD" → Install
+2. Manual: npm install -g @jcvd/mcp-server (package in development)
 3. Docker: docker run -d jcvd/mcp-server (for advanced users)
 ```
 
@@ -485,11 +516,11 @@ Claude: "Excellent choice! Local Mode provides full JCVD functionality using an 
 ✅ Velocity tracking, estimation, and progress analytics
 ✅ Complete offline operation - no internet required
 ✅ High performance with thousands of issues and complex dependency graphs
-✅ Identical schema to Linear for easy migration when ready
+✅ Linear-inspired schema optimized for easy data migration when ready
 
 **How it works:**
 - Embedded SQLite database stores all project data locally
-- Same data model as Linear for seamless future migration
+- Linear-inspired data model optimized for seamless future migration
 - All JCVD features work identically to cloud providers
 - Data stored securely in your project directory
 
@@ -682,13 +713,13 @@ Let's start with #1 - what problem will your task management app solve?"
 
 Claude: "Great answers! Let me summarize what I've learned:
 
-**Your Project: TaskMaster Pro**
-- Problem: Help freelancers track billable hours and project deadlines
-- Users: Individual freelancers and small agencies  
-- Success: Users can track time, generate invoices, meet deadlines
-- Scope: Web application with authentication, database, reporting
-- Tech: You're open to suggestions but prefer TypeScript
-- Timeline: Personal project, flexible timeline, just you developing
+**Your Project: DevLog**
+- Problem: Help developers track learning progress, code snippets, and project insights
+- Users: Individual software engineers and developers
+- Success: Users can organize learning, share knowledge, and track skill development
+- Scope: Web application with authentication, markdown editor, search, and tagging
+- Tech: You're open to suggestions but prefer TypeScript/React
+- Timeline: Personal side project, flexible timeline, just you developing
 - Approach: You want to follow TDD practices
 
 Does this summary look accurate? Any corrections or additions?"
@@ -709,10 +740,10 @@ This will take about 2-3 minutes..."
 
 #### Project Structure Creation
 ```
-Claude: "🎉 Your ProjectMaster Pro project is ready! Here's what I've created:
+Claude: "🎉 Your DevLog project is ready! Here's what I've created:
 
 **Repository Structure:**
-projectmaster-pro/
+devlog/
 ├── docs/
 │   ├── PRD.md                  # Complete requirements document
 │   ├── ARCHITECTURE.md         # System design and architecture
@@ -732,11 +763,11 @@ projectmaster-pro/
 ├── jest.config.js             # Testing configuration
 └── README.md                  # Getting started guide
 
-**Project Issues: "ProjectMaster Pro"**
+**Project Issues: "DevLog"**
 - **Epic 1**: User Authentication System (5 stories, 23 points)
-- **Epic 2**: Time Tracking Core (4 stories, 18 points)  
-- **Epic 3**: Project Management (6 stories, 34 points)
-- **Epic 4**: Reporting & Invoicing (3 stories, 21 points)
+- **Epic 2**: Content Management Core (4 stories, 18 points)  
+- **Epic 3**: Search & Tagging System (6 stories, 34 points)
+- **Epic 4**: Knowledge Sharing Features (3 stories, 21 points)
 
 **Current Milestone**: "Proof of Concept" (Sprint 1-2, ~4 weeks)
 **Next Task**: TASK-1 "Set up development environment and basic project structure"
@@ -796,7 +827,7 @@ User: [Starts new Claude Code session]
 "Continue with my project work"
 
 Claude: [JCVD loads project state from issue tracker and docs]
-"Welcome back! You're working on the ProjectMaster project. 
+"Welcome back! You're working on the DevLog project. 
 
 Current status:
 - Phase: Development (Sprint 2)
@@ -1016,15 +1047,15 @@ const healthCheck: SimpleHealthCheck = {
 - **Developer Satisfaction**: >90% of users report clear understanding of project scope and next steps
 
 ### Development Phase Success  
-- **Task Clarity**: >95% of recommended next tasks are actionable without additional clarification
-- **Dependency Management**: Zero blocked tasks due to unresolved dependencies
+- **Task Clarity**: >80% of recommended next tasks are actionable without additional clarification
+- **Dependency Management**: <5% of tasks blocked due to unresolved dependencies
 - **Quality Maintenance**: >90% of completed stories pass quality gates on first attempt
 - **Velocity Tracking**: Accurate story point estimation within 20% of actual completion time
 
 ### Overall System Success
 - **Project Completion Rate**: >80% of projects started reach their defined success criteria
 - **Time to Value**: First proof-of-concept delivered within planned timeline 90% of time
-- **Documentation Fidelity**: Architecture docs remain synchronized with implementation >95% of time
+- **Documentation Fidelity**: Architecture docs remain synchronized with implementation >85% of time
 - **User Retention**: >85% of users complete multiple projects using JCVD framework
 
 ## Implementation Roadmap
