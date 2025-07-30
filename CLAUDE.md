@@ -10,7 +10,6 @@ JCVD is a multi-agent orchestration framework for Claude Code that aims to trans
 
 This repository contains:
 - **docs/PRD.md**: Product Requirements Document focused on business requirements, user needs, and success criteria
-- **docs/ARCHITECTURE.md**: Technical architecture document detailing system design, components, and integration patterns  
 - **README.md**: Basic project description
 - **docs/**: Architecture documentation and detailed design docs
 
@@ -34,13 +33,6 @@ The system will consist of 7 specialized agents:
 - **State Management**: Multi-layer system (in-memory, repository docs, Linear sync)
 
 For detailed technical architecture, component specifications, and integration patterns, see `docs/ARCHITECTURE.md`.
-
-## Implementation Phases (from PRD)
-
-1. **Phase 1**: Foundation - Orchestrator core, state management, Linear integration
-2. **Phase 2**: Core Agents - Implement all 7 specialized agents
-3. **Phase 3**: Advanced Orchestration - Parallel execution, enterprise features
-4. **Phase 4**: Production Readiness - Performance optimization, security, documentation
 
 ## Development Commands
 
@@ -69,3 +61,65 @@ Since this is pre-implementation:
 5. Implement individual specialized agents
 
 The docs/PRD.md contains business requirements and implementation phases, while docs/ARCHITECTURE.md contains the technical architecture and design patterns that should guide all development decisions.
+
+## Linear Reference
+
+### Team & Project IDs
+- **Team**: Spiral House - `03ee7cf5-773e-4f53-bc0d-2e5e4d3bc3bc`
+- **Project**: jcvd - `217eeb45-4f83-4ca0-8030-81f9c78692bc`
+
+### Issue Status IDs
+- **Backlog**: `1e7bd879-6685-4d94-8887-b7709b3ae6e8` (type: backlog)
+- **Todo**: `fc814d1f-22b5-4ce6-8b40-87c1312d54ba` (type: unstarted)
+- **In Progress**: `a433a32b-b815-4e11-af23-a74cb09606aa` (type: started)
+- **In Review**: `8d617a10-15f3-4e26-ad28-3653215c2f25` (type: started)
+- **Done**: `3d267fcf-15c0-4f3a-8725-2f1dd717e9e8` (type: completed)
+- **Canceled**: `a2581462-7e43-4edb-a13a-023a2f4a6b1e` (type: canceled)
+- **Duplicate**: `3f7c4359-7560-4bd9-93b7-9900671742aa` (type: canceled)
+
+### Issue Hierarchy & Estimation Rules
+
+The project uses a three-tier issue hierarchy:
+
+1. **Epics** (Top Level)
+   - High-level features or major project phases
+   - No direct estimates
+   - Contains multiple Stories
+
+2. **Stories** (Middle Level)
+   - User-facing functionality or complete features
+   - **Estimation Rule**: Stories can have estimate points ONLY when they don't have subtasks
+   - If a Story has subtasks, the Story's estimate is the sum of its subtasks
+   - Parent: Epic
+
+3. **Subtasks** (Bottom Level)
+   - Specific implementation work items
+   - **Always have estimates** (required)
+   - Parent: Story
+
+**Example Structure:**
+```
+Epic: "Phase 1: MVP Workflow Engine"
+└── Story: "Implement single-stage workflow execution" (no estimate - has subtasks)
+    ├── Subtask: "Create workflow engine core" (3 points)
+    ├── Subtask: "Add context loading system" (5 points)
+    └── Subtask: "Implement stage validation" (2 points)
+└── Story: "Setup documentation" (2 points - no subtasks)
+```
+
+### Estimation Scale (Fibonacci)
+**Complexity-Based Estimation**: Points reflect task complexity, not time duration
+
+- **1 point** = Trivial complexity (straightforward implementation)
+- **2 points** = Simple complexity (well-understood requirements)
+- **3 points** = Moderate complexity (some architectural decisions needed)
+- **5 points** = Moderately complex (multiple integrations or significant logic)
+- **8 points** = Complex (substantial architectural work or many unknowns)
+- **13 points** = Highly complex (major feature, consider decomposition)
+
+**Guidelines**:
+- Target subtasks at 1-5 points for optimal sprint planning
+- 8+ point tasks may need further breakdown
+- Consider task complexity, unknowns, and dependencies when estimating
+- Let velocity emerge from completed complexity over time
+- **Parent stories with subtasks should NOT have estimates** - only the subtasks get pointed

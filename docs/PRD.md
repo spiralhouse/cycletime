@@ -1,673 +1,486 @@
-# JCVD: Multi-Agent Orchestration Framework for Claude Code
+# JCVD: Comprehensive Project Orchestration Framework
 ## Product Requirements Document
 
-**Version:** 1.0  
-**Date:** July 28, 2025  
+**Version:** 3.0  
+**Date:** July 30, 2025  
 **Authors:** John Burbridge, Claude Code
-
----
-
-## Table of Contents
-
-1. [Executive Summary](#executive-summary)
-2. [Project Overview](#project-overview)
-3. [Business Requirements](#business-requirements)
-4. [Use Cases & User Stories](#use-cases--user-stories)
-5. [High-Level Technical Approach](#high-level-technical-approach)
-6. [Agent Overview](#agent-overview)
-7. [Implementation Roadmap](#implementation-roadmap)
-8. [Success Metrics](#success-metrics)
-9. [Risk Assessment](#risk-assessment)
 
 ---
 
 ## Executive Summary
 
-**JCVD** is a personal AI development assistant that transforms Claude Code into a specialized software development team for individual engineers. By leveraging Claude Code's existing subagent architecture, JCVD creates focused AI agents that handle different aspects of the development process, enabling developers to accelerate their personal development cycles while maintaining full control and oversight.
+**JCVD** is a comprehensive project orchestration framework that transforms Claude Code into a complete software development partner. Unlike traditional coding assistants, JCVD creates and manages ALL artifacts required to execute a software project from inception to deployment, including specifications, architecture documentation, Linear issue management, and repository setup.
 
-The framework addresses the challenge individual developers face when juggling multiple disciplines - from requirements analysis and architecture design to implementation, testing, and deployment. JCVD allows developers to focus on creative problem-solving and high-level decision-making while delegating routine tasks to specialized AI agents that work under their supervision.
+The system operates on a project-centric model where every development effort begins with an **Inception Phase** - either through an interactive requirements gathering interview or by accepting a user-provided PRD. JCVD then orchestrates the entire development lifecycle through Linear issue management, ensuring structured progression from high-level design through proof-of-concept delivery.
 
-**Key Value Propositions:**
-- **Accelerated Development Cycles**: Complete features 3-5x faster through parallel task execution
-- **Maintained Quality Standards**: Automated checks and processes ensure consistent code quality
-- **Reduced Context Switching**: Stay focused on core development while agents handle peripheral tasks
-- **Complete Developer Control**: All agent actions are transparent and require developer approval for critical decisions
+**Core Value Propositions:**
+- **Complete Project Orchestration**: From requirements gathering to deployment-ready code
+- **Artifact Generation**: Auto-creates all necessary documentation, specifications, and project structure
+- **Linear-Driven Workflow**: Uses Linear's Agile structure (Epic → Story → Subtasks) for comprehensive project tracking
+- **Phase-Based Development**: Structured progression through Inception, Development/Alpha, and delivery phases
+- **Intelligent Task Orchestration**: LLM-powered analysis of Linear dependency graphs to determine optimal next actions
 
-## Project Overview
+## Project Vision
 
 ### Vision Statement
-To create the most effective AI-powered personal development assistant that enables individual software engineers to deliver high-quality features faster while maintaining complete control over their development process.
+To create the first truly comprehensive software development orchestration system that handles every aspect of project delivery - from initial concept through production deployment - while maintaining complete transparency and developer control.
 
 ### Problem Statement
-Individual software engineers face increasing complexity in modern development:
-- **Context Switching Overhead**: Constantly switching between different types of work (coding, testing, documentation, deployment)
-- **Cognitive Load**: Juggling multiple disciplines and best practices simultaneously
-- **Routine Task Burden**: Spending significant time on repetitive tasks that could be automated
-- **Quality Consistency**: Difficulty maintaining consistent standards across all aspects of development
-- **Knowledge Gaps**: Having to research and learn new technologies/patterns for each project phase
+Current AI coding assistants focus on individual coding tasks but fail to address the broader challenges of software project delivery:
+
+- **Project Initiation Complexity**: No systematic approach to gathering requirements, defining scope, and creating project structure
+- **Documentation Fragmentation**: Specifications, architecture docs, and project artifacts scattered across tools and formats
+- **Task Prioritization Chaos**: No intelligent system for determining what to work on next based on project dependencies and priorities
+- **Phase Management Gaps**: No structured approach to project phases (inception, development, deployment)
+- **Greenfield Project Challenges**: Starting new projects requires extensive manual setup and planning
+- **Context Loss**: Project knowledge and progress scattered across conversations, files, and tools
 
 ### Solution Overview
-JCVD transforms Claude Code into a personal AI development team by:
-
-1. **Specialized Personal Assistants**: Seven focused agents that handle different development disciplines
-2. **Intelligent Task Delegation**: Automatic routing of work to the most appropriate agent while keeping developer in control
-3. **Parallel Work Execution**: Agents work on independent tasks simultaneously while developer focuses on core logic
-4. **Consistent Process Enforcement**: Automated quality checks and standards without developer overhead
-5. **Transparent Operations**: All agent actions are visible and require developer approval for significant decisions
-
-### Target Users
-**Primary**: Individual Software Engineers
-- Solo developers working on personal or client projects
-- Engineers at companies who want to accelerate their individual productivity
-- Developers learning new technologies who want expert guidance across disciplines
-- Senior engineers who want to focus on architecture/design while automating implementation details
-
-**Secondary**: Small Development Teams (2-3 people)
-- Teams where each member uses JCVD as their personal assistant
-- Startups where developers wear multiple hats and need efficiency gains
-
-## Business Requirements
-
-### Functional Requirements
-
-#### FR1: Personal Assistant Orchestration
-- **FR1.1**: System must support seven specialized personal development assistant agents
-- **FR1.2**: Orchestrator must intelligently delegate tasks while requiring developer approval for significant decisions
-- **FR1.3**: Support for parallel execution of independent tasks while developer focuses on core work
-- **FR1.4**: Transparent task delegation with clear visibility into what each agent is doing
-
-#### FR2: Development State Management
-- **FR2.1**: Maintain current project state and context across all personal assistant agents
-- **FR2.2**: Optional integration with Linear for personal task tracking and organization
-- **FR2.3**: Support for resuming work sessions with full context restoration
-- **FR2.4**: Automatic saving of agent outputs and decisions for developer review
-
-#### FR3: Intelligent Agent Selection
-- **FR3.1**: Intelligent model selection (Claude 4 Sonnet vs Opus) based on task complexity and user preferences
-- **FR3.2**: Support for user-configured agent preferences and specializations
-- **FR3.3**: Cost-aware model routing to optimize performance vs. expense
-- **FR3.4**: Performance tracking to improve future task delegation decisions
-
-#### FR4: Developer Control & Integration
-- **FR4.1**: Native integration with Claude Code's existing tool ecosystem
-- **FR4.2**: Developer override capabilities for all agent decisions
-- **FR4.3**: Configurable automation levels (from full approval required to autonomous operation)
-- **FR4.4**: Clear audit trail of all agent actions and developer decisions
-
-### Non-Functional Requirements
-
-#### NFR1: Performance
-- **Response Time**: Agent task delegation < 3 seconds for individual developer workflow
-- **Throughput**: Support for 3-5 parallel agent operations per developer session
-- **Scalability**: Handle personal projects with up to 500 files efficiently
-
-#### NFR2: Reliability
-- **Session Continuity**: Maintain context across interrupted work sessions
-- **Error Handling**: Clear error messages and graceful fallback to manual operation
-- **Recovery**: Ability to resume work with full context after failures
-
-#### NFR3: Privacy & Security
-- **Local Operation**: Agents work with local code without unnecessary external dependencies
-- **Data Privacy**: All code and project data stays within developer's control
-- **Secure Integration**: Safe integration with developer's existing Claude Code setup
-
-#### NFR4: Developer Experience
-- **Learning Curve**: <15 minutes for experienced Claude Code users to start being productive
-- **Transparency**: Clear understanding of what each agent is doing and why
-- **Control**: Easy ability to approve, modify, or reject any agent action
-- **Customization**: Simple configuration of agent behavior and automation levels
-
-## Use Cases & User Stories
-
-### Primary Use Cases
-
-#### UC1: Individual Feature Development
-**Actor**: Individual Software Developer  
-**Goal**: Complete a feature from concept to deployment with AI assistance  
-**Preconditions**: Developer has JCVD configured and project repository setup  
-**Flow**:
-1. Developer describes feature requirements to JCVD
-2. Product Manager Agent helps refine requirements and create acceptance criteria
-3. Software Architect Agent proposes technical approach and integration points
-4. Developer reviews and approves architecture, then focuses on core implementation
-5. Developer Agent assists with boilerplate code, utility functions, and routine tasks
-6. QA Agent automatically generates test cases and runs quality checks
-7. DevOps Agent handles deployment preparation while developer focuses on logic
-8. Developer maintains control and approval over all significant decisions
-
-#### UC2: Bug Investigation and Fix
-**Actor**: Individual Software Developer  
-**Goal**: Efficiently diagnose and fix a reported bug  
-**Preconditions**: Bug report or issue description available  
-**Flow**:
-1. Developer provides bug description to JCVD
-2. Developer Agent helps investigate codebase and identifies potential root causes
-3. QA Agent creates reproduction steps and test cases
-4. Developer focuses on implementing the fix while agents handle supporting tasks
-5. QA Agent runs regression tests and validates the fix
-6. DevOps Agent prepares deployment if needed
-7. Developer approves all changes before they are applied
-
-#### UC3: Learning New Technology
-**Actor**: Individual Software Developer  
-**Goal**: Implement a feature using unfamiliar technology or framework  
-**Preconditions**: Developer needs to use new tech stack or patterns  
-**Flow**:
-1. Developer specifies the technology/framework they want to learn
-2. Software Architect Agent provides architecture guidance and best practices
-3. Developer Agent offers implementation examples and code templates
-4. QA Agent suggests appropriate testing approaches for the new technology
-5. DevOps Agent handles deployment and configuration aspects
-6. Developer learns by doing while agents provide expert guidance and handle routine setup
 
-### User Stories
-
-#### Epic: Personal Productivity
-- **As an** individual developer, **I want** JCVD agents to handle routine tasks **so that** I can focus on complex problem-solving and creative work
-- **As a** solo developer, **I want** to maintain full control over all decisions **so that** I understand and can maintain my codebase
-- **As a** developer, **I want** transparent agent operations **so that** I can learn from their suggestions and improve my skills
-- **As a** freelancer, **I want** to deliver features 3-5x faster **so that** I can take on more clients and increase my income
-
-#### Epic: Learning and Growth
-- **As a** junior developer, **I want** expert guidance across all development disciplines **so that** I can learn best practices while building real features
-- **As a** senior developer, **I want** to focus on architecture and design **so that** agents can handle implementation details and boilerplate
-- **As a** developer learning new tech, **I want** contextual examples and guidance **so that** I can become productive quickly without extensive research
-
-#### Epic: Quality and Consistency
-- **As a** developer, **I want** automated quality checks and testing **so that** I can maintain high standards without manual overhead
-- **As a** consultant, **I want** consistent code patterns across all my projects **so that** I can maintain professional quality regardless of project constraints
-- **As a** developer, **I want** automatic documentation and deployment preparation **so that** my projects are always delivery-ready
-
-## High-Level Technical Approach
-
-### System Overview
-
-JCVD will be built as an orchestration layer that extends Claude Code's existing subagent architecture. The system will coordinate specialized AI agents that work as personal assistants to individual developers, with all significant decisions requiring developer approval.
-
-**Core Integration Points:**
-- **Claude Code Extension**: Leverages existing Task tool and agent delegation framework
-- **Linear MCP Integration**: Optional integration for issue tracking and project management  
-- **State Management**: Multi-layer system maintaining project context across agents
-- **Model Routing**: Intelligent selection between Claude models based on task complexity
-
-**Key Architecture Principles:**
-- **Developer Control**: All agents work under developer supervision with transparent operations
-- **Incremental Adoption**: Can be adopted gradually without disrupting existing workflows
-- **Extensible Design**: Plugin architecture for future integrations and customizations
-
-## Agent Overview
-
-JCVD will implement seven specialized agents, each focusing on a specific aspect of software development:
-
-### 1. Product Manager Agent
-- **Focus**: Requirements gathering, stakeholder communication, roadmap planning
-- **Key Outputs**: User stories, acceptance criteria, Linear issues, stakeholder communication
-
-### 2. Tech Lead Agent  
-- **Focus**: Task coordination, dependency management, engineering process enforcement
-- **Key Outputs**: Task breakdowns, dependency maps, agent assignments, progress reports
-
-### 3. Software Architect Agent
-- **Focus**: System design, technical decisions, architecture documentation
-- **Key Outputs**: Architecture diagrams, technical design docs, ADRs, API specifications
-
-### 4. Developer Agent
-- **Focus**: Code implementation, unit testing, bug resolution
-- **Key Outputs**: Production code, unit tests, bug fixes, refactoring improvements
-
-### 5. QA Agent
-- **Focus**: Test planning, quality assurance, defect management
-- **Key Outputs**: Test plans, automated tests, bug reports, quality metrics
-
-### 6. DevOps Agent
-- **Focus**: Infrastructure, CI/CD pipelines, deployment coordination
-- **Key Outputs**: Infrastructure configs, CI/CD definitions, monitoring setup
-
-### 7. Release Engineer Agent
-- **Focus**: Release planning, deployment orchestration, incident response
-- **Key Outputs**: Release plans, deployment reports, release notes
-
-Each agent will be implemented as a specialized Claude Code subagent with domain-specific prompts, tools, and model preferences optimized for their responsibilities.
-
-
-
-## Implementation Roadmap
-
-### Development Phases
-
-#### Phase 1: Foundation (Months 1-2)
-**Objective**: Establish core orchestration framework and basic agent infrastructure
-
-**Milestones:**
-- **M1.1**: JCVD Orchestrator Core Engine
-  - Task delegation and routing system
-  - Agent registry and discovery mechanism
-  - Basic state management infrastructure
-  - Integration with Claude Code's Task tool
-
-- **M1.2**: State Management System
-  - Repository-based state documents (PROJECT_STATE.md, TASKS.md)
-  - In-memory state coordination
-  - Basic conflict detection and resolution
-  - State validation and consistency checks
-
-- **M1.3**: Linear MCP Integration
-  - Linear MCP server configuration and setup
-  - Basic issue creation and status synchronization
-  - Agent-to-Linear mapping configuration
-  - Webhook handling for real-time updates
-
-**Deliverables:**
-- Core orchestration engine
-- Basic agent framework
-- Linear integration
-- Foundation documentation
-
-#### Phase 2: Core Agents (Months 3-4)
-**Objective**: Implement and test the seven specialized software development agents
-
-**Milestones:**
-- **M2.1**: Primary Development Agents
-  - Tech Lead Agent with dependency management
-  - Developer Agent with full Claude Code tool access
-  - Software Architect Agent with system design capabilities
-  - Basic agent-to-agent communication protocols
-
-- **M2.2**: Quality and Operations Agents
-  - QA Agent with testing framework integration
-  - DevOps Agent with CI/CD and infrastructure management
-  - Release Engineer Agent with deployment coordination
-  - Product Manager Agent with requirements management
-
-- **M2.3**: Agent Specialization and Model Routing
-  - Claude 4 Sonnet vs Opus intelligent routing
-  - Agent-specific tool configurations
-  - Domain expertise optimization
-  - Performance monitoring and metrics
-
-**Deliverables:**
-- All seven specialized agents
-- Agent interaction protocols
-- Model routing system
-- Basic workflow automation
-
-#### Phase 3: Advanced Orchestration (Months 5-6)
-**Objective**: Implement sophisticated coordination, parallel execution, and enterprise features
-
-**Milestones:**
-- **M3.1**: Parallel Execution Engine
-  - Dependency graph analysis and optimization
-  - Parallel task execution with up to 10 concurrent agents
-  - Resource allocation and load balancing
-  - Advanced error handling and recovery
-
-- **M3.2**: Advanced State Management
-  - Multi-layer state synchronization
-  - Advanced conflict resolution strategies
-  - State backup and recovery mechanisms
-  - Cross-system consistency validation
-
-- **M3.3**: Enterprise Integration Features
-  - Custom agent configuration and specialization
-  - Plugin architecture for third-party integrations
-  - API access for programmatic workflow automation
-  - Advanced monitoring and observability
-
-**Deliverables:**
-- Parallel execution engine
-- Advanced state management
-- Enterprise integration features
-- Performance optimization
-
-#### Phase 4: Production Readiness (Months 7-8)
-**Objective**: Polish, optimize, and prepare for production deployment
-
-**Milestones:**
-- **M4.1**: Performance Optimization
-  - Response time optimization (< 2 seconds for delegation)
-  - Throughput optimization (10+ parallel operations)
-  - Resource usage optimization
-  - Scalability testing (1,000+ file projects)
-
-- **M4.2**: Security and Compliance
-  - Authentication and authorization framework
-  - Role-based access control for agents
-  - Secure handling of sensitive code and data
-  - Security audit and vulnerability assessment
-
-- **M4.3**: Documentation and Training
-  - Comprehensive user documentation
-  - Agent configuration guides
-  - Best practices and workflow examples
-  - Video tutorials and onboarding materials
-
-**Deliverables:**
-- Production-ready system
-- Security framework
-- Complete documentation
-- Training materials
-
-### Implementation Strategy
-
-#### Development Approach
-- **Iterative Development**: Each phase builds incrementally on previous phases
-- **Early Validation**: Regular testing with real-world projects throughout development
-- **Community Feedback**: Early access program for select users to provide feedback
-- **Continuous Integration**: Automated testing and quality assurance throughout development
-
-#### Technical Milestones
-
-```mermaid
-gantt
-    title JCVD Implementation Timeline
-    dateFormat  YYYY-MM-DD
-    section Phase 1 Foundation
-    Orchestrator Core        :a1, 2025-08-01, 30d
-    State Management         :a2, after a1, 20d
-    Linear Integration       :a3, after a2, 15d
-    
-    section Phase 2 Core Agents
-    Primary Dev Agents       :b1, after a3, 25d
-    Quality & Ops Agents     :b2, after b1, 25d
-    Agent Specialization     :b3, after b2, 15d
-    
-    section Phase 3 Advanced Features
-    Parallel Execution       :c1, after b3, 20d
-    Advanced State Mgmt      :c2, after c1, 20d
-    Enterprise Features      :c3, after c2, 20d
-    
-    section Phase 4 Production
-    Performance Optimization :d1, after c3, 15d
-    Security & Compliance    :d2, after d1, 15d
-    Documentation & Training :d3, after d2, 15d
+JCVD provides a **comprehensive project orchestration platform** that:
+
+1. **Inception Phase Management**: Interactive requirements gathering or PRD acceptance, followed by systematic project setup
+2. **Complete Artifact Generation**: Creates all necessary documentation, specifications, and project structure in standardized locations
+3. **Linear-Driven Orchestration**: Uses Linear's Epic → Story → Subtasks hierarchy for complete project tracking and dependency management
+4. **Intelligent Task Sequencing**: LLM-powered analysis of Linear issues to determine optimal next actions based on dependencies, priorities, and project context
+5. **Phase-Based Progression**: Structured movement through Inception → Development/Alpha → subsequent phases using Linear milestones
+6. **Repository Convention Enforcement**: Standardized `docs/` directory structure and project organization patterns
+7. **Test-Driven Development Integration**: TDD practices built into all applicable workflows and task generation
+
+## Target Users
+
+**Primary**: Individual Software Engineers and Freelancers
+- Solo developers starting new projects who need comprehensive project structure and management
+- Freelancers who want to demonstrate professional project management to clients
+- Engineers who want to follow best practices but lack the time to set up comprehensive project infrastructure
+- Developers transitioning from ad-hoc development to structured, professional workflows
+
+**Secondary**: Small Development Teams (2-4 people)  
+- Startups needing rapid project setup and structured development workflows
+- Small consulting teams who want to standardize their project delivery approach
+- Teams who want to use Linear effectively for Agile development practices
+
+## Core Functional Requirements
+
+### FR1: Inception Phase Orchestration
+
+**FR1.1: Requirements Gathering System**
+- Interactive interview process to gather project requirements, scope, and constraints
+- Alternative path: Accept user-provided PRD.md and validate completeness
+- Generate comprehensive PRD.md stored in `docs/` directory following standardized template
+- Capture technical requirements, business requirements, success criteria, and constraints
+
+**FR1.2: Project Structure Generation**
+- Create standardized `docs/` directory structure for all project documentation
+- Generate repository scaffolding appropriate for detected project type (web app, API, mobile, etc.)
+- Create initial development toolchain setup (package.json, build configs, testing frameworks)
+- Establish Linear project and team structure with appropriate labels and issue types
+
+**FR1.3: High-Level Design Orchestration**
+- Create Linear Epic/Story/Subtask hierarchy based on PRD requirements
+- Generate architecture and system design issues with proper dependencies
+- Create repository setup tasks with dependency ordering
+- Populate Linear with sufficient backlog to reach proof-of-concept/demo milestone
+
+### FR2: Linear-Driven Task Orchestration
+
+**FR2.1: Intelligent Next-Task Determination**
+- LLM-powered analysis of Linear issue dependency graph, priorities, and current project state
+- Consider issue relationships, prerequisites, and optimal development sequence
+- Factor in current repository state and completed work when recommending next tasks
+- Provide reasoning for task recommendations including dependency analysis
+
+**FR2.2: Issue Lifecycle Management**
+- Automatic Linear issue updates as work progresses through subtasks
+- Status transitions based on completion criteria and validation results
+- Dependency tracking and automatic unblocking of subsequent tasks
+- Progress reporting with detailed completion summaries
+
+**FR2.3: Milestone and Phase Management**
+- Use Linear milestones to track major project phases (Inception, Development/Alpha, Beta, etc.)
+- Automatic milestone progression based on completion criteria
+- Phase-appropriate task generation and backlog management
+- Adaptive planning - support both up-front planning and iterative discovery
+
+### FR3: Comprehensive Documentation Management
+
+**FR3.1: Standardized Documentation Structure**
+- Enforce consistent `docs/` directory organization across all projects
+- Auto-generate and maintain architecture documentation, API specifications, and design documents
+- Version control integration for all documentation artifacts
+- Template-based document generation with project-specific customization
+
+**FR3.2: Living Documentation System**
+- Keep documentation synchronized with implementation progress
+- Update specifications and architecture docs as implementation evolves
+- Generate decision logs and architectural decision records (ADRs)
+- Maintain traceability between requirements, design, and implementation
+
+### FR4: Development Methodology Integration
+
+**FR4.1: Test-Driven Development Framework**
+- TDD practices integrated into all applicable task workflows
+- Automatic test generation and validation as part of issue completion
+- Test coverage tracking and quality gate enforcement
+- Support for different testing frameworks and project types
+
+**FR4.2: Agile Development Practices**
+- Epic → Story → Subtask hierarchy enforcement with proper estimation
+- Sprint planning support with velocity tracking
+- Retrospective and improvement process integration
+- Continuous integration and deployment pipeline setup
+
+### FR5: Claude Code Integration and User Experience
+
+**FR5.1: Seamless Claude Code Workflow Integration**
+- Natural language interface for all JCVD operations
+- Context-aware suggestions based on current project phase and Linear state
+- Intelligent tool selection and agent orchestration based on task type
+- Progress reporting and status updates through normal Claude Code conversation
+
+**FR5.2: MCP Server Architecture**
+- Comprehensive MCP server exposing project orchestration capabilities
+- LLM-powered task analysis and recommendation engine
+- Linear API integration for complete issue lifecycle management
+- Repository and documentation management through standard file operations
+
+## System Architecture Overview
+
+### Core Components
+
+**1. Inception Engine**
+- Requirements gathering interview system
+- PRD validation and enhancement
+- Project type detection and scaffolding generation
+- Initial Linear project and issue structure creation
+
+**2. Task Orchestration Engine** 
+- LLM-powered Linear issue analysis and task recommendation
+- Dependency graph analysis and optimal sequencing
+- Priority and context-aware task selection
+- Progress tracking and milestone management
+
+**3. Documentation Management System**
+- Standardized `docs/` directory structure enforcement
+- Living documentation generation and maintenance
+- Architecture and design document management
+- Decision logging and traceability systems
+
+**4. Linear Integration Layer**
+- Complete Linear API integration for issue lifecycle management
+- Epic/Story/Subtask hierarchy management
+- Milestone and phase tracking
+- Agile development workflow support
+
+**5. Development Methodology Framework**
+- TDD workflow integration and test generation
+- Quality gate enforcement and validation
+- Continuous integration pipeline setup
+- Code quality and coverage tracking
+
+## Project Phase Structure
+
+### Phase 1: Inception
+**Objective**: Establish project foundation, requirements, and initial structure
+
+**Entry Criteria**: Developer requests new project creation or provides initial requirements
+
+**Key Activities**:
+1. **Requirements Gathering**: Interactive interview or PRD acceptance and validation
+2. **Project Setup**: Repository structure, toolchain configuration, Linear project creation
+3. **High-Level Design**: Architecture planning, system design, technology selection
+4. **Backlog Population**: Create Epic/Story/Subtask structure for proof-of-concept development
+5. **Development Environment**: Setup development tools, testing frameworks, CI/CD foundations
+
+**Exit Criteria**:
+- Complete PRD.md in `docs/` directory
+- Repository structure established with appropriate toolchain
+- Linear project populated with sufficient stories for proof-of-concept
+- Architecture and system design documented
+- Development environment ready for implementation
+
+**Duration**: Varies by project complexity
+- Simple projects (SPA, basic API): 1-2 hours
+- Complex projects (multi-service systems): 1-2 days
+
+### Phase 2: Development (Simple Projects) / Alpha (Complex Projects)
+**Objective**: Implement proof-of-concept or first major milestone
+
+**Entry Criteria**: Inception phase complete, development environment ready
+
+**Key Activities**:
+1. **Story Implementation**: Work through Linear backlog in dependency order
+2. **Test-Driven Development**: Implement features following TDD practices
+3. **Documentation Updates**: Keep architecture and design docs current
+4. **Quality Gates**: Continuous validation and testing
+5. **Milestone Tracking**: Progress toward proof-of-concept or alpha release
+
+**Exit Criteria**:
+- Proof-of-concept or alpha milestone achieved
+- All tests passing with appropriate coverage
+- Documentation updated and current
+- Ready for user feedback or next phase
+
+### Subsequent Phases
+**Beta, Production, Maintenance phases** - structured similarly with phase-appropriate objectives and criteria
+
+## User Experience Design
+
+### First-Time Installation and Setup
+
+#### Discovery and Installation
+```
+User discovers JCVD through:
+- Claude Code MCP server marketplace/directory
+- GitHub repository or documentation
+- Developer community recommendations
+
+Installation options:
+1. Via Claude Code: "Add MCP Server" → Search "JCVD" → Install
+2. Manual: npm install -g @jcvd/mcp-server && claude-code add-mcp jcvd
+3. Docker: docker run -d jcvd/mcp-server (for advanced users)
 ```
 
-#### Risk Mitigation
+#### First Launch Experience
+```
+User: "I want to start a new project"
 
-**Technical Risks:**
-- **Claude Code API Changes**: Maintain close relationship with Anthropic team for early access to changes
-- **Linear API Limitations**: Develop fallback mechanisms and alternative integrations
-- **Performance Bottlenecks**: Implement comprehensive monitoring and optimization from Phase 1
-- **State Consistency Issues**: Extensive testing of state management under concurrent loads
+Claude: [JCVD MCP server detected for first time]
+"I see you have JCVD installed! This is a comprehensive project orchestration 
+framework that will help you build software projects from start to finish.
 
-**Market Risks:**
-- **Competition**: Focus on unique multi-agent orchestration capabilities
-- **Adoption Challenges**: Invest heavily in documentation and developer experience
-- **Feature Complexity**: Provide simple default configurations with advanced customization options
+Before we begin, I need to set up a few things:
 
-#### Success Criteria
+1. **Linear Integration**: JCVD uses Linear for project management. 
+   Do you have a Linear workspace, or should I help you create one?
 
-**Phase 1 Success:**
-- ✅ Basic task delegation working with 3+ agents
-- ✅ Linear integration creating and updating issues
-- ✅ Repository state documents maintained consistently
-- ✅ No critical bugs in core orchestration
+2. **Project Location**: Where would you like to create your project? 
+   JCVD will set up a complete repository structure.
 
-**Phase 2 Success:**
-- ✅ All 7 agents operational with domain expertise
-- ✅ End-to-end feature development workflow functional
-- ✅ Model routing optimizing for task complexity
-- ✅ Agent-to-agent communication protocols stable
+3. **Development Preferences**: Any preferred technologies, frameworks, 
+   or development methodologies I should know about?
 
-**Phase 3 Success:**
-- ✅ 5+ parallel agents executing simultaneously
-- ✅ Complex project coordination (20+ tasks)
-- ✅ Enterprise features configurable and documented
-- ✅ Sub-2-second task delegation response times
+Let's start with Linear - this is where we'll track all your project tasks 
+and progress..."
+```
 
-**Phase 4 Success:**
-- ✅ Production deployment ready
-- ✅ Security audit passed
-- ✅ User documentation complete
-- ✅ Early adopters successfully onboarded
+#### Linear Workspace Setup
+```
+Claude: "Let's connect your Linear workspace. You have a few options:
 
+A) **Existing Linear Workspace**: Provide your Linear API key and workspace ID
+   - I'll create a new project within your existing workspace
+   - Uses your existing team structure and preferences
+
+B) **New Linear Workspace**: I'll guide you through creating a Linear account
+   - Free for personal use (up to 10 team members)
+   - I'll set up the optimal project structure for JCVD
+
+C) **Local Mode**: Work without Linear integration
+   - Tasks tracked in local markdown files
+   - Less powerful but works offline
+
+Which would you prefer?"
+
+[User chooses option, setup process continues]
+```
+
+#### Project Type Detection and Scoping
+```
+User: "I have Linear set up, now I want to build a task management web app"
+
+Claude: "Perfect! I'll start the JCVD Inception Phase for your task management app.
+
+Let me ask a few key questions to understand your project:
+
+**Project Basics:**
+1. What's the main problem your app will solve?
+2. Who are your target users?
+3. What's your success criteria (how will you know it's working)?
+
+**Technical Scope:**
+4. Do you want a simple single-page app or a more complex system?
+5. Any specific technologies you want to use or avoid?
+6. Will you need user authentication, data persistence, etc.?
+
+**Timeline and Constraints:**
+7. Is this a personal project, client work, or startup idea?
+8. Any deadlines or budget constraints?
+9. Just you working on it, or will there be a team?
+
+Let's start with #1 - what problem will your task management app solve?"
+```
+
+#### Interactive Requirements Gathering
+```
+[Following the interview questions above, JCVD conducts a structured conversation]
+
+Claude: "Great answers! Let me summarize what I've learned:
+
+**Your Project: TaskMaster Pro**
+- Problem: Help freelancers track billable hours and project deadlines
+- Users: Individual freelancers and small agencies  
+- Success: Users can track time, generate invoices, meet deadlines
+- Scope: Web application with authentication, database, reporting
+- Tech: You're open to suggestions but prefer TypeScript
+- Timeline: Personal project, flexible timeline, just you developing
+- Approach: You want to follow TDD practices
+
+Does this summary look accurate? Any corrections or additions?"
+
+User: "That's perfect!"
+
+Claude: "Excellent! Now I'll create your complete project structure:
+
+1. **Generating PRD**: Creating comprehensive requirements document
+2. **Setting up repository**: Full project structure with TypeScript, testing, etc.
+3. **Creating Linear project**: Epic/Story/Subtask breakdown  
+4. **Planning first sprint**: Tasks to get you to a working proof-of-concept
+
+This will take about 2-3 minutes..."
+
+[JCVD generates all artifacts]
+```
+
+#### Project Structure Creation
+```
+Claude: "🎉 Your ProjectMaster Pro project is ready! Here's what I've created:
+
+**Repository Structure:**
+projectmaster-pro/
+├── docs/
+│   ├── PRD.md                  # Complete requirements document
+│   ├── ARCHITECTURE.md         # System design and architecture
+│   ├── API_SPEC.md            # API documentation
+│   └── DEPLOYMENT.md          # Deployment and infrastructure
+├── src/
+│   ├── components/            # React components
+│   ├── services/              # Business logic and API calls
+│   ├── utils/                 # Utility functions
+│   └── types/                 # TypeScript type definitions
+├── tests/
+│   ├── unit/                  # Unit tests
+│   ├── integration/           # Integration tests
+│   └── e2e/                   # End-to-end tests
+├── package.json               # Dependencies and scripts
+├── tsconfig.json              # TypeScript configuration
+├── jest.config.js             # Testing configuration
+└── README.md                  # Getting started guide
+
+**Linear Project: "ProjectMaster Pro"**
+- **Epic 1**: User Authentication System (5 stories, 23 points)
+- **Epic 2**: Time Tracking Core (4 stories, 18 points)  
+- **Epic 3**: Project Management (6 stories, 34 points)
+- **Epic 4**: Reporting & Invoicing (3 stories, 21 points)
+
+**Current Milestone**: "Proof of Concept" (Sprint 1-2, ~4 weeks)
+**Next Task**: TASK-1 "Set up development environment and basic project structure"
+
+Everything is ready! Would you like to start with the first task, or do you want 
+to review the PRD and architecture documents first?"
+```
+
+#### Transition to Development Phase
+```
+User: "Let's start with the first task!"
+
+Claude: "Perfect! Let me check your Linear backlog for the optimal next step...
+
+**Current Task: TASK-1 "Development Environment Setup"**
+- **Story**: "As a developer, I want a fully configured development environment"
+- **Subtask**: "Initialize TypeScript project with testing framework"
+- **Estimated effort**: 2 points (~2-3 hours)
+- **Dependencies**: None (ready to start!)
+
+This task involves:
+1. Setting up package.json with all necessary dependencies
+2. Configuring TypeScript, Jest, and ESLint
+3. Creating basic project structure
+4. Writing your first test to verify everything works
+
+Since you want to follow TDD, we'll start by writing a test for the basic 
+project setup, then implement the configuration to make it pass.
+
+Ready to begin? I'll guide you through each step!"
+
+[Development phase begins with structured TDD workflow]
+```
+
+### Ongoing Development Experience
+
+**Daily Workflow**:
+```
+User: "What should I work on next?"
+
+Claude: [Calls JCVD to analyze Linear state, dependencies, priorities]
+"Based on your Linear backlog and current progress, I recommend working on 
+Story PROJ-15: 'User Authentication System'. 
+
+This story is ready to start because:
+- All prerequisite stories are complete 
+- Database schema story (PROJ-12) was finished yesterday
+- It's on the critical path for your Sprint 2 milestone
+- Estimated at 5 points, fits well in your remaining capacity
+
+Shall we begin with the first subtask: 'Create User Model with Tests'?"
+```
+
+### Cross-Session Continuity
+```
+User: [Starts new Claude Code session]
+"Continue with my project work"
+
+Claude: [JCVD loads project state from Linear and docs]
+"Welcome back! You're working on the ProjectMaster project. 
+
+Current status:
+- Phase: Development (Sprint 2)
+- Active Story: PROJ-15 'User Authentication System' 
+- Last completed: User model tests (all passing)
+- Next up: Authentication middleware implementation
+
+Ready to continue with the middleware setup?"
+```
 
 ## Success Metrics
 
-### Key Performance Indicators (KPIs)
+### Inception Phase Success
+- **Setup Time**: Complete project inception in <2 hours for simple projects, <1 day for complex
+- **Documentation Quality**: Generated PRDs score >8/10 on completeness assessment
+- **Linear Structure**: Proper Epic/Story/Subtask hierarchy with realistic estimates
+- **Developer Satisfaction**: >90% of users report clear understanding of project scope and next steps
 
-#### Development Velocity Metrics
-- **Feature Delivery Speed**: 10x improvement in time-to-delivery for standard features
-- **Parallel Work Efficiency**: 70% reduction in sequential bottlenecks
-- **Context Switch Reduction**: 80% reduction in developer context switching time
-- **Task Completion Rate**: 95% task completion rate with automated quality checks
+### Development Phase Success  
+- **Task Clarity**: >95% of recommended next tasks are actionable without additional clarification
+- **Dependency Management**: Zero blocked tasks due to unresolved dependencies
+- **Quality Maintenance**: >90% of completed stories pass quality gates on first attempt
+- **Velocity Tracking**: Accurate story point estimation within 20% of actual completion time
 
-#### Quality Metrics
-- **Defect Rate**: < 2% defect rate in agent-delivered features
-- **Code Coverage**: Maintain > 90% test coverage across all agent-developed code
-- **Architecture Compliance**: 100% compliance with established architecture patterns
-- **Documentation Completeness**: 95% of features delivered with complete documentation
+### Overall System Success
+- **Project Completion Rate**: >80% of projects started reach their defined success criteria
+- **Time to Value**: First proof-of-concept delivered within planned timeline 90% of time
+- **Documentation Fidelity**: Architecture docs remain synchronized with implementation >95% of time
+- **User Retention**: >85% of users complete multiple projects using JCVD framework
 
-#### Operational Metrics
-- **System Uptime**: 99.9% availability during business hours
-- **Response Time**: < 2 seconds average for task delegation
-- **Resource Utilization**: Optimal balance between Sonnet and Opus usage
-- **Error Recovery**: < 5 minutes average recovery time from agent failures
+## Implementation Roadmap
 
-#### User Adoption Metrics
-- **User Onboarding**: < 30 minutes for experienced Claude Code users
-- **Feature Adoption**: 80% of teams using at least 5 of 7 specialized agents
-- **User Satisfaction**: > 4.5/5 average satisfaction rating
-- **Retention Rate**: > 90% monthly retention rate
+### MVP (Months 1-2): Inception Phase Foundation
+- Requirements gathering interview system
+- PRD generation and validation
+- Basic Linear project setup
+- Simple repository scaffolding
+- Documentation structure enforcement
 
-### Business Impact Measurements
+### V1.0 (Months 3-4): Complete Task Orchestration
+- LLM-powered Linear analysis and task recommendation
+- Dependency graph analysis and sequencing
+- Comprehensive issue lifecycle management
+- TDD workflow integration
 
-#### Cost Efficiency
-- **Development Cost Reduction**: 60% reduction in development costs per feature
-- **Resource Optimization**: 40% improvement in team resource utilization
-- **Time-to-Market**: 70% faster feature delivery to production
-- **Technical Debt**: 50% reduction in technical debt accumulation
+### V2.0 (Months 5-6): Advanced Project Management
+- Multi-phase project support
+- Advanced milestone and sprint management
+- Custom workflow templates
+- Team collaboration features
 
-#### Scalability Impact
-- **Team Scaling**: Enable 3x team productivity without proportional headcount increase
-- **Project Complexity**: Handle 5x more complex projects with same team size
-- **Cross-team Coordination**: 80% reduction in cross-team coordination overhead
-- **Knowledge Distribution**: 90% reduction in single-point-of-failure knowledge bottlenecks
-
-### Measurement Framework
-
-#### Data Collection
-```typescript
-interface MetricsCollector {
-  // Performance metrics
-  recordTaskDelegationTime(taskId: string, duration: number): void;
-  recordAgentExecutionTime(agentId: string, taskId: string, duration: number): void;
-  recordStateUpdateTime(updateType: string, duration: number): void;
-  
-  // Quality metrics
-  recordDefectRate(period: string, defects: number, totalDeliveries: number): void;
-  recordCodeCoverage(project: string, coverage: number): void;
-  recordArchitectureCompliance(violations: ComplianceViolation[]): void;
-  
-  // Business metrics
-  recordFeatureDeliveryTime(featureId: string, startTime: Date, endTime: Date): void;
-  recordUserSatisfaction(userId: string, rating: number, feedback: string): void;
-  recordCostSavings(project: string, estimatedSavings: number): void;
-}
-```
-
-#### Reporting Dashboard
-- **Real-time Performance**: Live metrics on task delegation and execution
-- **Quality Trends**: Historical trends in defect rates and code quality
-- **Agent Utilization**: Resource usage across different agent types
-- **Business Impact**: ROI calculations and cost savings analysis
-
-#### Alerting System
-- **Performance Degradation**: Alerts when response times exceed thresholds
-- **Quality Issues**: Notifications for compliance violations or high defect rates
-- **System Health**: Monitoring for agent failures or state inconsistencies
-- **Usage Anomalies**: Detection of unusual usage patterns or potential issues
-
-## Risk Assessment
-
-### Technical Risks
-
-#### High Risk
-
-**R1: Claude Code API Dependencies**
-- **Probability**: Medium
-- **Impact**: High
-- **Description**: Breaking changes in Claude Code's subagent API or tool ecosystem
-- **Mitigation**: 
-  - Maintain close relationship with Anthropic team
-  - Implement abstraction layer for Claude Code integration
-  - Develop fallback mechanisms for critical functionality
-  - Regular testing against Claude Code beta releases
-
-**R2: State Consistency Under Load**
-- **Probability**: Medium
-- **Impact**: High
-- **Description**: State synchronization failures during high-concurrency operations
-- **Mitigation**:
-  - Implement robust conflict resolution mechanisms
-  - Extensive load testing with concurrent agents
-  - Automatic state recovery and validation
-  - Backup and rollback capabilities
-
-**R3: Linear API Rate Limiting**
-- **Probability**: High
-- **Impact**: Medium
-- **Description**: Linear API rate limits affecting real-time synchronization
-- **Mitigation**:
-  - Implement intelligent request batching
-  - Develop offline mode with sync queuing
-  - Create alternative state persistence mechanisms
-  - Negotiate higher rate limits with Linear
-
-#### Medium Risk
-
-**R4: Model Selection Optimization**
-- **Probability**: Medium
-- **Impact**: Medium
-- **Description**: Suboptimal model routing leading to poor performance or high costs
-- **Mitigation**:
-  - Implement adaptive learning for model selection
-  - Comprehensive cost monitoring and optimization
-  - User-configurable model preferences
-  - Regular analysis and tuning of routing algorithms
-
-**R5: Agent Coordination Complexity**
-- **Probability**: Medium
-- **Impact**: Medium
-- **Description**: Complex inter-agent dependencies leading to deadlocks or inefficiencies
-- **Mitigation**:
-  - Implement timeout mechanisms for all agent interactions
-  - Dependency cycle detection and prevention
-  - Fallback strategies for failed agent communications
-  - Comprehensive testing of coordination scenarios
-
-### Business Risks
-
-#### High Risk
-
-**R6: Market Competition**
-- **Probability**: High
-- **Impact**: High
-- **Description**: Competitors developing similar multi-agent development tools
-- **Mitigation**:
-  - Focus on unique orchestration and Claude Code integration
-  - Rapid feature development and continuous innovation
-  - Strong community building and developer advocacy
-  - Patent protection for key innovations
-
-**R7: User Adoption Barriers**
-- **Probability**: Medium
-- **Impact**: High
-- **Description**: Complexity preventing widespread adoption among development teams
-- **Mitigation**:
-  - Invest heavily in user experience and onboarding
-  - Provide comprehensive documentation and tutorials
-  - Create simple default configurations
-  - Develop community support and examples
-
-#### Medium Risk
-
-**R8: Regulatory and Compliance**
-- **Probability**: Low
-- **Impact**: High
-- **Description**: Changes in AI regulations affecting automated development tools
-- **Mitigation**:
-  - Stay informed on AI regulation developments
-  - Implement comprehensive audit trails
-  - Ensure human oversight capabilities
-  - Develop compliance reporting features
-
-**R9: Scaling Challenges**
-- **Probability**: Medium
-- **Impact**: Medium
-- **Description**: Technical or operational challenges scaling to enterprise customers
-- **Mitigation**:
-  - Design for scalability from Phase 1
-  - Regular performance testing at scale
-  - Enterprise customer pilot programs
-  - Dedicated enterprise support capabilities
-
-### Operational Risks
-
-#### Medium Risk
-
-**R10: Key Personnel Dependency**
-- **Probability**: Medium
-- **Impact**: Medium
-- **Description**: Over-reliance on specific team members for critical knowledge
-- **Mitigation**:
-  - Comprehensive documentation of all systems
-  - Cross-training team members on critical components
-  - Knowledge sharing sessions and code reviews
-  - Succession planning for key roles
-
-**R11: Security Vulnerabilities**
-- **Probability**: Medium
-- **Impact**: High
-- **Description**: Security flaws in agent coordination or state management
-- **Mitigation**:
-  - Regular security audits and penetration testing
-  - Secure coding practices and code reviews
-  - Automated security scanning in CI/CD
-  - Incident response plan and procedures
-
-### Risk Monitoring and Response
-
-#### Risk Dashboard
-```typescript
-interface RiskMonitor {
-  trackRisk(riskId: string, indicators: RiskIndicator[]): void;
-  assessRiskLevel(riskId: string): RiskLevel;
-  triggerMitigation(riskId: string, severity: 'low' | 'medium' | 'high'): void;
-  generateRiskReport(period: string): RiskReport;
-}
-
-interface RiskIndicator {
-  name: string;
-  currentValue: number;
-  threshold: number;
-  trend: 'improving' | 'stable' | 'worsening';
-  lastChecked: Date;
-}
-```
-
-#### Contingency Plans
-
-**Claude Code API Changes**:
-1. Immediate assessment of impact scope
-2. Emergency compatibility layer implementation
-3. Communication with users about temporary limitations
-4. Accelerated development of permanent solution
-
-**State Consistency Failures**:
-1. Automatic rollback to last known good state
-2. Notify affected agents and halt conflicting operations
-3. Manual state reconciliation by Tech Lead agent
-4. Post-incident analysis and prevention measures
-
-**Linear API Issues**:
-1. Switch to offline mode with local state management
-2. Queue all Linear updates for batch processing
-3. Notify users of temporary synchronization delays
-4. Resume normal operation when API is restored
-
-#### Regular Risk Reviews
-- **Weekly**: Operational risk assessment and monitoring
-- **Monthly**: Technical risk evaluation and mitigation progress
-- **Quarterly**: Strategic risk review and business impact analysis
-- **Annual**: Comprehensive risk framework update and planning
+This comprehensive approach transforms JCVD from a coding assistant into a complete project orchestration platform that handles every aspect of software development from conception to delivery.

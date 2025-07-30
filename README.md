@@ -1,2 +1,2 @@
-# jcvd
-Van Damme, a multi-agent orchestration framework for Claude Code
+# JCVD
+Guardrails for software development with Claude Code 
