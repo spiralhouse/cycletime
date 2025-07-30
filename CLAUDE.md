@@ -9,11 +9,14 @@ JCVD is a multi-agent orchestration framework for Claude Code that aims to trans
 ## Current State
 
 This repository contains:
-- **docs/PRD.md**: Product Requirements Document focused on business requirements, user needs, and success criteria
+- **docs/PRD.md**: Core product requirements, business vision, and success criteria
+- **docs/ARCHITECTURE.md**: Technical architecture, database schemas, and system design
+- **docs/USER_EXPERIENCE.md**: Complete user workflows, setup processes, and daily development experience
+- **docs/ONBOARDING.md**: Project integration guide for new and existing projects
 - **README.md**: Basic project description
-- **docs/**: Architecture documentation and detailed design docs
+- **SESSION_SUMMARY.md**: Detailed development session documentation
 
-**Status**: Pre-implementation phase - no actual code exists yet
+**Status**: Pre-implementation phase - comprehensive documentation complete, ready for implementation
 
 ## System Architecture (see docs/ARCHITECTURE.md)
 
@@ -45,12 +48,33 @@ When implementation begins, common commands will likely include:
 
 ## Working with this Repository
 
-Since this is pre-implementation:
-- Focus on understanding the business vision outlined in docs/PRD.md
-- Review the technical architecture detailed in docs/ARCHITECTURE.md
-- Any code implementation should follow the architectural patterns described in the architecture document
-- Consider the planned agent specializations when designing components
-- State management will be critical - design with multi-layer persistence in mind
+Since this is pre-implementation, familiarize yourself with the focused documentation structure:
+
+**📋 Business Requirements (docs/PRD.md)**
+- Product vision, target users, and core functional requirements
+- Success metrics and implementation roadmap
+- Developer experience philosophy
+
+**🏗️ Technical Architecture (docs/ARCHITECTURE.md)**
+- Multi-provider architecture with embedded SQLite foundation
+- Database schemas, provider interfaces, and system components
+- Integration patterns with Claude Code MCP framework
+
+**👤 User Experience (docs/USER_EXPERIENCE.md)**
+- Complete setup workflows and daily development experience
+- Provider selection flows and cross-session continuity patterns
+- Task orchestration and project structure creation
+
+**🚀 Project Integration (docs/ONBOARDING.md)**
+- Onboarding strategies for new and existing projects
+- Integration approaches based on project size and complexity
+- Realistic scope limitations and health check processes
+
+**Implementation Guidelines:**
+- Follow the provider-agnostic architecture patterns from ARCHITECTURE.md
+- Use the multi-layer state management approach (embedded SQLite → cloud providers)
+- Implement user workflows as specified in USER_EXPERIENCE.md
+- Design with the developer experience philosophy from PRD.md
 
 ## Next Steps for Implementation
 
@@ -60,7 +84,11 @@ Since this is pre-implementation:
 4. Add Linear MCP integration
 5. Implement individual specialized agents
 
-The docs/PRD.md contains business requirements and implementation phases, while docs/ARCHITECTURE.md contains the technical architecture and design patterns that should guide all development decisions.
+The focused document structure ensures each aspect has dedicated coverage:
+- **PRD.md**: Business requirements and product vision
+- **ARCHITECTURE.md**: Technical specifications and implementation patterns
+- **USER_EXPERIENCE.md**: Complete user workflows and interaction design
+- **ONBOARDING.md**: Project integration strategies and adoption approaches
 
 ## Linear Reference
 
