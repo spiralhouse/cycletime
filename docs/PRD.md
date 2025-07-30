@@ -9,16 +9,16 @@
 
 ## Executive Summary
 
-**JCVD** is a comprehensive project orchestration framework that transforms Claude Code into a complete software development partner. Unlike traditional coding assistants, JCVD creates and manages ALL artifacts required to execute a software project from inception to deployment, including specifications, architecture documentation, Linear issue management, and repository setup.
+**JCVD** is a comprehensive project orchestration framework that transforms Claude Code into a complete software development partner. Unlike traditional coding assistants, JCVD creates and manages ALL artifacts required to execute a software project from inception to deployment, including specifications, architecture documentation, issue tracking and management, and repository setup.
 
-The system operates on a project-centric model where every development effort begins with an **Inception Phase** - either through an interactive requirements gathering interview or by accepting a user-provided PRD. JCVD then orchestrates the entire development lifecycle through Linear issue management, ensuring structured progression from high-level design through proof-of-concept delivery.
+The system operates on a project-centric model where every development effort begins with an **Inception Phase** - either through an interactive requirements gathering interview or by accepting a user-provided PRD. JCVD then orchestrates the entire development lifecycle through intelligent issue tracking systems, ensuring structured progression from high-level design through proof-of-concept delivery.
 
 **Core Value Propositions:**
 - **Complete Project Orchestration**: From requirements gathering to deployment-ready code
 - **Artifact Generation**: Auto-creates all necessary documentation, specifications, and project structure
-- **Linear-Driven Workflow**: Uses Linear's Agile structure (Epic → Story → Subtasks) for comprehensive project tracking
+- **Issue-Driven Workflow**: Uses Agile structure (Epic → Story → Subtasks) for comprehensive project tracking
 - **Phase-Based Development**: Structured progression through Inception, Development/Alpha, and delivery phases
-- **Intelligent Task Orchestration**: LLM-powered analysis of Linear dependency graphs to determine optimal next actions
+- **Intelligent Task Orchestration**: LLM-powered analysis of issue dependency graphs to determine optimal next actions
 
 ## Project Vision
 
@@ -41,9 +41,9 @@ JCVD provides a **comprehensive project orchestration platform** that:
 
 1. **Inception Phase Management**: Interactive requirements gathering or PRD acceptance, followed by systematic project setup
 2. **Complete Artifact Generation**: Creates all necessary documentation, specifications, and project structure in standardized locations
-3. **Linear-Driven Orchestration**: Uses Linear's Epic → Story → Subtasks hierarchy for complete project tracking and dependency management
-4. **Intelligent Task Sequencing**: LLM-powered analysis of Linear issues to determine optimal next actions based on dependencies, priorities, and project context
-5. **Phase-Based Progression**: Structured movement through Inception → Development/Alpha → subsequent phases using Linear milestones
+3. **Issue-Based Orchestration**: Uses Epic → Story → Subtasks hierarchy for complete project tracking and dependency management
+4. **Intelligent Task Sequencing**: LLM-powered analysis of project issues to determine optimal next actions based on dependencies, priorities, and project context
+5. **Phase-Based Progression**: Structured movement through Inception → Development/Alpha → subsequent phases using project milestones
 6. **Repository Convention Enforcement**: Standardized `docs/` directory structure and project organization patterns
 7. **Test-Driven Development Integration**: TDD practices built into all applicable workflows and task generation
 
@@ -58,7 +58,7 @@ JCVD provides a **comprehensive project orchestration platform** that:
 **Secondary**: Small Development Teams (2-4 people)  
 - Startups needing rapid project setup and structured development workflows
 - Small consulting teams who want to standardize their project delivery approach
-- Teams who want to use Linear effectively for Agile development practices
+- Teams who want to use issue tracking effectively for Agile development practices
 
 ## Core Functional Requirements
 
@@ -74,30 +74,30 @@ JCVD provides a **comprehensive project orchestration platform** that:
 - Create standardized `docs/` directory structure for all project documentation
 - Generate repository scaffolding appropriate for detected project type (web app, API, mobile, etc.)
 - Create initial development toolchain setup (package.json, build configs, testing frameworks)
-- Establish Linear project and team structure with appropriate labels and issue types
+- Establish issue tracking project structure with appropriate labels and issue types
 
 **FR1.3: High-Level Design Orchestration**
-- Create Linear Epic/Story/Subtask hierarchy based on PRD requirements
+- Create Epic/Story/Subtask hierarchy based on PRD requirements
 - Generate architecture and system design issues with proper dependencies
 - Create repository setup tasks with dependency ordering
-- Populate Linear with sufficient backlog to reach proof-of-concept/demo milestone
+- Populate issue tracker with sufficient backlog to reach proof-of-concept/demo milestone
 
-### FR2: Linear-Driven Task Orchestration
+### FR2: Issue-Driven Task Orchestration
 
 **FR2.1: Intelligent Next-Task Determination**
-- LLM-powered analysis of Linear issue dependency graph, priorities, and current project state
+- LLM-powered analysis of issue dependency graph, priorities, and current project state
 - Consider issue relationships, prerequisites, and optimal development sequence
 - Factor in current repository state and completed work when recommending next tasks
 - Provide reasoning for task recommendations including dependency analysis
 
 **FR2.2: Issue Lifecycle Management**
-- Automatic Linear issue updates as work progresses through subtasks
+- Automatic issue updates as work progresses through subtasks
 - Status transitions based on completion criteria and validation results
 - Dependency tracking and automatic unblocking of subsequent tasks
 - Progress reporting with detailed completion summaries
 
 **FR2.3: Milestone and Phase Management**
-- Use Linear milestones to track major project phases (Inception, Development/Alpha, Beta, etc.)
+- Use project milestones to track major project phases (Inception, Development/Alpha, Beta, etc.)
 - Automatic milestone progression based on completion criteria
 - Phase-appropriate task generation and backlog management
 - Adaptive planning - support both up-front planning and iterative discovery
@@ -134,14 +134,14 @@ JCVD provides a **comprehensive project orchestration platform** that:
 
 **FR5.1: Seamless Claude Code Workflow Integration**
 - Natural language interface for all JCVD operations
-- Context-aware suggestions based on current project phase and Linear state
+- Context-aware suggestions based on current project phase and issue tracking state
 - Intelligent tool selection and agent orchestration based on task type
 - Progress reporting and status updates through normal Claude Code conversation
 
 **FR5.2: MCP Server Architecture**
 - Comprehensive MCP server exposing project orchestration capabilities
 - LLM-powered task analysis and recommendation engine
-- Linear API integration for complete issue lifecycle management
+- Issue tracking API integration for complete issue lifecycle management
 - Repository and documentation management through standard file operations
 
 ## System Architecture Overview
@@ -200,7 +200,7 @@ interface IssueProvider {
   syncWith(otherProvider: IssueProvider): Promise<SyncResult>
 }
 
-// Unified data model (mirrors Linear schema)
+// Unified data model (uses standard issue tracking schema)
 interface Issue {
   id: string
   projectId: string
@@ -224,10 +224,10 @@ interface Issue {
 
 ### Embedded Database Schema (SQLite)
 
-The embedded SQLite provider uses an optimized schema that mirrors Linear's data model for seamless migration:
+The embedded SQLite provider uses an optimized schema that follows standard issue tracking patterns with Linear compatibility for seamless migration:
 
 ```sql
--- Projects (maps to Linear Projects)
+-- Projects (compatible with Linear Projects)
 CREATE TABLE projects (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -237,7 +237,7 @@ CREATE TABLE projects (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Workflow states (mirrors Linear states)
+-- Workflow states (standard issue tracking states)
 CREATE TABLE workflow_states (
   id TEXT PRIMARY KEY,
   project_id TEXT REFERENCES projects(id),
@@ -247,7 +247,7 @@ CREATE TABLE workflow_states (
   color TEXT DEFAULT '#000000'
 );
 
--- Issues (complete Linear Issue compatibility)
+-- Issues (standard issue tracking schema with Linear compatibility)
 CREATE TABLE issues (
   id TEXT PRIMARY KEY,
   project_id TEXT REFERENCES projects(id),
@@ -354,7 +354,7 @@ CREATE INDEX idx_dependencies_blocked ON issue_dependencies(blocked_id);
 
 **Key Activities**:
 1. **Requirements Gathering**: Interactive interview or PRD acceptance and validation
-2. **Project Setup**: Repository structure, toolchain configuration, Linear project creation
+2. **Project Setup**: Repository structure, toolchain configuration, issue tracking project creation
 3. **High-Level Design**: Architecture planning, system design, technology selection
 4. **Backlog Population**: Create Epic/Story/Subtask structure for proof-of-concept development
 5. **Development Environment**: Setup development tools, testing frameworks, CI/CD foundations
@@ -362,7 +362,7 @@ CREATE INDEX idx_dependencies_blocked ON issue_dependencies(blocked_id);
 **Exit Criteria**:
 - Complete PRD.md in `docs/` directory
 - Repository structure established with appropriate toolchain
-- Linear project populated with sufficient stories for proof-of-concept
+- Issue tracker populated with sufficient stories for proof-of-concept
 - Architecture and system design documented
 - Development environment ready for implementation
 
@@ -376,7 +376,7 @@ CREATE INDEX idx_dependencies_blocked ON issue_dependencies(blocked_id);
 **Entry Criteria**: Inception phase complete, development environment ready
 
 **Key Activities**:
-1. **Story Implementation**: Work through Linear backlog in dependency order
+1. **Story Implementation**: Work through project backlog in dependency order
 2. **Test-Driven Development**: Implement features following TDD practices
 3. **Documentation Updates**: Keep architecture and design docs current
 4. **Quality Gates**: Continuous validation and testing
@@ -699,7 +699,7 @@ Claude: "Excellent! Now I'll create your complete project structure:
 
 1. **Generating PRD**: Creating comprehensive requirements document
 2. **Setting up repository**: Full project structure with TypeScript, testing, etc.
-3. **Creating Linear project**: Epic/Story/Subtask breakdown  
+3. **Creating project issues**: Epic/Story/Subtask breakdown  
 4. **Planning first sprint**: Tasks to get you to a working proof-of-concept
 
 This will take about 2-3 minutes..."
@@ -732,7 +732,7 @@ projectmaster-pro/
 ├── jest.config.js             # Testing configuration
 └── README.md                  # Getting started guide
 
-**Linear Project: "ProjectMaster Pro"**
+**Project Issues: "ProjectMaster Pro"**
 - **Epic 1**: User Authentication System (5 stories, 23 points)
 - **Epic 2**: Time Tracking Core (4 stories, 18 points)  
 - **Epic 3**: Project Management (6 stories, 34 points)
@@ -749,7 +749,7 @@ to review the PRD and architecture documents first?"
 ```
 User: "Let's start with the first task!"
 
-Claude: "Perfect! Let me check your Linear backlog for the optimal next step...
+Claude: "Perfect! Let me check your project backlog for the optimal next step...
 
 **Current Task: TASK-1 "Development Environment Setup"**
 - **Story**: "As a developer, I want a fully configured development environment"
@@ -777,8 +777,8 @@ Ready to begin? I'll guide you through each step!"
 ```
 User: "What should I work on next?"
 
-Claude: [Calls JCVD to analyze Linear state, dependencies, priorities]
-"Based on your Linear backlog and current progress, I recommend working on 
+Claude: [Calls JCVD to analyze issue state, dependencies, priorities]
+"Based on your project backlog and current progress, I recommend working on 
 Story PROJ-15: 'User Authentication System'. 
 
 This story is ready to start because:
@@ -795,7 +795,7 @@ Shall we begin with the first subtask: 'Create User Model with Tests'?"
 User: [Starts new Claude Code session]
 "Continue with my project work"
 
-Claude: [JCVD loads project state from Linear and docs]
+Claude: [JCVD loads project state from issue tracker and docs]
 "Welcome back! You're working on the ProjectMaster project. 
 
 Current status:
@@ -807,12 +807,212 @@ Current status:
 Ready to continue with the middleware setup?"
 ```
 
+## Existing Project Onboarding
+
+### Overview
+
+JCVD provides guided onboarding for existing projects through a simple "Onboarding Assistant" that helps determine the best approach for integrating JCVD with ongoing work. Rather than complex automated analysis, JCVD uses targeted questions to understand project state and provide realistic recommendations.
+
+### Onboarding Assistant Flow
+
+#### Initial Assessment Through Questions
+
+```
+User: "I want to use JCVD with my existing project that's already in Linear"
+
+Claude: "Great! I can help you integrate JCVD with your existing project. Let me ask 
+a few questions to recommend the best approach:
+
+**Project Context:**
+1. **Project Size**: Roughly how many issues do you have? 
+   - Small (10-50 issues)
+   - Medium (50-200 issues)  
+   - Large (200+ issues)
+
+2. **Documentation Status**: Do you have project requirements documented?
+   - Yes, we have comprehensive PRD and architecture docs
+   - We have some documentation but it's incomplete
+   - No, documentation is minimal or missing
+
+3. **Issue Organization**: How are your issues structured?
+   - Well organized with Epic → Story → Subtask hierarchy
+   - Mostly organized but with some gaps
+   - Mixed structure, needs cleanup
+
+4. **Current Activity**: How active is development?
+   - Very active (daily commits, multiple people)
+   - Moderately active (weekly activity)
+   - Maintenance mode (occasional updates)
+
+Based on your answers, I'll recommend the best way to get started with JCVD."
+
+User: "Medium size, some documentation, mostly organized, very active"
+
+Claude: "Perfect! Based on your answers, here's my recommendation:
+
+## 🎯 **Recommended Approach: Hybrid Integration**
+
+Your project is a good candidate for gradual JCVD integration:
+
+### **Phase 1: Start with New Work (Immediate)**
+- Use JCVD for new features and stories going forward
+- Leave existing in-progress work in current workflow
+- Create new Epic/Story/Subtask structures using JCVD standards
+
+### **Phase 2: Documentation Review (Week 1-2)**  
+- Review and enhance existing documentation to JCVD standards
+- I can help identify gaps and suggest improvements
+- Add missing PRD sections or architecture details
+
+### **Phase 3: Gradual Expansion (Week 3+)**
+- Optionally bring existing work into JCVD workflows
+- Apply JCVD orchestration to broader project scope
+- Full integration when ready
+
+**Benefits of This Approach:**
+✅ No disruption to current active development
+✅ Immediate value from JCVD for new work  
+✅ Gradual learning and adoption
+✅ Preserve existing team velocity
+
+Ready to start with Phase 1?"
+```
+
+#### Small Project Fast Track
+
+```
+User: "Small size, minimal documentation, mixed structure, moderately active"
+
+Claude: "Excellent! Small projects are perfect for full JCVD integration:
+
+## 🚀 **Recommended Approach: Full Integration**
+
+Your project size (10-50 issues) is ideal for comprehensive JCVD onboarding:
+
+### **Quick Integration Plan (2-4 hours total)**
+
+**Step 1: Documentation Foundation (1-2 hours)**
+- Create basic PRD.md based on existing project goals
+- I'll guide you through essential project documentation
+- Add simple architecture overview
+
+**Step 2: Issue Organization Review (30 minutes)**
+- Quick review of current issue structure  
+- Simple recommendations for Epic/Story/Subtask organization
+- Optional: guided cleanup of any structural issues
+
+**Step 3: JCVD Activation (30 minutes)**
+- Connect JCVD to your project
+- Set up intelligent task orchestration
+- Ready for full JCVD workflow management
+
+**Why Full Integration Works for Your Project:**
+✅ Small scope makes comprehensive review manageable
+✅ Moderate activity allows time for setup
+✅ Complete JCVD benefits from day one
+✅ Strong foundation for future growth
+
+Would you like to start with the documentation foundation?"
+```
+
+#### Large Project Conservative Approach
+
+```
+User: "Large size, comprehensive docs, well organized, very active"
+
+Claude: "Smart! Large, active projects need careful integration:
+
+## 🛡️ **Recommended Approach: Conservative Integration**
+
+For large, active projects (200+ issues), I recommend starting small:
+
+### **Phase 1: Pilot with New Epic (Week 1)**
+- Select one new Epic for JCVD pilot
+- Use JCVD workflow for this Epic only
+- Existing work continues unchanged
+
+### **Phase 2: Evaluate and Expand (Week 2-4)**
+- Assess JCVD value with pilot Epic
+- Gradually expand to additional new work
+- Optional: bring selected existing work into JCVD
+
+### **Phase 3: Broader Integration (Month 2+)**
+- Expand JCVD usage based on pilot success
+- Consider broader project integration if beneficial
+- Maintain flexibility to use JCVD where it adds most value
+
+**Why Conservative Approach:**
+✅ Minimal disruption to established workflows
+✅ Proven value before broader commitment
+✅ Maintains team productivity during evaluation
+✅ Flexible expansion based on results
+
+**Good News:** Your existing documentation and organization mean you're 
+already following many JCVD best practices!
+
+Ready to identify a good pilot Epic to start with?"
+```
+
+### Simple Health Checks (Small Projects Only)
+
+For small projects (< 100 issues), JCVD can perform basic validation:
+
+```typescript
+interface SimpleHealthCheck {
+  projectSize: 'SMALL' | 'MEDIUM' | 'LARGE'
+  
+  // Only performed for SMALL projects
+  basicMetrics?: {
+    totalIssues: number
+    orphanedStories: number           // Stories without parent Epic
+    directEpicSubtasks: number        // Subtasks directly under Epic
+    issuesWithoutEstimates: number    // Stories lacking estimates
+    documentationFound: string[]      // List of found docs
+  }
+  
+  recommendations: string[]           // Simple, actionable recommendations
+}
+
+// Example simple health check for small project
+const healthCheck: SimpleHealthCheck = {
+  projectSize: 'SMALL',
+  basicMetrics: {
+    totalIssues: 47,
+    orphanedStories: 3,
+    directEpicSubtasks: 1,
+    issuesWithoutEstimates: 8,
+    documentationFound: ['README.md']
+  },
+  recommendations: [
+    "Create PRD.md to document project requirements",
+    "Move 3 orphaned Stories under appropriate Epics", 
+    "Add estimates to 8 Stories for better planning",
+    "Consider adding ARCHITECTURE.md for technical overview"
+  ]
+}
+```
+
+### Realistic Limitations
+
+**What JCVD Won't Do:**
+- ❌ Automated analysis of large projects (200+ issues)
+- ❌ Complex cross-issue inference or pattern detection
+- ❌ Automated documentation generation from existing data
+- ❌ Large-scale automated restructuring
+
+**What JCVD Will Do:**
+- ✅ Guided questions to understand project state
+- ✅ Realistic recommendations based on project size and activity
+- ✅ Simple health checks for small projects only
+- ✅ Gradual integration strategies that preserve team velocity
+- ✅ Manual guidance for remediation tasks
+
 ## Success Metrics
 
 ### Inception Phase Success
 - **Setup Time**: Complete project inception in <2 hours for simple projects, <1 day for complex
 - **Documentation Quality**: Generated PRDs score >8/10 on completeness assessment
-- **Linear Structure**: Proper Epic/Story/Subtask hierarchy with realistic estimates
+- **Issue Tracking Structure**: Proper Epic/Story/Subtask hierarchy with realistic estimates
 - **Developer Satisfaction**: >90% of users report clear understanding of project scope and next steps
 
 ### Development Phase Success  
@@ -885,5 +1085,18 @@ Ready to continue with the middleware setup?"
 - Support for 4 distinct issue tracking providers (SQLite, Linear, GitHub, Jira)
 - Cross-provider data migration and synchronization
 - Custom workflow definition and template system
+
+### V3.0+ (Month 9+): Existing Project Integration
+- **Core Focus**: Simple onboarding assistance for existing projects
+- Onboarding Assistant with guided questionnaire approach
+- Basic health checks for small projects (< 100 issues)
+- Gradual integration strategies (Hybrid, Full, Conservative approaches)
+- Manual remediation guidance with specific, actionable steps
+- **Scope Limitation**: No automated analysis of large projects or complex inference
+
+**Success Criteria:**
+- Successful onboarding of small-to-medium existing projects
+- Clear integration pathways that preserve team velocity
+- Simple validation and recommendation system
 
 This comprehensive approach transforms JCVD from a coding assistant into a complete project orchestration platform that handles every aspect of software development from conception to delivery.
