@@ -146,16 +146,183 @@ JCVD provides a **comprehensive project orchestration platform** that:
 
 ## System Architecture Overview
 
+### Multi-Provider Issue Tracking Architecture
+
+JCVD is built on a **provider-agnostic architecture** that supports multiple issue tracking backends through a unified interface. This enables seamless switching between providers while maintaining full feature parity and data portability.
+
+**Core Architecture Principles:**
+- **Provider Abstraction**: Unified interface for all issue tracking operations
+- **Schema Consistency**: Common data model across all providers  
+- **Migration Support**: Seamless data migration between providers
+- **Feature Parity**: Full functionality regardless of provider choice
+- **Offline Capability**: Embedded database option for complete offline operation
+
+**Supported Providers:**
+
+| Provider | Status | Features | Use Case |
+|----------|--------|----------|----------|
+| **SQLite (Embedded)** | ✅ MVP | Full feature parity, offline, high performance | Proof of concept, offline development, personal projects |
+| **Linear** | ✅ V1.0 | Native Linear integration, team collaboration | Professional development, team projects |
+| **GitHub Issues** | 🔄 V2.0 | GitHub integration, repository linking | Open source projects, GitHub-centric workflows |
+| **Jira** | 🔄 V2.0 | Enterprise features, custom workflows | Enterprise development, complex project management |
+
+### Provider Interface Design
+
+```typescript
+interface IssueProvider {
+  // Provider metadata
+  getProviderInfo(): ProviderInfo
+  isAvailable(): Promise<boolean>
+  
+  // Project management
+  createProject(config: ProjectConfig): Promise<Project>
+  getProject(id: string): Promise<Project>
+  updateProject(id: string, updates: Partial<Project>): Promise<Project>
+  
+  // Issue lifecycle
+  createIssue(config: IssueConfig): Promise<Issue>
+  getIssue(id: string): Promise<Issue>
+  updateIssue(id: string, updates: Partial<Issue>): Promise<Issue>
+  listIssues(filters: IssueFilters): Promise<Issue[]>
+  
+  // Dependency management
+  addDependency(blockerId: string, blockedId: string): Promise<Dependency>
+  removeDependency(dependencyId: string): Promise<void>
+  getDependencyGraph(projectId: string): Promise<DependencyGraph>
+  
+  // Workflow and states
+  getWorkflowStates(): Promise<WorkflowState[]>
+  updateIssueState(issueId: string, stateId: string): Promise<Issue>
+  
+  // Migration and sync
+  exportData(projectId: string): Promise<ExportData>
+  importData(data: ExportData): Promise<ImportResult>
+  syncWith(otherProvider: IssueProvider): Promise<SyncResult>
+}
+
+// Unified data model (mirrors Linear schema)
+interface Issue {
+  id: string
+  projectId: string
+  parentId?: string              // For Epic → Story → Subtask hierarchy
+  title: string
+  description?: string
+  stateId: string               // 'backlog', 'todo', 'in_progress', 'done', etc.
+  priority: number              // 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low
+  estimate?: number             // Story points (Fibonacci scale)
+  issueType: 'epic' | 'story' | 'subtask'
+  assigneeId?: string
+  labels: string[]
+  dependencies: Dependency[]
+  createdAt: Date
+  updatedAt: Date
+  
+  // Provider-specific metadata
+  providerMetadata?: Record<string, any>
+}
+```
+
+### Embedded Database Schema (SQLite)
+
+The embedded SQLite provider uses an optimized schema that mirrors Linear's data model for seamless migration:
+
+```sql
+-- Projects (maps to Linear Projects)
+CREATE TABLE projects (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  key TEXT UNIQUE,              -- Project key/identifier
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Workflow states (mirrors Linear states)
+CREATE TABLE workflow_states (
+  id TEXT PRIMARY KEY,
+  project_id TEXT REFERENCES projects(id),
+  name TEXT NOT NULL,           -- 'Backlog', 'Todo', 'In Progress', 'Done'
+  type TEXT NOT NULL,           -- 'backlog', 'unstarted', 'started', 'completed'
+  position INTEGER DEFAULT 0,
+  color TEXT DEFAULT '#000000'
+);
+
+-- Issues (complete Linear Issue compatibility)
+CREATE TABLE issues (
+  id TEXT PRIMARY KEY,
+  project_id TEXT REFERENCES projects(id),
+  parent_id TEXT REFERENCES issues(id),
+  title TEXT NOT NULL,
+  description TEXT,
+  state_id TEXT REFERENCES workflow_states(id),
+  priority INTEGER DEFAULT 0,
+  estimate INTEGER,            -- Story points
+  issue_type TEXT NOT NULL CHECK (issue_type IN ('epic', 'story', 'subtask')),
+  assignee_id TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  
+  -- Hierarchy constraints
+  CHECK (
+    (issue_type = 'epic' AND parent_id IS NULL) OR
+    (issue_type = 'story' AND parent_id IS NOT NULL) OR
+    (issue_type = 'subtask' AND parent_id IS NOT NULL)
+  )
+);
+
+-- Dependencies for dependency graph analysis
+CREATE TABLE issue_dependencies (
+  id TEXT PRIMARY KEY,
+  blocker_id TEXT REFERENCES issues(id) ON DELETE CASCADE,
+  blocked_id TEXT REFERENCES issues(id) ON DELETE CASCADE,
+  dependency_type TEXT DEFAULT 'blocks',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  
+  UNIQUE(blocker_id, blocked_id)
+);
+
+-- Labels and tagging
+CREATE TABLE labels (
+  id TEXT PRIMARY KEY,
+  project_id TEXT REFERENCES projects(id),
+  name TEXT NOT NULL,
+  color TEXT DEFAULT '#000000',
+  UNIQUE(project_id, name)
+);
+
+CREATE TABLE issue_labels (
+  issue_id TEXT REFERENCES issues(id) ON DELETE CASCADE,
+  label_id TEXT REFERENCES labels(id) ON DELETE CASCADE,
+  PRIMARY KEY (issue_id, label_id)
+);
+
+-- Comments and activity
+CREATE TABLE issue_comments (
+  id TEXT PRIMARY KEY,
+  issue_id TEXT REFERENCES issues(id) ON DELETE CASCADE,
+  body TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Optimized indexes for performance
+CREATE INDEX idx_issues_project_id ON issues(project_id);
+CREATE INDEX idx_issues_parent_id ON issues(parent_id);
+CREATE INDEX idx_issues_state_id ON issues(state_id);
+CREATE INDEX idx_issues_type ON issues(issue_type);
+CREATE INDEX idx_dependencies_blocker ON issue_dependencies(blocker_id);
+CREATE INDEX idx_dependencies_blocked ON issue_dependencies(blocked_id);
+```
+
 ### Core Components
 
 **1. Inception Engine**
 - Requirements gathering interview system
 - PRD validation and enhancement
 - Project type detection and scaffolding generation
-- Initial Linear project and issue structure creation
+- Provider-agnostic project and issue structure creation
 
 **2. Task Orchestration Engine** 
-- LLM-powered Linear issue analysis and task recommendation
+- LLM-powered issue analysis and task recommendation (provider-agnostic)
 - Dependency graph analysis and optimal sequencing
 - Priority and context-aware task selection
 - Progress tracking and milestone management
@@ -166,11 +333,11 @@ JCVD provides a **comprehensive project orchestration platform** that:
 - Architecture and design document management
 - Decision logging and traceability systems
 
-**4. Linear Integration Layer**
-- Complete Linear API integration for issue lifecycle management
-- Epic/Story/Subtask hierarchy management
-- Milestone and phase tracking
-- Agile development workflow support
+**4. Issue Provider Abstraction Layer**
+- Unified interface for all issue tracking operations
+- Provider switching and migration capabilities
+- Data synchronization between providers
+- Feature parity enforcement across providers
 
 **5. Development Methodology Framework**
 - TDD workflow integration and test generation
@@ -249,10 +416,15 @@ Claude: [JCVD MCP server detected for first time]
 "I see you have JCVD installed! This is a comprehensive project orchestration 
 framework that will help you build software projects from start to finish.
 
+JCVD works completely offline by default using an embedded database, with no 
+external accounts or internet connection required. You also have the option 
+to integrate with cloud-based issue tracking systems like Linear.
+
 Before we begin, I need to set up a few things:
 
-1. **Linear Integration**: JCVD uses Linear for project management. 
-   Do you have a Linear workspace, or should I help you create one?
+1. **Issue Tracking**: How would you like to track your project tasks and progress? 
+   - **Local Database** (recommended): Works offline, full features, no accounts needed
+   - **Linear Integration**: Cloud-based, team collaboration, requires Linear account
 
 2. **Project Location**: Where would you like to create your project? 
    JCVD will set up a complete repository structure.
@@ -260,34 +432,227 @@ Before we begin, I need to set up a few things:
 3. **Development Preferences**: Any preferred technologies, frameworks, 
    or development methodologies I should know about?
 
-Let's start with Linear - this is where we'll track all your project tasks 
-and progress..."
+Let's start with issue tracking setup - this is where we'll manage all your 
+project tasks, dependencies, and progress..."
 ```
 
-#### Linear Workspace Setup
+#### Issue Tracking Setup
+
+**Initial Setup Dialog:**
 ```
-Claude: "Let's connect your Linear workspace. You have a few options:
+Claude: "Let's set up your issue tracking system. JCVD provides intelligent task 
+management, dependency tracking, and progress orchestration regardless of which 
+option you choose.
 
-A) **Existing Linear Workspace**: Provide your Linear API key and workspace ID
-   - I'll create a new project within your existing workspace
-   - Uses your existing team structure and preferences
+You have three setup options:
 
-B) **New Linear Workspace**: I'll guide you through creating a Linear account
-   - Free for personal use (up to 10 team members)
-   - I'll set up the optimal project structure for JCVD
+A) **Local Database (Embedded SQLite)** ⭐ **RECOMMENDED**
+   ✅ Works completely offline with full feature parity
+   ✅ No external accounts or internet connection required
+   ✅ Complete dependency tracking and intelligent task selection
+   ✅ Full cross-session continuity and project state management
+   ✅ High performance with embedded SQLite database
+   ✅ Easy migration to cloud providers when ready
+   
+B) **Existing Linear Workspace**
+   ✅ Integrates with your current projects and teams
+   ✅ Uses your established workflow preferences
+   ✅ Cloud-based collaboration and sharing
+   ❗ Requires Linear API key with appropriate permissions
+   
+C) **New Linear Workspace**
+   ✅ Optimized setup specifically for JCVD workflows
+   ✅ Free for personal use (up to 10 team members)
+   ✅ Cloud-based collaboration and sharing
+   ❗ Requires creating new Linear account
 
-C) **Local Mode**: Work without Linear integration
-   - Tasks tracked in local markdown files
-   - Less powerful but works offline
+Which option would you prefer? **Option A (Local Database)** is recommended for 
+getting started - it provides the complete JCVD experience with no setup friction, 
+and you can migrate to Linear or other providers anytime."
+```
 
-Which would you prefer?"
+**Option A: Local Database (Embedded SQLite)**
+```
+User: "I'll use Local Mode for now"
 
-[User chooses option, setup process continues]
+Claude: "Excellent choice! Local Mode provides full JCVD functionality using an embedded SQLite database - no compromises on features:
+
+**What you get in Local Mode:**
+✅ Complete project orchestration with full dependency tracking
+✅ Intelligent task selection and next-step recommendations  
+✅ Full Epic → Story → Subtask hierarchy management
+✅ Cross-session continuity and project state persistence
+✅ Velocity tracking, estimation, and progress analytics
+✅ Complete offline operation - no internet required
+✅ High performance with thousands of issues and complex dependency graphs
+✅ Identical schema to Linear for easy migration when ready
+
+**How it works:**
+- Embedded SQLite database stores all project data locally
+- Same data model as Linear for seamless future migration
+- All JCVD features work identically to cloud providers
+- Data stored securely in your project directory
+
+I'll create a `.jcvd/` directory in your project to store:
+- `database.sqlite` - Local project database (encrypted)
+- `config.json` - JCVD configuration and preferences
+- `backups/` - Automated database backups
+- `exports/` - Data export files for migration
+
+You can migrate to Linear, GitHub Issues, or other providers anytime while preserving all your project history and relationships.
+
+Ready to proceed with Local Mode?"
+
+User: "Yes"
+
+Claude: "Local Mode activated! Initializing embedded database and project structure...
+
+📁 Created .jcvd/
+├── database.sqlite       # Encrypted SQLite database with full schema
+├── config.json          # JCVD configuration
+├── backups/              # Automated daily backups
+│   └── 2025-07-30.db.backup
+└── exports/              # Migration and backup exports
+
+✅ Database initialized with optimized schema
+✅ Dependency tracking system ready
+✅ Task orchestration engine configured
+✅ Cross-session state management active
+
+Your local JCVD instance is ready with full feature parity! Let's begin project setup."
+```
+
+**Option B: Existing Linear Workspace**
+```
+User: "I want to use my existing Linear workspace"
+
+Claude: "Perfect! To connect to your existing Linear workspace, I need:
+
+1. **Linear API Key**: 
+   - Go to Linear Settings → API → Personal API Keys
+   - Create a new key with 'read' and 'write' permissions
+   - Name it 'JCVD Integration' for easy identification
+
+2. **Team ID** (optional but recommended):
+   - If you want JCVD to use a specific team
+   - Find it in Linear URL: linear.app/[workspace]/team/[TEAM_ID]
+   - Leave blank to use your default team
+
+Please provide your API key when ready. I'll validate the connection and check permissions."
+
+User: [Provides API key]
+
+Claude: [JCVD validates API key]
+
+**Success Path:**
+"✅ Linear connection successful! 
+   - Workspace: [Workspace Name]
+   - Team: [Team Name] 
+   - Permissions: ✅ Read ✅ Write ✅ Create Issues
+   
+   I've verified I can create and manage issues in your workspace. 
+   Ready to proceed with project setup!"
+
+**Error Paths:**
+
+**Invalid API Key:**
+"❌ API key validation failed. Please check:
+   - Key was copied correctly (no extra spaces)
+   - Key hasn't been revoked or expired
+   - Key has 'read' and 'write' permissions
+   
+   Would you like to try again or create a new API key?"
+
+**Insufficient Permissions:**
+"⚠️ API key valid but missing required permissions:
+   - Current: [list current permissions]
+   - Required: read, write, create
+   
+   Please update your API key permissions in Linear Settings → API, 
+   or create a new key with full permissions."
+
+**Network/Connection Issues:**
+"❌ Unable to connect to Linear API. This might be due to:
+   - Network connectivity issues
+   - Linear service temporarily unavailable
+   - Corporate firewall blocking Linear API
+   
+   Would you like to:
+   1. Retry connection
+   2. Switch to Local Database for now
+   3. Try New Linear Workspace instead"
+```
+
+**Option C: New Linear Workspace**
+```
+User: "I want to create a new Linear workspace"
+
+Claude: "Great choice! I'll guide you through creating a Linear workspace optimized for JCVD.
+
+**Step 1: Create Linear Account**
+1. Visit: https://linear.app/signup
+2. Sign up with your email (Google/GitHub signup also supported)
+3. Verify your email address
+4. Come back here when you've completed signup
+
+**Step 2: Initial Workspace Setup**
+After signup, Linear will prompt you to:
+- Choose workspace name (suggestion: '[Your Name] Projects')
+- Select team name (suggestion: 'Development')
+- Choose workflow preferences
+
+For JCVD optimization, I recommend:
+- ✅ Enable 'Auto-assign issues to creator'
+- ✅ Enable 'Issue auto-archiving' (after 30 days)
+- ✅ Use 'Backlog' as default issue state
+- ✅ Enable estimation (Fibonacci scale: 1,2,3,5,8,13)
+
+Ready to continue? Type 'ready' when your Linear workspace is set up."
+
+User: "ready"
+
+Claude: "Perfect! Now I need your Linear API key to complete the integration:
+
+1. In Linear, go to Settings → API → Personal API Keys
+2. Click 'Create API Key'
+3. Name: 'JCVD Integration'  
+4. Permissions: Select 'read' and 'write'
+5. Copy the generated key
+
+Paste your API key here when ready."
+
+[Same validation flow as Option B continues...]
+```
+
+**Validation and Error Recovery**
+```
+**Connection Testing Flow:**
+1. Validate API key format
+2. Test basic API connectivity  
+3. Check workspace permissions
+4. Verify team access (if specified)
+5. Test issue creation/update capabilities
+6. Store validated configuration
+
+**Error Recovery Strategies:**
+- Invalid credentials → Clear guidance on key creation
+- Network issues → Offer offline mode fallback
+- Permission issues → Specific permission requirements
+- Rate limiting → Graceful backoff with user notification
+- Service unavailable → Option to continue in Local Mode
+
+**Configuration Storage:**
+JCVD stores provider configurations securely:
+- Mac: ~/Library/Application Support/jcvd/provider-config.json
+- Linux: ~/.config/jcvd/provider-config.json  
+- Windows: %APPDATA%/jcvd/provider-config.json
+
+API keys and sensitive data encrypted using system keychain when available.
 ```
 
 #### Project Type Detection and Scoping
 ```
-User: "I have Linear set up, now I want to build a task management web app"
+User: "I have my issue tracking set up, now I want to build a task management web app"
 
 Claude: "Perfect! I'll start the JCVD Inception Phase for your task management app.
 
@@ -464,23 +829,61 @@ Ready to continue with the middleware setup?"
 
 ## Implementation Roadmap
 
-### MVP (Months 1-2): Inception Phase Foundation
-- Requirements gathering interview system
-- PRD generation and validation
-- Basic Linear project setup
-- Simple repository scaffolding
-- Documentation structure enforcement
+### Proof of Concept (Month 1): Embedded Database Foundation
+- **Core Focus**: SQLite-based local mode with full feature parity
+- Embedded SQLite provider with optimized schema
+- Basic requirements gathering interview system
+- Simple project structure generation and repository scaffolding
+- Local database initialization and configuration management
+- Fundamental issue lifecycle operations (create, read, update)
+- Basic dependency tracking and relationship management
 
-### V1.0 (Months 3-4): Complete Task Orchestration
-- LLM-powered Linear analysis and task recommendation
-- Dependency graph analysis and sequencing
-- Comprehensive issue lifecycle management
-- TDD workflow integration
+**Success Criteria:**
+- Create project with Epic → Story → Subtask hierarchy in local database
+- Perform basic CRUD operations on issues with full data persistence
+- Demonstrate dependency graph creation and traversal
+- Generate simple project documentation structure
 
-### V2.0 (Months 5-6): Advanced Project Management
-- Multi-phase project support
-- Advanced milestone and sprint management
-- Custom workflow templates
-- Team collaboration features
+### MVP (Months 2-3): Complete Local Orchestration
+- **Core Focus**: Full task orchestration using embedded database
+- LLM-powered issue analysis and intelligent next-task recommendation
+- Complete dependency graph analysis and optimal task sequencing
+- Comprehensive workflow state management and persistence
+- TDD methodology integration with workflow substates  
+- Cross-session continuity and project state recovery
+- PRD generation and validation system
+
+**Success Criteria:**
+- Complete end-to-end project creation and management locally
+- Intelligent task recommendations based on dependency analysis
+- Full TDD workflow support with substate transitions
+- Seamless cross-session project continuation
+
+### V1.0 (Months 4-5): Multi-Provider Architecture + Linear Integration
+- **Core Focus**: Provider abstraction layer with Linear integration
+- Complete IssueProvider interface implementation
+- Linear provider with full API integration and bidirectional sync
+- Provider switching and data migration capabilities
+- Enhanced requirements gathering with adaptive questioning
+- Advanced project type detection and technology-specific scaffolding
+
+**Success Criteria:**
+- Seamless migration from SQLite to Linear while preserving all data and relationships
+- Full Linear integration with team collaboration features
+- Provider-agnostic operations work identically across SQLite and Linear
+
+### V2.0 (Months 6-8): Extended Provider Ecosystem
+- **Core Focus**: GitHub Issues and Jira provider support
+- GitHub Issues provider with repository integration
+- Jira provider with enterprise workflow support
+- Advanced multi-provider synchronization capabilities
+- Custom workflow templates and methodology frameworks
+- Enhanced analytics and velocity tracking across providers
+- Team collaboration features and shared project access
+
+**Success Criteria:**
+- Support for 4 distinct issue tracking providers (SQLite, Linear, GitHub, Jira)
+- Cross-provider data migration and synchronization
+- Custom workflow definition and template system
 
 This comprehensive approach transforms JCVD from a coding assistant into a complete project orchestration platform that handles every aspect of software development from conception to delivery.
