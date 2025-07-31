@@ -4,38 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-JCVD is a multi-agent orchestration framework for Claude Code that aims to transform Claude Code into a specialized software development team for individual engineers. The project is currently in the conceptual/planning phase.
-
-## Current State
-
-This repository contains:
-- **docs/PRD.md**: Core product requirements, business vision, and success criteria
-- **docs/ARCHITECTURE.md**: Technical architecture, database schemas, and system design
-- **docs/USER_EXPERIENCE.md**: Complete user workflows, setup processes, and daily development experience
-- **docs/ONBOARDING.md**: Project integration guide for new and existing projects
-- **README.md**: Basic project description
-- **SESSION_SUMMARY.md**: Detailed development session documentation
+JCVD is a project orchestration framework that extends Claude Code to manage complete software development lifecycles with minimal configuration overhead. The system handles requirements gathering, project structure creation, task sequencing, and documentation maintenance across development sessions through simple, natural language interactions. Rather than focusing on individual coding tasks, JCVD coordinates all artifacts needed for systematic project execution while maintaining the intuitive experience developers expect from Claude Code.
 
 **Status**: Pre-implementation phase - comprehensive documentation complete, ready for implementation
 
-## System Architecture (see docs/ARCHITECTURE.md)
+## Agents
 
-The system will consist of 7 specialized agents:
-1. **Product Manager Agent** - Requirements gathering, stakeholder communication
-2. **Tech Lead Agent** - Task coordination, dependency management  
-3. **Software Architect Agent** - System design, architecture decisions
-4. **Developer Agent** - Code implementation, unit testing
-5. **QA Agent** - Test planning, quality assurance
-6. **DevOps Agent** - Infrastructure, CI/CD, deployment
-7. **Release Engineer Agent** - Release coordination, deployment orchestration
+Unless otherwise specified, please delegate tasks to the appropriate agent based on the task type. Your role is to orchestrate and manage the workflow, not to do work directly unless otherwise instructed to.
 
-## Key Integration Points
-
-- **Claude Code Integration**: Extends existing subagent framework and tool ecosystem
-- **Linear MCP Integration**: For issue tracking and project management
-- **State Management**: Multi-layer system (in-memory, repository docs, Linear sync)
-
-For detailed technical architecture, component specifications, and integration patterns, see `docs/ARCHITECTURE.md`.
+1. **Code Review Agent** (@agent-code-reviewer)  Code review, feedback, and quality checks
+2. **Developer Agent** (@agent-developer) Code implementation, unit testing
+3. **Product Manager Agent** (@agent-product-manager) Requirements gathering, stakeholder communication
+4. **QA Agent** (@agent-qa) Test planning, quality assurance
+5. **Software Architect Agent** (@agent-software-architect) System design, architecture decisions
+6. **Tech Lead Agent** (@agent-tech-lead) Task coordination, dependency management
 
 ## Development Commands
 
@@ -46,9 +28,7 @@ When implementation begins, common commands will likely include:
 - Build process (TBD) 
 - Linting/type checking (TBD)
 
-## Working with this Repository
-
-Since this is pre-implementation, familiarize yourself with the focused documentation structure:
+## Documentation Structure
 
 **📋 Business Requirements (docs/PRD.md)**
 - Product vision, target users, and core functional requirements
@@ -75,20 +55,6 @@ Since this is pre-implementation, familiarize yourself with the focused document
 - Use the multi-layer state management approach (embedded SQLite → cloud providers)
 - Implement user workflows as specified in USER_EXPERIENCE.md
 - Design with the developer experience philosophy from PRD.md
-
-## Next Steps for Implementation
-
-1. Set up basic project structure (package.json, TypeScript config)
-2. Implement core orchestrator engine
-3. Create base agent interface and framework
-4. Add Linear MCP integration
-5. Implement individual specialized agents
-
-The focused document structure ensures each aspect has dedicated coverage:
-- **PRD.md**: Business requirements and product vision
-- **ARCHITECTURE.md**: Technical specifications and implementation patterns
-- **USER_EXPERIENCE.md**: Complete user workflows and interaction design
-- **ONBOARDING.md**: Project integration strategies and adoption approaches
 
 ## Linear Reference
 
