@@ -137,3 +137,58 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-shm
+*.db-wal
+
+# IDE and editor files
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Vitest
+.vitest/
+
+# Documentation
+docs/api/
+typedoc/
+
+# Local development
+*.local
+.dev/
+
+# Backup files
+*.backup
+*.bak
+
+# Lock files (keep package-lock.json for npm)
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files
+generated/
+auto-generated/
+
+# JCVD specific
+.jcvd/
+jcvd.db*
+workflows/*.local.yml
+providers/*/secrets.*

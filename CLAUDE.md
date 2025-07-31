@@ -151,3 +151,29 @@ Epic: "Phase 1: MVP Workflow Engine"
 - Consider task complexity, unknowns, and dependencies when estimating
 - Let velocity emerge from completed complexity over time
 - **Parent stories with subtasks should NOT have estimates** - only the subtasks get pointed
+
+### Linear Issue Management Workflow
+
+**IMPORTANT**: When working on stories with subtasks, always update the individual subtasks rather than commenting on the parent story.
+
+**Correct Workflow:**
+1. **Start Work**: Update subtask status from `Todo` → `In Progress`
+2. **During Work**: Continue updating subtask status as work progresses
+3. **Complete Work**: Update subtask status to `Done`
+4. **Parent Story**: Only update parent story status when ALL subtasks are complete
+
+**Agents and Status Updates:**
+- **Always update subtask status fields** using `mcp__linear__update_issue`
+- **Never create comments** on stories when you should be updating subtask status
+- **Track progress** through status changes, not comments
+- **Comments are for**: clarifications, decisions, blocked states, or stakeholder communication
+- **Status updates are for**: tracking actual completion progress
+
+**Example:**
+```
+Epic: "Core Infrastructure" 
+└── Story: "Technical Implementation" (no comments needed)
+    ├── Subtask: "Technology Decisions" → Update status to Done ✅
+    ├── Subtask: "Project Structure" → Update status to Done ✅  
+    └── Subtask: "Configuration Files" → Update status to Done ✅
+```
