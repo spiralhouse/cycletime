@@ -169,7 +169,6 @@ Thumbs.db
 
 # Documentation
 docs/api/
-typedoc/
 
 # Local development
 *.local

@@ -404,7 +404,6 @@ server.addTool('custom-tool', async (params) => {
 - [Architecture](docs/ARCHITECTURE.md) - System design and components
 - [PRD](docs/PRD.md) - Product requirements and vision
 - [User Experience](docs/USER_EXPERIENCE.md) - User workflows and interfaces
-- [Technology Decisions](docs/TECHNOLOGY_DECISIONS.md) - Technology stack rationale
 
 ### External Resources
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
