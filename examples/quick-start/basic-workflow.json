@@ -1,0 +1,134 @@
+{
+  "name": "JCVD Quick Start Example",
+  "version": "0.1.0",
+  "database": {
+    "path": "./jcvd-example.db",
+    "walMode": true,
+    "migrations": {
+      "autoRun": true,
+      "directory": "./migrations"
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "pretty",
+    "outputs": [
+      {
+        "type": "console",
+        "config": {
+          "colors": true
+        }
+      }
+    ]
+  },
+  "agents": [
+    {
+      "id": "product-manager",
+      "type": "product-manager",
+      "name": "Product Manager",
+      "description": "Handles requirements gathering and stakeholder communication",
+      "enabled": true,
+      "config": {
+        "maxConcurrentTasks": 3,
+        "notificationChannels": ["console"]
+      }
+    },
+    {
+      "id": "tech-lead",
+      "type": "tech-lead",
+      "name": "Tech Lead",
+      "description": "Coordinates tasks and manages dependencies",
+      "enabled": true,
+      "config": {
+        "prioritizationStrategy": "impact-effort",
+        "trackingInterval": 300
+      },
+      "dependencies": ["product-manager"]
+    },
+    {
+      "id": "developer",
+      "type": "developer",
+      "name": "Developer",
+      "description": "Implements code and writes unit tests",
+      "enabled": true,
+      "config": {
+        "codeStyle": "prettier",
+        "testFramework": "vitest",
+        "autoTest": true
+      },
+      "dependencies": ["tech-lead"]
+    }
+  ],
+  "providers": [
+    {
+      "id": "local-filesystem",
+      "type": "local",
+      "name": "Local Development",
+      "description": "Local filesystem provider for development",
+      "enabled": true,
+      "config": {
+        "rootDir": "./workspace",
+        "include": ["**/*.ts", "**/*.js", "**/*.json", "**/*.md"],
+        "exclude": ["node_modules/**", "dist/**", "coverage/**"]
+      }
+    }
+  ],
+  "workflows": [
+    {
+      "id": "feature-development",
+      "name": "Feature Development Workflow",
+      "description": "Standard workflow for developing new features",
+      "enabled": true,
+      "triggers": [
+        {
+          "type": "manual",
+          "config": {
+            "allowedUsers": ["developer", "tech-lead"]
+          }
+        }
+      ],
+      "stages": [
+        {
+          "id": "requirements-analysis",
+          "name": "Requirements Analysis",
+          "agent": "product-manager",
+          "inputs": {
+            "feature_description": "Feature to be developed"
+          },
+          "timeout": 30
+        },
+        {
+          "id": "task-breakdown",
+          "name": "Task Breakdown",
+          "agent": "tech-lead",
+          "inputs": {
+            "requirements": "Output from requirements-analysis"
+          },
+          "timeout": 20
+        },
+        {
+          "id": "implementation",
+          "name": "Code Implementation",
+          "agent": "developer",
+          "inputs": {
+            "tasks": "Output from task-breakdown"
+          },
+          "timeout": 120
+        }
+      ]
+    }
+  ],
+  "mcp": {
+    "port": 3001,
+    "host": "localhost",
+    "auth": false,
+    "requestLogging": true
+  },
+  "features": {
+    "experimental": false,
+    "monitoring": true,
+    "tracing": false,
+    "metrics": true,
+    "healthChecks": true
+  }
+}
