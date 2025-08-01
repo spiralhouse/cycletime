@@ -139,7 +139,8 @@ Epic: "Phase 1: MVP Workflow Engine"
 1. **Start Work**: Update subtask status from `Todo` → `In Progress`
 2. **During Work**: Continue updating subtask status as work progresses
 3. **Complete Work**: Update subtask status to `Done`
-4. **Parent Story**: Only update parent story status when ALL subtasks are complete
+4. **Parent Story**: Only update parent story status to `In Review` when ALL subtasks are complete
+5. **Final Review**: Once the parent story is `In Review` delegate to the Code Review Agent for final checks
 
 **Agents and Status Updates:**
 - **Always update subtask status fields** using `mcp__linear__update_issue`

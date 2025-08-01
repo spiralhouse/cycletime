@@ -239,6 +239,59 @@ export interface SchemaMetadata {
 }
 
 // =============================================================================
+// Hierarchy Validation Types
+// =============================================================================
+
+/**
+ * Hierarchy validation result
+ */
+export interface HierarchyValidationResult {
+  isValid: boolean
+  errors: HierarchyValidationError[]
+  warnings: HierarchyValidationWarning[]
+}
+
+/**
+ * Hierarchy validation error
+ */
+export interface HierarchyValidationError {
+  code: string
+  message: string
+  field?: string
+  context?: Record<string, any>
+}
+
+/**
+ * Hierarchy validation warning
+ */
+export interface HierarchyValidationWarning {
+  code: string
+  message: string
+  field?: string
+  context?: Record<string, any>
+}
+
+/**
+ * Hierarchy tree node for visualization
+ */
+export interface HierarchyTreeNode {
+  issue: Issue
+  children: HierarchyTreeNode[]
+  depth: number
+  path: string[]
+}
+
+/**
+ * Hierarchy validation rule definition
+ */
+export interface HierarchyRule {
+  code: string
+  description: string
+  validator: (issue: Issue, context: Issue[]) => boolean
+  errorMessage: string
+}
+
+// =============================================================================
 // Utility Types for Database Operations
 // =============================================================================
 

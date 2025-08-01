@@ -18,6 +18,9 @@ export * from './validation.js'
 // Re-export base provider implementations when available
 export * from './base/index.js'
 
+// Data transformation system
+export * from './transformers/index.js'
+
 // Re-export specific provider implementations when available
 export * from './local/index.js'
 export * from './linear/index.js'
