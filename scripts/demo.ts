@@ -11,8 +11,8 @@
  * - Vitest testing framework
  */
 
-import { createJCVD } from '../src/index.js';
 import { testDatabase, testDatabaseFile } from '../src/database/hello-db.js';
+import { createJCVD } from '../src/index.js';
 import { testMCPServer, testMCPTransport } from '../src/mcp/hello-mcp.js';
 
 console.log('🚀 JCVD Proof of Concept Demonstration');
@@ -24,14 +24,16 @@ async function runDemo() {
   try {
     const jcvd = await createJCVD();
     const status = jcvd.getStatus();
+
     console.log('✅ JCVD framework initialized successfully');
     console.log(`   Status: ${status.status}`);
-    console.log(`   Active agents: ${status.activeAgents}`);
+    console.log(`   Task coordination: ${status.taskCoordination}`);
     console.log(`   Active providers: ${status.activeProviders}`);
     await jcvd.stop();
     console.log('✅ JCVD framework stopped gracefully');
   } catch (error) {
     console.log('❌ JCVD framework test failed:', error);
+
     return false;
   }
   console.log('');
@@ -47,10 +49,12 @@ async function runDemo() {
       console.log(`   File DB: ${fileResult.data?.message}`);
     } else {
       console.log('❌ SQLite integration failed');
+
       return false;
     }
   } catch (error) {
     console.log('❌ SQLite test failed:', error);
+
     return false;
   }
   console.log('');
@@ -67,10 +71,12 @@ async function runDemo() {
       console.log(`   Transport capabilities: ${transportResult.data?.capabilities?.join(', ')}`);
     } else {
       console.log('❌ MCP SDK integration failed');
+
       return false;
     }
   } catch (error) {
     console.log('❌ MCP SDK test failed:', error);
+
     return false;
   }
   console.log('');

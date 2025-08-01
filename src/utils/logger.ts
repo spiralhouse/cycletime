@@ -10,11 +10,11 @@ import type { LogLevel, LogEntry } from '../types/index.js';
  * Logger interface
  */
 export interface Logger {
-  debug(message: string, context?: Record<string, unknown>): void;
-  info(message: string, context?: Record<string, unknown>): void;
-  warn(message: string, context?: Record<string, unknown>): void;
-  error(message: string, context?: Record<string, unknown>): void;
-  log(level: LogLevel, message: string, context?: Record<string, unknown>): void;
+  debug: (message: string, context?: Record<string, unknown>) => void;
+  info: (message: string, context?: Record<string, unknown>) => void;
+  warn: (message: string, context?: Record<string, unknown>) => void;
+  error: (message: string, context?: Record<string, unknown>) => void;
+  log: (level: LogLevel, message: string, context?: Record<string, unknown>) => void;
 }
 
 /**
@@ -32,11 +32,16 @@ class JCVDLogger implements Logger {
 
   private getLogLevel(): number {
     const level = process.env.LOG_LEVEL?.toLowerCase() || 'info';
+
     switch (level) {
       case 'debug': return 0;
+
       case 'info': return 1;
+
       case 'warn': return 2;
+
       case 'error': return 3;
+
       default: return 1;
     }
   }
@@ -71,12 +76,15 @@ class JCVDLogger implements Logger {
       case 'debug':
         this.consola.debug(message, context);
         break;
+
       case 'info':
         this.consola.info(message, context);
         break;
+
       case 'warn':
         this.consola.warn(message, context);
         break;
+
       case 'error':
         this.consola.error(message, context);
         break;
@@ -147,9 +155,11 @@ export function timeOperation<T>(
     if (result instanceof Promise) {
       return result.then(res => {
         logCompletion(Date.now() - startTime);
+
         return res;
       }).catch(error => {
         const duration = Date.now() - startTime;
+
         loggerInstance.error(`Operation failed: ${operationName}`, { 
           duration: `${duration}ms`,
           operationName,
@@ -159,10 +169,12 @@ export function timeOperation<T>(
       });
     } else {
       logCompletion(Date.now() - startTime);
+
       return Promise.resolve(result);
     }
   } catch (error) {
     const duration = Date.now() - startTime;
+
     loggerInstance.error(`Operation failed: ${operationName}`, { 
       duration: `${duration}ms`,
       operationName,

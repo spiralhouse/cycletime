@@ -5,8 +5,8 @@
  * through a provider-agnostic, multi-agent architecture.
  */
 
-import { Orchestrator } from './core/orchestrator.js';
 import { ConfigManager } from './config/config-manager.js';
+import { Orchestrator } from './core/orchestrator.js';
 import { logger } from './utils/logger.js';
 
 import type { JCVDConfig } from './types/config.js';
@@ -25,7 +25,7 @@ export class JCVD {
     logger.info('JCVD framework initialized', {
       version: '0.1.0',
       providers: this.config.providers.length,
-      agents: this.config.agents.length
+      defaultAgent: this.config.taskCoordination.defaultAgent
     });
   }
 
@@ -66,7 +66,6 @@ export class JCVD {
 // Export main class and types
 export default JCVD;
 export * from './types/index.js';
-export * from './agents/index.js';
 export * from './providers/index.js';
 export * from './core/index.js';
 
@@ -75,7 +74,9 @@ export * from './core/index.js';
  */
 export async function createJCVD(config?: Partial<JCVDConfig>): Promise<JCVD> {
   const jcvd = new JCVD(config);
+
   await jcvd.start();
+
   return jcvd;
 }
 

@@ -3,6 +3,7 @@
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('hello-mcp');
@@ -55,6 +56,7 @@ export async function testMCPServer(): Promise<{ success: boolean; message: stri
 
   } catch (error) {
     logger.error('❌ MCP server test failed', { error });
+
     return {
       success: false,
       message: `MCP server test failed: ${error instanceof Error ? error.message : error}`
@@ -92,6 +94,7 @@ export function testMCPTransport(): { success: boolean; message: string; data?: 
 
   } catch (error) {
     logger.error('❌ MCP transport test failed', { error });
+
     return {
       success: false,
       message: `MCP transport test failed: ${error instanceof Error ? error.message : error}`

@@ -4,7 +4,7 @@
 
 import { beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
-import { logger, createLogger } from '@/utils/logger';
+// import { createLogger } from '@/utils/logger';
 
 // Set up test environment
 beforeAll(async () => {
@@ -13,14 +13,16 @@ beforeAll(async () => {
   process.env.LOG_LEVEL = 'silent';
   
   // Initialize test database or other global setup
-  const testLogger = createLogger('test-setup');
-  testLogger.debug('Test environment initialized');
+  // const testLogger = createLogger('test-setup');
+  // testLogger.debug('Test environment initialized');
+  console.log('Test environment initialized');
 });
 
 afterAll(async () => {
   // Clean up global resources
-  const testLogger = createLogger('test-setup');
-  testLogger.debug('Test environment cleaned up');
+  // const testLogger = createLogger('test-setup');
+  // testLogger.debug('Test environment cleaned up');
+  console.log('Test environment cleaned up');
 });
 
 beforeEach(async () => {
@@ -184,6 +186,7 @@ export const testUtils = {
    */
   cleanupTempDir: async (dir: string) => {
     const { rm } = await import('node:fs/promises');
+
     await rm(dir, { recursive: true, force: true });
   }
 };

@@ -4,11 +4,11 @@
  * Setup script for JCVD development environment
  */
 
+import { constants } from 'node:fs';
 import { readdir, access, mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { constants } from 'node:fs';
 
-import { createLogger } from '../src/utils/logger';
+import { createLogger } from '../src/utils/logger.js';
 
 const logger = createLogger('setup');
 
@@ -88,7 +88,7 @@ async function createDirectories(): Promise<void> {
     try {
       await mkdir(resolve(dir), { recursive: true });
       logger.debug(`Created directory: ${dir}`);
-    } catch (error) {
+    } catch {
       // Directory might already exist, that's fine
       logger.debug(`Directory already exists: ${dir}`);
     }
@@ -105,6 +105,7 @@ async function createExampleConfig(): Promise<void> {
   try {
     await access(configPath, constants.F_OK);
     logger.debug('Configuration file already exists, skipping');
+
     return;
   } catch {
     // File doesn't exist, create it
@@ -115,6 +116,7 @@ async function createExampleConfig(): Promise<void> {
   try {
     const { readFile } = await import('node:fs/promises');
     const exampleConfig = await readFile(exampleConfigPath, 'utf8');
+
     await writeFile(configPath, exampleConfig, 'utf8');
     logger.debug('✅ Example configuration created');
   } catch (error) {
@@ -154,7 +156,7 @@ async function runInitialTests(): Promise<void> {
     );
 
     if (hasTests) {
-      await execAsync('npm run test:run', { timeout: 30000 });
+      await execAsync('npm run test:run', { timeout: 30_000 });
       logger.debug('✅ Initial tests passed');
     } else {
       logger.debug('No tests found, skipping test run');

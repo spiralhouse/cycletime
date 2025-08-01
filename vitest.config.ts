@@ -100,7 +100,6 @@ export default defineConfig({
       '@': resolve(__dirname, './src'),
       '@/types': resolve(__dirname, './src/types'),
       '@/core': resolve(__dirname, './src/core'),
-      '@/agents': resolve(__dirname, './src/agents'),
       '@/providers': resolve(__dirname, './src/providers'),
       '@/database': resolve(__dirname, './src/database'),
       '@/mcp': resolve(__dirname, './src/mcp'),

@@ -32,10 +32,10 @@ export interface ConfigError extends JCVDError {
   configPath: string;
 }
 
-export interface AgentError extends JCVDError {
-  code: 'AGENT_ERROR';
-  agentId: string;
-  agentType: string;
+export interface TaskCoordinationError extends JCVDError {
+  code: 'TASK_COORDINATION_ERROR';
+  agent: string;
+  taskType?: string;
 }
 
 export interface ProviderError extends JCVDError {
@@ -53,7 +53,7 @@ export interface StatusInfo {
   status: Status;
   uptime: number;
   lastActivity: Date;
-  activeAgents: number;
+  taskCoordination: string;
   activeProviders: number;
   errors: JCVDError[];
 }
@@ -67,9 +67,10 @@ export interface EventBase {
   source: string;
 }
 
-export interface AgentEvent extends EventBase {
-  type: 'agent.started' | 'agent.stopped' | 'agent.error' | 'agent.task.completed';
-  agentId: string;
+export interface TaskCoordinationEvent extends EventBase {
+  type: 'task.started' | 'task.completed' | 'task.failed' | 'agent.switched';
+  agent: string;
+  taskType?: string;
   data?: Record<string, unknown>;
 }
 
@@ -85,7 +86,7 @@ export interface WorkflowEvent extends EventBase {
   data?: Record<string, unknown>;
 }
 
-export type JCVDEvent = AgentEvent | ProviderEvent | WorkflowEvent;
+export type JCVDEvent = TaskCoordinationEvent | ProviderEvent | WorkflowEvent;
 
 /**
  * Logging types

@@ -27,8 +27,8 @@ JCVD (Project Orchestration Framework) implements a **provider-agnostic architec
 
 **MCP Server Integration**
 - Built as Claude Code MCP server for native ecosystem integration
-- Leverages existing tool ecosystem and agent framework
-- Maintains compatibility with Claude Code's subagent architecture
+- Leverages existing tool ecosystem and built-in agent framework
+- Coordinates work through Claude Code's Task tool and agent system
 
 **TDD Methodology Integration**
 - Test-driven development practices built into core workflows
@@ -506,7 +506,7 @@ class StateManager {
 - Native integration with Claude Code ecosystem and existing tools
 - Leverages established user workflows and interaction patterns
 - Access to comprehensive file system and development tool integration
-- Consistent with Claude Code's agent and subagent architecture
+- Utilizes Claude Code's built-in agent system for task delegation
 
 **Trade-offs**:
 - Dependency on Claude Code platform for operation

@@ -4,14 +4,16 @@
  * JCVD CLI - Command-line interface for the multi-agent orchestration framework
  */
 
-import { Command } from 'commander';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createJCVD } from './index.js';
+import { Command } from 'commander';
+
 import { ConfigManager } from './config/config-manager.js';
 import { createLogger } from './utils/logger.js';
+
+import { createJCVD } from './index.js';
 
 // Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -61,9 +63,10 @@ cli
       } else {
         cliLogger.info('JCVD started in foreground mode');
         const status = jcvd.getStatus();
+
         console.log('✅ JCVD framework started successfully');
         console.log(`📊 Status: ${status.status}`);
-        console.log(`🤖 Active agents: ${status.activeAgents}`);
+        console.log(`🎯 Task coordination: ${status.taskCoordination}`);
         console.log(`🔌 Active providers: ${status.activeProviders}`);
         console.log('');
         console.log('Press Ctrl+C to stop');
@@ -93,7 +96,7 @@ cli
       console.log(`Name: ${config.name}`);
       console.log(`Version: ${config.version}`);
       console.log(`Database: ${config.database.path}`);
-      console.log(`Agents: ${config.agents.length} configured`);
+      console.log(`Task Coordination: ${config.taskCoordination.defaultAgent} (default)`);
       console.log(`Providers: ${config.providers.length} configured`);
       console.log(`Workflows: ${config.workflows.length} configured`);
       
@@ -121,10 +124,12 @@ cli
     try {
       if (options.validate) {
         const config = ConfigManager.load();
+
         console.log('✅ Configuration is valid');
-        console.log(`📋 ${config.agents.length} agents, ${config.providers.length} providers, ${config.workflows.length} workflows`);
+        console.log(`📋 Task coordination: ${config.taskCoordination.defaultAgent}, ${config.providers.length} providers, ${config.workflows.length} workflows`);
       } else if (options.show) {
         const config = ConfigManager.load();
+
         console.log(JSON.stringify(config, null, 2));
       } else if (options.init) {
         console.log('🚧 Configuration initialization not yet implemented');
@@ -139,54 +144,59 @@ cli
     }
   });
 
-// Agents command
+// Task coordination command
 cli
-  .command('agents')
-  .description('Manage JCVD agents')
-  .option('--list', 'list all configured agents')
-  .option('--types', 'show available agent types')
+  .command('coordination')
+  .description('Manage task coordination with Claude Code agents')
+  .option('--status', 'show task coordination configuration')
+  .option('--agents', 'show available Claude Code agents')
   .action(async (options) => {
     try {
-      if (options.list) {
+      if (options.status) {
         const config = ConfigManager.load();
         
-        if (config.agents.length === 0) {
-          console.log('No agents configured');
-          return;
-        }
+        console.log('🎯 Task Coordination Configuration');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log(`Default Agent: ${config.taskCoordination.defaultAgent}`);
+        console.log(`Fallback Agent: ${config.taskCoordination.fallbackAgent}`);
         
-        console.log('🤖 Configured Agents');
-        console.log('━━━━━━━━━━━━━━━━━━━');
-        
-        for (const agent of config.agents) {
-          const status = agent.enabled ? '✅' : '❌';
-          console.log(`${status} ${agent.id} (${agent.type}) - ${agent.name}`);
-          if (agent.description) {
-            console.log(`   ${agent.description}`);
+        if (config.taskCoordination.routing && config.taskCoordination.routing.length > 0) {
+          console.log('\nRouting Rules:');
+          for (const rule of config.taskCoordination.routing) {
+            console.log(`  • ${rule.taskType} → ${rule.agent} (priority: ${rule.priority})`);
           }
         }
-      } else if (options.types) {
+        
+        if (config.taskCoordination.preferences) {
+          console.log('\nAgent Preferences:');
+          for (const [agent, pref] of Object.entries(config.taskCoordination.preferences)) {
+            const status = pref.enabled ? '✅' : '❌';
+
+            console.log(`  ${status} ${agent}${pref.timeout ? ` (timeout: ${pref.timeout}m)` : ''}`);
+          }
+        }
+      } else if (options.agents) {
         const agentTypes = [
+          'general-purpose - General development tasks',
           'product-manager - Requirements gathering and stakeholder communication',
           'tech-lead - Task coordination and dependency management',
-          'architect - System design and architecture decisions',
+          'software-architect - System design and architecture decisions',
           'developer - Code implementation and unit testing',
           'qa - Test planning and quality assurance',
-          'devops - Infrastructure and CI/CD management',
-          'release-engineer - Release coordination and deployment'
+          'code-reviewer - Code review and quality checks'
         ];
         
-        console.log('🤖 Available Agent Types');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('🤖 Available Claude Code Agents');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         
         for (const type of agentTypes) {
           console.log(`  • ${type}`);
         }
       } else {
-        console.log('Please specify an action: --list or --types');
+        console.log('Please specify an action: --status or --agents');
       }
     } catch (error) {
-      cliLogger.error('Agents command failed', { error });
+      cliLogger.error('Task coordination command failed', { error });
       console.error('❌ Agents command failed:', error instanceof Error ? error.message : error);
       process.exit(1);
     }
@@ -205,6 +215,7 @@ cli
         
         if (config.providers.length === 0) {
           console.log('No providers configured');
+
           return;
         }
         
@@ -213,6 +224,7 @@ cli
         
         for (const provider of config.providers) {
           const status = provider.enabled ? '✅' : '❌';
+
           console.log(`${status} ${provider.id} (${provider.type}) - ${provider.name}`);
           if (provider.description) {
             console.log(`   ${provider.description}`);
@@ -260,6 +272,7 @@ cli
         
         // Test in-memory database
         const memoryResult = testDatabase();
+
         if (memoryResult.success) {
           console.log('✅ In-memory database test passed');
           console.log(`   Original: ${memoryResult.data?.originalMessage}`);
@@ -271,6 +284,7 @@ cli
         
         // Test file database
         const fileResult = testDatabaseFile();
+
         if (fileResult.success) {
           console.log('✅ File database test passed');
           console.log(`   Message: ${fileResult.data?.message}`);
@@ -293,6 +307,7 @@ cli
         
         // Test MCP server
         const serverResult = await testMCPServer();
+
         if (serverResult.success) {
           console.log('✅ MCP server test passed');
           console.log(`   SDK Imported: ${serverResult.data?.sdkImported}`);
@@ -305,6 +320,7 @@ cli
         
         // Test MCP transport
         const transportResult = testMCPTransport();
+
         if (transportResult.success) {
           console.log('✅ MCP transport test passed');
           console.log(`   Type: ${transportResult.data?.transportType}`);
@@ -317,6 +333,7 @@ cli
 
       if (!options.database && !options.mcp && !options.all) {
         console.log('Please specify test type: --database, --mcp, or --all');
+
         return;
       }
       
@@ -350,6 +367,6 @@ cli.on('error', (error) => {
 cli.parse(process.argv);
 
 // If no command was provided, show help
-if (!process.argv.slice(2).length) {
+if (process.argv.slice(2).length === 0) {
   cli.outputHelp();
 }

@@ -16,8 +16,8 @@ export interface JCVDConfig {
   /** Logging configuration */
   logging: LoggingConfig;
   
-  /** Agent configurations */
-  agents: AgentConfig[];
+  /** Task coordination configuration */
+  taskCoordination: TaskCoordinationConfig;
   
   /** Provider configurations */
   providers: ProviderConfig[];
@@ -101,32 +101,51 @@ export interface HttpLogConfig {
 }
 
 /**
- * Agent configuration
+ * Task coordination configuration
  */
-export interface AgentConfig {
-  /** Unique agent identifier */
-  id: string;
+export interface TaskCoordinationConfig {
+  /** Default agent to use for tasks */
+  defaultAgent: string;
   
-  /** Agent type */
-  type: 'product-manager' | 'tech-lead' | 'architect' | 'developer' | 'qa' | 'devops' | 'release-engineer';
+  /** Fallback agent when default is unavailable */
+  fallbackAgent: string;
   
-  /** Agent display name */
-  name: string;
+  /** Task routing rules */
+  routing?: TaskRoutingRule[];
   
-  /** Agent description */
-  description?: string;
+  /** Agent preferences */
+  preferences?: Record<string, AgentPreference>;
+}
+
+/**
+ * Task routing rule
+ */
+export interface TaskRoutingRule {
+  /** Task type pattern */
+  taskType: string;
   
-  /** Whether agent is enabled */
+  /** Preferred agent for this task type */
+  agent: string;
+  
+  /** Priority (higher numbers take precedence) */
+  priority: number;
+  
+  /** Conditions for this rule */
+  conditions?: Record<string, unknown>;
+}
+
+/**
+ * Agent preference configuration
+ */
+export interface AgentPreference {
+  /** Whether to use this agent */
   enabled: boolean;
   
-  /** Agent-specific configuration */
-  config: Record<string, unknown>;
+  /** Agent-specific parameters */
+  parameters?: Record<string, unknown>;
   
-  /** Agent dependencies (other agent IDs) */
-  dependencies?: string[];
-  
-  /** Agent capabilities */
-  capabilities?: string[];
+  /** Timeout for agent tasks in minutes */
+  timeout?: number;
 }
 
 /**
@@ -285,7 +304,7 @@ export interface WorkflowStage {
   /** Stage name */
   name: string;
   
-  /** Agent to execute this stage */
+  /** Claude Code agent to execute this stage */
   agent: string;
   
   /** Stage inputs */
@@ -379,7 +398,10 @@ export const DEFAULT_CONFIG: JCVDConfig = {
       }
     ]
   },
-  agents: [],
+  taskCoordination: {
+    defaultAgent: 'developer',
+    fallbackAgent: 'general-purpose'
+  },
   providers: [],
   workflows: [],
   mcp: {

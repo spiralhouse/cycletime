@@ -42,7 +42,6 @@ jcvd/                                    # Root project directory
 │   ├── cli.ts                          # CLI interface
 │   ├── types/                          # TypeScript type definitions
 │   │   ├── index.ts                    # Consolidated exports
-│   │   ├── agents.ts                   # Agent interfaces
 │   │   ├── providers.ts                # Provider interfaces
 │   │   ├── config.ts                   # Configuration types
 │   │   ├── database.ts                 # Database schema types
@@ -51,11 +50,11 @@ jcvd/                                    # Root project directory
 │   ├── core/                           # Core framework components
 │   │   ├── index.ts                    # Core exports
 │   │   ├── orchestrator.ts             # Main orchestration engine
-│   │   ├── agent-factory.ts            # Agent instantiation
+│   │   ├── task-coordinator.ts         # Claude Code agent coordination
 │   │   ├── config-manager.ts           # Configuration management
 │   │   ├── state-manager.ts            # Multi-layer state management
 │   │   ├── workflow-engine.ts          # Workflow execution engine
-│   │   └── event-bus.ts                # Inter-agent communication
+│   │   └── event-bus.ts                # Inter-component communication
 │   │
 │   ├── database/                       # Database layer
 │   │   ├── index.ts                    # Database exports
@@ -63,76 +62,19 @@ jcvd/                                    # Root project directory
 │   │   ├── migrations/                 # Database migrations
 │   │   │   ├── index.ts                # Migration runner
 │   │   │   ├── 001-initial-schema.ts   # Initial database schema
-│   │   │   ├── 002-agent-states.ts     # Agent state tables
+│   │   │   ├── 002-workflow-states.ts  # Workflow state tables
 │   │   │   └── 003-provider-sync.ts    # Provider synchronization
 │   │   ├── models/                     # Database models
 │   │   │   ├── index.ts                # Model exports
 │   │   │   ├── workflow.ts             # Workflow model
 │   │   │   ├── task.ts                 # Task model
-│   │   │   ├── agent-state.ts          # Agent state model
+│   │   │   ├── project-state.ts        # Project state model
 │   │   │   └── provider-sync.ts        # Provider sync model
 │   │   └── queries/                    # SQL queries
 │   │       ├── index.ts                # Query exports
 │   │       ├── workflows.ts            # Workflow queries
 │   │       ├── tasks.ts                # Task queries
-│   │       └── agents.ts               # Agent queries
-│   │
-│   ├── agents/                         # Agent implementations
-│   │   ├── index.ts                    # Agent exports
-│   │   ├── base/                       # Base agent classes
-│   │   │   ├── index.ts                # Base exports
-│   │   │   ├── agent.ts                # Abstract base agent
-│   │   │   ├── mcp-agent.ts           # MCP-enabled agent base
-│   │   │   └── stateful-agent.ts      # Stateful agent base
-│   │   │
-│   │   ├── product-manager/            # Product Manager Agent
-│   │   │   ├── index.ts                # PM agent exports
-│   │   │   ├── product-manager.ts      # Main PM implementation
-│   │   │   ├── requirements-gatherer.ts # Requirements gathering
-│   │   │   ├── stakeholder-comm.ts     # Stakeholder communication
-│   │   │   └── acceptance-criteria.ts  # Acceptance criteria generation
-│   │   │
-│   │   ├── tech-lead/                  # Tech Lead Agent
-│   │   │   ├── index.ts                # TL agent exports
-│   │   │   ├── tech-lead.ts            # Main TL implementation
-│   │   │   ├── task-coordinator.ts     # Task coordination
-│   │   │   ├── dependency-manager.ts   # Dependency management
-│   │   │   └── progress-tracker.ts     # Progress tracking
-│   │   │
-│   │   ├── architect/                  # Software Architect Agent
-│   │   │   ├── index.ts                # Architect exports
-│   │   │   ├── architect.ts            # Main architect implementation
-│   │   │   ├── system-designer.ts      # System design
-│   │   │   ├── decision-recorder.ts    # Architecture decisions
-│   │   │   └── pattern-definer.ts      # Pattern definitions
-│   │   │
-│   │   ├── developer/                  # Developer Agent
-│   │   │   ├── index.ts                # Developer exports
-│   │   │   ├── developer.ts            # Main developer implementation
-│   │   │   ├── code-generator.ts       # Code generation
-│   │   │   ├── test-writer.ts          # Unit test writing
-│   │   │   └── refactorer.ts           # Code refactoring
-│   │   │
-│   │   ├── qa/                         # QA Agent
-│   │   │   ├── index.ts                # QA exports
-│   │   │   ├── qa.ts                   # Main QA implementation
-│   │   │   ├── test-planner.ts         # Test planning
-│   │   │   ├── quality-checker.ts      # Quality assurance
-│   │   │   └── bug-reporter.ts         # Bug reporting
-│   │   │
-│   │   ├── devops/                     # DevOps Agent
-│   │   │   ├── index.ts                # DevOps exports
-│   │   │   ├── devops.ts               # Main DevOps implementation
-│   │   │   ├── infra-manager.ts        # Infrastructure management
-│   │   │   ├── ci-cd-manager.ts        # CI/CD pipeline management
-│   │   │   └── deployment-manager.ts   # Deployment management
-│   │   │
-│   │   └── release-engineer/           # Release Engineer Agent
-│   │       ├── index.ts                # RE exports
-│   │       ├── release-engineer.ts     # Main RE implementation
-│   │       ├── release-coordinator.ts  # Release coordination
-│   │       ├── version-manager.ts      # Version management
-│   │       └── rollback-manager.ts     # Rollback management
+│   │       └── projects.ts             # Project queries
 │   │
 │   ├── providers/                      # Provider implementations
 │   │   ├── index.ts                    # Provider exports
@@ -196,13 +138,12 @@ jcvd/                                    # Root project directory
 │   │
 │   ├── unit/                           # Unit tests
 │   │   ├── core/                       # Core component tests
-│   │   ├── agents/                     # Agent tests
 │   │   ├── providers/                  # Provider tests
 │   │   ├── database/                   # Database tests
 │   │   └── utils/                      # Utility tests
 │   │
 │   ├── integration/                    # Integration tests
-│   │   ├── agent-coordination/         # Agent interaction tests
+│   │   ├── task-coordination/          # Claude Code agent integration tests
 │   │   ├── provider-sync/              # Provider synchronization tests
 │   │   ├── workflow-execution/         # End-to-end workflow tests
 │   │   └── mcp-integration/            # MCP integration tests
@@ -221,7 +162,7 @@ jcvd/                                    # Root project directory
 │   │
 │   ├── advanced/                       # Advanced examples
 │   │   ├── multi-provider.yml          # Multiple provider setup
-│   │   ├── custom-agents.yml           # Custom agent configuration
+│   │   ├── agent-coordination.yml      # Claude Code agent coordination
 │   │   └── complex-workflow.yml        # Complex workflow example
 │   │
 │   └── templates/                      # Project templates
@@ -295,11 +236,11 @@ Related documentation lives near the code it describes.
 Each directory includes an `index.ts` file that re-exports public APIs:
 
 ```typescript
-// src/agents/index.ts
-export { ProductManager } from './product-manager';
-export { TechLead } from './tech-lead';
-export { Architect } from './architect';
-// ... other agents
+// src/providers/index.ts
+export { SQLiteProvider } from './sqlite';
+export { LinearProvider } from './linear';
+export { GitHubProvider } from './github';
+// ... other providers
 ```
 
 ### Internal vs External APIs
@@ -311,8 +252,9 @@ Separate type definitions to enable tree-shaking:
 
 ```typescript
 // src/types/index.ts
-export type { AgentInterface } from './agents';
 export type { ProviderInterface } from './providers';
+export type { WorkflowConfig } from './workflows';
+export type { DatabaseSchema } from './database';
 ```
 
 ## Configuration File Locations
@@ -355,8 +297,8 @@ Configure TypeScript path mapping for clean imports:
 // Instead of: ../../../core/orchestrator
 import { Orchestrator } from '@/core/orchestrator';
 
-// Instead of: ../../types/agents
-import type { AgentInterface } from '@/types/agents';
+// Instead of: ../../types/providers
+import type { ProviderInterface } from '@/types/providers';
 ```
 
 ### Path Mapping Configuration
@@ -367,29 +309,23 @@ import type { AgentInterface } from '@/types/agents';
     "@/*": ["*"],
     "@/types/*": ["types/*"],
     "@/core/*": ["core/*"],
-    "@/agents/*": ["agents/*"],
-    "@/providers/*": ["providers/*"]
+    "@/providers/*": ["providers/*"],
+    "@/database/*": ["database/*"]
   }
 }
 ```
 
-## Agent Directory Deep Dive
+## Task Coordination Architecture
 
-Each agent follows consistent internal structure:
+JCVD leverages Claude Code's built-in agent system through the Task tool:
 
 ```
-agents/product-manager/
-├── index.ts                    # Public API exports
-├── product-manager.ts          # Main agent implementation
-├── capabilities/               # Agent-specific capabilities
-│   ├── requirements-gatherer.ts
-│   ├── stakeholder-comm.ts
-│   └── acceptance-criteria.ts
-├── types.ts                   # Agent-specific types
-├── config.ts                  # Agent configuration
-└── __tests__/                 # Agent-specific tests
-    ├── product-manager.test.ts
-    └── capabilities/
+Task Coordination Pattern:
+├── Orchestrator identifies task type
+├── Delegates to appropriate Claude Code agent via Task tool
+├── Agent performs work using available tools and context
+├── Results are integrated back into JCVD workflow state
+└── Progress is tracked in issue tracking system
 ```
 
 ## Provider Directory Deep Dive
@@ -453,11 +389,11 @@ mcp/
 Each component can be developed, tested, and deployed independently.
 
 ### 2. Clear Separation of Concerns
-- **Core**: Framework logic
-- **Agents**: Business logic
+- **Core**: Framework logic and task coordination
 - **Providers**: External integrations
 - **Database**: Data persistence
 - **MCP**: Claude Code integration
+- **Task Coordination**: Agent orchestration through Claude Code
 
 ### 3. Consistent Patterns
 Every domain follows similar patterns for predictability.

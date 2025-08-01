@@ -22,7 +22,7 @@ export class Orchestrator extends EventEmitter {
   constructor(private config: JCVDConfig) {
     super();
     this.logger.debug('Orchestrator created', { 
-      agents: config.agents.length,
+      taskCoordination: config.taskCoordination.defaultAgent,
       providers: config.providers.length,
       workflows: config.workflows.length
     });
@@ -44,8 +44,8 @@ export class Orchestrator extends EventEmitter {
       // Initialize providers
       await this.initializeProviders();
 
-      // Initialize agents
-      await this.initializeAgents();
+      // Initialize task coordination
+      await this.initializeTaskCoordination();
 
       // Initialize MCP server
       await this.initializeMCPServer();
@@ -126,7 +126,7 @@ export class Orchestrator extends EventEmitter {
       status: this.status,
       uptime,
       lastActivity: this.lastActivity,
-      activeAgents: this.config.agents.filter(a => a.enabled).length,
+      taskCoordination: this.config.taskCoordination.defaultAgent,
       activeProviders: this.config.providers.filter(p => p.enabled).length,
       errors: [] // TODO: Track errors
     };
@@ -204,43 +204,43 @@ export class Orchestrator extends EventEmitter {
   }
 
   /**
-   * Initialize all configured agents
+   * Initialize task coordination with Claude Code agents
    */
-  private async initializeAgents(): Promise<void> {
-    this.logger.debug('Initializing agents...', { 
-      count: this.config.agents.length 
+  private async initializeTaskCoordination(): Promise<void> {
+    this.logger.debug('Initializing task coordination...', { 
+      defaultAgent: this.config.taskCoordination.defaultAgent,
+      fallbackAgent: this.config.taskCoordination.fallbackAgent
     });
 
-    for (const agentConfig of this.config.agents) {
-      if (!agentConfig.enabled) {
-        this.logger.debug('Skipping disabled agent', { 
-          id: agentConfig.id,
-          type: agentConfig.type 
-        });
-        continue;
-      }
-
-      try {
-        // TODO: Implement agent initialization
-        // - Load agent based on type
-        // - Initialize with configuration
-        // - Set up dependencies
-        
-        this.logger.debug('Agent initialized', { 
-          id: agentConfig.id,
-          type: agentConfig.type 
-        });
-      } catch (error) {
-        this.logger.error('Failed to initialize agent', { 
-          id: agentConfig.id,
-          type: agentConfig.type,
-          error 
-        });
-        throw error;
-      }
+    // Validate that configured agents are available
+    const validAgents = ['general-purpose', 'product-manager', 'tech-lead', 'software-architect', 'developer', 'qa', 'code-reviewer'];
+    
+    if (!validAgents.includes(this.config.taskCoordination.defaultAgent)) {
+      throw new Error(`Invalid default agent: ${this.config.taskCoordination.defaultAgent}`);
+    }
+    
+    if (!validAgents.includes(this.config.taskCoordination.fallbackAgent)) {
+      throw new Error(`Invalid fallback agent: ${this.config.taskCoordination.fallbackAgent}`);
     }
 
-    this.logger.debug('All agents initialized');
+    try {
+      // TODO: Implement task coordination initialization
+      // - Set up Claude Code agent routing rules
+      // - Configure agent preferences and timeouts
+      // - Initialize agent communication channels
+      
+      this.logger.debug('Task coordination initialized', { 
+        defaultAgent: this.config.taskCoordination.defaultAgent,
+        fallbackAgent: this.config.taskCoordination.fallbackAgent
+      });
+    } catch (error) {
+      this.logger.error('Failed to initialize task coordination', { 
+        error 
+      });
+      throw error;
+    }
+
+    this.logger.debug('Task coordination setup complete');
   }
 
   /**
@@ -249,6 +249,7 @@ export class Orchestrator extends EventEmitter {
   private async initializeMCPServer(): Promise<void> {
     if (!this.config.mcp) {
       this.logger.debug('MCP server not configured, skipping');
+
       return;
     }
 

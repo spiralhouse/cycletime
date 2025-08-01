@@ -89,8 +89,7 @@ jcvd/
 │   ├── index.ts           # Main entry point
 │   ├── cli.ts             # CLI interface
 │   ├── types/             # TypeScript types
-│   ├── core/              # Core framework
-│   ├── agents/            # Agent implementations
+│   ├── core/              # Core framework and task coordination
 │   ├── providers/         # Provider implementations
 │   ├── database/          # Database layer
 │   ├── mcp/               # MCP integration
@@ -141,11 +140,11 @@ npx tsx src/cli.ts --help
 # Check configuration
 npx tsx src/cli.ts config --validate
 
-# List agents
-npx tsx src/cli.ts agents --list
-
 # List providers
 npx tsx src/cli.ts providers --list
+
+# Show task coordination status
+npx tsx src/cli.ts status --detailed
 
 # Start JCVD
 npx tsx src/cli.ts start --log-level debug
@@ -165,28 +164,32 @@ npx tsx src/cli.ts config --init
 
 ## Architecture Overview
 
-### Multi-Agent System
-JCVD implements 7 specialized agents:
-
-1. **Product Manager** - Requirements and stakeholder communication
-2. **Tech Lead** - Task coordination and dependency management  
-3. **Architect** - System design and architecture decisions
-4. **Developer** - Code implementation and unit testing
-5. **QA** - Test planning and quality assurance
-6. **DevOps** - Infrastructure and CI/CD management
-7. **Release Engineer** - Release coordination and deployment
-
-### Provider-Agnostic Design
-- **SQLite Core** - Embedded database for local state
-- **Provider Layer** - Abstraction for external integrations
-- **Sync Engine** - Bi-directional synchronization
-
 ### Technology Stack
 - **TypeScript 5.7.2** - Type-safe development
 - **Node.js 22.17.0 LTS** - Runtime platform
 - **better-sqlite3** - High-performance embedded database
 - **Vitest** - Fast testing framework
 - **ESLint 9.17.0** - Modern linting
+
+## Contributing
+
+### Before Contributing
+1. Read the [Architecture documentation](docs/ARCHITECTURE.md)
+2. Understand the [User Experience](docs/USER_EXPERIENCE.md)
+3. Check existing [Issues](https://github.com/jburbridge/jcvd/issues)
+
+### Development Process
+1. **Fork** the repository
+2. **Create** a feature branch
+3. **Write** tests for new functionality
+4. **Ensure** all tests pass
+5. **Submit** a pull request
+
+### Pull Request Guidelines
+- Write clear commit messages
+- Include tests for new features
+- Update documentation as needed
+- Ensure CI passes
 
 ## Development Practices
 
@@ -243,9 +246,12 @@ Create `jcvd.config.json`:
     "path": "./jcvd.db",
     "walMode": true
   },
-  "agents": [],
   "providers": [],
-  "workflows": []
+  "workflows": [],
+  "taskCoordination": {
+    "defaultAgent": "developer",
+    "fallbackAgent": "general-purpose"
+  }
 }
 ```
 
@@ -341,40 +347,22 @@ npm run db:migrate
 
 #### Memory usage
 - Monitor with `node --inspect`
-- Check for memory leaks in agents
+- Check for memory leaks in task coordination
 - Verify proper cleanup in providers
-
-## Contributing
-
-### Before Contributing
-1. Read the [Architecture documentation](docs/ARCHITECTURE.md)
-2. Understand the [User Experience](docs/USER_EXPERIENCE.md)
-3. Check existing [Issues](https://github.com/jburbridge/jcvd/issues)
-
-### Development Process
-1. **Fork** the repository
-2. **Create** a feature branch
-3. **Write** tests for new functionality
-4. **Ensure** all tests pass
-5. **Submit** a pull request
-
-### Pull Request Guidelines
-- Write clear commit messages
-- Include tests for new features
-- Update documentation as needed
-- Ensure CI passes
 
 ## Advanced Topics
 
-### Custom Agents
+### Task Coordination with Claude Code Agents
 ```typescript
-import { BaseAgent } from '@/agents/base';
+import { TaskCoordinator } from '@/core/task-coordinator';
 
-export class CustomAgent extends BaseAgent {
-  async execute(task: Task): Promise<Result<void>> {
-    // Custom agent implementation
-  }
-}
+// Coordinate work through Claude Code's built-in agents
+const coordinator = new TaskCoordinator();
+await coordinator.delegateTask('developer', {
+  description: 'Implement user authentication',
+  context: projectContext,
+  requirements: taskRequirements
+});
 ```
 
 ### Custom Providers
@@ -410,10 +398,6 @@ server.addTool('custom-tool', async (params) => {
 - [Vitest Documentation](https://vitest.dev/)
 - [better-sqlite3 API](https://github.com/WiseLibs/better-sqlite3/blob/master/docs/api.md)
 - [ESLint Configuration](https://eslint.org/docs/latest/)
-
-### Community
-- [GitHub Issues](https://github.com/jburbridge/jcvd/issues) - Bug reports and feature requests
-- [GitHub Discussions](https://github.com/jburbridge/jcvd/discussions) - Community discussion
 
 ---
 

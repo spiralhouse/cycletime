@@ -169,7 +169,7 @@ JCVD is designed around core principles that prioritize developer autonomy, simp
 **FR5.1: Seamless Claude Code Workflow Integration**
 - Natural language interface for all JCVD operations
 - Context-aware suggestions based on current project phase and issue tracking state
-- Intelligent tool selection and agent orchestration based on task type
+- Intelligent task delegation to Claude Code's built-in agents based on task type
 - Progress reporting and status updates through normal Claude Code conversation
 
 **FR5.2: MCP Server Architecture**

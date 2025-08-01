@@ -5,10 +5,10 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { DEFAULT_CONFIG } from '../types/config.js';
 import { createLogger } from '../utils/logger.js';
 
 import type { JCVDConfig } from '../types/config.js';
-import { DEFAULT_CONFIG } from '../types/config.js';
 
 /**
  * Configuration manager for loading and validating JCVD configuration
@@ -27,6 +27,7 @@ export class ConfigManager {
 
     // Load from file if exists
     const fileConfig = this.loadFromFile();
+
     if (fileConfig) {
       config = this.mergeConfigs(config, fileConfig);
       this.logger.debug('Loaded configuration from file');
@@ -34,6 +35,7 @@ export class ConfigManager {
 
     // Load from environment variables
     const envConfig = this.loadFromEnvironment();
+
     if (envConfig) {
       config = this.mergeConfigs(config, envConfig);
       this.logger.debug('Loaded configuration from environment');
@@ -49,7 +51,7 @@ export class ConfigManager {
     this.validate(config);
 
     this.logger.info('Configuration loaded successfully', {
-      agents: config.agents.length,
+      taskCoordination: config.taskCoordination.defaultAgent,
       providers: config.providers.length,
       workflows: config.workflows.length
     });
@@ -138,7 +140,7 @@ export class ConfigManager {
     if (process.env.JCVD_MCP_PORT) {
       envConfig.mcp = {
         ...DEFAULT_CONFIG.mcp!,
-        port: parseInt(process.env.JCVD_MCP_PORT, 10)
+        port: Number.parseInt(process.env.JCVD_MCP_PORT, 10)
       };
     }
 
@@ -204,21 +206,13 @@ export class ConfigManager {
       throw new Error('Configuration validation failed: database.path is required');
     }
 
-    // Agent validation
-    for (const agent of config.agents) {
-      if (!agent.id) {
-        throw new Error('Configuration validation failed: agent.id is required');
-      }
-      
-      if (!agent.type) {
-        throw new Error(`Configuration validation failed: agent.type is required for agent ${agent.id}`);
-      }
-
-      // Check for duplicate agent IDs
-      const duplicateIds = config.agents.filter(a => a.id === agent.id);
-      if (duplicateIds.length > 1) {
-        throw new Error(`Configuration validation failed: duplicate agent ID: ${agent.id}`);
-      }
+    // Task coordination validation
+    if (!config.taskCoordination.defaultAgent) {
+      throw new Error('Configuration validation failed: taskCoordination.defaultAgent is required');
+    }
+    
+    if (!config.taskCoordination.fallbackAgent) {
+      throw new Error('Configuration validation failed: taskCoordination.fallbackAgent is required');
     }
 
     // Provider validation
@@ -233,6 +227,7 @@ export class ConfigManager {
 
       // Check for duplicate provider IDs
       const duplicateIds = config.providers.filter(p => p.id === provider.id);
+
       if (duplicateIds.length > 1) {
         throw new Error(`Configuration validation failed: duplicate provider ID: ${provider.id}`);
       }
@@ -250,6 +245,7 @@ export class ConfigManager {
 
       // Check for duplicate workflow IDs
       const duplicateIds = config.workflows.filter(w => w.id === workflow.id);
+
       if (duplicateIds.length > 1) {
         throw new Error(`Configuration validation failed: duplicate workflow ID: ${workflow.id}`);
       }
@@ -264,17 +260,18 @@ export class ConfigManager {
           throw new Error(`Configuration validation failed: stage.agent is required for stage ${stage.id} in workflow ${workflow.id}`);
         }
 
-        // Check if referenced agent exists
-        const referencedAgent = config.agents.find(a => a.id === stage.agent);
-        if (!referencedAgent) {
-          throw new Error(`Configuration validation failed: agent ${stage.agent} referenced in workflow ${workflow.id} does not exist`);
+        // Validate that agent is a known Claude Code agent type
+        const validAgents = ['general-purpose', 'product-manager', 'tech-lead', 'software-architect', 'developer', 'qa', 'code-reviewer'];
+
+        if (!validAgents.includes(stage.agent)) {
+          throw new Error(`Configuration validation failed: agent ${stage.agent} referenced in workflow ${workflow.id} is not a valid Claude Code agent`);
         }
       }
     }
 
     // MCP validation
     if (config.mcp) {
-      if (config.mcp.port < 1 || config.mcp.port > 65535) {
+      if (config.mcp.port < 1 || config.mcp.port > 65_535) {
         throw new Error('Configuration validation failed: mcp.port must be between 1 and 65535');
       }
     }
