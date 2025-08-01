@@ -28,5 +28,6 @@ export * from './transformers/index.js'
 export * from './capabilities/index.js'
 
 // Re-export specific provider implementations when available
+export * from './sqlite/index.js'
 export * from './local/index.js'
 export * from './linear/index.js'

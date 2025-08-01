@@ -26,6 +26,11 @@ import type {
   WorkflowStateType
 } from '../database/models/schema-types.js'
 
+import type {
+  ExportData,
+  ExportOptions
+} from './export-format.js'
+
 // =============================================================================
 // Provider Metadata and Capability System
 // =============================================================================

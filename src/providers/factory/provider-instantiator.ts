@@ -345,9 +345,10 @@ export class ProviderInstantiator {
    * Register default provider constructors
    */
   private registerDefaultConstructors(): void {
-    // SQLite provider constructor (placeholder)
+    // SQLite provider constructor
     this.constructors.set('sqlite', async (config) => {
-      return new SQLiteProviderPlaceholder(config)
+      const { SQLiteProvider } = await import('../sqlite/sqlite-provider.js')
+      return new SQLiteProvider(config as any)
     })
 
     // Linear provider constructor (placeholder)

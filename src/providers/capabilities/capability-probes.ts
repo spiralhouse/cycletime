@@ -754,12 +754,28 @@ export class JiraCapabilityProbe extends BaseCapabilityProbe {
 // =============================================================================
 
 export class CapabilityProbeFactory {
-  private static probes = new Map<ProviderType, CapabilityProbe>([
-    ['sqlite', new SQLiteCapabilityProbe()],
-    ['linear', new LinearCapabilityProbe()],
-    ['github', new GitHubCapabilityProbe()],
-    ['jira', new JiraCapabilityProbe()]
-  ])
+  private static probes = new Map<ProviderType, CapabilityProbe>()
+
+  static {
+    // Initialize probes
+    this.probes.set('sqlite', new SQLiteCapabilityProbe())
+    this.probes.set('linear', new LinearCapabilityProbe())
+    this.probes.set('github', new GitHubCapabilityProbe())
+    this.probes.set('jira', new JiraCapabilityProbe())
+    
+    // Register enhanced SQLite probe if available
+    this.registerEnhancedProbes()
+  }
+
+  private static async registerEnhancedProbes() {
+    try {
+      const { createSQLiteCapabilityProbe } = await import('../sqlite/sqlite-capability-probe.js')
+      this.probes.set('sqlite', createSQLiteCapabilityProbe())
+    } catch (error) {
+      // Fallback to basic probe if enhanced probe is not available
+      console.warn('Enhanced SQLite capability probe not available, using basic probe')
+    }
+  }
 
   static getProbe(providerType: ProviderType): CapabilityProbe {
     const probe = this.probes.get(providerType)
