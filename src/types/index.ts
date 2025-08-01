@@ -3,7 +3,37 @@
  */
 
 // Re-export all types from specific modules
-export * from './config.js';
+export * from './config.js'
+
+// Re-export provider system types for easy access
+export type {
+  IssueProvider,
+  ProviderInfo,
+  ProviderCapabilities,
+  ProviderStatus,
+  ProviderType,
+  ProviderConfig,
+  SQLiteProviderConfig,
+  LinearProviderConfig,
+  GitHubProviderConfig,
+  JiraProviderConfig,
+  EnhancedIssue,
+  ProjectConfig,
+  IssueConfig,
+  Dependency,
+  DependencyGraph,
+  TaskRecommendation,
+  OperationResult,
+  ImportResult,
+  SyncResult,
+  ExportData
+} from '../providers/types.js'
+
+// Provider-specific error types (avoid conflicts with existing types)
+export type {
+  ProviderError as IssueProviderError,
+  ProviderErrorCode as IssueProviderErrorCode
+} from '../providers/types.js'
 
 /**
  * Common utility types
