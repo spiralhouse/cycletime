@@ -86,6 +86,12 @@ Workflow Integration:
 - Consider QA and testing implications in designs
 - Update architecture docs as system evolves
 
+Database Migrations:
+- Follow semantic versioning for schema changes (MAJOR.MINOR.PATCH)
+- Use SQLite-specific patterns for table modifications (create new, copy, drop old)
+- Reference `/Users/jburbridge/Projects/jcvd/docs/DATABASE_MIGRATION_GUIDE.md` for complex scenarios
+- Design migrations with rollback safety and validation in mind
+
 Key Artifacts:
 - Architecture diagrams (component, sequence, data flow)
 - Technical design documents
