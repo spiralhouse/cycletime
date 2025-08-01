@@ -7,10 +7,8 @@
 import { EventEmitter } from 'node:events';
 
 import { createLogger } from '../utils/logger.js';
-import { MultiAgentCoordinator } from './multi-agent-coordinator.js';
 
 import type { JCVDConfig, Status, StatusInfo, Result } from '../types/index.js';
-import type { MultiAgentContext } from '../types/multi-agent.js';
 
 /**
  * Main orchestrator class that manages the entire JCVD framework
@@ -20,7 +18,6 @@ export class Orchestrator extends EventEmitter {
   private status: Status = 'idle';
   private startTime: Date | null = null;
   private lastActivity: Date = new Date();
-  private multiAgentCoordinator?: MultiAgentCoordinator;
 
   constructor(private config: JCVDConfig) {
     super();
@@ -131,33 +128,8 @@ export class Orchestrator extends EventEmitter {
       lastActivity: this.lastActivity,
       taskCoordination: this.config.taskCoordination.defaultAgent,
       activeProviders: this.config.providers.filter(p => p.enabled).length,
-      errors: [], // TODO: Track errors
-      multiAgent: this.multiAgentCoordinator ? {
-        enabled: true,
-        activeContexts: this.getActiveMultiAgentContexts().length,
-        maxConcurrentAgents: this.config.taskCoordination.parallel?.maxConcurrentAgents || 0
-      } : { enabled: false, activeContexts: 0, maxConcurrentAgents: 0 }
+      errors: [] // TODO: Track errors
     };
-  }
-  
-  /**
-   * Get active multi-agent contexts
-   */
-  getActiveMultiAgentContexts(): MultiAgentContext[] {
-    if (!this.multiAgentCoordinator) {
-      return [];
-    }
-    
-    // This would need to be implemented in the coordinator
-    // For now, return empty array
-    return [];
-  }
-  
-  /**
-   * Get multi-agent coordinator instance
-   */
-  getMultiAgentCoordinator(): MultiAgentCoordinator | undefined {
-    return this.multiAgentCoordinator;
   }
 
   /**
@@ -237,8 +209,7 @@ export class Orchestrator extends EventEmitter {
   private async initializeTaskCoordination(): Promise<void> {
     this.logger.debug('Initializing task coordination...', { 
       defaultAgent: this.config.taskCoordination.defaultAgent,
-      fallbackAgent: this.config.taskCoordination.fallbackAgent,
-      parallelEnabled: this.config.taskCoordination.parallel?.enabled
+      fallbackAgent: this.config.taskCoordination.fallbackAgent
     });
 
     // Validate that configured agents are available
@@ -253,34 +224,14 @@ export class Orchestrator extends EventEmitter {
     }
 
     try {
-      // Initialize multi-agent coordinator if parallel execution is enabled
-      if (this.config.taskCoordination.parallel?.enabled) {
-        this.multiAgentCoordinator = new MultiAgentCoordinator(this.config.taskCoordination);
-        
-        // Set up event listeners for multi-agent coordination
-        this.multiAgentCoordinator.on('multi-agent-started', (context: MultiAgentContext) => {
-          this.logger.info('Multi-agent execution started', { taskId: context.taskId });
-          this.emit('multi-agent-started', context);
-        });
-        
-        this.multiAgentCoordinator.on('multi-agent-completed', (context: MultiAgentContext) => {
-          this.logger.info('Multi-agent execution completed', { 
-            taskId: context.taskId, 
-            status: context.status 
-          });
-          this.emit('multi-agent-completed', context);
-        });
-        
-        this.logger.debug('Multi-agent coordinator initialized', {
-          maxConcurrentAgents: this.config.taskCoordination.parallel.maxConcurrentAgents,
-          worktreeBaseDir: this.config.taskCoordination.parallel.worktree.baseDir
-        });
-      }
+      // TODO: Implement task coordination initialization
+      // - Set up Claude Code agent routing rules
+      // - Configure agent preferences and timeouts
+      // - Initialize agent communication channels
       
       this.logger.debug('Task coordination initialized', { 
         defaultAgent: this.config.taskCoordination.defaultAgent,
-        fallbackAgent: this.config.taskCoordination.fallbackAgent,
-        multiAgentEnabled: !!this.multiAgentCoordinator
+        fallbackAgent: this.config.taskCoordination.fallbackAgent
       });
     } catch (error) {
       this.logger.error('Failed to initialize task coordination', { 
@@ -346,17 +297,7 @@ export class Orchestrator extends EventEmitter {
    */
   private async stopAgents(): Promise<void> {
     this.logger.debug('Stopping agents...');
-    
-    // Clean up multi-agent coordinator
-    if (this.multiAgentCoordinator) {
-      try {
-        await this.multiAgentCoordinator.cleanup();
-        this.logger.debug('Multi-agent coordinator cleaned up');
-      } catch (error) {
-        this.logger.warn('Error cleaning up multi-agent coordinator', { error });
-      }
-    }
-    
+    // TODO: Implement agent shutdown
     this.logger.debug('All agents stopped');
   }
 

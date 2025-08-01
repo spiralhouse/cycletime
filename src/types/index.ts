@@ -4,7 +4,6 @@
 
 // Re-export all types from specific modules
 export * from './config.js'
-export * from './multi-agent.js'
 
 // Re-export provider system types for easy access
 export type {
@@ -87,11 +86,6 @@ export interface StatusInfo {
   taskCoordination: string;
   activeProviders: number;
   errors: JCVDError[];
-  multiAgent: {
-    enabled: boolean;
-    activeContexts: number;
-    maxConcurrentAgents: number;
-  };
 }
 
 /**
