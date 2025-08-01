@@ -277,7 +277,7 @@ API keys and sensitive data encrypted using system keychain when available.
 ```
 User: "I have my issue tracking set up, now I want to build a task management web app"
 
-Claude: "Perfect! I'll start the JCVD Inception Phase for your task management app.
+Claude: "Perfect! I'll start the JCVD Project Bootstrap for your task management app.
 
 Let me ask a few key questions to understand your project:
 

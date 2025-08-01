@@ -12,91 +12,123 @@
 
 ## Executive Summary
 
-**JCVD** is a comprehensive project orchestration framework that transforms Claude Code into a complete software development partner. Unlike traditional coding assistants, JCVD creates and manages ALL artifacts required to execute a software project from inception to deployment, including specifications, architecture documentation, issue tracking and management, and repository setup.
+**JCVD** is a comprehensive project orchestration framework designed specifically for the Claude Code ecosystem, transforming Claude Code from an excellent coding assistant into a complete software development lifecycle management platform. Building on Claude Code's proven agent capabilities and natural language workflow, JCVD creates and manages ALL artifacts required to execute a software project from inception to deployment, including specifications, architecture documentation, issue tracking and management, and repository setup.
 
-The system operates on a project-centric model where every development effort begins with an **Inception Phase** - either through an interactive requirements gathering interview or by accepting a user-provided PRD. JCVD then orchestrates the entire development lifecycle through intelligent issue tracking systems, ensuring structured progression from high-level design through proof-of-concept delivery.
+Targeting the growing community of solo developers and freelancers who rely on Claude Code for productivity, JCVD addresses the specific challenges these users face: cognitive overload from maintaining entire project context, loss of project state between Claude Code sessions, and the need for professional project deliverables when working with clients.
+
+The system operates on a project-centric model where every development effort begins with **Project Bootstrap** - either through an interactive requirements gathering interview or by accepting a user-provided PRD. JCVD then orchestrates the entire development lifecycle through intelligent issue tracking systems, ensuring structured progression from high-level design through proof-of-concept delivery, all while preserving Claude Code's familiar agent-based interaction model.
 
 **Primary Value Proposition:**
-Transform Claude Code from a coding assistant into a complete software development partner that orchestrates the entire project lifecycle from requirements gathering to deployment-ready code.
+Transform Claude Code from an excellent coding assistant into a complete project orchestration platform for solo developers and freelancers, providing systematic project management, cross-session continuity, and professional client deliverables while preserving Claude Code's natural development experience.
 
 **Supporting Benefits:**
-- **Comprehensive Artifact Generation**: Auto-creates all necessary documentation, specifications, and project structure
-- **Issue-Driven Workflow**: Uses Agile structure (Epic → Story → Subtasks) for comprehensive project tracking
-- **Intelligent Task Orchestration**: LLM-powered analysis of issue dependency graphs to determine optimal next actions
-- **Phase-Based Development**: Structured progression through Inception, Development/Alpha, and delivery phases
-- **Developer-Controlled Architecture**: Open source, provider-agnostic design with complete data portability
+- **Claude Code Ecosystem Integration**: Seamlessly extends Claude Code's agent framework with project orchestration capabilities
+- **Cross-Session Project Continuity**: Maintains project context and progress across multiple Claude Code sessions, solving a key pain point for solo developers
+- **Comprehensive Artifact Generation**: Auto-creates professional project documentation, specifications, and structure through Claude Code's familiar natural language interface
+- **Issue-Driven Workflow**: Uses Agile structure (Epic → Story → Subtasks) for comprehensive project tracking, reducing cognitive load for solo developers
+- **Intelligent Task Orchestration**: LLM-powered analysis of issue dependency graphs provides intelligent next-task recommendations, replacing team input for solo developers
+- **Solo Developer Cognitive Support**: Addresses context switching fatigue and mental overhead specific to solo development scenarios
+- **Professional Client Deliverables**: Generates client-ready project artifacts and progress reports through Claude Code workflows
+- **Developer-Controlled Architecture**: Open source, provider-agnostic design with complete data portability, aligned with Claude Code's transparency philosophy
 
 ## Project Vision
 
 ### Vision Statement
-To create the first truly comprehensive software development orchestration system that handles every aspect of project delivery - from initial concept through production deployment - while maintaining complete transparency and developer control.
+To create the first truly comprehensive project orchestration framework specifically for Claude Code users, extending Claude Code's existing capabilities to handle complete software development lifecycles - from initial concept through production deployment - while preserving Claude Code's developer-first philosophy of transparency and control.
 
 ### Problem Statement
-Current AI coding assistants focus on individual coding tasks but fail to address the broader challenges of software project delivery:
+While Claude Code excels at individual coding tasks and provides powerful agent capabilities, solo developers and freelancers using Claude Code face significant challenges with complete project orchestration:
 
-- **Project Initiation Complexity**: No systematic approach to gathering requirements, defining scope, and creating project structure
-- **Documentation Fragmentation**: Specifications, architecture docs, and project artifacts scattered across tools and formats
-- **Task Prioritization Chaos**: No intelligent system for determining what to work on next based on project dependencies and priorities
-- **Phase Management Gaps**: No structured approach to project phases (inception, development, deployment)
-- **Greenfield Project Challenges**: Starting new projects requires extensive manual setup and planning
-- **Context Loss**: Project knowledge and progress scattered across conversations, files, and tools
-- **Vendor Lock-in Concerns**: Proprietary AI assistants create dependency on external services with limited transparency or control
-- **Lack of Customization**: Closed-source solutions can't be adapted to specific workflows or extended with custom functionality
+**Solo Developer Specific Challenges:**
+- **Cognitive Overload**: Solo developers must maintain entire project context (database schema to frontend animations) without team support, causing mental fatigue that Claude Code currently doesn't address systematically
+- **Context Switching Drain**: Constant switching between requirements, architecture, implementation, and client communication fragments focus and productivity
+- **Project Initiation Complexity**: No systematic approach within Claude Code for gathering requirements, defining scope, and creating comprehensive project structure
+- **Cross-Session Context Loss**: Project knowledge and progress scattered across Claude Code conversations, with no persistence of project state between sessions
+- **Task Prioritization Without Team Input**: Solo developers lack team members to help prioritize work, leading to suboptimal task sequencing and blocked progress
+- **Client Communication Overhead**: Freelancers need professional project artifacts (PRDs, architecture docs, progress tracking) but lack efficient ways to generate and maintain these through Claude Code
+- **Greenfield Project Setup Burden**: Starting new projects requires extensive manual setup that could be orchestrated through Claude Code's existing capabilities
+
+**Claude Code Ecosystem Gaps:**
+- **No Project Continuity Framework**: While Claude Code provides excellent session-based assistance, there's no system for maintaining project context and progress across multiple development sessions
+- **Agent Coordination Limitations**: Though Claude Code has powerful individual agents, there's no orchestration layer to coordinate multi-step project workflows across agent interactions
+- **Documentation Integration Missing**: Claude Code can generate excellent code but lacks integrated systems for maintaining project documentation, specifications, and architectural artifacts alongside development
 
 ### Solution Overview
 
 JCVD provides a **comprehensive project orchestration platform** that:
 
-1. **Inception Phase Management**: Interactive requirements gathering or PRD acceptance, followed by systematic project setup
+1. **Project Bootstrap Management**: Interactive requirements gathering or PRD acceptance, followed by systematic project setup
 2. **Complete Artifact Generation**: Creates all necessary documentation, specifications, and project structure in standardized locations
 3. **Issue-Driven Orchestration**: Uses Epic → Story → Subtasks hierarchy for complete project tracking and dependency management
 4. **Intelligent Task Sequencing**: LLM-powered analysis of project issues to determine optimal next actions based on dependencies, priorities, and project context
-5. **Phase-Based Progression**: Structured movement through Inception → Development/Alpha → subsequent phases using project milestones
+5. **Phase-Based Progression**: Structured movement through Project Bootstrap → Development/Alpha → subsequent phases using project milestones
 6. **Repository Convention Enforcement**: Standardized `docs/` directory structure and project organization patterns
 7. **Test-Driven Development Integration**: TDD practices built into all applicable workflows and task generation
-8. **Open Source Transparency**: Full source code visibility enabling custom extensions, security auditing, and community contributions
-9. **No Vendor Lock-in**: Complete data portability and provider-agnostic architecture ensuring long-term flexibility
+8. **Agent Capability Enhancement**: Amplifies Claude Code's existing agent framework with project context and intelligent task recommendations
+9. **Open Source Transparency**: Full source code visibility enabling custom extensions, security auditing, and community contributions
+10. **No Vendor Lock-in**: Complete data portability and provider-agnostic architecture ensuring long-term flexibility
 
 ## Target Users
 
-**Primary**: Individual Software Engineers and Freelancers
-- Solo developers starting new projects who need comprehensive project structure and management
-- Freelancers who want to demonstrate professional project management to clients
-- Engineers who want to follow best practices but lack the time to set up comprehensive project infrastructure
-- Developers transitioning from ad-hoc development to structured, professional workflows
+**Primary**: Solo/Freelance Software Engineers within the Claude Code Ecosystem
 
-**Secondary**: Small Development Teams (2-4 people)  
-- Startups needing rapid project setup and structured development workflows
-- Small consulting teams who want to standardize their project delivery approach
-- Teams who want to use issue tracking effectively for Agile development practices
+**Core Demographics:**
+- **Existing Claude Code Users**: Developers already familiar with Claude Code's agent system and natural language development workflows
+- **Solo Developers Using Claude Code**: Independent developers who rely on Claude Code for productivity but struggle with project-level orchestration and continuity
+- **Freelance Consultants**: Professional developers using Claude Code who need to deliver structured project artifacts and demonstrate professional project management to clients
+- **Productivity-Focused Engineers**: Developers who have experienced Claude Code's ability to "work like a team of five" but want systematic project orchestration to amplify this effect
+
+**Specific Pain Points This Audience Faces:**
+- Currently use Claude Code effectively for coding tasks but lose project context between sessions
+- Need professional project deliverables (PRDs, architecture docs, progress tracking) for client work
+- Want to leverage Claude Code's agent capabilities for complete project workflows, not just individual tasks
+- Struggle with the cognitive overhead of maintaining entire project context without team support
+- Seek to transform from "programmer managing Claude Code" to "engineering manager orchestrating through Claude Code"
+- Desire systematic project setup and task prioritization that builds on Claude Code's existing strengths
+
+**Behavioral Characteristics:**
+- Already invested in Claude Code's workflow and terminology
+- Comfortable with terminal-based AI interaction and agent delegation
+- Value Claude Code's transparency and developer control philosophy
+- Experience cognitive fatigue from context switching that Claude Code's task focus could address systematically
+- Want professional project management without abandoning Claude Code's natural development experience
+
+**Secondary**: Small Development Teams Already Using Claude Code (2-4 people)
+- Teams who have adopted Claude Code for individual productivity and want project-level orchestration
+- Claude Code-savvy startups needing rapid project setup within their existing development workflow
+- Small consulting teams who want to standardize project delivery while leveraging their Claude Code investment
 
 ## Developer Experience Philosophy
 
-JCVD is designed around core principles that prioritize developer autonomy, simplicity, and long-term sustainability:
+JCVD is designed around core principles that extend Claude Code's developer-first philosophy to comprehensive project orchestration:
 
-**Developer Control First**
+**Claude Code Ecosystem Integration First**
+- Seamlessly extends Claude Code's existing agent framework without replacing familiar workflows
+- Preserves Claude Code's natural language interaction model for all project orchestration tasks
+- Maintains Claude Code's session-based development experience while adding cross-session project continuity
+- Leverages Claude Code users' existing comfort with agent delegation and terminal-based AI interaction
+
+**Developer Control First** *(Aligned with Claude Code's Philosophy)*
 - All project data remains under developer control (local files, standard formats, portable data)
 - No forced cloud dependencies or external service requirements for core functionality
 - Complete transparency into system behavior through open source architecture
+- Preserves Claude Code's commitment to developer autonomy and transparency
 
-**Simplicity Over Complexity**
-- Single command setup with sensible defaults that work immediately
-- Progressive disclosure: basic functionality accessible immediately, advanced features discoverable
-- Convention over configuration: follow established patterns while allowing customization
+**Amplify, Don't Replace** *(Claude Code's Existing Strengths)*
+- Transforms Claude Code from excellent coding assistant to complete project orchestration platform
+- Builds on Claude Code's proven ability to help solo developers \"work like a team of five\"
+- Extends Claude Code's agent capabilities with project context and intelligent task sequencing
+- Maintains Claude Code's natural development flow while adding systematic project management
 
-**Long-term Sustainability**
-- Provider-agnostic architecture prevents tool lock-in
-- Standard file formats and database schemas enable easy migration
-- Open source ensures continuity regardless of commercial changes
-
-**Professional Without Bureaucracy**
-- Structured workflows that enhance rather than impede development velocity
-- Intelligent defaults that minimize configuration while maximizing utility
-- Focus on delivering value quickly while maintaining professional project standards
+**Professional Without Bureaucracy** *(For Claude Code's Solo Developer Audience)*
+- Structured workflows that enhance Claude Code's productivity benefits rather than impede development velocity
+- Intelligent defaults that minimize configuration while maximizing Claude Code's utility for complete projects
+- Focus on delivering professional project artifacts through Claude Code's familiar interface
+- Addresses solo developer pain points (cognitive overload, context switching) that Claude Code users specifically experience
 
 ## Core Functional Requirements
 
-### FR1: Inception Phase Orchestration
+### FR1: Project Bootstrap Orchestration
 
 **FR1.1: Requirements Gathering System**
 - Interactive interview process to gather project requirements, scope, and constraints
@@ -131,7 +163,7 @@ JCVD is designed around core principles that prioritize developer autonomy, simp
 - Progress reporting with detailed completion summaries
 
 **FR2.3: Milestone and Phase Management**
-- Use project milestones to track major project phases (Inception, Development/Alpha, Beta, etc.)
+- Use project milestones to track major project phases (Project Bootstrap, Development/Alpha, Beta, etc.)
 - Automatic milestone progression based on completion criteria
 - Phase-appropriate task generation and backlog management
 - Adaptive planning - support both up-front planning and iterative discovery
@@ -178,6 +210,13 @@ JCVD is designed around core principles that prioritize developer autonomy, simp
 - Issue tracking API integration for complete issue lifecycle management
 - Repository and documentation management through standard file operations
 
+**FR5.3: Agent Configuration Management**
+- Default agent provisioning with sensible configurations for common development tasks
+- User-controlled agent discovery and configuration management
+- Intelligent task-to-agent recommendations based on task type, project context, and available agents
+- Context provision system that enhances Claude Code's native agents with project-specific information
+- Seamless integration with Claude Code's existing agent framework without replacement or external coordination
+
 ## System Architecture
 
 JCVD uses a provider-agnostic architecture that supports multiple issue tracking backends (SQLite, Linear, GitHub Issues, Jira) through a unified interface. This enables complete offline operation with embedded SQLite while providing seamless migration to cloud providers when ready.
@@ -190,11 +229,34 @@ JCVD uses a provider-agnostic architecture that supports multiple issue tracking
 
 For detailed technical specifications, database schemas, and component architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
+## Claude Code Agent Integration
+
+JCVD is designed specifically for the Claude Code user community, working seamlessly **with** Claude Code's existing agent framework to address the unique challenges solo developers and freelancers face when managing complete projects. This architectural approach ensures:
+
+**Agent Enhancement for Solo Developer Workflows**
+- Claude Code's native agents (Developer, QA, Product Manager, etc.) remain the primary execution layer that solo developers already know and trust
+- JCVD provides project context, task recommendations, and orchestration intelligence to these existing agents, reducing the cognitive load of maintaining entire project context
+- No custom agent implementations or external coordination protocols required - preserves Claude Code users' existing workflow familiarity
+
+**Context-Aware Task Intelligence for Solo Development**
+- JCVD analyzes issue dependencies, project state, and task types to provide intelligent recommendations, addressing the lack of team input that solo developers typically face
+- Agents receive enhanced context about project goals, current phase, and optimal next actions, reducing context switching fatigue
+- Task delegation happens naturally through Claude Code's existing Task tool and agent system that users already understand
+- Transforms solo developers from \"managing Claude Code sessions\" to \"orchestrating project workflows through Claude Code\"
+
+**Seamless Integration Model for Claude Code Ecosystem**
+- JCVD operates as an MCP server that enhances Claude Code's capabilities from within, maintaining the terminal-based AI interaction that Claude Code users prefer
+- All agent interactions happen through Claude Code's native session management, preserving user workflow familiarity
+- Project orchestration intelligence is delivered through natural language recommendations, consistent with Claude Code's existing interaction model
+- Cross-session project continuity addresses one of the biggest pain points Claude Code users face when working on larger projects
+
+This approach ensures that JCVD amplifies Claude Code's proven ability to help solo developers \"work like a team of five\" by adding systematic project management capabilities without disrupting the development experience that attracted users to Claude Code in the first place.
+
 ## Project Phases
 
 JCVD organizes software development into structured phases:
 
-1. **Inception Phase**: Requirements gathering, project setup, and initial architecture
+1. **Project Bootstrap**: Requirements gathering, project setup, and initial architecture
 2. **Development/Alpha Phase**: Proof-of-concept implementation with TDD practices
 3. **Subsequent Phases**: Beta, production, and maintenance with milestone-driven progression
 
@@ -204,19 +266,22 @@ For detailed phase workflows and user experiences, see [USER_EXPERIENCE.md](USER
 
 ## User Experience Overview
 
-JCVD prioritizes developer control and simplicity through:
+JCVD prioritizes developer control and simplicity through Claude Code's familiar interaction model:
 
-1. **First-Time Setup**: Simple installation with offline-first embedded database or optional cloud provider integration
-2. **Project Creation**: Interactive requirements gathering followed by complete project structure generation
-3. **Daily Development**: Intelligent task recommendations based on dependencies and project context
-4. **Cross-Session Continuity**: Seamless project state recovery across Claude Code sessions
+1. **First-Time Setup**: Simple installation as MCP server with offline-first embedded database, maintaining Claude Code's developer control philosophy
+2. **Project Creation Within Claude Code**: Interactive requirements gathering through natural language conversation, followed by complete project structure generation through Claude Code agents
+3. **Daily Development Through Claude Code**: Intelligent task recommendations and agent delegation based on dependencies and project context, preserving Claude Code's proven workflow
+4. **Cross-Session Continuity**: Seamless project state recovery across Claude Code sessions, solving the context loss problem solo developers face
+5. **Professional Output for Freelancers**: Client-ready project artifacts and progress reports generated through familiar Claude Code interactions
+
+This approach ensures that existing Claude Code users can immediately leverage JCVD's project orchestration capabilities without learning new interfaces or abandoning their proven development workflows.
 
 For detailed user workflows, setup processes, and daily development experiences, see [USER_EXPERIENCE.md](USER_EXPERIENCE.md).
 
 ## Project Integration
 
 ### New Projects
-JCVD provides comprehensive greenfield project support through the Inception Phase, including requirements gathering, project structure creation, and complete development environment setup.
+JCVD provides comprehensive greenfield project support through Project Bootstrap, including requirements gathering, project structure creation, and complete development environment setup.
 
 ### Existing Projects  
 JCVD uses a simple "Onboarding Assistant" with targeted questions to recommend integration strategies:
@@ -229,8 +294,8 @@ For detailed onboarding workflows, integration strategies, and realistic scope l
 
 ## Success Metrics
 
-### Inception Phase Success
-- **Setup Time**: Complete project inception in <2 hours for simple projects, <1 day for complex
+### Project Bootstrap Success
+- **Setup Time**: Complete project bootstrap in <2 hours for simple projects, <1 day for complex
 - **Documentation Quality**: Generated PRDs score >8/10 on completeness assessment
 - **Issue Tracking Structure**: Proper Epic/Story/Subtask hierarchy with realistic estimates
 - **Developer Satisfaction**: >90% of users report clear understanding of project scope and next steps
@@ -240,6 +305,11 @@ For detailed onboarding workflows, integration strategies, and realistic scope l
 - **Dependency Management**: <5% of tasks blocked due to unresolved dependencies
 - **Quality Maintenance**: >90% of completed stories pass quality gates on first attempt
 - **Velocity Tracking**: Accurate story point estimation within 20% of actual completion time
+- **Claude Code Agent Integration**: >85% of task-to-agent recommendations are accepted and successfully executed by Claude Code's existing agents
+- **Context Utilization**: >90% of Claude Code agent interactions benefit from JCVD-provided project context
+- **Cross-Session Continuity**: >95% of users successfully resume project work in new Claude Code sessions without context loss
+- **Cognitive Load Reduction**: >80% of solo developers report reduced mental fatigue from context switching when using JCVD
+- **Seamless Experience**: <2% of users report friction or confusion with agent delegation and recommendations within Claude Code
 
 ### Overall System Success
 - **Project Completion Rate**: >80% of projects started reach their defined success criteria

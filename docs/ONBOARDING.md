@@ -14,7 +14,7 @@ JCVD provides guided onboarding for both new and existing projects through a sim
 
 ## New Project Onboarding
 
-For new (greenfield) projects, JCVD provides a comprehensive Inception Phase that includes:
+For new (greenfield) projects, JCVD provides comprehensive Project Bootstrap that includes:
 
 1. **Requirements Gathering**: Interactive interview process or PRD acceptance
 2. **Project Structure Creation**: Repository scaffolding and toolchain setup

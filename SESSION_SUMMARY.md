@@ -162,7 +162,7 @@ interface IssueProvider {
 
 ## Success Metrics Defined
 
-### Inception Phase Success
+### Project Bootstrap Success
 - Setup time: <2 hours for simple projects, <1 day for complex
 - Documentation quality: Generated PRDs score >8/10 on completeness
 - Issue tracking structure: Proper hierarchy with realistic estimates
