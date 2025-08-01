@@ -604,6 +604,74 @@ export interface IssueProvider {
    * @returns Promise resolving when cleanup is complete
    */
   cleanup(): Promise<OperationResult<void>>
+
+  // -------------------------------------------------------------------------
+  // Capability Discovery and Validation
+  // -------------------------------------------------------------------------
+  
+  /**
+   * Discover and validate provider capabilities dynamically
+   * @param options Discovery configuration options
+   * @returns Promise resolving to capability discovery results
+   */
+  discoverCapabilities?(options?: {
+    targetCapabilities?: string[]
+    skipCached?: boolean
+    timeout?: number
+    includeBenchmarks?: boolean
+    probeDepth?: 'shallow' | 'deep'
+  }): Promise<{
+    capabilities: Map<string, {
+      capabilityId: string
+      isSupported: boolean
+      version?: string
+      performance?: {
+        averageResponseTime: number
+        reliability: number
+        throughput: number
+      }
+      metadata?: Record<string, any>
+      error?: ProviderError
+      probedAt: Date
+    }>
+    discoverySuccess: boolean
+    discoveryDuration: number
+    discoveredAt: Date
+    errors: ProviderError[]
+    warnings: string[]
+  }>
+
+  /**
+   * Check if a specific capability is supported
+   * @param capabilityId Capability identifier to check
+   * @returns Promise resolving to capability support status
+   */
+  supportsCapability?(capabilityId: string): Promise<boolean>
+
+  /**
+   * Get detailed information about a capability implementation
+   * @param capabilityId Capability identifier
+   * @returns Capability implementation details or undefined if not supported
+   */
+  getCapabilityInfo?(capabilityId: string): Promise<{
+    isSupported: boolean
+    implementationDetails?: string
+    limitations?: string[]
+    performanceNotes?: string
+    version?: string
+  } | undefined>
+
+  /**
+   * Validate that required capabilities are available before operation
+   * @param requiredCapabilities List of capability IDs required
+   * @returns Promise resolving to validation result
+   */
+  validateCapabilities?(requiredCapabilities: string[]): Promise<{
+    isValid: boolean
+    supportedCapabilities: string[]
+    unsupportedCapabilities: string[]
+    warnings: string[]
+  }>
   
   // -------------------------------------------------------------------------
   // Project Lifecycle Management
@@ -925,10 +993,43 @@ export interface ProviderFactory {
   createProvider(config: ProviderConfig): Promise<IssueProvider>
   
   /**
+   * Create provider instance with capability validation
+   * @param config Provider configuration
+   * @param requiredCapabilities Capabilities that must be supported
+   * @returns Promise resolving to provider instance with capability validation
+   */
+  createProviderWithCapabilities?(
+    config: ProviderConfig,
+    requiredCapabilities: string[]
+  ): Promise<{
+    provider: IssueProvider
+    capabilityValidation: {
+      isValid: boolean
+      supportedCapabilities: string[]
+      unsupportedCapabilities: string[]
+      warnings: string[]
+    }
+  }>
+  
+  /**
    * Get supported provider types
    * @returns Array of supported provider types
    */
   getSupportedTypes(): ProviderType[]
+  
+  /**
+   * Get provider type capabilities without creating instance
+   * @param providerType Provider type to check
+   * @returns Promise resolving to provider type capabilities
+   */
+  getProviderTypeCapabilities?(providerType: ProviderType): Promise<{
+    capabilities: Map<string, {
+      isSupported: boolean
+      limitations?: string[]
+      implementationNotes?: string
+    }>
+    overallScore: number
+  }>
   
   /**
    * Validate provider configuration
@@ -939,6 +1040,29 @@ export interface ProviderFactory {
     isValid: boolean
     errors: string[]
   }
+
+  /**
+   * Find best provider for required capabilities
+   * @param requiredCapabilities List of required capability IDs
+   * @param availableConfigs Available provider configurations
+   * @returns Promise resolving to best provider recommendation
+   */
+  findBestProviderForCapabilities?(
+    requiredCapabilities: string[],
+    availableConfigs: ProviderConfig[]
+  ): Promise<{
+    recommendedConfig: ProviderConfig | null
+    compatibilityScore: number
+    analysis: {
+      supportedCapabilities: string[]
+      unsupportedCapabilities: string[]
+      alternatives: {
+        config: ProviderConfig
+        score: number
+        gaps: string[]
+      }[]
+    }
+  }>
 }
 
 /**

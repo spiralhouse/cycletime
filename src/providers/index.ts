@@ -15,11 +15,17 @@ export * from './migration-utils.js'
 // Provider validation utilities
 export * from './validation.js'
 
-// Re-export base provider implementations when available
+// Base provider implementations and utilities
 export * from './base/index.js'
+
+// Enhanced provider factory system
+export * from './factory/index.js'
 
 // Data transformation system
 export * from './transformers/index.js'
+
+// Capability discovery and management system
+export * from './capabilities/index.js'
 
 // Re-export specific provider implementations when available
 export * from './local/index.js'
