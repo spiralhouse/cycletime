@@ -99,7 +99,15 @@ export class MCPServer extends EventEmitter {
    */
   async start(): Promise<OperationResult> {
     try {
-      // Always re-initialize if stopped
+      // Check if already running
+      if (this.lifecycle.isRunning()) {
+        return {
+          success: false,
+          error: 'Server already running',
+        };
+      }
+
+      // Initialize if stopped
       if (this.lifecycle.getStatus() === 'stopped') {
         const initResult = await this.lifecycle.initialize(this.config);
 
@@ -204,25 +212,30 @@ export class MCPServer extends EventEmitter {
     this.lastActivity = Date.now();
 
     try {
-      // Parse the message
-      const parseResult = this.protocolHandler.parseMessage(messageString);
-      
-      if (!parseResult.success) {
+      // First, try to parse JSON
+      let message: any;
+      try {
+        message = JSON.parse(messageString);
+      } catch (error) {
         const errorResponse = this.protocolHandler.formatErrorResponse(
           null,
           ProtocolHandler.createError(
             ProtocolHandler.ErrorCodes.PARSE_ERROR,
             'Parse error',
-            { details: parseResult.error }
+            { details: error instanceof Error ? error.message : String(error) }
           )
         );
         
-        // Don't emit error event for parse errors - they're handled gracefully
+        // Emit error event for parse errors
+        this.emit('error', {
+          error: error instanceof Error ? error : new Error(String(error)),
+          timestamp: Date.now(),
+        });
 
         return JSON.stringify(errorResponse);
       }
 
-      const message = parseResult.data!;
+      // Then validate the JSON-RPC structure
       const validation = this.protocolHandler.validateMessage(message);
 
       if (!validation.isValid) {

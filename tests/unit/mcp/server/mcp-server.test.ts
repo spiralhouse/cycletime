@@ -15,8 +15,20 @@ const mockLogger: Logger = {
 describe('MCPServer', () => {
   let server: MCPServer;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    
+    // If there's an existing server, clean it up first
+    if (server) {
+      try {
+        if (server.isRunning()) {
+          await server.stop();
+        }
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    }
+    
     server = new MCPServer({
       name: 'test-server',
       version: '1.0.0',
@@ -29,8 +41,12 @@ describe('MCPServer', () => {
   });
 
   afterEach(async () => {
-    if (server.isRunning()) {
-      await server.stop();
+    try {
+      if (server && server.isRunning()) {
+        await server.stop();
+      }
+    } catch (error) {
+      // Ignore cleanup errors in tests
     }
   });
 
@@ -115,7 +131,19 @@ describe('MCPServer', () => {
 
   describe('Message handling', () => {
     beforeEach(async () => {
-      await server.start();
+      if (!server.isRunning()) {
+        const result = await server.start();
+        if (!result.success) {
+          throw new Error(`Failed to start server in Message handling beforeEach: ${result.error}`);
+        }
+      }
+    });
+
+    afterEach(async () => {
+      // Ensure clean state after message handling tests
+      if (server.isRunning()) {
+        await server.stop();
+      }
     });
 
     it('should handle initialize request', async () => {
