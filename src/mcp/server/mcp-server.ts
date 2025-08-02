@@ -9,6 +9,8 @@ import { createLogger } from '../../utils/logger.js';
 import { MessageRouter } from './message-router.js';
 import { ProtocolHandler, type JSONRPCRequest, type JSONRPCNotification } from './protocol-handler.js';
 import { ServerLifecycle, type ServerConfig, type OperationResult } from './server-lifecycle.js';
+import { ToolRegistry } from '../tools/tool-registry.js';
+import { ToolHandler } from '../handlers/tool-handler.js';
 
 import type { Logger } from '../../utils/logger.js';
 
@@ -70,6 +72,8 @@ export class MCPServer extends EventEmitter {
   private config: ServerConfig;
   private logger: Logger;
   private lastActivity: number = 0;
+  private toolRegistry: ToolRegistry;
+  private toolHandler: ToolHandler;
 
   constructor(config: ServerConfig, logger?: Logger) {
     super();
@@ -90,8 +94,13 @@ export class MCPServer extends EventEmitter {
     this.protocolHandler = new ProtocolHandler(this.logger);
     this.messageRouter = new MessageRouter(this.logger);
     this.lifecycle = new ServerLifecycle(this.logger);
+    
+    // Initialize tool support
+    this.toolRegistry = new ToolRegistry();
+    this.toolHandler = new ToolHandler(this.toolRegistry);
 
     this.setupDefaultHandlers();
+    this.setupToolHandlers();
   }
 
   /**
@@ -330,7 +339,17 @@ export class MCPServer extends EventEmitter {
    * Get server capabilities
    */
   getCapabilities(): MCPCapabilities {
-    return { ...this.config.capabilities };
+    const baseCapabilities = { ...this.config.capabilities };
+    
+    // Add tool capabilities if tools are registered
+    if (!this.toolRegistry.isEmpty()) {
+      baseCapabilities.tools = {
+        ...baseCapabilities.tools,
+        ...this.toolHandler.getCapabilities().tools
+      };
+    }
+    
+    return baseCapabilities;
   }
 
   /**
@@ -407,6 +426,65 @@ export class MCPServer extends EventEmitter {
     });
 
     // Add more default handlers as needed...
+  }
+
+  /**
+   * Setup tool-specific handlers
+   */
+  private setupToolHandlers(): void {
+    this.toolHandler.registerHandlers(this.messageRouter);
+    
+    this.logger.debug('Tool handlers registered');
+  }
+
+  /**
+   * Get tool registry for external tool registration
+   */
+  getToolRegistry(): ToolRegistry {
+    return this.toolRegistry;
+  }
+
+  /**
+   * Get tool handler for statistics and management
+   */
+  getToolHandler(): ToolHandler {
+    return this.toolHandler;
+  }
+
+  /**
+   * Register a tool with the server
+   */
+  registerTool(tool: any): void {
+    this.toolRegistry.register(tool);
+    
+    this.logger.info('Tool registered with server', {
+      toolName: tool.name,
+      version: tool.metadata.version
+    });
+  }
+
+  /**
+   * Register multiple tools with the server
+   */
+  registerTools(tools: any[]): void {
+    this.toolRegistry.registerBatch(tools);
+    
+    this.logger.info('Tools registered with server', {
+      toolCount: tools.length
+    });
+  }
+
+  /**
+   * Get server status including tool information
+   */
+  getServerStatus(): any {
+    const baseStatus = this.getStatus();
+    const toolStatus = this.toolHandler.getStatus();
+    
+    return {
+      ...baseStatus,
+      tools: toolStatus
+    };
   }
 
   /**
