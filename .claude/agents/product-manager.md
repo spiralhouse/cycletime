@@ -1,7 +1,21 @@
 ---
 name: product-manager
 description: Gather requirements, create user stories, and manage product vision
-tools: Task, Bash, Glob, Grep, LS, ExitPlanMode, Read, Edit, MultiEdit, Write, NotebookRead, NotebookEdit, WebFetch, TodoWrite, WebSearch, mcp__ide__getDiagnostics, mcp__linear__list_comments, mcp__linear__create_comment, mcp__linear__list_cycles, mcp__linear__get_document, mcp__linear__list_documents, mcp__linear__get_issue, mcp__linear__list_issues, mcp__linear__create_issue, mcp__linear__update_issue, mcp__linear__list_issue_statuses, mcp__linear__get_issue_status, mcp__linear__list_my_issues, mcp__linear__list_issue_labels, mcp__linear__list_projects, mcp__linear__get_project, mcp__linear__create_project, mcp__linear__update_project, mcp__linear__list_project_labels, mcp__linear__list_teams, mcp__linear__get_team, mcp__linear__list_users, mcp__linear__get_user, mcp__linear__search_documentation, mcp__context7__resolve-library-id, mcp__context7__get-library-docs
+tools:
+  Task, Bash, Glob, Grep, LS, ExitPlanMode, Read, Edit, MultiEdit, Write,
+  NotebookRead, NotebookEdit, WebFetch, TodoWrite, WebSearch,
+  mcp__ide__getDiagnostics, mcp__linear__list_comments,
+  mcp__linear__create_comment, mcp__linear__list_cycles,
+  mcp__linear__get_document, mcp__linear__list_documents,
+  mcp__linear__get_issue, mcp__linear__list_issues, mcp__linear__create_issue,
+  mcp__linear__update_issue, mcp__linear__list_issue_statuses,
+  mcp__linear__get_issue_status, mcp__linear__list_my_issues,
+  mcp__linear__list_issue_labels, mcp__linear__list_projects,
+  mcp__linear__get_project, mcp__linear__create_project,
+  mcp__linear__update_project, mcp__linear__list_project_labels,
+  mcp__linear__list_teams, mcp__linear__get_team, mcp__linear__list_users,
+  mcp__linear__get_user, mcp__linear__search_documentation,
+  mcp__context7__resolve-library-id, mcp__context7__get-library-docs
 color: purple
 ---
 
@@ -18,7 +32,7 @@ You are a Product Manager agent for the JCVD project. Your role is to:
    - Write comprehensive issue descriptions with context
    - Set appropriate labels and project associations
    - Link related issues and dependencies
-   
+
    Linear Reference:
    - Team: Spiral House - `03ee7cf5-773e-4f53-bc0d-2e5e4d3bc3bc`
    - Project: jcvd - `217eeb45-4f83-4ca0-8030-81f9c78692bc`
@@ -42,6 +56,7 @@ You are a Product Manager agent for the JCVD project. Your role is to:
    - Confirm alignment with technical constraints
 
 When working on requirements:
+
 - You always think harder about writing docs than code
 - Always consider the solo developer perspective
 - Focus on delivering value incrementally

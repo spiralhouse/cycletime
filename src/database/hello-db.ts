@@ -28,7 +28,7 @@ export function testDatabase(): { success: boolean; message: string; data?: any 
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `;
-    
+
     db.exec(createTableQuery);
     logger.info('✅ Test table created');
 
@@ -40,7 +40,9 @@ export function testDatabase(): { success: boolean; message: string; data?: any 
 
     // Query test data
     const selectQuery = db.prepare('SELECT * FROM hello_test WHERE id = ?');
-    const result = selectQuery.get(insertResult.lastInsertRowid) as { id: number; message: string; timestamp: string } | undefined;
+    const result = selectQuery.get(insertResult.lastInsertRowid) as
+      | { id: number; message: string; timestamp: string }
+      | undefined;
 
     logger.info('✅ Test data retrieved', { result });
 
@@ -51,7 +53,9 @@ export function testDatabase(): { success: boolean; message: string; data?: any 
     logger.info('✅ Test data updated');
 
     // Query updated data
-    const updatedResult = selectQuery.get(insertResult.lastInsertRowid) as { id: number; message: string; timestamp: string } | undefined;
+    const updatedResult = selectQuery.get(insertResult.lastInsertRowid) as
+      | { id: number; message: string; timestamp: string }
+      | undefined;
 
     logger.info('✅ Updated data retrieved', { result: updatedResult });
 
@@ -65,16 +69,15 @@ export function testDatabase(): { success: boolean; message: string; data?: any 
       data: {
         originalMessage: result?.message,
         updatedMessage: updatedResult?.message,
-        insertId: insertResult.lastInsertRowid
-      }
+        insertId: insertResult.lastInsertRowid,
+      },
     };
-
   } catch (error) {
     logger.error('❌ Database test failed', { error });
 
     return {
       success: false,
-      message: `Database test failed: ${error instanceof Error ? error.message : error}`
+      message: `Database test failed: ${error instanceof Error ? error.message : error}`,
     };
   }
 }
@@ -100,7 +103,7 @@ export function testDatabaseFile(): { success: boolean; message: string; data?: 
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `;
-    
+
     db.exec(createTableQuery);
     logger.info('✅ Test table created in file database');
 
@@ -108,11 +111,15 @@ export function testDatabaseFile(): { success: boolean; message: string; data?: 
     const insertQuery = db.prepare('INSERT INTO hello_file_test (message) VALUES (?)');
     const insertResult = insertQuery.run('Hello from JCVD file database!');
 
-    logger.info('✅ Test data inserted to file database', { insertId: insertResult.lastInsertRowid });
+    logger.info('✅ Test data inserted to file database', {
+      insertId: insertResult.lastInsertRowid,
+    });
 
     // Query test data
     const selectQuery = db.prepare('SELECT * FROM hello_file_test ORDER BY id DESC LIMIT 1');
-    const result = selectQuery.get() as { id: number; message: string; timestamp: string } | undefined;
+    const result = selectQuery.get() as
+      | { id: number; message: string; timestamp: string }
+      | undefined;
 
     logger.info('✅ Test data retrieved from file database', { result });
 
@@ -126,16 +133,15 @@ export function testDatabaseFile(): { success: boolean; message: string; data?: 
       data: {
         dbFile: dbPath,
         message: result?.message,
-        insertId: insertResult.lastInsertRowid
-      }
+        insertId: insertResult.lastInsertRowid,
+      },
     };
-
   } catch (error) {
     logger.error('❌ File database test failed', { error });
 
     return {
       success: false,
-      message: `File database test failed: ${error instanceof Error ? error.message : error}`
+      message: `File database test failed: ${error instanceof Error ? error.message : error}`,
     };
   }
 }

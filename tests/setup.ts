@@ -2,7 +2,7 @@
  * Test setup configuration for JCVD framework
  */
 
-import { beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+import { beforeAll, afterAll, beforeEach, afterEach, expect, vi } from 'vitest';
 
 // import { createLogger } from '@/utils/logger';
 
@@ -11,7 +11,7 @@ beforeAll(async () => {
   // Set test environment
   process.env.NODE_ENV = 'test';
   process.env.LOG_LEVEL = 'silent';
-  
+
   // Initialize test database or other global setup
   // const testLogger = createLogger('test-setup');
   // testLogger.debug('Test environment initialized');
@@ -46,90 +46,90 @@ declare global {
 
 // Custom matchers
 expect.extend({
-  toBeValidJCVDConfig(received) {
+  toBeValidJCVDConfig(received: any) {
     const required = ['name', 'version', 'database', 'logging', 'agents', 'providers', 'workflows'];
     const missing = required.filter(key => !(key in received));
-    
+
     if (missing.length > 0) {
       return {
         message: () => `Expected valid JCVD config, but missing keys: ${missing.join(', ')}`,
-        pass: false
+        pass: false,
       };
     }
-    
+
     return {
       message: () => 'Expected invalid JCVD config',
-      pass: true
+      pass: true,
     };
   },
-  
-  toBeValidAgentConfig(received) {
+
+  toBeValidAgentConfig(received: any) {
     const required = ['id', 'type', 'name', 'enabled', 'config'];
     const missing = required.filter(key => !(key in received));
-    
+
     if (missing.length > 0) {
       return {
         message: () => `Expected valid agent config, but missing keys: ${missing.join(', ')}`,
-        pass: false
+        pass: false,
       };
     }
-    
+
     return {
       message: () => 'Expected invalid agent config',
-      pass: true
+      pass: true,
     };
   },
-  
-  toBeValidProviderConfig(received) {
+
+  toBeValidProviderConfig(received: any) {
     const required = ['id', 'type', 'name', 'enabled', 'config'];
     const missing = required.filter(key => !(key in received));
-    
+
     if (missing.length > 0) {
       return {
         message: () => `Expected valid provider config, but missing keys: ${missing.join(', ')}`,
-        pass: false
+        pass: false,
       };
     }
-    
+
     return {
       message: () => 'Expected invalid provider config',
-      pass: true
+      pass: true,
     };
-  }
+  },
 });
 
 // Test data factories
 export const testData = {
-  createAgentConfig: (overrides = {}) => ({
+  createAgentConfig: (overrides: Record<string, any> = {}) => ({
     id: 'test-agent',
     type: 'product-manager' as const,
     name: 'Test Agent',
     enabled: true,
     config: {},
-    ...overrides
+    ...overrides,
   }),
-  
-  createProviderConfig: (overrides = {}) => ({
+
+  createProviderConfig: (overrides: Record<string, any> = {}) => ({
     id: 'test-provider',
     type: 'local' as const,
     name: 'Test Provider',
     enabled: true,
     config: {
-      rootDir: '/tmp/test'
+      rootDir: '/tmp/test',
     },
-    ...overrides
+    ...overrides,
   }),
-  
-  createWorkflowConfig: (overrides = {}) => ({
+
+  createWorkflowConfig: (overrides: Record<string, any> = {}) => ({
     id: 'test-workflow',
     name: 'Test Workflow',
     enabled: true,
     triggers: [],
     stages: [],
-    ...overrides
+    ...overrides,
   }),
-  
-  createJCVDConfig: (overrides = {}) => ({
+
+  createJCVDConfig: (overrides: Record<string, any> = {}) => ({
     name: 'Test JCVD',
     version: '0.1.0-test',
     database: {
@@ -137,19 +137,19 @@ export const testData = {
       walMode: false,
       migrations: {
         autoRun: false,
-        directory: './migrations'
-      }
+        directory: './migrations',
+      },
     },
     logging: {
       level: 'silent' as const,
       format: 'json' as const,
-      outputs: []
+      outputs: [],
     },
     agents: [],
     providers: [],
     workflows: [],
-    ...overrides
-  })
+    ...overrides,
+  }),
 };
 
 // Test utilities
@@ -158,7 +158,7 @@ export const testUtils = {
    * Wait for a specific amount of time
    */
   wait: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
-  
+
   /**
    * Create a mock logger for testing
    */
@@ -167,9 +167,9 @@ export const testUtils = {
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-    log: vi.fn()
+    log: vi.fn(),
   }),
-  
+
   /**
    * Create a temporary directory for testing
    */
@@ -177,10 +177,10 @@ export const testUtils = {
     const { mkdtemp } = await import('node:fs/promises');
     const { tmpdir } = await import('node:os');
     const { join } = await import('node:path');
-    
+
     return mkdtemp(join(tmpdir(), 'jcvd-test-'));
   },
-  
+
   /**
    * Clean up temporary directory
    */
@@ -188,5 +188,5 @@ export const testUtils = {
     const { rm } = await import('node:fs/promises');
 
     await rm(dir, { recursive: true, force: true });
-  }
+  },
 };

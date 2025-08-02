@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '22.17.0'
-  NPM_VERSION: '10.9.0'
+  NODE_VERSION: "22.17.0"
+  NPM_VERSION: "10.9.0"
 
 jobs:
   # Quality checks
@@ -17,28 +17,28 @@ jobs:
     name: Code Quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Type check
         run: npm run type-check
-      
+
       - name: Lint
         run: npm run lint
-      
+
       - name: Format check
         run: npm run format:check
 
@@ -47,34 +47,34 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     strategy:
       matrix:
-        node-version: ['22.17.0', '22.x']
+        node-version: ["22.17.0", "22.x"]
         os: [ubuntu-latest, windows-latest, macos-latest]
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run tests
         run: npm run test:run
         env:
           NODE_ENV: test
-      
+
       - name: Generate coverage
         if: matrix.os == 'ubuntu-latest' && matrix.node-version == '22.17.0'
         run: npm run test:coverage
-      
+
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.node-version == '22.17.0'
         uses: codecov/codecov-action@v4
@@ -91,30 +91,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [quality, test]
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Build
         run: npm run build
-      
+
       - name: Verify build outputs
         run: |
           test -f dist/index.js
           test -f dist/index.d.ts
           test -f dist/cli.js
           test -f dist/cli.d.ts
-      
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -132,36 +132,36 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [build]
-    
+
     services:
       # Add any services needed for integration tests
       # e.g., databases, message queues, etc.
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
           path: .
-      
+
       - name: Run integration tests
         run: npm run test:run -- tests/integration
         env:
           NODE_ENV: test
           CI: true
-      
+
       - name: Test CLI functionality
         run: |
           node dist/cli.js --version
@@ -172,23 +172,23 @@ jobs:
     name: Security Audit
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run security audit
         run: npm audit --audit-level moderate
-      
+
       - name: Check for known vulnerabilities
         run: npx audit-ci --moderate
 
@@ -197,15 +197,15 @@ jobs:
     name: Dependency Review
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
         with:
-          config-file: '.github/dependency-review-config.yml'
+          config-file: ".github/dependency-review-config.yml"
 
   # Performance benchmarks (optional)
   benchmark:
@@ -214,26 +214,26 @@ jobs:
     timeout-minutes: 15
     needs: [build]
     if: github.event_name == 'pull_request'
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
           path: .
-      
+
       - name: Run benchmarks
         run: |
           if [ -f "scripts/benchmark.ts" ]; then
@@ -248,23 +248,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: [quality, test, build, integration, security]
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Final validation
         run: npm run validate
-      
+
       - name: Report success
         run: echo "✅ All CI checks passed successfully!"
 
@@ -274,7 +274,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [quality, test, build, integration, security, validate]
     if: failure()
-    
+
     steps:
       - name: Report failure
         run: |

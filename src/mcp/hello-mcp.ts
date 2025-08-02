@@ -18,15 +18,15 @@ export async function testMCPServer(): Promise<{ success: boolean; message: stri
     // Create a simple MCP server instance to verify SDK integration
     const server = new Server(
       {
-        name: 'jcvd-test-server',  
+        name: 'jcvd-test-server',
         version: '0.1.0',
       },
       {
         capabilities: {
           resources: {},
           tools: {},
-          prompts: {}
-        }
+          prompts: {},
+        },
       }
     );
 
@@ -37,10 +37,10 @@ export async function testMCPServer(): Promise<{ success: boolean; message: stri
     const hasSetRequestHandler = typeof server.setRequestHandler === 'function';
     const hasConnect = typeof server.connect === 'function';
 
-    logger.info('✅ MCP server interface verified', { 
-      isServerInstance, 
-      hasSetRequestHandler, 
-      hasConnect 
+    logger.info('✅ MCP server interface verified', {
+      isServerInstance,
+      hasSetRequestHandler,
+      hasConnect,
     });
 
     return {
@@ -50,16 +50,15 @@ export async function testMCPServer(): Promise<{ success: boolean; message: stri
         sdkImported: true,
         serverCreated: isServerInstance,
         hasRequestHandler: hasSetRequestHandler,
-        hasConnect: hasConnect
-      }
+        hasConnect: hasConnect,
+      },
     };
-
   } catch (error) {
     logger.error('❌ MCP server test failed', { error });
 
     return {
       success: false,
-      message: `MCP server test failed: ${error instanceof Error ? error.message : error}`
+      message: `MCP server test failed: ${error instanceof Error ? error.message : error}`,
     };
   }
 }
@@ -77,8 +76,8 @@ export function testMCPTransport(): { success: boolean; message: string; data?: 
       capabilities: {
         resources: {},
         tools: {},
-        prompts: {}
-      }
+        prompts: {},
+      },
     };
 
     logger.info('✅ MCP transport configuration created', { options: transportOptions });
@@ -88,16 +87,15 @@ export function testMCPTransport(): { success: boolean; message: string; data?: 
       message: 'MCP transport test completed successfully',
       data: {
         transportType: 'stdio',
-        capabilities: Object.keys(transportOptions.capabilities)
-      }
+        capabilities: Object.keys(transportOptions.capabilities),
+      },
     };
-
   } catch (error) {
     logger.error('❌ MCP transport test failed', { error });
 
     return {
       success: false,
-      message: `MCP transport test failed: ${error instanceof Error ? error.message : error}`
+      message: `MCP transport test failed: ${error instanceof Error ? error.message : error}`,
     };
   }
 }

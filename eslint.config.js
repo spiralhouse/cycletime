@@ -21,8 +21,8 @@ export default [
       '.vscode/**',
       '.github/**',
       'docs/diagrams/**',
-      'examples/**/*.js'
-    ]
+      'examples/**/*.js',
+    ],
   },
 
   // TypeScript files configuration
@@ -34,7 +34,7 @@ export default [
         ecmaVersion: 'latest',
         sourceType: 'module',
         project: './tsconfig.json',
-        tsconfigRootDir: process.cwd()
+        tsconfigRootDir: process.cwd(),
       },
       globals: {
         console: 'readonly',
@@ -43,13 +43,13 @@ export default [
         __dirname: 'readonly',
         __filename: 'readonly',
         global: 'readonly',
-        NodeJS: 'readonly'
-      }
+        NodeJS: 'readonly',
+      },
     },
     plugins: {
       '@typescript-eslint': typescript,
       import: importPlugin,
-      unicorn: unicorn
+      unicorn: unicorn,
     },
     rules: {
       // TypeScript-specific rules
@@ -58,8 +58,8 @@ export default [
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_'
-        }
+          caughtErrorsIgnorePattern: '^_',
+        },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'warn',
@@ -69,8 +69,8 @@ export default [
         'error',
         {
           prefer: 'type-imports',
-          disallowTypeAnnotations: false
-        }
+          disallowTypeAnnotations: false,
+        },
       ],
       '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
       '@typescript-eslint/array-type': ['error', { default: 'array' }],
@@ -86,21 +86,13 @@ export default [
       'import/order': [
         'error',
         {
-          groups: [
-            'builtin',
-            'external',
-            'internal',
-            'parent',
-            'sibling',
-            'index',
-            'type'
-          ],
+          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index', 'type'],
           'newlines-between': 'always',
           alphabetize: {
             order: 'asc',
-            caseInsensitive: true
-          }
-        }
+            caseInsensitive: true,
+          },
+        },
       ],
       'import/no-duplicates': 'error',
       'import/no-unresolved': 'off', // TypeScript handles this
@@ -111,8 +103,8 @@ export default [
           ts: 'never',
           tsx: 'never',
           js: 'never',
-          jsx: 'never'
-        }
+          jsx: 'never',
+        },
       ],
 
       // Unicorn rules for better practices
@@ -126,9 +118,9 @@ export default [
         {
           cases: {
             kebabCase: true,
-            pascalCase: true
-          }
-        }
+            pascalCase: true,
+          },
+        },
       ],
       'unicorn/new-for-builtins': 'error',
       'unicorn/no-array-callback-reference': 'off',
@@ -171,7 +163,7 @@ export default [
       'no-useless-return': 'error',
       'prefer-const': 'error',
       'prefer-template': 'error',
-      'yoda': 'error',
+      yoda: 'error',
 
       // Code organization
       'padding-line-between-statements': [
@@ -181,9 +173,9 @@ export default [
         { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['const', 'let', 'var'] },
         { blankLine: 'always', prev: 'directive', next: '*' },
         { blankLine: 'any', prev: 'directive', next: 'directive' },
-        { blankLine: 'always', prev: ['case', 'default'], next: '*' }
-      ]
-    }
+        { blankLine: 'always', prev: ['case', 'default'], next: '*' },
+      ],
+    },
   },
 
   // Test files configuration
@@ -192,8 +184,8 @@ export default [
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
-      'unicorn/consistent-function-scoping': 'off'
-    }
+      'unicorn/consistent-function-scoping': 'off',
+    },
   },
 
   // Configuration files
@@ -201,10 +193,10 @@ export default [
     files: ['**/*.config.{js,ts}', 'scripts/**/*'],
     rules: {
       'unicorn/prefer-module': 'off',
-      '@typescript-eslint/no-var-requires': 'off'
-    }
+      '@typescript-eslint/no-var-requires': 'off',
+    },
   },
 
   // Disable formatting rules (handled by Prettier)
-  prettier
+  prettier,
 ];

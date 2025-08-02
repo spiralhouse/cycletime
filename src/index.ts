@@ -1,6 +1,6 @@
 /**
  * JCVD - Multi-agent orchestration framework for Claude Code
- * 
+ *
  * Transforms Claude Code into a specialized software development team
  * through a provider-agnostic, multi-agent architecture.
  */
@@ -21,11 +21,11 @@ export class JCVD {
   constructor(config?: Partial<JCVDConfig>) {
     this.config = ConfigManager.load(config);
     this.orchestrator = new Orchestrator(this.config);
-    
+
     logger.info('JCVD framework initialized', {
       version: '0.1.0',
       providers: this.config.providers.length,
-      defaultAgent: this.config.taskCoordination.defaultAgent
+      defaultAgent: this.config.taskCoordination.defaultAgent,
     });
   }
 
@@ -65,8 +65,63 @@ export class JCVD {
 
 // Export main class and types
 export default JCVD;
-export * from './types/index.js';
-export * from './providers/index.js';
+
+// Export core types (avoiding conflicts)
+export type {
+  Awaitable,
+  Optional,
+  RequiredKeys,
+  OptionalKeys,
+  JCVDError,
+  ValidationError,
+  ConfigError,
+  TaskCoordinationError,
+  Status,
+  StatusInfo,
+  EventBase,
+  TaskCoordinationEvent,
+  ProviderEvent,
+  WorkflowEvent,
+  JCVDEvent,
+  LogLevel,
+  LogEntry,
+  Result,
+} from './types/index.js';
+
+// Export provider system
+export type {
+  IssueProvider,
+  ProviderInfo,
+  ProviderCapabilities,
+  ProviderStatus,
+  ProviderType,
+  ProviderConfig,
+  SQLiteProviderConfig,
+  LinearProviderConfig,
+  GitHubProviderConfig,
+  JiraProviderConfig,
+  EnhancedIssue,
+  ProjectConfig,
+  IssueConfig,
+  Dependency,
+  DependencyGraph,
+  TaskRecommendation,
+  OperationResult,
+  ImportResult,
+  SyncResult,
+  ExportData,
+  IssueProviderError,
+  IssueProviderErrorCode,
+} from './types/index.js';
+
+// Export provider registry functions
+export {
+  registerProvider,
+  getProviderImplementation,
+  getRegisteredProviderTypes,
+} from './providers/index.js';
+
+// Export core functionality
 export * from './core/index.js';
 
 /**

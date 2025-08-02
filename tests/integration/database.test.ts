@@ -8,7 +8,7 @@ import { testDatabase, testDatabaseFile } from '../../src/database/hello-db.js';
 describe('Database Integration Tests', () => {
   it('should successfully connect to and use in-memory SQLite database', () => {
     const result = testDatabase();
-    
+
     expect(result.success).toBe(true);
     expect(result.message).toContain('successfully');
     expect(result.data).toBeDefined();
@@ -19,7 +19,7 @@ describe('Database Integration Tests', () => {
 
   it('should successfully connect to and use file-based SQLite database', () => {
     const result = testDatabaseFile();
-    
+
     expect(result.success).toBe(true);
     expect(result.message).toContain('successfully');
     expect(result.data).toBeDefined();

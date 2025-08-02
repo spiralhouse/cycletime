@@ -9,25 +9,25 @@ export interface JCVDConfig {
   /** Framework metadata */
   name: string;
   version: string;
-  
+
   /** Database configuration */
   database: DatabaseConfig;
-  
+
   /** Logging configuration */
   logging: LoggingConfig;
-  
+
   /** Task coordination configuration */
   taskCoordination: TaskCoordinationConfig;
-  
+
   /** Provider configurations */
   providers: ProviderConfig[];
-  
+
   /** Workflow configurations */
   workflows: WorkflowConfig[];
-  
+
   /** MCP server configuration */
   mcp?: MCPConfig;
-  
+
   /** Feature flags */
   features?: FeatureFlags;
 }
@@ -38,10 +38,10 @@ export interface JCVDConfig {
 export interface DatabaseConfig {
   /** Database file path (SQLite) */
   path: string;
-  
+
   /** Enable WAL mode for better concurrency */
   walMode: boolean;
-  
+
   /** Migration settings */
   migrations: {
     /** Auto-run migrations on startup */
@@ -49,7 +49,7 @@ export interface DatabaseConfig {
     /** Migration directory */
     directory: string;
   };
-  
+
   /** Backup settings */
   backup?: {
     /** Enable automatic backups */
@@ -69,13 +69,13 @@ export interface DatabaseConfig {
 export interface LoggingConfig {
   /** Log level */
   level: 'debug' | 'info' | 'warn' | 'error';
-  
+
   /** Log format */
   format: 'json' | 'pretty';
-  
+
   /** Log outputs */
   outputs: LogOutput[];
-  
+
   /** Structured logging context */
   context?: Record<string, unknown>;
 }
@@ -106,13 +106,13 @@ export interface HttpLogConfig {
 export interface TaskCoordinationConfig {
   /** Default agent to use for tasks */
   defaultAgent: string;
-  
+
   /** Fallback agent when default is unavailable */
   fallbackAgent: string;
-  
+
   /** Task routing rules */
   routing?: TaskRoutingRule[];
-  
+
   /** Agent preferences */
   preferences?: Record<string, AgentPreference>;
 }
@@ -123,13 +123,13 @@ export interface TaskCoordinationConfig {
 export interface TaskRoutingRule {
   /** Task type pattern */
   taskType: string;
-  
+
   /** Preferred agent for this task type */
   agent: string;
-  
+
   /** Priority (higher numbers take precedence) */
   priority: number;
-  
+
   /** Conditions for this rule */
   conditions?: Record<string, unknown>;
 }
@@ -140,10 +140,10 @@ export interface TaskRoutingRule {
 export interface AgentPreference {
   /** Whether to use this agent */
   enabled: boolean;
-  
+
   /** Agent-specific parameters */
   parameters?: Record<string, unknown>;
-  
+
   /** Timeout for agent tasks in minutes */
   timeout?: number;
 }
@@ -154,22 +154,26 @@ export interface AgentPreference {
 export interface ProviderConfig {
   /** Unique provider identifier */
   id: string;
-  
+
   /** Provider type */
   type: 'linear' | 'github' | 'local' | string;
-  
+
   /** Provider display name */
   name: string;
-  
+
   /** Provider description */
   description?: string;
-  
+
   /** Whether provider is enabled */
   enabled: boolean;
-  
+
   /** Provider-specific configuration */
-  config: LinearProviderConfig | GitHubProviderConfig | LocalProviderConfig | Record<string, unknown>;
-  
+  config:
+    | LinearProviderConfig
+    | GitHubProviderConfig
+    | LocalProviderConfig
+    | Record<string, unknown>;
+
   /** Sync settings */
   sync?: {
     /** Enable automatic sync */
@@ -187,13 +191,13 @@ export interface ProviderConfig {
 export interface LinearProviderConfig {
   /** Linear API key */
   apiKey: string;
-  
+
   /** Team ID */
   teamId: string;
-  
+
   /** Project ID (optional) */
   projectId?: string;
-  
+
   /** Workspace URL */
   workspaceUrl?: string;
 }
@@ -204,13 +208,13 @@ export interface LinearProviderConfig {
 export interface GitHubProviderConfig {
   /** GitHub token */
   token: string;
-  
+
   /** Repository owner */
   owner: string;
-  
+
   /** Repository name */
   repo: string;
-  
+
   /** Base branch */
   baseBranch?: string;
 }
@@ -221,10 +225,10 @@ export interface GitHubProviderConfig {
 export interface LocalProviderConfig {
   /** Project root directory */
   rootDir: string;
-  
+
   /** Include patterns */
   include?: string[];
-  
+
   /** Exclude patterns */
   exclude?: string[];
 }
@@ -235,22 +239,22 @@ export interface LocalProviderConfig {
 export interface WorkflowConfig {
   /** Unique workflow identifier */
   id: string;
-  
+
   /** Workflow name */
   name: string;
-  
+
   /** Workflow description */
   description?: string;
-  
+
   /** Whether workflow is enabled */
   enabled: boolean;
-  
+
   /** Workflow triggers */
   triggers: WorkflowTrigger[];
-  
+
   /** Workflow stages */
   stages: WorkflowStage[];
-  
+
   /** Workflow variables */
   variables?: Record<string, unknown>;
 }
@@ -261,7 +265,7 @@ export interface WorkflowConfig {
 export interface WorkflowTrigger {
   /** Trigger type */
   type: 'manual' | 'schedule' | 'event' | 'webhook';
-  
+
   /** Trigger configuration */
   config: ManualTriggerConfig | ScheduleTriggerConfig | EventTriggerConfig | WebhookTriggerConfig;
 }
@@ -300,22 +304,22 @@ export interface WebhookTriggerConfig {
 export interface WorkflowStage {
   /** Stage identifier */
   id: string;
-  
+
   /** Stage name */
   name: string;
-  
+
   /** Claude Code agent to execute this stage */
   agent: string;
-  
+
   /** Stage inputs */
   inputs?: Record<string, unknown>;
-  
+
   /** Stage conditions */
   conditions?: WorkflowCondition[];
-  
+
   /** Stage timeout in minutes */
   timeout?: number;
-  
+
   /** Whether stage can be skipped */
   optional?: boolean;
 }
@@ -326,7 +330,7 @@ export interface WorkflowStage {
 export interface WorkflowCondition {
   /** Condition type */
   type: 'variable' | 'agent-status' | 'provider-status' | 'expression';
-  
+
   /** Condition configuration */
   config: Record<string, unknown>;
 }
@@ -337,19 +341,19 @@ export interface WorkflowCondition {
 export interface MCPConfig {
   /** Server port */
   port: number;
-  
+
   /** Server host */
   host: string;
-  
+
   /** Enable authentication */
   auth: boolean;
-  
+
   /** API key for authentication */
   apiKey?: string;
-  
+
   /** Allowed origins for CORS */
   allowedOrigins?: string[];
-  
+
   /** Enable request logging */
   requestLogging: boolean;
 }
@@ -360,16 +364,16 @@ export interface MCPConfig {
 export interface FeatureFlags {
   /** Enable experimental features */
   experimental: boolean;
-  
+
   /** Enable performance monitoring */
   monitoring: boolean;
-  
+
   /** Enable distributed tracing */
   tracing: boolean;
-  
+
   /** Enable metrics collection */
   metrics: boolean;
-  
+
   /** Enable health checks */
   healthChecks: boolean;
 }
@@ -385,8 +389,8 @@ export const DEFAULT_CONFIG: JCVDConfig = {
     walMode: true,
     migrations: {
       autoRun: true,
-      directory: './migrations'
-    }
+      directory: './migrations',
+    },
   },
   logging: {
     level: 'info',
@@ -394,13 +398,13 @@ export const DEFAULT_CONFIG: JCVDConfig = {
     outputs: [
       {
         type: 'console',
-        config: { colors: true }
-      }
-    ]
+        config: { colors: true },
+      },
+    ],
   },
   taskCoordination: {
     defaultAgent: 'developer',
-    fallbackAgent: 'general-purpose'
+    fallbackAgent: 'general-purpose',
   },
   providers: [],
   workflows: [],
@@ -408,13 +412,13 @@ export const DEFAULT_CONFIG: JCVDConfig = {
     port: 3001,
     host: 'localhost',
     auth: false,
-    requestLogging: true
+    requestLogging: true,
   },
   features: {
     experimental: false,
     monitoring: false,
     tracing: false,
     metrics: false,
-    healthChecks: true
-  }
+    healthChecks: true,
+  },
 };

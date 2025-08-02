@@ -8,7 +8,7 @@ import { testMCPServer, testMCPTransport } from '../../src/mcp/hello-mcp.js';
 describe('MCP Integration Tests', () => {
   it('should successfully create and test MCP server functionality', async () => {
     const result = await testMCPServer();
-    
+
     expect(result.success).toBe(true);
     expect(result.message).toContain('successfully');
     expect(result.data).toBeDefined();
@@ -19,7 +19,7 @@ describe('MCP Integration Tests', () => {
 
   it('should successfully create MCP transport configuration', () => {
     const result = testMCPTransport();
-    
+
     expect(result.success).toBe(true);
     expect(result.message).toContain('successfully');
     expect(result.data).toBeDefined();
