@@ -2,7 +2,7 @@
 
 /**
  * JCVD Proof of Concept Demonstration Script
- * 
+ *
  * This script demonstrates that all key technologies are working together:
  * - TypeScript compilation with ES modules
  * - SQLite database integration
@@ -42,10 +42,12 @@ async function runDemo() {
   try {
     const memoryResult = testDatabase();
     const fileResult = testDatabaseFile();
-    
+
     if (memoryResult.success && fileResult.success) {
       console.log('✅ SQLite integration working');
-      console.log(`   In-memory: ${memoryResult.data?.originalMessage} → ${memoryResult.data?.updatedMessage}`);
+      console.log(
+        `   In-memory: ${memoryResult.data?.originalMessage} → ${memoryResult.data?.updatedMessage}`
+      );
       console.log(`   File DB: ${fileResult.data?.message}`);
     } else {
       console.log('❌ SQLite integration failed');
@@ -63,7 +65,7 @@ async function runDemo() {
   try {
     const serverResult = await testMCPServer();
     const transportResult = testMCPTransport();
-    
+
     if (serverResult.success && transportResult.success) {
       console.log('✅ MCP SDK integration working');
       console.log(`   Server created: ${serverResult.data?.serverCreated}`);
@@ -92,14 +94,16 @@ async function runDemo() {
   console.log('   • Logging system (consola)');
   console.log('');
   console.log('Ready for SPI-328 implementation phase! 🚀');
-  
+
   return true;
 }
 
 // Run the demo
-runDemo().then((success) => {
-  process.exit(success ? 0 : 1);
-}).catch((error) => {
-  console.error('Demo failed:', error);
-  process.exit(1);
-});
+runDemo()
+  .then(success => {
+    process.exit(success ? 0 : 1);
+  })
+  .catch(error => {
+    console.error('Demo failed:', error);
+    process.exit(1);
+  });

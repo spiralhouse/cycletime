@@ -1,10 +1,14 @@
 # JCVD SQLite Provider
 
-The **SQLite Provider** is the flagship implementation of the JCVD IssueProvider interface, serving as the reference implementation for all provider functionality. It demonstrates best practices for provider development and showcases the full capabilities of the JCVD provider system.
+The **SQLite Provider** is the flagship implementation of the JCVD IssueProvider
+interface, serving as the reference implementation for all provider
+functionality. It demonstrates best practices for provider development and
+showcases the full capabilities of the JCVD provider system.
 
 ## Overview
 
-This provider implements a complete issue tracking and project management system using an embedded SQLite database, offering:
+This provider implements a complete issue tracking and project management system
+using an embedded SQLite database, offering:
 
 - **High Performance**: Sub-100ms queries for 10,000+ issues
 - **Full Offline Support**: No network connectivity required
@@ -29,21 +33,26 @@ SQLiteProvider
 
 ### 🚀 Performance Optimizations
 
-- **Connection Management**: WAL mode, connection pooling, prepared statement caching
-- **Query Optimization**: Indexed queries, batch operations, transaction grouping
+- **Connection Management**: WAL mode, connection pooling, prepared statement
+  caching
+- **Query Optimization**: Indexed queries, batch operations, transaction
+  grouping
 - **Intelligent Caching**: LRU cache with 30-second TTL, 80%+ hit rate
 - **Memory Efficiency**: Streaming operations for large datasets
 
 ### 🎯 Advanced Functionality
 
-- **Task Recommendations**: AI-driven task suggestions based on dependencies, priority, and context
-- **Dependency Analysis**: Circular dependency detection, bottleneck identification
+- **Task Recommendations**: AI-driven task suggestions based on dependencies,
+  priority, and context
+- **Dependency Analysis**: Circular dependency detection, bottleneck
+  identification
 - **Hierarchy Validation**: Real-time Epic→Story→Subtask enforcement
 - **Data Integrity**: Comprehensive validation with detailed error reporting
 
 ### 🔧 Integration Features
 
-- **Capability Discovery**: Dynamic feature detection with performance benchmarking
+- **Capability Discovery**: Dynamic feature detection with performance
+  benchmarking
 - **Data Portability**: Complete export/import with integrity validation
 - **Health Monitoring**: Real-time status monitoring with metrics
 - **Error Handling**: Comprehensive error management with retry logic
@@ -53,7 +62,7 @@ SQLiteProvider
 ### Basic Setup
 
 ```typescript
-import { createSQLiteProvider } from '@jcvd/providers/sqlite'
+import { createSQLiteProvider } from '@jcvd/providers/sqlite';
 
 const provider = createSQLiteProvider({
   id: 'my-sqlite-provider',
@@ -62,10 +71,10 @@ const provider = createSQLiteProvider({
   databasePath: './my-project.sqlite',
   enableWAL: true,
   cacheSize: 2000,
-  enableForeignKeys: true
-})
+  enableForeignKeys: true,
+});
 
-await provider.initialize()
+await provider.initialize();
 ```
 
 ### Project Management
@@ -75,23 +84,23 @@ await provider.initialize()
 const project = await provider.createProject({
   name: 'My Project',
   description: 'A sample project',
-  key: 'MP'
-})
+  key: 'MP',
+});
 
 // Create workflow states
 const todoState = await provider.createWorkflowState(project.id, {
   name: 'To Do',
   type: 'unstarted',
   position: 1,
-  color: '#cccccc'
-})
+  color: '#cccccc',
+});
 
 const doneState = await provider.createWorkflowState(project.id, {
   name: 'Done',
   type: 'completed',
   position: 2,
-  color: '#00ff00'
-})
+  color: '#00ff00',
+});
 ```
 
 ### Issue Management with Hierarchy
@@ -104,8 +113,8 @@ const epic = await provider.createIssue({
   description: 'Complete user authentication and authorization',
   state_id: todoState.id,
   issue_type: 'epic',
-  priority: 1
-})
+  priority: 1,
+});
 
 // Create a story under the epic
 const story = await provider.createIssue({
@@ -116,8 +125,8 @@ const story = await provider.createIssue({
   state_id: todoState.id,
   issue_type: 'story',
   priority: 2,
-  estimate: 5
-})
+  estimate: 5,
+});
 
 // Create subtasks under the story
 const subtask = await provider.createIssue({
@@ -128,8 +137,8 @@ const subtask = await provider.createIssue({
   state_id: todoState.id,
   issue_type: 'subtask',
   priority: 2,
-  estimate: 2
-})
+  estimate: 2,
+});
 ```
 
 ### Dependency Management
@@ -137,19 +146,24 @@ const subtask = await provider.createIssue({
 ```typescript
 // Create dependencies between issues
 const dependency = await provider.addDependency(
-  epic.id,      // blocker
-  story.id,     // blocked
-  'blocks'      // dependency type
-)
+  epic.id, // blocker
+  story.id, // blocked
+  'blocks' // dependency type
+);
 
 // Get dependency graph for analysis
-const graph = await provider.getDependencyGraph(project.id)
-console.log(`Graph has ${graph.nodes.length} nodes and ${graph.edges.length} edges`)
+const graph = await provider.getDependencyGraph(project.id);
+console.log(
+  `Graph has ${graph.nodes.length} nodes and ${graph.edges.length} edges`
+);
 
 // Validate for circular dependencies
-const validation = await provider.validateDependencyGraph(project.id)
+const validation = await provider.validateDependencyGraph(project.id);
 if (!validation.isValid) {
-  console.warn('Circular dependencies detected:', validation.circularDependencies)
+  console.warn(
+    'Circular dependencies detected:',
+    validation.circularDependencies
+  );
 }
 ```
 
@@ -157,27 +171,24 @@ if (!validation.isValid) {
 
 ```typescript
 // Get intelligent task recommendation
-const recommendation = await provider.getNextTaskRecommendation(
-  project.id,
-  {
-    focusArea: 'authentication',
-    recentWork: ['frontend', 'forms'],
-    timeConstraints: {
-      availableHours: 4,
-      preferredTaskSize: 'medium'
-    }
-  }
-)
+const recommendation = await provider.getNextTaskRecommendation(project.id, {
+  focusArea: 'authentication',
+  recentWork: ['frontend', 'forms'],
+  timeConstraints: {
+    availableHours: 4,
+    preferredTaskSize: 'medium',
+  },
+});
 
-console.log(`Recommended task: ${recommendation.issue.title}`)
-console.log(`Confidence: ${Math.round(recommendation.confidence * 100)}%`)
-console.log(`Rationale: ${recommendation.rationale}`)
+console.log(`Recommended task: ${recommendation.issue.title}`);
+console.log(`Confidence: ${Math.round(recommendation.confidence * 100)}%`);
+console.log(`Rationale: ${recommendation.rationale}`);
 
 // Get available issues for assignment
 const availableIssues = await provider.getAvailableIssues(
   project.id,
   'user-123' // assignee ID
-)
+);
 ```
 
 ### Label Management
@@ -188,19 +199,19 @@ const bugLabel = await provider.createLabel({
   project_id: project.id,
   name: 'bug',
   color: '#ff0000',
-  description: 'Bug reports and fixes'
-})
+  description: 'Bug reports and fixes',
+});
 
 const featureLabel = await provider.createLabel({
   project_id: project.id,
   name: 'feature',
   color: '#00ff00',
-  description: 'New features'
-})
+  description: 'New features',
+});
 
 // Add labels to issues
-await provider.addLabelToIssue(story.id, bugLabel.id)
-await provider.addLabelToIssue(story.id, featureLabel.id)
+await provider.addLabelToIssue(story.id, bugLabel.id);
+await provider.addLabelToIssue(story.id, featureLabel.id);
 ```
 
 ### Advanced Querying
@@ -217,14 +228,17 @@ const filteredIssues = await provider.listIssues({
   search: 'authentication',
   order_by: 'priority',
   order_direction: 'asc',
-  limit: 50
-})
+  limit: 50,
+});
 
 // Get issue with full relationships
-const fullIssue = await provider.getIssue(story.id)
-console.log('Labels:', fullIssue.labels.map(l => l.name))
-console.log('Dependencies:', fullIssue.dependencies.length)
-console.log('Children:', fullIssue.children.length)
+const fullIssue = await provider.getIssue(story.id);
+console.log(
+  'Labels:',
+  fullIssue.labels.map(l => l.name)
+);
+console.log('Dependencies:', fullIssue.dependencies.length);
+console.log('Children:', fullIssue.children.length);
 ```
 
 ### Data Export and Import
@@ -234,21 +248,21 @@ console.log('Children:', fullIssue.children.length)
 const exportData = await provider.exportData(project.id, {
   includeComments: true,
   includeHistory: true,
-  validateIntegrity: true
-})
+  validateIntegrity: true,
+});
 
-console.log(`Exported ${exportData.metadata.totalEntities} entities`)
-console.log(`Export checksum: ${exportData.validation.checksums.issues}`)
+console.log(`Exported ${exportData.metadata.totalEntities} entities`);
+console.log(`Export checksum: ${exportData.validation.checksums.issues}`);
 
 // Import data to another provider
 const importResult = await provider.importData(exportData, {
   overwriteExisting: false,
   validateData: true,
-  createMissingWorkflowStates: true
-})
+  createMissingWorkflowStates: true,
+});
 
-console.log(`Import success: ${importResult.success}`)
-console.log(`Imported ${importResult.imported.issues} issues`)
+console.log(`Import success: ${importResult.success}`);
+console.log(`Imported ${importResult.imported.issues} issues`);
 ```
 
 ### Capability Discovery
@@ -258,20 +272,24 @@ console.log(`Imported ${importResult.imported.issues} issues`)
 const capabilities = await provider.discoverCapabilities({
   probeDepth: 'deep',
   includeBenchmarks: true,
-  timeout: 10000
-})
+  timeout: 10000,
+});
 
-console.log(`Discovered ${capabilities.capabilities.size} capabilities`)
+console.log(`Discovered ${capabilities.capabilities.size} capabilities`);
 
 // Check specific capability
-const hierarchyCapability = capabilities.capabilities.get('hierarchy.validation')
+const hierarchyCapability = capabilities.capabilities.get(
+  'hierarchy.validation'
+);
 if (hierarchyCapability?.isSupported) {
-  console.log(`Hierarchy validation: ${hierarchyCapability.performance?.averageResponseTime}ms`)
+  console.log(
+    `Hierarchy validation: ${hierarchyCapability.performance?.averageResponseTime}ms`
+  );
 }
 
 // Get detailed capability information
-const capabilityInfo = await provider.getCapabilityInfo('dependencies.graph')
-console.log(capabilityInfo?.implementationDetails)
+const capabilityInfo = await provider.getCapabilityInfo('dependencies.graph');
+console.log(capabilityInfo?.implementationDetails);
 ```
 
 ## Configuration Options
@@ -279,21 +297,21 @@ console.log(capabilityInfo?.implementationDetails)
 ```typescript
 interface SQLiteProviderConfig {
   /** Provider ID */
-  id: string
+  id: string;
   /** Provider type */
-  type: 'sqlite'
+  type: 'sqlite';
   /** Provider name */
-  name: string
+  name: string;
   /** SQLite database file path */
-  databasePath: string
+  databasePath: string;
   /** Enable WAL mode for better concurrency (recommended) */
-  enableWAL?: boolean
+  enableWAL?: boolean;
   /** Database page cache size (default: 2000) */
-  cacheSize?: number
+  cacheSize?: number;
   /** Connection timeout in milliseconds (default: 5000) */
-  timeout?: number
+  timeout?: number;
   /** Enable foreign key constraints (recommended) */
-  enableForeignKeys?: boolean
+  enableForeignKeys?: boolean;
 }
 ```
 
@@ -301,14 +319,14 @@ interface SQLiteProviderConfig {
 
 ### Benchmarks
 
-| Operation | Performance Target | Typical Performance |
-|-----------|-------------------|-------------------|
-| Issue Creation | < 50ms | 2-5ms |
-| Issue Retrieval | < 10ms | 1-3ms |
-| Issue Listing (1000 items) | < 100ms | 20-50ms |
-| Dependency Graph (10,000 nodes) | < 500ms | 100-300ms |
-| Data Export (10,000 issues) | < 2s | 500ms-1.5s |
-| Hierarchy Validation | < 10ms | 1-5ms |
+| Operation                       | Performance Target | Typical Performance |
+| ------------------------------- | ------------------ | ------------------- |
+| Issue Creation                  | < 50ms             | 2-5ms               |
+| Issue Retrieval                 | < 10ms             | 1-3ms               |
+| Issue Listing (1000 items)      | < 100ms            | 20-50ms             |
+| Dependency Graph (10,000 nodes) | < 500ms            | 100-300ms           |
+| Data Export (10,000 issues)     | < 2s               | 500ms-1.5s          |
+| Hierarchy Validation            | < 10ms             | 1-5ms               |
 
 ### Scalability
 
@@ -324,15 +342,15 @@ The SQLite provider implements comprehensive error handling:
 
 ```typescript
 try {
-  const issue = await provider.createIssue(config)
+  const issue = await provider.createIssue(config);
 } catch (error) {
   if (error.code === 'HIERARCHY_VIOLATION') {
-    console.error('Hierarchy rule violated:', error.message)
+    console.error('Hierarchy rule violated:', error.message);
   } else if (error.code === 'RESOURCE_NOT_FOUND') {
-    console.error('Referenced resource not found:', error.message)
+    console.error('Referenced resource not found:', error.message);
   } else if (error.retryable) {
     // Retry the operation
-    console.log('Retryable error, attempting retry...')
+    console.log('Retryable error, attempting retry...');
   }
 }
 ```
@@ -341,18 +359,18 @@ try {
 
 ```typescript
 // Check provider health
-const isAvailable = await provider.isAvailable()
-const healthStatus = await provider.healthCheck()
+const isAvailable = await provider.isAvailable();
+const healthStatus = await provider.healthCheck();
 
-console.log(`Provider available: ${isAvailable}`)
-console.log(`Health status: ${healthStatus.isHealthy}`)
-console.log(`Response time: ${healthStatus.metrics.averageResponseTime}ms`)
-console.log(`Uptime: ${healthStatus.metrics.uptime}ms`)
+console.log(`Provider available: ${isAvailable}`);
+console.log(`Health status: ${healthStatus.isHealthy}`);
+console.log(`Response time: ${healthStatus.metrics.averageResponseTime}ms`);
+console.log(`Uptime: ${healthStatus.metrics.uptime}ms`);
 
 // Get detailed metrics
-const connectionMetrics = provider.connectionManager.getMetrics()
-console.log(`Total queries: ${connectionMetrics.totalQueries}`)
-console.log(`Cached statements: ${connectionMetrics.cachedStatements}`)
+const connectionMetrics = provider.connectionManager.getMetrics();
+console.log(`Total queries: ${connectionMetrics.totalQueries}`);
+console.log(`Cached statements: ${connectionMetrics.cachedStatements}`);
 ```
 
 ## Data Integrity
@@ -367,18 +385,22 @@ The provider ensures data integrity through:
 
 ```typescript
 // Validate project data integrity
-const integrity = await provider.validateDataIntegrity(project.id)
+const integrity = await provider.validateDataIntegrity(project.id);
 
 if (!integrity.isValid) {
-  console.error('Data integrity issues found:')
-  integrity.errors.forEach(error => console.error(`- ${error}`))
+  console.error('Data integrity issues found:');
+  integrity.errors.forEach(error => console.error(`- ${error}`));
 }
 
-console.log(`Statistics:`)
-console.log(`- Total issues: ${integrity.statistics.totalIssues}`)
-console.log(`- Hierarchy violations: ${integrity.statistics.hierarchyViolations}`)
-console.log(`- Dependency violations: ${integrity.statistics.dependencyViolations}`)
-console.log(`- Orphaned entities: ${integrity.statistics.orphanedEntities}`)
+console.log(`Statistics:`);
+console.log(`- Total issues: ${integrity.statistics.totalIssues}`);
+console.log(
+  `- Hierarchy violations: ${integrity.statistics.hierarchyViolations}`
+);
+console.log(
+  `- Dependency violations: ${integrity.statistics.dependencyViolations}`
+);
+console.log(`- Orphaned entities: ${integrity.statistics.orphanedEntities}`);
 ```
 
 ## Testing
@@ -401,16 +423,19 @@ npm test -- tests/performance/sqlite-provider.bench.ts
 ### Common Issues
 
 **Database locked errors:**
+
 - Ensure no other processes are accessing the database file
 - Check file permissions
 - Consider using WAL mode (enabled by default)
 
 **Performance issues:**
+
 - Increase cache size for large datasets
 - Ensure proper indexes are in place
 - Use batch operations for bulk updates
 
 **Memory usage:**
+
 - Monitor query cache size
 - Use streaming operations for large exports
 - Implement proper cleanup in long-running processes
@@ -422,8 +447,8 @@ Enable debug logging for detailed operation information:
 ```typescript
 const provider = createSQLiteProvider({
   ...config,
-  debug: true // Enable debug logging
-})
+  debug: true, // Enable debug logging
+});
 ```
 
 ## Contributing
@@ -438,4 +463,5 @@ When extending the SQLite provider:
 
 ## License
 
-This SQLite provider is part of the JCVD project and follows the same licensing terms.
+This SQLite provider is part of the JCVD project and follows the same licensing
+terms.

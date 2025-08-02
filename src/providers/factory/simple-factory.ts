@@ -3,17 +3,16 @@
  * Core provider factory implementation without circular dependencies
  */
 
+import { BaseProvider } from '../base/base-provider.js';
+import { ProviderRegistry } from '../base/provider-registry.js';
+
 import type {
   ProviderFactory,
   ProviderConfig,
   ProviderType,
   IssueProvider,
   ProviderError,
-  OperationResult
-} from '../types.js'
-
-import { BaseProvider } from '../base/base-provider.js'
-import { ProviderRegistry } from '../base/provider-registry.js'
+} from '../types.js';
 
 // =============================================================================
 // Simple Provider Factory Implementation
@@ -23,11 +22,11 @@ import { ProviderRegistry } from '../base/provider-registry.js'
  * Simple, reliable provider factory with core functionality
  */
 export class SimpleProviderFactory implements ProviderFactory {
-  private registry = new ProviderRegistry()
-  private instances = new Map<string, IssueProvider>()
+  private registry = new ProviderRegistry();
+  private instances = new Map<string, IssueProvider>();
 
   constructor() {
-    console.log('SimpleProviderFactory initialized')
+    console.log('SimpleProviderFactory initialized');
   }
 
   // -------------------------------------------------------------------------
@@ -40,45 +39,54 @@ export class SimpleProviderFactory implements ProviderFactory {
   async createProvider(config: ProviderConfig): Promise<IssueProvider> {
     try {
       // Basic validation
-      this.validateBasicConfig(config)
+      this.validateBasicConfig(config);
 
       // Check for existing instance
       if (this.instances.has(config.id)) {
         throw this.createFactoryError(
           'RESOURCE_ALREADY_EXISTS',
           `Provider with ID '${config.id}' already exists`
-        )
+        );
       }
 
       // Create provider based on type
-      const provider = await this.instantiateProvider(config)
+      const provider = await this.instantiateProvider(config);
 
       // Initialize provider
-      const initResult = await provider.initialize(config)
+      const initResult = await provider.initialize(config);
+
       if (!initResult.success) {
-        throw initResult.error || new Error('Provider initialization failed')
+        throw initResult.error || new Error('Provider initialization failed');
       }
 
       // Store instance
-      this.instances.set(config.id, provider)
+      this.instances.set(config.id, provider);
 
       // Register with registry (with error handling)
       try {
-        const registrationResult = await this.registry.registerProvider(provider)
+        const registrationResult = await this.registry.registerProvider(provider);
+
         if (!registrationResult.success) {
-          console.warn(`Failed to register provider '${config.id}':`, registrationResult.error?.message)
+          console.warn(
+            `Failed to register provider '${config.id}':`,
+            registrationResult.error?.message
+          );
         }
       } catch (error) {
-        console.warn(`Registry error for provider '${config.id}':`, error.message)
+        console.warn(
+          `Registry error for provider '${config.id}':`,
+          error instanceof Error ? error.message : String(error)
+        );
       }
 
-      return provider
-
+      return provider;
     } catch (error) {
-      throw error.code ? error : this.createFactoryError(
-        'OPERATION_FAILED',
-        `Provider creation failed: ${error.message}`
-      )
+      throw error instanceof Error && 'code' in error
+        ? error
+        : this.createFactoryError(
+            'OPERATION_FAILED',
+            `Provider creation failed: ${error instanceof Error ? error.message : String(error)}`
+          );
     }
   }
 
@@ -89,62 +97,65 @@ export class SimpleProviderFactory implements ProviderFactory {
     config: ProviderConfig,
     requiredCapabilities: string[]
   ): Promise<{
-    provider: IssueProvider
+    _provider: IssueProvider;
     capabilityValidation: {
-      isValid: boolean
-      supportedCapabilities: string[]
-      unsupportedCapabilities: string[]
-      warnings: string[]
-    }
+      isValid: boolean;
+      supportedCapabilities: string[];
+      unsupportedCapabilities: string[];
+      warnings: string[];
+    };
   }> {
-    const provider = await this.createProvider(config)
-    
+    const provider = await this.createProvider(config);
+
     // Simple capability validation
-    const supportedCapabilities: string[] = []
-    const unsupportedCapabilities: string[] = []
-    
+    const supportedCapabilities: string[] = [];
+    const unsupportedCapabilities: string[] = [];
+
     for (const capability of requiredCapabilities) {
-      if (provider.supportsCapability && await provider.supportsCapability(capability)) {
-        supportedCapabilities.push(capability)
+      if (provider.supportsCapability && (await provider.supportsCapability(capability))) {
+        supportedCapabilities.push(capability);
       } else {
-        unsupportedCapabilities.push(capability)
+        unsupportedCapabilities.push(capability);
       }
     }
 
     return {
-      provider,
+      _provider: provider,
       capabilityValidation: {
         isValid: unsupportedCapabilities.length === 0,
         supportedCapabilities,
         unsupportedCapabilities,
-        warnings: unsupportedCapabilities.length > 0 ? 
-          [`${unsupportedCapabilities.length} capabilities not supported`] : []
-      }
-    }
+        warnings:
+          unsupportedCapabilities.length > 0
+            ? [`${unsupportedCapabilities.length} capabilities not supported`]
+            : [],
+      },
+    };
   }
 
   /**
    * Get supported provider types
    */
   getSupportedTypes(): ProviderType[] {
-    return ['sqlite', 'linear', 'github', 'jira']
+    return ['sqlite', 'linear', 'github', 'jira'];
   }
 
   /**
    * Validate provider configuration
    */
   validateConfig(config: ProviderConfig): {
-    isValid: boolean
-    errors: string[]
+    isValid: boolean;
+    errors: string[];
   } {
     try {
-      this.validateBasicConfig(config)
-      return { isValid: true, errors: [] }
+      this.validateBasicConfig(config);
+
+      return { isValid: true, errors: [] };
     } catch (error) {
       return {
         isValid: false,
-        errors: [error.message]
-      }
+        errors: [error instanceof Error ? error.message : String(error)],
+      };
     }
   }
 
@@ -157,11 +168,13 @@ export class SimpleProviderFactory implements ProviderFactory {
    */
   getProvider(id: string): IssueProvider | undefined {
     // Try registry first, fall back to direct instance lookup
-    const registryProvider = this.registry.getProvider(id)
+    const registryProvider = this.registry.getProvider(id);
+
     if (registryProvider) {
-      return registryProvider
+      return registryProvider;
     }
-    return this.instances.get(id)
+
+    return this.instances.get(id);
   }
 
   /**
@@ -169,21 +182,24 @@ export class SimpleProviderFactory implements ProviderFactory {
    */
   listProviders() {
     // Try registry first, fall back to generating from instances
-    const registryProviders = this.registry.listProviders()
+    const registryProviders = this.registry.listProviders();
+
     if (registryProviders.length > 0) {
-      return registryProviders
+      return registryProviders;
     }
-    
+
     // Generate provider info from instances
-    const providers = []
+    const providers = [];
+
     for (const provider of this.instances.values()) {
       try {
-        providers.push(provider.getProviderInfo())
+        providers.push(provider.getProviderInfo());
       } catch (error) {
-        console.warn('Failed to get provider info:', error)
+        console.warn('Failed to get provider info:', error);
       }
     }
-    return providers
+
+    return providers;
   }
 
   // -------------------------------------------------------------------------
@@ -197,18 +213,18 @@ export class SimpleProviderFactory implements ProviderFactory {
     const cleanupPromises = Array.from(this.instances.entries()).map(async ([id, provider]) => {
       try {
         if (provider.cleanup) {
-          await provider.cleanup()
+          await provider.cleanup();
         }
       } catch (error) {
-        console.error(`Failed to cleanup provider ${id}:`, error)
+        console.error(`Failed to cleanup provider ${id}:`, error);
       }
-    })
+    });
 
-    await Promise.allSettled(cleanupPromises)
-    this.instances.clear()
-    await this.registry.cleanup()
+    await Promise.allSettled(cleanupPromises);
+    this.instances.clear();
+    await this.registry.cleanup();
 
-    console.log('SimpleProviderFactory cleaned up')
+    console.log('SimpleProviderFactory cleaned up');
   }
 
   // -------------------------------------------------------------------------
@@ -220,27 +236,30 @@ export class SimpleProviderFactory implements ProviderFactory {
    */
   private validateBasicConfig(config: ProviderConfig): void {
     if (!config) {
-      throw this.createFactoryError('VALIDATION_ERROR', 'Configuration is required')
+      throw this.createFactoryError('VALIDATION_ERROR', 'Configuration is required');
     }
 
     if (!config.type) {
-      throw this.createFactoryError('VALIDATION_ERROR', 'Provider type is required')
+      throw this.createFactoryError('VALIDATION_ERROR', 'Provider type is required');
     }
 
     if (!this.getSupportedTypes().includes(config.type)) {
-      throw this.createFactoryError('VALIDATION_ERROR', `Unsupported provider type: ${config.type}`)
+      throw this.createFactoryError(
+        'VALIDATION_ERROR',
+        `Unsupported provider type: ${config.type}`
+      );
     }
 
-    if (!config.id || !config.id.trim()) {
-      throw this.createFactoryError('VALIDATION_ERROR', 'Provider ID is required')
+    if (!config.id?.trim()) {
+      throw this.createFactoryError('VALIDATION_ERROR', 'Provider ID is required');
     }
 
-    if (!config.name || !config.name.trim()) {
-      throw this.createFactoryError('VALIDATION_ERROR', 'Provider name is required')
+    if (!config.name?.trim()) {
+      throw this.createFactoryError('VALIDATION_ERROR', 'Provider name is required');
     }
 
     // Type-specific validation
-    this.validateTypeSpecificConfig(config)
+    this.validateTypeSpecificConfig(config);
   }
 
   /**
@@ -249,47 +268,60 @@ export class SimpleProviderFactory implements ProviderFactory {
   private validateTypeSpecificConfig(config: ProviderConfig): void {
     switch (config.type) {
       case 'sqlite': {
-        const sqliteConfig = config as any
+        const sqliteConfig = config as any;
+
         if (!sqliteConfig.databasePath) {
-          throw this.createFactoryError('VALIDATION_ERROR', 'SQLite provider requires databasePath')
+          throw this.createFactoryError(
+            'VALIDATION_ERROR',
+            'SQLite provider requires databasePath'
+          );
         }
-        break
+        break;
       }
+
       case 'linear': {
-        const linearConfig = config as any
+        const linearConfig = config as any;
+
         if (!linearConfig.apiToken) {
-          throw this.createFactoryError('VALIDATION_ERROR', 'Linear provider requires apiToken')
+          throw this.createFactoryError('VALIDATION_ERROR', 'Linear provider requires apiToken');
         }
         if (!linearConfig.teamId) {
-          throw this.createFactoryError('VALIDATION_ERROR', 'Linear provider requires teamId')
+          throw this.createFactoryError('VALIDATION_ERROR', 'Linear provider requires teamId');
         }
-        break
+        break;
       }
+
       case 'github': {
-        const githubConfig = config as any
+        const githubConfig = config as any;
+
         if (!githubConfig.apiToken) {
-          throw this.createFactoryError('VALIDATION_ERROR', 'GitHub provider requires apiToken')
+          throw this.createFactoryError('VALIDATION_ERROR', 'GitHub provider requires apiToken');
         }
         if (!githubConfig.owner || !githubConfig.repo) {
-          throw this.createFactoryError('VALIDATION_ERROR', 'GitHub provider requires owner and repo')
+          throw this.createFactoryError(
+            'VALIDATION_ERROR',
+            'GitHub provider requires owner and repo'
+          );
         }
-        break
+        break;
       }
+
       case 'jira': {
-        const jiraConfig = config as any
+        const jiraConfig = config as any;
+
         if (!jiraConfig.baseUrl) {
-          throw this.createFactoryError('VALIDATION_ERROR', 'Jira provider requires baseUrl')
+          throw this.createFactoryError('VALIDATION_ERROR', 'Jira provider requires baseUrl');
         }
         if (!jiraConfig.username) {
-          throw this.createFactoryError('VALIDATION_ERROR', 'Jira provider requires username')
+          throw this.createFactoryError('VALIDATION_ERROR', 'Jira provider requires username');
         }
         if (!jiraConfig.apiToken) {
-          throw this.createFactoryError('VALIDATION_ERROR', 'Jira provider requires apiToken')
+          throw this.createFactoryError('VALIDATION_ERROR', 'Jira provider requires apiToken');
         }
         if (!jiraConfig.projectKey) {
-          throw this.createFactoryError('VALIDATION_ERROR', 'Jira provider requires projectKey')
+          throw this.createFactoryError('VALIDATION_ERROR', 'Jira provider requires projectKey');
         }
-        break
+        break;
       }
     }
   }
@@ -300,15 +332,22 @@ export class SimpleProviderFactory implements ProviderFactory {
   private async instantiateProvider(config: ProviderConfig): Promise<IssueProvider> {
     switch (config.type) {
       case 'sqlite':
-        return new SQLiteProviderImpl(config)
+        return new SQLiteProviderImpl(config) as IssueProvider;
+
       case 'linear':
-        return new LinearProviderImpl(config)
+        return new LinearProviderImpl(config) as IssueProvider;
+
       case 'github':
-        return new GitHubProviderImpl(config)
+        return new GitHubProviderImpl(config) as IssueProvider;
+
       case 'jira':
-        return new JiraProviderImpl(config)
+        return new JiraProviderImpl(config) as IssueProvider;
+
       default:
-        throw this.createFactoryError('OPERATION_FAILED', `Unsupported provider type: ${config.type}`)
+        throw this.createFactoryError(
+          'OPERATION_FAILED',
+          `Unsupported provider type: ${(config as any).type}`
+        );
     }
   }
 
@@ -325,9 +364,9 @@ export class SimpleProviderFactory implements ProviderFactory {
       retryable: false,
       context: {
         operation: 'factory_operation',
-        timestamp: new Date()
-      }
-    }
+        timestamp: new Date(),
+      },
+    };
   }
 }
 
@@ -340,15 +379,15 @@ export class SimpleProviderFactory implements ProviderFactory {
  */
 class SQLiteProviderImpl extends BaseProvider {
   protected async performInitialization(): Promise<void> {
-    console.log(`SQLite provider ${this.config.id} initialized`)
+    console.log(`SQLite provider ${this.config.id} initialized`);
   }
 
   protected async performCleanup(): Promise<void> {
-    console.log(`SQLite provider ${this.config.id} cleaned up`)
+    console.log(`SQLite provider ${this.config.id} cleaned up`);
   }
 
   protected async performHealthCheck(): Promise<boolean> {
-    return true
+    return true;
   }
 
   getProviderInfo() {
@@ -370,51 +409,118 @@ class SQLiteProviderImpl extends BaseProvider {
         supportsExport: true,
         supportsImport: true,
         supportsSync: false,
-        supportsOffline: true
+        supportsOffline: true,
       },
       status: {
         isConnected: true,
         isHealthy: true,
-        lastHealthCheck: new Date()
+        lastHealthCheck: new Date(),
       },
-      authRequired: false
-    }
+      authRequired: false,
+    };
   }
 
-  protected async validateProjectExists(): Promise<boolean> { return true }
-  protected async validateIssueExists(): Promise<boolean> { return true }
+  protected async validateProjectExists(_projectId: string): Promise<boolean> {
+    return true;
+  }
+  protected async validateIssueExists(_issueId: string): Promise<boolean> {
+    return true;
+  }
 
-  // Placeholder implementations
-  async createProject() { throw new Error('Not implemented') }
-  async getProject() { throw new Error('Not implemented') }
-  async updateProject() { throw new Error('Not implemented') }
-  async listProjects() { throw new Error('Not implemented') }
-  async deleteProject() { throw new Error('Not implemented') }
-  async createIssue() { throw new Error('Not implemented') }
-  async getIssue() { throw new Error('Not implemented') }
-  async updateIssue() { throw new Error('Not implemented') }
-  async listIssues() { throw new Error('Not implemented') }
-  async deleteIssue() { throw new Error('Not implemented') }
-  async addDependency() { throw new Error('Not implemented') }
-  async removeDependency() { throw new Error('Not implemented') }
-  async getDependencyGraph() { throw new Error('Not implemented') }
-  async validateDependencyGraph() { throw new Error('Not implemented') }
-  async getWorkflowStates() { throw new Error('Not implemented') }
-  async createWorkflowState() { throw new Error('Not implemented') }
-  async updateIssueState() { throw new Error('Not implemented') }
-  async getValidStateTransitions() { throw new Error('Not implemented') }
-  async createLabel() { throw new Error('Not implemented') }
-  async getProjectLabels() { throw new Error('Not implemented') }
-  async addLabelToIssue() { throw new Error('Not implemented') }
-  async removeLabelFromIssue() { throw new Error('Not implemented') }
-  async getNextTaskRecommendation() { throw new Error('Not implemented') }
-  async getAvailableIssues() { throw new Error('Not implemented') }
-  async startIssue() { throw new Error('Not implemented') }
-  async completeIssue() { throw new Error('Not implemented') }
-  async exportData() { throw new Error('Not implemented') }
-  async importData() { throw new Error('Not implemented') }
-  async syncWith() { throw new Error('Not implemented') }
-  async validateDataIntegrity() { throw new Error('Not implemented') }
+  // Placeholder implementations with proper return types
+  async createProject(_config: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getProject(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async updateProject(_id: string, _updates: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async listProjects(_filters?: any): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async deleteProject(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async createIssue(_config: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getIssue(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async updateIssue(_id: string, _updates: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async listIssues(_filters: any): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async deleteIssue(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async addDependency(_blockerId: string, _blockedId: string, _type?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async removeDependency(_dependencyId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getDependencyGraph(_projectId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async validateDependencyGraph(_projectId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getWorkflowStates(_projectId: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async createWorkflowState(_projectId: string, _state: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async updateIssueState(_issueId: string, _stateId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getValidStateTransitions(_issueId: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async createLabel(_label: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getProjectLabels(_projectId: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async addLabelToIssue(_issueId: string, _labelId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async removeLabelFromIssue(_issueId: string, _labelId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getNextTaskRecommendation(
+    _projectId: string,
+    _context?: { focusArea?: string; recentWork?: string[] }
+  ): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getAvailableIssues(_projectId: string, _assigneeId?: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async startIssue(_issueId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async completeIssue(_issueId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async exportData(_projectId: string, _options?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async importData(_data: any, _options?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async syncWith(_otherProvider: any, _options?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async validateDataIntegrity(_projectId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
 }
 
 /**
@@ -422,15 +528,15 @@ class SQLiteProviderImpl extends BaseProvider {
  */
 class LinearProviderImpl extends BaseProvider {
   protected async performInitialization(): Promise<void> {
-    console.log(`Linear provider ${this.config.id} initialized`)
+    console.log(`Linear provider ${this.config.id} initialized`);
   }
 
   protected async performCleanup(): Promise<void> {
-    console.log(`Linear provider ${this.config.id} cleaned up`)
+    console.log(`Linear provider ${this.config.id} cleaned up`);
   }
 
   protected async performHealthCheck(): Promise<boolean> {
-    return true
+    return true;
   }
 
   getProviderInfo() {
@@ -452,51 +558,118 @@ class LinearProviderImpl extends BaseProvider {
         supportsExport: true,
         supportsImport: false,
         supportsSync: true,
-        supportsOffline: false
+        supportsOffline: false,
       },
       status: {
         isConnected: true,
         isHealthy: true,
-        lastHealthCheck: new Date()
+        lastHealthCheck: new Date(),
       },
-      authRequired: true
-    }
+      authRequired: true,
+    };
   }
 
-  protected async validateProjectExists(): Promise<boolean> { return true }
-  protected async validateIssueExists(): Promise<boolean> { return true }
+  protected async validateProjectExists(_projectId: string): Promise<boolean> {
+    return true;
+  }
+  protected async validateIssueExists(_issueId: string): Promise<boolean> {
+    return true;
+  }
 
-  // Placeholder implementations
-  async createProject() { throw new Error('Not implemented') }
-  async getProject() { throw new Error('Not implemented') }
-  async updateProject() { throw new Error('Not implemented') }
-  async listProjects() { throw new Error('Not implemented') }
-  async deleteProject() { throw new Error('Not implemented') }
-  async createIssue() { throw new Error('Not implemented') }
-  async getIssue() { throw new Error('Not implemented') }
-  async updateIssue() { throw new Error('Not implemented') }
-  async listIssues() { throw new Error('Not implemented') }
-  async deleteIssue() { throw new Error('Not implemented') }
-  async addDependency() { throw new Error('Not implemented') }
-  async removeDependency() { throw new Error('Not implemented') }
-  async getDependencyGraph() { throw new Error('Not implemented') }
-  async validateDependencyGraph() { throw new Error('Not implemented') }
-  async getWorkflowStates() { throw new Error('Not implemented') }
-  async createWorkflowState() { throw new Error('Not implemented') }
-  async updateIssueState() { throw new Error('Not implemented') }
-  async getValidStateTransitions() { throw new Error('Not implemented') }
-  async createLabel() { throw new Error('Not implemented') }
-  async getProjectLabels() { throw new Error('Not implemented') }
-  async addLabelToIssue() { throw new Error('Not implemented') }
-  async removeLabelFromIssue() { throw new Error('Not implemented') }
-  async getNextTaskRecommendation() { throw new Error('Not implemented') }
-  async getAvailableIssues() { throw new Error('Not implemented') }
-  async startIssue() { throw new Error('Not implemented') }
-  async completeIssue() { throw new Error('Not implemented') }
-  async exportData() { throw new Error('Not implemented') }
-  async importData() { throw new Error('Not implemented') }
-  async syncWith() { throw new Error('Not implemented') }
-  async validateDataIntegrity() { throw new Error('Not implemented') }
+  // Placeholder implementations with proper return types
+  async createProject(_config: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getProject(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async updateProject(_id: string, _updates: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async listProjects(_filters?: any): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async deleteProject(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async createIssue(_config: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getIssue(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async updateIssue(_id: string, _updates: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async listIssues(_filters: any): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async deleteIssue(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async addDependency(_blockerId: string, _blockedId: string, _type?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async removeDependency(_dependencyId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getDependencyGraph(_projectId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async validateDependencyGraph(_projectId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getWorkflowStates(_projectId: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async createWorkflowState(_projectId: string, _state: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async updateIssueState(_issueId: string, _stateId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getValidStateTransitions(_issueId: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async createLabel(_label: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getProjectLabels(_projectId: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async addLabelToIssue(_issueId: string, _labelId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async removeLabelFromIssue(_issueId: string, _labelId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getNextTaskRecommendation(
+    _projectId: string,
+    _context?: { focusArea?: string; recentWork?: string[] }
+  ): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getAvailableIssues(_projectId: string, _assigneeId?: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async startIssue(_issueId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async completeIssue(_issueId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async exportData(_projectId: string, _options?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async importData(_data: any, _options?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async syncWith(_otherProvider: any, _options?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async validateDataIntegrity(_projectId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
 }
 
 /**
@@ -504,15 +677,15 @@ class LinearProviderImpl extends BaseProvider {
  */
 class GitHubProviderImpl extends BaseProvider {
   protected async performInitialization(): Promise<void> {
-    console.log(`GitHub provider ${this.config.id} initialized`)
+    console.log(`GitHub provider ${this.config.id} initialized`);
   }
 
   protected async performCleanup(): Promise<void> {
-    console.log(`GitHub provider ${this.config.id} cleaned up`)
+    console.log(`GitHub provider ${this.config.id} cleaned up`);
   }
 
   protected async performHealthCheck(): Promise<boolean> {
-    return true
+    return true;
   }
 
   getProviderInfo() {
@@ -534,51 +707,118 @@ class GitHubProviderImpl extends BaseProvider {
         supportsExport: true,
         supportsImport: false,
         supportsSync: false,
-        supportsOffline: false
+        supportsOffline: false,
       },
       status: {
         isConnected: true,
         isHealthy: true,
-        lastHealthCheck: new Date()
+        lastHealthCheck: new Date(),
       },
-      authRequired: true
-    }
+      authRequired: true,
+    };
   }
 
-  protected async validateProjectExists(): Promise<boolean> { return true }
-  protected async validateIssueExists(): Promise<boolean> { return true }
+  protected async validateProjectExists(_projectId: string): Promise<boolean> {
+    return true;
+  }
+  protected async validateIssueExists(_issueId: string): Promise<boolean> {
+    return true;
+  }
 
-  // Placeholder implementations
-  async createProject() { throw new Error('Not implemented') }
-  async getProject() { throw new Error('Not implemented') }
-  async updateProject() { throw new Error('Not implemented') }
-  async listProjects() { throw new Error('Not implemented') }
-  async deleteProject() { throw new Error('Not implemented') }
-  async createIssue() { throw new Error('Not implemented') }
-  async getIssue() { throw new Error('Not implemented') }
-  async updateIssue() { throw new Error('Not implemented') }
-  async listIssues() { throw new Error('Not implemented') }
-  async deleteIssue() { throw new Error('Not implemented') }
-  async addDependency() { throw new Error('Not implemented') }
-  async removeDependency() { throw new Error('Not implemented') }
-  async getDependencyGraph() { throw new Error('Not implemented') }
-  async validateDependencyGraph() { throw new Error('Not implemented') }
-  async getWorkflowStates() { throw new Error('Not implemented') }
-  async createWorkflowState() { throw new Error('Not implemented') }
-  async updateIssueState() { throw new Error('Not implemented') }
-  async getValidStateTransitions() { throw new Error('Not implemented') }
-  async createLabel() { throw new Error('Not implemented') }
-  async getProjectLabels() { throw new Error('Not implemented') }
-  async addLabelToIssue() { throw new Error('Not implemented') }
-  async removeLabelFromIssue() { throw new Error('Not implemented') }
-  async getNextTaskRecommendation() { throw new Error('Not implemented') }
-  async getAvailableIssues() { throw new Error('Not implemented') }
-  async startIssue() { throw new Error('Not implemented') }
-  async completeIssue() { throw new Error('Not implemented') }
-  async exportData() { throw new Error('Not implemented') }
-  async importData() { throw new Error('Not implemented') }
-  async syncWith() { throw new Error('Not implemented') }
-  async validateDataIntegrity() { throw new Error('Not implemented') }
+  // Placeholder implementations with proper return types
+  async createProject(_config: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getProject(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async updateProject(_id: string, _updates: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async listProjects(_filters?: any): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async deleteProject(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async createIssue(_config: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getIssue(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async updateIssue(_id: string, _updates: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async listIssues(_filters: any): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async deleteIssue(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async addDependency(_blockerId: string, _blockedId: string, _type?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async removeDependency(_dependencyId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getDependencyGraph(_projectId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async validateDependencyGraph(_projectId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getWorkflowStates(_projectId: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async createWorkflowState(_projectId: string, _state: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async updateIssueState(_issueId: string, _stateId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getValidStateTransitions(_issueId: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async createLabel(_label: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getProjectLabels(_projectId: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async addLabelToIssue(_issueId: string, _labelId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async removeLabelFromIssue(_issueId: string, _labelId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getNextTaskRecommendation(
+    _projectId: string,
+    _context?: { focusArea?: string; recentWork?: string[] }
+  ): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getAvailableIssues(_projectId: string, _assigneeId?: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async startIssue(_issueId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async completeIssue(_issueId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async exportData(_projectId: string, _options?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async importData(_data: any, _options?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async syncWith(_otherProvider: any, _options?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async validateDataIntegrity(_projectId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
 }
 
 /**
@@ -586,15 +826,15 @@ class GitHubProviderImpl extends BaseProvider {
  */
 class JiraProviderImpl extends BaseProvider {
   protected async performInitialization(): Promise<void> {
-    console.log(`Jira provider ${this.config.id} initialized`)
+    console.log(`Jira provider ${this.config.id} initialized`);
   }
 
   protected async performCleanup(): Promise<void> {
-    console.log(`Jira provider ${this.config.id} cleaned up`)
+    console.log(`Jira provider ${this.config.id} cleaned up`);
   }
 
   protected async performHealthCheck(): Promise<boolean> {
-    return true
+    return true;
   }
 
   getProviderInfo() {
@@ -616,49 +856,116 @@ class JiraProviderImpl extends BaseProvider {
         supportsExport: true,
         supportsImport: false,
         supportsSync: false,
-        supportsOffline: false
+        supportsOffline: false,
       },
       status: {
         isConnected: true,
         isHealthy: true,
-        lastHealthCheck: new Date()
+        lastHealthCheck: new Date(),
       },
-      authRequired: true
-    }
+      authRequired: true,
+    };
   }
 
-  protected async validateProjectExists(): Promise<boolean> { return true }
-  protected async validateIssueExists(): Promise<boolean> { return true }
+  protected async validateProjectExists(_projectId: string): Promise<boolean> {
+    return true;
+  }
+  protected async validateIssueExists(_issueId: string): Promise<boolean> {
+    return true;
+  }
 
-  // Placeholder implementations
-  async createProject() { throw new Error('Not implemented') }
-  async getProject() { throw new Error('Not implemented') }
-  async updateProject() { throw new Error('Not implemented') }
-  async listProjects() { throw new Error('Not implemented') }
-  async deleteProject() { throw new Error('Not implemented') }
-  async createIssue() { throw new Error('Not implemented') }
-  async getIssue() { throw new Error('Not implemented') }
-  async updateIssue() { throw new Error('Not implemented') }
-  async listIssues() { throw new Error('Not implemented') }
-  async deleteIssue() { throw new Error('Not implemented') }
-  async addDependency() { throw new Error('Not implemented') }
-  async removeDependency() { throw new Error('Not implemented') }
-  async getDependencyGraph() { throw new Error('Not implemented') }
-  async validateDependencyGraph() { throw new Error('Not implemented') }
-  async getWorkflowStates() { throw new Error('Not implemented') }
-  async createWorkflowState() { throw new Error('Not implemented') }
-  async updateIssueState() { throw new Error('Not implemented') }
-  async getValidStateTransitions() { throw new Error('Not implemented') }
-  async createLabel() { throw new Error('Not implemented') }
-  async getProjectLabels() { throw new Error('Not implemented') }
-  async addLabelToIssue() { throw new Error('Not implemented') }
-  async removeLabelFromIssue() { throw new Error('Not implemented') }
-  async getNextTaskRecommendation() { throw new Error('Not implemented') }
-  async getAvailableIssues() { throw new Error('Not implemented') }
-  async startIssue() { throw new Error('Not implemented') }
-  async completeIssue() { throw new Error('Not implemented') }
-  async exportData() { throw new Error('Not implemented') }
-  async importData() { throw new Error('Not implemented') }
-  async syncWith() { throw new Error('Not implemented') }
-  async validateDataIntegrity() { throw new Error('Not implemented') }
+  // Placeholder implementations with proper return types
+  async createProject(_config: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getProject(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async updateProject(_id: string, _updates: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async listProjects(_filters?: any): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async deleteProject(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async createIssue(_config: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getIssue(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async updateIssue(_id: string, _updates: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async listIssues(_filters: any): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async deleteIssue(_id: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async addDependency(_blockerId: string, _blockedId: string, _type?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async removeDependency(_dependencyId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getDependencyGraph(_projectId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async validateDependencyGraph(_projectId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getWorkflowStates(_projectId: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async createWorkflowState(_projectId: string, _state: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async updateIssueState(_issueId: string, _stateId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getValidStateTransitions(_issueId: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async createLabel(_label: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getProjectLabels(_projectId: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async addLabelToIssue(_issueId: string, _labelId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async removeLabelFromIssue(_issueId: string, _labelId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getNextTaskRecommendation(
+    _projectId: string,
+    _context?: { focusArea?: string; recentWork?: string[] }
+  ): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async getAvailableIssues(_projectId: string, _assigneeId?: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async startIssue(_issueId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async completeIssue(_issueId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async exportData(_projectId: string, _options?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async importData(_data: any, _options?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async syncWith(_otherProvider: any, _options?: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async validateDataIntegrity(_projectId: string): Promise<any> {
+    throw new Error('Not implemented');
+  }
 }

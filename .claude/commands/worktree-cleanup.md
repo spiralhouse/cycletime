@@ -4,11 +4,14 @@ description: Guide cleanup of completed or abandoned git worktrees
 tools: Bash, Read, Glob, LS
 ---
 
-You are tasked with guiding the cleanup of git worktrees created for multi-agent parallel development. This helps maintain a clean workspace and free up disk space.
+You are tasked with guiding the cleanup of git worktrees created for multi-agent
+parallel development. This helps maintain a clean workspace and free up disk
+space.
 
 ## Manual Worktree Cleanup Process
 
-This command provides **analysis and git commands** for cleaning up worktrees, but the user executes the cleanup commands manually for safety.
+This command provides **analysis and git commands** for cleaning up worktrees,
+but the user executes the cleanup commands manually for safety.
 
 ## Process:
 
@@ -36,18 +39,21 @@ done
 ### 2. Categorize Worktrees
 
 #### **Safe to Clean** (Automatic candidates)
+
 - Branch has been merged to main
 - No uncommitted changes
 - Associated Linear issues are "Done"
 - Older than configured age threshold
 
-#### **Requires Review** (Manual decision needed)  
+#### **Requires Review** (Manual decision needed)
+
 - Has uncommitted changes
 - Branch not yet merged
 - Associated Linear issues still active
 - Recently active (within last hour)
 
 #### **Keep** (Should not be cleaned)
+
 - Currently being worked on
 - Contains important unmerged work
 - Reviewer worktrees with ongoing reviews
@@ -64,13 +70,14 @@ git branch --merged main | grep "feature/developer/task-123"
 cd .jcvd/worktrees/developer-task-123
 git status --porcelain
 
-# Check recent activity  
+# Check recent activity
 git log -1 --format="%cr" HEAD
 ```
 
 ### 4. Cleanup Commands
 
 #### **Safe Cleanup** (Merged branches)
+
 ```bash
 # Remove worktree (safe - branch is merged)
 git worktree remove .jcvd/worktrees/developer-task-123
@@ -80,6 +87,7 @@ git branch -d feature/developer/task-123
 ```
 
 #### **Force Cleanup** (Abandoned work)
+
 ```bash
 # Backup first (optional but recommended)
 cp -r .jcvd/worktrees/abandoned-task-456 /tmp/backup-abandoned-task-456
@@ -92,6 +100,7 @@ git branch -D feature/abandoned/task-456
 ```
 
 #### **Archive Instead of Delete**
+
 ```bash
 # Create archive of unmerged work
 mkdir -p .jcvd/archives
@@ -135,7 +144,7 @@ done
 
 ## Output Format:
 
-```
+````
 🧹 Worktree Cleanup Analysis
 ============================
 
@@ -145,14 +154,14 @@ done
 │   🕐 Age: 2 days ago
 │   🎯 Action: Safe to clean
 │
-├── qa-auth-123 (feature/qa/auth-testing)  
+├── qa-auth-123 (feature/qa/auth-testing)
 │   ⚠️  Status: Not merged, has 3 uncommitted files
 │   🕐 Age: 6 hours ago
 │   🎯 Action: Review needed - backup first
 │
 └── reviewer-auth-456 (review/auth-final)
     🔄 Status: Active review in progress
-    🕐 Age: 30 minutes ago  
+    🕐 Age: 30 minutes ago
     🎯 Action: Keep - currently active
 
 📋 Recommended Actions:
@@ -162,9 +171,10 @@ done
 # Clean merged developer worktree
 git worktree remove .jcvd/worktrees/developer-auth-123
 git branch -d feature/developer/auth-implementation
-```
+````
 
-⚠️  Review Needed (1):
+⚠️ Review Needed (1):
+
 ```bash
 # Backup before cleaning qa worktree
 cp -r .jcvd/worktrees/qa-auth-123 /tmp/backup-qa-auth-123
@@ -172,12 +182,9 @@ git worktree remove --force .jcvd/worktrees/qa-auth-123
 # Branch feature/qa/auth-testing will be preserved
 ```
 
-📊 Summary:
-├── Total worktrees: 3
-├── Safe to clean: 1  
-├── Requires review: 1
-├── Keep active: 1
-└── Estimated space to free: 45.2 MB
+📊 Summary: ├── Total worktrees: 3 ├── Safe to clean: 1  
+├── Requires review: 1 ├── Keep active: 1 └── Estimated space to free: 45.2 MB
+
 ```
 
 ## Safety Features:
@@ -189,3 +196,4 @@ git worktree remove --force .jcvd/worktrees/qa-auth-123
 5. **Shows recent activity** to avoid cleaning active work
 
 This provides **safe, guided cleanup** rather than automated deletion, ensuring no important work is lost.
+```

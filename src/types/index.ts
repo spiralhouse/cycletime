@@ -3,7 +3,7 @@
  */
 
 // Re-export all types from specific modules
-export * from './config.js'
+export * from './config.js';
 
 // Re-export provider system types for easy access
 export type {
@@ -26,14 +26,14 @@ export type {
   OperationResult,
   ImportResult,
   SyncResult,
-  ExportData
-} from '../providers/types.js'
+  ExportData,
+} from '../providers/types.js';
 
 // Provider-specific error types (avoid conflicts with existing types)
 export type {
   ProviderError as IssueProviderError,
-  ProviderErrorCode as IssueProviderErrorCode
-} from '../providers/types.js'
+  ProviderErrorCode as IssueProviderErrorCode,
+} from '../providers/types.js';
 
 /**
  * Common utility types
@@ -134,14 +134,12 @@ export interface LogEntry {
 /**
  * Generic result type for operations that may fail
  */
-export type Result<T, E = JCVDError> = 
-  | { success: true; data: T }
-  | { success: false; error: E };
+export type Result<T, E = JCVDError> = { success: true; data: T } | { success: false; error: E };
 
 /**
  * Helper type for creating results
  */
 export const Result = {
   success: <T>(data: T): Result<T, never> => ({ success: true, data }),
-  error: <E extends JCVDError>(error: E): Result<never, E> => ({ success: false, error })
+  error: <E extends JCVDError>(error: E): Result<never, E> => ({ success: false, error }),
 };

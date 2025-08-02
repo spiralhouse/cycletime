@@ -1,6 +1,6 @@
 /**
  * JCVD - Multi-agent orchestration framework for Claude Code
- * 
+ *
  * Transforms Claude Code into a specialized software development team
  * through a provider-agnostic, multi-agent architecture.
  */
@@ -21,11 +21,11 @@ export class JCVD {
   constructor(config?: Partial<JCVDConfig>) {
     this.config = ConfigManager.load(config);
     this.orchestrator = new Orchestrator(this.config);
-    
+
     logger.info('JCVD framework initialized', {
       version: '0.1.0',
       providers: this.config.providers.length,
-      defaultAgent: this.config.taskCoordination.defaultAgent
+      defaultAgent: this.config.taskCoordination.defaultAgent,
     });
   }
 
@@ -85,7 +85,7 @@ export type {
   JCVDEvent,
   LogLevel,
   LogEntry,
-  Result
+  Result,
 } from './types/index.js';
 
 // Export provider system
@@ -111,14 +111,14 @@ export type {
   SyncResult,
   ExportData,
   IssueProviderError,
-  IssueProviderErrorCode
+  IssueProviderErrorCode,
 } from './types/index.js';
 
 // Export provider registry functions
 export {
   registerProvider,
   getProviderImplementation,
-  getRegisteredProviderTypes
+  getRegisteredProviderTypes,
 } from './providers/index.js';
 
 // Export core functionality

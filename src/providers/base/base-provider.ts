@@ -3,6 +3,9 @@
  * Abstract base class providing common functionality for all provider implementations
  */
 
+import { ConnectionManager } from './connection-manager.js';
+import { HealthMonitor } from './health-monitor.js';
+
 import type {
   IssueProvider,
   ProviderConfig,
@@ -27,11 +30,8 @@ import type {
   ExportData,
   ExportOptions,
   ImportResult,
-  SyncResult
-} from '../types.js'
-
-import { ConnectionManager } from './connection-manager.js'
-import { HealthMonitor } from './health-monitor.js'
+  SyncResult,
+} from '../types.js';
 
 // =============================================================================
 // Abstract Base Provider
@@ -41,118 +41,122 @@ import { HealthMonitor } from './health-monitor.js'
  * Abstract base provider class implementing common functionality
  */
 export abstract class BaseProvider implements IssueProvider {
-  protected config: ProviderConfig
-  protected connectionManager: ConnectionManager
-  protected healthMonitor: HealthMonitor
-  private initialized = false
+  protected config: ProviderConfig;
+  protected connectionManager: ConnectionManager;
+  protected healthMonitor: HealthMonitor;
+  private initialized = false;
 
   constructor(config: ProviderConfig) {
-    this.config = config
-    this.connectionManager = new ConnectionManager(config)
-    this.healthMonitor = new HealthMonitor(
-      this.performHealthCheck.bind(this),
-      {
-        checkInterval: 30000, // 30 seconds
-        maxRetries: 3,
-        timeoutMs: 10000
-      }
-    )
+    this.config = config;
+    this.connectionManager = new ConnectionManager(config);
+    this.healthMonitor = new HealthMonitor(this.performHealthCheck.bind(this), {
+      checkInterval: 30_000, // 30 seconds
+      maxRetries: 3,
+      timeoutMs: 10_000,
+    });
   }
 
   // -------------------------------------------------------------------------
   // Provider Metadata and Health Management
   // -------------------------------------------------------------------------
 
-  abstract getProviderInfo(): ProviderInfo
+  abstract getProviderInfo(): ProviderInfo;
 
   async isAvailable(): Promise<boolean> {
-    return this.connectionManager.isConnected() && this.healthMonitor.isHealthy()
+    return this.connectionManager.isConnected() && this.healthMonitor.isHealthy();
   }
 
   async healthCheck(): Promise<ProviderStatus> {
-    return this.healthMonitor.getCurrentStatus()
+    return this.healthMonitor.getCurrentStatus();
   }
 
   async initialize(config: ProviderConfig): Promise<OperationResult<void>> {
     try {
-      this.config = { ...this.config, ...config }
-      
+      this.config = { ...this.config, ...config };
+
       // Initialize connection
-      const connectionResult = await this.connectionManager.connect()
+      const connectionResult = await this.connectionManager.connect();
+
       if (!connectionResult.success) {
         return {
           success: false,
-          error: connectionResult.error,
+          error: connectionResult.error!,
           metadata: {
             duration: 0,
             timestamp: new Date(),
-            operationType: 'initialize'
-          }
-        }
+            operationType: 'initialize',
+          },
+        };
       }
 
       // Start health monitoring
-      this.healthMonitor.startMonitoring()
+      this.healthMonitor.startMonitoring();
 
       // Perform provider-specific initialization
-      await this.performInitialization()
+      await this.performInitialization();
 
-      this.initialized = true
+      this.initialized = true;
 
       return {
         success: true,
         metadata: {
           duration: 0,
           timestamp: new Date(),
-          operationType: 'initialize'
-        }
-      }
-
+          operationType: 'initialize',
+        },
+      };
     } catch (error) {
       return {
         success: false,
-        error: this.createProviderError('PROVIDER_CONFIGURATION_ERROR', error.message, { operation: 'initialize' }),
+        error: this.createProviderError(
+          'PROVIDER_CONFIGURATION_ERROR',
+          error instanceof Error ? error.message : String(error),
+          { operation: 'initialize' }
+        ),
         metadata: {
           duration: 0,
           timestamp: new Date(),
-          operationType: 'initialize'
-        }
-      }
+          operationType: 'initialize',
+        },
+      };
     }
   }
 
   async cleanup(): Promise<OperationResult<void>> {
     try {
       // Stop health monitoring
-      this.healthMonitor.stopMonitoring()
+      this.healthMonitor.stopMonitoring();
 
       // Perform provider-specific cleanup
-      await this.performCleanup()
+      await this.performCleanup();
 
       // Close connections
-      await this.connectionManager.disconnect()
+      await this.connectionManager.disconnect();
 
-      this.initialized = false
+      this.initialized = false;
 
       return {
         success: true,
         metadata: {
           duration: 0,
           timestamp: new Date(),
-          operationType: 'cleanup'
-        }
-      }
-
+          operationType: 'cleanup',
+        },
+      };
     } catch (error) {
       return {
         success: false,
-        error: this.createProviderError('OPERATION_FAILED', error.message, { operation: 'cleanup' }),
+        error: this.createProviderError(
+          'OPERATION_FAILED',
+          error instanceof Error ? error.message : String(error),
+          { operation: 'cleanup' }
+        ),
         metadata: {
           duration: 0,
           timestamp: new Date(),
-          operationType: 'cleanup'
-        }
-      }
+          operationType: 'cleanup',
+        },
+      };
     }
   }
 
@@ -162,8 +166,8 @@ export abstract class BaseProvider implements IssueProvider {
 
   async supportsCapability?(capabilityId: string): Promise<boolean> {
     // Default implementation - override in derived classes
-    const info = this.getProviderInfo()
-    
+    const info = this.getProviderInfo();
+
     // Map capability IDs to provider capabilities
     const capabilityMap: Record<string, boolean> = {
       'projects.create': info.capabilities.supportsProjects,
@@ -190,28 +194,29 @@ export abstract class BaseProvider implements IssueProvider {
       'performance.offline': info.capabilities.supportsOffline,
       'integration.export': info.capabilities.supportsExport,
       'integration.import': info.capabilities.supportsImport,
-      'integration.sync': info.capabilities.supportsSync
-    }
+      'integration.sync': info.capabilities.supportsSync,
+    };
 
-    return capabilityMap[capabilityId] ?? false
+    return capabilityMap[capabilityId] ?? false;
   }
 
   async validateCapabilities?(requiredCapabilities: string[]): Promise<{
-    isValid: boolean
-    supportedCapabilities: string[]
-    unsupportedCapabilities: string[]
-    warnings: string[]
+    isValid: boolean;
+    supportedCapabilities: string[];
+    unsupportedCapabilities: string[];
+    warnings: string[];
   }> {
-    const supportedCapabilities: string[] = []
-    const unsupportedCapabilities: string[] = []
-    const warnings: string[] = []
+    const supportedCapabilities: string[] = [];
+    const unsupportedCapabilities: string[] = [];
+    const warnings: string[] = [];
 
     for (const capabilityId of requiredCapabilities) {
-      const isSupported = await this.supportsCapability!(capabilityId)
+      const isSupported = await this.supportsCapability!(capabilityId);
+
       if (isSupported) {
-        supportedCapabilities.push(capabilityId)
+        supportedCapabilities.push(capabilityId);
       } else {
-        unsupportedCapabilities.push(capabilityId)
+        unsupportedCapabilities.push(capabilityId);
       }
     }
 
@@ -219,98 +224,105 @@ export abstract class BaseProvider implements IssueProvider {
       isValid: unsupportedCapabilities.length === 0,
       supportedCapabilities,
       unsupportedCapabilities,
-      warnings
-    }
+      warnings,
+    };
   }
 
   // -------------------------------------------------------------------------
   // Abstract Methods - Must be implemented by derived classes
   // -------------------------------------------------------------------------
 
-  abstract createProject(config: ProjectConfig): Promise<Project>
-  abstract getProject(id: string): Promise<Project>
-  abstract updateProject(id: string, updates: UpdateProjectInput): Promise<Project>
-  abstract listProjects(filters?: { name?: string; createdAfter?: Date }): Promise<Project[]>
-  abstract deleteProject(id: string): Promise<OperationResult<void>>
+  abstract createProject(config: ProjectConfig): Promise<Project>;
+  abstract getProject(id: string): Promise<Project>;
+  abstract updateProject(id: string, updates: UpdateProjectInput): Promise<Project>;
+  abstract listProjects(filters?: { name?: string; createdAfter?: Date }): Promise<Project[]>;
+  abstract deleteProject(id: string): Promise<OperationResult<void>>;
 
-  abstract createIssue(config: IssueConfig): Promise<EnhancedIssue>
-  abstract getIssue(id: string): Promise<EnhancedIssue>
-  abstract updateIssue(id: string, updates: UpdateIssueInput): Promise<EnhancedIssue>
-  abstract listIssues(filters: IssueFilters): Promise<EnhancedIssue[]>
-  abstract deleteIssue(id: string): Promise<OperationResult<void>>
+  abstract createIssue(config: IssueConfig): Promise<EnhancedIssue>;
+  abstract getIssue(id: string): Promise<EnhancedIssue>;
+  abstract updateIssue(id: string, updates: UpdateIssueInput): Promise<EnhancedIssue>;
+  abstract listIssues(filters: IssueFilters): Promise<EnhancedIssue[]>;
+  abstract deleteIssue(id: string): Promise<OperationResult<void>>;
 
-  abstract addDependency(blockerId: string, blockedId: string, type?: DependencyType): Promise<Dependency>
-  abstract removeDependency(dependencyId: string): Promise<OperationResult<void>>
-  abstract getDependencyGraph(projectId: string): Promise<DependencyGraph>
+  abstract addDependency(
+    blockerId: string,
+    blockedId: string,
+    type?: DependencyType
+  ): Promise<Dependency>;
+  abstract removeDependency(dependencyId: string): Promise<OperationResult<void>>;
+  abstract getDependencyGraph(projectId: string): Promise<DependencyGraph>;
   abstract validateDependencyGraph(projectId: string): Promise<{
-    isValid: boolean
-    circularDependencies: string[][]
-    errors: string[]
-  }>
+    isValid: boolean;
+    circularDependencies: string[][];
+    errors: string[];
+  }>;
 
-  abstract getWorkflowStates(projectId: string): Promise<WorkflowState[]>
+  abstract getWorkflowStates(projectId: string): Promise<WorkflowState[]>;
   abstract createWorkflowState(
-    projectId: string, 
+    projectId: string,
     state: Omit<WorkflowState, 'id' | 'project_id' | 'created_at' | 'updated_at'>
-  ): Promise<WorkflowState>
-  abstract updateIssueState(issueId: string, stateId: string): Promise<EnhancedIssue>
-  abstract getValidStateTransitions(issueId: string): Promise<WorkflowState[]>
+  ): Promise<WorkflowState>;
+  abstract updateIssueState(issueId: string, stateId: string): Promise<EnhancedIssue>;
+  abstract getValidStateTransitions(issueId: string): Promise<WorkflowState[]>;
 
-  abstract createLabel(label: CreateLabelInput): Promise<Label>
-  abstract getProjectLabels(projectId: string): Promise<Label[]>
-  abstract addLabelToIssue(issueId: string, labelId: string): Promise<OperationResult<void>>
-  abstract removeLabelFromIssue(issueId: string, labelId: string): Promise<OperationResult<void>>
+  abstract createLabel(label: CreateLabelInput): Promise<Label>;
+  abstract getProjectLabels(projectId: string): Promise<Label[]>;
+  abstract addLabelToIssue(issueId: string, labelId: string): Promise<OperationResult<void>>;
+  abstract removeLabelFromIssue(issueId: string, labelId: string): Promise<OperationResult<void>>;
 
   abstract getNextTaskRecommendation(
-    projectId: string, 
+    projectId: string,
     context?: { focusArea?: string; recentWork?: string[] }
-  ): Promise<TaskRecommendation>
-  abstract getAvailableIssues(projectId: string, assigneeId?: string): Promise<EnhancedIssue[]>
-  abstract startIssue(issueId: string): Promise<EnhancedIssue>
+  ): Promise<TaskRecommendation>;
+  abstract getAvailableIssues(projectId: string, assigneeId?: string): Promise<EnhancedIssue[]>;
+  abstract startIssue(issueId: string): Promise<EnhancedIssue>;
   abstract completeIssue(issueId: string): Promise<{
-    issue: EnhancedIssue
-    unblockedIssues: EnhancedIssue[]
-  }>
+    issue: EnhancedIssue;
+    unblockedIssues: EnhancedIssue[];
+  }>;
 
-  abstract exportData(projectId: string, options?: Partial<ExportOptions>): Promise<ExportData>
-  abstract importData(data: ExportData, options?: {
-    overwriteExisting?: boolean
-    validateData?: boolean
-    createMissingWorkflowStates?: boolean
-    enableStreaming?: boolean
-    chunkSize?: number
-    maxMemoryUsage?: number
-  }): Promise<ImportResult>
+  abstract exportData(projectId: string, options?: Partial<ExportOptions>): Promise<ExportData>;
+  abstract importData(
+    data: ExportData,
+    options?: {
+      overwriteExisting?: boolean;
+      validateData?: boolean;
+      createMissingWorkflowStates?: boolean;
+      enableStreaming?: boolean;
+      chunkSize?: number;
+      maxMemoryUsage?: number;
+    }
+  ): Promise<ImportResult>;
 
   abstract syncWith(
-    otherProvider: IssueProvider, 
+    otherProvider: IssueProvider,
     projectId: string,
     options?: {
-      direction: 'push' | 'pull' | 'bidirectional'
-      conflictResolution: 'source_wins' | 'target_wins' | 'manual'
-      dryRun?: boolean
+      direction: 'push' | 'pull' | 'bidirectional';
+      conflictResolution: 'source_wins' | 'target_wins' | 'manual';
+      dryRun?: boolean;
     }
-  ): Promise<SyncResult>
+  ): Promise<SyncResult>;
 
   abstract validateDataIntegrity(projectId: string): Promise<{
-    isValid: boolean
-    errors: string[]
-    warnings: string[]
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
     statistics: {
-      totalIssues: number
-      hierarchyViolations: number
-      dependencyViolations: number
-      orphanedEntities: number
-    }
-  }>
+      totalIssues: number;
+      hierarchyViolations: number;
+      dependencyViolations: number;
+      orphanedEntities: number;
+    };
+  }>;
 
   // -------------------------------------------------------------------------
   // Protected Helper Methods
   // -------------------------------------------------------------------------
 
-  protected abstract performInitialization(): Promise<void>
-  protected abstract performCleanup(): Promise<void>
-  protected abstract performHealthCheck(): Promise<boolean>
+  protected abstract performInitialization(): Promise<void>;
+  protected abstract performCleanup(): Promise<void>;
+  protected abstract performHealthCheck(): Promise<boolean>;
 
   /**
    * Create standardized provider error
@@ -320,8 +332,8 @@ export abstract class BaseProvider implements IssueProvider {
     message: string,
     context?: Record<string, any>
   ): ProviderError {
-    const info = this.getProviderInfo()
-    
+    const info = this.getProviderInfo();
+
     return {
       name: 'ProviderError',
       message,
@@ -332,9 +344,9 @@ export abstract class BaseProvider implements IssueProvider {
       context: {
         operation: 'unknown',
         timestamp: new Date(),
-        ...context
-      }
-    }
+        ...context,
+      },
+    };
   }
 
   /**
@@ -345,9 +357,10 @@ export abstract class BaseProvider implements IssueProvider {
       'NETWORK_ERROR',
       'TIMEOUT',
       'RATE_LIMIT_EXCEEDED',
-      'CONNECTION_FAILED'
-    ]
-    return retryableErrors.includes(code)
+      'CONNECTION_FAILED',
+    ];
+
+    return retryableErrors.includes(code);
   }
 
   /**
@@ -358,31 +371,32 @@ export abstract class BaseProvider implements IssueProvider {
     operationName: string,
     maxRetries = 3
   ): Promise<T> {
-    let lastError: Error | null = null
-    
+    let lastError: Error | null = null;
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        return await operation()
+        return await operation();
       } catch (error) {
-        lastError = error
-        
+        lastError = error instanceof Error ? error : new Error(String(error));
+
         // Don't retry if error is not retryable
-        if (error.code && !this.isRetryableError(error.code)) {
-          throw error
+        if ((error as any).code && !this.isRetryableError((error as any).code)) {
+          throw error;
         }
-        
+
         // Don't retry on last attempt
         if (attempt === maxRetries) {
-          throw error
+          throw error;
         }
-        
+
         // Wait before retrying (exponential backoff)
-        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000)
-        await new Promise(resolve => setTimeout(resolve, delay))
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10_000);
+
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
-    
-    throw lastError || new Error(`Operation ${operationName} failed after ${maxRetries} attempts`)
+
+    throw lastError || new Error(`Operation ${operationName} failed after ${maxRetries} attempts`);
   }
 
   /**
@@ -394,17 +408,17 @@ export abstract class BaseProvider implements IssueProvider {
         'PROVIDER_CONFIGURATION_ERROR',
         'Provider must be initialized before performing operations',
         { operation: 'initialization_check' }
-      )
+      );
     }
   }
 
   /**
    * Validate project exists (to be implemented by derived classes)
    */
-  protected abstract validateProjectExists(projectId: string): Promise<boolean>
+  protected abstract validateProjectExists(projectId: string): Promise<boolean>;
 
   /**
    * Validate issue exists (to be implemented by derived classes)
    */
-  protected abstract validateIssueExists(issueId: string): Promise<boolean>
+  protected abstract validateIssueExists(issueId: string): Promise<boolean>;
 }

@@ -4,12 +4,16 @@
  */
 
 // Main provider implementation
-export { SQLiteProvider, createSQLiteProvider } from './sqlite-provider.js'
+export { SQLiteProvider, createSQLiteProvider } from './sqlite-provider.js';
 
 // Supporting components
-export { SQLiteConnectionManager, createConnectionManager, validateDatabasePath } from './sqlite-connection.js'
-export { SQLiteOperations } from './sqlite-operations.js'
-export { TaskRecommendationEngine } from './task-recommender.js'
+export {
+  SQLiteConnectionManager,
+  createConnectionManager,
+  validateDatabasePath,
+} from './sqlite-connection.js';
+export { SQLiteOperations } from './sqlite-operations.js';
+export { TaskRecommendationEngine } from './task-recommender.js';
 
 // Query definitions (for advanced usage)
 export {
@@ -21,13 +25,13 @@ export {
   COMMENT_QUERIES,
   ANALYTICS_QUERIES,
   VALIDATION_QUERIES,
-  buildIssueFilterQuery
-} from './sqlite-queries.js'
+  buildIssueFilterQuery,
+} from './sqlite-queries.js';
 
 // Re-export types for convenience
 export type {
   SQLiteProviderConfig,
   RecommendationContext,
   RecommendationFactors,
-  ScoredRecommendation
-} from '../types.js'
+  TaskRecommendation,
+} from '../types.js';

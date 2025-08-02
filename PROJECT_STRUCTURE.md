@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document defines the complete repository structure for the JCVD multi-agent orchestration framework, organized around the 7 specialized agents and provider-agnostic architecture.
+This document defines the complete repository structure for the JCVD multi-agent
+orchestration framework, organized around the 7 specialized agents and
+provider-agnostic architecture.
 
 ## Root Directory Structure
 
@@ -201,38 +203,49 @@ jcvd/                                    # Root project directory
 ## File Naming Conventions
 
 ### TypeScript Files
+
 - **PascalCase** for classes: `ProductManager.ts`, `WorkflowEngine.ts`
 - **kebab-case** for modules: `task-coordinator.ts`, `state-manager.ts`
 - **camelCase** for utilities: `asyncUtils.ts`, `configLoader.ts`
 
 ### Configuration Files
+
 - **kebab-case** for config files: `eslint.config.js`, `vitest.config.ts`
 - **SCREAMING_SNAKE_CASE** for environment: `.env.production`
 
 ### Test Files
+
 - **Same as source + .test.ts**: `orchestrator.test.ts`
 - **Same as source + .spec.ts**: `workflow-engine.spec.ts`
 
 ## Directory Organization Principles
 
 ### 1. Domain-Driven Structure
-Each major domain (agents, providers, core) has its own directory with clear boundaries.
+
+Each major domain (agents, providers, core) has its own directory with clear
+boundaries.
 
 ### 2. Agent Isolation
-Each agent has its own directory with specialized modules, enabling independent development.
+
+Each agent has its own directory with specialized modules, enabling independent
+development.
 
 ### 3. Provider Abstraction
+
 Provider implementations are isolated but follow consistent interfaces.
 
 ### 4. Test Organization
+
 Tests mirror source structure for easy navigation and maintenance.
 
 ### 5. Documentation Co-location
+
 Related documentation lives near the code it describes.
 
 ## Module Export Strategy
 
 ### Barrel Exports
+
 Each directory includes an `index.ts` file that re-exports public APIs:
 
 ```typescript
@@ -244,10 +257,12 @@ export { GitHubProvider } from './github';
 ```
 
 ### Internal vs External APIs
+
 - **Internal**: Direct imports within the same domain
 - **External**: Imports through barrel exports only
 
 ### Type-Only Exports
+
 Separate type definitions to enable tree-shaking:
 
 ```typescript
@@ -260,27 +275,32 @@ export type { DatabaseSchema } from './database';
 ## Configuration File Locations
 
 ### Root Level Configuration
+
 - `package.json` - Dependencies and scripts
 - `tsconfig.json` - TypeScript compilation settings
 - `eslint.config.js` - Linting rules
 - `vitest.config.ts` - Test configuration
 
 ### Workspace Configuration
+
 - `.vscode/` - Editor-specific settings
 - `.github/` - Repository automation
 
 ### Environment Configuration
+
 - `.env` files in project root (not committed)
 - Environment-specific configs in `src/config/`
 
 ## Build Output Structure
 
 ### Development Build
+
 - In-memory compilation via `tsx`
 - Source maps enabled
 - Fast rebuild on changes
 
 ### Production Build
+
 ```
 dist/
 ├── src/           # Compiled JavaScript
@@ -291,6 +311,7 @@ dist/
 ## Import Path Strategy
 
 ### Absolute Imports
+
 Configure TypeScript path mapping for clean imports:
 
 ```typescript
@@ -302,6 +323,7 @@ import type { ProviderInterface } from '@/types/providers';
 ```
 
 ### Path Mapping Configuration
+
 ```json
 {
   "baseUrl": "./src",
@@ -386,9 +408,11 @@ mcp/
 ## Key Design Decisions
 
 ### 1. Modular Architecture
+
 Each component can be developed, tested, and deployed independently.
 
 ### 2. Clear Separation of Concerns
+
 - **Core**: Framework logic and task coordination
 - **Providers**: External integrations
 - **Database**: Data persistence
@@ -396,12 +420,17 @@ Each component can be developed, tested, and deployed independently.
 - **Task Coordination**: Agent orchestration through Claude Code
 
 ### 3. Consistent Patterns
+
 Every domain follows similar patterns for predictability.
 
 ### 4. Testability
+
 Structure enables comprehensive testing at all levels.
 
 ### 5. Documentation Proximity
+
 Documentation lives close to the code it describes.
 
-This structure supports the JCVD vision of a comprehensive multi-agent orchestration framework while maintaining clarity, maintainability, and extensibility.
+This structure supports the JCVD vision of a comprehensive multi-agent
+orchestration framework while maintaining clarity, maintainability, and
+extensibility.

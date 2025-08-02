@@ -9,25 +9,14 @@ export default defineConfig({
     globals: true,
     clearMocks: true,
     restoreMocks: true,
-    
+
     // File patterns
-    include: [
-      'src/**/*.{test,spec}.ts',
-      'tests/**/*.{test,spec}.ts'
-    ],
-    exclude: [
-      'node_modules',
-      'dist',
-      'coverage',
-      '.vscode',
-      '.github'
-    ],
-    
+    include: ['src/**/*.{test,spec}.ts', 'tests/**/*.{test,spec}.ts'],
+    exclude: ['node_modules', 'dist', 'coverage', '.vscode', '.github'],
+
     // Setup
-    setupFiles: [
-      './tests/setup.ts'
-    ],
-    
+    setupFiles: ['./tests/setup.ts'],
+
     // Coverage configuration
     coverage: {
       provider: 'v8',
@@ -43,57 +32,57 @@ export default defineConfig({
         'tests',
         'scripts',
         'examples',
-        'docs'
+        'docs',
       ],
       thresholds: {
         global: {
           branches: 80,
           functions: 80,
           lines: 80,
-          statements: 80
-        }
+          statements: 80,
+        },
       },
       skipFull: true,
-      clean: true
+      clean: true,
     },
-    
+
     // Performance
     pool: 'threads',
     poolOptions: {
       threads: {
         singleThread: false,
         minThreads: 1,
-        maxThreads: 4
-      }
+        maxThreads: 4,
+      },
     },
-    
+
     // Test timeout
     testTimeout: 10000,
     hookTimeout: 10000,
-    
+
     // Watch mode
     watch: false,
-    
+
     // Reporter configuration
     reporter: ['verbose', 'json'],
-    
+
     // Output configuration
     silent: false,
     hideSkippedTests: false,
-    
-    // Mock configuration  
+
+    // Mock configuration
     mockReset: true,
-    
+
     // Retry configuration
     retry: 0,
-    
+
     // Concurrent test execution
     sequence: {
       concurrent: true,
-      shuffle: false
-    }
+      shuffle: false,
+    },
   },
-  
+
   // Resolve configuration for path mapping
   resolve: {
     alias: {
@@ -104,17 +93,17 @@ export default defineConfig({
       '@/database': resolve(__dirname, './src/database'),
       '@/mcp': resolve(__dirname, './src/mcp'),
       '@/config': resolve(__dirname, './src/config'),
-      '@/utils': resolve(__dirname, './src/utils')
-    }
+      '@/utils': resolve(__dirname, './src/utils'),
+    },
   },
-  
+
   // Define constants for testing
   define: {
-    __TEST__: true
+    __TEST__: true,
   },
-  
+
   // ESBuild configuration for TypeScript
   esbuild: {
-    target: 'es2022'
-  }
+    target: 'es2022',
+  },
 });

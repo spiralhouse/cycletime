@@ -53,7 +53,7 @@ export class ConfigManager {
     this.logger.info('Configuration loaded successfully', {
       taskCoordination: config.taskCoordination.defaultAgent,
       providers: config.providers.length,
-      workflows: config.workflows.length
+      workflows: config.workflows.length,
     });
 
     return config;
@@ -63,27 +63,22 @@ export class ConfigManager {
    * Load configuration from file
    */
   private static loadFromFile(): Partial<JCVDConfig> | null {
-    const configPaths = [
-      'jcvd.config.json',
-      'jcvd.config.js',
-      '.jcvd.json',
-      'package.json'
-    ];
+    const configPaths = ['jcvd.config.json', 'jcvd.config.js', '.jcvd.json', 'package.json'];
 
     for (const configPath of configPaths) {
       const fullPath = resolve(process.cwd(), configPath);
-      
+
       if (existsSync(fullPath)) {
         try {
           if (configPath.endsWith('.json')) {
             const content = readFileSync(fullPath, 'utf8');
             const parsed = JSON.parse(content);
-            
+
             // If it's package.json, look for jcvd key
             if (configPath === 'package.json') {
               return parsed.jcvd || null;
             }
-            
+
             return parsed;
           } else if (configPath.endsWith('.js')) {
             // TODO: Support JS config files
@@ -91,9 +86,9 @@ export class ConfigManager {
             // return config.default || config;
           }
         } catch (error) {
-          this.logger.warn('Failed to load config file', { 
-            path: configPath, 
-            error: error instanceof Error ? error.message : String(error)
+          this.logger.warn('Failed to load config file', {
+            path: configPath,
+            error: error instanceof Error ? error.message : String(error),
           });
         }
       }
@@ -117,14 +112,14 @@ export class ConfigManager {
     if (process.env.JCVD_DB_PATH) {
       envConfig.database = {
         ...DEFAULT_CONFIG.database,
-        path: process.env.JCVD_DB_PATH
+        path: process.env.JCVD_DB_PATH,
       };
     }
 
     if (process.env.JCVD_DB_WAL_MODE) {
       envConfig.database = {
-        ...envConfig.database || DEFAULT_CONFIG.database,
-        walMode: process.env.JCVD_DB_WAL_MODE === 'true'
+        ...(envConfig.database || DEFAULT_CONFIG.database),
+        walMode: process.env.JCVD_DB_WAL_MODE === 'true',
       };
     }
 
@@ -132,7 +127,7 @@ export class ConfigManager {
     if (process.env.LOG_LEVEL) {
       envConfig.logging = {
         ...DEFAULT_CONFIG.logging,
-        level: process.env.LOG_LEVEL as any
+        level: process.env.LOG_LEVEL as any,
       };
     }
 
@@ -140,14 +135,14 @@ export class ConfigManager {
     if (process.env.JCVD_MCP_PORT) {
       envConfig.mcp = {
         ...DEFAULT_CONFIG.mcp!,
-        port: Number.parseInt(process.env.JCVD_MCP_PORT, 10)
+        port: Number.parseInt(process.env.JCVD_MCP_PORT, 10),
       };
     }
 
     if (process.env.JCVD_MCP_HOST) {
       envConfig.mcp = {
-        ...envConfig.mcp || DEFAULT_CONFIG.mcp!,
-        host: process.env.JCVD_MCP_HOST
+        ...(envConfig.mcp || DEFAULT_CONFIG.mcp!),
+        host: process.env.JCVD_MCP_HOST,
       };
     }
 
@@ -155,7 +150,7 @@ export class ConfigManager {
     if (process.env.JCVD_EXPERIMENTAL) {
       envConfig.features = {
         ...DEFAULT_CONFIG.features!,
-        experimental: process.env.JCVD_EXPERIMENTAL === 'true'
+        experimental: process.env.JCVD_EXPERIMENTAL === 'true',
       };
     }
 
@@ -174,8 +169,8 @@ export class ConfigManager {
       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
         // Deep merge objects
         merged[key as keyof JCVDConfig] = {
-          ...merged[key as keyof JCVDConfig] as any,
-          ...value
+          ...(merged[key as keyof JCVDConfig] as any),
+          ...value,
         };
       } else {
         // Direct assignment for primitives and arrays
@@ -210,9 +205,11 @@ export class ConfigManager {
     if (!config.taskCoordination.defaultAgent) {
       throw new Error('Configuration validation failed: taskCoordination.defaultAgent is required');
     }
-    
+
     if (!config.taskCoordination.fallbackAgent) {
-      throw new Error('Configuration validation failed: taskCoordination.fallbackAgent is required');
+      throw new Error(
+        'Configuration validation failed: taskCoordination.fallbackAgent is required'
+      );
     }
 
     // Provider validation
@@ -220,9 +217,11 @@ export class ConfigManager {
       if (!provider.id) {
         throw new Error('Configuration validation failed: provider.id is required');
       }
-      
+
       if (!provider.type) {
-        throw new Error(`Configuration validation failed: provider.type is required for provider ${provider.id}`);
+        throw new Error(
+          `Configuration validation failed: provider.type is required for provider ${provider.id}`
+        );
       }
 
       // Check for duplicate provider IDs
@@ -238,9 +237,11 @@ export class ConfigManager {
       if (!workflow.id) {
         throw new Error('Configuration validation failed: workflow.id is required');
       }
-      
+
       if (!workflow.name) {
-        throw new Error(`Configuration validation failed: workflow.name is required for workflow ${workflow.id}`);
+        throw new Error(
+          `Configuration validation failed: workflow.name is required for workflow ${workflow.id}`
+        );
       }
 
       // Check for duplicate workflow IDs
@@ -253,18 +254,32 @@ export class ConfigManager {
       // Validate workflow stages
       for (const stage of workflow.stages) {
         if (!stage.id) {
-          throw new Error(`Configuration validation failed: stage.id is required in workflow ${workflow.id}`);
+          throw new Error(
+            `Configuration validation failed: stage.id is required in workflow ${workflow.id}`
+          );
         }
-        
+
         if (!stage.agent) {
-          throw new Error(`Configuration validation failed: stage.agent is required for stage ${stage.id} in workflow ${workflow.id}`);
+          throw new Error(
+            `Configuration validation failed: stage.agent is required for stage ${stage.id} in workflow ${workflow.id}`
+          );
         }
 
         // Validate that agent is a known Claude Code agent type
-        const validAgents = ['general-purpose', 'product-manager', 'tech-lead', 'software-architect', 'developer', 'qa', 'code-reviewer'];
+        const validAgents = [
+          'general-purpose',
+          'product-manager',
+          'tech-lead',
+          'software-architect',
+          'developer',
+          'qa',
+          'code-reviewer',
+        ];
 
         if (!validAgents.includes(stage.agent)) {
-          throw new Error(`Configuration validation failed: agent ${stage.agent} referenced in workflow ${workflow.id} is not a valid Claude Code agent`);
+          throw new Error(
+            `Configuration validation failed: agent ${stage.agent} referenced in workflow ${workflow.id} is not a valid Claude Code agent`
+          );
         }
       }
     }
@@ -289,12 +304,12 @@ export class ConfigManager {
       // TODO: Implement file writing
       // const content = JSON.stringify(config, null, 2);
       // writeFileSync(filePath, content, 'utf8');
-      
+
       this.logger.info('Configuration saved successfully', { filePath });
     } catch (error) {
-      this.logger.error('Failed to save configuration', { 
-        filePath, 
-        error: error instanceof Error ? error.message : String(error)
+      this.logger.error('Failed to save configuration', {
+        filePath,
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }

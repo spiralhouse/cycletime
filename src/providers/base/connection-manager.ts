@@ -3,11 +3,7 @@
  * Handles connection lifecycle, health checks, and reconnection logic
  */
 
-import type {
-  ProviderConfig,
-  ProviderError,
-  OperationResult
-} from '../types.js'
+import type { ProviderConfig, ProviderError, OperationResult } from '../types.js';
 
 // =============================================================================
 // Connection Manager Interface
@@ -15,36 +11,36 @@ import type {
 
 export interface ConnectionManagerOptions {
   /** Maximum number of reconnection attempts */
-  maxReconnectAttempts?: number
+  maxReconnectAttempts?: number;
   /** Initial reconnection delay in milliseconds */
-  reconnectDelay?: number
+  reconnectDelay?: number;
   /** Maximum reconnection delay in milliseconds */
-  maxReconnectDelay?: number
+  maxReconnectDelay?: number;
   /** Connection timeout in milliseconds */
-  connectionTimeout?: number
+  connectionTimeout?: number;
   /** Enable automatic reconnection */
-  autoReconnect?: boolean
+  autoReconnect?: boolean;
 }
 
 export interface ConnectionStatus {
   /** Current connection state */
-  isConnected: boolean
+  isConnected: boolean;
   /** Connection establishment timestamp */
-  connectedAt?: Date
+  connectedAt?: Date;
   /** Last connection attempt timestamp */
-  lastAttempt?: Date
+  lastAttempt?: Date;
   /** Number of connection attempts */
-  attemptCount: number
+  attemptCount: number;
   /** Last error encountered */
-  lastError?: ProviderError
+  lastError?: ProviderError;
   /** Connection performance metrics */
   metrics: {
-    totalConnections: number
-    failedConnections: number
-    totalReconnections: number
-    averageConnectionTime: number
-    lastConnectionTime: number
-  }
+    totalConnections: number;
+    failedConnections: number;
+    totalReconnections: number;
+    averageConnectionTime: number;
+    lastConnectionTime: number;
+  };
 }
 
 // =============================================================================
@@ -55,21 +51,21 @@ export interface ConnectionStatus {
  * Manages provider connections with automatic reconnection and monitoring
  */
 export class ConnectionManager {
-  private config: ProviderConfig
-  private options: Required<ConnectionManagerOptions>
-  private status: ConnectionStatus
-  private reconnectTimer?: NodeJS.Timeout
-  private connectionPromise?: Promise<OperationResult<void>>
+  protected config: ProviderConfig;
+  private options: Required<ConnectionManagerOptions>;
+  private status: ConnectionStatus;
+  private reconnectTimer?: NodeJS.Timeout;
+  private connectionPromise?: Promise<OperationResult<void>>;
 
   constructor(config: ProviderConfig, options: ConnectionManagerOptions = {}) {
-    this.config = config
+    this.config = config;
     this.options = {
       maxReconnectAttempts: options.maxReconnectAttempts ?? 5,
       reconnectDelay: options.reconnectDelay ?? 1000,
-      maxReconnectDelay: options.maxReconnectDelay ?? 30000,
-      connectionTimeout: options.connectionTimeout ?? 10000,
-      autoReconnect: options.autoReconnect ?? true
-    }
+      maxReconnectDelay: options.maxReconnectDelay ?? 30_000,
+      connectionTimeout: options.connectionTimeout ?? 10_000,
+      autoReconnect: options.autoReconnect ?? true,
+    };
 
     this.status = {
       isConnected: false,
@@ -79,9 +75,9 @@ export class ConnectionManager {
         failedConnections: 0,
         totalReconnections: 0,
         averageConnectionTime: 0,
-        lastConnectionTime: 0
-      }
-    }
+        lastConnectionTime: 0,
+      },
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -94,14 +90,15 @@ export class ConnectionManager {
   async connect(): Promise<OperationResult<void>> {
     // Return existing connection promise if already connecting
     if (this.connectionPromise) {
-      return this.connectionPromise
+      return this.connectionPromise;
     }
 
-    this.connectionPromise = this.performConnection()
-    const result = await this.connectionPromise
-    this.connectionPromise = undefined
+    this.connectionPromise = this.performConnection();
+    const result = await this.connectionPromise;
 
-    return result
+    delete (this as any).connectionPromise;
+
+    return result;
   }
 
   /**
@@ -110,35 +107,38 @@ export class ConnectionManager {
   async disconnect(): Promise<OperationResult<void>> {
     try {
       // Stop automatic reconnection
-      this.stopReconnection()
+      this.stopReconnection();
 
       // Perform provider-specific disconnection
       if (this.status.isConnected) {
-        await this.performDisconnection()
+        await this.performDisconnection();
       }
 
-      this.status.isConnected = false
-      this.status.connectedAt = undefined
+      this.status.isConnected = false;
+      delete this.status.connectedAt;
 
       return {
         success: true,
         metadata: {
           duration: 0,
           timestamp: new Date(),
-          operationType: 'disconnect'
-        }
-      }
-
+          operationType: 'disconnect',
+        },
+      };
     } catch (error) {
       return {
         success: false,
-        error: this.createConnectionError('CONNECTION_FAILED', error.message, { operation: 'disconnect' }),
+        error: this.createConnectionError(
+          'CONNECTION_FAILED',
+          error instanceof Error ? error.message : String(error),
+          { operation: 'disconnect' }
+        ),
         metadata: {
           duration: 0,
           timestamp: new Date(),
-          operationType: 'disconnect'
-        }
-      }
+          operationType: 'disconnect',
+        },
+      };
     }
   }
 
@@ -146,8 +146,9 @@ export class ConnectionManager {
    * Force reconnection
    */
   async reconnect(): Promise<OperationResult<void>> {
-    await this.disconnect()
-    return this.connect()
+    await this.disconnect();
+
+    return this.connect();
   }
 
   // -------------------------------------------------------------------------
@@ -158,14 +159,14 @@ export class ConnectionManager {
    * Check if currently connected
    */
   isConnected(): boolean {
-    return this.status.isConnected
+    return this.status.isConnected;
   }
 
   /**
    * Get current connection status
    */
   getStatus(): ConnectionStatus {
-    return { ...this.status }
+    return { ...this.status };
   }
 
   /**
@@ -173,14 +174,15 @@ export class ConnectionManager {
    */
   async testConnection(): Promise<boolean> {
     if (!this.status.isConnected) {
-      return false
+      return false;
     }
 
     try {
-      return await this.performConnectionTest()
+      return await this.performConnectionTest();
     } catch (error) {
-      this.handleConnectionError(error)
-      return false
+      this.handleConnectionError(error);
+
+      return false;
     }
   }
 
@@ -192,31 +194,36 @@ export class ConnectionManager {
    * Perform actual connection establishment
    */
   private async performConnection(): Promise<OperationResult<void>> {
-    const startTime = Date.now()
-    this.status.attemptCount++
-    this.status.lastAttempt = new Date()
+    const startTime = Date.now();
+
+    this.status.attemptCount++;
+    this.status.lastAttempt = new Date();
 
     try {
       // Implement connection timeout
-      const connectionPromise = this.establishConnection()
-      const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), this.options.connectionTimeout)
-      )
+      const connectionPromise = this.establishConnection();
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => {
+          reject(new Error('Connection timeout'));
+        }, this.options.connectionTimeout)
+      );
 
-      await Promise.race([connectionPromise, timeoutPromise])
+      await Promise.race([connectionPromise, timeoutPromise]);
 
       // Connection successful
-      const connectionTime = Date.now() - startTime
-      this.status.isConnected = true
-      this.status.connectedAt = new Date()
-      this.status.lastError = undefined
+      const connectionTime = Date.now() - startTime;
+
+      this.status.isConnected = true;
+      this.status.connectedAt = new Date();
+      delete this.status.lastError;
 
       // Update metrics
-      this.status.metrics.totalConnections++
-      this.status.metrics.lastConnectionTime = connectionTime
-      this.status.metrics.averageConnectionTime = 
-        (this.status.metrics.averageConnectionTime * (this.status.metrics.totalConnections - 1) + connectionTime) / 
-        this.status.metrics.totalConnections
+      this.status.metrics.totalConnections++;
+      this.status.metrics.lastConnectionTime = connectionTime;
+      this.status.metrics.averageConnectionTime =
+        (this.status.metrics.averageConnectionTime * (this.status.metrics.totalConnections - 1) +
+          connectionTime) /
+        this.status.metrics.totalConnections;
 
       return {
         success: true,
@@ -224,23 +231,29 @@ export class ConnectionManager {
           duration: connectionTime,
           timestamp: new Date(),
           operationType: 'connect',
-          affectedResources: [this.config.id]
-        }
-      }
-
+          affectedResources: [this.config.id],
+        },
+      };
     } catch (error) {
-      const connectionTime = Date.now() - startTime
-      const providerError = this.createConnectionError('CONNECTION_FAILED', error.message, { 
-        operation: 'connect',
-        duration: connectionTime 
-      })
+      const connectionTime = Date.now() - startTime;
+      const providerError = this.createConnectionError(
+        'CONNECTION_FAILED',
+        error instanceof Error ? error.message : String(error),
+        {
+          operation: 'connect',
+          duration: connectionTime,
+        }
+      );
 
-      this.status.lastError = providerError
-      this.status.metrics.failedConnections++
+      this.status.lastError = providerError;
+      this.status.metrics.failedConnections++;
 
       // Start automatic reconnection if enabled
-      if (this.options.autoReconnect && this.status.attemptCount < this.options.maxReconnectAttempts) {
-        this.scheduleReconnection()
+      if (
+        this.options.autoReconnect &&
+        this.status.attemptCount < this.options.maxReconnectAttempts
+      ) {
+        this.scheduleReconnection();
       }
 
       return {
@@ -249,9 +262,9 @@ export class ConnectionManager {
         metadata: {
           duration: connectionTime,
           timestamp: new Date(),
-          operationType: 'connect'
-        }
-      }
+          operationType: 'connect',
+        },
+      };
     }
   }
 
@@ -260,27 +273,27 @@ export class ConnectionManager {
    */
   private scheduleReconnection(): void {
     if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer)
+      clearTimeout(this.reconnectTimer);
     }
 
     // Calculate delay with exponential backoff
     const delay = Math.min(
       this.options.reconnectDelay * Math.pow(2, this.status.attemptCount - 1),
       this.options.maxReconnectDelay
-    )
+    );
 
     this.reconnectTimer = setTimeout(async () => {
       try {
-        this.status.metrics.totalReconnections++
-        const result = await this.connect()
-        
+        this.status.metrics.totalReconnections++;
+        const result = await this.connect();
+
         if (result.success) {
-          console.log(`Provider ${this.config.id} reconnected successfully`)
+          console.log(`Provider ${this.config.id} reconnected successfully`);
         }
       } catch (error) {
-        console.error(`Provider ${this.config.id} reconnection failed:`, error)
+        console.error(`Provider ${this.config.id} reconnection failed:`, error);
       }
-    }, delay)
+    }, delay);
   }
 
   /**
@@ -288,8 +301,8 @@ export class ConnectionManager {
    */
   private stopReconnection(): void {
     if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer)
-      this.reconnectTimer = undefined
+      clearTimeout(this.reconnectTimer);
+      delete (this as any).reconnectTimer;
     }
   }
 
@@ -297,19 +310,29 @@ export class ConnectionManager {
    * Handle connection errors
    */
   private handleConnectionError(error: any): void {
-    this.status.isConnected = false
-    this.status.lastError = this.createConnectionError('CONNECTION_FAILED', error.message)
+    this.status.isConnected = false;
+    this.status.lastError = this.createConnectionError(
+      'CONNECTION_FAILED',
+      error instanceof Error ? error.message : String(error)
+    );
 
     // Start reconnection if enabled
-    if (this.options.autoReconnect && this.status.attemptCount < this.options.maxReconnectAttempts) {
-      this.scheduleReconnection()
+    if (
+      this.options.autoReconnect &&
+      this.status.attemptCount < this.options.maxReconnectAttempts
+    ) {
+      this.scheduleReconnection();
     }
   }
 
   /**
    * Create standardized connection error
    */
-  private createConnectionError(code: string, message: string, context?: Record<string, any>): ProviderError {
+  private createConnectionError(
+    code: string,
+    message: string,
+    context?: Record<string, any>
+  ): ProviderError {
     return {
       name: 'ConnectionError',
       message: `Provider ${this.config.id}: ${message}`,
@@ -320,9 +343,9 @@ export class ConnectionManager {
       context: {
         operation: 'connection',
         timestamp: new Date(),
-        ...context
-      }
-    }
+        ...context,
+      },
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -335,8 +358,8 @@ export class ConnectionManager {
    */
   protected async establishConnection(): Promise<void> {
     // Default implementation for testing
-    await new Promise(resolve => setTimeout(resolve, 100))
-    
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     // Provider-specific connection logic would go here
     // For example:
     // - Database connection establishment
@@ -351,8 +374,8 @@ export class ConnectionManager {
    */
   protected async performDisconnection(): Promise<void> {
     // Default implementation for testing
-    await new Promise(resolve => setTimeout(resolve, 50))
-    
+    await new Promise(resolve => setTimeout(resolve, 50));
+
     // Provider-specific disconnection logic would go here
     // For example:
     // - Close database connections
@@ -367,8 +390,8 @@ export class ConnectionManager {
    */
   protected async performConnectionTest(): Promise<boolean> {
     // Default implementation for testing
-    return true
-    
+    return true;
+
     // Provider-specific health check logic would go here
     // For example:
     // - Database ping
@@ -386,20 +409,21 @@ export class ConnectionManager {
  * SQLite-specific connection manager
  */
 export class SQLiteConnectionManager extends ConnectionManager {
-  protected async establishConnection(): Promise<void> {
+  protected override async establishConnection(): Promise<void> {
     // SQLite connection logic would be implemented here
     // For now, this is a placeholder
-    console.log(`Establishing SQLite connection to ${(this.config as any).databasePath}`)
+    console.log(`Establishing SQLite connection to ${(this.config as any).databasePath}`);
   }
 
-  protected async performDisconnection(): Promise<void> {
-    console.log(`Closing SQLite connection`)
+  protected override async performDisconnection(): Promise<void> {
+    console.log(`Closing SQLite connection`);
   }
 
-  protected async performConnectionTest(): Promise<boolean> {
+  protected override async performConnectionTest(): Promise<boolean> {
     // Test SQLite connection with a simple query
-    console.log(`Testing SQLite connection`)
-    return true
+    console.log(`Testing SQLite connection`);
+
+    return true;
   }
 }
 
@@ -407,19 +431,20 @@ export class SQLiteConnectionManager extends ConnectionManager {
  * Linear-specific connection manager
  */
 export class LinearConnectionManager extends ConnectionManager {
-  protected async establishConnection(): Promise<void> {
+  protected override async establishConnection(): Promise<void> {
     // Linear API authentication would be implemented here
-    console.log(`Establishing Linear API connection for team ${(this.config as any).teamId}`)
+    console.log(`Establishing Linear API connection for team ${(this.config as any).teamId}`);
   }
 
-  protected async performDisconnection(): Promise<void> {
-    console.log(`Closing Linear API connection`)
+  protected override async performDisconnection(): Promise<void> {
+    console.log(`Closing Linear API connection`);
   }
 
-  protected async performConnectionTest(): Promise<boolean> {
+  protected override async performConnectionTest(): Promise<boolean> {
     // Test Linear API connection with viewer query
-    console.log(`Testing Linear API connection`)
-    return true
+    console.log(`Testing Linear API connection`);
+
+    return true;
   }
 }
 
@@ -427,19 +452,22 @@ export class LinearConnectionManager extends ConnectionManager {
  * GitHub-specific connection manager
  */
 export class GitHubConnectionManager extends ConnectionManager {
-  protected async establishConnection(): Promise<void> {
+  protected override async establishConnection(): Promise<void> {
     // GitHub API authentication would be implemented here
-    console.log(`Establishing GitHub API connection for ${(this.config as any).owner}/${(this.config as any).repo}`)
+    console.log(
+      `Establishing GitHub API connection for ${(this.config as any).owner}/${(this.config as any).repo}`
+    );
   }
 
-  protected async performDisconnection(): Promise<void> {
-    console.log(`Closing GitHub API connection`)
+  protected override async performDisconnection(): Promise<void> {
+    console.log(`Closing GitHub API connection`);
   }
 
-  protected async performConnectionTest(): Promise<boolean> {
+  protected override async performConnectionTest(): Promise<boolean> {
     // Test GitHub API connection with repository query
-    console.log(`Testing GitHub API connection`)
-    return true
+    console.log(`Testing GitHub API connection`);
+
+    return true;
   }
 }
 
@@ -447,18 +475,19 @@ export class GitHubConnectionManager extends ConnectionManager {
  * Jira-specific connection manager
  */
 export class JiraConnectionManager extends ConnectionManager {
-  protected async establishConnection(): Promise<void> {
+  protected override async establishConnection(): Promise<void> {
     // Jira API authentication would be implemented here
-    console.log(`Establishing Jira API connection to ${(this.config as any).baseUrl}`)
+    console.log(`Establishing Jira API connection to ${(this.config as any).baseUrl}`);
   }
 
-  protected async performDisconnection(): Promise<void> {
-    console.log(`Closing Jira API connection`)
+  protected override async performDisconnection(): Promise<void> {
+    console.log(`Closing Jira API connection`);
   }
 
-  protected async performConnectionTest(): Promise<boolean> {
+  protected override async performConnectionTest(): Promise<boolean> {
     // Test Jira API connection with project query
-    console.log(`Testing Jira API connection`)
-    return true
+    console.log(`Testing Jira API connection`);
+
+    return true;
   }
 }

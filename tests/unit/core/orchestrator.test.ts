@@ -35,9 +35,9 @@ describe('Orchestrator', () => {
   describe('initialize', () => {
     it('should initialize successfully with empty configuration', async () => {
       const result = await orchestrator.initialize();
-      
+
       expect(result.success).toBe(true);
-      
+
       const status = orchestrator.getStatus();
       expect(status.status).toBe('running');
       expect(status.uptime).toBeGreaterThan(0);
@@ -47,18 +47,16 @@ describe('Orchestrator', () => {
       const configWithComponents = testData.createJCVDConfig({
         agents: [
           testData.createAgentConfig({ id: 'agent-1' }),
-          testData.createAgentConfig({ id: 'agent-2', enabled: false })
+          testData.createAgentConfig({ id: 'agent-2', enabled: false }),
         ],
-        providers: [
-          testData.createProviderConfig({ id: 'provider-1' })
-        ]
+        providers: [testData.createProviderConfig({ id: 'provider-1' })],
       });
 
       const orchestratorWithComponents = new Orchestrator(configWithComponents);
       const result = await orchestratorWithComponents.initialize();
-      
+
       expect(result.success).toBe(true);
-      
+
       const status = orchestratorWithComponents.getStatus();
       expect(status.activeAgents).toBe(1); // Only enabled agents
       expect(status.activeProviders).toBe(1);
@@ -67,9 +65,9 @@ describe('Orchestrator', () => {
     it('should emit initialization event on success', async () => {
       const initSpy = vi.fn();
       orchestrator.on('orchestrator.initialized', initSpy);
-      
+
       await orchestrator.initialize();
-      
+
       expect(initSpy).toHaveBeenCalledOnce();
     });
 
@@ -78,12 +76,12 @@ describe('Orchestrator', () => {
       const failingConfig = testData.createJCVDConfig({
         database: {
           ...testData.createJCVDConfig().database,
-          path: '/invalid/path/that/should/fail'
-        }
+          path: '/invalid/path/that/should/fail',
+        },
       });
 
       const failingOrchestrator = new Orchestrator(failingConfig);
-      
+
       // Note: Since we haven't implemented actual database initialization yet,
       // this test will pass. When we implement the real initialization,
       // we should update this test to verify proper error handling.
@@ -95,11 +93,11 @@ describe('Orchestrator', () => {
   describe('shutdown', () => {
     it('should shutdown successfully after initialization', async () => {
       await orchestrator.initialize();
-      
+
       const result = await orchestrator.shutdown();
-      
+
       expect(result.success).toBe(true);
-      
+
       const status = orchestrator.getStatus();
       expect(status.status).toBe('stopped');
     });
@@ -107,16 +105,16 @@ describe('Orchestrator', () => {
     it('should emit shutdown event on success', async () => {
       const shutdownSpy = vi.fn();
       orchestrator.on('orchestrator.shutdown', shutdownSpy);
-      
+
       await orchestrator.initialize();
       await orchestrator.shutdown();
-      
+
       expect(shutdownSpy).toHaveBeenCalledOnce();
     });
 
     it('should handle shutdown errors gracefully', async () => {
       await orchestrator.initialize();
-      
+
       // For now, shutdown should always succeed since we haven't implemented
       // the actual cleanup logic yet
       const result = await orchestrator.shutdown();
@@ -129,9 +127,9 @@ describe('Orchestrator', () => {
       const beforeInit = orchestrator.getStatus();
       expect(beforeInit.status).toBe('idle');
       expect(beforeInit.uptime).toBe(0);
-      
+
       await orchestrator.initialize();
-      
+
       const afterInit = orchestrator.getStatus();
       expect(afterInit.status).toBe('running');
       expect(afterInit.uptime).toBeGreaterThan(0);
@@ -143,17 +141,17 @@ describe('Orchestrator', () => {
         agents: [
           testData.createAgentConfig({ id: 'agent-1', enabled: true }),
           testData.createAgentConfig({ id: 'agent-2', enabled: false }),
-          testData.createAgentConfig({ id: 'agent-3', enabled: true })
+          testData.createAgentConfig({ id: 'agent-3', enabled: true }),
         ],
         providers: [
           testData.createProviderConfig({ id: 'provider-1', enabled: true }),
-          testData.createProviderConfig({ id: 'provider-2', enabled: false })
-        ]
+          testData.createProviderConfig({ id: 'provider-2', enabled: false }),
+        ],
       });
 
       const orchestratorWithMixed = new Orchestrator(configWithMixed);
       await orchestratorWithMixed.initialize();
-      
+
       const status = orchestratorWithMixed.getStatus();
       expect(status.activeAgents).toBe(2); // Only enabled agents
       expect(status.activeProviders).toBe(1); // Only enabled providers
@@ -169,13 +167,13 @@ describe('Orchestrator', () => {
 
     it('should emit events during lifecycle', async () => {
       const events: string[] = [];
-      
+
       orchestrator.on('orchestrator.initialized', () => events.push('initialized'));
       orchestrator.on('orchestrator.shutdown', () => events.push('shutdown'));
-      
+
       await orchestrator.initialize();
       await orchestrator.shutdown();
-      
+
       expect(events).toEqual(['initialized', 'shutdown']);
     });
   });
@@ -185,12 +183,12 @@ describe('Orchestrator', () => {
       const minimalConfig = testData.createJCVDConfig({
         agents: [],
         providers: [],
-        workflows: []
+        workflows: [],
       });
 
       const minimalOrchestrator = new Orchestrator(minimalConfig);
       const status = minimalOrchestrator.getStatus();
-      
+
       expect(status.activeAgents).toBe(0);
       expect(status.activeProviders).toBe(0);
     });
@@ -198,26 +196,26 @@ describe('Orchestrator', () => {
     it('should handle complex configuration', () => {
       const complexConfig = testData.createJCVDConfig({
         agents: [
-          testData.createAgentConfig({ 
-            id: 'pm', 
+          testData.createAgentConfig({
+            id: 'pm',
             type: 'product-manager',
-            dependencies: ['architect'] 
+            dependencies: ['architect'],
           }),
-          testData.createAgentConfig({ 
-            id: 'architect', 
-            type: 'architect' 
-          })
+          testData.createAgentConfig({
+            id: 'architect',
+            type: 'architect',
+          }),
         ],
         providers: [
-          testData.createProviderConfig({ 
+          testData.createProviderConfig({
             id: 'linear',
-            type: 'linear' 
+            type: 'linear',
           }),
-          testData.createProviderConfig({ 
+          testData.createProviderConfig({
             id: 'github',
-            type: 'github' 
-          })
-        ]
+            type: 'github',
+          }),
+        ],
       });
 
       const complexOrchestrator = new Orchestrator(complexConfig);

@@ -1,18 +1,24 @@
 ---
 name: multi-agent-merge
 description: Guide manual coordination of multi-agent work merging
-tools: Task, Bash, Read, Write, mcp__linear__update_issue, mcp__linear__create_comment
+tools:
+  Task, Bash, Read, Write, mcp__linear__update_issue,
+  mcp__linear__create_comment
 ---
 
-You are tasked with guiding the manual coordination of merging multi-agent work from separate git worktrees. This helps orchestrate the integration of parallel development efforts.
+You are tasked with guiding the manual coordination of merging multi-agent work
+from separate git worktrees. This helps orchestrate the integration of parallel
+development efforts.
 
 ## Manual Merge Coordination Process
 
-This command provides **guidance and git commands** for merging work from multiple worktrees, but the user executes the commands manually.
+This command provides **guidance and git commands** for merging work from
+multiple worktrees, but the user executes the commands manually.
 
 ## Process:
 
 ### 1. Pre-Merge Validation
+
 Check readiness of each worktree before merging:
 
 ```bash
@@ -20,20 +26,21 @@ Check readiness of each worktree before merging:
 for worktree in .jcvd/worktrees/*/; do
   echo "=== Checking $worktree ==="
   cd "$worktree"
-  
+
   # Check for uncommitted changes
   if ! git diff-index --quiet HEAD --; then
     echo "⚠️  Uncommitted changes in $worktree"
   fi
-  
+
   # Check if tests pass
   npm test 2>/dev/null || echo "⚠️  Tests may be failing in $worktree"
-  
+
   cd - >/dev/null
 done
 ```
 
 ### 2. Conflict Detection
+
 Identify potential merge conflicts before attempting merges:
 
 ```bash
@@ -50,6 +57,7 @@ comm -12 <(sort /tmp/dev-files) <(sort /tmp/qa-files)
 Based on the analysis, suggest one of these approaches:
 
 #### **Sequential Merge** (Safest)
+
 ```bash
 # 1. Merge developer work first
 git checkout main
@@ -58,7 +66,7 @@ git merge feature/developer/task-123
 # 2. Run tests to validate
 npm test
 
-# 3. Merge QA work  
+# 3. Merge QA work
 git merge feature/qa/task-123
 
 # 4. Final validation
@@ -66,13 +74,14 @@ npm test && npm run lint
 ```
 
 #### **Feature Branch Integration** (Most Control)
+
 ```bash
 # 1. Create integration branch
 git checkout -b integration/task-123
 
 # 2. Merge each feature branch
 git merge feature/developer/task-123
-git merge feature/qa/task-123  
+git merge feature/qa/task-123
 
 # 3. Resolve conflicts and test
 # ... manual conflict resolution ...
@@ -84,6 +93,7 @@ git merge integration/task-123
 ```
 
 #### **Cherry-Pick Selective** (Complex Cases)
+
 ```bash
 # Pick specific commits from each branch
 git checkout main
@@ -96,6 +106,7 @@ git cherry-pick <commit-hash-from-qa>
 When conflicts occur:
 
 1. **Analyze the conflict context**:
+
    ```bash
    git status
    git diff --name-only --diff-filter=U
@@ -109,7 +120,7 @@ When conflicts occur:
 3. **Validate resolution**:
    ```bash
    npm test
-   npm run lint  
+   npm run lint
    npm run type-check
    ```
 
@@ -136,7 +147,7 @@ git branch -d feature/qa/task-123
 # Guide merge of specific task
 /project:multi-agent-merge AUTH-123
 
-# General merge guidance  
+# General merge guidance
 /project:multi-agent-merge
 
 # Check merge readiness only
@@ -155,19 +166,19 @@ git branch -d feature/qa/task-123
 ## What This Command Does NOT Do:
 
 - Automatically execute git merge commands
-- Resolve merge conflicts automatically  
+- Resolve merge conflicts automatically
 - Make decisions about which code to keep
 - Replace human judgment in complex conflicts
 
 ## Output Format:
 
-```
+````
 🔄 Multi-Agent Merge Coordination
 =================================
 
 📊 Merge Readiness Check:
 ├── ✅ developer-auth-123: Ready (all committed, tests pass)
-├── ✅ qa-auth-123: Ready (all committed, tests pass)  
+├── ✅ qa-auth-123: Ready (all committed, tests pass)
 └── ⚠️  reviewer-auth-123: Has uncommitted changes
 
 🔍 Conflict Analysis:
@@ -177,7 +188,7 @@ git branch -d feature/qa/task-123
 
 📋 Recommended Strategy: Sequential Merge
 ├── 1. Merge feature/developer/auth-implementation → main
-├── 2. Resolve test conflicts in tests/auth/login.test.ts  
+├── 2. Resolve test conflicts in tests/auth/login.test.ts
 ├── 3. Merge feature/qa/auth-testing → main
 └── 4. Final validation and cleanup
 
@@ -186,13 +197,14 @@ git branch -d feature/qa/task-123
 git checkout main
 git merge feature/developer/auth-implementation
 # Resolve any conflicts, then:
-git merge feature/qa/auth-testing  
+git merge feature/qa/auth-testing
 npm test && git worktree remove .jcvd/worktrees/developer-auth-123
-```
+````
 
-🎯 Linear Updates:
-├── AUTH-123: Will be marked as "In Review" after merge
-└── Subtasks: Will be marked as "Done"
+🎯 Linear Updates: ├── AUTH-123: Will be marked as "In Review" after merge └──
+Subtasks: Will be marked as "Done"
+
 ```
 
 This provides **human-guided coordination** rather than automated merging, ensuring safety and control over the integration process.
+```

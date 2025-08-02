@@ -1,33 +1,26 @@
 /**
  * JCVD Export Data Format Specification
  * Comprehensive format for seamless provider migration with data integrity validation
- * 
+ *
  * This module implements the standardized ExportData format that enables zero-loss
  * migration between any two providers with complete integrity validation.
- * 
+ *
  * @version 1.0.0
  * @author JCVD Software Architect Agent
  */
 
-import crypto from 'crypto'
-import { z } from 'zod'
+import crypto from 'node:crypto';
+
+import { z } from 'zod';
+
+import type { ProviderType, EnhancedIssue, Dependency } from './types.js';
 import type {
   Project,
   Issue,
   WorkflowState,
-  IssueDependency,
   Label,
   IssueComment,
-  IssueType,
-  IssuePriority,
-  WorkflowStateType,
-  DependencyType
-} from '../database/models/schema-types.js'
-import type {
-  ProviderType,
-  EnhancedIssue,
-  Dependency
-} from './types.js'
+} from '../database/models/schema-types.js';
 
 // =============================================================================
 // Core Export Data Format
@@ -36,23 +29,23 @@ import type {
 /**
  * Export format version for schema evolution and compatibility
  */
-export const EXPORT_FORMAT_VERSION = '1.0.0'
+export const EXPORT_FORMAT_VERSION = '1.0.0';
 
 /**
  * Supported export formats
  */
-export type ExportFormat = 'json' | 'yaml' | 'compressed-json'
+export type ExportFormat = 'json' | 'yaml' | 'compressed-json';
 
 /**
  * Export compression options for large datasets
  */
 export interface CompressionOptions {
   /** Enable gzip compression */
-  enabled: boolean
+  enabled: boolean;
   /** Compression level (1-9, 9 = best compression) */
-  level: number
+  level: number;
   /** Chunk size for streaming compression */
-  chunkSize: number
+  chunkSize: number;
 }
 
 /**
@@ -60,21 +53,21 @@ export interface CompressionOptions {
  */
 export interface ExportOptions {
   /** Include issue comments in export */
-  includeComments: boolean
+  includeComments: boolean;
   /** Include historical activity data */
-  includeHistory: boolean
+  includeHistory: boolean;
   /** Include sensitive data (tokens, private fields) */
-  includeSensitiveData: boolean
+  includeSensitiveData: boolean;
   /** Export format preference */
-  format: ExportFormat
+  format: ExportFormat;
   /** Compression settings for large exports */
-  compression: CompressionOptions
+  compression: CompressionOptions;
   /** Enable streaming for large datasets */
-  enableStreaming: boolean
+  enableStreaming: boolean;
   /** Maximum memory usage for large exports (MB) */
-  maxMemoryUsage: number
+  maxMemoryUsage: number;
   /** Validate data integrity during export */
-  validateIntegrity: boolean
+  validateIntegrity: boolean;
 }
 
 /**
@@ -88,37 +81,37 @@ export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   compression: {
     enabled: false,
     level: 6,
-    chunkSize: 64 * 1024 // 64KB chunks
+    chunkSize: 64 * 1024, // 64KB chunks
   },
   enableStreaming: false,
   maxMemoryUsage: 512, // 512MB
-  validateIntegrity: true
-}
+  validateIntegrity: true,
+};
 
 /**
  * Provider information embedded in export
  */
 export interface ExportProviderInfo {
   /** Provider type identifier */
-  type: ProviderType
+  type: ProviderType;
   /** Provider version */
-  version: string
+  version: string;
   /** Provider instance ID */
-  id: string
+  id: string;
   /** Provider name */
-  name: string
+  name: string;
   /** Provider capabilities at export time */
   capabilities: {
-    supportsHierarchy: boolean
-    supportsDependencies: boolean
-    supportsEstimation: boolean
-    supportsLabels: boolean
-    supportsComments: boolean
-  }
+    supportsHierarchy: boolean;
+    supportsDependencies: boolean;
+    supportsEstimation: boolean;
+    supportsLabels: boolean;
+    supportsComments: boolean;
+  };
   /** Export timestamp */
-  exportedAt: Date
+  exportedAt: Date;
   /** Export configuration used */
-  exportOptions: ExportOptions
+  exportOptions: ExportOptions;
 }
 
 /**
@@ -126,18 +119,18 @@ export interface ExportProviderInfo {
  */
 export interface DataChecksums {
   /** Individual entity type checksums */
-  projects: string
-  issues: string
-  dependencies: string
-  workflowStates: string
-  labels: string
-  comments: string
+  projects: string;
+  issues: string;
+  dependencies: string;
+  workflowStates: string;
+  labels: string;
+  comments: string;
   /** Overall data integrity checksum */
-  overall: string
+  overall: string;
   /** Checksum algorithm used */
-  algorithm: 'sha256' | 'sha512'
+  algorithm: 'sha256' | 'sha512';
   /** Checksum generation timestamp */
-  generatedAt: Date
+  generatedAt: Date;
 }
 
 /**
@@ -145,19 +138,19 @@ export interface DataChecksums {
  */
 export interface ExportValidation {
   /** Issue hierarchy is valid */
-  issueHierarchyValid: boolean
+  issueHierarchyValid: boolean;
   /** Dependency graph has no cycles */
-  dependencyGraphValid: boolean
+  dependencyGraphValid: boolean;
   /** All foreign key constraints satisfied */
-  foreignKeyConstraintsValid: boolean
+  foreignKeyConstraintsValid: boolean;
   /** Data integrity score (0-1) */
-  dataIntegrityScore: number
+  dataIntegrityScore: number;
   /** Validation errors found */
-  validationErrors: ValidationError[]
+  validationErrors: ValidationError[];
   /** Validation warnings */
-  validationWarnings: ValidationWarning[]
+  validationWarnings: ValidationWarning[];
   /** Validation timestamp */
-  validatedAt: Date
+  validatedAt: Date;
 }
 
 /**
@@ -166,37 +159,37 @@ export interface ExportValidation {
 export interface ExportStatistics {
   /** Entity counts by type */
   entityCounts: {
-    projects: number
-    issues: number
-    epics: number
-    stories: number
-    subtasks: number
-    dependencies: number
-    workflowStates: number
-    labels: number
-    comments: number
-  }
+    projects: number;
+    issues: number;
+    epics: number;
+    stories: number;
+    subtasks: number;
+    dependencies: number;
+    workflowStates: number;
+    labels: number;
+    comments: number;
+  };
   /** Data size metrics */
   dataSizeMetrics: {
-    totalSizeBytes: number
-    compressedSizeBytes?: number
-    compressionRatio?: number
-    estimatedImportTime: number
-  }
+    totalSizeBytes: number;
+    compressedSizeBytes?: number;
+    compressionRatio?: number;
+    estimatedImportTime: number;
+  };
   /** Complexity metrics */
   complexityMetrics: {
-    maxHierarchyDepth: number
-    averageIssueComplexity: number
-    dependencyGraphComplexity: number
-    cyclomaticComplexity: number
-  }
+    maxHierarchyDepth: number;
+    averageIssueComplexity: number;
+    dependencyGraphComplexity: number;
+    cyclomaticComplexity: number;
+  };
   /** Export performance metrics */
   performanceMetrics: {
-    exportDurationMs: number
-    memoryUsageMB: number
-    diskUsageMB: number
-    compressionDurationMs?: number
-  }
+    exportDurationMs: number;
+    memoryUsageMB: number;
+    diskUsageMB: number;
+    compressionDurationMs?: number;
+  };
 }
 
 /**
@@ -204,20 +197,20 @@ export interface ExportStatistics {
  */
 export interface ExportMetadata {
   /** Export validation results */
-  validation: ExportValidation
+  validation: ExportValidation;
   /** Data integrity checksums */
-  checksums: DataChecksums
+  checksums: DataChecksums;
   /** Export statistics and metrics */
-  statistics: ExportStatistics
+  statistics: ExportStatistics;
   /** Schema compatibility information */
   compatibility: {
     /** Minimum format version required for import */
-    minFormatVersion: string
+    minFormatVersion: string;
     /** Schema evolution changes */
-    schemaChanges: string[]
+    schemaChanges: string[];
     /** Breaking changes that affect import */
-    breakingChanges: string[]
-  }
+    breakingChanges: string[];
+  };
 }
 
 /**
@@ -225,26 +218,26 @@ export interface ExportMetadata {
  */
 export interface ExportData {
   /** Export format version for compatibility */
-  version: string
+  version: string;
   /** Source provider information */
-  sourceProvider: ExportProviderInfo
-  
+  sourceProvider: ExportProviderInfo;
+
   // Core data entities
   /** All projects in the export */
-  projects: Project[]
+  projects: Project[];
   /** All issues with enhanced relationship data */
-  issues: EnhancedIssue[]
+  issues: EnhancedIssue[];
   /** All dependencies and relationships */
-  dependencies: Dependency[]
+  dependencies: Dependency[];
   /** Workflow states and configurations */
-  workflowStates: WorkflowState[]
+  workflowStates: WorkflowState[];
   /** Labels and categorization data */
-  labels: Label[]
+  labels: Label[];
   /** Comments and activity history */
-  comments: IssueComment[]
-  
+  comments: IssueComment[];
+
   /** Comprehensive export metadata */
-  metadata: ExportMetadata
+  metadata: ExportMetadata;
 }
 
 // =============================================================================
@@ -254,30 +247,35 @@ export interface ExportData {
 /**
  * Validation error severity levels
  */
-export type ValidationSeverity = 'error' | 'warning' | 'info'
+export type ValidationSeverity = 'error' | 'warning' | 'info';
 
 /**
  * Validation error details
  */
 export interface ValidationError {
   /** Error type for programmatic handling */
-  type: 'hierarchy_violation' | 'dependency_cycle' | 'foreign_key_violation' | 'data_corruption' | 'missing_required_field'
+  type:
+    | 'hierarchy_violation'
+    | 'dependency_cycle'
+    | 'foreign_key_violation'
+    | 'data_corruption'
+    | 'missing_required_field';
   /** Severity level */
-  severity: ValidationSeverity
+  severity: ValidationSeverity;
   /** Human-readable error message */
-  message: string
+  message: string;
   /** Entity type that has the error */
-  entityType: string
+  entityType: string;
   /** Entity ID with the error */
-  entityId: string
+  entityId: string;
   /** Field that has the error */
-  field?: string
+  field?: string;
   /** Expected value */
-  expectedValue?: any
+  expectedValue?: any;
   /** Actual value found */
-  actualValue?: any
+  actualValue?: any;
   /** Suggested fix */
-  suggestedFix?: string
+  suggestedFix?: string;
 }
 
 /**
@@ -285,17 +283,17 @@ export interface ValidationError {
  */
 export interface ValidationWarning {
   /** Warning type */
-  type: 'performance_concern' | 'compatibility_issue' | 'data_inconsistency' | 'deprecated_field'
+  type: 'performance_concern' | 'compatibility_issue' | 'data_inconsistency' | 'deprecated_field';
   /** Warning message */
-  message: string
+  message: string;
   /** Entity type */
-  entityType: string
+  entityType: string;
   /** Entity ID */
-  entityId?: string
+  entityId?: string;
   /** Impact level */
-  impact: 'low' | 'medium' | 'high'
+  impact: 'low' | 'medium' | 'high';
   /** Recommended action */
-  recommendation?: string
+  recommendation?: string;
 }
 
 // =============================================================================
@@ -317,7 +315,7 @@ export const ExportDataSchema = z.object({
       supportsDependencies: z.boolean(),
       supportsEstimation: z.boolean(),
       supportsLabels: z.boolean(),
-      supportsComments: z.boolean()
+      supportsComments: z.boolean(),
     }),
     exportedAt: z.date(),
     exportOptions: z.object({
@@ -328,95 +326,122 @@ export const ExportDataSchema = z.object({
       compression: z.object({
         enabled: z.boolean(),
         level: z.number().min(1).max(9),
-        chunkSize: z.number().positive()
+        chunkSize: z.number().positive(),
       }),
       enableStreaming: z.boolean(),
       maxMemoryUsage: z.number().positive(),
-      validateIntegrity: z.boolean()
-    })
+      validateIntegrity: z.boolean(),
+    }),
   }),
-  projects: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    description: z.string().optional(),
-    key: z.string().optional(),
-    created_at: z.date(),
-    updated_at: z.date()
-  })),
-  issues: z.array(z.object({
-    id: z.string(),
-    project_id: z.string(),
-    parent_id: z.string().optional(),
-    title: z.string(),
-    description: z.string().optional(),
-    state_id: z.string().optional(),
-    priority: z.number().min(0).max(4),
-    estimate: z.number().optional(),
-    issue_type: z.enum(['epic', 'story', 'subtask']),
-    assignee_id: z.string().optional(),
-    created_at: z.date(),
-    updated_at: z.date()
-  })),
-  dependencies: z.array(z.object({
-    id: z.string(),
-    blocker_id: z.string(),
-    blocked_id: z.string(),
-    dependency_type: z.enum(['blocks', 'related', 'duplicate']),
-    created_at: z.date()
-  })),
-  workflowStates: z.array(z.object({
-    id: z.string(),
-    project_id: z.string(),
-    name: z.string(),
-    type: z.enum(['backlog', 'unstarted', 'started', 'completed', 'canceled']),
-    position: z.number(),
-    color: z.string(),
-    created_at: z.date(),
-    updated_at: z.date()
-  })),
-  labels: z.array(z.object({
-    id: z.string(),
-    project_id: z.string(),
-    name: z.string(),
-    color: z.string(),
-    description: z.string().optional(),
-    created_at: z.date(),
-    updated_at: z.date()
-  })),
-  comments: z.array(z.object({
-    id: z.string(),
-    issue_id: z.string(),
-    body: z.string(),
-    author_id: z.string().optional(),
-    created_at: z.date(),
-    updated_at: z.date()
-  })),
+  projects: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      description: z.string().optional(),
+      key: z.string().optional(),
+      created_at: z.date(),
+      updated_at: z.date(),
+    })
+  ),
+  issues: z.array(
+    z.object({
+      id: z.string(),
+      project_id: z.string(),
+      parent_id: z.string().optional(),
+      title: z.string(),
+      description: z.string().optional(),
+      state_id: z.string().optional(),
+      priority: z.number().min(0).max(4),
+      estimate: z.number().optional(),
+      issue_type: z.enum(['epic', 'story', 'subtask']),
+      assignee_id: z.string().optional(),
+      created_at: z.date(),
+      updated_at: z.date(),
+    })
+  ),
+  dependencies: z.array(
+    z.object({
+      id: z.string(),
+      blocker_id: z.string(),
+      blocked_id: z.string(),
+      dependency_type: z.enum(['blocks', 'related', 'duplicate']),
+      created_at: z.date(),
+    })
+  ),
+  workflowStates: z.array(
+    z.object({
+      id: z.string(),
+      project_id: z.string(),
+      name: z.string(),
+      type: z.enum(['backlog', 'unstarted', 'started', 'completed', 'canceled']),
+      position: z.number(),
+      color: z.string(),
+      created_at: z.date(),
+      updated_at: z.date(),
+    })
+  ),
+  labels: z.array(
+    z.object({
+      id: z.string(),
+      project_id: z.string(),
+      name: z.string(),
+      color: z.string(),
+      description: z.string().optional(),
+      created_at: z.date(),
+      updated_at: z.date(),
+    })
+  ),
+  comments: z.array(
+    z.object({
+      id: z.string(),
+      issue_id: z.string(),
+      body: z.string(),
+      author_id: z.string().optional(),
+      created_at: z.date(),
+      updated_at: z.date(),
+    })
+  ),
   metadata: z.object({
     validation: z.object({
       issueHierarchyValid: z.boolean(),
       dependencyGraphValid: z.boolean(),
       foreignKeyConstraintsValid: z.boolean(),
       dataIntegrityScore: z.number().min(0).max(1),
-      validationErrors: z.array(z.object({
-        type: z.enum(['hierarchy_violation', 'dependency_cycle', 'foreign_key_violation', 'data_corruption', 'missing_required_field']),
-        severity: z.enum(['error', 'warning', 'info']),
-        message: z.string(),
-        entityType: z.string(),
-        entityId: z.string(),
-        field: z.string().optional(),
-        expectedValue: z.any().optional(),
-        actualValue: z.any().optional(),
-        suggestedFix: z.string().optional()
-      })),
-      validationWarnings: z.array(z.object({
-        type: z.enum(['performance_concern', 'compatibility_issue', 'data_inconsistency', 'deprecated_field']),
-        message: z.string(),
-        entityType: z.string(),
-        entityId: z.string().optional(),
-        impact: z.enum(['low', 'medium', 'high']),
-        recommendation: z.string().optional()
-      })),
-      validatedAt: z.date()
+      validationErrors: z.array(
+        z.object({
+          type: z.enum([
+            'hierarchy_violation',
+            'dependency_cycle',
+            'foreign_key_violation',
+            'data_corruption',
+            'missing_required_field',
+          ]),
+          severity: z.enum(['error', 'warning', 'info']),
+          message: z.string(),
+          entityType: z.string(),
+          entityId: z.string(),
+          field: z.string().optional(),
+          expectedValue: z.any().optional(),
+          actualValue: z.any().optional(),
+          suggestedFix: z.string().optional(),
+        })
+      ),
+      validationWarnings: z.array(
+        z.object({
+          type: z.enum([
+            'performance_concern',
+            'compatibility_issue',
+            'data_inconsistency',
+            'deprecated_field',
+          ]),
+          message: z.string(),
+          entityType: z.string(),
+          entityId: z.string().optional(),
+          impact: z.enum(['low', 'medium', 'high']),
+          recommendation: z.string().optional(),
+        })
+      ),
+      validatedAt: z.date(),
     }),
     checksums: z.object({
       projects: z.string(),
@@ -427,7 +452,7 @@ export const ExportDataSchema = z.object({
       comments: z.string(),
       overall: z.string(),
       algorithm: z.enum(['sha256', 'sha512']),
-      generatedAt: z.date()
+      generatedAt: z.date(),
     }),
     statistics: z.object({
       entityCounts: z.object({
@@ -439,34 +464,34 @@ export const ExportDataSchema = z.object({
         dependencies: z.number().nonnegative(),
         workflowStates: z.number().nonnegative(),
         labels: z.number().nonnegative(),
-        comments: z.number().nonnegative()
+        comments: z.number().nonnegative(),
       }),
       dataSizeMetrics: z.object({
         totalSizeBytes: z.number().nonnegative(),
         compressedSizeBytes: z.number().nonnegative().optional(),
         compressionRatio: z.number().positive().optional(),
-        estimatedImportTime: z.number().nonnegative()
+        estimatedImportTime: z.number().nonnegative(),
       }),
       complexityMetrics: z.object({
         maxHierarchyDepth: z.number().nonnegative(),
         averageIssueComplexity: z.number().nonnegative(),
         dependencyGraphComplexity: z.number().nonnegative(),
-        cyclomaticComplexity: z.number().nonnegative()
+        cyclomaticComplexity: z.number().nonnegative(),
       }),
       performanceMetrics: z.object({
         exportDurationMs: z.number().nonnegative(),
         memoryUsageMB: z.number().nonnegative(),
         diskUsageMB: z.number().nonnegative(),
-        compressionDurationMs: z.number().nonnegative().optional()
-      })
+        compressionDurationMs: z.number().nonnegative().optional(),
+      }),
     }),
     compatibility: z.object({
       minFormatVersion: z.string(),
       schemaChanges: z.array(z.string()),
-      breakingChanges: z.array(z.string())
-    })
-  })
-})
+      breakingChanges: z.array(z.string()),
+    }),
+  }),
+});
 
 // =============================================================================
 // Data Integrity and Validation Utilities
@@ -476,18 +501,20 @@ export const ExportDataSchema = z.object({
  * Calculate SHA-256 checksum for data integrity verification
  */
 export function calculateChecksum(data: any, algorithm: 'sha256' | 'sha512' = 'sha256'): string {
-  const hash = crypto.createHash(algorithm)
-  hash.update(JSON.stringify(data, Object.keys(data).sort()))
-  return hash.digest('hex')
+  const hash = crypto.createHash(algorithm);
+
+  hash.update(JSON.stringify(data, Object.keys(data).sort()));
+
+  return hash.digest('hex');
 }
 
 /**
  * Generate checksums for all data sections
  */
 export function generateDataChecksums(exportData: Omit<ExportData, 'metadata'>): DataChecksums {
-  const generatedAt = new Date()
-  const algorithm = 'sha256'
-  
+  const generatedAt = new Date();
+  const algorithm = 'sha256';
+
   return {
     projects: calculateChecksum(exportData.projects, algorithm),
     issues: calculateChecksum(exportData.issues, algorithm),
@@ -495,35 +522,40 @@ export function generateDataChecksums(exportData: Omit<ExportData, 'metadata'>):
     workflowStates: calculateChecksum(exportData.workflowStates, algorithm),
     labels: calculateChecksum(exportData.labels, algorithm),
     comments: calculateChecksum(exportData.comments, algorithm),
-    overall: calculateChecksum({
-      projects: exportData.projects,
-      issues: exportData.issues,
-      dependencies: exportData.dependencies,
-      workflowStates: exportData.workflowStates,
-      labels: exportData.labels,
-      comments: exportData.comments
-    }, algorithm),
+    overall: calculateChecksum(
+      {
+        projects: exportData.projects,
+        issues: exportData.issues,
+        dependencies: exportData.dependencies,
+        workflowStates: exportData.workflowStates,
+        labels: exportData.labels,
+        comments: exportData.comments,
+      },
+      algorithm
+    ),
     algorithm,
-    generatedAt
-  }
+    generatedAt,
+  };
 }
 
 /**
  * Verify data integrity using checksums
  */
 export function verifyDataIntegrity(exportData: ExportData): boolean {
-  const coreData = {
+  const coreData: Omit<ExportData, 'metadata'> = {
+    version: exportData.version,
+    sourceProvider: exportData.sourceProvider,
     projects: exportData.projects,
     issues: exportData.issues,
     dependencies: exportData.dependencies,
     workflowStates: exportData.workflowStates,
     labels: exportData.labels,
-    comments: exportData.comments
-  }
-  
-  const currentChecksums = generateDataChecksums(coreData)
-  const storedChecksums = exportData.metadata.checksums
-  
+    comments: exportData.comments,
+  };
+
+  const currentChecksums = generateDataChecksums(coreData);
+  const storedChecksums = exportData.metadata.checksums;
+
   return (
     currentChecksums.projects === storedChecksums.projects &&
     currentChecksums.issues === storedChecksums.issues &&
@@ -532,16 +564,16 @@ export function verifyDataIntegrity(exportData: ExportData): boolean {
     currentChecksums.labels === storedChecksums.labels &&
     currentChecksums.comments === storedChecksums.comments &&
     currentChecksums.overall === storedChecksums.overall
-  )
+  );
 }
 
 /**
  * Validate issue hierarchy constraints
  */
 export function validateIssueHierarchy(issues: Issue[]): ValidationError[] {
-  const errors: ValidationError[] = []
-  const issueMap = new Map(issues.map(issue => [issue.id, issue]))
-  
+  const errors: ValidationError[] = [];
+  const issueMap = new Map(issues.map(issue => [issue.id, issue]));
+
   for (const issue of issues) {
     // Validate hierarchy rules
     switch (issue.issue_type) {
@@ -556,14 +588,15 @@ export function validateIssueHierarchy(issues: Issue[]): ValidationError[] {
             field: 'parent_id',
             actualValue: issue.parent_id,
             expectedValue: null,
-            suggestedFix: 'Remove parent_id or change issue_type'
-          })
+            suggestedFix: 'Remove parent_id or change issue_type',
+          });
         }
-        break
-        
+        break;
+
       case 'story':
         if (issue.parent_id) {
-          const parent = issueMap.get(issue.parent_id)
+          const parent = issueMap.get(issue.parent_id);
+
           if (!parent) {
             errors.push({
               type: 'foreign_key_violation',
@@ -573,8 +606,8 @@ export function validateIssueHierarchy(issues: Issue[]): ValidationError[] {
               entityId: issue.id,
               field: 'parent_id',
               actualValue: issue.parent_id,
-              suggestedFix: 'Remove parent_id or create missing parent issue'
-            })
+              suggestedFix: 'Remove parent_id or create missing parent issue',
+            });
           } else if (parent.issue_type !== 'epic') {
             errors.push({
               type: 'hierarchy_violation',
@@ -585,12 +618,12 @@ export function validateIssueHierarchy(issues: Issue[]): ValidationError[] {
               field: 'parent_id',
               actualValue: parent.issue_type,
               expectedValue: 'epic',
-              suggestedFix: 'Change parent to epic or make this issue an epic'
-            })
+              suggestedFix: 'Change parent to epic or make this issue an epic',
+            });
           }
         }
-        break
-        
+        break;
+
       case 'subtask':
         if (!issue.parent_id) {
           errors.push({
@@ -602,10 +635,11 @@ export function validateIssueHierarchy(issues: Issue[]): ValidationError[] {
             field: 'parent_id',
             actualValue: null,
             expectedValue: 'string',
-            suggestedFix: 'Add parent_id or change issue_type to story'
-          })
+            suggestedFix: 'Add parent_id or change issue_type to story',
+          });
         } else {
-          const parent = issueMap.get(issue.parent_id)
+          const parent = issueMap.get(issue.parent_id);
+
           if (!parent) {
             errors.push({
               type: 'foreign_key_violation',
@@ -615,8 +649,8 @@ export function validateIssueHierarchy(issues: Issue[]): ValidationError[] {
               entityId: issue.id,
               field: 'parent_id',
               actualValue: issue.parent_id,
-              suggestedFix: 'Create missing parent issue or change parent_id'
-            })
+              suggestedFix: 'Create missing parent issue or change parent_id',
+            });
           } else if (parent.issue_type !== 'story') {
             errors.push({
               type: 'hierarchy_violation',
@@ -627,78 +661,95 @@ export function validateIssueHierarchy(issues: Issue[]): ValidationError[] {
               field: 'parent_id',
               actualValue: parent.issue_type,
               expectedValue: 'story',
-              suggestedFix: 'Change parent to story or make this issue a story'
-            })
+              suggestedFix: 'Change parent to story or make this issue a story',
+            });
           }
         }
-        break
+        break;
     }
   }
-  
-  return errors
+
+  return errors;
 }
 
 /**
  * Detect circular dependencies in dependency graph
  */
 export function detectCircularDependencies(dependencies: Dependency[]): string[][] {
-  const graph = new Map<string, string[]>()
-  const circularPaths: string[][] = []
-  
+  const graph = new Map<string, string[]>();
+  const circularPaths: string[][] = [];
+
   // Build adjacency list
   for (const dep of dependencies) {
-    if (!graph.has(dep.blocker.id)) {
-      graph.set(dep.blocker.id, [])
+    if (dep.blocker && dep.blocked) {
+      if (!graph.has(dep.blocker.id)) {
+        graph.set(dep.blocker.id, []);
+      }
+      graph.get(dep.blocker.id)!.push(dep.blocked.id);
     }
-    graph.get(dep.blocker.id)!.push(dep.blocked.id)
   }
-  
+
   // DFS to detect cycles
-  const visited = new Set<string>()
-  const recursionStack = new Set<string>()
-  
+  const visited = new Set<string>();
+  const recursionStack = new Set<string>();
+
   function dfs(node: string, path: string[]): void {
-    visited.add(node)
-    recursionStack.add(node)
-    path.push(node)
-    
-    const neighbors = graph.get(node) || []
+    visited.add(node);
+    recursionStack.add(node);
+    path.push(node);
+
+    const neighbors = graph.get(node) || [];
+
     for (const neighbor of neighbors) {
       if (!visited.has(neighbor)) {
-        dfs(neighbor, [...path])
+        dfs(neighbor, [...path]);
       } else if (recursionStack.has(neighbor)) {
         // Found cycle - extract the circular path
-        const cycleStart = path.indexOf(neighbor)
-        const cyclePath = path.slice(cycleStart).concat([neighbor])
-        circularPaths.push(cyclePath)
+        const cycleStart = path.indexOf(neighbor);
+        const cyclePath = path.slice(cycleStart).concat([neighbor]);
+
+        circularPaths.push(cyclePath);
       }
     }
-    
-    recursionStack.delete(node)
+
+    recursionStack.delete(node);
   }
-  
+
   // Check all nodes for cycles
   for (const [node] of graph) {
     if (!visited.has(node)) {
-      dfs(node, [])
+      dfs(node, []);
     }
   }
-  
-  return circularPaths
+
+  return circularPaths;
 }
 
 /**
  * Validate dependency graph integrity
  */
 export function validateDependencyGraph(
-  issues: Issue[], 
+  issues: Issue[],
   dependencies: Dependency[]
 ): ValidationError[] {
-  const errors: ValidationError[] = []
-  const issueIds = new Set(issues.map(issue => issue.id))
-  
+  const errors: ValidationError[] = [];
+  const issueIds = new Set(issues.map(issue => issue.id));
+
   // Check foreign key constraints and self-dependencies
   for (const dependency of dependencies) {
+    if (!dependency.blocker || !dependency.blocked) {
+      errors.push({
+        type: 'missing_required_field',
+        severity: 'error',
+        message: 'Dependency missing required blocker or blocked reference',
+        entityType: 'dependency',
+        entityId: dependency.id,
+        field: 'blocker_id/blocked_id',
+        suggestedFix: 'Remove incomplete dependency',
+      });
+      continue;
+    }
+
     // Check for self-dependencies first
     if (dependency.blocker.id === dependency.blocked.id) {
       errors.push({
@@ -710,11 +761,11 @@ export function validateDependencyGraph(
         field: 'blocked_id',
         actualValue: dependency.blocked.id,
         expectedValue: 'different issue id',
-        suggestedFix: 'Remove self-dependency'
-      })
-      continue // Skip foreign key checks for self-dependencies
+        suggestedFix: 'Remove self-dependency',
+      });
+      continue; // Skip foreign key checks for self-dependencies
     }
-    
+
     if (!issueIds.has(dependency.blocker.id)) {
       errors.push({
         type: 'foreign_key_violation',
@@ -724,10 +775,10 @@ export function validateDependencyGraph(
         entityId: dependency.id,
         field: 'blocker_id',
         actualValue: dependency.blocker.id,
-        suggestedFix: 'Remove dependency or create missing issue'
-      })
+        suggestedFix: 'Remove dependency or create missing issue',
+      });
     }
-    
+
     if (!issueIds.has(dependency.blocked.id)) {
       errors.push({
         type: 'foreign_key_violation',
@@ -737,26 +788,28 @@ export function validateDependencyGraph(
         entityId: dependency.id,
         field: 'blocked_id',
         actualValue: dependency.blocked.id,
-        suggestedFix: 'Remove dependency or create missing issue'
-      })
+        suggestedFix: 'Remove dependency or create missing issue',
+      });
     }
   }
-  
+
   // Check for circular dependencies
-  const circularPaths = detectCircularDependencies(dependencies)
+  const circularPaths = detectCircularDependencies(dependencies);
+
   for (const path of circularPaths) {
-    const pathStr = path.join(' -> ')
+    const pathStr = path.join(' -> ');
+
     errors.push({
       type: 'dependency_cycle',
       severity: 'error',
       message: `Circular dependency detected: ${pathStr}`,
       entityType: 'dependency',
       entityId: `cycle-${path[0]}`,
-      suggestedFix: 'Remove one of the dependencies in the cycle'
-    })
+      suggestedFix: 'Remove one of the dependencies in the cycle',
+    });
   }
-  
-  return errors
+
+  return errors;
 }
 
 /**
@@ -767,15 +820,21 @@ export function calculateExportStatistics(
   exportDurationMs: number,
   memoryUsageMB: number
 ): ExportStatistics {
-  const issueTypeCounts = exportData.issues.reduce((counts, issue) => {
-    counts[issue.issue_type]++
-    return counts
-  }, { epic: 0, story: 0, subtask: 0 })
-  
-  const totalSizeBytes = JSON.stringify(exportData).length
-  const maxHierarchyDepth = calculateMaxHierarchyDepth(exportData.issues)
-  const dependencyGraphComplexity = calculateDependencyComplexity(exportData.dependencies)
-  
+  const issueTypeCounts = exportData.issues.reduce(
+    (counts, issue) => {
+      if (issue.issue_type in counts) {
+        counts[issue.issue_type as keyof typeof counts]++;
+      }
+
+      return counts;
+    },
+    { epic: 0, story: 0, subtask: 0 }
+  );
+
+  const totalSizeBytes = JSON.stringify(exportData).length;
+  const maxHierarchyDepth = calculateMaxHierarchyDepth(exportData.issues);
+  const dependencyGraphComplexity = calculateDependencyComplexity(exportData.dependencies);
+
   return {
     entityCounts: {
       projects: exportData.projects.length,
@@ -786,156 +845,168 @@ export function calculateExportStatistics(
       dependencies: exportData.dependencies.length,
       workflowStates: exportData.workflowStates.length,
       labels: exportData.labels.length,
-      comments: exportData.comments.length
+      comments: exportData.comments.length,
     },
     dataSizeMetrics: {
       totalSizeBytes,
-      estimatedImportTime: Math.max(1000, totalSizeBytes / 1000) // Rough estimate: 1ms per KB
+      estimatedImportTime: Math.max(1000, totalSizeBytes / 1000), // Rough estimate: 1ms per KB
     },
     complexityMetrics: {
       maxHierarchyDepth,
       averageIssueComplexity: calculateAverageIssueComplexity(exportData.issues),
       dependencyGraphComplexity,
-      cyclomaticComplexity: dependencyGraphComplexity + maxHierarchyDepth
+      cyclomaticComplexity: dependencyGraphComplexity + maxHierarchyDepth,
     },
     performanceMetrics: {
       exportDurationMs,
       memoryUsageMB,
-      diskUsageMB: totalSizeBytes / (1024 * 1024)
-    }
-  }
+      diskUsageMB: totalSizeBytes / (1024 * 1024),
+    },
+  };
 }
 
 /**
  * Calculate maximum hierarchy depth
  */
 function calculateMaxHierarchyDepth(issues: Issue[]): number {
-  const issueMap = new Map(issues.map(issue => [issue.id, issue]))
-  let maxDepth = 0
-  
+  const issueMap = new Map(issues.map(issue => [issue.id, issue]));
+  let maxDepth = 0;
+
   function getDepth(issueId: string, visited = new Set<string>()): number {
-    if (visited.has(issueId)) return 0 // Prevent infinite recursion
-    visited.add(issueId)
-    
-    const issue = issueMap.get(issueId)
-    if (!issue || !issue.parent_id) return 1
-    
-    return 1 + getDepth(issue.parent_id, visited)
+    if (visited.has(issueId)) return 0; // Prevent infinite recursion
+    visited.add(issueId);
+
+    const issue = issueMap.get(issueId);
+
+    if (!issue?.parent_id) return 1;
+
+    return 1 + getDepth(issue.parent_id, visited);
   }
-  
+
   for (const issue of issues) {
-    const depth = getDepth(issue.id)
-    maxDepth = Math.max(maxDepth, depth)
+    const depth = getDepth(issue.id);
+
+    maxDepth = Math.max(maxDepth, depth);
   }
-  
-  return maxDepth
+
+  return maxDepth;
 }
 
 /**
  * Calculate average issue complexity based on relationships and content
  */
 function calculateAverageIssueComplexity(issues: Issue[]): number {
-  if (issues.length === 0) return 0
-  
+  if (issues.length === 0) return 0;
+
   const totalComplexity = issues.reduce((sum, issue) => {
-    let complexity = 1 // Base complexity
-    
+    let complexity = 1; // Base complexity
+
     // Add complexity for description length
     if (issue.description) {
-      complexity += Math.min(2, issue.description.length / 500)
+      complexity += Math.min(2, issue.description.length / 500);
     }
-    
+
     // Add complexity for estimates
     if (issue.estimate) {
-      complexity += issue.estimate / 10
+      complexity += issue.estimate / 10;
     }
-    
+
     // Add complexity for hierarchy
-    if (issue.parent_id) complexity += 0.5
-    
-    return sum + complexity
-  }, 0)
-  
-  return totalComplexity / issues.length
+    if (issue.parent_id) complexity += 0.5;
+
+    return sum + complexity;
+  }, 0);
+
+  return totalComplexity / issues.length;
 }
 
 /**
  * Calculate dependency graph complexity
  */
 function calculateDependencyComplexity(dependencies: Dependency[]): number {
-  if (dependencies.length === 0) return 0
-  
+  if (dependencies.length === 0) return 0;
+
   // Build adjacency lists
-  const outgoing = new Map<string, number>()
-  const incoming = new Map<string, number>()
-  
+  const outgoing = new Map<string, number>();
+  const incoming = new Map<string, number>();
+
   for (const dep of dependencies) {
-    outgoing.set(dep.blocker.id, (outgoing.get(dep.blocker.id) || 0) + 1)
-    incoming.set(dep.blocked.id, (incoming.get(dep.blocked.id) || 0) + 1)
+    if (dep.blocker && dep.blocked) {
+      outgoing.set(dep.blocker.id, (outgoing.get(dep.blocker.id) || 0) + 1);
+      incoming.set(dep.blocked.id, (incoming.get(dep.blocked.id) || 0) + 1);
+    }
   }
-  
+
   // Calculate complexity as sum of node degrees
-  const nodes = new Set([...outgoing.keys(), ...incoming.keys()])
-  let totalDegree = 0
-  
+  const nodes = new Set([...outgoing.keys(), ...incoming.keys()]);
+  let totalDegree = 0;
+
   for (const node of nodes) {
-    const outDegree = outgoing.get(node) || 0
-    const inDegree = incoming.get(node) || 0
-    totalDegree += outDegree + inDegree
+    const outDegree = outgoing.get(node) || 0;
+    const inDegree = incoming.get(node) || 0;
+
+    totalDegree += outDegree + inDegree;
   }
-  
-  return nodes.size > 0 ? totalDegree / nodes.size : 0
+
+  return nodes.size > 0 ? totalDegree / nodes.size : 0;
 }
 
 /**
  * Perform comprehensive validation of export data
  */
 export function validateExportData(exportData: Omit<ExportData, 'metadata'>): ExportValidation {
-  const validationErrors: ValidationError[] = []
-  const validationWarnings: ValidationWarning[] = []
-  
+  const validationErrors: ValidationError[] = [];
+  const validationWarnings: ValidationWarning[] = [];
+
   // Validate issue hierarchy
-  const hierarchyErrors = validateIssueHierarchy(exportData.issues)
-  validationErrors.push(...hierarchyErrors)
-  
+  const hierarchyErrors = validateIssueHierarchy(exportData.issues);
+
+  validationErrors.push(...hierarchyErrors);
+
   // Validate dependency graph
-  const dependencyErrors = validateDependencyGraph(exportData.issues, exportData.dependencies)
-  validationErrors.push(...dependencyErrors)
-  
+  const dependencyErrors = validateDependencyGraph(exportData.issues, exportData.dependencies);
+
+  validationErrors.push(...dependencyErrors);
+
   // Validate foreign key constraints
-  const fkErrors = validateForeignKeyConstraints(exportData)
-  validationErrors.push(...fkErrors)
-  
+  const fkErrors = validateForeignKeyConstraints(exportData);
+
+  validationErrors.push(...fkErrors);
+
   // Generate warnings for performance concerns
-  const performanceWarnings = generatePerformanceWarnings(exportData)
-  validationWarnings.push(...performanceWarnings)
-  
+  const performanceWarnings = generatePerformanceWarnings(exportData);
+
+  validationWarnings.push(...performanceWarnings);
+
   // Calculate data integrity score
-  const totalChecks = validationErrors.length + validationWarnings.length + 10 // Base checks
-  const failedChecks = validationErrors.filter(e => e.severity === 'error').length
-  const dataIntegrityScore = Math.max(0, (totalChecks - failedChecks) / totalChecks)
-  
+  const totalChecks = validationErrors.length + validationWarnings.length + 10; // Base checks
+  const failedChecks = validationErrors.filter(e => e.severity === 'error').length;
+  const dataIntegrityScore = Math.max(0, (totalChecks - failedChecks) / totalChecks);
+
   return {
     issueHierarchyValid: hierarchyErrors.length === 0,
     dependencyGraphValid: dependencyErrors.length === 0,
-    foreignKeyConstraintsValid: validationErrors.filter(e => e.type === 'foreign_key_violation').length === 0,
+    foreignKeyConstraintsValid:
+      validationErrors.filter(e => e.type === 'foreign_key_violation').length === 0,
     dataIntegrityScore,
     validationErrors,
     validationWarnings,
-    validatedAt: new Date()
-  }
+    validatedAt: new Date(),
+  };
 }
 
 /**
  * Validate foreign key constraints across all entities
  */
-function validateForeignKeyConstraints(exportData: Omit<ExportData, 'metadata'>): ValidationError[] {
-  const errors: ValidationError[] = []
-  const projectIds = new Set(exportData.projects.map(p => p.id))
-  const issueIds = new Set(exportData.issues.map(i => i.id))
-  const stateIds = new Set(exportData.workflowStates.map(s => s.id))
-  const labelIds = new Set(exportData.labels.map(l => l.id))
-  
+function validateForeignKeyConstraints(
+  exportData: Omit<ExportData, 'metadata'>
+): ValidationError[] {
+  const errors: ValidationError[] = [];
+  const projectIds = new Set(exportData.projects.map(p => p.id));
+  const issueIds = new Set(exportData.issues.map(i => i.id));
+  const stateIds = new Set(exportData.workflowStates.map(s => s.id));
+  // Label validation could be added here if needed
+
   // Validate issue foreign keys
   for (const issue of exportData.issues) {
     if (!projectIds.has(issue.project_id)) {
@@ -947,10 +1018,10 @@ function validateForeignKeyConstraints(exportData: Omit<ExportData, 'metadata'>)
         entityId: issue.id,
         field: 'project_id',
         actualValue: issue.project_id,
-        suggestedFix: 'Create missing project or fix project_id'
-      })
+        suggestedFix: 'Create missing project or fix project_id',
+      });
     }
-    
+
     if (issue.state_id && !stateIds.has(issue.state_id)) {
       errors.push({
         type: 'foreign_key_violation',
@@ -960,11 +1031,11 @@ function validateForeignKeyConstraints(exportData: Omit<ExportData, 'metadata'>)
         entityId: issue.id,
         field: 'state_id',
         actualValue: issue.state_id,
-        suggestedFix: 'Create missing workflow state or fix state_id'
-      })
+        suggestedFix: 'Create missing workflow state or fix state_id',
+      });
     }
   }
-  
+
   // Validate workflow state foreign keys
   for (const state of exportData.workflowStates) {
     if (!projectIds.has(state.project_id)) {
@@ -976,11 +1047,11 @@ function validateForeignKeyConstraints(exportData: Omit<ExportData, 'metadata'>)
         entityId: state.id,
         field: 'project_id',
         actualValue: state.project_id,
-        suggestedFix: 'Create missing project or fix project_id'
-      })
+        suggestedFix: 'Create missing project or fix project_id',
+      });
     }
   }
-  
+
   // Validate label foreign keys
   for (const label of exportData.labels) {
     if (!projectIds.has(label.project_id)) {
@@ -992,11 +1063,11 @@ function validateForeignKeyConstraints(exportData: Omit<ExportData, 'metadata'>)
         entityId: label.id,
         field: 'project_id',
         actualValue: label.project_id,
-        suggestedFix: 'Create missing project or fix project_id'
-      })
+        suggestedFix: 'Create missing project or fix project_id',
+      });
     }
   }
-  
+
   // Validate comment foreign keys
   for (const comment of exportData.comments) {
     if (!issueIds.has(comment.issue_id)) {
@@ -1008,64 +1079,67 @@ function validateForeignKeyConstraints(exportData: Omit<ExportData, 'metadata'>)
         entityId: comment.id,
         field: 'issue_id',
         actualValue: comment.issue_id,
-        suggestedFix: 'Create missing issue or fix issue_id'
-      })
+        suggestedFix: 'Create missing issue or fix issue_id',
+      });
     }
   }
-  
-  return errors
+
+  return errors;
 }
 
 /**
  * Generate performance warnings for large datasets
  */
-function generatePerformanceWarnings(exportData: Omit<ExportData, 'metadata'>): ValidationWarning[] {
-  const warnings: ValidationWarning[] = []
-  
+function generatePerformanceWarnings(
+  exportData: Omit<ExportData, 'metadata'>
+): ValidationWarning[] {
+  const warnings: ValidationWarning[] = [];
+
   // Check for large dataset warnings
-  if (exportData.issues.length > 10000) {
+  if (exportData.issues.length > 10_000) {
     warnings.push({
       type: 'performance_concern',
       message: 'Large number of issues may impact import performance',
       entityType: 'issue',
       impact: 'medium',
-      recommendation: 'Consider splitting into multiple exports or enabling compression'
-    })
+      recommendation: 'Consider splitting into multiple exports or enabling compression',
+    });
   }
-  
+
   if (exportData.dependencies.length > 5000) {
     warnings.push({
       type: 'performance_concern',
       message: 'Large number of dependencies may slow dependency analysis',
       entityType: 'dependency',
       impact: 'medium',
-      recommendation: 'Review dependency graph for optimization opportunities'
-    })
+      recommendation: 'Review dependency graph for optimization opportunities',
+    });
   }
-  
-  if (exportData.comments.length > 50000) {
+
+  if (exportData.comments.length > 50_000) {
     warnings.push({
       type: 'performance_concern',
       message: 'Large number of comments will increase import time significantly',
       entityType: 'comment',
       impact: 'high',
-      recommendation: 'Consider excluding comments or filtering by date range'
-    })
+      recommendation: 'Consider excluding comments or filtering by date range',
+    });
   }
-  
+
   // Check for complexity warnings
-  const maxDepth = calculateMaxHierarchyDepth(exportData.issues)
+  const maxDepth = calculateMaxHierarchyDepth(exportData.issues);
+
   if (maxDepth > 5) {
     warnings.push({
       type: 'performance_concern',
       message: 'Deep issue hierarchy may impact UI performance',
       entityType: 'issue',
       impact: 'low',
-      recommendation: 'Consider flattening hierarchy or limiting depth'
-    })
+      recommendation: 'Consider flattening hierarchy or limiting depth',
+    });
   }
-  
-  return warnings
+
+  return warnings;
 }
 
 // =============================================================================
@@ -1086,27 +1160,27 @@ export function createExportData(
   exportDurationMs: number,
   memoryUsageMB: number
 ): ExportData {
-  const coreData = {
+  const coreData: Omit<ExportData, 'metadata'> = {
+    version: EXPORT_FORMAT_VERSION,
+    sourceProvider,
     projects,
     issues,
     dependencies,
     workflowStates,
     labels,
-    comments
-  }
-  
+    comments,
+  };
+
   // Generate validation metadata
-  const validation = validateExportData(coreData)
-  
+  const validation = validateExportData(coreData);
+
   // Generate data checksums
-  const checksums = generateDataChecksums(coreData)
-  
+  const checksums = generateDataChecksums(coreData);
+
   // Calculate statistics
-  const statistics = calculateExportStatistics(coreData, exportDurationMs, memoryUsageMB)
-  
+  const statistics = calculateExportStatistics(coreData, exportDurationMs, memoryUsageMB);
+
   return {
-    version: EXPORT_FORMAT_VERSION,
-    sourceProvider,
     ...coreData,
     metadata: {
       validation,
@@ -1115,37 +1189,43 @@ export function createExportData(
       compatibility: {
         minFormatVersion: '1.0.0',
         schemaChanges: [],
-        breakingChanges: []
-      }
-    }
-  }
+        breakingChanges: [],
+      },
+    },
+  };
 }
 
 /**
  * Serialize export data to JSON with optional compression
  */
 export function serializeExportData(
-  exportData: ExportData, 
-  options: Pick<ExportOptions, 'format' | 'compression'> = { format: 'json', compression: { enabled: false, level: 6, chunkSize: 64 * 1024 } }
+  exportData: ExportData,
+  options: Pick<ExportOptions, 'format' | 'compression'> = {
+    format: 'json',
+    compression: { enabled: false, level: 6, chunkSize: 64 * 1024 },
+  }
 ): string | Buffer {
   switch (options.format) {
     case 'json':
-      return JSON.stringify(exportData, null, 2)
-    
+      return JSON.stringify(exportData, null, 2);
+
     case 'compressed-json':
-      const jsonString = JSON.stringify(exportData)
+      const jsonString = JSON.stringify(exportData);
+
       if (options.compression.enabled) {
-        const zlib = require('zlib')
-        return zlib.gzipSync(jsonString, { level: options.compression.level })
+        const zlib = require('node:zlib');
+
+        return zlib.gzipSync(jsonString, { level: options.compression.level });
       }
-      return jsonString
-    
+
+      return jsonString;
+
     case 'yaml':
       // YAML serialization would go here
-      throw new Error('YAML format not yet implemented')
-    
+      throw new Error('YAML format not yet implemented');
+
     default:
-      throw new Error(`Unsupported export format: ${options.format}`)
+      throw new Error(`Unsupported export format: ${options.format}`);
   }
 }
 
@@ -1153,55 +1233,59 @@ export function serializeExportData(
  * Deserialize export data from JSON with validation
  */
 export function deserializeExportData(data: string | Buffer): ExportData {
-  let jsonString: string
-  
+  let jsonString: string;
+
   if (Buffer.isBuffer(data)) {
     // Try to decompress if it's a buffer
     try {
-      const zlib = require('zlib')
-      jsonString = zlib.gunzipSync(data).toString()
+      const zlib = require('node:zlib');
+
+      jsonString = zlib.gunzipSync(data).toString();
     } catch {
-      jsonString = data.toString()
+      jsonString = data.toString();
     }
   } else {
-    jsonString = data
+    jsonString = data;
   }
-  
-  const parsed = JSON.parse(jsonString)
-  
+
+  const parsed = JSON.parse(jsonString);
+
   // Convert date strings back to Date objects
   const convertDates = (obj: any): any => {
-    if (obj === null || typeof obj !== 'object') return obj
-    
+    if (obj === null || typeof obj !== 'object') return obj;
+
     if (Array.isArray(obj)) {
-      return obj.map(convertDates)
+      return obj.map(convertDates);
     }
-    
-    const result: any = {}
+
+    const result: any = {};
+
     for (const [key, value] of Object.entries(obj)) {
       if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
-        result[key] = new Date(value)
+        result[key] = new Date(value);
       } else if (typeof value === 'object') {
-        result[key] = convertDates(value)
+        result[key] = convertDates(value);
       } else {
-        result[key] = value
+        result[key] = value;
       }
     }
-    return result
-  }
-  
-  const exportData = convertDates(parsed) as ExportData
-  
+
+    return result;
+  };
+
+  const exportData = convertDates(parsed) as ExportData;
+
   // Validate the deserialized data
-  const validationResult = ExportDataSchema.safeParse(exportData)
+  const validationResult = ExportDataSchema.safeParse(exportData);
+
   if (!validationResult.success) {
-    throw new Error(`Invalid export data format: ${validationResult.error.message}`)
+    throw new Error(`Invalid export data format: ${validationResult.error.message}`);
   }
-  
+
   // Verify data integrity
   if (!verifyDataIntegrity(exportData)) {
-    throw new Error('Data integrity check failed - export data may be corrupted')
+    throw new Error('Data integrity check failed - export data may be corrupted');
   }
-  
-  return exportData
+
+  return exportData;
 }

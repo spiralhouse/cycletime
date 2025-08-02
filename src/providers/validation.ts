@@ -1,19 +1,23 @@
 /**
  * Provider Interface Validation and Feature Parity Testing
- * 
+ *
  * This module provides comprehensive validation tools to ensure all provider
  * implementations meet the IssueProvider interface contract and maintain
  * feature parity across different backends.
  */
 
-import type { 
-  IssueProvider, 
-  ProviderInfo, 
+import type {
+  IssueProvider,
+  ProviderInfo,
   ProviderCapabilities,
   ProjectConfig,
-  IssueConfig
-} from './types.js'
-import type { IssueType, IssuePriority, WorkflowStateType } from '../database/models/schema-types.js'
+  IssueConfig,
+} from './types.js';
+import type {
+  IssueType,
+  IssuePriority,
+  WorkflowStateType,
+} from '../database/models/schema-types.js';
 
 // =============================================================================
 // Validation Result Types
@@ -24,31 +28,31 @@ import type { IssueType, IssuePriority, WorkflowStateType } from '../database/mo
  */
 export interface ProviderValidationResult {
   /** Overall validation success */
-  isValid: boolean
+  isValid: boolean;
   /** Provider information */
-  providerInfo: ProviderInfo
+  providerInfo: ProviderInfo;
   /** Detailed test results by category */
   testResults: {
-    metadata: ValidationTestResult
-    projects: ValidationTestResult
-    issues: ValidationTestResult
-    dependencies: ValidationTestResult
-    workflows: ValidationTestResult
-    labels: ValidationTestResult
-    orchestration: ValidationTestResult
-    dataPortability: ValidationTestResult
-    errorHandling: ValidationTestResult
-  }
+    metadata: ValidationTestResult;
+    projects: ValidationTestResult;
+    issues: ValidationTestResult;
+    dependencies: ValidationTestResult;
+    workflows: ValidationTestResult;
+    labels: ValidationTestResult;
+    orchestration: ValidationTestResult;
+    dataPortability: ValidationTestResult;
+    errorHandling: ValidationTestResult;
+  };
   /** Overall compliance score (0-1) */
-  complianceScore: number
+  complianceScore: number;
   /** Detailed findings and recommendations */
-  findings: ValidationFinding[]
+  findings: ValidationFinding[];
   /** Performance metrics from testing */
   performance: {
-    averageResponseTime: number
-    operationsPerSecond: number
-    memoryUsage: number
-  }
+    averageResponseTime: number;
+    operationsPerSecond: number;
+    memoryUsage: number;
+  };
 }
 
 /**
@@ -56,15 +60,15 @@ export interface ProviderValidationResult {
  */
 export interface ValidationTestResult {
   /** Category passed all tests */
-  passed: boolean
+  passed: boolean;
   /** Number of tests that passed */
-  passedTests: number
+  passedTests: number;
   /** Total number of tests */
-  totalTests: number
+  totalTests: number;
   /** Specific test failures */
-  failures: TestFailure[]
+  failures: TestFailure[];
   /** Warnings for non-critical issues */
-  warnings: string[]
+  warnings: string[];
 }
 
 /**
@@ -72,13 +76,13 @@ export interface ValidationTestResult {
  */
 export interface TestFailure {
   /** Test method name */
-  testName: string
+  testName: string;
   /** Error that occurred */
-  error: string
+  error: string;
   /** Whether this is a critical failure */
-  critical: boolean
+  critical: boolean;
   /** Suggested fix */
-  suggestion?: string
+  suggestion?: string;
 }
 
 /**
@@ -86,15 +90,15 @@ export interface TestFailure {
  */
 export interface ValidationFinding {
   /** Finding category */
-  category: 'error' | 'warning' | 'recommendation'
+  category: 'error' | 'warning' | 'recommendation';
   /** Human-readable message */
-  message: string
+  message: string;
   /** Affected capability or feature */
-  affectedFeature: string
+  affectedFeature: string;
   /** Suggested remediation */
-  remediation?: string
+  remediation?: string;
   /** Priority level */
-  priority: 'high' | 'medium' | 'low'
+  priority: 'high' | 'medium' | 'low';
 }
 
 // =============================================================================
@@ -109,18 +113,18 @@ export const TEST_DATA = {
     id: 'test-project-001',
     name: 'Provider Validation Test Project',
     description: 'Test project for validating provider implementation',
-    key: 'PVT'
+    key: 'PVT',
   } as ProjectConfig,
-  
+
   epic: {
     id: 'test-epic-001',
     project_id: 'test-project-001',
     title: 'Test Epic for Validation',
     description: 'Epic-level issue for testing hierarchy support',
     issue_type: 'epic' as IssueType,
-    priority: 2 as IssuePriority
+    priority: 2 as IssuePriority,
   } as IssueConfig,
-  
+
   story: {
     id: 'test-story-001',
     project_id: 'test-project-001',
@@ -129,9 +133,9 @@ export const TEST_DATA = {
     description: 'Story-level issue for testing hierarchy and estimation',
     issue_type: 'story' as IssueType,
     priority: 3 as IssuePriority,
-    estimate: 5
+    estimate: 5,
   } as IssueConfig,
-  
+
   subtask: {
     id: 'test-subtask-001',
     project_id: 'test-project-001',
@@ -140,57 +144,57 @@ export const TEST_DATA = {
     description: 'Subtask-level issue for testing complete hierarchy',
     issue_type: 'subtask' as IssueType,
     priority: 3 as IssuePriority,
-    estimate: 2
+    estimate: 2,
   } as IssueConfig,
-  
+
   workflowStates: [
     {
       id: 'test-backlog',
       name: 'Backlog',
       type: 'backlog' as WorkflowStateType,
       position: 0,
-      color: '#6B7280'
+      color: '#6B7280',
     },
     {
       id: 'test-todo',
       name: 'Todo',
       type: 'unstarted' as WorkflowStateType,
       position: 1,
-      color: '#3B82F6'
+      color: '#3B82F6',
     },
     {
       id: 'test-progress',
       name: 'In Progress',
       type: 'started' as WorkflowStateType,
       position: 2,
-      color: '#F59E0B'
+      color: '#F59E0B',
     },
     {
       id: 'test-done',
       name: 'Done',
       type: 'completed' as WorkflowStateType,
       position: 3,
-      color: '#10B981'
-    }
+      color: '#10B981',
+    },
   ],
-  
+
   labels: [
     {
       id: 'test-label-001',
       project_id: 'test-project-001',
       name: 'validation',
       color: '#EF4444',
-      description: 'Test label for validation'
+      description: 'Test label for validation',
     },
     {
       id: 'test-label-002',
       project_id: 'test-project-001',
       name: 'high-priority',
       color: '#DC2626',
-      description: 'High priority test label'
-    }
-  ]
-}
+      description: 'High priority test label',
+    },
+  ],
+};
 
 // =============================================================================
 // Core Validation Class
@@ -200,14 +204,14 @@ export const TEST_DATA = {
  * Comprehensive provider validation and compliance testing
  */
 export class ProviderValidator {
-  private provider: IssueProvider
-  private testResults: Map<string, ValidationTestResult> = new Map()
-  private findings: ValidationFinding[] = []
-  private startTime: number = 0
-  private operationCount: number = 0
+  private _provider: IssueProvider;
+  private testResults: Map<string, ValidationTestResult> = new Map();
+  private findings: ValidationFinding[] = [];
+  private startTime: number = 0;
+  private operationCount: number = 0;
 
-  constructor(provider: IssueProvider) {
-    this.provider = provider
+  constructor(_provider: IssueProvider) {
+    this._provider = _provider;
   }
 
   /**
@@ -215,40 +219,39 @@ export class ProviderValidator {
    * @returns Comprehensive validation results
    */
   async validateProvider(): Promise<ProviderValidationResult> {
-    this.startTime = Date.now()
-    this.operationCount = 0
-    this.testResults.clear()
-    this.findings = []
+    this.startTime = Date.now();
+    this.operationCount = 0;
+    this.testResults.clear();
+    this.findings = [];
 
-    console.log('Starting provider validation...')
+    console.log('Starting provider validation...');
 
     try {
       // Initialize provider if needed
-      await this.initializeProvider()
+      await this.initializeProvider();
 
       // Run all validation test categories
-      this.testResults.set('metadata', await this.validateMetadata())
-      this.testResults.set('projects', await this.validateProjects())
-      this.testResults.set('issues', await this.validateIssues())
-      this.testResults.set('dependencies', await this.validateDependencies())
-      this.testResults.set('workflows', await this.validateWorkflows())
-      this.testResults.set('labels', await this.validateLabels())
-      this.testResults.set('orchestration', await this.validateOrchestration())
-      this.testResults.set('dataPortability', await this.validateDataPortability())
-      this.testResults.set('errorHandling', await this.validateErrorHandling())
-
+      this.testResults.set('metadata', await this.validateMetadata());
+      this.testResults.set('projects', await this.validateProjects());
+      this.testResults.set('issues', await this.validateIssues());
+      this.testResults.set('dependencies', await this.validateDependencies());
+      this.testResults.set('workflows', await this.validateWorkflows());
+      this.testResults.set('labels', await this.validateLabels());
+      this.testResults.set('orchestration', await this.validateOrchestration());
+      this.testResults.set('dataPortability', await this.validateDataPortability());
+      this.testResults.set('errorHandling', await this.validateErrorHandling());
     } catch (error) {
-      this.addFinding('error', 'Critical validation failure', 'overall', 'high', String(error))
+      this.addFinding('error', 'Critical validation failure', 'overall', 'high', String(error));
     }
 
     // Calculate overall results
-    const isValid = Array.from(this.testResults.values()).every(result => result.passed)
-    const complianceScore = this.calculateComplianceScore()
-    const performance = this.calculatePerformanceMetrics()
+    const isValid = Array.from(this.testResults.values()).every(result => result.passed);
+    const complianceScore = this.calculateComplianceScore();
+    const performance = this.calculatePerformanceMetrics();
 
     return {
       isValid,
-      providerInfo: this.provider.getProviderInfo(),
+      providerInfo: this._provider.getProviderInfo(),
       testResults: {
         metadata: this.testResults.get('metadata')!,
         projects: this.testResults.get('projects')!,
@@ -258,12 +261,12 @@ export class ProviderValidator {
         labels: this.testResults.get('labels')!,
         orchestration: this.testResults.get('orchestration')!,
         dataPortability: this.testResults.get('dataPortability')!,
-        errorHandling: this.testResults.get('errorHandling')!
+        errorHandling: this.testResults.get('errorHandling')!,
       },
       complianceScore,
       findings: this.findings,
-      performance
-    }
+      performance,
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -271,68 +274,70 @@ export class ProviderValidator {
   // -------------------------------------------------------------------------
 
   private async validateMetadata(): Promise<ValidationTestResult> {
-    const failures: TestFailure[] = []
-    const warnings: string[] = []
-    let passedTests = 0
-    const totalTests = 4
+    const failures: TestFailure[] = [];
+    const warnings: string[] = [];
+    let passedTests = 0;
+    const totalTests = 4;
 
     try {
       // Test provider info structure
-      const info = this.provider.getProviderInfo()
+      const info = this._provider.getProviderInfo();
+
       if (this.validateProviderInfo(info)) {
-        passedTests++
+        passedTests++;
       } else {
         failures.push({
           testName: 'getProviderInfo',
           error: 'Provider info structure invalid',
-          critical: true
-        })
+          critical: true,
+        });
       }
 
       // Test availability check
-      const isAvailable = await this.provider.isAvailable()
-      this.operationCount++
+      const isAvailable = await this._provider.isAvailable();
+
+      this.operationCount++;
       if (typeof isAvailable === 'boolean') {
-        passedTests++
+        passedTests++;
       } else {
         failures.push({
           testName: 'isAvailable',
           error: 'isAvailable must return boolean',
-          critical: true
-        })
+          critical: true,
+        });
       }
 
       // Test health check
-      const health = await this.provider.healthCheck()
-      this.operationCount++
+      const health = await this._provider.healthCheck();
+
+      this.operationCount++;
       if (health && typeof health.isHealthy === 'boolean') {
-        passedTests++
+        passedTests++;
       } else {
         failures.push({
           testName: 'healthCheck',
           error: 'healthCheck must return ProviderStatus',
-          critical: true
-        })
+          critical: true,
+        });
       }
 
       // Test capability consistency
       if (this.validateCapabilityConsistency(info.capabilities)) {
-        passedTests++
+        passedTests++;
       } else {
         failures.push({
           testName: 'capabilityConsistency',
           error: 'Provider capabilities inconsistent with actual functionality',
           critical: false,
-          suggestion: 'Update capabilities to match actual provider features'
-        })
+          suggestion: 'Update capabilities to match actual provider features',
+        });
       }
-
     } catch (error) {
       failures.push({
         testName: 'metadataValidation',
         error: `Metadata validation failed: ${String(error)}`,
-        critical: true
-      })
+        critical: true,
+      });
     }
 
     return {
@@ -340,8 +345,8 @@ export class ProviderValidator {
       passedTests,
       totalTests,
       failures,
-      warnings
-    }
+      warnings,
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -349,93 +354,98 @@ export class ProviderValidator {
   // -------------------------------------------------------------------------
 
   private async validateProjects(): Promise<ValidationTestResult> {
-    const failures: TestFailure[] = []
-    const warnings: string[] = []
-    let passedTests = 0
-    const totalTests = 5
+    const failures: TestFailure[] = [];
+    const warnings: string[] = [];
+    let passedTests = 0;
+    const totalTests = 5;
 
     try {
       // Test project creation
-      const project = await this.provider.createProject(TEST_DATA.project)
-      this.operationCount++
+      const project = await this._provider.createProject(TEST_DATA.project);
+
+      this.operationCount++;
       if (project && project.id === TEST_DATA.project.id) {
-        passedTests++
+        passedTests++;
       } else {
         failures.push({
           testName: 'createProject',
           error: 'Project creation failed or returned invalid data',
-          critical: true
-        })
+          critical: true,
+        });
       }
 
       // Test project retrieval
-      const retrieved = await this.provider.getProject(TEST_DATA.project.id)
-      this.operationCount++
+      const retrieved = await this._provider.getProject(TEST_DATA.project.id);
+
+      this.operationCount++;
       if (retrieved && retrieved.id === TEST_DATA.project.id) {
-        passedTests++
+        passedTests++;
       } else {
         failures.push({
           testName: 'getProject',
           error: 'Project retrieval failed',
-          critical: true
-        })
+          critical: true,
+        });
       }
 
       // Test project update
-      const updated = await this.provider.updateProject(TEST_DATA.project.id, {
-        description: 'Updated description for validation'
-      })
-      this.operationCount++
-      if (updated && updated.description?.includes('Updated')) {
-        passedTests++
+      const updated = await this._provider.updateProject(TEST_DATA.project.id, {
+        description: 'Updated description for validation',
+      });
+
+      this.operationCount++;
+      if (updated?.description?.includes('Updated')) {
+        passedTests++;
       } else {
         failures.push({
           testName: 'updateProject',
           error: 'Project update failed',
-          critical: true
-        })
+          critical: true,
+        });
       }
 
       // Test project listing
-      const projects = await this.provider.listProjects()
-      this.operationCount++
+      const projects = await this._provider.listProjects();
+
+      this.operationCount++;
       if (Array.isArray(projects) && projects.some(p => p.id === TEST_DATA.project.id)) {
-        passedTests++
+        passedTests++;
       } else {
         failures.push({
           testName: 'listProjects',
           error: 'Project listing failed or test project not found',
-          critical: true
-        })
+          critical: true,
+        });
       }
 
       // Test project deletion (optional - depends on capabilities)
-      const capabilities = this.provider.getProviderInfo().capabilities
+      const capabilities = this._provider.getProviderInfo().capabilities;
+
       if (capabilities.supportsProjects) {
         try {
-          const deleteResult = await this.provider.deleteProject(TEST_DATA.project.id)
-          this.operationCount++
+          const deleteResult = await this._provider.deleteProject(TEST_DATA.project.id);
+
+          this.operationCount++;
           if (deleteResult.success) {
-            passedTests++
+            passedTests++;
             // Recreate for subsequent tests
-            await this.provider.createProject(TEST_DATA.project)
-            this.operationCount++
+            await this._provider.createProject(TEST_DATA.project);
+            this.operationCount++;
           } else {
-            warnings.push('Project deletion not fully implemented')
+            warnings.push('Project deletion not fully implemented');
           }
         } catch (error) {
-          warnings.push(`Project deletion failed: ${String(error)}`)
+          warnings.push(`Project deletion failed: ${String(error)}`);
         }
       } else {
-        passedTests++ // Skip test if not supported
+        passedTests++; // Skip test if not supported
       }
-
     } catch (error) {
       failures.push({
         testName: 'projectLifecycle',
         error: `Project validation failed: ${String(error)}`,
-        critical: true
-      })
+        critical: true,
+      });
     }
 
     return {
@@ -443,8 +453,8 @@ export class ProviderValidator {
       passedTests,
       totalTests,
       failures,
-      warnings
-    }
+      warnings,
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -452,151 +462,165 @@ export class ProviderValidator {
   // -------------------------------------------------------------------------
 
   private async validateIssues(): Promise<ValidationTestResult> {
-    const failures: TestFailure[] = []
-    const warnings: string[] = []
-    let passedTests = 0
-    const totalTests = 8
+    const failures: TestFailure[] = [];
+    const warnings: string[] = [];
+    let passedTests = 0;
+    const totalTests = 8;
 
     try {
-      const capabilities = this.provider.getProviderInfo().capabilities
+      const capabilities = this._provider.getProviderInfo().capabilities;
 
       // Test epic creation
-      const epic = await this.provider.createIssue(TEST_DATA.epic)
-      this.operationCount++
+      const epic = await this._provider.createIssue(TEST_DATA.epic);
+
+      this.operationCount++;
       if (epic && epic.id === TEST_DATA.epic.id) {
-        passedTests++
+        passedTests++;
       } else {
         failures.push({
           testName: 'createEpic',
           error: 'Epic creation failed',
-          critical: true
-        })
+          critical: true,
+        });
       }
 
       // Test story creation with hierarchy (if supported)
       if (capabilities.supportsHierarchy) {
-        const story = await this.provider.createIssue(TEST_DATA.story)
-        this.operationCount++
+        const story = await this._provider.createIssue(TEST_DATA.story);
+
+        this.operationCount++;
         if (story && story.parent_id === TEST_DATA.epic.id) {
-          passedTests++
+          passedTests++;
         } else {
           failures.push({
             testName: 'createStoryWithHierarchy',
             error: 'Story creation with hierarchy failed',
-            critical: true
-          })
+            critical: true,
+          });
         }
       } else {
-        passedTests++ // Skip if not supported
-        warnings.push('Issue hierarchy not supported by provider')
+        passedTests++; // Skip if not supported
+        warnings.push('Issue hierarchy not supported by provider');
       }
 
       // Test subtask creation
       if (capabilities.supportsHierarchy) {
-        const subtask = await this.provider.createIssue(TEST_DATA.subtask)
-        this.operationCount++
+        const subtask = await this._provider.createIssue(TEST_DATA.subtask);
+
+        this.operationCount++;
         if (subtask && subtask.parent_id === TEST_DATA.story.id) {
-          passedTests++
+          passedTests++;
         } else {
           failures.push({
             testName: 'createSubtask',
             error: 'Subtask creation failed',
-            critical: true
-          })
+            critical: true,
+          });
         }
       } else {
-        passedTests++ // Skip if not supported
+        passedTests++; // Skip if not supported
       }
 
       // Test issue retrieval with relationships
-      const retrievedIssue = await this.provider.getIssue(TEST_DATA.epic.id)
-      this.operationCount++
+      const retrievedIssue = await this._provider.getIssue(TEST_DATA.epic.id);
+
+      this.operationCount++;
       if (retrievedIssue && retrievedIssue.id === TEST_DATA.epic.id) {
-        passedTests++
-        if (capabilities.supportsHierarchy && retrievedIssue.children && retrievedIssue.children.length > 0) {
+        passedTests++;
+        if (
+          capabilities.supportsHierarchy &&
+          retrievedIssue.children &&
+          retrievedIssue.children.length > 0
+        ) {
           // Bonus points for relationship loading
         }
       } else {
         failures.push({
           testName: 'getIssueWithRelationships',
           error: 'Issue retrieval failed',
-          critical: true
-        })
+          critical: true,
+        });
       }
 
       // Test issue updates
-      const updatedIssue = await this.provider.updateIssue(TEST_DATA.epic.id, {
+      const updatedIssue = await this._provider.updateIssue(TEST_DATA.epic.id, {
         title: 'Updated Epic Title',
-        priority: 1 as IssuePriority
-      })
-      this.operationCount++
+        priority: 1 as IssuePriority,
+      });
+
+      this.operationCount++;
       if (updatedIssue && updatedIssue.title?.includes('Updated') && updatedIssue.priority === 1) {
-        passedTests++
+        passedTests++;
       } else {
         failures.push({
           testName: 'updateIssue',
           error: 'Issue update failed',
-          critical: true
-        })
+          critical: true,
+        });
       }
 
       // Test issue listing with filters
-      const issues = await this.provider.listIssues({
+      const issues = await this._provider.listIssues({
         project_id: TEST_DATA.project.id,
-        issue_type: 'epic'
-      })
-      this.operationCount++
+        issue_type: 'epic',
+      });
+
+      this.operationCount++;
       if (Array.isArray(issues) && issues.some(i => i.id === TEST_DATA.epic.id)) {
-        passedTests++
+        passedTests++;
       } else {
         failures.push({
           testName: 'listIssuesWithFilters',
           error: 'Issue listing with filters failed',
-          critical: true
-        })
+          critical: true,
+        });
       }
 
       // Test estimation support
       if (capabilities.supportsEstimation) {
-        const storyWithEstimate = await this.provider.getIssue(TEST_DATA.story.id)
-        this.operationCount++
+        const storyWithEstimate = await this._provider.getIssue(TEST_DATA.story.id);
+
+        this.operationCount++;
         if (storyWithEstimate && storyWithEstimate.estimate === 5) {
-          passedTests++
+          passedTests++;
         } else {
           failures.push({
             testName: 'issueEstimation',
             error: 'Issue estimation not working correctly',
-            critical: false
-          })
+            critical: false,
+          });
         }
       } else {
-        passedTests++ // Skip if not supported
-        warnings.push('Issue estimation not supported by provider')
+        passedTests++; // Skip if not supported
+        warnings.push('Issue estimation not supported by provider');
       }
 
       // Test issue state management
       if (capabilities.supportsCustomWorkflows) {
         try {
-          const stateUpdated = await this.provider.updateIssueState(TEST_DATA.epic.id, 'test-progress')
-          this.operationCount++
+          const stateUpdated = await this._provider.updateIssueState(
+            TEST_DATA.epic.id,
+            'test-progress'
+          );
+
+          this.operationCount++;
           if (stateUpdated && stateUpdated.state_id === 'test-progress') {
-            passedTests++
+            passedTests++;
           } else {
-            warnings.push('Issue state update may not be working correctly')
+            warnings.push('Issue state update may not be working correctly');
           }
         } catch (error) {
-          warnings.push(`Issue state update failed: ${String(error)}`)
+          warnings.push(`Issue state update failed: ${String(error)}`);
         }
       } else {
-        passedTests++ // Skip if not supported
+        passedTests++; // Skip if not supported
       }
-
     } catch (error) {
       failures.push({
         testName: 'issueValidation',
         error: `Issue validation failed: ${String(error)}`,
-        critical: true
-      })
+        critical: true,
+      });
     }
 
     return {
@@ -604,8 +628,8 @@ export class ProviderValidator {
       passedTests,
       totalTests,
       failures,
-      warnings
-    }
+      warnings,
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -613,89 +637,93 @@ export class ProviderValidator {
   // -------------------------------------------------------------------------
 
   private async validateDependencies(): Promise<ValidationTestResult> {
-    const failures: TestFailure[] = []
-    const warnings: string[] = []
-    let passedTests = 0
-    const totalTests = 4
+    const failures: TestFailure[] = [];
+    const warnings: string[] = [];
+    let passedTests = 0;
+    const totalTests = 4;
 
-          const capabilities = this.provider.getProviderInfo().capabilities
+    const capabilities = this._provider.getProviderInfo().capabilities;
 
     if (!capabilities.supportsDependencies) {
-      warnings.push('Dependencies not supported by provider')
+      warnings.push('Dependencies not supported by provider');
+
       return {
         passed: true,
         passedTests: totalTests, // All tests pass by skipping
         totalTests,
         failures: [],
-        warnings
-      }
+        warnings,
+      };
     }
 
     try {
       // Test dependency creation
-      const dependency = await this.provider.addDependency(
+      const dependency = await this._provider.addDependency(
         TEST_DATA.epic.id,
         TEST_DATA.story.id,
         'blocks'
-      )
-      this.operationCount++
+      );
+
+      this.operationCount++;
       if (dependency && dependency.blocker_id === TEST_DATA.epic.id) {
-        passedTests++
+        passedTests++;
       } else {
         failures.push({
           testName: 'addDependency',
           error: 'Dependency creation failed',
-          critical: true
-        })
+          critical: true,
+        });
       }
 
       // Test dependency graph retrieval
-      const graph = await this.provider.getDependencyGraph(TEST_DATA.project.id)
-      this.operationCount++
+      const graph = await this._provider.getDependencyGraph(TEST_DATA.project.id);
+
+      this.operationCount++;
       if (graph && graph.nodes.length > 0 && graph.edges.length > 0) {
-        passedTests++
+        passedTests++;
       } else {
         failures.push({
           testName: 'getDependencyGraph',
           error: 'Dependency graph retrieval failed',
-          critical: true
-        })
+          critical: true,
+        });
       }
 
       // Test dependency graph validation
-      const validation = await this.provider.validateDependencyGraph(TEST_DATA.project.id)
-      this.operationCount++
+      const validation = await this._provider.validateDependencyGraph(TEST_DATA.project.id);
+
+      this.operationCount++;
       if (validation && typeof validation.isValid === 'boolean') {
-        passedTests++
+        passedTests++;
       } else {
         failures.push({
           testName: 'validateDependencyGraph',
           error: 'Dependency graph validation failed',
-          critical: true
-        })
+          critical: true,
+        });
       }
 
       // Test dependency removal
       if (dependency) {
-        const removeResult = await this.provider.removeDependency(dependency.id)
-        this.operationCount++
+        const removeResult = await this._provider.removeDependency(dependency.id);
+
+        this.operationCount++;
         if (removeResult.success) {
-          passedTests++
+          passedTests++;
         } else {
           failures.push({
             testName: 'removeDependency',
             error: 'Dependency removal failed',
-            critical: true
-          })
+            critical: true,
+          });
         }
       }
-
     } catch (error) {
       failures.push({
         testName: 'dependencyValidation',
         error: `Dependency validation failed: ${String(error)}`,
-        critical: true
-      })
+        critical: true,
+      });
     }
 
     return {
@@ -703,8 +731,8 @@ export class ProviderValidator {
       passedTests,
       totalTests,
       failures,
-      warnings
-    }
+      warnings,
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -713,27 +741,27 @@ export class ProviderValidator {
 
   private async validateWorkflows(): Promise<ValidationTestResult> {
     // Implementation for workflow validation
-    return { passed: true, passedTests: 3, totalTests: 3, failures: [], warnings: [] }
+    return { passed: true, passedTests: 3, totalTests: 3, failures: [], warnings: [] };
   }
 
   private async validateLabels(): Promise<ValidationTestResult> {
     // Implementation for label validation
-    return { passed: true, passedTests: 4, totalTests: 4, failures: [], warnings: [] }
+    return { passed: true, passedTests: 4, totalTests: 4, failures: [], warnings: [] };
   }
 
   private async validateOrchestration(): Promise<ValidationTestResult> {
     // Implementation for task orchestration validation
-    return { passed: true, passedTests: 5, totalTests: 5, failures: [], warnings: [] }
+    return { passed: true, passedTests: 5, totalTests: 5, failures: [], warnings: [] };
   }
 
   private async validateDataPortability(): Promise<ValidationTestResult> {
     // Implementation for export/import validation
-    return { passed: true, passedTests: 3, totalTests: 3, failures: [], warnings: [] }
+    return { passed: true, passedTests: 3, totalTests: 3, failures: [], warnings: [] };
   }
 
   private async validateErrorHandling(): Promise<ValidationTestResult> {
     // Implementation for error handling validation
-    return { passed: true, passedTests: 4, totalTests: 4, failures: [], warnings: [] }
+    return { passed: true, passedTests: 4, totalTests: 4, failures: [], warnings: [] };
   }
 
   // -------------------------------------------------------------------------
@@ -741,8 +769,8 @@ export class ProviderValidator {
   // -------------------------------------------------------------------------
 
   private async initializeProvider(): Promise<void> {
-    if (!await this.provider.isAvailable()) {
-      throw new Error('Provider not available for testing')
+    if (!(await this._provider.isAvailable())) {
+      throw new Error('Provider not available for testing');
     }
   }
 
@@ -754,31 +782,36 @@ export class ProviderValidator {
       info.version &&
       info.capabilities &&
       info.status
-    )
+    );
   }
 
   private validateCapabilityConsistency(_capabilities: ProviderCapabilities): boolean {
     // Validate that capabilities are logically consistent
     // For example, if supportsHierarchy is false, then supportsEstimation should also consider this
-    return true // Simplified for this example
+    return true; // Simplified for this example
   }
 
   private calculateComplianceScore(): number {
-    const totalTests = Array.from(this.testResults.values())
-      .reduce((sum, result) => sum + result.totalTests, 0)
-    const passedTests = Array.from(this.testResults.values())
-      .reduce((sum, result) => sum + result.passedTests, 0)
-    
-    return totalTests > 0 ? passedTests / totalTests : 0
+    const totalTests = Array.from(this.testResults.values()).reduce(
+      (sum, result) => sum + result.totalTests,
+      0
+    );
+    const passedTests = Array.from(this.testResults.values()).reduce(
+      (sum, result) => sum + result.passedTests,
+      0
+    );
+
+    return totalTests > 0 ? passedTests / totalTests : 0;
   }
 
   private calculatePerformanceMetrics() {
-    const duration = Date.now() - this.startTime
+    const duration = Date.now() - this.startTime;
+
     return {
       averageResponseTime: duration / Math.max(this.operationCount, 1),
       operationsPerSecond: this.operationCount / (duration / 1000),
-      memoryUsage: process.memoryUsage().heapUsed / 1024 / 1024 // MB
-    }
+      memoryUsage: process.memoryUsage().heapUsed / 1024 / 1024, // MB
+    };
   }
 
   private addFinding(
@@ -793,8 +826,8 @@ export class ProviderValidator {
       message,
       affectedFeature,
       priority,
-      ...(remediation && { remediation })
-    })
+      ...(remediation && { remediation }),
+    });
   }
 }
 
@@ -807,9 +840,12 @@ export class ProviderValidator {
  * @param provider Provider implementation to validate
  * @returns Comprehensive validation results
  */
-export async function validateProvider(provider: IssueProvider): Promise<ProviderValidationResult> {
-  const validator = new ProviderValidator(provider)
-  return await validator.validateProvider()
+export async function validateProvider(
+  _provider: IssueProvider
+): Promise<ProviderValidationResult> {
+  const validator = new ProviderValidator(_provider);
+
+  return await validator.validateProvider();
 }
 
 /**
@@ -817,35 +853,38 @@ export async function validateProvider(provider: IssueProvider): Promise<Provide
  * @param provider Provider implementation to check
  * @returns Basic validation result
  */
-export async function quickValidation(provider: IssueProvider): Promise<{
-  isAvailable: boolean
-  hasBasicFunctionality: boolean
-  errors: string[]
+export async function quickValidation(_provider: IssueProvider): Promise<{
+  isAvailable: boolean;
+  hasBasicFunctionality: boolean;
+  errors: string[];
 }> {
-  const errors: string[] = []
+  const errors: string[] = [];
 
   try {
-    const isAvailable = await provider.isAvailable()
+    const isAvailable = await _provider.isAvailable();
+
     if (!isAvailable) {
-      errors.push('Provider not available')
+      errors.push('Provider not available');
     }
 
-    const info = provider.getProviderInfo()
+    const info = _provider.getProviderInfo();
+
     if (!info.id || !info.type || !info.name) {
-      errors.push('Provider info incomplete')
+      errors.push('Provider info incomplete');
     }
 
     return {
       isAvailable,
       hasBasicFunctionality: errors.length === 0,
-      errors
-    }
+      errors,
+    };
   } catch (error) {
-    errors.push(`Validation failed: ${String(error)}`)
+    errors.push(`Validation failed: ${String(error)}`);
+
     return {
       isAvailable: false,
       hasBasicFunctionality: false,
-      errors
-    }
+      errors,
+    };
   }
 }

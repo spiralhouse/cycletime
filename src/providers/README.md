@@ -2,23 +2,32 @@
 
 ## Overview
 
-The JCVD Provider System implements a unified interface (`IssueProvider`) that enables seamless operation across multiple issue tracking backends while maintaining complete feature parity. This provider-agnostic architecture allows users to switch between SQLite, Linear, GitHub Issues, and Jira without losing functionality or data.
+The JCVD Provider System implements a unified interface (`IssueProvider`) that
+enables seamless operation across multiple issue tracking backends while
+maintaining complete feature parity. This provider-agnostic architecture allows
+users to switch between SQLite, Linear, GitHub Issues, and Jira without losing
+functionality or data.
 
 ## Architecture Principles
 
 ### 1. Provider-Agnostic Design
-- **Unified Interface**: All providers implement the same `IssueProvider` interface
+
+- **Unified Interface**: All providers implement the same `IssueProvider`
+  interface
 - **Common Data Model**: Standardized data structures across all providers
 - **Feature Parity**: Consistent functionality regardless of backend choice
 - **Seamless Migration**: Complete data portability between providers
 
 ### 2. Async/Promise Architecture
-- **Consistent API Patterns**: All operations return Promises for uniform handling
+
+- **Consistent API Patterns**: All operations return Promises for uniform
+  handling
 - **Error Handling**: Standardized error types with provider-specific context
 - **Performance**: Non-blocking operations with optimal resource usage
 - **Scalability**: Handles large datasets and concurrent operations efficiently
 
 ### 3. Extensible Design
+
 - **Provider-Specific Extensions**: Support for unique features via metadata
 - **Capability Discovery**: Runtime feature detection and adaptation
 - **Plugin Architecture**: Easy addition of new provider types
@@ -31,9 +40,9 @@ The JCVD Provider System implements a unified interface (`IssueProvider`) that e
 Each provider exposes comprehensive metadata about its capabilities:
 
 ```typescript
-const providerInfo = await provider.getProviderInfo()
-console.log(providerInfo.capabilities.supportsHierarchy) // true/false
-console.log(providerInfo.status.isConnected) // true/false
+const providerInfo = await provider.getProviderInfo();
+console.log(providerInfo.capabilities.supportsHierarchy); // true/false
+console.log(providerInfo.status.isConnected); // true/false
 ```
 
 ### Enhanced Data Models
@@ -42,11 +51,11 @@ The system extends basic database entities with relationships and metadata:
 
 ```typescript
 // Enhanced issue includes all relationships
-const issue = await provider.getIssue('issue-123')
-console.log(issue.labels)        // Associated labels
-console.log(issue.dependencies)  // Blocking relationships
-console.log(issue.children)      // Child issues
-console.log(issue.workflowState) // Current state
+const issue = await provider.getIssue('issue-123');
+console.log(issue.labels); // Associated labels
+console.log(issue.dependencies); // Blocking relationships
+console.log(issue.children); // Child issues
+console.log(issue.workflowState); // Current state
 ```
 
 ### Task Orchestration
@@ -57,8 +66,8 @@ Built-in intelligence for project management:
 // Get next recommended task based on dependencies and context
 const recommendation = await provider.getNextTaskRecommendation('project-123', {
   focusArea: 'backend',
-  recentWork: ['api-design', 'database-schema']
-})
+  recentWork: ['api-design', 'database-schema'],
+});
 ```
 
 ## Provider Implementation Guide
@@ -68,20 +77,20 @@ const recommendation = await provider.getNextTaskRecommendation('project-123', {
 All providers must implement the complete `IssueProvider` interface:
 
 ```typescript
-import type { IssueProvider, ProviderConfig } from './types.js'
+import type { IssueProvider, ProviderConfig } from './types.js';
 
 export class MyProvider implements IssueProvider {
-  private config: MyProviderConfig
-  
+  private config: MyProviderConfig;
+
   constructor(config: MyProviderConfig) {
-    this.config = config
+    this.config = config;
   }
-  
+
   async initialize(config: ProviderConfig): Promise<OperationResult<void>> {
     // Provider-specific initialization
-    return { success: true }
+    return { success: true };
   }
-  
+
   getProviderInfo(): ProviderInfo {
     return {
       id: this.config.id,
@@ -95,9 +104,9 @@ export class MyProvider implements IssueProvider {
         // ... all capability flags
       },
       // ... complete provider info
-    }
+    };
   }
-  
+
   // Implement all required methods...
 }
 ```
@@ -161,7 +170,7 @@ async createIssue(config: IssueConfig): Promise<EnhancedIssue> {
       message: 'This provider does not support issue hierarchy'
     })
   }
-  
+
   // Implement based on capabilities
   const issue = await this.providerApi.createIssue(config)
   return this.transformToCommonFormat(issue)
@@ -170,20 +179,21 @@ async createIssue(config: IssueConfig): Promise<EnhancedIssue> {
 
 ## Feature Parity Matrix
 
-| Feature | SQLite | Linear | GitHub | Jira |
-|---------|--------|--------|---------|------|
-| **Projects** | ✅ Full | ✅ Full | ⚠️ Repository-based | ✅ Full |
-| **Issue Hierarchy** | ✅ Epic/Story/Subtask | ✅ Native | ❌ Flat only | ✅ Full |
-| **Dependencies** | ✅ Full graph | ✅ Native | ❌ Manual tracking | ✅ Full |
-| **Custom Workflows** | ✅ Full | ✅ Native | ⚠️ Limited | ✅ Full |
-| **Estimation** | ✅ Story points | ✅ Native | ❌ Labels only | ✅ Full |
-| **Labels** | ✅ Full | ✅ Native | ✅ Native | ✅ Full |
-| **Comments** | ✅ Full | ✅ Native | ✅ Native | ✅ Full |
-| **Real-time Sync** | ❌ Local only | ✅ Webhooks | ⚠️ Polling | ✅ Webhooks |
-| **Offline Operation** | ✅ Full | ❌ API-dependent | ❌ API-dependent | ❌ API-dependent |
-| **Data Export** | ✅ Full | ⚠️ API limits | ⚠️ API limits | ⚠️ API limits |
+| Feature               | SQLite                | Linear           | GitHub              | Jira             |
+| --------------------- | --------------------- | ---------------- | ------------------- | ---------------- |
+| **Projects**          | ✅ Full               | ✅ Full          | ⚠️ Repository-based | ✅ Full          |
+| **Issue Hierarchy**   | ✅ Epic/Story/Subtask | ✅ Native        | ❌ Flat only        | ✅ Full          |
+| **Dependencies**      | ✅ Full graph         | ✅ Native        | ❌ Manual tracking  | ✅ Full          |
+| **Custom Workflows**  | ✅ Full               | ✅ Native        | ⚠️ Limited          | ✅ Full          |
+| **Estimation**        | ✅ Story points       | ✅ Native        | ❌ Labels only      | ✅ Full          |
+| **Labels**            | ✅ Full               | ✅ Native        | ✅ Native           | ✅ Full          |
+| **Comments**          | ✅ Full               | ✅ Native        | ✅ Native           | ✅ Full          |
+| **Real-time Sync**    | ❌ Local only         | ✅ Webhooks      | ⚠️ Polling          | ✅ Webhooks      |
+| **Offline Operation** | ✅ Full               | ❌ API-dependent | ❌ API-dependent    | ❌ API-dependent |
+| **Data Export**       | ✅ Full               | ⚠️ API limits    | ⚠️ API limits       | ⚠️ API limits    |
 
 ### Legend
+
 - ✅ **Full**: Complete feature support
 - ⚠️ **Limited**: Partial support with constraints
 - ❌ **None**: Feature not available
@@ -202,16 +212,17 @@ async createIssue(config: IssueConfig): Promise<EnhancedIssue> {
 
 ```typescript
 interface ProviderError {
-  code: ProviderErrorCode      // Programmatic error identification
-  providerId: string           // Source provider
-  providerType: ProviderType   // Provider type
-  retryable: boolean          // Can operation be retried
-  context: {                  // Debug information
-    operation: string
-    timestamp: Date
-    requestId?: string
-  }
-  userActions?: string[]      // Suggested user actions
+  code: ProviderErrorCode; // Programmatic error identification
+  providerId: string; // Source provider
+  providerType: ProviderType; // Provider type
+  retryable: boolean; // Can operation be retried
+  context: {
+    // Debug information
+    operation: string;
+    timestamp: Date;
+    requestId?: string;
+  };
+  userActions?: string[]; // Suggested user actions
 }
 ```
 
@@ -224,12 +235,12 @@ async function withRetry<T>(
 ): Promise<T> {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      return await operation()
+      return await operation();
     } catch (error) {
       if (!error.retryable || attempt === maxAttempts) {
-        throw error
+        throw error;
       }
-      await delay(Math.pow(2, attempt) * 1000) // Exponential backoff
+      await delay(Math.pow(2, attempt) * 1000); // Exponential backoff
     }
   }
 }
@@ -243,20 +254,20 @@ Standardized export format enables seamless provider switching:
 
 ```typescript
 interface ExportData {
-  version: string                 // Schema version
-  exportedAt: Date               // Export timestamp
-  sourceProvider: ProviderInfo   // Source provider info
-  
+  version: string; // Schema version
+  exportedAt: Date; // Export timestamp
+  sourceProvider: ProviderInfo; // Source provider info
+
   // Complete project data
-  projects: Project[]
-  issues: EnhancedIssue[]
-  dependencies: Dependency[]
-  workflowStates: WorkflowState[]
-  labels: Label[]
-  comments: IssueComment[]
-  
+  projects: Project[];
+  issues: EnhancedIssue[];
+  dependencies: Dependency[];
+  workflowStates: WorkflowState[];
+  labels: Label[];
+  comments: IssueComment[];
+
   // Validation metadata
-  metadata: ExportMetadata
+  metadata: ExportMetadata;
 }
 ```
 
@@ -264,18 +275,18 @@ interface ExportData {
 
 ```typescript
 // Export from source provider
-const exportData = await sourceProvider.exportData('project-123')
+const exportData = await sourceProvider.exportData('project-123');
 
 // Validate export integrity
 if (!exportData.metadata.validation.dataIntegrityScore > 0.95) {
-  throw new Error('Export data integrity below threshold')
+  throw new Error('Export data integrity below threshold');
 }
 
 // Import to target provider
 const importResult = await targetProvider.importData(exportData, {
   overwriteExisting: false,
-  validateData: true
-})
+  validateData: true,
+});
 
 // Handle conflicts if any
 if (importResult.conflicts.unresolved.length > 0) {
@@ -289,17 +300,17 @@ if (importResult.conflicts.unresolved.length > 0) {
 
 ```typescript
 class ProviderCache {
-  private cache = new Map<string, { data: any; timestamp: Date }>()
-  
+  private cache = new Map<string, { data: any; timestamp: Date }>();
+
   async get<T>(key: string, fetcher: () => Promise<T>, ttl = 5000): Promise<T> {
-    const cached = this.cache.get(key)
+    const cached = this.cache.get(key);
     if (cached && Date.now() - cached.timestamp.getTime() < ttl) {
-      return cached.data
+      return cached.data;
     }
-    
-    const data = await fetcher()
-    this.cache.set(key, { data, timestamp: new Date() })
-    return data
+
+    const data = await fetcher();
+    this.cache.set(key, { data, timestamp: new Date() });
+    return data;
   }
 }
 ```
@@ -311,12 +322,12 @@ async bulkUpdateIssues(updates: Array<{ id: string; updates: UpdateIssueInput }>
   // Batch updates to reduce API calls
   const batches = chunk(updates, 50) // Provider-specific batch size
   const results = []
-  
+
   for (const batch of batches) {
     const batchResults = await this.providerApi.bulkUpdate(batch)
     results.push(...batchResults)
   }
-  
+
   return results.map(this.transformToCommonFormat)
 }
 ```
@@ -327,19 +338,19 @@ async bulkUpdateIssues(updates: Array<{ id: string; updates: UpdateIssueInput }>
 
 ```typescript
 export class MockProvider implements IssueProvider {
-  private data = new Map<string, any>()
-  
+  private data = new Map<string, any>();
+
   async createIssue(config: IssueConfig): Promise<EnhancedIssue> {
     const issue = {
       id: `mock-${Date.now()}`,
       ...config,
       created_at: new Date(),
-      updated_at: new Date()
-    }
-    this.data.set(issue.id, issue)
-    return issue
+      updated_at: new Date(),
+    };
+    this.data.set(issue.id, issue);
+    return issue;
   }
-  
+
   // Implement all methods with in-memory storage
 }
 ```
@@ -352,20 +363,20 @@ describe('Provider Contract Tests', () => {
     new SQLiteProvider(sqliteConfig),
     new LinearProvider(linearConfig),
     // Add all provider implementations
-  ]
-  
+  ];
+
   providers.forEach(provider => {
     describe(`${provider.getProviderInfo().name}`, () => {
       test('should create and retrieve project', async () => {
-        const project = await provider.createProject(testProjectConfig)
-        const retrieved = await provider.getProject(project.id)
-        expect(retrieved).toEqual(project)
-      })
-      
+        const project = await provider.createProject(testProjectConfig);
+        const retrieved = await provider.getProject(project.id);
+        expect(retrieved).toEqual(project);
+      });
+
       // Test all interface methods
-    })
-  })
-})
+    });
+  });
+});
 ```
 
 ## Security Considerations
@@ -374,13 +385,13 @@ describe('Provider Contract Tests', () => {
 
 ```typescript
 interface SecureConfig {
-  apiToken: string    // Never logged or exposed
-  apiUrl?: string     // Can be logged
-  timeout?: number    // Safe to log
+  apiToken: string; // Never logged or exposed
+  apiUrl?: string; // Can be logged
+  timeout?: number; // Safe to log
 }
 
 // Use secure credential storage
-const config = await getSecureConfig('linear-provider')
+const config = await getSecureConfig('linear-provider');
 ```
 
 ### Data Sanitization
@@ -401,9 +412,9 @@ private sanitizeForLogs(data: any): any {
 
 ```typescript
 interface ProviderPlugin {
-  name: string
-  version: string
-  extend(provider: IssueProvider): IssueProvider
+  name: string;
+  version: string;
+  extend(provider: IssueProvider): IssueProvider;
 }
 
 // Example: Analytics plugin
@@ -411,16 +422,16 @@ class AnalyticsPlugin implements ProviderPlugin {
   extend(provider: IssueProvider): IssueProvider {
     return new Proxy(provider, {
       get(target, prop) {
-        const method = target[prop]
+        const method = target[prop];
         if (typeof method === 'function') {
           return async (...args: any[]) => {
-            this.trackMethodCall(prop as string, args)
-            return method.apply(target, args)
-          }
+            this.trackMethodCall(prop as string, args);
+            return method.apply(target, args);
+          };
         }
-        return method
-      }
-    })
+        return method;
+      },
+    });
   }
 }
 ```
@@ -436,14 +447,16 @@ Developers can create custom providers by:
 
 ```typescript
 // Register custom provider
-registerProvider('custom', CustomProvider)
+registerProvider('custom', CustomProvider);
 
 // Use in configuration
 const config: ProviderConfig = {
   type: 'custom',
   id: 'my-custom-provider',
   // Custom configuration fields
-}
+};
 ```
 
-This comprehensive provider system enables JCVD to work seamlessly across different issue tracking backends while maintaining a consistent, powerful API for project orchestration and task management.
+This comprehensive provider system enables JCVD to work seamlessly across
+different issue tracking backends while maintaining a consistent, powerful API
+for project orchestration and task management.

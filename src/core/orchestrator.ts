@@ -1,6 +1,6 @@
 /**
  * Main orchestration engine for JCVD framework
- * 
+ *
  * Coordinates agents, providers, and workflows in a provider-agnostic manner
  */
 
@@ -21,10 +21,10 @@ export class Orchestrator extends EventEmitter {
 
   constructor(private config: JCVDConfig) {
     super();
-    this.logger.debug('Orchestrator created', { 
+    this.logger.debug('Orchestrator created', {
       taskCoordination: config.taskCoordination.defaultAgent,
       providers: config.providers.length,
-      workflows: config.workflows.length
+      workflows: config.workflows.length,
     });
   }
 
@@ -61,15 +61,15 @@ export class Orchestrator extends EventEmitter {
       this.status = 'error';
       this.logger.error('Failed to initialize orchestrator', { error });
       this.emit('orchestrator.error', error);
-      
-      return { 
-        success: false, 
+
+      return {
+        success: false,
         error: {
           name: 'InitializationError',
           message: `Failed to initialize orchestrator: ${error instanceof Error ? error.message : String(error)}`,
           code: 'ORCHESTRATOR_INIT_ERROR',
-          context: { originalError: error }
-        } as any
+          context: { originalError: error },
+        } as any,
       };
     }
   }
@@ -103,15 +103,15 @@ export class Orchestrator extends EventEmitter {
       this.status = 'error';
       this.logger.error('Error during orchestrator shutdown', { error });
       this.emit('orchestrator.error', error);
-      
-      return { 
-        success: false, 
+
+      return {
+        success: false,
         error: {
           name: 'ShutdownError',
           message: `Failed to shutdown orchestrator: ${error instanceof Error ? error.message : String(error)}`,
           code: 'ORCHESTRATOR_SHUTDOWN_ERROR',
-          context: { originalError: error }
-        } as any
+          context: { originalError: error },
+        } as any,
       };
     }
   }
@@ -121,14 +121,14 @@ export class Orchestrator extends EventEmitter {
    */
   getStatus(): StatusInfo {
     const uptime = this.startTime ? Date.now() - this.startTime.getTime() : 0;
-    
+
     return {
       status: this.status,
       uptime,
       lastActivity: this.lastActivity,
       taskCoordination: this.config.taskCoordination.defaultAgent,
       activeProviders: this.config.providers.filter(p => p.enabled).length,
-      errors: [] // TODO: Track errors
+      errors: [], // TODO: Track errors
     };
   }
 
@@ -138,10 +138,10 @@ export class Orchestrator extends EventEmitter {
   // TODO: Implement event handling when needed
   // private handleEvent(event: JCVDEvent): void {
   //   this.lastActivity = new Date();
-  //   this.logger.debug('Received event', { 
-  //     type: event.type, 
+  //   this.logger.debug('Received event', {
+  //     type: event.type,
   //     source: event.source,
-  //     id: event.id 
+  //     id: event.id
   //   });
 
   //   // Forward event to interested parties
@@ -154,12 +154,12 @@ export class Orchestrator extends EventEmitter {
    */
   private async initializeDatabase(): Promise<void> {
     this.logger.debug('Initializing database...');
-    
+
     // TODO: Implement database initialization
     // - Create SQLite connection
     // - Run migrations if enabled
     // - Set up WAL mode if configured
-    
+
     this.logger.debug('Database initialized');
   }
 
@@ -167,15 +167,15 @@ export class Orchestrator extends EventEmitter {
    * Initialize all configured providers
    */
   private async initializeProviders(): Promise<void> {
-    this.logger.debug('Initializing providers...', { 
-      count: this.config.providers.length 
+    this.logger.debug('Initializing providers...', {
+      count: this.config.providers.length,
     });
 
     for (const providerConfig of this.config.providers) {
       if (!providerConfig.enabled) {
-        this.logger.debug('Skipping disabled provider', { 
+        this.logger.debug('Skipping disabled provider', {
           id: providerConfig.id,
-          type: providerConfig.type 
+          type: providerConfig.type,
         });
         continue;
       }
@@ -185,16 +185,16 @@ export class Orchestrator extends EventEmitter {
         // - Load provider based on type
         // - Initialize with configuration
         // - Set up sync if enabled
-        
-        this.logger.debug('Provider initialized', { 
-          id: providerConfig.id,
-          type: providerConfig.type 
-        });
-      } catch (error) {
-        this.logger.error('Failed to initialize provider', { 
+
+        this.logger.debug('Provider initialized', {
           id: providerConfig.id,
           type: providerConfig.type,
-          error 
+        });
+      } catch (error) {
+        this.logger.error('Failed to initialize provider', {
+          id: providerConfig.id,
+          type: providerConfig.type,
+          error,
         });
         throw error;
       }
@@ -207,18 +207,26 @@ export class Orchestrator extends EventEmitter {
    * Initialize task coordination with Claude Code agents
    */
   private async initializeTaskCoordination(): Promise<void> {
-    this.logger.debug('Initializing task coordination...', { 
+    this.logger.debug('Initializing task coordination...', {
       defaultAgent: this.config.taskCoordination.defaultAgent,
-      fallbackAgent: this.config.taskCoordination.fallbackAgent
+      fallbackAgent: this.config.taskCoordination.fallbackAgent,
     });
 
     // Validate that configured agents are available
-    const validAgents = ['general-purpose', 'product-manager', 'tech-lead', 'software-architect', 'developer', 'qa', 'code-reviewer'];
-    
+    const validAgents = [
+      'general-purpose',
+      'product-manager',
+      'tech-lead',
+      'software-architect',
+      'developer',
+      'qa',
+      'code-reviewer',
+    ];
+
     if (!validAgents.includes(this.config.taskCoordination.defaultAgent)) {
       throw new Error(`Invalid default agent: ${this.config.taskCoordination.defaultAgent}`);
     }
-    
+
     if (!validAgents.includes(this.config.taskCoordination.fallbackAgent)) {
       throw new Error(`Invalid fallback agent: ${this.config.taskCoordination.fallbackAgent}`);
     }
@@ -228,14 +236,14 @@ export class Orchestrator extends EventEmitter {
       // - Set up Claude Code agent routing rules
       // - Configure agent preferences and timeouts
       // - Initialize agent communication channels
-      
-      this.logger.debug('Task coordination initialized', { 
+
+      this.logger.debug('Task coordination initialized', {
         defaultAgent: this.config.taskCoordination.defaultAgent,
-        fallbackAgent: this.config.taskCoordination.fallbackAgent
+        fallbackAgent: this.config.taskCoordination.fallbackAgent,
       });
     } catch (error) {
-      this.logger.error('Failed to initialize task coordination', { 
-        error 
+      this.logger.error('Failed to initialize task coordination', {
+        error,
       });
       throw error;
     }
@@ -253,16 +261,16 @@ export class Orchestrator extends EventEmitter {
       return;
     }
 
-    this.logger.debug('Initializing MCP server...', { 
+    this.logger.debug('Initializing MCP server...', {
       port: this.config.mcp.port,
-      host: this.config.mcp.host 
+      host: this.config.mcp.host,
     });
 
     // TODO: Implement MCP server initialization
     // - Create MCP server instance
     // - Set up request handlers
     // - Start listening on configured port
-    
+
     this.logger.debug('MCP server initialized');
   }
 

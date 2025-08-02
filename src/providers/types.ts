@@ -1,11 +1,12 @@
 /**
  * JCVD Provider System Types
  * Comprehensive type definitions for the unified IssueProvider interface
- * 
+ *
  * This module defines the complete API contract for all provider implementations,
  * ensuring feature parity across SQLite, Linear, GitHub, and Jira providers.
  */
 
+import type { ExportData, ExportOptions } from './export-format.js';
 import type {
   Project,
   Issue,
@@ -22,14 +23,7 @@ import type {
   CreateDependencyInput,
   DependencyType,
   IssueType,
-  IssuePriority,
-  WorkflowStateType
-} from '../database/models/schema-types.js'
-
-import type {
-  ExportData,
-  ExportOptions
-} from './export-format.js'
+} from '../database/models/schema-types.js';
 
 // =============================================================================
 // Provider Metadata and Capability System
@@ -38,36 +32,36 @@ import type {
 /**
  * Provider type identifiers for all supported issue tracking systems
  */
-export type ProviderType = 'sqlite' | 'linear' | 'github' | 'jira'
+export type ProviderType = 'sqlite' | 'linear' | 'github' | 'jira';
 
 /**
  * Provider capability flags for feature discovery
  */
 export interface ProviderCapabilities {
   /** Supports creating and managing projects */
-  supportsProjects: boolean
+  supportsProjects: boolean;
   /** Supports issue hierarchy (epics, stories, subtasks) */
-  supportsHierarchy: boolean
+  supportsHierarchy: boolean;
   /** Supports issue dependencies and blocking relationships */
-  supportsDependencies: boolean
+  supportsDependencies: boolean;
   /** Supports custom workflow states */
-  supportsCustomWorkflows: boolean
+  supportsCustomWorkflows: boolean;
   /** Supports issue estimation (story points) */
-  supportsEstimation: boolean
+  supportsEstimation: boolean;
   /** Supports issue labels and tagging */
-  supportsLabels: boolean
+  supportsLabels: boolean;
   /** Supports comments and activity tracking */
-  supportsComments: boolean
+  supportsComments: boolean;
   /** Supports assignee management */
-  supportsAssignees: boolean
+  supportsAssignees: boolean;
   /** Supports data export functionality */
-  supportsExport: boolean
+  supportsExport: boolean;
   /** Supports data import functionality */
-  supportsImport: boolean
+  supportsImport: boolean;
   /** Supports real-time synchronization */
-  supportsSync: boolean
+  supportsSync: boolean;
   /** Supports offline operation */
-  supportsOffline: boolean
+  supportsOffline: boolean;
 }
 
 /**
@@ -75,20 +69,20 @@ export interface ProviderCapabilities {
  */
 export interface ProviderStatus {
   /** Current connection state */
-  isConnected: boolean
+  isConnected: boolean;
   /** Provider is available and responding */
-  isHealthy: boolean
+  isHealthy: boolean;
   /** Last successful health check timestamp */
-  lastHealthCheck?: Date
+  lastHealthCheck?: Date;
   /** Current error if unhealthy */
-  lastError?: ProviderError
+  lastError?: ProviderError;
   /** Performance metrics */
   metrics?: {
-    averageResponseTime: number
-    totalRequests: number
-    failedRequests: number
-    uptime: number
-  }
+    averageResponseTime: number;
+    totalRequests: number;
+    failedRequests: number;
+    uptime: number;
+  };
 }
 
 /**
@@ -96,29 +90,29 @@ export interface ProviderStatus {
  */
 export interface ProviderInfo {
   /** Unique provider identifier */
-  id: string
+  id: string;
   /** Provider type classification */
-  type: ProviderType
+  type: ProviderType;
   /** Human-readable provider name */
-  name: string
+  name: string;
   /** Provider version information */
-  version: string
+  version: string;
   /** Detailed description of provider capabilities */
-  description: string
+  description: string;
   /** Feature capability matrix */
-  capabilities: ProviderCapabilities
+  capabilities: ProviderCapabilities;
   /** Current operational status */
-  status: ProviderStatus
+  status: ProviderStatus;
   /** Provider-specific configuration schema */
-  configSchema?: Record<string, any>
+  configSchema?: Record<string, any>;
   /** Authentication requirements */
-  authRequired: boolean
+  authRequired: boolean;
   /** API rate limit information */
   rateLimits?: {
-    requestsPerHour: number
-    requestsPerMinute: number
-    burstLimit: number
-  }
+    requestsPerHour: number;
+    requestsPerMinute: number;
+    burstLimit: number;
+  };
 }
 
 // =============================================================================
@@ -130,91 +124,91 @@ export interface ProviderInfo {
  */
 export interface BaseProviderConfig {
   /** Provider type identifier */
-  type: ProviderType
+  type: ProviderType;
   /** Provider instance ID */
-  id: string
+  id: string;
   /** Human-readable name for this provider instance */
-  name: string
+  name: string;
   /** Enable/disable this provider */
-  enabled: boolean
+  enabled: boolean;
 }
 
 /**
  * SQLite provider configuration
  */
 export interface SQLiteProviderConfig extends BaseProviderConfig {
-  type: 'sqlite'
+  type: 'sqlite';
   /** Database file path */
-  databasePath: string
+  databasePath: string;
   /** Enable WAL mode for better concurrency */
-  enableWAL?: boolean
+  enableWAL?: boolean;
   /** Database page cache size */
-  cacheSize?: number
+  cacheSize?: number;
   /** Connection timeout in milliseconds */
-  timeout?: number
+  timeout?: number;
   /** Enable foreign key constraints */
-  enableForeignKeys?: boolean
+  enableForeignKeys?: boolean;
 }
 
 /**
  * Linear provider configuration
  */
 export interface LinearProviderConfig extends BaseProviderConfig {
-  type: 'linear'
+  type: 'linear';
   /** Linear API token */
-  apiToken: string
+  apiToken: string;
   /** Linear team ID */
-  teamId: string
+  teamId: string;
   /** API base URL (for Linear on-premise) */
-  apiUrl?: string
+  apiUrl?: string;
   /** Request timeout in milliseconds */
-  timeout?: number
+  timeout?: number;
   /** Enable webhook synchronization */
-  enableWebhooks?: boolean
+  enableWebhooks?: boolean;
 }
 
 /**
  * GitHub provider configuration
  */
 export interface GitHubProviderConfig extends BaseProviderConfig {
-  type: 'github'
+  type: 'github';
   /** GitHub API token */
-  apiToken: string
+  apiToken: string;
   /** Repository owner */
-  owner: string
+  owner: string;
   /** Repository name */
-  repo: string
+  repo: string;
   /** GitHub API base URL (for GitHub Enterprise) */
-  apiUrl?: string
+  apiUrl?: string;
   /** Request timeout in milliseconds */
-  timeout?: number
+  timeout?: number;
 }
 
 /**
  * Jira provider configuration
  */
 export interface JiraProviderConfig extends BaseProviderConfig {
-  type: 'jira'
+  type: 'jira';
   /** Jira base URL */
-  baseUrl: string
+  baseUrl: string;
   /** Jira username or email */
-  username: string
+  username: string;
   /** Jira API token or password */
-  apiToken: string
+  apiToken: string;
   /** Jira project key */
-  projectKey: string
+  projectKey: string;
   /** Request timeout in milliseconds */
-  timeout?: number
+  timeout?: number;
 }
 
 /**
  * Union type for all provider configurations
  */
-export type ProviderConfig = 
-  | SQLiteProviderConfig 
-  | LinearProviderConfig 
-  | GitHubProviderConfig 
-  | JiraProviderConfig
+export type ProviderConfig =
+  | SQLiteProviderConfig
+  | LinearProviderConfig
+  | GitHubProviderConfig
+  | JiraProviderConfig;
 
 // =============================================================================
 // Provider-Agnostic Data Model Extensions
@@ -225,15 +219,15 @@ export type ProviderConfig =
  */
 export interface ProjectConfig extends CreateProjectInput {
   /** Project visibility settings */
-  visibility?: 'private' | 'internal' | 'public'
+  visibility?: 'private' | 'internal' | 'public';
   /** Project template to use for initialization */
-  template?: string
+  template?: string;
   /** Default workflow states to create */
-  defaultWorkflowStates?: Omit<CreateWorkflowStateInput, 'project_id'>[]
+  defaultWorkflowStates?: Omit<CreateWorkflowStateInput, 'project_id'>[];
   /** Default labels to create */
-  defaultLabels?: CreateLabelInput[]
+  defaultLabels?: CreateLabelInput[];
   /** Project settings and preferences */
-  settings?: Record<string, any>
+  settings?: Record<string, any>;
 }
 
 /**
@@ -241,13 +235,13 @@ export interface ProjectConfig extends CreateProjectInput {
  */
 export interface IssueConfig extends CreateIssueInput {
   /** Labels to apply to the issue */
-  labels?: string[]
+  labels?: string[];
   /** Initial comment body */
-  initialComment?: string
+  initialComment?: string;
   /** Dependencies to create with this issue */
-  dependencies?: Omit<CreateDependencyInput, 'blocked_id'>[]
+  dependencies?: Omit<CreateDependencyInput, 'blocked_id'>[];
   /** Custom fields for provider-specific data */
-  customFields?: Record<string, any>
+  customFields?: Record<string, any>;
 }
 
 /**
@@ -255,19 +249,19 @@ export interface IssueConfig extends CreateIssueInput {
  */
 export interface EnhancedIssue extends Issue {
   /** Associated labels */
-  labels?: Label[]
+  labels?: Label[];
   /** Issue dependencies (outgoing) */
-  dependencies?: Dependency[]
+  dependencies?: Dependency[];
   /** Issues that depend on this one (incoming) */
-  dependents?: Dependency[]
+  dependents?: Dependency[];
   /** Recent comments */
-  comments?: IssueComment[]
+  comments?: IssueComment[];
   /** Current workflow state */
-  workflowState?: WorkflowState
+  workflowState?: WorkflowState;
   /** Child issues (for epics and stories) */
-  children?: EnhancedIssue[]
+  children?: EnhancedIssue[];
   /** Provider-specific metadata */
-  providerMetadata?: Record<string, any>
+  providerMetadata?: Record<string, any>;
 }
 
 /**
@@ -275,20 +269,20 @@ export interface EnhancedIssue extends Issue {
  */
 export interface Dependency extends IssueDependency {
   /** The issue that blocks */
-  blocker?: Issue
+  blocker?: Issue;
   /** The issue that is blocked */
-  blocked?: Issue
+  blocked?: Issue;
 }
 
 /**
  * Create label input with provider-agnostic options
  */
 export interface CreateLabelInput {
-  id: string
-  project_id: string
-  name: string
-  color?: string
-  description?: string
+  id: string;
+  project_id: string;
+  name: string;
+  color?: string;
+  description?: string;
 }
 
 // =============================================================================
@@ -300,18 +294,18 @@ export interface CreateLabelInput {
  */
 export interface OperationResult<T = void> {
   /** Operation succeeded */
-  success: boolean
+  success: boolean;
   /** Result data if successful */
-  data?: T
+  data?: T;
   /** Error information if failed */
-  error?: ProviderError
+  error?: ProviderError;
   /** Additional metadata about the operation */
   metadata?: {
-    duration: number
-    timestamp: Date
-    operationType: string
-    affectedResources?: string[]
-  }
+    duration: number;
+    timestamp: Date;
+    operationType: string;
+    affectedResources?: string[];
+  };
 }
 
 /**
@@ -319,31 +313,31 @@ export interface OperationResult<T = void> {
  */
 export interface ImportResult {
   /** Import operation succeeded */
-  success: boolean
+  success: boolean;
   /** Number of entities imported by type */
   imported: {
-    projects: number
-    issues: number
-    dependencies: number
-    workflowStates: number
-    labels: number
-    comments: number
-  }
+    projects: number;
+    issues: number;
+    dependencies: number;
+    workflowStates: number;
+    labels: number;
+    comments: number;
+  };
   /** Entities that failed to import */
   failed: {
-    projects: string[]
-    issues: string[]
-    dependencies: string[]
-    workflowStates: string[]
-    labels: string[]
-    comments: string[]
-  }
+    projects: string[];
+    issues: string[];
+    dependencies: string[];
+    workflowStates: string[];
+    labels: string[];
+    comments: string[];
+  };
   /** Import warnings and non-fatal issues */
-  warnings: string[]
+  warnings: string[];
   /** Detailed error information */
-  errors: ProviderError[]
+  errors: ProviderError[];
   /** Import duration in milliseconds */
-  duration: number
+  duration: number;
 }
 
 /**
@@ -351,26 +345,26 @@ export interface ImportResult {
  */
 export interface SyncResult {
   /** Synchronization succeeded */
-  success: boolean
+  success: boolean;
   /** Number of entities synchronized */
   synchronized: {
-    created: number
-    updated: number
-    deleted: number
-  }
+    created: number;
+    updated: number;
+    deleted: number;
+  };
   /** Conflicts that required resolution */
   conflicts: {
-    resolved: number
-    unresolved: ConflictResolution[]
-  }
+    resolved: number;
+    unresolved: ConflictResolution[];
+  };
   /** Sync warnings and non-fatal issues */
-  warnings: string[]
+  warnings: string[];
   /** Detailed error information */
-  errors: ProviderError[]
+  errors: ProviderError[];
   /** Sync duration in milliseconds */
-  duration: number
+  duration: number;
   /** Last successful sync timestamp */
-  lastSyncAt: Date
+  lastSyncAt: Date;
 }
 
 /**
@@ -378,21 +372,21 @@ export interface SyncResult {
  */
 export interface ConflictResolution {
   /** Type of conflict */
-  type: 'data_conflict' | 'schema_conflict' | 'permission_conflict'
+  type: 'data_conflict' | 'schema_conflict' | 'permission_conflict';
   /** Entity that had the conflict */
-  entityId: string
+  entityId: string;
   /** Entity type */
-  entityType: string
+  entityType: string;
   /** Description of the conflict */
-  description: string
+  description: string;
   /** Suggested resolution strategy */
-  suggestedResolution: 'use_source' | 'use_target' | 'merge' | 'manual'
+  suggestedResolution: 'use_source' | 'use_target' | 'merge' | 'manual';
   /** Conflict details */
   details: {
-    sourceValue: any
-    targetValue: any
-    conflictField: string
-  }
+    sourceValue: any;
+    targetValue: any;
+    conflictField: string;
+  };
 }
 
 // =============================================================================
@@ -412,49 +406,108 @@ export type {
   ValidationError,
   ValidationWarning,
   ValidationSeverity,
-  CompressionOptions
-} from './export-format.js'
+  CompressionOptions,
+} from './export-format.js';
+
+// Re-export capability discovery types
+export type {
+  CapabilityProbeResult,
+  CapabilityDiscoveryOptions,
+} from './capabilities/capability-discovery.js';
+
+// Re-export core schema types that were imported but not exported
+export type {
+  Project,
+  WorkflowState,
+  UpdateProjectInput,
+  UpdateIssueInput,
+  IssueFilters,
+  Label,
+  DependencyType,
+  IssuePriority,
+} from '../database/models/schema-types.js';
 
 // =============================================================================
 // Query and Analysis Types
 // =============================================================================
 
 /**
+ * Context information for task recommendations
+ */
+export interface RecommendationContext {
+  /** Focus area or specific work context */
+  focusArea?: string;
+  /** Recent work history for pattern analysis */
+  recentWork?: string[];
+  /** User's skill level or expertise areas */
+  expertiseAreas?: string[];
+  /** Time constraints or availability */
+  timeConstraints?: {
+    availableHours: number;
+    preferredTaskSize: 'small' | 'medium' | 'large';
+  };
+  /** Current sprint or milestone context */
+  sprintContext?: {
+    sprintId: string;
+    sprintEndDate: Date;
+    remainingCapacity: number;
+  };
+}
+
+/**
+ * Recommendation scoring factors
+ */
+export interface RecommendationFactors {
+  /** Priority score (0-10) */
+  priorityScore: number;
+  /** Dependency readiness score (0-10) */
+  dependencyScore: number;
+  /** Complexity/effort score (0-10) */
+  complexityScore: number;
+  /** Context relevance score (0-10) */
+  contextScore: number;
+  /** User preference/history score (0-10) */
+  userScore: number;
+  /** Overall weighted score */
+  totalScore: number;
+}
+
+/**
  * Dependency graph structure for analysis
  */
 export interface DependencyGraph {
   /** Project this graph represents */
-  projectId: string
+  projectId: string;
   /** All nodes (issues) in the graph */
   nodes: {
-    id: string
-    title: string
-    type: IssueType
-    state: string
-    estimate?: number
-  }[]
+    id: string;
+    title: string;
+    type: IssueType;
+    state: string;
+    estimate?: number;
+  }[];
   /** All edges (dependencies) in the graph */
   edges: {
-    from: string
-    to: string
-    type: DependencyType
-  }[]
+    from: string;
+    to: string;
+    type: DependencyType;
+  }[];
   /** Graph analysis results */
   analysis: {
     /** Issues with no dependencies (can start immediately) */
-    rootNodes: string[]
+    rootNodes: string[];
     /** Issues that nothing depends on (final deliverables) */
-    leafNodes: string[]
+    leafNodes: string[];
     /** Critical path through the project */
-    criticalPath: string[]
+    criticalPath: string[];
     /** Circular dependencies detected */
-    circularDependencies: string[][]
+    circularDependencies: string[][];
     /** Issues blocking the most other issues */
     bottlenecks: {
-      issueId: string
-      blockedCount: number
-    }[]
-  }
+      issueId: string;
+      blockedCount: number;
+    }[];
+  };
 }
 
 /**
@@ -462,28 +515,28 @@ export interface DependencyGraph {
  */
 export interface TaskRecommendation {
   /** Recommended issue to work on */
-  issue: EnhancedIssue
+  issue: EnhancedIssue;
   /** Confidence score (0-1) for this recommendation */
-  confidence: number
+  confidence: number;
   /** Human-readable rationale for the recommendation */
-  rationale: string
+  rationale: string;
   /** Alternative tasks if this one is not suitable */
   alternatives: {
-    issue: EnhancedIssue
-    confidence: number
-    rationale: string
-  }[]
+    issue: EnhancedIssue;
+    confidence: number;
+    rationale: string;
+  }[];
   /** Context information used for recommendation */
   context: {
     /** Available (unblocked) issues considered */
-    availableIssues: number
+    availableIssues: number;
     /** User's current focus area */
-    focusArea?: string
+    focusArea?: string;
     /** Recent work history */
-    recentWork?: string[]
+    recentWork?: string[];
     /** Project phase or milestone */
-    projectPhase?: string
-  }
+    projectPhase?: string;
+  };
 }
 
 // =============================================================================
@@ -495,24 +548,24 @@ export interface TaskRecommendation {
  */
 export interface ProviderError extends Error {
   /** Error code for programmatic handling */
-  code: ProviderErrorCode
+  code: ProviderErrorCode;
   /** Provider that generated the error */
-  providerId: string
+  providerId: string;
   /** Provider type */
-  providerType: ProviderType
+  providerType: ProviderType;
   /** HTTP status code if applicable */
-  statusCode?: number
+  statusCode?: number;
   /** Retry information */
-  retryable: boolean
+  retryable: boolean;
   /** Context data for debugging */
   context?: {
-    operation: string
-    parameters?: Record<string, any>
-    timestamp: Date
-    requestId?: string
-  }
+    operation: string;
+    parameters?: Record<string, any>;
+    timestamp: Date;
+    requestId?: string;
+  };
   /** Suggested user actions */
-  userActions?: string[]
+  userActions?: string[];
 }
 
 /**
@@ -526,40 +579,40 @@ export type ProviderErrorCode =
   | 'RATE_LIMIT_EXCEEDED'
   | 'NETWORK_ERROR'
   | 'TIMEOUT'
-  
+
   // Data validation errors
   | 'VALIDATION_ERROR'
   | 'INVALID_INPUT'
   | 'MISSING_REQUIRED_FIELD'
   | 'INVALID_FIELD_VALUE'
   | 'CONSTRAINT_VIOLATION'
-  
+
   // Resource errors
   | 'RESOURCE_NOT_FOUND'
   | 'RESOURCE_ALREADY_EXISTS'
   | 'RESOURCE_CONFLICT'
   | 'RESOURCE_LOCKED'
   | 'INSUFFICIENT_PERMISSIONS'
-  
+
   // Operation errors
   | 'OPERATION_FAILED'
   | 'OPERATION_NOT_SUPPORTED'
   | 'CIRCULAR_DEPENDENCY'
   | 'HIERARCHY_VIOLATION'
   | 'STATE_TRANSITION_INVALID'
-  
+
   // Provider-specific errors
   | 'PROVIDER_ERROR'
   | 'PROVIDER_UNAVAILABLE'
   | 'PROVIDER_CONFIGURATION_ERROR'
   | 'PROVIDER_FEATURE_NOT_SUPPORTED'
-  
+
   // Data integrity errors
   | 'DATA_CORRUPTION'
   | 'MIGRATION_FAILED'
   | 'SYNC_FAILED'
   | 'EXPORT_FAILED'
-  | 'IMPORT_FAILED'
+  | 'IMPORT_FAILED';
 
 // =============================================================================
 // Core Provider Interface
@@ -567,10 +620,10 @@ export type ProviderErrorCode =
 
 /**
  * Unified IssueProvider interface for all issue tracking backends
- * 
+ *
  * This interface defines the complete API contract that all provider implementations
  * must support, ensuring feature parity across SQLite, Linear, GitHub, and Jira.
- * 
+ *
  * The interface follows async/await patterns throughout and provides comprehensive
  * error handling with standardized error types and status codes.
  */
@@ -578,190 +631,196 @@ export interface IssueProvider {
   // -------------------------------------------------------------------------
   // Provider Metadata and Health Management
   // -------------------------------------------------------------------------
-  
+
   /**
    * Get comprehensive provider information and capabilities
    * @returns Provider metadata including capabilities and status
    */
-  getProviderInfo(): ProviderInfo
-  
+  getProviderInfo: () => ProviderInfo;
+
   /**
    * Check if provider is available and can handle requests
    * @returns Promise resolving to availability status
    */
-  isAvailable(): Promise<boolean>
-  
+  isAvailable: () => Promise<boolean>;
+
   /**
    * Perform health check and update provider status
    * @returns Promise resolving to current health status
    */
-  healthCheck(): Promise<ProviderStatus>
-  
+  healthCheck: () => Promise<ProviderStatus>;
+
   /**
    * Initialize provider connection and perform setup
    * @param config Provider-specific configuration
    * @returns Promise resolving to initialization result
    */
-  initialize(config: ProviderConfig): Promise<OperationResult<void>>
-  
+  initialize: (config: ProviderConfig) => Promise<OperationResult<void>>;
+
   /**
    * Cleanup provider resources and close connections
    * @returns Promise resolving when cleanup is complete
    */
-  cleanup(): Promise<OperationResult<void>>
+  cleanup: () => Promise<OperationResult<void>>;
 
   // -------------------------------------------------------------------------
   // Capability Discovery and Validation
   // -------------------------------------------------------------------------
-  
+
   /**
    * Discover and validate provider capabilities dynamically
    * @param options Discovery configuration options
    * @returns Promise resolving to capability discovery results
    */
-  discoverCapabilities?(options?: {
-    targetCapabilities?: string[]
-    skipCached?: boolean
-    timeout?: number
-    includeBenchmarks?: boolean
-    probeDepth?: 'shallow' | 'deep'
-  }): Promise<{
-    capabilities: Map<string, {
-      capabilityId: string
-      isSupported: boolean
-      version?: string
-      performance?: {
-        averageResponseTime: number
-        reliability: number
-        throughput: number
+  discoverCapabilities?: (options?: {
+    targetCapabilities?: string[];
+    skipCached?: boolean;
+    timeout?: number;
+    includeBenchmarks?: boolean;
+    probeDepth?: 'shallow' | 'deep';
+  }) => Promise<{
+    capabilities: Map<
+      string,
+      {
+        capabilityId: string;
+        isSupported: boolean;
+        version?: string;
+        performance?: {
+          averageResponseTime: number;
+          reliability: number;
+          throughput: number;
+        };
+        metadata?: Record<string, any>;
+        error?: ProviderError;
+        probedAt: Date;
       }
-      metadata?: Record<string, any>
-      error?: ProviderError
-      probedAt: Date
-    }>
-    discoverySuccess: boolean
-    discoveryDuration: number
-    discoveredAt: Date
-    errors: ProviderError[]
-    warnings: string[]
-  }>
+    >;
+    discoverySuccess: boolean;
+    discoveryDuration: number;
+    discoveredAt: Date;
+    errors: ProviderError[];
+    warnings: string[];
+  }>;
 
   /**
    * Check if a specific capability is supported
    * @param capabilityId Capability identifier to check
    * @returns Promise resolving to capability support status
    */
-  supportsCapability?(capabilityId: string): Promise<boolean>
+  supportsCapability?: (capabilityId: string) => Promise<boolean>;
 
   /**
    * Get detailed information about a capability implementation
    * @param capabilityId Capability identifier
    * @returns Capability implementation details or undefined if not supported
    */
-  getCapabilityInfo?(capabilityId: string): Promise<{
-    isSupported: boolean
-    implementationDetails?: string
-    limitations?: string[]
-    performanceNotes?: string
-    version?: string
-  } | undefined>
+  getCapabilityInfo?: (capabilityId: string) => Promise<
+    | {
+        isSupported: boolean;
+        implementationDetails?: string;
+        limitations?: string[];
+        performanceNotes?: string;
+        version?: string;
+      }
+    | undefined
+  >;
 
   /**
    * Validate that required capabilities are available before operation
    * @param requiredCapabilities List of capability IDs required
    * @returns Promise resolving to validation result
    */
-  validateCapabilities?(requiredCapabilities: string[]): Promise<{
-    isValid: boolean
-    supportedCapabilities: string[]
-    unsupportedCapabilities: string[]
-    warnings: string[]
-  }>
-  
+  validateCapabilities?: (requiredCapabilities: string[]) => Promise<{
+    isValid: boolean;
+    supportedCapabilities: string[];
+    unsupportedCapabilities: string[];
+    warnings: string[];
+  }>;
+
   // -------------------------------------------------------------------------
   // Project Lifecycle Management
   // -------------------------------------------------------------------------
-  
+
   /**
    * Create a new project with initial configuration
    * @param config Project configuration and settings
    * @returns Promise resolving to created project
    */
-  createProject(config: ProjectConfig): Promise<Project>
-  
+  createProject: (config: ProjectConfig) => Promise<Project>;
+
   /**
    * Retrieve project by ID with complete metadata
    * @param id Project identifier
    * @returns Promise resolving to project details
    */
-  getProject(id: string): Promise<Project>
-  
+  getProject: (id: string) => Promise<Project>;
+
   /**
    * Update existing project with partial updates
    * @param id Project identifier
    * @param updates Partial project data to update
    * @returns Promise resolving to updated project
    */
-  updateProject(id: string, updates: UpdateProjectInput): Promise<Project>
-  
+  updateProject: (id: string, updates: UpdateProjectInput) => Promise<Project>;
+
   /**
    * List all projects with optional filtering
    * @param filters Optional project filtering criteria
    * @returns Promise resolving to array of projects
    */
-  listProjects(filters?: { name?: string; createdAfter?: Date }): Promise<Project[]>
-  
+  listProjects: (filters?: { name?: string; createdAfter?: Date }) => Promise<Project[]>;
+
   /**
    * Delete project and all associated data
    * @param id Project identifier
    * @returns Promise resolving to operation result
    */
-  deleteProject(id: string): Promise<OperationResult<void>>
-  
+  deleteProject: (id: string) => Promise<OperationResult<void>>;
+
   // -------------------------------------------------------------------------
   // Issue Lifecycle Operations
   // -------------------------------------------------------------------------
-  
+
   /**
    * Create a new issue with full configuration
    * @param config Issue configuration including relationships
    * @returns Promise resolving to created issue
    */
-  createIssue(config: IssueConfig): Promise<EnhancedIssue>
-  
+  createIssue: (config: IssueConfig) => Promise<EnhancedIssue>;
+
   /**
    * Retrieve issue by ID with complete relationships
    * @param id Issue identifier
    * @returns Promise resolving to enhanced issue details
    */
-  getIssue(id: string): Promise<EnhancedIssue>
-  
+  getIssue: (id: string) => Promise<EnhancedIssue>;
+
   /**
    * Update existing issue with partial updates
    * @param id Issue identifier
    * @param updates Partial issue data to update
    * @returns Promise resolving to updated issue
    */
-  updateIssue(id: string, updates: UpdateIssueInput): Promise<EnhancedIssue>
-  
+  updateIssue: (id: string, updates: UpdateIssueInput) => Promise<EnhancedIssue>;
+
   /**
    * List issues with comprehensive filtering and sorting
    * @param filters Issue filtering and query options
    * @returns Promise resolving to array of issues
    */
-  listIssues(filters: IssueFilters): Promise<EnhancedIssue[]>
-  
+  listIssues: (filters: IssueFilters) => Promise<EnhancedIssue[]>;
+
   /**
    * Delete issue and handle dependency cleanup
    * @param id Issue identifier
    * @returns Promise resolving to operation result
    */
-  deleteIssue(id: string): Promise<OperationResult<void>>
-  
+  deleteIssue: (id: string) => Promise<OperationResult<void>>;
+
   // -------------------------------------------------------------------------
   // Dependency Graph Management
   // -------------------------------------------------------------------------
-  
+
   /**
    * Add dependency relationship between issues
    * @param blockerId Issue that must complete first
@@ -769,184 +828,178 @@ export interface IssueProvider {
    * @param type Type of dependency relationship
    * @returns Promise resolving to created dependency
    */
-  addDependency(
-    blockerId: string, 
-    blockedId: string, 
+  addDependency: (
+    blockerId: string,
+    blockedId: string,
     type?: DependencyType
-  ): Promise<Dependency>
-  
+  ) => Promise<Dependency>;
+
   /**
    * Remove dependency relationship
    * @param dependencyId Dependency identifier
    * @returns Promise resolving to operation result
    */
-  removeDependency(dependencyId: string): Promise<OperationResult<void>>
-  
+  removeDependency: (dependencyId: string) => Promise<OperationResult<void>>;
+
   /**
    * Get complete dependency graph for project with analysis
    * @param projectId Project identifier
    * @returns Promise resolving to dependency graph and analysis
    */
-  getDependencyGraph(projectId: string): Promise<DependencyGraph>
-  
+  getDependencyGraph: (projectId: string) => Promise<DependencyGraph>;
+
   /**
    * Validate dependency graph for circular dependencies
    * @param projectId Project identifier
    * @returns Promise resolving to validation results
    */
-  validateDependencyGraph(projectId: string): Promise<{
-    isValid: boolean
-    circularDependencies: string[][]
-    errors: string[]
-  }>
-  
+  validateDependencyGraph: (projectId: string) => Promise<{
+    isValid: boolean;
+    circularDependencies: string[][];
+    errors: string[];
+  }>;
+
   // -------------------------------------------------------------------------
   // Workflow State Management
   // -------------------------------------------------------------------------
-  
+
   /**
    * Get all workflow states for a project
    * @param projectId Project identifier
    * @returns Promise resolving to workflow states
    */
-  getWorkflowStates(projectId: string): Promise<WorkflowState[]>
-  
+  getWorkflowStates: (projectId: string) => Promise<WorkflowState[]>;
+
   /**
    * Create new workflow state
    * @param projectId Project identifier
    * @param state Workflow state configuration
    * @returns Promise resolving to created state
    */
-  createWorkflowState(
-    projectId: string, 
+  createWorkflowState: (
+    projectId: string,
     state: Omit<WorkflowState, 'id' | 'project_id' | 'created_at' | 'updated_at'>
-  ): Promise<WorkflowState>
-  
+  ) => Promise<WorkflowState>;
+
   /**
    * Update issue workflow state with validation
    * @param issueId Issue identifier
    * @param stateId New workflow state identifier
    * @returns Promise resolving to updated issue
    */
-  updateIssueState(issueId: string, stateId: string): Promise<EnhancedIssue>
-  
+  updateIssueState: (issueId: string, stateId: string) => Promise<EnhancedIssue>;
+
   /**
    * Get valid state transitions for an issue
    * @param issueId Issue identifier
    * @returns Promise resolving to available transitions
    */
-  getValidStateTransitions(issueId: string): Promise<WorkflowState[]>
-  
+  getValidStateTransitions: (issueId: string) => Promise<WorkflowState[]>;
+
   // -------------------------------------------------------------------------
   // Label and Categorization Management
   // -------------------------------------------------------------------------
-  
+
   /**
    * Create new label
    * @param label Label configuration
    * @returns Promise resolving to created label
    */
-  createLabel(label: CreateLabelInput): Promise<Label>
-  
+  createLabel: (label: CreateLabelInput) => Promise<Label>;
+
   /**
    * Get all labels for a project
    * @param projectId Project identifier
    * @returns Promise resolving to project labels
    */
-  getProjectLabels(projectId: string): Promise<Label[]>
-  
+  getProjectLabels: (projectId: string) => Promise<Label[]>;
+
   /**
    * Add label to issue
    * @param issueId Issue identifier
    * @param labelId Label identifier
    * @returns Promise resolving to operation result
    */
-  addLabelToIssue(issueId: string, labelId: string): Promise<OperationResult<void>>
-  
+  addLabelToIssue: (issueId: string, labelId: string) => Promise<OperationResult<void>>;
+
   /**
    * Remove label from issue
    * @param issueId Issue identifier
    * @param labelId Label identifier
    * @returns Promise resolving to operation result
    */
-  removeLabelFromIssue(issueId: string, labelId: string): Promise<OperationResult<void>>
-  
+  removeLabelFromIssue: (issueId: string, labelId: string) => Promise<OperationResult<void>>;
+
   // -------------------------------------------------------------------------
   // Task Orchestration and Recommendations
   // -------------------------------------------------------------------------
-  
+
   /**
    * Get intelligent next task recommendation based on project state
    * @param projectId Project identifier
    * @param context Additional context for recommendation
    * @returns Promise resolving to task recommendation
    */
-  getNextTaskRecommendation(
-    projectId: string, 
+  getNextTaskRecommendation: (
+    projectId: string,
     context?: { focusArea?: string; recentWork?: string[] }
-  ): Promise<TaskRecommendation>
-  
+  ) => Promise<TaskRecommendation>;
+
   /**
    * Get all available (unblocked) issues for immediate work
    * @param projectId Project identifier
    * @param assigneeId Optional assignee filter
    * @returns Promise resolving to available issues
    */
-  getAvailableIssues(
-    projectId: string, 
-    assigneeId?: string
-  ): Promise<EnhancedIssue[]>
-  
+  getAvailableIssues: (projectId: string, assigneeId?: string) => Promise<EnhancedIssue[]>;
+
   /**
    * Mark issue as started and update dependencies
    * @param issueId Issue identifier
    * @returns Promise resolving to updated issue
    */
-  startIssue(issueId: string): Promise<EnhancedIssue>
-  
+  startIssue: (issueId: string) => Promise<EnhancedIssue>;
+
   /**
    * Mark issue as completed and unblock dependents
    * @param issueId Issue identifier
    * @returns Promise resolving to completion result with unblocked issues
    */
-  completeIssue(issueId: string): Promise<{
-    issue: EnhancedIssue
-    unblockedIssues: EnhancedIssue[]
-  }>
-  
+  completeIssue: (issueId: string) => Promise<{
+    issue: EnhancedIssue;
+    unblockedIssues: EnhancedIssue[];
+  }>;
+
   // -------------------------------------------------------------------------
   // Data Portability and Migration
   // -------------------------------------------------------------------------
-  
+
   /**
    * Export complete project data for migration
    * @param projectId Project identifier
    * @param options Export configuration options
    * @returns Promise resolving to export data
    */
-  exportData(
-    projectId: string, 
-    options?: Partial<ExportOptions>
-  ): Promise<ExportData>
-  
+  exportData: (projectId: string, options?: Partial<ExportOptions>) => Promise<ExportData>;
+
   /**
    * Import data from another provider
    * @param data Export data to import
    * @param options Import configuration options
    * @returns Promise resolving to import results
    */
-  importData(
-    data: ExportData, 
+  importData: (
+    data: ExportData,
     options?: {
-      overwriteExisting?: boolean
-      validateData?: boolean
-      createMissingWorkflowStates?: boolean
-      enableStreaming?: boolean
-      chunkSize?: number
-      maxMemoryUsage?: number
+      overwriteExisting?: boolean;
+      validateData?: boolean;
+      createMissingWorkflowStates?: boolean;
+      enableStreaming?: boolean;
+      chunkSize?: number;
+      maxMemoryUsage?: number;
     }
-  ): Promise<ImportResult>
-  
+  ) => Promise<ImportResult>;
+
   /**
    * Synchronize data with another provider
    * @param otherProvider Target provider for synchronization
@@ -954,32 +1007,32 @@ export interface IssueProvider {
    * @param options Synchronization options
    * @returns Promise resolving to sync results
    */
-  syncWith(
-    otherProvider: IssueProvider, 
+  syncWith: (
+    otherProvider: IssueProvider,
     projectId: string,
     options?: {
-      direction: 'push' | 'pull' | 'bidirectional'
-      conflictResolution: 'source_wins' | 'target_wins' | 'manual'
-      dryRun?: boolean
+      direction: 'push' | 'pull' | 'bidirectional';
+      conflictResolution: 'source_wins' | 'target_wins' | 'manual';
+      dryRun?: boolean;
     }
-  ): Promise<SyncResult>
-  
+  ) => Promise<SyncResult>;
+
   /**
    * Validate data integrity and consistency
    * @param projectId Project identifier
    * @returns Promise resolving to validation results
    */
-  validateDataIntegrity(projectId: string): Promise<{
-    isValid: boolean
-    errors: string[]
-    warnings: string[]
+  validateDataIntegrity: (projectId: string) => Promise<{
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
     statistics: {
-      totalIssues: number
-      hierarchyViolations: number
-      dependencyViolations: number
-      orphanedEntities: number
-    }
-  }>
+      totalIssues: number;
+      hierarchyViolations: number;
+      dependencyViolations: number;
+      orphanedEntities: number;
+    };
+  }>;
 }
 
 // =============================================================================
@@ -995,56 +1048,59 @@ export interface ProviderFactory {
    * @param config Provider configuration
    * @returns Promise resolving to provider instance
    */
-  createProvider(config: ProviderConfig): Promise<IssueProvider>
-  
+  createProvider: (config: ProviderConfig) => Promise<IssueProvider>;
+
   /**
    * Create provider instance with capability validation
    * @param config Provider configuration
    * @param requiredCapabilities Capabilities that must be supported
    * @returns Promise resolving to provider instance with capability validation
    */
-  createProviderWithCapabilities?(
+  createProviderWithCapabilities?: (
     config: ProviderConfig,
     requiredCapabilities: string[]
-  ): Promise<{
-    provider: IssueProvider
+  ) => Promise<{
+    _provider: IssueProvider;
     capabilityValidation: {
-      isValid: boolean
-      supportedCapabilities: string[]
-      unsupportedCapabilities: string[]
-      warnings: string[]
-    }
-  }>
-  
+      isValid: boolean;
+      supportedCapabilities: string[];
+      unsupportedCapabilities: string[];
+      warnings: string[];
+    };
+  }>;
+
   /**
    * Get supported provider types
    * @returns Array of supported provider types
    */
-  getSupportedTypes(): ProviderType[]
-  
+  getSupportedTypes: () => ProviderType[];
+
   /**
    * Get provider type capabilities without creating instance
    * @param providerType Provider type to check
    * @returns Promise resolving to provider type capabilities
    */
-  getProviderTypeCapabilities?(providerType: ProviderType): Promise<{
-    capabilities: Map<string, {
-      isSupported: boolean
-      limitations?: string[]
-      implementationNotes?: string
-    }>
-    overallScore: number
-  }>
-  
+  getProviderTypeCapabilities?: (providerType: ProviderType) => Promise<{
+    capabilities: Map<
+      string,
+      {
+        isSupported: boolean;
+        limitations?: string[];
+        implementationNotes?: string;
+      }
+    >;
+    overallScore: number;
+  }>;
+
   /**
    * Validate provider configuration
    * @param config Provider configuration to validate
    * @returns Validation result with errors if invalid
    */
-  validateConfig(config: ProviderConfig): {
-    isValid: boolean
-    errors: string[]
-  }
+  validateConfig: (config: ProviderConfig) => {
+    isValid: boolean;
+    errors: string[];
+  };
 
   /**
    * Find best provider for required capabilities
@@ -1052,22 +1108,22 @@ export interface ProviderFactory {
    * @param availableConfigs Available provider configurations
    * @returns Promise resolving to best provider recommendation
    */
-  findBestProviderForCapabilities?(
+  findBestProviderForCapabilities?: (
     requiredCapabilities: string[],
     availableConfigs: ProviderConfig[]
-  ): Promise<{
-    recommendedConfig: ProviderConfig | null
-    compatibilityScore: number
+  ) => Promise<{
+    recommendedConfig: ProviderConfig | null;
+    compatibilityScore: number;
     analysis: {
-      supportedCapabilities: string[]
-      unsupportedCapabilities: string[]
+      supportedCapabilities: string[];
+      unsupportedCapabilities: string[];
       alternatives: {
-        config: ProviderConfig
-        score: number
-        gaps: string[]
-      }[]
-    }
-  }>
+        config: ProviderConfig;
+        score: number;
+        gaps: string[];
+      }[];
+    };
+  }>;
 }
 
 /**
@@ -1079,25 +1135,25 @@ export interface ProviderRegistry {
    * @param provider Provider to register
    * @returns Registration result
    */
-  registerProvider(provider: IssueProvider): Promise<OperationResult<void>>
-  
+  registerProvider: (_provider: IssueProvider) => Promise<OperationResult<void>>;
+
   /**
    * Get provider by ID
    * @param id Provider identifier
    * @returns Provider instance or undefined
    */
-  getProvider(id: string): IssueProvider | undefined
-  
+  getProvider: (id: string) => IssueProvider | undefined;
+
   /**
    * List all registered providers
    * @returns Array of provider information
    */
-  listProviders(): ProviderInfo[]
-  
+  listProviders: () => ProviderInfo[];
+
   /**
    * Remove provider from registry
    * @param id Provider identifier
    * @returns Removal result
    */
-  unregisterProvider(id: string): Promise<OperationResult<void>>
+  unregisterProvider: (id: string) => Promise<OperationResult<void>>;
 }

@@ -1,34 +1,17 @@
 /**
  * JCVD Data Transformation Interface
  * Core contracts for bidirectional data transformation between providers
- * 
+ *
  * This module defines the foundational interfaces for transforming data between
  * provider-specific formats and the unified JCVD data model, enabling seamless
  * provider interoperability with lossless data conversion.
- * 
+ *
  * @version 1.0.0
  * @author JCVD Software Architect Agent
  */
 
-import type {
-  Issue,
-  Project,
-  WorkflowState,
-  IssueDependency,
-  Label,
-  IssueComment,
-  IssueType,
-  IssuePriority,
-  WorkflowStateType,
-  DependencyType
-} from '../../database/models/schema-types.js'
-import type {
-  ProviderType,
-  EnhancedIssue,
-  Dependency,
-  ProviderError,
-  ProviderErrorCode
-} from '../types.js'
+import type { WorkflowState, Label } from '../../database/models/schema-types.js';
+import type { ProviderType } from '../types.js';
 
 // =============================================================================
 // Core Transformation Interfaces
@@ -36,7 +19,7 @@ import type {
 
 /**
  * Generic transformer interface for bidirectional data conversion
- * 
+ *
  * @template TSource - Source data type (provider-specific format)
  * @template TTarget - Target data type (unified model format)
  */
@@ -47,66 +30,79 @@ export interface DataTransformer<TSource, TTarget> {
    * @param context - Transformation context and metadata
    * @returns Promise resolving to transformed data
    */
-  transform(source: TSource, context: TransformationContext): Promise<TransformationResult<TTarget>>
-  
+  transform: (
+    source: TSource,
+    context: TransformationContext
+  ) => Promise<TransformationResult<TTarget>>;
+
   /**
    * Transform target data back to source format (reverse transformation)
    * @param target - Data in target format
    * @param context - Transformation context and metadata
    * @returns Promise resolving to reverse-transformed data
    */
-  reverseTransform(target: TTarget, context: TransformationContext): Promise<TransformationResult<TSource>>
-  
+  reverseTransform: (
+    target: TTarget,
+    context: TransformationContext
+  ) => Promise<TransformationResult<TSource>>;
+
   /**
    * Validate that source data can be transformed
    * @param source - Data to validate
    * @returns Validation result with errors if invalid
    */
-  validateSource(source: TSource): Promise<ValidationResult>
-  
+  validateSource: (source: TSource) => Promise<ValidationResult>;
+
   /**
    * Validate that target data is correctly formatted
    * @param target - Data to validate
    * @returns Validation result with errors if invalid
    */
-  validateTarget(target: TTarget): Promise<ValidationResult>
-  
+  validateTarget: (target: TTarget) => Promise<ValidationResult>;
+
   /**
    * Get transformation schema/mapping information
    * @returns Metadata about the transformation mapping
    */
-  getTransformationSchema(): TransformationSchema<TSource, TTarget>
+  getTransformationSchema: () => TransformationSchema<TSource, TTarget>;
 }
 
 /**
  * Specialized interface for entity-specific transformers
  */
-export interface EntityTransformer<TProviderEntity, TUnifiedEntity> extends DataTransformer<TProviderEntity, TUnifiedEntity> {
+export interface EntityTransformer<TProviderEntity, TUnifiedEntity>
+  extends DataTransformer<TProviderEntity, TUnifiedEntity> {
   /**
    * Entity type this transformer handles
    */
-  readonly entityType: EntityType
-  
+  readonly entityType: EntityType;
+
   /**
    * Provider type this transformer supports
    */
-  readonly providerType: ProviderType
-  
+  readonly providerType: ProviderType;
+
   /**
    * Transform a batch of entities for performance optimization
    * @param sources - Array of source entities
    * @param context - Transformation context
    * @returns Promise resolving to batch transformation results
    */
-  transformBatch(sources: TProviderEntity[], context: TransformationContext): Promise<BatchTransformationResult<TUnifiedEntity>>
-  
+  transformBatch: (
+    sources: TProviderEntity[],
+    context: TransformationContext
+  ) => Promise<BatchTransformationResult<TUnifiedEntity>>;
+
   /**
    * Reverse transform a batch of entities
    * @param targets - Array of target entities
    * @param context - Transformation context
    * @returns Promise resolving to batch reverse transformation results
    */
-  reverseTransformBatch(targets: TUnifiedEntity[], context: TransformationContext): Promise<BatchTransformationResult<TProviderEntity>>
+  reverseTransformBatch: (
+    targets: TUnifiedEntity[],
+    context: TransformationContext
+  ) => Promise<BatchTransformationResult<TProviderEntity>>;
 }
 
 // =============================================================================
@@ -116,42 +112,45 @@ export interface EntityTransformer<TProviderEntity, TUnifiedEntity> extends Data
 /**
  * Supported entity types for transformation
  */
-export type EntityType = 'project' | 'issue' | 'workflowState' | 'dependency' | 'label' | 'comment'
+export type EntityType = 'project' | 'issue' | 'workflowState' | 'dependency' | 'label' | 'comment';
 
 /**
  * Field mapping strategies for different transformation patterns
  */
-export type FieldMappingStrategy = 
-  | 'identity'      // Direct field-to-field mapping
-  | 'computed'      // Derive field from multiple source fields
-  | 'conditional'   // Field mapping based on conditions
-  | 'lookup'        // Map values using lookup tables
-  | 'custom'        // Custom transformation function
+export type FieldMappingStrategy =
+  | 'identity' // Direct field-to-field mapping
+  | 'computed' // Derive field from multiple source fields
+  | 'conditional' // Field mapping based on conditions
+  | 'lookup' // Map values using lookup tables
+  | 'custom'; // Custom transformation function
 
 /**
  * Field mapping definition for individual fields
  */
 export interface FieldMapping<TSource = any, TTarget = any> {
   /** Source field path (dot notation supported for nested objects) */
-  sourceField?: string | string[]
+  sourceField?: string | string[];
   /** Target field path */
-  targetField: string
+  targetField: string;
   /** Mapping strategy */
-  strategy: FieldMappingStrategy
+  strategy: FieldMappingStrategy;
   /** Required field (transformation fails if missing) */
-  required: boolean
+  required: boolean;
   /** Default value if source field is missing */
-  defaultValue?: TTarget
+  defaultValue?: TTarget;
   /** Type conversion information */
-  typeConversion?: TypeConversion
+  typeConversion?: TypeConversion;
   /** Conditional mapping rules */
-  conditions?: FieldCondition<TSource>[]
+  conditions?: FieldCondition<TSource>[];
   /** Custom transformation function */
-  transform?: (source: TSource, context: TransformationContext) => TTarget | Promise<TTarget>
+  transform?: (source: TSource, context: TransformationContext) => TTarget | Promise<TTarget>;
   /** Reverse transformation function */
-  reverseTransform?: (target: TTarget, context: TransformationContext) => TSource | Promise<TSource>
+  reverseTransform?: (
+    target: TTarget,
+    context: TransformationContext
+  ) => TSource | Promise<TSource>;
   /** Field validation rules */
-  validation?: FieldValidation<TTarget>
+  validation?: FieldValidation<TTarget>;
 }
 
 /**
@@ -159,16 +158,16 @@ export interface FieldMapping<TSource = any, TTarget = any> {
  */
 export interface TypeConversion {
   /** Source data type */
-  sourceType: 'string' | 'number' | 'boolean' | 'date' | 'object' | 'array'
+  sourceType: 'string' | 'number' | 'boolean' | 'date' | 'object' | 'array';
   /** Target data type */
-  targetType: 'string' | 'number' | 'boolean' | 'date' | 'object' | 'array'
+  targetType: 'string' | 'number' | 'boolean' | 'date' | 'object' | 'array';
   /** Conversion options */
   options?: {
-    dateFormat?: string
-    numberBase?: number
-    booleanTrueValues?: any[]
-    objectKeyMapping?: Record<string, string>
-  }
+    dateFormat?: string;
+    numberBase?: number;
+    booleanTrueValues?: any[];
+    objectKeyMapping?: Record<string, string>;
+  };
 }
 
 /**
@@ -176,13 +175,21 @@ export interface TypeConversion {
  */
 export interface FieldCondition<TSource = any> {
   /** Field to check for condition */
-  field: string
+  field: string;
   /** Comparison operator */
-  operator: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'exists' | 'not_exists' | 'greater_than' | 'less_than'
+  operator:
+    | 'equals'
+    | 'not_equals'
+    | 'contains'
+    | 'not_contains'
+    | 'exists'
+    | 'not_exists'
+    | 'greater_than'
+    | 'less_than';
   /** Value to compare against */
-  value?: any
+  value?: any;
   /** Mapping to use if condition is true */
-  mapping: Partial<FieldMapping<TSource>>
+  mapping: Partial<FieldMapping<TSource>>;
 }
 
 /**
@@ -190,17 +197,17 @@ export interface FieldCondition<TSource = any> {
  */
 export interface FieldValidation<T = any> {
   /** Field is required */
-  required?: boolean
+  required?: boolean;
   /** Minimum value/length */
-  min?: number
+  min?: number;
   /** Maximum value/length */
-  max?: number
+  max?: number;
   /** Regular expression pattern */
-  pattern?: RegExp  
+  pattern?: RegExp;
   /** Allowed values (enum) */
-  allowedValues?: T[]
+  allowedValues?: T[];
   /** Custom validation function */
-  custom?: (value: T) => boolean | string
+  custom?: (value: T) => boolean | string;
 }
 
 /**
@@ -208,26 +215,26 @@ export interface FieldValidation<T = any> {
  */
 export interface TransformationSchema<TSource = any, TTarget = any> {
   /** Entity type being transformed */
-  entityType: EntityType
+  entityType: EntityType;
   /** Provider type */
-  providerType: ProviderType
+  providerType: ProviderType;
   /** Schema version for evolution tracking */
-  version: string
+  version: string;
   /** Field mappings */
-  fieldMappings: FieldMapping<TSource, TTarget>[]
+  fieldMappings: FieldMapping<TSource, TTarget>[];
   /** Provider-specific metadata preservation */
   metadataMapping?: {
     /** Source fields to preserve in metadata */
-    preserveFields: string[]
+    preserveFields: string[];
     /** Custom metadata extraction function */
-    extractMetadata?: (source: TSource) => Record<string, any>
+    extractMetadata?: (source: TSource) => Record<string, any>;
     /** Custom metadata restoration function */
-    restoreMetadata?: (target: TTarget, metadata: Record<string, any>) => TSource
-  }
+    restoreMetadata?: (target: TTarget, metadata: Record<string, any>) => TSource;
+  };
   /** Relationship mappings for complex entities */
-  relationshipMappings?: RelationshipMapping[]
+  relationshipMappings?: RelationshipMapping[];
   /** Transformation constraints and validation */
-  constraints?: TransformationConstraint[]
+  constraints?: TransformationConstraint[];
 }
 
 /**
@@ -235,13 +242,13 @@ export interface TransformationSchema<TSource = any, TTarget = any> {
  */
 export interface RelationshipMapping {
   /** Relationship type */
-  type: 'parent_child' | 'many_to_many' | 'one_to_many' | 'dependency' | 'reference'
+  type: 'parent_child' | 'many_to_many' | 'one_to_many' | 'dependency' | 'reference';
   /** Source relationship field/structure */
-  sourceRelationship: string | RelationshipStructure
+  sourceRelationship: string | RelationshipStructure;
   /** Target relationship field/structure */
-  targetRelationship: string | RelationshipStructure
+  targetRelationship: string | RelationshipStructure;
   /** Related entity transformer */
-  relatedEntityTransformer?: string // Reference to transformer ID
+  relatedEntityTransformer?: string; // Reference to transformer ID
 }
 
 /**
@@ -249,13 +256,13 @@ export interface RelationshipMapping {
  */
 export interface RelationshipStructure {
   /** Primary key field */
-  primaryKey: string
+  primaryKey: string;
   /** Foreign key field */
-  foreignKey: string
+  foreignKey: string;
   /** Junction table for many-to-many */
-  junctionTable?: string
+  junctionTable?: string;
   /** Additional fields to map */
-  additionalFields?: string[]
+  additionalFields?: string[];
 }
 
 /**
@@ -263,15 +270,15 @@ export interface RelationshipStructure {
  */
 export interface TransformationConstraint {
   /** Constraint type */
-  type: 'uniqueness' | 'foreign_key' | 'hierarchy' | 'business_rule' | 'data_integrity'
+  type: 'uniqueness' | 'foreign_key' | 'hierarchy' | 'business_rule' | 'data_integrity';
   /** Field(s) the constraint applies to */
-  fields: string[]
+  fields: string[];
   /** Constraint validation function */
-  validate: (entity: any, context: TransformationContext) => boolean | string
+  validate: (entity: any, context: TransformationContext) => boolean | string;
   /** Error message if constraint fails */
-  errorMessage: string
+  errorMessage: string;
   /** Constraint severity */
-  severity: 'error' | 'warning' | 'info'
+  severity: 'error' | 'warning' | 'info';
 }
 
 // =============================================================================
@@ -283,30 +290,30 @@ export interface TransformationConstraint {
  */
 export interface TransformationContext {
   /** Source provider type */
-  sourceProvider: ProviderType
+  sourceProvider: ProviderType;
   /** Target provider type */
-  targetProvider: ProviderType
+  targetProvider: ProviderType;
   /** Transformation direction */
-  direction: 'to_unified' | 'from_unified'
+  direction: 'to_unified' | 'from_unified';
   /** Project context */
   projectContext?: {
-    projectId: string
-    workflowStates: WorkflowState[]
-    labels: Label[]
-    customFields: Record<string, any>
-  }
+    projectId: string;
+    workflowStates: WorkflowState[];
+    labels: Label[];
+    customFields: Record<string, any>;
+  };
   /** User context */
   userContext?: {
-    userId?: string
-    timezone?: string
-    locale?: string
-  }
+    userId?: string;
+    timezone?: string;
+    locale?: string;
+  };
   /** Transformation options */
-  options: TransformationOptions
+  options: TransformationOptions;
   /** Cache for lookup data */
-  cache: Map<string, any>
+  cache: Map<string, any>;
   /** Logger for transformation events */
-  logger?: TransformationLogger
+  logger?: TransformationLogger;
 }
 
 /**
@@ -314,19 +321,19 @@ export interface TransformationContext {
  */
 export interface TransformationOptions {
   /** Skip validation for performance */
-  skipValidation: boolean
+  skipValidation: boolean;
   /** Preserve unknown fields in metadata */
-  preserveUnknownFields: boolean
+  preserveUnknownFields: boolean;
   /** Fail on first error vs collect all errors */
-  failFast: boolean
+  failFast: boolean;
   /** Maximum recursion depth for nested objects */
-  maxRecursionDepth: number
+  maxRecursionDepth: number;
   /** Batch size for bulk operations */
-  batchSize: number
+  batchSize: number;
   /** Enable performance metrics collection */
-  collectMetrics: boolean
+  collectMetrics: boolean;
   /** Custom field mappings override */
-  customMappings?: Record<string, FieldMapping>
+  customMappings?: Record<string, FieldMapping>;
 }
 
 /**
@@ -334,17 +341,17 @@ export interface TransformationOptions {
  */
 export interface TransformationResult<T> {
   /** Transformation succeeded */
-  success: boolean
+  success: boolean;
   /** Transformed data (if successful) */
-  data?: T
+  data?: T;
   /** Transformation errors */
-  errors: TransformationError[]
+  errors: TransformationError[];
   /** Transformation warnings */
-  warnings: TransformationWarning[]
+  warnings: TransformationWarning[];
   /** Preserved metadata */
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>;
   /** Transformation metrics */
-  metrics?: TransformationMetrics
+  metrics?: TransformationMetrics;
 }
 
 /**
@@ -352,18 +359,18 @@ export interface TransformationResult<T> {
  */
 export interface BatchTransformationResult<T> {
   /** Overall success status */
-  success: boolean
+  success: boolean;
   /** Successfully transformed entities */
-  successful: T[]
+  successful: T[];
   /** Failed transformations with errors */
   failed: {
-    sourceData: any
-    errors: TransformationError[]
-  }[]
+    sourceData: any;
+    errors: TransformationError[];
+  }[];
   /** Batch warnings */
-  warnings: TransformationWarning[]
+  warnings: TransformationWarning[];
   /** Batch metrics */
-  metrics: BatchTransformationMetrics
+  metrics: BatchTransformationMetrics;
 }
 
 /**
@@ -371,26 +378,26 @@ export interface BatchTransformationResult<T> {
  */
 export interface TransformationError {
   /** Error code for programmatic handling */
-  code: TransformationErrorCode
+  code: TransformationErrorCode;
   /** Human-readable error message */
-  message: string
+  message: string;
   /** Field that caused the error */
-  field?: string
+  field?: string;
   /** Source value that caused error */
-  sourceValue?: any
+  sourceValue?: any;
   /** Expected value or format */
-  expectedValue?: any
+  expectedValue?: any;
   /** Error context and debug information */
   context?: {
-    entityType: EntityType
-    entityId?: string
-    transformationStep: string
-    stackTrace?: string
-  }
+    entityType: EntityType;
+    entityId?: string;
+    transformationStep: string;
+    stackTrace?: string;
+  };
   /** Suggested fix for the error */
-  suggestedFix?: string
+  suggestedFix?: string;
   /** Whether error is recoverable */
-  recoverable: boolean
+  recoverable: boolean;
 }
 
 /**
@@ -398,15 +405,15 @@ export interface TransformationError {
  */
 export interface TransformationWarning {
   /** Warning code */
-  code: string
+  code: string;
   /** Warning message */
-  message: string  
+  message: string;
   /** Field that triggered warning */
-  field?: string
+  field?: string;
   /** Warning severity */
-  severity: 'low' | 'medium' | 'high'
+  severity: 'low' | 'medium' | 'high';
   /** Recommendation for addressing warning */
-  recommendation?: string
+  recommendation?: string;
 }
 
 /**
@@ -414,7 +421,7 @@ export interface TransformationWarning {
  */
 export type TransformationErrorCode =
   | 'FIELD_MAPPING_FAILED'
-  | 'TYPE_CONVERSION_FAILED'  
+  | 'TYPE_CONVERSION_FAILED'
   | 'VALIDATION_FAILED'
   | 'CONSTRAINT_VIOLATION'
   | 'MISSING_REQUIRED_FIELD'
@@ -424,19 +431,21 @@ export type TransformationErrorCode =
   | 'METADATA_EXTRACTION_FAILED'
   | 'CUSTOM_TRANSFORM_FAILED'
   | 'SCHEMA_VERSION_MISMATCH'
+  | 'BATCH_PROCESSING_ERROR'
+  | 'TRANSFORMATION_ENGINE_ERROR';
 
 /**
  * Validation result
  */
 export interface ValidationResult {
   /** Validation passed */
-  isValid: boolean
+  isValid: boolean;
   /** Validation errors */
-  errors: TransformationError[]
+  errors: TransformationError[];
   /** Validation warnings */
-  warnings: TransformationWarning[]
+  warnings: TransformationWarning[];
   /** Validation score (0-1) */
-  score: number
+  score: number;
 }
 
 /**
@@ -444,19 +453,19 @@ export interface ValidationResult {
  */
 export interface TransformationMetrics {
   /** Start time */
-  startTime: Date
+  startTime: Date;
   /** End time */
-  endTime: Date
+  endTime: Date;
   /** Duration in milliseconds */
-  duration: number
+  duration: number;
   /** Memory usage in MB */
-  memoryUsage: number
+  memoryUsage: number;
   /** Number of fields transformed */
-  fieldsTransformed: number
+  fieldsTransformed: number;
   /** Number of relationships processed */
-  relationshipsProcessed: number
+  relationshipsProcessed: number;
   /** Cache hit rate */
-  cacheHitRate?: number
+  cacheHitRate?: number;
 }
 
 /**
@@ -464,24 +473,24 @@ export interface TransformationMetrics {
  */
 export interface BatchTransformationMetrics extends TransformationMetrics {
   /** Total entities processed */
-  totalEntities: number
+  totalEntities: number;
   /** Successfully processed entities */
-  successfulEntities: number
+  successfulEntities: number;
   /** Failed entities */
-  failedEntities: number
+  failedEntities: number;
   /** Average processing time per entity */
-  averageProcessingTime: number
+  averageProcessingTime: number;
 }
 
 /**
  * Transformation logger interface
  */
 export interface TransformationLogger {
-  debug(message: string, context?: any): void
-  info(message: string, context?: any): void
-  warn(message: string, context?: any): void
-  error(message: string, error?: Error, context?: any): void
-  metric(name: string, value: number, tags?: Record<string, string>): void
+  debug: (message: string, context?: any) => void;
+  info: (message: string, context?: any) => void;
+  warn: (message: string, context?: any) => void;
+  error: (message: string, error?: Error, context?: any) => void;
+  metric: (name: string, value: number, tags?: Record<string, string>) => void;
 }
 
 // =============================================================================
@@ -493,31 +502,33 @@ export interface TransformationLogger {
  */
 export interface ProviderTransformerBase {
   /** Provider type */
-  readonly providerType: ProviderType
+  readonly providerType: ProviderType;
   /** Supported entity types */
-  readonly supportedEntities: EntityType[]
+  readonly supportedEntities: EntityType[];
   /** Transformer version */
-  readonly version: string
-  
+  readonly version: string;
+
   /**
    * Initialize transformer with provider-specific configuration
    */
-  initialize(config: any): Promise<void>
-  
+  initialize: (config: any) => Promise<void>;
+
   /**
    * Get transformer for specific entity type
    */
-  getEntityTransformer<TProvider, TUnified>(entityType: EntityType): EntityTransformer<TProvider, TUnified>
-  
+  getEntityTransformer: <TProvider, TUnified>(
+    entityType: EntityType
+  ) => EntityTransformer<TProvider, TUnified>;
+
   /**
    * Validate provider data format
    */
-  validateProviderData(entityType: EntityType, data: any): Promise<ValidationResult>
-  
+  validateProviderData: (entityType: EntityType, data: any) => Promise<ValidationResult>;
+
   /**
    * Get provider-specific metadata
    */
-  getProviderMetadata(): ProviderTransformerMetadata
+  getProviderMetadata: () => ProviderTransformerMetadata;
 }
 
 /**
@@ -525,25 +536,25 @@ export interface ProviderTransformerBase {
  */
 export interface ProviderTransformerMetadata {
   /** Provider name */
-  name: string
+  name: string;
   /** Provider version */
-  version: string
+  version: string;
   /** Supported features */
   supportedFeatures: {
-    supportsHierarchy: boolean
-    supportsDependencies: boolean
-    supportsCustomFields: boolean
-    supportsLabels: boolean
-    supportsComments: boolean
-  }
+    supportsHierarchy: boolean;
+    supportsDependencies: boolean;
+    supportsCustomFields: boolean;
+    supportsLabels: boolean;
+    supportsComments: boolean;
+  };
   /** Field mapping schemas for each entity type */
-  schemas: Record<EntityType, TransformationSchema>
+  schemas: Record<EntityType, TransformationSchema>;
   /** Performance characteristics */
   performance: {
-    averageTransformTime: number
-    memoryUsageProfile: 'low' | 'medium' | 'high'
-    batchSizeRecommendation: number
-  }
+    averageTransformTime: number;
+    memoryUsageProfile: 'low' | 'medium' | 'high';
+    batchSizeRecommendation: number;
+  };
 }
 
 // =============================================================================
@@ -557,40 +568,40 @@ export interface TransformationEngine {
   /**
    * Register a provider transformer
    */
-  registerTransformer(transformer: ProviderTransformerBase): void
-  
+  registerTransformer: (transformer: ProviderTransformerBase) => void;
+
   /**
    * Transform data between two providers
    */
-  transform<TSource, TTarget>(
+  transform: <TSource, TTarget>(
     sourceData: TSource[],
     sourceProvider: ProviderType,
     targetProvider: ProviderType,
     entityType: EntityType,
     context?: Partial<TransformationContext>
-  ): Promise<BatchTransformationResult<TTarget>>
-  
+  ) => Promise<BatchTransformationResult<TTarget>>;
+
   /**
    * Get transformation schema for provider pair
    */
-  getTransformationSchema(
+  getTransformationSchema: (
     sourceProvider: ProviderType,
     targetProvider: ProviderType,
     entityType: EntityType
-  ): Promise<TransformationSchema>
-  
+  ) => Promise<TransformationSchema>;
+
   /**
    * Validate transformation compatibility
    */
-  validateCompatibility(
+  validateCompatibility: (
     sourceProvider: ProviderType,
     targetProvider: ProviderType
-  ): Promise<CompatibilityResult>
-  
+  ) => Promise<CompatibilityResult>;
+
   /**
    * Get transformation statistics and metrics
    */
-  getTransformationStats(): TransformationStatistics
+  getTransformationStats: () => TransformationStatistics;
 }
 
 /**
@@ -598,17 +609,17 @@ export interface TransformationEngine {
  */
 export interface CompatibilityResult {
   /** Providers are compatible */
-  compatible: boolean
+  compatible: boolean;
   /** Compatibility score (0-1) */
-  score: number
+  score: number;
   /** Supported entity types */
-  supportedEntities: EntityType[]
+  supportedEntities: EntityType[];
   /** Unsupported features */
-  unsupportedFeatures: string[]
+  unsupportedFeatures: string[];
   /** Transformation limitations */
-  limitations: string[]
+  limitations: string[];
   /** Recommended migration strategy */
-  migrationStrategy?: 'direct' | 'staged' | 'manual'
+  migrationStrategy?: 'direct' | 'staged' | 'manual';
 }
 
 /**
@@ -616,23 +627,26 @@ export interface CompatibilityResult {
  */
 export interface TransformationStatistics {
   /** Total transformations performed */
-  totalTransformations: number
+  totalTransformations: number;
   /** Successful transformations */
-  successfulTransformations: number
+  successfulTransformations: number;
   /** Failed transformations */
-  failedTransformations: number
+  failedTransformations: number;
   /** Average transformation time */
-  averageTransformationTime: number
+  averageTransformationTime: number;
   /** Performance metrics by provider */
-  providerMetrics: Record<ProviderType, {
-    transformations: number
-    averageTime: number
-    errorRate: number
-  }>
+  providerMetrics: Record<
+    ProviderType,
+    {
+      transformations: number;
+      averageTime: number;
+      errorRate: number;
+    }
+  >;
   /** Most common transformation errors */
   commonErrors: {
-    code: TransformationErrorCode
-    count: number
-    percentage: number
-  }[]
+    code: TransformationErrorCode;
+    count: number;
+    percentage: number;
+  }[];
 }

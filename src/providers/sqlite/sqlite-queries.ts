@@ -1,7 +1,7 @@
 /**
  * JCVD SQLite Optimized Query Definitions
  * High-performance, pre-optimized SQL queries for all provider operations
- * 
+ *
  * This module contains all SQL queries used by the SQLite provider,
  * optimized for performance with proper indexing and query planning.
  */
@@ -73,8 +73,8 @@ export const PROJECT_QUERIES = {
     LEFT JOIN workflow_states ws ON i.state_id = ws.id
     WHERE p.id = ?
     GROUP BY p.id, p.name
-  `
-} as const
+  `,
+} as const;
 
 // =============================================================================
 // Issue Queries
@@ -231,8 +231,8 @@ export const ISSUE_QUERIES = {
     ORDER BY 
       i.priority ASC, 
       i.created_at ASC
-  `
-} as const
+  `,
+} as const;
 
 // =============================================================================
 // Dependency Queries
@@ -307,8 +307,8 @@ export const DEPENDENCY_QUERIES = {
     SELECT 1 FROM issue_dependencies 
     WHERE blocker_id = ? AND blocked_id = ?
     LIMIT 1
-  `
-} as const
+  `,
+} as const;
 
 // =============================================================================
 // Workflow State Queries
@@ -352,8 +352,8 @@ export const WORKFLOW_QUERIES = {
     DELETE FROM workflow_states 
     WHERE id = ? 
     AND NOT EXISTS (SELECT 1 FROM issues WHERE state_id = ?)
-  `
-} as const
+  `,
+} as const;
 
 // =============================================================================
 // Label Queries
@@ -415,8 +415,8 @@ export const LABEL_QUERIES = {
   // Delete label (cascading handled by foreign keys)
   DELETE: `
     DELETE FROM labels WHERE id = ?
-  `
-} as const
+  `,
+} as const;
 
 // =============================================================================
 // Comment Queries
@@ -455,8 +455,8 @@ export const COMMENT_QUERIES = {
   // Delete comment
   DELETE: `
     DELETE FROM issue_comments WHERE id = ?
-  `
-} as const
+  `,
+} as const;
 
 // =============================================================================
 // Analytics and Recommendation Queries
@@ -543,8 +543,8 @@ export const ANALYTICS_QUERIES = {
       AND (? IS NULL OR i.title LIKE '%' || ? || '%' OR i.description LIKE '%' || ? || '%')
     ORDER BY recommendation_score DESC, i.priority ASC, i.created_at ASC
     LIMIT 5
-  `
-} as const
+  `,
+} as const;
 
 // =============================================================================
 // Validation and Integrity Queries
@@ -640,8 +640,8 @@ export const VALIDATION_QUERIES = {
     WHERE 
       i.project_id = ?
       AND NOT EXISTS (SELECT 1 FROM workflow_states ws WHERE ws.id = i.state_id)
-  `
-} as const
+  `,
+} as const;
 
 // =============================================================================
 // Utility Functions for Query Building
@@ -650,88 +650,88 @@ export const VALIDATION_QUERIES = {
 /**
  * Build dynamic WHERE clause for issue filtering
  */
-export function buildIssueFilterQuery(filters: any): { 
-  sql: string 
-  params: any[] 
+export function buildIssueFilterQuery(filters: any): {
+  sql: string;
+  params: any[];
 } {
-  const conditions: string[] = []
-  const params: any[] = []
+  const conditions: string[] = [];
+  const params: any[] = [];
 
   // Add parameter pairs for nullable filters
   if (filters.project_id !== undefined) {
-    conditions.push('i.project_id = ?')
-    params.push(filters.project_id)
+    conditions.push('i.project_id = ?');
+    params.push(filters.project_id);
   }
 
   if (filters.parent_id !== undefined) {
     if (filters.parent_id === null) {
-      conditions.push('i.parent_id IS NULL')
+      conditions.push('i.parent_id IS NULL');
     } else {
-      conditions.push('i.parent_id = ?')
-      params.push(filters.parent_id)
+      conditions.push('i.parent_id = ?');
+      params.push(filters.parent_id);
     }
   }
 
   if (filters.state_id !== undefined) {
-    conditions.push('i.state_id = ?')
-    params.push(filters.state_id)
+    conditions.push('i.state_id = ?');
+    params.push(filters.state_id);
   }
 
   if (filters.issue_type !== undefined) {
-    conditions.push('i.issue_type = ?')
-    params.push(filters.issue_type)
+    conditions.push('i.issue_type = ?');
+    params.push(filters.issue_type);
   }
 
   if (filters.assignee_id !== undefined) {
     if (filters.assignee_id === null) {
-      conditions.push('i.assignee_id IS NULL')
+      conditions.push('i.assignee_id IS NULL');
     } else {
-      conditions.push('i.assignee_id = ?')
-      params.push(filters.assignee_id)
+      conditions.push('i.assignee_id = ?');
+      params.push(filters.assignee_id);
     }
   }
 
   if (filters.priority !== undefined) {
-    conditions.push('i.priority = ?')
-    params.push(filters.priority)
+    conditions.push('i.priority = ?');
+    params.push(filters.priority);
   }
 
   if (filters.has_estimate !== undefined) {
     if (filters.has_estimate) {
-      conditions.push('i.estimate IS NOT NULL')
+      conditions.push('i.estimate IS NOT NULL');
     } else {
-      conditions.push('i.estimate IS NULL')
+      conditions.push('i.estimate IS NULL');
     }
   }
 
   if (filters.created_after) {
-    conditions.push('i.created_at >= ?')
-    params.push(filters.created_after.toISOString())
+    conditions.push('i.created_at >= ?');
+    params.push(filters.created_after.toISOString());
   }
 
   if (filters.created_before) {
-    conditions.push('i.created_at <= ?')
-    params.push(filters.created_before.toISOString())
+    conditions.push('i.created_at <= ?');
+    params.push(filters.created_before.toISOString());
   }
 
   if (filters.updated_after) {
-    conditions.push('i.updated_at >= ?')
-    params.push(filters.updated_after.toISOString())
+    conditions.push('i.updated_at >= ?');
+    params.push(filters.updated_after.toISOString());
   }
 
   if (filters.updated_before) {
-    conditions.push('i.updated_at <= ?')
-    params.push(filters.updated_before.toISOString())
+    conditions.push('i.updated_at <= ?');
+    params.push(filters.updated_before.toISOString());
   }
 
   if (filters.search) {
-    conditions.push('(i.title LIKE ? OR i.description LIKE ?)')
-    const searchPattern = `%${filters.search}%`
-    params.push(searchPattern, searchPattern)
+    conditions.push('(i.title LIKE ? OR i.description LIKE ?)');
+    const searchPattern = `%${filters.search}%`;
+
+    params.push(searchPattern, searchPattern);
   }
 
-  const whereClause = conditions.length > 0 ? 
-    `WHERE ${conditions.join(' AND ')}` : ''
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-  return { sql: whereClause, params }
+  return { sql: whereClause, params };
 }

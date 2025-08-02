@@ -10,32 +10,32 @@
 /**
  * Migration execution direction
  */
-export type MigrationDirection = 'up' | 'down'
+export type MigrationDirection = 'up' | 'down';
 
 /**
  * Migration types supporting different patterns
  */
-export type MigrationType = 'schema' | 'data' | 'hotfix' | 'rollback'
+export type MigrationType = 'schema' | 'data' | 'hotfix' | 'rollback';
 
 /**
  * Migration execution status
  */
-export type MigrationStatus = 'pending' | 'running' | 'completed' | 'failed' | 'rolled_back'
+export type MigrationStatus = 'pending' | 'running' | 'completed' | 'failed' | 'rolled_back';
 
 /**
  * Migration execution mode
  */
-export type MigrationMode = 'normal' | 'dry_run' | 'force'
+export type MigrationMode = 'normal' | 'dry_run' | 'force';
 
 /**
  * Semantic version for schema versioning
  */
 export interface SemanticVersion {
-  major: number
-  minor: number
-  patch: number
-  prerelease?: string
-  build?: string
+  major: number;
+  minor: number;
+  patch: number;
+  prerelease?: string;
+  build?: string;
 }
 
 /**
@@ -43,95 +43,95 @@ export interface SemanticVersion {
  */
 export interface Migration {
   /** Migration identifier (e.g., "003_migration_system") */
-  id: string
-  
+  id: string;
+
   /** Semantic version this migration targets */
-  version: SemanticVersion
-  
+  version: SemanticVersion;
+
   /** Human-readable migration name */
-  name: string
-  
+  name: string;
+
   /** Migration type */
-  type: MigrationType
-  
+  type: MigrationType;
+
   /** Migration description */
-  description: string
-  
+  description: string;
+
   /** Dependencies - migrations that must be applied first */
-  dependencies: string[]
-  
+  dependencies: string[];
+
   /** Forward migration SQL or function */
-  up: string | MigrationFunction
-  
+  up: string | MigrationFunction;
+
   /** Rollback migration SQL or function (optional) */
-  down?: string | MigrationFunction
-  
+  down?: string | MigrationFunction;
+
   /** Validation function to check migration success */
-  validate?: MigrationValidationFunction
-  
+  validate?: MigrationValidationFunction;
+
   /** Creation timestamp */
-  created_at: Date
-  
+  created_at: Date;
+
   /** Author/source of the migration */
-  author?: string
-  
+  author?: string;
+
   /** Estimated execution time in ms */
-  estimated_duration?: number
-  
+  estimated_duration?: number;
+
   /** Whether this migration requires a backup before execution */
-  requires_backup?: boolean
-  
+  requires_backup?: boolean;
+
   /** Whether this migration is reversible */
-  reversible?: boolean
+  reversible?: boolean;
 }
 
 /**
  * Programmatic migration function signature
  */
-export type MigrationFunction = (context: MigrationContext) => Promise<void> | void
+export type MigrationFunction = (context: MigrationContext) => Promise<void> | void;
 
 /**
  * Migration validation function signature
  */
-export type MigrationValidationFunction = (context: MigrationContext) => Promise<boolean> | boolean
+export type MigrationValidationFunction = (context: MigrationContext) => Promise<boolean> | boolean;
 
 /**
  * Migration execution context
  */
 export interface MigrationContext {
   /** Database connection/transaction */
-  db: any // TODO: Type this properly once we have DB abstraction
-  
+  db: any; // TODO: Type this properly once we have DB abstraction
+
   /** Migration being executed */
-  migration: Migration
-  
+  migration: Migration;
+
   /** Execution direction */
-  direction: MigrationDirection
-  
+  direction: MigrationDirection;
+
   /** Execution mode */
-  mode: MigrationMode
-  
+  mode: MigrationMode;
+
   /** Logger for migration output */
-  logger: MigrationLogger
-  
+  logger: MigrationLogger;
+
   /** Current schema version before migration */
-  currentVersion: SemanticVersion
-  
+  currentVersion: SemanticVersion;
+
   /** Target schema version after migration */
-  targetVersion: SemanticVersion
-  
+  targetVersion: SemanticVersion;
+
   /** Additional metadata */
-  metadata: Record<string, any>
+  metadata: Record<string, any>;
 }
 
 /**
  * Migration logger interface
  */
 export interface MigrationLogger {
-  info(message: string, context?: Record<string, any>): void
-  warn(message: string, context?: Record<string, any>): void
-  error(message: string, error?: Error, context?: Record<string, any>): void
-  debug(message: string, context?: Record<string, any>): void
+  info: (message: string, context?: Record<string, any>) => void;
+  warn: (message: string, context?: Record<string, any>) => void;
+  error: (message: string, error?: Error, context?: Record<string, any>) => void;
+  debug: (message: string, context?: Record<string, any>) => void;
 }
 
 // =============================================================================
@@ -143,49 +143,49 @@ export interface MigrationLogger {
  */
 export interface MigrationRecord {
   /** Migration ID */
-  migration_id: string
-  
+  migration_id: string;
+
   /** Migration version */
-  version: string
-  
+  version: string;
+
   /** Migration name */
-  name: string
-  
+  name: string;
+
   /** Migration type */
-  type: MigrationType
-  
+  type: MigrationType;
+
   /** Execution status */
-  status: MigrationStatus
-  
+  status: MigrationStatus;
+
   /** Execution direction */
-  direction: MigrationDirection
-  
+  direction: MigrationDirection;
+
   /** Execution mode */
-  mode: MigrationMode
-  
+  mode: MigrationMode;
+
   /** Execution start time */
-  started_at: Date
-  
+  started_at: Date;
+
   /** Execution completion time */
-  completed_at?: Date
-  
+  completed_at?: Date;
+
   /** Actual execution duration in ms */
-  duration?: number
-  
+  duration?: number;
+
   /** Error message if failed */
-  error_message?: string
-  
+  error_message: string | null;
+
   /** Error stack trace if failed */
-  error_stack?: string
-  
+  error_stack: string | null;
+
   /** Migration checksum/fingerprint */
-  checksum: string
-  
+  checksum: string;
+
   /** Migration metadata */
-  metadata?: Record<string, any>
-  
+  metadata?: Record<string, any>;
+
   /** Applied by (user/system identifier) */
-  applied_by?: string
+  applied_by?: string;
 }
 
 /**
@@ -193,28 +193,28 @@ export interface MigrationRecord {
  */
 export interface SchemaSnapshot {
   /** Snapshot ID */
-  id: string
-  
+  id: string;
+
   /** Schema version at time of snapshot */
-  version: string
-  
+  version: string;
+
   /** Complete schema DDL */
-  schema_ddl: string
-  
+  schema_ddl: string;
+
   /** Data sample (for critical tables) */
-  data_sample?: Record<string, any[]>
-  
+  data_sample?: Record<string, any[]>;
+
   /** Snapshot creation time */
-  created_at: Date
-  
+  created_at: Date;
+
   /** Snapshot description */
-  description: string
-  
+  description: string;
+
   /** Size of snapshot in bytes */
-  size_bytes: number
-  
+  size_bytes: number;
+
   /** Checksum for integrity verification */
-  checksum: string
+  checksum: string;
 }
 
 // =============================================================================
@@ -226,28 +226,28 @@ export interface SchemaSnapshot {
  */
 export interface MigrationPlan {
   /** Plan ID */
-  id: string
-  
+  id: string;
+
   /** Source version */
-  from_version: SemanticVersion
-  
+  from_version: SemanticVersion;
+
   /** Target version */
-  to_version: SemanticVersion
-  
+  to_version: SemanticVersion;
+
   /** Ordered list of migrations to execute */
-  migrations: Migration[]
-  
+  migrations: Migration[];
+
   /** Execution direction */
-  direction: MigrationDirection
-  
+  direction: MigrationDirection;
+
   /** Total estimated duration */
-  estimated_duration: number
-  
+  estimated_duration: number;
+
   /** Validation results */
-  validation_results: MigrationPlanValidation
-  
+  validation_results: MigrationPlanValidation;
+
   /** Created timestamp */
-  created_at: Date
+  created_at: Date;
 }
 
 /**
@@ -255,19 +255,19 @@ export interface MigrationPlan {
  */
 export interface MigrationPlanValidation {
   /** Overall validation status */
-  is_valid: boolean
-  
+  is_valid: boolean;
+
   /** Validation errors (blocking) */
-  errors: MigrationValidationError[]
-  
+  errors: MigrationValidationError[];
+
   /** Validation warnings (non-blocking) */
-  warnings: MigrationValidationWarning[]
-  
+  warnings: MigrationValidationWarning[];
+
   /** Dependency graph validity */
-  dependency_check: DependencyValidation
-  
+  dependency_check: DependencyValidation;
+
   /** Rollback safety analysis */
-  rollback_safety: RollbackSafetyAnalysis
+  rollback_safety: RollbackSafetyAnalysis;
 }
 
 /**
@@ -275,19 +275,19 @@ export interface MigrationPlanValidation {
  */
 export interface MigrationValidationError {
   /** Error code */
-  code: string
-  
+  code: string;
+
   /** Error message */
-  message: string
-  
+  message: string;
+
   /** Migration ID that caused the error */
-  migration_id?: string
-  
+  migration_id?: string;
+
   /** Additional context */
-  context?: Record<string, any>
-  
+  context?: Record<string, any>;
+
   /** Severity level */
-  severity: 'critical' | 'high' | 'medium' | 'low'
+  severity: 'critical' | 'high' | 'medium' | 'low';
 }
 
 /**
@@ -295,19 +295,19 @@ export interface MigrationValidationError {
  */
 export interface MigrationValidationWarning {
   /** Warning code */
-  code: string
-  
+  code: string;
+
   /** Warning message */
-  message: string
-  
+  message: string;
+
   /** Migration ID that caused the warning */
-  migration_id?: string
-  
+  migration_id?: string;
+
   /** Additional context */
-  context?: Record<string, any>
-  
+  context?: Record<string, any>;
+
   /** Recommended action */
-  recommendation?: string
+  recommendation?: string;
 }
 
 /**
@@ -315,16 +315,16 @@ export interface MigrationValidationWarning {
  */
 export interface DependencyValidation {
   /** Dependency graph is valid */
-  is_valid: boolean
-  
+  is_valid: boolean;
+
   /** Circular dependencies detected */
-  circular_dependencies: string[][]
-  
+  circular_dependencies: string[][];
+
   /** Missing dependencies */
-  missing_dependencies: string[]
-  
+  missing_dependencies: string[];
+
   /** Dependency order */
-  execution_order: string[]
+  execution_order: string[];
 }
 
 /**
@@ -332,16 +332,16 @@ export interface DependencyValidation {
  */
 export interface RollbackSafetyAnalysis {
   /** Overall rollback safety */
-  is_safe: boolean
-  
+  is_safe: boolean;
+
   /** Migrations without rollback support */
-  non_reversible_migrations: string[]
-  
+  non_reversible_migrations: string[];
+
   /** Data loss risks */
-  data_loss_risks: DataLossRisk[]
-  
+  data_loss_risks: DataLossRisk[];
+
   /** Backup requirements */
-  backup_required: boolean
+  backup_required: boolean;
 }
 
 /**
@@ -349,19 +349,19 @@ export interface RollbackSafetyAnalysis {
  */
 export interface DataLossRisk {
   /** Migration causing the risk */
-  migration_id: string
-  
+  migration_id: string;
+
   /** Risk level */
-  risk_level: 'critical' | 'high' | 'medium' | 'low'
-  
+  risk_level: 'critical' | 'high' | 'medium' | 'low';
+
   /** Description of the risk */
-  description: string
-  
+  description: string;
+
   /** Affected tables/columns */
-  affected_objects: string[]
-  
+  affected_objects: string[];
+
   /** Mitigation strategies */
-  mitigation_strategies: string[]
+  mitigation_strategies: string[];
 }
 
 // =============================================================================
@@ -374,42 +374,42 @@ export interface DataLossRisk {
 export interface MigrationEngineConfig {
   /** Database connection configuration */
   database: {
-    path: string
-    timeout?: number
-    enableWAL?: boolean
-    enableForeignKeys?: boolean
-  }
-  
+    path: string;
+    timeout?: number;
+    enableWAL?: boolean;
+    enableForeignKeys?: boolean;
+  };
+
   /** Migration directories to scan */
-  migration_directories: string[]
-  
+  migration_directories: string[];
+
   /** Maximum migration execution time in ms */
-  max_execution_time?: number
-  
+  max_execution_time?: number;
+
   /** Whether to create backups before migrations */
-  auto_backup?: boolean
-  
+  auto_backup?: boolean;
+
   /** Backup directory */
-  backup_directory?: string
-  
+  backup_directory?: string;
+
   /** Dry run mode by default */
-  default_dry_run?: boolean
-  
+  default_dry_run?: boolean;
+
   /** Validation strictness */
-  validation_mode: 'strict' | 'warn' | 'ignore'
-  
+  validation_mode: 'strict' | 'warn' | 'ignore';
+
   /** Concurrency settings */
   concurrency?: {
-    max_parallel_migrations?: number
-    dependency_parallel?: boolean
-  }
-  
+    max_parallel_migrations?: number;
+    dependency_parallel?: boolean;
+  };
+
   /** Logging configuration */
   logging?: {
-    level: 'debug' | 'info' | 'warn' | 'error'
-    file?: string
-    console?: boolean
-  }
+    level: 'debug' | 'info' | 'warn' | 'error';
+    file?: string;
+    console?: boolean;
+  };
 }
 
 // =============================================================================
@@ -419,7 +419,7 @@ export interface MigrationEngineConfig {
 /**
  * Migration event types
  */
-export type MigrationEventType = 
+export type MigrationEventType =
   | 'migration_started'
   | 'migration_completed'
   | 'migration_failed'
@@ -427,57 +427,60 @@ export type MigrationEventType =
   | 'plan_created'
   | 'plan_validated'
   | 'backup_created'
-  | 'snapshot_created'
+  | 'snapshot_created';
 
 /**
  * Migration event
  */
 export interface MigrationEvent {
   /** Event type */
-  type: MigrationEventType
-  
+  type: MigrationEventType;
+
   /** Event timestamp */
-  timestamp: Date
-  
+  timestamp: Date;
+
   /** Migration ID (if applicable) */
-  migration_id?: string
-  
+  migration_id?: string;
+
   /** Event data */
-  data: Record<string, any>
-  
+  data: Record<string, any>;
+
   /** Event source */
-  source: string
+  source: string;
 }
 
 /**
  * Migration hook function signature
  */
-export type MigrationHook = (event: MigrationEvent, context: MigrationContext) => Promise<void> | void
+export type MigrationHook = (
+  event: MigrationEvent,
+  context: MigrationContext
+) => Promise<void> | void;
 
 /**
  * Migration hooks configuration
  */
 export interface MigrationHooks {
   /** Before migration plan creation */
-  beforePlanCreate?: MigrationHook
-  
+  beforePlanCreate?: MigrationHook;
+
   /** After migration plan creation */
-  afterPlanCreate?: MigrationHook
-  
+  afterPlanCreate?: MigrationHook;
+
   /** Before migration execution */
-  beforeMigration?: MigrationHook
-  
+  beforeMigration?: MigrationHook;
+
   /** After migration execution */
-  afterMigration?: MigrationHook
-  
+  afterMigration?: MigrationHook;
+
   /** On migration failure */
-  onMigrationFailure?: MigrationHook
-  
+  onMigrationFailure?: MigrationHook;
+
   /** Before rollback */
-  beforeRollback?: MigrationHook
-  
+  beforeRollback?: MigrationHook;
+
   /** After rollback */
-  afterRollback?: MigrationHook
+  afterRollback?: MigrationHook;
 }
 
 // =============================================================================
@@ -489,25 +492,25 @@ export interface MigrationHooks {
  */
 export interface MigrationResult {
   /** Operation success status */
-  success: boolean
-  
+  success: boolean;
+
   /** Executed migrations */
-  executed_migrations: string[]
-  
+  executed_migrations: string[];
+
   /** Final schema version */
-  final_version: SemanticVersion
-  
+  final_version: SemanticVersion;
+
   /** Total execution time */
-  total_duration: number
-  
+  total_duration: number;
+
   /** Any errors that occurred */
-  errors: MigrationValidationError[]
-  
+  errors: MigrationValidationError[];
+
   /** Any warnings generated */
-  warnings: MigrationValidationWarning[]
-  
+  warnings: MigrationValidationWarning[];
+
   /** Migration records created */
-  migration_records: MigrationRecord[]
+  migration_records: MigrationRecord[];
 }
 
 /**
@@ -515,28 +518,28 @@ export interface MigrationResult {
  */
 export interface SchemaComparison {
   /** Schemas are identical */
-  identical: boolean
-  
+  identical: boolean;
+
   /** Added tables */
-  added_tables: string[]
-  
+  added_tables: string[];
+
   /** Removed tables */
-  removed_tables: string[]
-  
+  removed_tables: string[];
+
   /** Modified tables */
-  modified_tables: TableModification[]
-  
+  modified_tables: TableModification[];
+
   /** Added indexes */
-  added_indexes: string[]
-  
+  added_indexes: string[];
+
   /** Removed indexes */
-  removed_indexes: string[]
-  
+  removed_indexes: string[];
+
   /** Added triggers */
-  added_triggers: string[]
-  
+  added_triggers: string[];
+
   /** Removed triggers */
-  removed_triggers: string[]
+  removed_triggers: string[];
 }
 
 /**
@@ -544,22 +547,22 @@ export interface SchemaComparison {
  */
 export interface TableModification {
   /** Table name */
-  table_name: string
-  
+  table_name: string;
+
   /** Added columns */
-  added_columns: ColumnDefinition[]
-  
+  added_columns: ColumnDefinition[];
+
   /** Removed columns */
-  removed_columns: string[]
-  
+  removed_columns: string[];
+
   /** Modified columns */
-  modified_columns: ColumnModification[]
-  
+  modified_columns: ColumnModification[];
+
   /** Added constraints */
-  added_constraints: string[]
-  
+  added_constraints: string[];
+
   /** Removed constraints */
-  removed_constraints: string[]
+  removed_constraints: string[];
 }
 
 /**
@@ -567,22 +570,22 @@ export interface TableModification {
  */
 export interface ColumnDefinition {
   /** Column name */
-  name: string
-  
+  name: string;
+
   /** Column type */
-  type: string
-  
+  type: string;
+
   /** Nullable */
-  nullable: boolean
-  
+  nullable: boolean;
+
   /** Default value */
-  default_value?: any
-  
+  default_value: any | null;
+
   /** Primary key */
-  primary_key: boolean
-  
+  primary_key: boolean;
+
   /** Foreign key reference */
-  foreign_key?: string
+  foreign_key: string | null;
 }
 
 /**
@@ -590,14 +593,14 @@ export interface ColumnDefinition {
  */
 export interface ColumnModification {
   /** Column name */
-  name: string
-  
+  name: string;
+
   /** Old definition */
-  old_definition: ColumnDefinition
-  
+  old_definition: ColumnDefinition;
+
   /** New definition */
-  new_definition: ColumnDefinition
-  
+  new_definition: ColumnDefinition;
+
   /** Type of modification */
-  modification_type: 'type_change' | 'nullable_change' | 'default_change' | 'constraint_change'
+  modification_type: 'type_change' | 'nullable_change' | 'default_change' | 'constraint_change';
 }

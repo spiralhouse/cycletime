@@ -26,23 +26,28 @@ class JCVDLogger implements Logger {
     formatOptions: {
       colors: true,
       compact: false,
-      date: true
-    }
+      date: true,
+    },
   });
 
   private getLogLevel(): number {
     const level = process.env.LOG_LEVEL?.toLowerCase() || 'info';
 
     switch (level) {
-      case 'debug': return 0;
+      case 'debug':
+        return 0;
 
-      case 'info': return 1;
+      case 'info':
+        return 1;
 
-      case 'warn': return 2;
+      case 'warn':
+        return 2;
 
-      case 'error': return 3;
+      case 'error':
+        return 3;
 
-      default: return 1;
+      default:
+        return 1;
     }
   }
 
@@ -68,7 +73,7 @@ class JCVDLogger implements Logger {
       message,
       timestamp: new Date(),
       source: 'jcvd',
-      ...(context && { context })
+      ...(context && { context }),
     };
 
     // Use consola for console output
@@ -107,7 +112,7 @@ class JCVDLogger implements Logger {
  */
 export function createLogger(source: string, baseContext?: Record<string, unknown>): Logger {
   const baseLogger = new JCVDLogger();
-  
+
   return {
     debug: (message: string, context?: Record<string, unknown>) => {
       baseLogger.debug(message, { ...baseContext, ...context, source });
@@ -123,7 +128,7 @@ export function createLogger(source: string, baseContext?: Record<string, unknow
     },
     log: (level: LogLevel, message: string, context?: Record<string, unknown>) => {
       baseLogger.log(level, message, { ...baseContext, ...context, source });
-    }
+    },
   };
 }
 
@@ -141,32 +146,34 @@ export function timeOperation<T>(
   loggerInstance: Logger = logger
 ): Promise<T> {
   const startTime = Date.now();
-  
+
   const logCompletion = (duration: number) => {
-    loggerInstance.debug(`Operation completed: ${operationName}`, { 
+    loggerInstance.debug(`Operation completed: ${operationName}`, {
       duration: `${duration}ms`,
-      operationName 
+      operationName,
     });
   };
 
   try {
     const result = operation();
-    
+
     if (result instanceof Promise) {
-      return result.then(res => {
-        logCompletion(Date.now() - startTime);
+      return result
+        .then(res => {
+          logCompletion(Date.now() - startTime);
 
-        return res;
-      }).catch(error => {
-        const duration = Date.now() - startTime;
+          return res;
+        })
+        .catch(error => {
+          const duration = Date.now() - startTime;
 
-        loggerInstance.error(`Operation failed: ${operationName}`, { 
-          duration: `${duration}ms`,
-          operationName,
-          error: error.message 
+          loggerInstance.error(`Operation failed: ${operationName}`, {
+            duration: `${duration}ms`,
+            operationName,
+            error: error.message,
+          });
+          throw error;
         });
-        throw error;
-      });
     } else {
       logCompletion(Date.now() - startTime);
 
@@ -175,10 +182,10 @@ export function timeOperation<T>(
   } catch (error) {
     const duration = Date.now() - startTime;
 
-    loggerInstance.error(`Operation failed: ${operationName}`, { 
+    loggerInstance.error(`Operation failed: ${operationName}`, {
       duration: `${duration}ms`,
       operationName,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error;
   }

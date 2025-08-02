@@ -9,8 +9,8 @@ import type {
   ProviderInfo,
   ProviderRegistry as IProviderRegistry,
   ProviderError,
-  OperationResult
-} from '../types.js'
+  OperationResult,
+} from '../types.js';
 
 // =============================================================================
 // Provider Registry Implementation
@@ -21,26 +21,26 @@ import type {
  */
 interface ProviderRegistryEntry {
   /** Provider instance */
-  provider: IssueProvider
+  _provider: IssueProvider;
   /** Registration timestamp */
-  registeredAt: Date
+  registeredAt: Date;
   /** Last activity timestamp */
-  lastActivity: Date
+  lastActivity: Date;
   /** Number of operations performed */
-  operationCount: number
+  operationCount: number;
   /** Provider configuration used for registration */
-  config: ProviderConfig
+  config: ProviderConfig;
   /** Registry-specific metadata */
   metadata: {
     /** Tags for categorizing providers */
-    tags: string[]
+    tags: string[];
     /** Priority for provider selection */
-    priority: number
+    priority: number;
     /** Environment context (dev, staging, production) */
-    environment?: string
+    environment?: string;
     /** Custom metadata */
-    custom?: Record<string, any>
-  }
+    custom?: Record<string, any>;
+  };
 }
 
 /**
@@ -48,44 +48,44 @@ interface ProviderRegistryEntry {
  */
 export interface ProviderRegistryOptions {
   /** Maximum number of providers to register */
-  maxProviders?: number
+  maxProviders?: number;
   /** Enable automatic cleanup of inactive providers */
-  enableAutoCleanup?: boolean
+  enableAutoCleanup?: boolean;
   /** Inactivity threshold for cleanup (milliseconds) */
-  cleanupThreshold?: number
+  cleanupThreshold?: number;
   /** Cleanup check interval (milliseconds) */
-  cleanupInterval?: number
+  cleanupInterval?: number;
   /** Enable provider health monitoring */
-  enableHealthMonitoring?: boolean
+  enableHealthMonitoring?: boolean;
   /** Health check interval (milliseconds) */
-  healthCheckInterval?: number
+  healthCheckInterval?: number;
 }
 
 /**
  * Central registry for managing provider instances
  */
 export class ProviderRegistry implements IProviderRegistry {
-  private providers = new Map<string, ProviderRegistryEntry>()
-  private options: Required<ProviderRegistryOptions>
-  private cleanupTimer?: NodeJS.Timeout
-  private healthCheckTimer?: NodeJS.Timeout
+  private providers = new Map<string, ProviderRegistryEntry>();
+  private options: Required<ProviderRegistryOptions>;
+  private cleanupTimer?: NodeJS.Timeout;
+  private healthCheckTimer?: NodeJS.Timeout;
 
   constructor(options: ProviderRegistryOptions = {}) {
     this.options = {
       maxProviders: options.maxProviders ?? 50,
       enableAutoCleanup: options.enableAutoCleanup ?? true,
-      cleanupThreshold: options.cleanupThreshold ?? 3600000, // 1 hour
-      cleanupInterval: options.cleanupInterval ?? 300000, // 5 minutes
+      cleanupThreshold: options.cleanupThreshold ?? 3_600_000, // 1 hour
+      cleanupInterval: options.cleanupInterval ?? 300_000, // 5 minutes
       enableHealthMonitoring: options.enableHealthMonitoring ?? true,
-      healthCheckInterval: options.healthCheckInterval ?? 60000 // 1 minute
-    }
+      healthCheckInterval: options.healthCheckInterval ?? 60_000, // 1 minute
+    };
 
     if (this.options.enableAutoCleanup) {
-      this.startCleanupTimer()
+      this.startCleanupTimer();
     }
 
     if (this.options.enableHealthMonitoring) {
-      this.startHealthMonitoring()
+      this.startHealthMonitoring();
     }
   }
 
@@ -97,17 +97,17 @@ export class ProviderRegistry implements IProviderRegistry {
    * Register provider instance
    */
   async registerProvider(
-    provider: IssueProvider,
+    _provider: IssueProvider,
     options?: {
-      tags?: string[]
-      priority?: number
-      environment?: string
-      custom?: Record<string, any>
+      tags?: string[];
+      priority?: number;
+      environment?: string;
+      custom?: Record<string, any>;
     }
   ): Promise<OperationResult<void>> {
     try {
-      const info = provider.getProviderInfo()
-      
+      const info = _provider.getProviderInfo();
+
       // Check if provider already exists
       if (this.providers.has(info.id)) {
         return {
@@ -119,9 +119,9 @@ export class ProviderRegistry implements IProviderRegistry {
           metadata: {
             duration: 0,
             timestamp: new Date(),
-            operationType: 'register'
-          }
-        }
+            operationType: 'register',
+          },
+        };
       }
 
       // Check registry capacity
@@ -135,13 +135,14 @@ export class ProviderRegistry implements IProviderRegistry {
           metadata: {
             duration: 0,
             timestamp: new Date(),
-            operationType: 'register'
-          }
-        }
+            operationType: 'register',
+          },
+        };
       }
 
       // Verify provider is available
-      const isAvailable = await provider.isAvailable()
+      const isAvailable = await _provider.isAvailable();
+
       if (!isAvailable) {
         return {
           success: false,
@@ -152,50 +153,52 @@ export class ProviderRegistry implements IProviderRegistry {
           metadata: {
             duration: 0,
             timestamp: new Date(),
-            operationType: 'register'
-          }
-        }
+            operationType: 'register',
+          },
+        };
       }
 
       // Create registry entry
       const entry: ProviderRegistryEntry = {
-        provider,
+        _provider,
         registeredAt: new Date(),
         lastActivity: new Date(),
         operationCount: 0,
-        config: { ...info } as ProviderConfig, // Use provider info as config fallback
+        config: { ...info } as unknown as ProviderConfig, // Use provider info as config fallback
         metadata: {
           tags: options?.tags ?? [],
           priority: options?.priority ?? 0,
-          environment: options?.environment,
-          custom: options?.custom
-        }
-      }
+          ...(options?.environment && { environment: options.environment }),
+          ...(options?.custom && { custom: options.custom }),
+        },
+      };
 
-      this.providers.set(info.id, entry)
+      this.providers.set(info.id, entry);
 
-      console.log(`Provider '${info.id}' registered successfully`)
-      
+      console.log(`Provider '${info.id}' registered successfully`);
+
       return {
         success: true,
         metadata: {
           duration: 0,
           timestamp: new Date(),
           operationType: 'register',
-          affectedResources: [info.id]
-        }
-      }
-
+          affectedResources: [info.id],
+        },
+      };
     } catch (error) {
       return {
         success: false,
-        error: this.createRegistryError('OPERATION_FAILED', error.message),
+        error: this.createRegistryError(
+          'OPERATION_FAILED',
+          error instanceof Error ? error.message : String(error)
+        ),
         metadata: {
           duration: 0,
           timestamp: new Date(),
-          operationType: 'register'
-        }
-      }
+          operationType: 'register',
+        },
+      };
     }
   }
 
@@ -203,30 +206,32 @@ export class ProviderRegistry implements IProviderRegistry {
    * Get provider by ID
    */
   getProvider(id: string): IssueProvider | undefined {
-    const entry = this.providers.get(id)
+    const entry = this.providers.get(id);
+
     if (entry) {
       // Update activity tracking
-      entry.lastActivity = new Date()
-      entry.operationCount++
+      entry.lastActivity = new Date();
+      entry.operationCount++;
     }
-    return entry?.provider
+
+    return entry?._provider;
   }
 
   /**
    * List all registered providers
    */
   listProviders(): ProviderInfo[] {
-    const providers: ProviderInfo[] = []
-    
-    for (const entry of this.providers.values()) {
+    const providers: ProviderInfo[] = [];
+
+    for (const entry of Array.from(this.providers.values())) {
       try {
-        providers.push(entry.provider.getProviderInfo())
+        providers.push(entry._provider.getProviderInfo());
       } catch (error) {
-        console.error(`Failed to get provider info for ${entry.config.id}:`, error)
+        console.error(`Failed to get provider info for ${entry.config.id}:`, error);
       }
     }
-    
-    return providers
+
+    return providers;
   }
 
   /**
@@ -234,7 +239,8 @@ export class ProviderRegistry implements IProviderRegistry {
    */
   async unregisterProvider(id: string): Promise<OperationResult<void>> {
     try {
-      const entry = this.providers.get(id)
+      const entry = this.providers.get(id);
+
       if (!entry) {
         return {
           success: false,
@@ -242,19 +248,19 @@ export class ProviderRegistry implements IProviderRegistry {
           metadata: {
             duration: 0,
             timestamp: new Date(),
-            operationType: 'unregister'
-          }
-        }
+            operationType: 'unregister',
+          },
+        };
       }
 
       // Cleanup provider resources
-      if (entry.provider.cleanup) {
-        await entry.provider.cleanup()
+      if (entry._provider.cleanup) {
+        await entry._provider.cleanup();
       }
 
-      this.providers.delete(id)
+      this.providers.delete(id);
 
-      console.log(`Provider '${id}' unregistered successfully`)
+      console.log(`Provider '${id}' unregistered successfully`);
 
       return {
         success: true,
@@ -262,20 +268,22 @@ export class ProviderRegistry implements IProviderRegistry {
           duration: 0,
           timestamp: new Date(),
           operationType: 'unregister',
-          affectedResources: [id]
-        }
-      }
-
+          affectedResources: [id],
+        },
+      };
     } catch (error) {
       return {
         success: false,
-        error: this.createRegistryError('OPERATION_FAILED', error.message),
+        error: this.createRegistryError(
+          'OPERATION_FAILED',
+          error instanceof Error ? error.message : String(error)
+        ),
         metadata: {
           duration: 0,
           timestamp: new Date(),
-          operationType: 'unregister'
-        }
-      }
+          operationType: 'unregister',
+        },
+      };
     }
   }
 
@@ -287,72 +295,75 @@ export class ProviderRegistry implements IProviderRegistry {
    * Find providers by tags
    */
   findProvidersByTags(tags: string[]): ProviderInfo[] {
-    const matchingProviders: ProviderInfo[] = []
-    
-    for (const entry of this.providers.values()) {
-      const hasAllTags = tags.every(tag => entry.metadata.tags.includes(tag))
+    const matchingProviders: ProviderInfo[] = [];
+
+    for (const entry of Array.from(this.providers.values())) {
+      const hasAllTags = tags.every(tag => entry.metadata.tags.includes(tag));
+
       if (hasAllTags) {
         try {
-          matchingProviders.push(entry.provider.getProviderInfo())
+          matchingProviders.push(entry._provider.getProviderInfo());
         } catch (error) {
-          console.error(`Failed to get provider info for ${entry.config.id}:`, error)
+          console.error(`Failed to get provider info for ${entry.config.id}:`, error);
         }
       }
     }
-    
-    return matchingProviders
+
+    return matchingProviders;
   }
 
   /**
    * Find providers by environment
    */
   findProvidersByEnvironment(environment: string): ProviderInfo[] {
-    const matchingProviders: ProviderInfo[] = []
-    
-    for (const entry of this.providers.values()) {
+    const matchingProviders: ProviderInfo[] = [];
+
+    for (const entry of Array.from(this.providers.values())) {
       if (entry.metadata.environment === environment) {
         try {
-          matchingProviders.push(entry.provider.getProviderInfo())
+          matchingProviders.push(entry._provider.getProviderInfo());
         } catch (error) {
-          console.error(`Failed to get provider info for ${entry.config.id}:`, error)
+          console.error(`Failed to get provider info for ${entry.config.id}:`, error);
         }
       }
     }
-    
-    return matchingProviders
+
+    return matchingProviders;
   }
 
   /**
    * Get providers sorted by priority
    */
   getProvidersByPriority(): ProviderInfo[] {
-    const sortedEntries = Array.from(this.providers.values())
-      .sort((a, b) => b.metadata.priority - a.metadata.priority) // Descending priority
-    
-    const providers: ProviderInfo[] = []
+    const sortedEntries = Array.from(this.providers.values()).sort(
+      (a, b) => b.metadata.priority - a.metadata.priority
+    ); // Descending priority
+
+    const providers: ProviderInfo[] = [];
+
     for (const entry of sortedEntries) {
       try {
-        providers.push(entry.provider.getProviderInfo())
+        providers.push(entry._provider.getProviderInfo());
       } catch (error) {
-        console.error(`Failed to get provider info for ${entry.config.id}:`, error)
+        console.error(`Failed to get provider info for ${entry.config.id}:`, error);
       }
     }
-    
-    return providers
+
+    return providers;
   }
 
   /**
    * Get registry statistics
    */
   getRegistryStatistics(): {
-    totalProviders: number
-    providersByType: Record<string, number>
-    providersByEnvironment: Record<string, number>
-    healthyProviders: number
-    unhealthyProviders: number
-    averageOperationsPerProvider: number
-    oldestProvider: Date | null
-    newestProvider: Date | null
+    totalProviders: number;
+    providersByType: Record<string, number>;
+    providersByEnvironment: Record<string, number>;
+    healthyProviders: number;
+    unhealthyProviders: number;
+    averageOperationsPerProvider: number;
+    oldestProvider: Date | null;
+    newestProvider: Date | null;
   } {
     const stats = {
       totalProviders: this.providers.size,
@@ -362,51 +373,50 @@ export class ProviderRegistry implements IProviderRegistry {
       unhealthyProviders: 0,
       averageOperationsPerProvider: 0,
       oldestProvider: null as Date | null,
-      newestProvider: null as Date | null
-    }
+      newestProvider: null as Date | null,
+    };
 
-    let totalOperations = 0
+    let totalOperations = 0;
 
-    for (const entry of this.providers.values()) {
+    for (const entry of Array.from(this.providers.values())) {
       try {
-        const info = entry.provider.getProviderInfo()
-        
+        const info = entry._provider.getProviderInfo();
+
         // Count by type
-        stats.providersByType[info.type] = (stats.providersByType[info.type] || 0) + 1
-        
+        stats.providersByType[info.type] = (stats.providersByType[info.type] || 0) + 1;
+
         // Count by environment
         if (entry.metadata.environment) {
-          stats.providersByEnvironment[entry.metadata.environment] = 
-            (stats.providersByEnvironment[entry.metadata.environment] || 0) + 1
+          stats.providersByEnvironment[entry.metadata.environment] =
+            (stats.providersByEnvironment[entry.metadata.environment] || 0) + 1;
         }
-        
+
         // Health status
         if (info.status.isHealthy) {
-          stats.healthyProviders++
+          stats.healthyProviders++;
         } else {
-          stats.unhealthyProviders++
+          stats.unhealthyProviders++;
         }
-        
+
         // Operation count
-        totalOperations += entry.operationCount
-        
+        totalOperations += entry.operationCount;
+
         // Registration dates
         if (!stats.oldestProvider || entry.registeredAt < stats.oldestProvider) {
-          stats.oldestProvider = entry.registeredAt
+          stats.oldestProvider = entry.registeredAt;
         }
         if (!stats.newestProvider || entry.registeredAt > stats.newestProvider) {
-          stats.newestProvider = entry.registeredAt
+          stats.newestProvider = entry.registeredAt;
         }
-        
       } catch (error) {
-        console.error(`Failed to get stats for provider ${entry.config.id}:`, error)
+        console.error(`Failed to get stats for provider ${entry.config.id}:`, error);
       }
     }
 
-    stats.averageOperationsPerProvider = 
-      stats.totalProviders > 0 ? totalOperations / stats.totalProviders : 0
+    stats.averageOperationsPerProvider =
+      stats.totalProviders > 0 ? totalOperations / stats.totalProviders : 0;
 
-    return stats
+    return stats;
   }
 
   // -------------------------------------------------------------------------
@@ -419,27 +429,27 @@ export class ProviderRegistry implements IProviderRegistry {
   async cleanup(): Promise<void> {
     // Stop timers
     if (this.cleanupTimer) {
-      clearInterval(this.cleanupTimer)
+      clearInterval(this.cleanupTimer);
     }
     if (this.healthCheckTimer) {
-      clearInterval(this.healthCheckTimer)
+      clearInterval(this.healthCheckTimer);
     }
 
     // Cleanup all providers
     const cleanupPromises = Array.from(this.providers.entries()).map(async ([id, entry]) => {
       try {
-        if (entry.provider.cleanup) {
-          await entry.provider.cleanup()
+        if (entry._provider.cleanup) {
+          await entry._provider.cleanup();
         }
       } catch (error) {
-        console.error(`Failed to cleanup provider ${id}:`, error)
+        console.error(`Failed to cleanup provider ${id}:`, error);
       }
-    })
+    });
 
-    await Promise.allSettled(cleanupPromises)
-    this.providers.clear()
+    await Promise.allSettled(cleanupPromises);
+    this.providers.clear();
 
-    console.log('Provider registry cleaned up')
+    console.log('Provider registry cleaned up');
   }
 
   // -------------------------------------------------------------------------
@@ -451,8 +461,8 @@ export class ProviderRegistry implements IProviderRegistry {
    */
   private startCleanupTimer(): void {
     this.cleanupTimer = setInterval(() => {
-      this.performAutomaticCleanup()
-    }, this.options.cleanupInterval)
+      this.performAutomaticCleanup();
+    }, this.options.cleanupInterval);
   }
 
   /**
@@ -460,31 +470,32 @@ export class ProviderRegistry implements IProviderRegistry {
    */
   private startHealthMonitoring(): void {
     this.healthCheckTimer = setInterval(() => {
-      this.performHealthChecks()
-    }, this.options.healthCheckInterval)
+      this.performHealthChecks();
+    }, this.options.healthCheckInterval);
   }
 
   /**
    * Perform automatic cleanup of inactive providers
    */
   private async performAutomaticCleanup(): Promise<void> {
-    const now = Date.now()
-    const threshold = this.options.cleanupThreshold
-    const providersToCleanup: string[] = []
+    const now = Date.now();
+    const threshold = this.options.cleanupThreshold;
+    const providersToCleanup: string[] = [];
 
-    for (const [id, entry] of this.providers.entries()) {
-      const inactiveTime = now - entry.lastActivity.getTime()
+    for (const [id, entry] of Array.from(this.providers.entries())) {
+      const inactiveTime = now - entry.lastActivity.getTime();
+
       if (inactiveTime > threshold) {
-        providersToCleanup.push(id)
+        providersToCleanup.push(id);
       }
     }
 
     for (const id of providersToCleanup) {
       try {
-        await this.unregisterProvider(id)
-        console.log(`Automatically cleaned up inactive provider: ${id}`)
+        await this.unregisterProvider(id);
+        console.log(`Automatically cleaned up inactive provider: ${id}`);
       } catch (error) {
-        console.error(`Failed to cleanup provider ${id}:`, error)
+        console.error(`Failed to cleanup provider ${id}:`, error);
       }
     }
   }
@@ -495,15 +506,15 @@ export class ProviderRegistry implements IProviderRegistry {
   private async performHealthChecks(): Promise<void> {
     const healthCheckPromises = Array.from(this.providers.entries()).map(async ([id, entry]) => {
       try {
-        if (entry.provider.healthCheck) {
-          await entry.provider.healthCheck()
+        if (entry._provider.healthCheck) {
+          await entry._provider.healthCheck();
         }
       } catch (error) {
-        console.error(`Health check failed for provider ${id}:`, error)
+        console.error(`Health check failed for provider ${id}:`, error);
       }
-    })
+    });
 
-    await Promise.allSettled(healthCheckPromises)
+    await Promise.allSettled(healthCheckPromises);
   }
 
   /**
@@ -519,9 +530,9 @@ export class ProviderRegistry implements IProviderRegistry {
       retryable: false,
       context: {
         operation: 'registry_operation',
-        timestamp: new Date()
-      }
-    }
+        timestamp: new Date(),
+      },
+    };
   }
 }
 
@@ -529,16 +540,17 @@ export class ProviderRegistry implements IProviderRegistry {
 // Singleton Registry Instance
 // =============================================================================
 
-let globalRegistry: ProviderRegistry | null = null
+let globalRegistry: ProviderRegistry | null = null;
 
 /**
  * Get global provider registry instance
  */
 export function getGlobalProviderRegistry(options?: ProviderRegistryOptions): ProviderRegistry {
   if (!globalRegistry) {
-    globalRegistry = new ProviderRegistry(options)
+    globalRegistry = new ProviderRegistry(options);
   }
-  return globalRegistry
+
+  return globalRegistry;
 }
 
 /**
@@ -546,7 +558,7 @@ export function getGlobalProviderRegistry(options?: ProviderRegistryOptions): Pr
  */
 export function resetGlobalProviderRegistry(): void {
   if (globalRegistry) {
-    globalRegistry.cleanup()
-    globalRegistry = null
+    globalRegistry.cleanup();
+    globalRegistry = null;
   }
 }

@@ -1,27 +1,32 @@
 # JCVD User Experience Design
 
 **Version:** 1.0  
-**Date:** July 30, 2025  
+**Date:** July 30, 2025
 
 **Related Documents:**  
-📋 [PRD.md](PRD.md) | 🏗️ [ARCHITECTURE.md](ARCHITECTURE.md) | 👤 [USER_EXPERIENCE.md](USER_EXPERIENCE.md) | 🚀 [ONBOARDING.md](ONBOARDING.md)
+📋 [PRD.md](PRD.md) | 🏗️ [ARCHITECTURE.md](ARCHITECTURE.md) | 👤
+[USER_EXPERIENCE.md](USER_EXPERIENCE.md) | 🚀 [ONBOARDING.md](ONBOARDING.md)
 
 ---
 
 ## Overview
 
-This document defines the complete user experience for JCVD, from first installation through daily development workflows. JCVD prioritizes developer control, simplicity, and professional project management without bureaucracy.
+This document defines the complete user experience for JCVD, from first
+installation through daily development workflows. JCVD prioritizes developer
+control, simplicity, and professional project management without bureaucracy.
 
 ## First-Time Installation and Setup
 
 ### Discovery and Installation
 
 Users discover JCVD through:
+
 - Claude Code MCP server marketplace/directory
 - GitHub repository or documentation
 - Developer community recommendations
 
 Installation options (coming soon):
+
 1. Via Claude Code: Browse MCP servers → Search "JCVD" → Install
 2. Manual: npm install -g @jcvd/mcp-server (package in development)
 3. Docker: docker run -d jcvd/mcp-server (for advanced users)
@@ -32,26 +37,26 @@ Installation options (coming soon):
 User: "I want to start a new project"
 
 Claude: [JCVD MCP server detected for first time]
-"I see you have JCVD installed! This is a comprehensive project orchestration 
+"I see you have JCVD installed! This is a comprehensive project orchestration
 framework that will help you build software projects from start to finish.
 
-JCVD works completely offline by default using an embedded database, with no 
-external accounts or internet connection required. You also have the option 
+JCVD works completely offline by default using an embedded database, with no
+external accounts or internet connection required. You also have the option
 to integrate with cloud-based issue tracking systems like Linear.
 
 Before we begin, I need to set up a few things:
 
-1. **Issue Tracking**: How would you like to track your project tasks and progress? 
+1. **Issue Tracking**: How would you like to track your project tasks and progress?
    - **Local Database** (recommended): Works offline, full features, no accounts needed
    - **Linear Integration**: Cloud-based, team collaboration, requires Linear account
 
-2. **Project Location**: Where would you like to create your project? 
+2. **Project Location**: Where would you like to create your project?
    JCVD will set up a complete repository structure.
 
-3. **Development Preferences**: Any preferred technologies, frameworks, 
+3. **Development Preferences**: Any preferred technologies, frameworks,
    or development methodologies I should know about?
 
-Let's start with issue tracking setup - this is where we'll manage all your 
+Let's start with issue tracking setup - this is where we'll manage all your
 project tasks, dependencies, and progress..."
 ```
 
@@ -60,8 +65,8 @@ project tasks, dependencies, and progress..."
 ### Initial Setup Dialog
 
 ```
-Claude: "Let's set up your issue tracking system. JCVD provides intelligent task 
-management, dependency tracking, and progress orchestration regardless of which 
+Claude: "Let's set up your issue tracking system. JCVD provides intelligent task
+management, dependency tracking, and progress orchestration regardless of which
 option you choose.
 
 You have three setup options:
@@ -73,21 +78,21 @@ A) **Local Database (Embedded SQLite)** ⭐ **RECOMMENDED**
    ✅ Full cross-session continuity and project state management
    ✅ High performance with embedded SQLite database
    ✅ Easy migration to cloud providers when ready
-   
+
 B) **Existing Linear Workspace**
    ✅ Integrates with your current projects and teams
    ✅ Uses your established workflow preferences
    ✅ Cloud-based collaboration and sharing
    ❗ Requires Linear API key with appropriate permissions
-   
+
 C) **New Linear Workspace**
    ✅ Optimized setup specifically for JCVD workflows
    ✅ Free for personal use (up to 10 team members)
    ✅ Cloud-based collaboration and sharing
    ❗ Requires creating new Linear account
 
-Which option would you prefer? **Option A (Local Database)** is recommended for 
-getting started - it provides the complete JCVD experience with no setup friction, 
+Which option would you prefer? **Option A (Local Database)** is recommended for
+getting started - it provides the complete JCVD experience with no setup friction,
 and you can migrate to Linear or other providers anytime."
 ```
 
@@ -100,7 +105,7 @@ Claude: "Excellent choice! Local Mode provides full JCVD functionality using an 
 
 **What you get in Local Mode:**
 ✅ Complete project orchestration with full dependency tracking
-✅ Intelligent task selection and next-step recommendations  
+✅ Intelligent task selection and next-step recommendations
 ✅ Full Epic → Story → Subtask hierarchy management
 ✅ Cross-session continuity and project state persistence
 ✅ Velocity tracking, estimation, and progress analytics
@@ -150,7 +155,7 @@ User: "I want to use my existing Linear workspace"
 
 Claude: "Perfect! To connect to your existing Linear workspace, I need:
 
-1. **Linear API Key**: 
+1. **Linear API Key**:
    - Go to Linear Settings → API → Personal API Keys
    - Create a new key with 'read' and 'write' permissions
    - Name it 'JCVD Integration' for easy identification
@@ -167,12 +172,12 @@ User: [Provides API key]
 Claude: [JCVD validates API key]
 
 **Success Path:**
-"✅ Linear connection successful! 
+"✅ Linear connection successful!
    - Workspace: [Workspace Name]
-   - Team: [Team Name] 
+   - Team: [Team Name]
    - Permissions: ✅ Read ✅ Write ✅ Create Issues
-   
-   I've verified I can create and manage issues in your workspace. 
+
+   I've verified I can create and manage issues in your workspace.
    Ready to proceed with project setup!"
 
 **Error Paths:**
@@ -182,15 +187,15 @@ Claude: [JCVD validates API key]
    - Key was copied correctly (no extra spaces)
    - Key hasn't been revoked or expired
    - Key has 'read' and 'write' permissions
-   
+
    Would you like to try again or create a new API key?"
 
 **Insufficient Permissions:**
 "⚠️ API key valid but missing required permissions:
    - Current: [list current permissions]
    - Required: read, write, create
-   
-   Please update your API key permissions in Linear Settings → API, 
+
+   Please update your API key permissions in Linear Settings → API,
    or create a new key with full permissions."
 
 **Network/Connection Issues:**
@@ -198,7 +203,7 @@ Claude: [JCVD validates API key]
    - Network connectivity issues
    - Linear service temporarily unavailable
    - Corporate firewall blocking Linear API
-   
+
    Would you like to:
    1. Retry connection
    2. Switch to Local Database for now
@@ -238,7 +243,7 @@ Claude: "Perfect! Now I need your Linear API key to complete the integration:
 
 1. In Linear, go to Settings → API → Personal API Keys
 2. Click 'Create API Key'
-3. Name: 'JCVD Integration'  
+3. Name: 'JCVD Integration'
 4. Permissions: Select 'read' and 'write'
 5. Copy the generated key
 
@@ -250,24 +255,26 @@ Paste your API key here when ready."
 ### Validation and Error Recovery
 
 **Connection Testing Flow:**
+
 1. Validate API key format
-2. Test basic API connectivity  
+2. Test basic API connectivity
 3. Check workspace permissions
 4. Verify team access (if specified)
 5. Test issue creation/update capabilities
 6. Store validated configuration
 
 **Error Recovery Strategies:**
+
 - Invalid credentials → Clear guidance on key creation
 - Network issues → Offer offline mode fallback
 - Permission issues → Specific permission requirements
 - Rate limiting → Graceful backoff with user notification
 - Service unavailable → Option to continue in Local Mode
 
-**Configuration Storage:**
-JCVD stores provider configurations securely:
+**Configuration Storage:** JCVD stores provider configurations securely:
+
 - Mac: ~/Library/Application Support/jcvd/provider-config.json
-- Linux: ~/.config/jcvd/provider-config.json  
+- Linux: ~/.config/jcvd/provider-config.json
 - Windows: %APPDATA%/jcvd/provider-config.json
 
 API keys and sensitive data encrypted using system keychain when available.
@@ -301,7 +308,8 @@ Let's start with #1 - what problem will your task management app solve?"
 
 ## Interactive Requirements Gathering
 
-Following the interview questions above, JCVD conducts a structured conversation:
+Following the interview questions above, JCVD conducts a structured
+conversation:
 
 ```
 Claude: "Great answers! Let me summarize what I've learned:
@@ -323,7 +331,7 @@ Claude: "Excellent! Now I'll create your complete project structure:
 
 1. **Generating PRD**: Creating comprehensive requirements document
 2. **Setting up repository**: Full project structure with TypeScript, testing, etc.
-3. **Creating project issues**: Epic/Story/Subtask breakdown  
+3. **Creating project issues**: Epic/Story/Subtask breakdown
 4. **Planning first sprint**: Tasks to get you to a working proof-of-concept
 
 This will take about 2-3 minutes..."
@@ -359,14 +367,14 @@ devlog/
 
 **Project Issues: "DevLog"**
 - **Epic 1**: User Authentication System (5 stories, 23 points)
-- **Epic 2**: Content Management Core (4 stories, 18 points)  
+- **Epic 2**: Content Management Core (4 stories, 18 points)
 - **Epic 3**: Search & Tagging System (6 stories, 34 points)
 - **Epic 4**: Knowledge Sharing Features (3 stories, 21 points)
 
 **Current Milestone**: "Proof of Concept" (Sprint 1-2, ~4 weeks)
 **Next Task**: TASK-1 "Set up development environment and basic project structure"
 
-Everything is ready! Would you like to start with the first task, or do you want 
+Everything is ready! Would you like to start with the first task, or do you want
 to review the PRD and architecture documents first?"
 ```
 
@@ -389,7 +397,7 @@ This task involves:
 3. Creating basic project structure
 4. Writing your first test to verify everything works
 
-Since you want to follow TDD, we'll start by writing a test for the basic 
+Since you want to follow TDD, we'll start by writing a test for the basic
 project setup, then implement the configuration to make it pass.
 
 Ready to begin? I'll guide you through each step!"
@@ -405,11 +413,11 @@ Ready to begin? I'll guide you through each step!"
 User: "What should I work on next?"
 
 Claude: [Calls JCVD to analyze issue state, dependencies, priorities]
-"Based on your project backlog and current progress, I recommend working on 
-Story PROJ-15: 'User Authentication System'. 
+"Based on your project backlog and current progress, I recommend working on
+Story PROJ-15: 'User Authentication System'.
 
 This story is ready to start because:
-- All prerequisite stories are complete 
+- All prerequisite stories are complete
 - Database schema story (PROJ-12) was finished yesterday
 - It's on the critical path for your Sprint 2 milestone
 - Estimated at 5 points, fits well in your remaining capacity
@@ -429,7 +437,7 @@ Claude: [JCVD loads task context and requirements]
 
 Based on your PRD and architecture docs, this task involves:
 1. **Design User data model** following your TypeScript patterns
-2. **Write comprehensive unit tests** for user validation, creation, and methods  
+2. **Write comprehensive unit tests** for user validation, creation, and methods
 3. **Implement User class** to pass all tests
 4. **Add database integration** using your established ORM patterns
 
@@ -439,7 +447,7 @@ I can see from your existing code that you're using:
 - Prisma ORM for database operations
 - Your established project patterns for error handling
 
-Ready to start with the test design? I'll help you create comprehensive tests 
+Ready to start with the test design? I'll help you create comprehensive tests
 that cover all the user authentication requirements from your PRD."
 ```
 
@@ -450,16 +458,16 @@ User: [Starts new Claude Code session]
 "Continue with my project work"
 
 Claude: [JCVD loads project state from issue tracker and docs]
-"Welcome back! You're working on the DevLog project. 
+"Welcome back! You're working on the DevLog project.
 
 Current status:
 - Phase: Development (Sprint 2)
-- Active Story: PROJ-15 'User Authentication System' 
+- Active Story: PROJ-15 'User Authentication System'
 - Last completed: User model tests (all passing)
 - Next up: Authentication middleware implementation
 
-I can see from your git history that you completed the User model yesterday 
-with 100% test coverage. The tests are passing and the implementation follows 
+I can see from your git history that you completed the User model yesterday
+with 100% test coverage. The tests are passing and the implementation follows
 your established patterns.
 
 **Next Recommended Task: PROJ-15-2 'Authentication Middleware'**
@@ -475,27 +483,32 @@ Ready to continue with the middleware setup?"
 JCVD maintains comprehensive project context through:
 
 **Issue Tracking State**
+
 - Current active stories and subtasks
 - Completed work and remaining estimates
 - Dependency relationships and blocked items
 - Milestone progress and sprint planning
 
 **Repository Analysis**
+
 - Recent git commits and branch state
 - Test results and coverage reports
 - Documentation updates and changes
 - Code patterns and architectural consistency
 
 **Session Memory**
+
 - Previous conversations and decisions
 - Established preferences and patterns
 - Custom configurations and tool choices
 - Developer workflow and methodology preferences
 
 **Intelligent Context Loading**
+
 - Analyzes current repository state vs issue tracking
 - Identifies discrepancies and suggests updates
 - Loads relevant documentation and specifications
 - Prepares contextual information for next task
 
-This comprehensive approach ensures seamless continuation across sessions while maintaining full project context and development velocity.
+This comprehensive approach ensures seamless continuation across sessions while
+maintaining full project context and development velocity.

@@ -1,9 +1,9 @@
 /**
  * JCVD Provider Capability Discovery System
- * 
+ *
  * This module implements dynamic capability discovery for all provider types,
  * enabling intelligent provider feature detection and adaptation.
- * 
+ *
  * Core Features:
  * - Dynamic capability probing with caching
  * - Feature compatibility matrix generation
@@ -11,13 +11,7 @@
  * - Graceful degradation for unsupported operations
  */
 
-import type {
-  ProviderType,
-  ProviderCapabilities,
-  IssueProvider,
-  ProviderError,
-  OperationResult
-} from '../types.js'
+import type { ProviderType, IssueProvider, ProviderError } from '../types.js';
 
 // =============================================================================
 // Capability Discovery Core Types
@@ -28,58 +22,58 @@ import type {
  */
 export interface CapabilityDefinition {
   /** Unique capability identifier */
-  id: string
+  id: string;
   /** Human-readable capability name */
-  name: string
+  name: string;
   /** Detailed capability description */
-  description: string
+  description: string;
   /** Capability category for organization */
-  category: CapabilityCategory
+  category: CapabilityCategory;
   /** Whether this capability is required for basic functionality */
-  required: boolean
+  required: boolean;
   /** Dependencies on other capabilities */
-  dependencies: string[]
+  dependencies: string[];
   /** Alternative capabilities that can substitute for this one */
-  alternatives: string[]
+  alternatives: string[];
   /** Provider-specific implementation notes */
-  implementationNotes?: Record<ProviderType, string>
+  implementationNotes?: Record<ProviderType, string>;
 }
 
 /**
  * Capability categories for logical grouping
  */
-export type CapabilityCategory = 
-  | 'core'           // Essential functionality (CRUD operations)
-  | 'hierarchy'      // Issue hierarchy support (epics, stories, subtasks)
-  | 'workflow'       // Workflow and state management
-  | 'collaboration'  // Team features (assignees, comments)
-  | 'organization'   // Labeling and categorization
-  | 'analytics'      // Reporting and analysis features
-  | 'integration'    // External system integration
-  | 'performance'    // Performance and optimization features
+export type CapabilityCategory =
+  | 'core' // Essential functionality (CRUD operations)
+  | 'hierarchy' // Issue hierarchy support (epics, stories, subtasks)
+  | 'workflow' // Workflow and state management
+  | 'collaboration' // Team features (assignees, comments)
+  | 'organization' // Labeling and categorization
+  | 'analytics' // Reporting and analysis features
+  | 'integration' // External system integration
+  | 'performance'; // Performance and optimization features
 
 /**
  * Capability probe result with detailed information
  */
 export interface CapabilityProbeResult {
   /** Capability identifier */
-  capabilityId: string
+  capabilityId: string;
   /** Whether the capability is supported */
-  isSupported: boolean
+  isSupported: boolean;
   /** Capability version or implementation level */
-  version?: string
+  version?: string;
   /** Performance metrics for this capability */
   performance?: {
-    averageResponseTime: number
-    reliability: number
-    throughput: number
-  }
+    averageResponseTime: number;
+    reliability: number;
+    throughput: number;
+  };
   /** Implementation-specific metadata */
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>;
   /** Error information if capability failed to probe */
-  error?: ProviderError
+  error?: ProviderError;
   /** Timestamp of probe execution */
-  probedAt: Date
+  probedAt: Date;
 }
 
 /**
@@ -87,21 +81,21 @@ export interface CapabilityProbeResult {
  */
 export interface CapabilityDiscoveryResult {
   /** Provider that was probed */
-  providerId: string
+  providerId: string;
   /** Provider type */
-  providerType: ProviderType
+  providerType: ProviderType;
   /** Individual capability probe results */
-  capabilities: Map<string, CapabilityProbeResult>
+  capabilities: Map<string, CapabilityProbeResult>;
   /** Overall discovery success */
-  discoverySuccess: boolean
+  discoverySuccess: boolean;
   /** Discovery duration in milliseconds */
-  discoveryDuration: number
+  discoveryDuration: number;
   /** Discovery timestamp */
-  discoveredAt: Date
+  discoveredAt: Date;
   /** Errors encountered during discovery */
-  errors: ProviderError[]
+  errors: ProviderError[];
   /** Warnings and non-critical issues */
-  warnings: string[]
+  warnings: string[];
 }
 
 /**
@@ -109,15 +103,15 @@ export interface CapabilityDiscoveryResult {
  */
 export interface CapabilityDiscoveryOptions {
   /** Capabilities to specifically probe (empty = all) */
-  targetCapabilities?: string[]
+  targetCapabilities?: string[];
   /** Skip capabilities that are cached and recent */
-  skipCached?: boolean
+  skipCached?: boolean;
   /** Maximum discovery time in milliseconds */
-  timeout?: number
+  timeout?: number;
   /** Include performance benchmarking */
-  includeBenchmarks?: boolean
+  includeBenchmarks?: boolean;
   /** Probe depth (shallow for basic checks, deep for full validation) */
-  probeDepth?: 'shallow' | 'deep'
+  probeDepth?: 'shallow' | 'deep';
 }
 
 // =============================================================================
@@ -128,15 +122,16 @@ export interface CapabilityDiscoveryOptions {
  * Registry of all supported capabilities across all provider types
  */
 export class CapabilityRegistry {
-  private static instance: CapabilityRegistry
-  private capabilities = new Map<string, CapabilityDefinition>()
+  private static instance: CapabilityRegistry;
+  private capabilities = new Map<string, CapabilityDefinition>();
 
   static getInstance(): CapabilityRegistry {
     if (!CapabilityRegistry.instance) {
-      CapabilityRegistry.instance = new CapabilityRegistry()
-      CapabilityRegistry.instance.initializeDefaultCapabilities()
+      CapabilityRegistry.instance = new CapabilityRegistry();
+      CapabilityRegistry.instance.initializeDefaultCapabilities();
     }
-    return CapabilityRegistry.instance
+
+    return CapabilityRegistry.instance;
   }
 
   /**
@@ -152,7 +147,7 @@ export class CapabilityRegistry {
         category: 'core',
         required: true,
         dependencies: [],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'projects.read',
@@ -161,7 +156,7 @@ export class CapabilityRegistry {
         category: 'core',
         required: true,
         dependencies: [],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'projects.update',
@@ -170,7 +165,7 @@ export class CapabilityRegistry {
         category: 'core',
         required: false,
         dependencies: ['projects.read'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'projects.delete',
@@ -179,7 +174,7 @@ export class CapabilityRegistry {
         category: 'core',
         required: false,
         dependencies: ['projects.read'],
-        alternatives: []
+        alternatives: [],
       },
 
       // Issue management capabilities
@@ -190,7 +185,7 @@ export class CapabilityRegistry {
         category: 'core',
         required: true,
         dependencies: ['projects.read'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'issues.read',
@@ -199,7 +194,7 @@ export class CapabilityRegistry {
         category: 'core',
         required: true,
         dependencies: [],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'issues.update',
@@ -208,7 +203,7 @@ export class CapabilityRegistry {
         category: 'core',
         required: true,
         dependencies: ['issues.read'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'issues.delete',
@@ -217,7 +212,7 @@ export class CapabilityRegistry {
         category: 'core',
         required: false,
         dependencies: ['issues.read'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'issues.list',
@@ -226,7 +221,7 @@ export class CapabilityRegistry {
         category: 'core',
         required: true,
         dependencies: ['issues.read'],
-        alternatives: []
+        alternatives: [],
       },
 
       // Hierarchy capabilities
@@ -237,7 +232,7 @@ export class CapabilityRegistry {
         category: 'hierarchy',
         required: false,
         dependencies: ['issues.create', 'issues.read'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'hierarchy.stories',
@@ -246,7 +241,7 @@ export class CapabilityRegistry {
         category: 'hierarchy',
         required: false,
         dependencies: ['issues.create', 'issues.read'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'hierarchy.subtasks',
@@ -255,7 +250,7 @@ export class CapabilityRegistry {
         category: 'hierarchy',
         required: false,
         dependencies: ['issues.create', 'issues.read'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'hierarchy.validation',
@@ -264,7 +259,7 @@ export class CapabilityRegistry {
         category: 'hierarchy',
         required: false,
         dependencies: ['hierarchy.epics', 'hierarchy.stories', 'hierarchy.subtasks'],
-        alternatives: []
+        alternatives: [],
       },
 
       // Dependency management
@@ -275,7 +270,7 @@ export class CapabilityRegistry {
         category: 'workflow',
         required: false,
         dependencies: ['issues.read'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'dependencies.remove',
@@ -284,7 +279,7 @@ export class CapabilityRegistry {
         category: 'workflow',
         required: false,
         dependencies: ['dependencies.create'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'dependencies.graph',
@@ -293,7 +288,7 @@ export class CapabilityRegistry {
         category: 'analytics',
         required: false,
         dependencies: ['dependencies.create'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'dependencies.validation',
@@ -302,7 +297,7 @@ export class CapabilityRegistry {
         category: 'workflow',
         required: false,
         dependencies: ['dependencies.graph'],
-        alternatives: []
+        alternatives: [],
       },
 
       // Workflow and state management
@@ -313,7 +308,7 @@ export class CapabilityRegistry {
         category: 'workflow',
         required: false,
         dependencies: ['issues.read'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'workflow.transitions',
@@ -322,7 +317,7 @@ export class CapabilityRegistry {
         category: 'workflow',
         required: false,
         dependencies: ['workflow.states'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'workflow.automation',
@@ -331,7 +326,7 @@ export class CapabilityRegistry {
         category: 'workflow',
         required: false,
         dependencies: ['workflow.transitions'],
-        alternatives: []
+        alternatives: [],
       },
 
       // Collaboration features
@@ -342,7 +337,7 @@ export class CapabilityRegistry {
         category: 'collaboration',
         required: false,
         dependencies: ['issues.update'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'collaboration.comments',
@@ -351,7 +346,7 @@ export class CapabilityRegistry {
         category: 'collaboration',
         required: false,
         dependencies: ['issues.read'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'collaboration.notifications',
@@ -360,7 +355,7 @@ export class CapabilityRegistry {
         category: 'collaboration',
         required: false,
         dependencies: ['collaboration.assignees'],
-        alternatives: []
+        alternatives: [],
       },
 
       // Organization and labeling
@@ -371,7 +366,7 @@ export class CapabilityRegistry {
         category: 'organization',
         required: false,
         dependencies: ['issues.read'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'organization.priorities',
@@ -380,7 +375,7 @@ export class CapabilityRegistry {
         category: 'organization',
         required: false,
         dependencies: ['issues.update'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'organization.estimation',
@@ -389,7 +384,7 @@ export class CapabilityRegistry {
         category: 'organization',
         required: false,
         dependencies: ['issues.update'],
-        alternatives: []
+        alternatives: [],
       },
 
       // Data portability and integration
@@ -400,7 +395,7 @@ export class CapabilityRegistry {
         category: 'integration',
         required: false,
         dependencies: ['projects.read', 'issues.read'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'integration.import',
@@ -409,7 +404,7 @@ export class CapabilityRegistry {
         category: 'integration',
         required: false,
         dependencies: ['projects.create', 'issues.create'],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'integration.sync',
@@ -418,7 +413,7 @@ export class CapabilityRegistry {
         category: 'integration',
         required: false,
         dependencies: ['integration.export', 'integration.import'],
-        alternatives: []
+        alternatives: [],
       },
 
       // Performance capabilities
@@ -429,7 +424,7 @@ export class CapabilityRegistry {
         category: 'performance',
         required: false,
         dependencies: [],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'performance.caching',
@@ -438,7 +433,7 @@ export class CapabilityRegistry {
         category: 'performance',
         required: false,
         dependencies: [],
-        alternatives: []
+        alternatives: [],
       },
       {
         id: 'performance.bulk',
@@ -447,73 +442,72 @@ export class CapabilityRegistry {
         category: 'performance',
         required: false,
         dependencies: [],
-        alternatives: []
-      }
-    ]
+        alternatives: [],
+      },
+    ];
 
     defaultCapabilities.forEach(capability => {
-      this.capabilities.set(capability.id, capability)
-    })
+      this.capabilities.set(capability.id, capability);
+    });
   }
 
   /**
    * Register a new capability definition
    */
   registerCapability(capability: CapabilityDefinition): void {
-    this.capabilities.set(capability.id, capability)
+    this.capabilities.set(capability.id, capability);
   }
 
   /**
    * Get capability definition by ID
    */
   getCapability(id: string): CapabilityDefinition | undefined {
-    return this.capabilities.get(id)
+    return this.capabilities.get(id);
   }
 
   /**
    * Get all capabilities in a category
    */
   getCapabilitiesByCategory(category: CapabilityCategory): CapabilityDefinition[] {
-    return Array.from(this.capabilities.values())
-      .filter(cap => cap.category === category)
+    return Array.from(this.capabilities.values()).filter(cap => cap.category === category);
   }
 
   /**
    * Get all required capabilities
    */
   getRequiredCapabilities(): CapabilityDefinition[] {
-    return Array.from(this.capabilities.values())
-      .filter(cap => cap.required)
+    return Array.from(this.capabilities.values()).filter(cap => cap.required);
   }
 
   /**
    * Get all capability definitions
    */
   getAllCapabilities(): CapabilityDefinition[] {
-    return Array.from(this.capabilities.values())
+    return Array.from(this.capabilities.values());
   }
 
   /**
    * Validate capability dependencies
    */
   validateDependencies(capabilityIds: string[]): { isValid: boolean; missing: string[] } {
-    const missing = new Set<string>()
-    
+    const missing = new Set<string>();
+
     for (const id of capabilityIds) {
-      const capability = this.capabilities.get(id)
-      if (!capability) continue
-      
+      const capability = this.capabilities.get(id);
+
+      if (!capability) continue;
+
       for (const depId of capability.dependencies) {
         if (!capabilityIds.includes(depId)) {
-          missing.add(depId)
+          missing.add(depId);
         }
       }
     }
-    
+
     return {
       isValid: missing.size === 0,
-      missing: Array.from(missing)
-    }
+      missing: Array.from(missing),
+    };
   }
 }
 
@@ -525,33 +519,33 @@ export class CapabilityRegistry {
  * Main capability discovery engine that orchestrates provider capability detection
  */
 export class CapabilityDiscoveryEngine {
-  private registry: CapabilityRegistry
-  private probeInstances = new Map<ProviderType, CapabilityProbe>()
+  private registry: CapabilityRegistry;
+  private probeInstances = new Map<ProviderType, CapabilityProbe>();
 
   constructor() {
-    this.registry = CapabilityRegistry.getInstance()
+    this.registry = CapabilityRegistry.getInstance();
   }
 
   /**
    * Register a capability probe for a specific provider type
    */
   registerProbe(providerType: ProviderType, probe: CapabilityProbe): void {
-    this.probeInstances.set(providerType, probe)
+    this.probeInstances.set(providerType, probe);
   }
 
   /**
    * Discover capabilities for a provider instance
    */
   async discoverCapabilities(
-    provider: IssueProvider,
+    _provider: IssueProvider,
     options: CapabilityDiscoveryOptions = {}
   ): Promise<CapabilityDiscoveryResult> {
-    const startTime = Date.now()
-    const providerInfo = provider.getProviderInfo()
-    const probe = this.probeInstances.get(providerInfo.type)
-    
+    const startTime = Date.now();
+    const providerInfo = _provider.getProviderInfo();
+    const probe = this.probeInstances.get(providerInfo.type);
+
     if (!probe) {
-      throw new Error(`No capability probe registered for provider type: ${providerInfo.type}`)
+      throw new Error(`No capability probe registered for provider type: ${providerInfo.type}`);
     }
 
     const result: CapabilityDiscoveryResult = {
@@ -562,56 +556,58 @@ export class CapabilityDiscoveryEngine {
       discoveryDuration: 0,
       discoveredAt: new Date(),
       errors: [],
-      warnings: []
-    }
+      warnings: [],
+    };
 
     try {
       // Determine which capabilities to probe
-      const targetCapabilities = options.targetCapabilities || 
-        this.registry.getAllCapabilities().map(cap => cap.id)
+      const targetCapabilities =
+        options.targetCapabilities || this.registry.getAllCapabilities().map(cap => cap.id);
 
       // Execute capability probes
-      const probePromises = targetCapabilities.map(async (capabilityId) => {
+      const probePromises = targetCapabilities.map(async capabilityId => {
         try {
-          const probeResult = await probe.probeCapability(
-            provider, 
-            capabilityId, 
-            options
-          )
-          result.capabilities.set(capabilityId, probeResult)
+          const probeResult = await probe.probeCapability(_provider, capabilityId, options);
+
+          result.capabilities.set(capabilityId, probeResult);
         } catch (error) {
-          const providerError = error as ProviderError
-          result.errors.push(providerError)
-          
+          const providerError = error as ProviderError;
+
+          result.errors.push(providerError);
+
           // Add failed probe result
           result.capabilities.set(capabilityId, {
             capabilityId,
             isSupported: false,
             error: providerError,
-            probedAt: new Date()
-          })
+            probedAt: new Date(),
+          });
         }
-      })
+      });
 
       // Execute probes with timeout
-      const timeout = options.timeout || 10000 // 10 second default
+      const timeout = options.timeout || 10_000; // 10 second default
+
       await Promise.race([
         Promise.all(probePromises),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Capability discovery timeout')), timeout)
-        )
-      ])
+        new Promise((_, reject) =>
+          setTimeout(() => {
+            reject(new Error('Capability discovery timeout'));
+          }, timeout)
+        ),
+      ]);
 
-      result.discoverySuccess = result.errors.length === 0
-      
+      result.discoverySuccess = result.errors.length === 0;
     } catch (error) {
-      const providerError = error as ProviderError
-      result.errors.push(providerError)
-      result.discoverySuccess = false
+      const providerError = error as ProviderError;
+
+      result.errors.push(providerError);
+      result.discoverySuccess = false;
     }
 
-    result.discoveryDuration = Date.now() - startTime
-    return result
+    result.discoveryDuration = Date.now() - startTime;
+
+    return result;
   }
 
   /**
@@ -621,56 +617,55 @@ export class CapabilityDiscoveryEngine {
     sourceProvider: IssueProvider,
     targetProvider: IssueProvider
   ): Promise<{
-    score: number
-    compatibleCapabilities: string[]
-    incompatibleCapabilities: string[]
-    analysis: string
+    score: number;
+    compatibleCapabilities: string[];
+    incompatibleCapabilities: string[];
+    analysis: string;
   }> {
     const [sourceResult, targetResult] = await Promise.all([
       this.discoverCapabilities(sourceProvider),
-      this.discoverCapabilities(targetProvider)
-    ])
+      this.discoverCapabilities(targetProvider),
+    ]);
 
     const sourceCapabilities = Array.from(sourceResult.capabilities.entries())
       .filter(([_, result]) => result.isSupported)
-      .map(([id, _]) => id)
-    
+      .map(([id, _]) => id);
+
     const targetCapabilities = Array.from(targetResult.capabilities.entries())
       .filter(([_, result]) => result.isSupported)
-      .map(([id, _]) => id)
+      .map(([id, _]) => id);
 
-    const compatible = sourceCapabilities.filter(cap => targetCapabilities.includes(cap))
-    const incompatible = sourceCapabilities.filter(cap => !targetCapabilities.includes(cap))
-    
-    const score = sourceCapabilities.length > 0 ? 
-      compatible.length / sourceCapabilities.length : 0
+    const compatible = sourceCapabilities.filter(cap => targetCapabilities.includes(cap));
+    const incompatible = sourceCapabilities.filter(cap => !targetCapabilities.includes(cap));
 
-    const analysis = this.generateCompatibilityAnalysis(compatible, incompatible, score)
+    const score = sourceCapabilities.length > 0 ? compatible.length / sourceCapabilities.length : 0;
+
+    const analysis = this.generateCompatibilityAnalysis(compatible, incompatible, score);
 
     return {
       score,
       compatibleCapabilities: compatible,
       incompatibleCapabilities: incompatible,
-      analysis
-    }
+      analysis,
+    };
   }
 
   /**
    * Generate human-readable compatibility analysis
    */
   private generateCompatibilityAnalysis(
-    compatible: string[], 
-    incompatible: string[], 
+    _compatible: string[],
+    incompatible: string[],
     score: number
   ): string {
     if (score >= 0.9) {
-      return `Excellent compatibility (${Math.round(score * 100)}%). Migration should be seamless with minimal feature loss.`
+      return `Excellent compatibility (${Math.round(score * 100)}%). Migration should be seamless with minimal feature loss.`;
     } else if (score >= 0.7) {
-      return `Good compatibility (${Math.round(score * 100)}%). Most features will transfer successfully. Review incompatible features: ${incompatible.join(', ')}`
+      return `Good compatibility (${Math.round(score * 100)}%). Most features will transfer successfully. Review incompatible features: ${incompatible.join(', ')}`;
     } else if (score >= 0.5) {
-      return `Moderate compatibility (${Math.round(score * 100)}%). Significant feature differences exist. Manual review required for: ${incompatible.join(', ')}`
+      return `Moderate compatibility (${Math.round(score * 100)}%). Significant feature differences exist. Manual review required for: ${incompatible.join(', ')}`;
     } else {
-      return `Low compatibility (${Math.round(score * 100)}%). Major feature gaps detected. Consider alternative providers or accept limited functionality.`
+      return `Low compatibility (${Math.round(score * 100)}%). Major feature gaps detected. Consider alternative providers or accept limited functionality.`;
     }
   }
 }
@@ -686,18 +681,20 @@ export interface CapabilityProbe {
   /**
    * Probe a specific capability on a provider instance
    */
-  probeCapability(
-    provider: IssueProvider,
+  probeCapability: (
+    _provider: IssueProvider,
     capabilityId: string,
     options: CapabilityDiscoveryOptions
-  ): Promise<CapabilityProbeResult>
+  ) => Promise<CapabilityProbeResult>;
 
   /**
    * Get provider-specific capability metadata
    */
-  getProviderCapabilityInfo(capabilityId: string): {
-    implementationDetails: string
-    limitations?: string[]
-    performanceNotes?: string
-  } | undefined
+  getProviderCapabilityInfo: (capabilityId: string) =>
+    | {
+        implementationDetails: string;
+        limitations?: string[];
+        performanceNotes?: string;
+      }
+    | undefined;
 }

@@ -44,7 +44,6 @@ async function main() {
     console.log('  npx tsx src/cli.ts --help');
     console.log('  npx tsx src/cli.ts config --validate');
     console.log('  npx tsx src/cli.ts agents --types');
-
   } catch (error) {
     logger.error('❌ Setup failed', { error });
     console.error('❌ Setup failed:', error instanceof Error ? error.message : error);
@@ -55,12 +54,7 @@ async function main() {
 async function checkProjectStructure(): Promise<void> {
   logger.debug('Checking project structure...');
 
-  const requiredFiles = [
-    'package.json',
-    'tsconfig.json',
-    'src/index.ts',
-    'src/cli.ts'
-  ];
+  const requiredFiles = ['package.json', 'tsconfig.json', 'src/index.ts', 'src/cli.ts'];
 
   for (const file of requiredFiles) {
     try {
@@ -76,13 +70,7 @@ async function checkProjectStructure(): Promise<void> {
 async function createDirectories(): Promise<void> {
   logger.debug('Creating necessary directories...');
 
-  const directories = [
-    'dist',
-    'logs',
-    'workspace',
-    'data',
-    'backups'
-  ];
+  const directories = ['dist', 'logs', 'workspace', 'data', 'backups'];
 
   for (const dir of directories) {
     try {
@@ -101,7 +89,7 @@ async function createExampleConfig(): Promise<void> {
   logger.debug('Creating example configuration...');
 
   const configPath = resolve('jcvd.config.json');
-  
+
   try {
     await access(configPath, constants.F_OK);
     logger.debug('Configuration file already exists, skipping');
@@ -112,7 +100,7 @@ async function createExampleConfig(): Promise<void> {
   }
 
   const exampleConfigPath = resolve('examples/quick-start/basic-workflow.json');
-  
+
   try {
     const { readFile } = await import('node:fs/promises');
     const exampleConfig = await readFile(exampleConfigPath, 'utf8');
@@ -151,9 +139,7 @@ async function runInitialTests(): Promise<void> {
     // Check if any test files exist
     const testDir = resolve('tests');
     const testFiles = await readdir(testDir, { recursive: true });
-    const hasTests = testFiles.some(file => 
-      typeof file === 'string' && file.endsWith('.test.ts')
-    );
+    const hasTests = testFiles.some(file => typeof file === 'string' && file.endsWith('.test.ts'));
 
     if (hasTests) {
       await execAsync('npm run test:run', { timeout: 30_000 });
