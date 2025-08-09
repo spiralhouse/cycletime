@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+
 import { testDatabase, testDatabaseFile } from '../../src/database/hello-db.js';
 
 describe('Database Integration Tests', () => {

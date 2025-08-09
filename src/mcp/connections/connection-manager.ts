@@ -3,6 +3,7 @@
  */
 
 import { createLogger } from '../../utils/logger.js';
+
 import { ConnectionState, ConnectionStatus, type ConnectionMetadata } from './connection-state.js';
 import { MessageQueue, type Message, type QueuedMessage, MessagePriority } from './message-queue.js';
 
@@ -70,14 +71,14 @@ export class ConnectionManager {
 
   constructor(config: ConnectionConfig = {}, logger?: Logger) {
     this.config = {
-      maxConnections: config.maxConnections || 100,
-      messageTimeout: config.messageTimeout || 30000, // 30 seconds
-      connectionTimeout: config.connectionTimeout || 60000, // 60 seconds
-      enableHeartbeat: config.enableHeartbeat || false,
-      heartbeatInterval: config.heartbeatInterval || 30000, // 30 seconds
+      maxConnections: config.maxConnections ?? 100,
+      messageTimeout: config.messageTimeout ?? 30_000, // 30 seconds
+      connectionTimeout: config.connectionTimeout ?? 60_000, // 60 seconds
+      enableHeartbeat: config.enableHeartbeat ?? false,
+      heartbeatInterval: config.heartbeatInterval ?? 30_000, // 30 seconds
     };
 
-    this.logger = logger || createLogger('connection-manager');
+    this.logger = logger ?? createLogger('connection-manager');
   }
 
   /**
@@ -158,6 +159,7 @@ export class ConnectionManager {
       return { success: true };
     } catch (error) {
       const connectionData = this.connections.get(connectionId);
+
       if (connectionData) {
         connectionData.state.setStatus(ConnectionStatus.ERROR, error as Error);
       }
@@ -217,6 +219,7 @@ export class ConnectionManager {
    */
   async reconnect(connectionId: string): Promise<ConnectionResult> {
     const disconnectResult = await this.disconnect(connectionId);
+
     if (!disconnectResult.success) {
       return disconnectResult;
     }
@@ -287,6 +290,7 @@ export class ConnectionManager {
       }
 
       const result = connectionData.messageQueue.enqueue(message, priority);
+
       if (!result.success) {
         return result;
       }
@@ -319,10 +323,12 @@ export class ConnectionManager {
       
       if (!connectionData) {
         this.logger.warn('Attempted to process message for non-existent connection', { connectionId });
+
         return null;
       }
 
       const queuedMessage = connectionData.messageQueue.dequeue();
+
       if (queuedMessage) {
         connectionData.state.incrementMessageCount('response');
         connectionData.state.updateActivity();
@@ -346,6 +352,7 @@ export class ConnectionManager {
    */
   getConnection(connectionId: string): ConnectionState | undefined {
     const connectionData = this.connections.get(connectionId);
+
     return connectionData?.state;
   }
 
@@ -424,6 +431,7 @@ export class ConnectionManager {
     
     if (errorConnections.length > 0) {
       const errorRate = errorConnections.length / connections.length;
+
       if (errorRate >= 0.5) {
         status = 'unhealthy';
       } else if (errorRate >= 0.2) {

@@ -4,12 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import type {
-  ExportData,
-  ExportProviderInfo,
-  ValidationError,
-  ValidationWarning,
-} from '../../../src/providers/export-format.js';
+
 import {
   EXPORT_FORMAT_VERSION,
   DEFAULT_EXPORT_OPTIONS,
@@ -25,6 +20,7 @@ import {
   deserializeExportData,
   ExportDataSchema,
 } from '../../../src/providers/export-format.js';
+
 import type {
   Project,
   Issue,
@@ -37,6 +33,12 @@ import type {
   WorkflowStateType,
   DependencyType,
 } from '../../../src/database/models/schema-types.js';
+import type {
+  ExportData,
+  ExportProviderInfo,
+  ValidationError,
+  ValidationWarning,
+} from '../../../src/providers/export-format.js';
 import type { EnhancedIssue, Dependency } from '../../../src/providers/types.js';
 
 // =============================================================================
@@ -164,7 +166,7 @@ describe('Export Format - Checksums and Integrity', () => {
     const checksum2 = calculateChecksum(data, 'sha256');
 
     expect(checksum1).toBe(checksum2);
-    expect(checksum1).toMatch(/^[a-f0-9]{64}$/); // SHA-256 hex format
+    expect(checksum1).toMatch(/^[\da-f]{64}$/); // SHA-256 hex format
   });
 
   it('should generate different checksums for different data', () => {
@@ -189,13 +191,13 @@ describe('Export Format - Checksums and Integrity', () => {
 
     const checksums = generateDataChecksums(exportData);
 
-    expect(checksums.projects).toMatch(/^[a-f0-9]{64}$/);
-    expect(checksums.issues).toMatch(/^[a-f0-9]{64}$/);
-    expect(checksums.dependencies).toMatch(/^[a-f0-9]{64}$/);
-    expect(checksums.workflowStates).toMatch(/^[a-f0-9]{64}$/);
-    expect(checksums.labels).toMatch(/^[a-f0-9]{64}$/);
-    expect(checksums.comments).toMatch(/^[a-f0-9]{64}$/);
-    expect(checksums.overall).toMatch(/^[a-f0-9]{64}$/);
+    expect(checksums.projects).toMatch(/^[\da-f]{64}$/);
+    expect(checksums.issues).toMatch(/^[\da-f]{64}$/);
+    expect(checksums.dependencies).toMatch(/^[\da-f]{64}$/);
+    expect(checksums.workflowStates).toMatch(/^[\da-f]{64}$/);
+    expect(checksums.labels).toMatch(/^[\da-f]{64}$/);
+    expect(checksums.comments).toMatch(/^[\da-f]{64}$/);
+    expect(checksums.overall).toMatch(/^[\da-f]{64}$/);
     expect(checksums.algorithm).toBe('sha256');
     expect(checksums.generatedAt).toBeInstanceOf(Date);
   });
@@ -395,6 +397,7 @@ describe('Export Format - Dependency Graph Validation', () => {
     const cycle = circularPaths.find(
       path => path.includes('B') && path.includes('C') && path.includes('D')
     );
+
     expect(cycle).toBeDefined();
   });
 });
@@ -468,6 +471,7 @@ describe('Export Format - Comprehensive Validation', () => {
 
     // Check for specific error types
     const errorTypes = validation.validationErrors.map(e => e.type);
+
     expect(errorTypes).toContain('hierarchy_violation');
     expect(errorTypes).toContain('foreign_key_violation');
     expect(errorTypes).toContain('dependency_cycle');
@@ -478,7 +482,7 @@ describe('Export Format - Comprehensive Validation', () => {
     const workflowState = createMockWorkflowState();
 
     // Create large number of issues to trigger performance warnings
-    const issues = Array.from({ length: 15000 }, (_, i) =>
+    const issues = Array.from({ length: 15_000 }, (_, i) =>
       createMockEnhancedIssue(`issue-${i}`, 'story')
     );
 
@@ -498,6 +502,7 @@ describe('Export Format - Comprehensive Validation', () => {
     const performanceWarnings = validation.validationWarnings.filter(
       w => w.type === 'performance_concern'
     );
+
     expect(performanceWarnings.length).toBeGreaterThan(0);
   });
 });
@@ -622,6 +627,7 @@ describe('Export Format - Data Creation and Serialization', () => {
     expect(Buffer.isBuffer(compressed)).toBe(true);
 
     const deserialized = deserializeExportData(compressed as Buffer);
+
     expect(deserialized.version).toBe(exportData.version);
     expect(deserialized.projects).toHaveLength(1);
   });
@@ -686,6 +692,7 @@ describe('Export Format - Data Creation and Serialization', () => {
 
     // Corrupt the data by modifying the JSON
     const parsed = JSON.parse(serialized);
+
     parsed.projects[0].name = 'Corrupted Name';
     serialized = JSON.stringify(parsed);
 
@@ -712,6 +719,7 @@ describe('Export Format - Schema Validation', () => {
     );
 
     const result = ExportDataSchema.safeParse(exportData);
+
     expect(result.success).toBe(true);
   });
 
@@ -731,6 +739,7 @@ describe('Export Format - Schema Validation', () => {
     exportData.version = 'invalid-version';
 
     const result = ExportDataSchema.safeParse(exportData);
+
     expect(result.success).toBe(false);
 
     if (!result.success) {
@@ -740,6 +749,7 @@ describe('Export Format - Schema Validation', () => {
 
   it('should reject export data with invalid issue priority', () => {
     const issue = createMockEnhancedIssue();
+
     issue.priority = 10 as any; // Invalid priority (should be 0-4)
 
     const exportData = createExportData(
@@ -755,11 +765,13 @@ describe('Export Format - Schema Validation', () => {
     );
 
     const result = ExportDataSchema.safeParse(exportData);
+
     expect(result.success).toBe(false);
   });
 
   it('should reject export data with invalid issue type', () => {
     const issue = createMockEnhancedIssue();
+
     issue.issue_type = 'invalid-type' as any;
 
     const exportData = createExportData(
@@ -775,6 +787,7 @@ describe('Export Format - Schema Validation', () => {
     );
 
     const result = ExportDataSchema.safeParse(exportData);
+
     expect(result.success).toBe(false);
   });
 
@@ -794,6 +807,7 @@ describe('Export Format - Schema Validation', () => {
     exportData.metadata.statistics.entityCounts.projects = -1;
 
     const result = ExportDataSchema.safeParse(exportData);
+
     expect(result.success).toBe(false);
   });
 });

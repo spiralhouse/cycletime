@@ -103,7 +103,8 @@ describe('ToolRegistry', () => {
       // }).toThrow('Invalid tool name: must start with jcvd_');
       
       // Test naming validation logic
-      const isValidName = (name: string) => /^jcvd_[a-z][a-z0-9_]*$/.test(name);
+      const isValidName = (name: string) => /^jcvd_[a-z][\d_a-z]*$/.test(name);
+
       expect(isValidName('invalid_tool')).toBe(false);
       expect(isValidName('jcvd_test_tool')).toBe(true);
     });
@@ -133,6 +134,7 @@ describe('ToolRegistry', () => {
       
       // Test batch operation concept
       const tools = [tool1, tool2];
+
       expect(tools.length).toBe(2);
       expect(tools.every(t => t.name.startsWith('jcvd_'))).toBe(true);
     });
@@ -148,6 +150,7 @@ describe('ToolRegistry', () => {
       
       // Test concept
       const mockRegistry = new Map();
+
       mockRegistry.set('jcvd_test_tool', mockTool);
       mockRegistry.delete('jcvd_test_tool');
       expect(mockRegistry.has('jcvd_test_tool')).toBe(false);
@@ -160,6 +163,7 @@ describe('ToolRegistry', () => {
       
       // Test graceful handling
       const mockRegistry = new Map();
+
       expect(() => {
         mockRegistry.delete('non_existent_tool');
       }).not.toThrow();
@@ -176,6 +180,7 @@ describe('ToolRegistry', () => {
       
       // Test concept
       const mockTools = [mockTool];
+
       expect(mockTools).toHaveLength(1);
       expect(mockTools[0].name).toBe('jcvd_test_tool');
     });
@@ -207,6 +212,7 @@ describe('ToolRegistry', () => {
       // Test capability filtering concept
       const tools = [executeTool, validateTool];
       const executeTools = tools.filter(t => t.getCapabilities().includes('execute'));
+
       expect(executeTools).toHaveLength(1);
       expect(executeTools[0].name).toBe('jcvd_execute_tool');
     });
@@ -240,6 +246,7 @@ describe('ToolRegistry', () => {
       // Test category filtering concept
       const tools = [issueTool, projectTool];
       const issueTools = tools.filter(t => t.metadata.category === 'issue_management');
+
       expect(issueTools).toHaveLength(1);
       expect(issueTools[0].name).toBe('jcvd_create_issue');
     });
@@ -323,6 +330,7 @@ describe('ToolRegistry', () => {
       
       // Test health check failure
       const isAvailable = await mockTool.isAvailable();
+
       expect(isAvailable).toBe(false);
     });
   });
@@ -337,6 +345,7 @@ describe('ToolRegistry', () => {
       
       // Test cleanup concept
       const mockRegistry = new Map();
+
       mockRegistry.set('jcvd_test_tool', mockTool);
       mockRegistry.clear();
       expect(mockRegistry.size).toBe(0);

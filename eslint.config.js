@@ -33,7 +33,7 @@ export default [
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './tsconfig.json',
+        project: './tsconfig.eslint.json',
         tsconfigRootDir: process.cwd(),
       },
       globals: {
@@ -102,8 +102,8 @@ export default [
         {
           ts: 'never',
           tsx: 'never',
-          js: 'never',
-          jsx: 'never',
+          js: 'always',
+          jsx: 'always',
         },
       ],
 
@@ -181,6 +181,21 @@ export default [
   // Test files configuration
   {
     files: ['**/*.test.ts', '**/*.spec.ts', 'tests/**/*'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        global: 'readonly',
+        NodeJS: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+      },
+    },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',

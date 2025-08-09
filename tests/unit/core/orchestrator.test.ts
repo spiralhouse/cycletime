@@ -4,10 +4,11 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { Orchestrator } from '@/core/orchestrator';
 import { testData } from '../../setup';
 
 import type { JCVDConfig } from '@/types/config';
+
+import { Orchestrator } from '@/core/orchestrator';
 
 describe('Orchestrator', () => {
   let config: JCVDConfig;
@@ -25,6 +26,7 @@ describe('Orchestrator', () => {
 
     it('should initialize with idle status', () => {
       const status = orchestrator.getStatus();
+
       expect(status.status).toBe('idle');
       expect(status.uptime).toBe(0);
       expect(status.activeAgents).toBe(0);
@@ -39,6 +41,7 @@ describe('Orchestrator', () => {
       expect(result.success).toBe(true);
 
       const status = orchestrator.getStatus();
+
       expect(status.status).toBe('running');
       expect(status.uptime).toBeGreaterThan(0);
     });
@@ -58,12 +61,14 @@ describe('Orchestrator', () => {
       expect(result.success).toBe(true);
 
       const status = orchestratorWithComponents.getStatus();
+
       expect(status.activeAgents).toBe(1); // Only enabled agents
       expect(status.activeProviders).toBe(1);
     });
 
     it('should emit initialization event on success', async () => {
       const initSpy = vi.fn();
+
       orchestrator.on('orchestrator.initialized', initSpy);
 
       await orchestrator.initialize();
@@ -86,6 +91,7 @@ describe('Orchestrator', () => {
       // this test will pass. When we implement the real initialization,
       // we should update this test to verify proper error handling.
       const result = await failingOrchestrator.initialize();
+
       expect(result.success).toBe(true); // Will be false once implemented
     });
   });
@@ -99,11 +105,13 @@ describe('Orchestrator', () => {
       expect(result.success).toBe(true);
 
       const status = orchestrator.getStatus();
+
       expect(status.status).toBe('stopped');
     });
 
     it('should emit shutdown event on success', async () => {
       const shutdownSpy = vi.fn();
+
       orchestrator.on('orchestrator.shutdown', shutdownSpy);
 
       await orchestrator.initialize();
@@ -118,6 +126,7 @@ describe('Orchestrator', () => {
       // For now, shutdown should always succeed since we haven't implemented
       // the actual cleanup logic yet
       const result = await orchestrator.shutdown();
+
       expect(result.success).toBe(true);
     });
   });
@@ -125,12 +134,14 @@ describe('Orchestrator', () => {
   describe('getStatus', () => {
     it('should return correct status information', async () => {
       const beforeInit = orchestrator.getStatus();
+
       expect(beforeInit.status).toBe('idle');
       expect(beforeInit.uptime).toBe(0);
 
       await orchestrator.initialize();
 
       const afterInit = orchestrator.getStatus();
+
       expect(afterInit.status).toBe('running');
       expect(afterInit.uptime).toBeGreaterThan(0);
       expect(afterInit.lastActivity).toBeInstanceOf(Date);
@@ -150,9 +161,11 @@ describe('Orchestrator', () => {
       });
 
       const orchestratorWithMixed = new Orchestrator(configWithMixed);
+
       await orchestratorWithMixed.initialize();
 
       const status = orchestratorWithMixed.getStatus();
+
       expect(status.activeAgents).toBe(2); // Only enabled agents
       expect(status.activeProviders).toBe(1); // Only enabled providers
     });
@@ -219,6 +232,7 @@ describe('Orchestrator', () => {
       });
 
       const complexOrchestrator = new Orchestrator(complexConfig);
+
       expect(complexOrchestrator).toBeInstanceOf(Orchestrator);
     });
   });

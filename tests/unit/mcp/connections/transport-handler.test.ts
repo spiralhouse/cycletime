@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import { TransportHandler, TransportType, TransportConfig } from '../../../../src/mcp/connections/transport-handler.js';
+import { TransportHandler, TransportType } from '../../../../src/mcp/connections/transport-handler.js';
+
+import type { TransportConfig } from '../../../../src/mcp/connections/transport-handler.js';
 import type { Logger } from '../../../../src/utils/logger.js';
 
 // Mock logger
@@ -21,6 +23,7 @@ describe('TransportHandler', () => {
     expect(handler.isReady()).toBe(false); // Not ready until initialized
     
     const result = await handler.initialize();
+
     expect(result.success).toBe(true);
     expect(handler.isReady()).toBe(true);
   });
@@ -46,6 +49,7 @@ describe('TransportHandler', () => {
 
   it('should handle message sending', async () => {
     const handler = new TransportHandler({ type: TransportType.STDIO }, mockLogger);
+
     await handler.initialize();
     
     const message = { id: '1', method: 'test', jsonrpc: '2.0' };
@@ -65,9 +69,11 @@ describe('TransportHandler', () => {
 
   it('should handle cleanup properly', async () => {
     const handler = new TransportHandler({ type: TransportType.STDIO }, mockLogger);
+
     await handler.initialize();
     
     const result = await handler.cleanup();
+
     expect(result.success).toBe(true);
   });
 });

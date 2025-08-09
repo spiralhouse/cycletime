@@ -3,6 +3,7 @@
  */
 
 import { createLogger } from '../../utils/logger.js';
+
 import type { Logger } from '../../utils/logger.js';
 
 /**
@@ -57,12 +58,12 @@ export class ConnectionPool {
 
   constructor(config: PoolConfig = {}, logger?: Logger) {
     this.config = {
-      maxSize: config.maxSize || 100,
-      cleanupInterval: config.cleanupInterval || 60000, // 1 minute
-      maxIdleTime: config.maxIdleTime || 300000, // 5 minutes
+      maxSize: config.maxSize ?? 100,
+      cleanupInterval: config.cleanupInterval ?? 60_000, // 1 minute
+      maxIdleTime: config.maxIdleTime ?? 300_000, // 5 minutes
     };
 
-    this.logger = logger || createLogger('connection-pool');
+    this.logger = logger ?? createLogger('connection-pool');
     this.startCleanupTimer();
   }
 
@@ -215,6 +216,7 @@ export class ConnectionPool {
   async clear(): Promise<PoolResult> {
     try {
       const removedCount = this.connections.size;
+
       this.connections.clear();
 
       this.logger.info('Pool cleared', { removedCount });
@@ -248,6 +250,7 @@ export class ConnectionPool {
 
     for (const connection of connections) {
       const age = now - connection.createdAt;
+
       totalAge += age;
 
       if (!oldestConnection || connection.createdAt < oldestConnection.createdAt) {

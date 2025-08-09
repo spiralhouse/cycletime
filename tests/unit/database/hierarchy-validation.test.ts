@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import {
   validateIssueHierarchy,
   validateIssueHierarchyBatch,
@@ -14,7 +15,8 @@ import {
   validateEstimationRules,
   HIERARCHY_ERROR_CODES,
 } from '../../../src/database/models/hierarchy-validator.js';
-import { Issue, IssueType } from '../../../src/database/models/schema-types.js';
+
+import type { Issue, IssueType } from '../../../src/database/models/schema-types.js';
 
 // =============================================================================
 // Test Data Helpers
@@ -196,6 +198,7 @@ describe('calculateIssueDepth', () => {
 
     // Should not hang, should return reasonable depth
     const depth = calculateIssueDepth(issue1, issues);
+
     expect(depth).toBeLessThanOrEqual(10);
   });
 });
@@ -211,6 +214,7 @@ describe('detectCircularHierarchy', () => {
     const issues = [issue1, issue2];
 
     const cycles = detectCircularHierarchy(issues);
+
     expect(cycles).toHaveLength(1);
     expect(cycles[0]).toContain('issue-1');
     expect(cycles[0]).toContain('issue-2');
@@ -223,6 +227,7 @@ describe('detectCircularHierarchy', () => {
     const issues = [issue1, issue2, issue3];
 
     const cycles = detectCircularHierarchy(issues);
+
     expect(cycles).toHaveLength(1);
     expect(cycles[0]).toContain('issue-1');
     expect(cycles[0]).toContain('issue-2');
@@ -236,6 +241,7 @@ describe('detectCircularHierarchy', () => {
     const issues = [epic, story, subtask];
 
     const cycles = detectCircularHierarchy(issues);
+
     expect(cycles).toHaveLength(0);
   });
 
@@ -244,6 +250,7 @@ describe('detectCircularHierarchy', () => {
     const issues = [issue];
 
     const cycles = detectCircularHierarchy(issues);
+
     expect(cycles).toHaveLength(1);
     expect(cycles[0]).toContain('issue-1');
   });
@@ -261,6 +268,7 @@ describe('validateIssueHierarchyBatch', () => {
     const issues = [epic, story, subtask];
 
     const result = validateIssueHierarchyBatch(issues);
+
     expect(result.isValid).toBe(true);
     expect(result.errors).toHaveLength(0);
   });
@@ -271,6 +279,7 @@ describe('validateIssueHierarchyBatch', () => {
     const issues = [epicWithParent, subtaskWithoutParent];
 
     const result = validateIssueHierarchyBatch(issues);
+
     expect(result.isValid).toBe(false);
     expect(result.errors.length).toBeGreaterThanOrEqual(2);
   });
@@ -281,6 +290,7 @@ describe('validateIssueHierarchyBatch', () => {
     const issues = [issue1, issue2];
 
     const result = validateIssueHierarchyBatch(issues);
+
     expect(result.isValid).toBe(false);
     expect(
       result.errors.some(e => e.code === HIERARCHY_ERROR_CODES.CIRCULAR_HIERARCHY_DETECTED)
@@ -292,6 +302,7 @@ describe('validateIssueHierarchyBatch', () => {
     const issues = [subtask];
 
     const result = validateIssueHierarchyBatch(issues);
+
     expect(result.warnings.some(w => w.code === HIERARCHY_ERROR_CODES.ORPHANED_SUBTASK)).toBe(true);
   });
 });

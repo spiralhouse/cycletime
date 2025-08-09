@@ -8,8 +8,9 @@
 
 import EventEmitter from 'node:events';
 
-import type { Resource, ResourceCapability } from './resource-interface.js';
 import { ResourceURI, ResourceError, InvalidResourceURIError } from './resource-interface.js';
+
+import type { Resource, ResourceCapability } from './resource-interface.js';
 
 /**
  * Resource registration information
@@ -73,7 +74,7 @@ export interface BatchRegistrationResult {
   successful: Resource[];
   
   /** Failed registrations with errors */
-  failed: Array<{ resource: Resource; error: string }>;
+  failed: { resource: Resource; error: string }[];
 }
 
 /**
@@ -133,6 +134,7 @@ export class ResourceRegistry extends EventEmitter {
    */
   unregister(uri: string): void {
     const resourceInfo = this.resources.get(uri);
+
     if (!resourceInfo) {
       return; // Gracefully handle non-existent resources
     }
@@ -158,12 +160,15 @@ export class ResourceRegistry extends EventEmitter {
    */
   get(uri: string): Resource | undefined {
     const resourceInfo = this.resources.get(uri);
+
     if (resourceInfo) {
       // Update access tracking
       resourceInfo.lastAccessed = Date.now();
       resourceInfo.accessCount++;
+
       return resourceInfo.resource;
     }
+
     return undefined;
   }
 
@@ -194,6 +199,7 @@ export class ResourceRegistry extends EventEmitter {
         // If any registration fails, we need to clean up already registered resources
         // from this batch to maintain consistency
         const registeredInThisBatch = resources.slice(0, resources.indexOf(resource));
+
         for (const registeredResource of registeredInThisBatch) {
           this.unregister(registeredResource.uri);
         }
@@ -213,7 +219,7 @@ export class ResourceRegistry extends EventEmitter {
    */
   registerBatchSafe(resources: Resource[]): BatchRegistrationResult {
     const successful: Resource[] = [];
-    const failed: Array<{ resource: Resource; error: string }> = [];
+    const failed: { resource: Resource; error: string }[] = [];
 
     for (const resource of resources) {
       try {
@@ -255,6 +261,7 @@ export class ResourceRegistry extends EventEmitter {
 
     for (const [uri, resourceInfo] of this.resources) {
       const parsedUri = ResourceURI.parse(uri);
+
       if (parsedUri && parsedUri.projectId === projectId) {
         results.push(resourceInfo.resource);
       }
@@ -302,7 +309,7 @@ export class ResourceRegistry extends EventEmitter {
     // Convert glob pattern to regex
     // Escape special regex characters first, then handle wildcards
     const regexPattern = pattern
-      .replace(/[.+?^${}()|[\]\\]/g, '\\$&')  // Escape special regex chars
+      .replace(/[$()+.?[\\\]^{|}]/g, '\\$&')  // Escape special regex chars
       .replace(/\\\*/g, '.*');                // Convert \* back to .* for wildcards
     
     const regex = new RegExp(`^${regexPattern}$`);
@@ -332,6 +339,7 @@ export class ResourceRegistry extends EventEmitter {
 
     try {
       const isAvailable = await resourceInfo.resource.isAvailable();
+
       return {
         isAvailable,
         checkedAt: Date.now()
@@ -364,12 +372,14 @@ export class ResourceRegistry extends EventEmitter {
     for (const [uri, resourceInfo] of this.resources) {
       // Count by project
       const parsedUri = ResourceURI.parse(uri);
+
       if (parsedUri) {
         resourcesByProject[parsedUri.projectId] = (resourcesByProject[parsedUri.projectId] || 0) + 1;
       }
 
       // Count by content type
       const contentType = resourceInfo.resource.metadata.contentType;
+
       resourcesByContentType[contentType] = (resourcesByContentType[contentType] || 0) + 1;
 
       // Count by capabilities
@@ -396,6 +406,7 @@ export class ResourceRegistry extends EventEmitter {
    */
   cleanup(): void {
     const resourceCount = this.resources.size;
+
     this.resources.clear();
 
     this.emit('cleanup-completed', {
@@ -413,6 +424,7 @@ export class ResourceRegistry extends EventEmitter {
 
     for (const [uri] of this.resources) {
       const parsedUri = ResourceURI.parse(uri);
+
       if (parsedUri && parsedUri.projectId === projectId) {
         urisToRemove.push(uri);
       }

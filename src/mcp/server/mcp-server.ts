@@ -5,12 +5,13 @@
 import EventEmitter from 'node:events';
 
 import { createLogger } from '../../utils/logger.js';
+import { ToolHandler } from '../handlers/tool-handler.js';
+import { ToolRegistry } from '../tools/tool-registry.js';
 
 import { MessageRouter } from './message-router.js';
 import { ProtocolHandler, type JSONRPCRequest, type JSONRPCNotification } from './protocol-handler.js';
 import { ServerLifecycle, type ServerConfig, type OperationResult } from './server-lifecycle.js';
-import { ToolRegistry } from '../tools/tool-registry.js';
-import { ToolHandler } from '../handlers/tool-handler.js';
+
 
 import type { Logger } from '../../utils/logger.js';
 
@@ -223,6 +224,7 @@ export class MCPServer extends EventEmitter {
     try {
       // First, try to parse JSON
       let message: any;
+
       try {
         message = JSON.parse(messageString);
       } catch (error) {

@@ -85,10 +85,10 @@ export const DEFAULT_MCP_CONFIG: MCPServerConfig = {
   tools: {
     enabled: true,
     validationEnabled: true,
-    executionTimeout: 30000, // 30 seconds
+    executionTimeout: 30_000, // 30 seconds
   },
   health: {
-    checkInterval: 30000, // 30 seconds
+    checkInterval: 30_000, // 30 seconds
     timeoutMs: 5000, // 5 seconds
   },
   provider: {
@@ -111,16 +111,16 @@ export const PRODUCTION_MCP_CONFIG: Partial<MCPServerConfig> = {
   },
   resources: {
     enabled: true,
-    cacheSize: 10000,
+    cacheSize: 10_000,
     cacheTTL: 600, // 10 minutes
   },
   tools: {
     enabled: true,
     validationEnabled: true,
-    executionTimeout: 60000, // 60 seconds
+    executionTimeout: 60_000, // 60 seconds
   },
   health: {
-    checkInterval: 15000, // 15 seconds
+    checkInterval: 15_000, // 15 seconds
     timeoutMs: 3000, // 3 seconds
   },
 };

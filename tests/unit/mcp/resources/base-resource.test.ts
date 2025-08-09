@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
 import { BaseResource } from '../../../../src/mcp/resources/base-resource.js';
+
 import type { ResourceMetadata, ResourceContent } from '../../../../src/mcp/resources/resource-interface.js';
 
 describe('BaseResource', () => {
@@ -94,6 +95,7 @@ describe('BaseResource', () => {
       };
 
       const { resource, mockGetContent } = createTestResource();
+
       mockGetContent.mockResolvedValue(mockContent);
 
       const content = await resource.getContent();
@@ -121,6 +123,7 @@ describe('BaseResource', () => {
       };
 
       const { resource, mockGetContent } = createTestResource();
+
       mockGetContent.mockResolvedValue(mockContent);
 
       await expect(resource.getContent()).rejects.toThrow('Content type mismatch');
@@ -154,10 +157,12 @@ describe('BaseResource', () => {
 
       // First call should invoke content provider
       const content1 = await testResource.getContent();
+
       expect(testMockGetContent).toHaveBeenCalledTimes(1);
 
       // Second call should use cache
       const content2 = await testResource.getContent();
+
       expect(testMockGetContent).toHaveBeenCalledTimes(1); // Still only one call
       expect(content1).toEqual(content2);
     });
@@ -319,6 +324,7 @@ describe('BaseResource', () => {
       );
 
       const available = await simpleResource.isAvailable();
+
       expect(available).toBe(true);
     });
   });

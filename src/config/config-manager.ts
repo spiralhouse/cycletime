@@ -76,7 +76,7 @@ export class ConfigManager {
 
             // If it's package.json, look for jcvd key
             if (configPath === 'package.json') {
-              return parsed.jcvd || null;
+              return parsed.jcvd ?? null;
             }
 
             return parsed;
@@ -118,7 +118,7 @@ export class ConfigManager {
 
     if (process.env.JCVD_DB_WAL_MODE) {
       envConfig.database = {
-        ...(envConfig.database || DEFAULT_CONFIG.database),
+        ...(envConfig.database ?? DEFAULT_CONFIG.database),
         walMode: process.env.JCVD_DB_WAL_MODE === 'true',
       };
     }
@@ -141,7 +141,7 @@ export class ConfigManager {
 
     if (process.env.JCVD_MCP_HOST) {
       envConfig.mcp = {
-        ...(envConfig.mcp || DEFAULT_CONFIG.mcp!),
+        ...(envConfig.mcp ?? DEFAULT_CONFIG.mcp!),
         host: process.env.JCVD_MCP_HOST,
       };
     }

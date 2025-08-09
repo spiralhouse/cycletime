@@ -7,8 +7,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { ResourceServer } from '../../../src/mcp/server/resource-server.js';
 import { BaseResource } from '../../../src/mcp/resources/base-resource.js';
+import { ResourceServer } from '../../../src/mcp/server/resource-server.js';
 
 import type { 
   ResourceServerConfig,
@@ -68,6 +68,7 @@ describe('ResourceServer Integration', () => {
 
       expect(listResponse).toBeTruthy();
       const listResult = JSON.parse(listResponse!);
+
       expect(listResult.result.resources).toHaveLength(1);
       expect(listResult.result.resources[0]).toMatchObject({
         uri: 'jcvd://project/test-123/context',
@@ -97,6 +98,7 @@ describe('ResourceServer Integration', () => {
 
       expect(readResponse).toBeTruthy();
       const readResult = JSON.parse(readResponse!);
+
       expect(readResult.result.contents).toHaveLength(1);
       expect(readResult.result.contents[0]).toMatchObject({
         uri: 'jcvd://project/test-456/data',
@@ -116,6 +118,7 @@ describe('ResourceServer Integration', () => {
 
       expect(readResponse).toBeTruthy();
       const readResult = JSON.parse(readResponse!);
+
       expect(readResult.error).toBeDefined();
       // Error messages may be wrapped in "Internal error" by the MCP handler
       expect(readResult.error.message).toMatch(/(Resource not found|Internal error)/);
@@ -159,9 +162,11 @@ describe('ResourceServer Integration', () => {
 
       expect(listResponse).toBeTruthy();
       const listResult = JSON.parse(listResponse!);
+
       expect(listResult.result.resources.length).toBeGreaterThanOrEqual(3);
       
       const uris = listResult.result.resources.map((r: any) => r.uri);
+
       expect(uris).toContain('jcvd://project/multi-test/context');
       expect(uris).toContain('jcvd://project/multi-test/tasks');
       expect(uris).toContain('jcvd://project/multi-test/dependencies');
@@ -184,12 +189,15 @@ describe('ResourceServer Integration', () => {
 
       // Test project-specific resource finding
       const proj1Found = server.findResourcesByProject('proj1');
+
       expect(proj1Found.length).toBeGreaterThanOrEqual(2);
       
       const proj2Found = server.findResourcesByProject('proj2');
+
       expect(proj2Found.length).toBeGreaterThanOrEqual(1);
       
       const nonExistentFound = server.findResourcesByProject('non-existent');
+
       expect(nonExistentFound).toHaveLength(0);
     });
   });
@@ -222,6 +230,7 @@ describe('ResourceServer Integration', () => {
 
       // Check statistics
       const stats = server.getResourceStatistics();
+
       expect(stats.registry.totalResources).toBeGreaterThanOrEqual(1);
       expect(stats.registry.totalAccesses).toBeGreaterThan(0);
     });
@@ -235,6 +244,7 @@ describe('ResourceServer Integration', () => {
 
       // Check resource health
       const health = await server.checkResourceHealth('jcvd://project/health-test/resource');
+
       expect(health.isAvailable).toBe(true);
       expect(health.checkedAt).toBeGreaterThan(0);
     });
@@ -281,14 +291,16 @@ describe('ResourceServer Integration', () => {
     it('should handle invalid JSON-RPC requests gracefully', async () => {
       // Set up error event listener to catch the error event (expected behavior)
       const errorEvents: any[] = [];
+
       server.on('error', (event) => errorEvents.push(event));
       
       const invalidResponse = await server.handleMessage('invalid json');
       
       expect(invalidResponse).toBeTruthy();
       const result = JSON.parse(invalidResponse!);
+
       expect(result.error).toBeDefined();
-      expect(result.error.code).toBe(-32700); // Parse error
+      expect(result.error.code).toBe(-32_700); // Parse error
       
       // Verify that an error event was emitted
       expect(errorEvents.length).toBeGreaterThan(0);
@@ -304,8 +316,9 @@ describe('ResourceServer Integration', () => {
 
       expect(unsupportedResponse).toBeTruthy();
       const result = JSON.parse(unsupportedResponse!);
+
       expect(result.error).toBeDefined();
-      expect(result.error.code).toBe(-32601); // Method not found
+      expect(result.error.code).toBe(-32_601); // Method not found
     });
 
     it('should handle resource registration errors', () => {

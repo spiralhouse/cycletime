@@ -74,19 +74,19 @@ export interface Resource {
    * @returns Promise that resolves to the resource content
    * @throws Error if resource is not available or content cannot be generated
    */
-  getContent(): Promise<ResourceContent>;
+  getContent: () => Promise<ResourceContent>;
   
   /**
    * Check if this resource is currently available
    * @returns Promise that resolves to true if resource can provide content
    */
-  isAvailable(): Promise<boolean>;
+  isAvailable: () => Promise<boolean>;
   
   /**
    * Invalidate any cached content for this resource
    * @returns Promise that resolves when cache is cleared
    */
-  invalidate(): Promise<void>;
+  invalidate: () => Promise<void>;
 }
 
 /**
@@ -98,12 +98,12 @@ export interface SubscribableResource extends Resource {
    * @param callback Function called when resource content changes
    * @returns Unsubscribe function
    */
-  subscribe(callback: (content: ResourceContent) => void): () => void;
+  subscribe: (callback: (content: ResourceContent) => void) => () => void;
   
   /**
    * Get the current number of active subscriptions
    */
-  getSubscriberCount(): number;
+  getSubscriberCount: () => number;
 }
 
 /**
@@ -116,14 +116,14 @@ export interface WritableResource extends Resource {
    * @returns Promise that resolves when content is updated
    * @throws Error if update fails or is not permitted
    */
-  updateContent(content: any): Promise<void>;
+  updateContent: (content: any) => Promise<void>;
   
   /**
    * Validate if the given content is acceptable for this resource
    * @param content Content to validate
    * @returns Validation result with success flag and optional error message
    */
-  validateContent(content: any): Promise<{ valid: boolean; error?: string }>;
+  validateContent: (content: any) => Promise<{ valid: boolean; error?: string }>;
 }
 
 /**
@@ -135,7 +135,7 @@ export type ResourceFactory = (projectId: string, ...args: any[]) => Promise<Res
  * Resource URI utilities for parsing and validating JCVD resource URIs
  */
 export class ResourceURI {
-  private static readonly URI_PATTERN = /^jcvd:\/\/project\/([\w-]+)\/([\w\/-]+)$/;
+  private static readonly URI_PATTERN = /^jcvd:\/\/project\/([\w-]+)\/([\w/-]+)$/;
   
   /**
    * Parse a JCVD resource URI into its components
@@ -144,6 +144,7 @@ export class ResourceURI {
    */
   static parse(uri: string): { projectId: string; resourcePath: string } | null {
     const match = uri.match(this.URI_PATTERN);
+
     if (!match) {
       return null;
     }
@@ -180,6 +181,7 @@ export class ResourceURI {
    */
   static getProjectId(uri: string): string | null {
     const parsed = this.parse(uri);
+
     return parsed?.projectId || null;
   }
   
@@ -190,6 +192,7 @@ export class ResourceURI {
    */
   static getResourcePath(uri: string): string | null {
     const parsed = this.parse(uri);
+
     return parsed?.resourcePath || null;
   }
 }

@@ -6,15 +6,17 @@
  * across the JCVD provider ecosystem.
  */
 
-import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { testUtils, testData } from '../../setup.js';
+
+import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+
 
 // Import provider implementations
-import { SQLiteProvider } from '../../../src/providers/sqlite/index.js';
-import { ProviderFactory } from '../../../src/providers/factory/index.js';
 import { CapabilityAwareFactory } from '../../../src/providers/capabilities/capability-aware-factory.js';
+import { ProviderFactory } from '../../../src/providers/factory/index.js';
+import { SQLiteProvider } from '../../../src/providers/sqlite/index.js';
+import { testUtils, testData } from '../../setup.js';
 
 // Import test utilities
 import {
@@ -35,7 +37,7 @@ describe('Cross-Provider Integration Tests', () => {
   let testDir: string;
   let providerFactory: ProviderFactory;
   let capabilityFactory: CapabilityAwareFactory;
-  let testProviders: TestProviderPair[] = [];
+  const testProviders: TestProviderPair[] = [];
 
   beforeAll(async () => {
     // Create test environment
@@ -58,7 +60,7 @@ describe('Cross-Provider Integration Tests', () => {
         performance: {
           queryTimeout: 5000,
           maxConnections: 10,
-          cacheSizeKB: 10000,
+          cacheSizeKB: 10_000,
         },
       },
     };
@@ -74,7 +76,7 @@ describe('Cross-Provider Integration Tests', () => {
         performance: {
           queryTimeout: 5000,
           maxConnections: 10,
-          cacheSizeKB: 10000,
+          cacheSizeKB: 10_000,
         },
       },
     };
@@ -141,6 +143,7 @@ describe('Cross-Provider Integration Tests', () => {
         // Verify providers are available
         const sourceAvailable = await sourceProvider.isAvailable();
         const destAvailable = await destProvider.isAvailable();
+
         expect(sourceAvailable).toBe(true);
         expect(destAvailable).toBe(true);
 
@@ -205,6 +208,7 @@ describe('Cross-Provider Integration Tests', () => {
     test('Complete project migration between providers', async () => {
       for (const providerPair of testProviders) {
         const { name, sourceProvider, destProvider } = providerPair;
+
         console.log(`Testing migration: ${name}`);
 
         // Create comprehensive test project in source
@@ -316,6 +320,7 @@ describe('Cross-Provider Integration Tests', () => {
     test('Large dataset migration performance and integrity', async () => {
       for (const providerPair of testProviders) {
         const { name, sourceProvider, destProvider } = providerPair;
+
         console.log(`Testing large dataset migration: ${name}`);
 
         // Create test project
@@ -370,6 +375,7 @@ describe('Cross-Provider Integration Tests', () => {
 
         // Use comprehensive parity validation
         const parityResult = await validateProviderParity(originalIssues, migratedIssues);
+
         expect(parityResult.dataLossDetected).toBe(false);
         expect(parityResult.hierarchyIntact).toBe(true);
         expect(parityResult.fieldMismatchCount).toBe(0);
@@ -381,7 +387,7 @@ describe('Cross-Provider Integration Tests', () => {
 
         console.log(`✅ Large dataset migration test passed: ${name}`);
       }
-    }, 120000); // 120 second timeout for large dataset migration
+    }, 120_000); // 120 second timeout for large dataset migration
   });
 
   // =============================================================================
@@ -441,10 +447,12 @@ describe('Cross-Provider Integration Tests', () => {
       // Test capability-based selection
       const compatibleProviders =
         await capabilityFactory.findCompatibleProviders(requiredCapabilities);
+
       expect(compatibleProviders.length).toBeGreaterThan(0);
 
       for (const provider of compatibleProviders) {
         const capabilities = provider.getProviderInfo().capabilities;
+
         expect(capabilities.supportsProjects).toBe(true);
         expect(capabilities.supportsHierarchy).toBe(true);
         expect(capabilities.supportsDependencies).toBe(true);
@@ -471,6 +479,7 @@ describe('Cross-Provider Integration Tests', () => {
 
         const sourceStateNames = sourceStates.map(s => s.name).sort();
         const destStateNames = destStates.map(s => s.name).sort();
+
         expect(sourceStateNames).toEqual(destStateNames);
 
         // Test state transitions work on both providers
@@ -489,8 +498,10 @@ describe('Cross-Provider Integration Tests', () => {
 
         // Test state transitions
         const inProgressState = sourceStates.find(s => s.name.toLowerCase().includes('progress'));
+
         if (inProgressState) {
           const updatedIssue = await sourceProvider.updateIssueState(issue.id, inProgressState.id);
+
           expect(updatedIssue.stateId).toBe(inProgressState.id);
         }
       }
@@ -524,10 +535,12 @@ describe('Cross-Provider Integration Tests', () => {
 
         // Create dependency
         const dependency = await sourceProvider.addDependency(issue1.id, issue2.id);
+
         expect(dependency).toBeDefined();
 
         // Verify dependency graph
         const dependencyGraph = await sourceProvider.getDependencyGraph(project.id);
+
         expect(dependencyGraph.dependencies).toHaveLength(1);
         expect(dependencyGraph.dependencies[0].blockerId).toBe(issue1.id);
         expect(dependencyGraph.dependencies[0].blockedId).toBe(issue2.id);
@@ -535,10 +548,12 @@ describe('Cross-Provider Integration Tests', () => {
         // Migrate to destination provider
         const exportData = await sourceProvider.exportData(project.id);
         const importResult = await destProvider.importData(exportData);
+
         expect(importResult.success).toBe(true);
 
         // Verify dependencies preserved in destination
         const destDependencyGraph = await destProvider.getDependencyGraph(project.id);
+
         expect(destDependencyGraph.dependencies).toHaveLength(1);
         expect(destDependencyGraph.dependencies[0].blockerId).toBe(issue1.id);
         expect(destDependencyGraph.dependencies[0].blockedId).toBe(issue2.id);

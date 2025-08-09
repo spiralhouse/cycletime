@@ -54,7 +54,7 @@ describe('ToolMetadataManager', () => {
       const mockValidate = (metadata: ToolMetadata) => {
         const errors: string[] = [];
         
-        if (!metadata.name || !metadata.name.startsWith('jcvd_')) {
+        if (!metadata.name?.startsWith('jcvd_')) {
           errors.push('name must start with jcvd_');
         }
         if (!metadata.description || metadata.description.length < 10) {
@@ -71,6 +71,7 @@ describe('ToolMetadataManager', () => {
       };
 
       const result = mockValidate(validMetadata);
+
       expect(result.valid).toBe(true);
     });
 
@@ -94,7 +95,8 @@ describe('ToolMetadataManager', () => {
       // expect(result.errors).toContain('name must start with jcvd_');
       
       // Test name validation
-      const isValidName = (name: string) => /^jcvd_[a-z][a-z0-9_]*$/.test(name);
+      const isValidName = (name: string) => /^jcvd_[a-z][\d_a-z]*$/.test(name);
+
       expect(isValidName(invalidMetadata.name)).toBe(false);
     });
 
@@ -113,6 +115,7 @@ describe('ToolMetadataManager', () => {
 
       // Test version validation
       const isValidVersion = (version: string) => /^\d+\.\d+\.\d+$/.test(version);
+
       expect(isValidVersion(invalidMetadata.version)).toBe(false);
       expect(isValidVersion('1.0.0')).toBe(true);
     });
@@ -132,6 +135,7 @@ describe('ToolMetadataManager', () => {
 
       // Test description validation
       const isValidDescription = (desc: string) => desc.length >= 10;
+
       expect(isValidDescription(invalidMetadata.description)).toBe(false);
       expect(isValidDescription('This is a longer description')).toBe(true);
     });
@@ -454,6 +458,7 @@ describe('ToolMetadataManager', () => {
       };
 
       const changes = compareMetadata(originalMetadata, updatedMetadata);
+
       expect(changes.hasChanges).toBe(true);
       expect(changes.changedFields).toContain('description');
       expect(changes.changedFields).toContain('version');

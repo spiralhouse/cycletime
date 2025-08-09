@@ -6,16 +6,18 @@
  * the system behaves predictably under stress and failure conditions.
  */
 
-import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
-import { performance } from 'node:perf_hooks';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { testUtils, testData } from '../../setup.js';
+import { performance } from 'node:perf_hooks';
+
+import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+
 
 // Import core JCVD components
-import { SQLiteProvider } from '../../../src/providers/sqlite/index.js';
-import { ProviderFactory } from '../../../src/providers/factory/index.js';
 import { createMigrationEngine } from '../../../src/database/migrations/migration-engine.js';
+import { ProviderFactory } from '../../../src/providers/factory/index.js';
+import { SQLiteProvider } from '../../../src/providers/sqlite/index.js';
+import { testUtils, testData } from '../../setup.js';
 
 // Import test utilities
 import { generateLargeDataset } from '../../utils/test-data-generators.js';
@@ -33,6 +35,7 @@ describe('System Reliability and Error Handling', () => {
   beforeAll(async () => {
     // Create test environment
     const testDir = await testUtils.createTempDir();
+
     console.log(`Reliability test directory: ${testDir}`);
 
     // Initialize core components
@@ -47,7 +50,7 @@ describe('System Reliability and Error Handling', () => {
         performance: {
           queryTimeout: 5000,
           maxConnections: 10,
-          cacheSizeKB: 10000,
+          cacheSizeKB: 10_000,
         },
       },
     };
@@ -109,6 +112,7 @@ describe('System Reliability and Error Handling', () => {
         await invalidProvider.initialize();
         // If initialization succeeds, check that operations fail gracefully
         const isAvailable = await invalidProvider.isAvailable();
+
         expect(isAvailable).toBe(false);
       } catch (error) {
         // Expected to fail - provider should report error clearly
@@ -118,6 +122,7 @@ describe('System Reliability and Error Handling', () => {
 
       // Health check should report connection issues
       const health = await invalidProvider.checkHealth();
+
       expect(health.isHealthy).toBe(false);
       expect(health.errors.length).toBeGreaterThan(0);
     });
@@ -129,6 +134,7 @@ describe('System Reliability and Error Handling', () => {
       // Verify provider starts healthy
       expect(await provider.isAvailable()).toBe(true);
       let health = await provider.checkHealth();
+
       expect(health.isHealthy).toBe(true);
 
       // Create test data
@@ -188,6 +194,7 @@ describe('System Reliability and Error Handling', () => {
           priority: 2,
           estimate: 1,
         });
+
         concurrentOperations.push(operation);
       }
 
@@ -208,8 +215,9 @@ describe('System Reliability and Error Handling', () => {
 
       // Verify final data integrity
       const finalIssues = await provider.listIssues({ projectId: project.id });
+
       expect(finalIssues.length).toBe(successful.length);
-    }, 30000); // 30 second timeout for concurrent operations
+    }, 30_000); // 30 second timeout for concurrent operations
   });
 
   // =============================================================================
@@ -238,6 +246,7 @@ describe('System Reliability and Error Handling', () => {
 
       // Test extremely long project name
       const longName = 'A'.repeat(1000);
+
       await expect(
         provider.createProject({
           name: longName,
@@ -370,6 +379,7 @@ describe('System Reliability and Error Handling', () => {
 
       // Create valid dependency
       const dependency = await provider.addDependency(issue1.id, issue2.id);
+
       expect(dependency).toBeDefined();
 
       // Test circular dependency prevention
@@ -421,19 +431,23 @@ describe('System Reliability and Error Handling', () => {
 
       // Create issues in batches
       const batchSize = 100;
+
       for (let i = 0; i < largeDataset.length; i += batchSize) {
         const batch = largeDataset.slice(i, i + batchSize);
 
         const batchStart = performance.now();
+
         for (const issue of batch) {
           await provider.createIssue(issue);
         }
         const batchTime = performance.now() - batchStart;
+
         performanceMetrics.push(batchTime);
 
         // Log progress every 1000 issues
         if ((i + batchSize) % 1000 === 0) {
           const memoryNow = process.memoryUsage();
+
           console.log(
             `Created ${i + batchSize} issues. Memory: ${(memoryNow.heapUsed / 1024 / 1024).toFixed(2)}MB`
           );
@@ -455,6 +469,7 @@ describe('System Reliability and Error Handling', () => {
 
       // Check memory usage is reasonable
       const memoryIncrease = memoryAfter.heapUsed - memoryBefore.heapUsed;
+
       console.log(`Memory increase: ${(memoryIncrease / 1024 / 1024).toFixed(2)}MB`);
       console.log(`Final query time: ${queryTime.toFixed(2)}ms`);
 
@@ -466,7 +481,7 @@ describe('System Reliability and Error Handling', () => {
 
       console.log(`Performance degradation factor: ${performanceDegradation.toFixed(2)}x`);
       expect(performanceDegradation).toBeLessThan(3); // No more than 3x degradation
-    }, 180000); // 3 minute timeout for memory pressure test
+    }, 180_000); // 3 minute timeout for memory pressure test
 
     test('System handles rapid concurrent writes without corruption', async () => {
       const { provider } = context;
@@ -514,6 +529,7 @@ describe('System Reliability and Error Handling', () => {
 
       // Verify data integrity after concurrent operations
       const finalIssues = await provider.listIssues({ projectId: project.id });
+
       expect(finalIssues.length).toBe(successful.length);
 
       // Check for data corruption
@@ -525,7 +541,7 @@ describe('System Reliability and Error Handling', () => {
         expect(issue.estimate).toBeGreaterThanOrEqual(1);
         expect(issue.estimate).toBeLessThanOrEqual(8);
       }
-    }, 60000); // 60 second timeout for concurrent write test
+    }, 60_000); // 60 second timeout for concurrent write test
   });
 
   // =============================================================================
@@ -566,7 +582,7 @@ describe('System Reliability and Error Handling', () => {
           issueType: 'story',
           priority: 2,
         });
-      } catch (error) {
+      } catch {
         failedOperations.push('create_invalid_issue');
       }
 
@@ -575,14 +591,14 @@ describe('System Reliability and Error Handling', () => {
         await provider.updateIssue(validIssue.id, {
           issueType: 'invalid-type' as any, // Invalid issue type
         });
-      } catch (error) {
+      } catch {
         failedOperations.push('update_invalid_type');
       }
 
       // Invalid dependency creation
       try {
         await provider.addDependency(validIssue.id, validIssue.id); // Self-dependency
-      } catch (error) {
+      } catch {
         failedOperations.push('create_self_dependency');
       }
 
@@ -591,10 +607,12 @@ describe('System Reliability and Error Handling', () => {
 
       // Verify database state is unchanged after failed operations
       const finalIssues = await provider.listIssues({ projectId: project.id });
+
       expect(finalIssues).toHaveLength(initialCount);
 
       // Verify valid issue is unchanged
       const unchangedIssue = await provider.getIssue(validIssue.id);
+
       expect(unchangedIssue.title).toBe('Valid Issue');
       expect(unchangedIssue.issueType).toBe('story');
       expect(unchangedIssue.priority).toBe(2);
@@ -642,6 +660,7 @@ describe('System Reliability and Error Handling', () => {
       };
 
       const destProvider = new SQLiteProvider(destConfig);
+
       await destProvider.initialize();
 
       try {
@@ -650,6 +669,7 @@ describe('System Reliability and Error Handling', () => {
 
         // Simulate partial import failure by corrupting data
         const corruptedData = { ...exportData };
+
         corruptedData.issues[0] = {
           ...corruptedData.issues[0],
           issueType: 'invalid-type' as any, // This should cause import to fail
@@ -657,6 +677,7 @@ describe('System Reliability and Error Handling', () => {
 
         // Attempt import (should fail)
         let importFailed = false;
+
         try {
           await destProvider.importData(corruptedData);
         } catch (error) {
@@ -668,6 +689,7 @@ describe('System Reliability and Error Handling', () => {
 
         // Verify destination database is clean after failed import
         const destProjects = await destProvider.listProjects();
+
         expect(destProjects).toHaveLength(0); // No partial data should remain
 
         // Verify source data is unchanged
@@ -699,14 +721,17 @@ describe('System Reliability and Error Handling', () => {
 
       // Test operations on empty project
       const issues = await provider.listIssues({ projectId: emptyProject.id });
+
       expect(issues).toHaveLength(0);
 
       const dependencyGraph = await provider.getDependencyGraph(emptyProject.id);
+
       expect(dependencyGraph.issues).toHaveLength(0);
       expect(dependencyGraph.dependencies).toHaveLength(0);
 
       // Export should work with empty project
       const exportData = await provider.exportData(emptyProject.id);
+
       expect(exportData.projects).toHaveLength(1);
       expect(exportData.issues).toHaveLength(0);
       expect(exportData.dependencies).toHaveLength(0);
@@ -759,6 +784,7 @@ describe('System Reliability and Error Handling', () => {
 
       // Test dependency graph with deep hierarchy
       const dependencyGraph = await provider.getDependencyGraph(project.id);
+
       expect(dependencyGraph.issues).toHaveLength(3);
     });
 
@@ -802,6 +828,7 @@ describe('System Reliability and Error Handling', () => {
 
       // Test export/import with Unicode content
       const exportData = await provider.exportData(project.id);
+
       expect(exportData.projects[0].name).toBe('Unicode Test 中文 🚀');
       expect(exportData.issues[0].title).toBe('Special Characters: "quotes", <tags>, & symbols!');
     });
@@ -832,8 +859,9 @@ describe('System Reliability and Error Handling', () => {
     };
 
     const allReliabilityTestsPassed = Object.values(reliabilityValidation).every(
-      test => test === true
+      Boolean
     );
+
     expect(allReliabilityTestsPassed).toBe(true);
 
     console.log('\nReliability Features Validated:');

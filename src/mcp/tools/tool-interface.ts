@@ -159,14 +159,14 @@ export interface Tool {
    * Check if this tool is currently available for execution
    * @returns Promise that resolves to true if tool can be executed
    */
-  isAvailable(): Promise<boolean>;
+  isAvailable: () => Promise<boolean>;
   
   /**
    * Validate parameters against the tool's parameter schema
    * @param parameters Parameters to validate
    * @returns Promise that resolves to validation result
    */
-  validateParameters(parameters: any): Promise<ToolParameterValidationResult>;
+  validateParameters: (parameters: any) => Promise<ToolParameterValidationResult>;
   
   /**
    * Execute the tool with validated parameters
@@ -174,13 +174,13 @@ export interface Tool {
    * @param context Execution context
    * @returns Promise that resolves to execution result
    */
-  execute(parameters: any, context: ToolExecutionContext): Promise<ToolExecutionResult>;
+  execute: (parameters: any, context: ToolExecutionContext) => Promise<ToolExecutionResult>;
   
   /**
    * Get the capabilities supported by this tool
    * @returns Array of supported capabilities
    */
-  getCapabilities(): ToolCapability[];
+  getCapabilities: () => ToolCapability[];
 }
 
 /**
@@ -193,7 +193,7 @@ export interface PreviewableTool extends Tool {
    * @param context Execution context
    * @returns Promise that resolves to preview result
    */
-  preview(parameters: any, context: ToolExecutionContext): Promise<ToolExecutionResult>;
+  preview: (parameters: any, context: ToolExecutionContext) => Promise<ToolExecutionResult>;
 }
 
 /**
@@ -205,7 +205,7 @@ export type ToolFactory = (...args: any[]) => Promise<Tool>;
  * Tool name utilities for validating JCVD tool naming conventions
  */
 export class ToolName {
-  private static readonly NAME_PATTERN = /^jcvd_[a-z][a-z0-9_]*$/;
+  private static readonly NAME_PATTERN = /^jcvd_[a-z][\d_a-z]*$/;
   
   /**
    * Validate if a tool name follows JCVD naming conventions
@@ -225,7 +225,8 @@ export class ToolName {
     if (!this.isValid(name)) {
       return null;
     }
-    return name.substring(5); // Remove 'jcvd_' prefix
+
+    return name.slice(5); // Remove 'jcvd_' prefix
   }
   
   /**
@@ -244,6 +245,7 @@ export class ToolName {
    */
   static inferCategory(name: string): string {
     const operation = this.getOperation(name);
+
     if (!operation) {
       return 'general';
     }

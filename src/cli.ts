@@ -22,7 +22,7 @@ const __dirname = dirname(__filename);
 // Read package.json for version
 const packagePath = resolve(__dirname, '../package.json');
 const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
-const version = packageJson.version || '0.1.0';
+const version = packageJson.version ?? '0.1.0';
 
 const cli = new Command();
 const cliLogger = createLogger('cli');

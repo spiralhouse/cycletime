@@ -55,6 +55,7 @@ describe('ToolValidator', () => {
             errors.push('title must be a string');
           } else {
             const titleProp = schema.properties?.title;
+
             if (titleProp?.minLength && params.title.length < titleProp.minLength) {
               errors.push(`title must be at least ${titleProp.minLength} characters`);
             }
@@ -68,9 +69,11 @@ describe('ToolValidator', () => {
       };
 
       const validResult = mockValidate(validParams, schema);
+
       expect(validResult.valid).toBe(true);
       
       const invalidResult = mockValidate(invalidParams, schema);
+
       expect(invalidResult.valid).toBe(false);
       expect(invalidResult.errors).toContain('title must be at least 1 characters');
     });
@@ -106,6 +109,7 @@ describe('ToolValidator', () => {
             errors.push('priority must be a number');
           } else {
             const priorityProp = schema.properties?.priority;
+
             if (priorityProp?.minimum !== undefined && params.priority < priorityProp.minimum) {
               errors.push(`priority must be at least ${priorityProp.minimum}`);
             }
@@ -205,6 +209,7 @@ describe('ToolValidator', () => {
             // Check uniqueness
             if (tagsProp?.uniqueItems) {
               const unique = new Set(params.tags);
+
               if (unique.size !== params.tags.length) {
                 errors.push('tags items must be unique');
               }
@@ -277,6 +282,7 @@ describe('ToolValidator', () => {
             errors.push('project must be an object');
           } else {
             const projectProp = schema.properties?.project;
+
             if (projectProp?.required?.includes('name') && !params.project.name) {
               errors.push('project.name is required');
             }
@@ -325,6 +331,7 @@ describe('ToolValidator', () => {
         
         if (params.status !== undefined) {
           const statusProp = schema.properties?.status;
+
           if (statusProp?.enum && !statusProp.enum.includes(params.status)) {
             errors.push(`status must be one of: ${statusProp.enum.join(', ')}`);
           }
@@ -332,6 +339,7 @@ describe('ToolValidator', () => {
         
         if (params.priority !== undefined) {
           const priorityProp = schema.properties?.priority;
+
           if (priorityProp?.enum && !priorityProp.enum.includes(params.priority)) {
             errors.push(`priority must be one of: ${priorityProp.enum.join(', ')}`);
           }
@@ -500,6 +508,7 @@ describe('ToolValidator', () => {
         // Type validation
         if (params.type !== undefined) {
           const validTypes = ['epic', 'story', 'subtask'];
+
           if (!validTypes.includes(params.type)) {
             errors.push(`type must be one of: ${validTypes.join(', ')}`);
           }
@@ -515,6 +524,7 @@ describe('ToolValidator', () => {
         // Additional properties
         if (schema.additionalProperties === false) {
           const allowedProps = Object.keys(schema.properties || {});
+
           for (const prop of Object.keys(params)) {
             if (!allowedProps.includes(prop)) {
               errors.push(`additional property '${prop}' is not allowed`);
@@ -528,6 +538,7 @@ describe('ToolValidator', () => {
       expect(mockValidateComplex(validParams, createIssueSchema).valid).toBe(true);
       
       const invalidResult = mockValidateComplex(invalidParams, createIssueSchema);
+
       expect(invalidResult.valid).toBe(false);
       expect(invalidResult.errors).toContain('title must not be empty');
       expect(invalidResult.errors).toContain('type must be one of: epic, story, subtask');
@@ -567,6 +578,7 @@ describe('ToolValidator', () => {
         
         if (params.project?.settings?.priority !== undefined) {
           const priority = params.project.settings.priority;
+
           if (typeof priority !== 'number' || priority < 1 || priority > 4) {
             errors.push('project.settings.priority must be a number between 1 and 4');
           }
@@ -576,6 +588,7 @@ describe('ToolValidator', () => {
       };
 
       const result = mockValidateWithPaths(invalidParams, schema);
+
       expect(result.valid).toBe(false);
       expect(result.errors?.[0]).toContain('project.settings.priority');
     });

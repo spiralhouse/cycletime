@@ -94,7 +94,8 @@ describe('BaseTool', () => {
       // }).toThrow('Invalid tool name: must start with jcvd_');
       
       // Test validation logic
-      const isValidName = (name: string) => /^jcvd_[a-z][a-z0-9_]*$/.test(name);
+      const isValidName = (name: string) => /^jcvd_[a-z][\d_a-z]*$/.test(name);
+
       expect(isValidName(invalidMetadata.name)).toBe(false);
       expect(isValidName(mockMetadata.name)).toBe(true);
     });
@@ -115,6 +116,7 @@ describe('BaseTool', () => {
       
       // Test availability concept
       const defaultAvailability = true;
+
       expect(defaultAvailability).toBe(true);
     });
   });
@@ -141,10 +143,12 @@ describe('BaseTool', () => {
         if (params.priority && (params.priority < 1 || params.priority > 4)) {
           return { valid: false, errors: ['priority must be between 1 and 4'] };
         }
+
         return { valid: true };
       };
 
       const result = mockValidate(validParameters, mockMetadata.parameters);
+
       expect(result.valid).toBe(true);
     });
 
@@ -177,6 +181,7 @@ describe('BaseTool', () => {
       };
 
       const result = mockValidate(invalidParameters, mockMetadata.parameters);
+
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('title is required');
       expect(result.errors).toContain('priority must be between 1 and 4');
@@ -220,10 +225,12 @@ describe('BaseTool', () => {
         if (!params.project.name) {
           return { valid: false, errors: ['project.name is required'] };
         }
+
         return { valid: true };
       };
 
       const result = mockValidateNested(validNested);
+
       expect(result.valid).toBe(true);
     });
   });
@@ -270,6 +277,7 @@ describe('BaseTool', () => {
       };
 
       const result = await mockExecute(parameters, mockContext);
+
       expect(result.success).toBe(true);
       expect(result.data.message).toBe('Tool executed successfully');
     });
@@ -313,6 +321,7 @@ describe('BaseTool', () => {
       };
 
       const result = await mockValidateAndExecute(invalidParameters, mockContext);
+
       expect(result.success).toBe(false);
       expect(result.error?.code).toBe('VALIDATION_ERROR');
     });
@@ -355,6 +364,7 @@ describe('BaseTool', () => {
       };
 
       const result = await mockExecuteWithError(parameters, mockContext);
+
       expect(result.success).toBe(false);
       expect(result.error?.code).toBe('EXECUTION_ERROR');
     });
@@ -369,6 +379,7 @@ describe('BaseTool', () => {
       
       // Test capability access
       const capabilities = mockMetadata.capabilities;
+
       expect(capabilities).toEqual(['execute', 'validate']);
       expect(capabilities).toContain('execute');
       expect(capabilities).toContain('validate');
@@ -416,6 +427,7 @@ describe('BaseTool', () => {
       // Test immutability
       const originalName = mockMetadata.name;
       const metadata = { ...mockMetadata };
+
       metadata.name = 'modified_name';
       
       expect(originalName).toBe('jcvd_test_tool');

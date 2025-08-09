@@ -4,13 +4,16 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import {
-  FieldMapper,
   createFieldMapper,
   createStandardMapping,
   createComputedMapping,
   createLookupMapping,
 } from '../../../../src/providers/transformers/field-mapper.js';
+
+import type {
+  FieldMapper} from '../../../../src/providers/transformers/field-mapper.js';
 import type {
   FieldMapping,
   TransformationContext,
@@ -111,6 +114,7 @@ describe('FieldMapper', () => {
       const mapping = createComputedMapping<any, string>('computedField', async src => {
         // Simulate async operation
         await new Promise(resolve => setTimeout(resolve, 1));
+
         return `computed_${src.id}`;
       });
 
@@ -381,6 +385,7 @@ describe('FieldMapper', () => {
 
       // Should have errors for missing required field and type conversion failure
       const errorCodes = result.errors.map(e => e.code);
+
       expect(errorCodes).toContain('MISSING_REQUIRED_FIELD');
       expect(errorCodes).toContain('FIELD_MAPPING_FAILED');
     });
@@ -440,6 +445,7 @@ describe('FieldMapper', () => {
         ['high', 2],
         ['urgent', 1],
       ]);
+
       fieldMapper.registerLookupTable('priority_lookup', priorityLookup);
     });
 
@@ -512,10 +518,12 @@ describe('FieldMapper', () => {
 
       // All transformations should succeed
       const successfulResults = results.filter(r => r.success);
+
       expect(successfulResults).toHaveLength(batchSize);
 
       // Performance metric: should process more than 200 items per second
       const itemsPerSecond = (batchSize / duration) * 1000;
+
       expect(itemsPerSecond).toBeGreaterThan(200);
     });
   });

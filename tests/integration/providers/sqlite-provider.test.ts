@@ -7,18 +7,20 @@
  * foundation components.
  */
 
+import { unlink } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { unlink } from 'fs/promises';
 
 import {
-  SQLiteProvider,
   createSQLiteProvider,
   SQLiteConnectionManager,
   TaskRecommendationEngine,
 } from '../../../src/providers/sqlite/index.js';
 
+import type {
+  SQLiteProvider} from '../../../src/providers/sqlite/index.js';
 import type {
   SQLiteProviderConfig,
   Project,
@@ -79,7 +81,7 @@ describe('SQLite Provider Integration Tests', () => {
     // Clean up test database
     try {
       await unlink(testDatabasePath);
-    } catch (error) {
+    } catch {
       // Ignore if file doesn't exist
     }
   });
@@ -114,6 +116,7 @@ describe('SQLite Provider Integration Tests', () => {
 
       // Provider should no longer be available after cleanup
       const isAvailable = await provider.isAvailable();
+
       expect(isAvailable).toBe(false);
     });
   });
@@ -157,9 +160,11 @@ describe('SQLite Provider Integration Tests', () => {
       });
 
       const allProjects = await provider.listProjects();
+
       expect(allProjects.length).toBeGreaterThanOrEqual(2);
 
       const filteredProjects = await provider.listProjects({ name: 'Test' });
+
       expect(filteredProjects.length).toBeGreaterThanOrEqual(1);
       expect(filteredProjects.every(p => p.name.includes('Test'))).toBe(true);
     });
@@ -185,6 +190,7 @@ describe('SQLite Provider Integration Tests', () => {
       });
 
       const deleteResult = await provider.deleteProject(projectToDelete.id);
+
       expect(deleteResult.success).toBe(true);
 
       // Verify project is deleted
@@ -322,30 +328,35 @@ describe('SQLite Provider Integration Tests', () => {
 
       // Test various filters
       const allIssues = await provider.listIssues({ project_id: testProject.id });
+
       expect(allIssues.length).toBeGreaterThanOrEqual(2);
 
       const epicIssues = await provider.listIssues({
         project_id: testProject.id,
         issue_type: 'epic',
       });
+
       expect(epicIssues.every(issue => issue.issue_type === 'epic')).toBe(true);
 
       const inProgressIssues = await provider.listIssues({
         project_id: testProject.id,
         state_id: workflowStates[1].id,
       });
+
       expect(inProgressIssues.every(issue => issue.state_id === workflowStates[1].id)).toBe(true);
 
       const estimatedIssues = await provider.listIssues({
         project_id: testProject.id,
         has_estimate: true,
       });
+
       expect(estimatedIssues.every(issue => issue.estimate !== null)).toBe(true);
 
       const assignedIssues = await provider.listIssues({
         project_id: testProject.id,
         assignee_id: 'test-user-123',
       });
+
       expect(assignedIssues.every(issue => issue.assignee_id === 'test-user-123')).toBe(true);
     });
 
@@ -468,10 +479,12 @@ describe('SQLite Provider Integration Tests', () => {
       const dependency = await provider.addDependency(issueA.id, issueB.id, 'blocks');
 
       const removeResult = await provider.removeDependency(dependency.id);
+
       expect(removeResult.success).toBe(true);
 
       // Verify dependency is removed
       const dependencyGraph = await provider.getDependencyGraph(testProject.id);
+
       expect(dependencyGraph.edges.length).toBe(0);
     });
   });
@@ -564,10 +577,12 @@ describe('SQLite Provider Integration Tests', () => {
 
       // Start the issue
       const startedIssue = await provider.startIssue(issue.id);
+
       expect(startedIssue.workflowState?.type).toBe('started');
 
       // Complete the issue
       const result = await provider.completeIssue(startedIssue.id);
+
       expect(result.issue.workflowState?.type).toBe('completed');
       expect(Array.isArray(result.unblockedIssues)).toBe(true);
     });
@@ -637,6 +652,7 @@ describe('SQLite Provider Integration Tests', () => {
 
       // Retrieve issue and verify labels
       const retrievedIssue = await provider.getIssue(issue.id);
+
       expect(retrievedIssue.labels.length).toBe(2);
       expect(retrievedIssue.labels.some(l => l.name === 'bug')).toBe(true);
       expect(retrievedIssue.labels.some(l => l.name === 'feature')).toBe(true);
@@ -645,6 +661,7 @@ describe('SQLite Provider Integration Tests', () => {
       await provider.removeLabelFromIssue(issue.id, bugLabel.id);
 
       const updatedIssue = await provider.getIssue(issue.id);
+
       expect(updatedIssue.labels.length).toBe(1);
       expect(updatedIssue.labels.some(l => l.name === 'feature')).toBe(true);
       expect(updatedIssue.labels.some(l => l.name === 'bug')).toBe(false);
@@ -774,7 +791,8 @@ describe('SQLite Provider Integration Tests', () => {
       );
 
       const creationTime = Date.now() - startTime;
-      expect(creationTime).toBeLessThan(10000); // Should complete in under 10 seconds
+
+      expect(creationTime).toBeLessThan(10_000); // Should complete in under 10 seconds
 
       // Test query performance
       const queryStartTime = Date.now();
@@ -807,6 +825,7 @@ describe('SQLite Provider Integration Tests', () => {
 
       // Issue retrieval should be very fast
       const retrievalStartTime = Date.now();
+
       await provider.getIssue(issue.id);
       const retrievalTime = Date.now() - retrievalStartTime;
 
@@ -852,6 +871,7 @@ describe('SQLite Provider Integration Tests', () => {
       });
 
       const projectsCapability = discoveryResult.capabilities.get('projects.read');
+
       expect(projectsCapability?.performance).toBeTruthy();
       expect(projectsCapability?.performance?.averageResponseTime).toBeGreaterThan(0);
       expect(projectsCapability?.performance?.reliability).toBeGreaterThan(0);
@@ -892,7 +912,7 @@ describe('SQLite Provider Edge Cases', () => {
     }
     try {
       await unlink(testDatabasePath);
-    } catch (error) {
+    } catch {
       // Ignore if file doesn't exist
     }
   });
@@ -945,6 +965,7 @@ describe('SQLite Provider Edge Cases', () => {
 
     // Verify all issues were created correctly
     const allIssues = await provider.listIssues({ project_id: project.id });
+
     expect(allIssues.length).toBe(10);
   });
 });

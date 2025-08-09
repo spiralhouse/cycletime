@@ -10,10 +10,6 @@ import EventEmitter from 'node:events';
 
 import { createLogger } from '../../utils/logger.js';
 
-import type { 
-  Tool, 
-  ToolCapability
-} from './tool-interface.js';
 import { 
   ToolName, 
   ToolError, 
@@ -21,6 +17,10 @@ import {
 } from './tool-interface.js';
 import { ToolMetadataManager } from './tool-metadata.js';
 
+import type { 
+  Tool, 
+  ToolCapability
+} from './tool-interface.js';
 import type { Logger } from '../../utils/logger.js';
 
 /**
@@ -68,19 +68,19 @@ export interface ToolHealthCheck {
  */
 export interface ToolDiscovery {
   /** Find tools by capability */
-  findByCapability(capability: ToolCapability): Tool[];
+  findByCapability: (capability: ToolCapability) => Tool[];
   
   /** Find tools by category */
-  findByCategory(category: string): Tool[];
+  findByCategory: (category: string) => Tool[];
   
   /** Find tools by name pattern */
-  findByPattern(pattern: string): Tool[];
+  findByPattern: (pattern: string) => Tool[];
   
   /** Find tools by tag */
-  findByTag(tag: string): Tool[];
+  findByTag: (tag: string) => Tool[];
   
   /** Get all tools */
-  getAllTools(): Tool[];
+  getAllTools: () => Tool[];
 }
 
 /**
@@ -120,7 +120,7 @@ export interface BatchRegistrationResult {
   successful: Tool[];
   
   /** Failed registrations with errors */
-  failed: Array<{ tool: Tool; error: string }>;
+  failed: { tool: Tool; error: string }[];
 }
 
 /**
@@ -171,6 +171,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
     // Validate tool metadata
     const validation = this.metadataManager.validateMetadata(tool.metadata);
+
     if (!validation.valid) {
       throw new ToolError(
         `Invalid tool metadata: ${validation.errors?.join(', ')}`,
@@ -207,8 +208,10 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
    */
   unregister(toolName: string): void {
     const toolInfo = this.tools.get(toolName);
+
     if (!toolInfo) {
       this.logger.debug('Tool unregister requested but tool not found', { toolName });
+
       return; // Gracefully handle non-existent tools
     }
 
@@ -235,9 +238,11 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
    */
   get(toolName: string): Tool | undefined {
     const toolInfo = this.tools.get(toolName);
+
     if (toolInfo) {
       // Update access tracking
       const now = Date.now();
+
       toolInfo.lastAccessed = now;
       toolInfo.accessCount++;
 
@@ -249,6 +254,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
       return toolInfo.tool;
     }
+
     return undefined;
   }
 
@@ -292,6 +298,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
       // If any registration fails, rollback all tools registered in this batch
       const failedTool = tools.find(t => t.name === (error as any).toolName);
       const toolsToRollback = tools.slice(0, failedTool ? tools.indexOf(failedTool) : 0);
+
       for (const tool of toolsToRollback) {
         this.unregister(tool.name);
       }
@@ -311,7 +318,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
    */
   registerBatchSafe(tools: Tool[]): BatchRegistrationResult {
     const successful: Tool[] = [];
-    const failed: Array<{ tool: Tool; error: string }> = [];
+    const failed: { tool: Tool; error: string }[] = [];
 
     for (const tool of tools) {
       try {
@@ -384,6 +391,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
     for (const toolInfo of this.tools.values()) {
       const toolCategory = toolInfo.tool.metadata.category || ToolName.inferCategory(toolInfo.tool.name);
+
       if (toolCategory === category) {
         results.push(toolInfo.tool);
       }
@@ -405,7 +413,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
     // Convert glob pattern to regex
     const regexPattern = pattern
-      .replace(/[.+?^${}()|[\]\\]/g, '\\$&')  // Escape special regex chars
+      .replace(/[$()+.?[\\\]^{|}]/g, '\\$&')  // Escape special regex chars
       .replace(/\\\*/g, '.*');                // Convert \* back to .* for wildcards
     
     const regex = new RegExp(`^${regexPattern}$`);
@@ -467,6 +475,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
       // Update tool info
       const wasAvailable = toolInfo.isAvailable;
+
       toolInfo.isAvailable = isAvailable;
       toolInfo.lastHealthCheck = checkedAt;
 
@@ -520,7 +529,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
    */
   async checkAllToolsHealth(): Promise<Record<string, ToolHealthCheck>> {
     const results: Record<string, ToolHealthCheck> = {};
-    const promises: Array<Promise<void>> = [];
+    const promises: Promise<void>[] = [];
 
     for (const toolName of this.tools.keys()) {
       promises.push(
@@ -560,6 +569,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
       // Count by category
       const category = tool.metadata.category || ToolName.inferCategory(tool.name);
+
       toolsByCategory[category] = (toolsByCategory[category] || 0) + 1;
 
       // Sum total accesses
@@ -597,6 +607,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
    */
   cleanup(): void {
     const toolCount = this.tools.size;
+
     this.tools.clear();
     this.executionCount = 0;
 
@@ -617,6 +628,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
     for (const [toolName, toolInfo] of this.tools) {
       const toolCategory = toolInfo.tool.metadata.category || ToolName.inferCategory(toolName);
+
       if (toolCategory === category) {
         toolsToRemove.push(toolName);
       }

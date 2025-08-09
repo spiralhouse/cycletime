@@ -109,6 +109,7 @@ export class ComponentStatus {
         return true;
       }
     }
+
     return false;
   }
 
@@ -172,6 +173,7 @@ export class ComponentStatus {
         return true;
       }
     }
+
     return false;
   }
 
@@ -194,13 +196,19 @@ export class ComponentStatus {
         case 'running':
           healthy++;
           break;
+
         case 'error':
+
         case 'stopped':
           unhealthy++;
           break;
+
         case 'unknown':
+
         case 'initializing':
+
         case 'stopping':
+
         default:
           unknown++;
           break;

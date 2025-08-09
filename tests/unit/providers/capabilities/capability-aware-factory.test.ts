@@ -5,10 +5,12 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
 import {
   CapabilityAwareProviderFactory,
   CapabilityAwareOperationDispatcher,
 } from '../../../../src/providers/capabilities/capability-aware-factory.js';
+import { CapabilityCacheManager } from '../../../../src/providers/capabilities/capability-cache.js';
 
 import type {
   ProviderConfig,
@@ -17,7 +19,6 @@ import type {
   ProviderError,
 } from '../../../../src/providers/types.js';
 
-import { CapabilityCacheManager } from '../../../../src/providers/capabilities/capability-cache.js';
 
 // =============================================================================
 // Mock Provider Implementation
@@ -206,6 +207,7 @@ describe('CapabilityAwareProviderFactory', () => {
     } as any;
 
     const validation = factory.validateConfig(validConfig);
+
     expect(validation.isValid).toBe(true);
     expect(validation.errors).toHaveLength(0);
   });
@@ -220,6 +222,7 @@ describe('CapabilityAwareProviderFactory', () => {
     } as any;
 
     const validation = factory.validateConfig(invalidConfig);
+
     expect(validation.isValid).toBe(false);
     expect(validation.errors.length).toBeGreaterThan(0);
     expect(validation.errors.some(error => error.includes('apiToken'))).toBe(true);
@@ -319,9 +322,9 @@ describe('CapabilityAwareOperationDispatcher', () => {
   beforeEach(() => {
     cacheManager = new CapabilityCacheManager({
       maxSizeBytes: 1024 * 1024,
-      defaultTTL: 60000,
-      matrixTTL: 300000,
-      comparisonTTL: 180000,
+      defaultTTL: 60_000,
+      matrixTTL: 300_000,
+      comparisonTTL: 180_000,
       maxEntriesPerProvider: 50,
       enableLRU: true,
       persistToDisk: false,

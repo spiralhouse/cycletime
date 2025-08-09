@@ -38,6 +38,7 @@ describe('ConnectionState', () => {
 
     it('should transition to connected and set timestamp', () => {
       const beforeConnect = Date.now();
+
       connectionState.setStatus(ConnectionStatus.CONNECTED);
       const afterConnect = Date.now();
       
@@ -45,6 +46,7 @@ describe('ConnectionState', () => {
       expect(connectionState.isConnected()).toBe(true);
       
       const connectedAt = connectionState.getConnectedAt()!;
+
       expect(connectedAt).toBeGreaterThanOrEqual(beforeConnect);
       expect(connectedAt).toBeLessThanOrEqual(afterConnect);
     });
@@ -60,6 +62,7 @@ describe('ConnectionState', () => {
 
     it('should handle error state', () => {
       const error = new Error('Connection failed');
+
       connectionState.setStatus(ConnectionStatus.ERROR, error);
       
       expect(connectionState.getStatus()).toBe(ConnectionStatus.ERROR);
@@ -71,10 +74,12 @@ describe('ConnectionState', () => {
   describe('Activity tracking', () => {
     it('should update last activity timestamp', () => {
       const beforeActivity = Date.now();
+
       connectionState.updateActivity();
       const afterActivity = Date.now();
       
       const lastActivity = connectionState.getLastActivity()!;
+
       expect(lastActivity).toBeGreaterThanOrEqual(beforeActivity);
       expect(lastActivity).toBeLessThanOrEqual(afterActivity);
     });
@@ -84,6 +89,7 @@ describe('ConnectionState', () => {
       
       // Wait a small amount
       const uptime = connectionState.getUptime();
+
       expect(uptime).toBeGreaterThanOrEqual(0);
     });
 
@@ -99,6 +105,7 @@ describe('ConnectionState', () => {
       connectionState.incrementMessageCount('response');
       
       const stats = connectionState.getStatistics();
+
       expect(stats.messageCount.request).toBe(2);
       expect(stats.messageCount.response).toBe(1);
       expect(stats.messageCount.notification).toBe(0);
@@ -130,6 +137,7 @@ describe('ConnectionState', () => {
   describe('Metadata management', () => {
     it('should update metadata', () => {
       const newMetadata = { clientType: 'web', userAgent: 'browser' };
+
       connectionState.updateMetadata(newMetadata);
       
       expect(connectionState.getMetadata()).toEqual(newMetadata);

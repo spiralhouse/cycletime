@@ -3,6 +3,7 @@
  */
 
 import { createLogger } from '../../utils/logger.js';
+
 import type { Logger } from '../../utils/logger.js';
 
 /**
@@ -84,9 +85,11 @@ export class TransportHandler {
         case TransportType.STDIO:
           await this.initializeStdio();
           break;
+
         case TransportType.WEBSOCKET:
           await this.initializeWebSocket();
           break;
+
         default:
           throw new Error(`Unsupported transport type: ${this.config.type}`);
       }
@@ -134,9 +137,11 @@ export class TransportHandler {
         case TransportType.STDIO:
           await this.sendViaStdio(message);
           break;
+
         case TransportType.WEBSOCKET:
           await this.sendViaWebSocket(connectionId, message);
           break;
+
         default:
           throw new Error(`Unsupported transport type: ${this.config.type}`);
       }
@@ -212,6 +217,7 @@ export class TransportHandler {
         case TransportType.STDIO:
           await this.cleanupStdio();
           break;
+
         case TransportType.WEBSOCKET:
           await this.cleanupWebSocket();
           break;

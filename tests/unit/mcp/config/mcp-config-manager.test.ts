@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 import { MCPConfigManager } from '../../../../src/mcp/config/mcp-config-manager.js';
+
 import type { MCPServerConfig } from '../../../../src/mcp/config/mcp-config.js';
 
 describe('MCPConfigManager', () => {
@@ -111,7 +112,7 @@ describe('MCPConfigManager', () => {
         },
       };
 
-      expect(() => MCPConfigManager.validateMCPConfig(validConfig)).not.toThrow();
+      expect(() => { MCPConfigManager.validateMCPConfig(validConfig); }).not.toThrow();
     });
 
     it('should throw for missing required server.name', () => {
@@ -126,7 +127,7 @@ describe('MCPConfigManager', () => {
         provider: { type: 'sqlite' as const, config: {} },
       };
 
-      expect(() => MCPConfigManager.validateMCPConfig(invalidConfig as any))
+      expect(() => { MCPConfigManager.validateMCPConfig(invalidConfig as any); })
         .toThrow('server.name is required and must be non-empty');
     });
 
@@ -143,7 +144,7 @@ describe('MCPConfigManager', () => {
         provider: { type: 'sqlite', config: {} },
       };
 
-      expect(() => MCPConfigManager.validateMCPConfig(invalidConfig as any))
+      expect(() => { MCPConfigManager.validateMCPConfig(invalidConfig as any); })
         .toThrow('transport must be either "stdio" or "websocket"');
     });
 
@@ -161,7 +162,7 @@ describe('MCPConfigManager', () => {
         provider: { type: 'sqlite', config: {} },
       };
 
-      expect(() => MCPConfigManager.validateMCPConfig(invalidConfig))
+      expect(() => { MCPConfigManager.validateMCPConfig(invalidConfig); })
         .toThrow('port is required when transport is "websocket"');
     });
 
@@ -171,7 +172,7 @@ describe('MCPConfigManager', () => {
           name: 'test-server',
           version: '1.0.0',
           transport: 'websocket',
-          port: 70000, // Invalid port
+          port: 70_000, // Invalid port
         },
         resources: { enabled: true },
         tools: { enabled: true, validationEnabled: true },
@@ -179,7 +180,7 @@ describe('MCPConfigManager', () => {
         provider: { type: 'sqlite', config: {} },
       };
 
-      expect(() => MCPConfigManager.validateMCPConfig(invalidConfig))
+      expect(() => { MCPConfigManager.validateMCPConfig(invalidConfig); })
         .toThrow('port must be between 1 and 65535');
     });
   });
@@ -187,6 +188,7 @@ describe('MCPConfigManager', () => {
   describe('getEnvironmentVariables', () => {
     it('should return empty object when no MCP environment variables set', () => {
       const envVars = MCPConfigManager.getEnvironmentVariables();
+
       expect(envVars).toEqual({});
     });
 
@@ -216,7 +218,7 @@ describe('MCPConfigManager', () => {
           validationEnabled: false,
         },
         health: {
-          checkInterval: 10000,
+          checkInterval: 10_000,
           timeoutMs: 5000,
         },
       });
@@ -239,7 +241,7 @@ describe('MCPConfigManager', () => {
       const envVars = MCPConfigManager.getEnvironmentVariables();
 
       expect(envVars.server?.port).toBe(3000);
-      expect(envVars.health?.checkInterval).toBe(15000);
+      expect(envVars.health?.checkInterval).toBe(15_000);
     });
   });
 });

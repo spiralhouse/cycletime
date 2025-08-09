@@ -2,25 +2,29 @@
  * Integration tests for Migration System End-to-End Scenarios
  */
 
+import { readFileSync, unlinkSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { readFileSync, unlinkSync, existsSync } from 'fs';
-import { join } from 'path';
+
 import {
   MigrationEngine,
   DefaultMigrationEngineFactory,
 } from '../../../src/database/migrations/migration-engine';
-import { MigrationValidator } from '../../../src/database/migrations/migration-validator';
-import { SchemaInspector } from '../../../src/database/utils/schema-inspector';
 import {
-  MigrationEngineConfig,
-  Migration,
   MigrationMode,
   SemanticVersion,
 } from '../../../src/database/migrations/migration-types';
+import { MigrationValidator } from '../../../src/database/migrations/migration-validator';
 import {
   parseSemanticVersion,
   formatSemanticVersion,
 } from '../../../src/database/migrations/schema-versioning';
+import { SchemaInspector } from '../../../src/database/utils/schema-inspector';
+
+import type {
+  MigrationEngineConfig,
+  Migration} from '../../../src/database/migrations/migration-types';
 
 // Mock database class for testing
 class MockDatabase {
@@ -59,6 +63,7 @@ class MockDatabase {
     // Mock execution - just track what was executed
     if (sql.includes('CREATE TABLE')) {
       const match = sql.match(/CREATE TABLE (\w+)/);
+
       if (match) {
         this.schema.set(match[1], sql);
         this.tables.set(match[1], []);
@@ -67,6 +72,7 @@ class MockDatabase {
 
     if (sql.includes('UPDATE schema_metadata SET value')) {
       const match = sql.match(/value = '([^']+)'/);
+
       if (match) {
         this.metadata.set('version', match[1]);
       }
@@ -104,7 +110,7 @@ describe('Migration System Integration Tests', () => {
         timeout: 5000,
       },
       migration_directories: ['./test-migrations'],
-      max_execution_time: 30000,
+      max_execution_time: 30_000,
       auto_backup: false,
       validation_mode: 'strict',
       logging: {
@@ -115,6 +121,7 @@ describe('Migration System Integration Tests', () => {
 
     // Create engine with mock database
     const factory = new DefaultMigrationEngineFactory();
+
     engine = new MigrationEngine(config);
 
     // Replace database connection with mock
@@ -216,6 +223,7 @@ describe('Migration System Integration Tests', () => {
 
       // First, apply the migration
       const upPlan = await engine.createMigrationPlan(parseSemanticVersion('1.1.0'), 'up');
+
       await engine.executePlan(upPlan, 'normal');
 
       expect(db.hasTable('temp_data')).toBe(true);
@@ -262,6 +270,7 @@ describe('Migration System Integration Tests', () => {
       // Should throw error due to circular dependency
       await expect(async () => {
         const plan = await engine.createMigrationPlan(targetVersion, 'up');
+
         await engine.executePlan(plan, 'normal');
       }).rejects.toThrow(/circular dependency/i);
     });
@@ -309,6 +318,7 @@ describe('Migration System Integration Tests', () => {
 
       // Use non-strict validator for this test
       const nonStrictValidator = new MigrationValidator(false);
+
       (engine as any).validator = nonStrictValidator;
 
       const targetVersion = parseSemanticVersion('1.1.0');
@@ -316,6 +326,7 @@ describe('Migration System Integration Tests', () => {
 
       // Should succeed in force mode
       const result = await engine.executePlan(plan, 'force');
+
       expect(result.success).toBe(true);
     });
   });
@@ -386,12 +397,14 @@ describe('Migration System Integration Tests', () => {
 
       // Migrate to 1.1.0
       const plan1_1 = await engine.createMigrationPlan(parseSemanticVersion('1.1.0'), 'up');
+
       await engine.executePlan(plan1_1, 'normal');
 
       expect(formatSemanticVersion(await engine.getCurrentVersion())).toBe('1.1.0');
 
       // Migrate to 1.2.0
       const plan1_2 = await engine.createMigrationPlan(parseSemanticVersion('1.2.0'), 'up');
+
       await engine.executePlan(plan1_2, 'normal');
 
       expect(formatSemanticVersion(await engine.getCurrentVersion())).toBe('1.2.0');
@@ -457,6 +470,7 @@ describe('Migration System Integration Tests', () => {
       (engine as any).loadMigrations = async () => [migration];
 
       const plan = await engine.createMigrationPlan(parseSemanticVersion('1.1.0'), 'up');
+
       await engine.executePlan(plan, 'normal');
 
       // Verify tables were created
@@ -465,6 +479,7 @@ describe('Migration System Integration Tests', () => {
 
       // Schema analysis should reflect the changes
       const schemaInfo = await inspector.getSchemaInfo();
+
       expect(schemaInfo.version).toBe('1.1.0');
     });
 
@@ -497,10 +512,12 @@ describe('Migration System Integration Tests', () => {
 
       // Mock exec to throw error for invalid SQL
       const originalExec = db.exec.bind(db);
+
       db.exec = async (sql: string) => {
         if (sql.includes('INVALID SQL')) {
           throw new Error('SQL syntax error');
         }
+
         return originalExec(sql);
       };
 
@@ -528,6 +545,7 @@ describe('Migration System Integration Tests', () => {
       expect(plan.migrations).toHaveLength(0);
 
       const result = await engine.executePlan(plan, 'normal');
+
       expect(result.success).toBe(true);
       expect(result.executed_migrations).toHaveLength(0);
     });
@@ -605,6 +623,7 @@ describe('Migration System Integration Tests', () => {
 
       // Should be able to rollback to 1.2.0 (before breaking change)
       const rollbackResult = await engine.rollbackToVersion(parseSemanticVersion('1.2.0'));
+
       expect(rollbackResult.success).toBe(true);
 
       // But should not be able to rollback further due to non-reversible migration

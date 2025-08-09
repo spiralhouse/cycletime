@@ -243,7 +243,7 @@ describe('Tool Naming Conventions', () => {
     ];
 
     for (const name of validNames) {
-      expect(name).toMatch(/^jcvd_[a-z][a-z0-9_]*$/);
+      expect(name).toMatch(/^jcvd_[a-z][\d_a-z]*$/);
     }
   });
 
@@ -258,7 +258,7 @@ describe('Tool Naming Conventions', () => {
     ];
 
     for (const name of invalidNames) {
-      expect(name).not.toMatch(/^jcvd_[a-z][a-z0-9_]*$/);
+      expect(name).not.toMatch(/^jcvd_[a-z][\d_a-z]*$/);
     }
   });
 });

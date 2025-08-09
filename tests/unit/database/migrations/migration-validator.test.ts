@@ -3,18 +3,21 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+
+import {
+  SemanticVersion,
+  SchemaComparison,
+} from '../../../../src/database/migrations/migration-types';
 import {
   MigrationValidator,
   validateMigration,
   validatePlan,
 } from '../../../../src/database/migrations/migration-validator';
-import {
-  Migration,
-  MigrationPlan,
-  SemanticVersion,
-  SchemaComparison,
-} from '../../../../src/database/migrations/migration-types';
 import { parseSemanticVersion } from '../../../../src/database/migrations/schema-versioning';
+
+import type {
+  Migration,
+  MigrationPlan} from '../../../../src/database/migrations/migration-types';
 
 describe('Migration Validator', () => {
   let validator: MigrationValidator;
@@ -38,6 +41,7 @@ describe('Migration Validator', () => {
       };
 
       const result = await validator.validateMigration(validMigration);
+
       expect(result.errors).toHaveLength(0);
     });
 
@@ -55,9 +59,11 @@ describe('Migration Validator', () => {
       };
 
       const result = await validator.validateMigration(invalidMigration);
+
       expect(result.errors.length).toBeGreaterThan(0);
 
       const errorCodes = result.errors.map(e => e.code);
+
       expect(errorCodes).toContain('MISSING_MIGRATION_ID');
       expect(errorCodes).toContain('MISSING_MIGRATION_NAME');
       expect(errorCodes).toContain('EMPTY_SQL_SCRIPT');
@@ -77,6 +83,7 @@ describe('Migration Validator', () => {
       };
 
       const result = await validator.validateMigration(migration);
+
       expect(result.warnings.some(w => w.code === 'NON_STANDARD_MIGRATION_ID')).toBe(true);
     });
 
@@ -95,6 +102,7 @@ describe('Migration Validator', () => {
       };
 
       const result = await validator.validateMigration(migration);
+
       expect(result.warnings.some(w => w.code === 'NO_ROLLBACK_SUPPORT')).toBe(true);
     });
   });
@@ -119,6 +127,7 @@ describe('Migration Validator', () => {
 
       const result = await validator.validateMigration(dangerousMigration);
       const errorCodes = result.errors.map(e => e.code);
+
       expect(errorCodes.filter(code => code === 'DANGEROUS_OPERATION')).toHaveLength(3);
     });
 
@@ -138,6 +147,7 @@ describe('Migration Validator', () => {
       };
 
       const result = await nonStrictValidator.validateMigration(dangerousMigration);
+
       expect(result.warnings.some(w => w.code === 'DANGEROUS_OPERATION')).toBe(true);
       expect(result.errors.some(e => e.code === 'DANGEROUS_OPERATION')).toBe(false);
     });
@@ -161,6 +171,7 @@ describe('Migration Validator', () => {
 
       const result = await validator.validateMigration(sqliteMigration);
       const warningCodes = result.warnings.map(w => w.code);
+
       expect(warningCodes.filter(code => code === 'SQLITE_COMPATIBILITY')).toHaveLength(3);
     });
 
@@ -181,6 +192,7 @@ describe('Migration Validator', () => {
       };
 
       const result = await validator.validateMigration(migration);
+
       expect(result.warnings.some(w => w.code === 'NO_EXPLICIT_TRANSACTION')).toBe(true);
     });
   });
@@ -229,6 +241,7 @@ describe('Migration Validator', () => {
       };
 
       const result = await validator.validateMigrationPlan(plan);
+
       expect(result.errors.some(e => e.code === 'MISSING_DEPENDENCY')).toBe(true);
       expect(result.dependency_check.missing_dependencies).toContain('001_missing_migration');
     });
@@ -287,6 +300,7 @@ describe('Migration Validator', () => {
       };
 
       const result = await validator.validateMigrationPlan(plan);
+
       expect(result.errors.some(e => e.code === 'CIRCULAR_DEPENDENCY')).toBe(true);
       expect(result.dependency_check.circular_dependencies.length).toBeGreaterThan(0);
     });
@@ -345,6 +359,7 @@ describe('Migration Validator', () => {
       };
 
       const result = await validator.validateMigrationPlan(plan);
+
       expect(result.dependency_check.execution_order).toEqual(['001_first', '002_second']);
     });
   });
@@ -394,6 +409,7 @@ describe('Migration Validator', () => {
       };
 
       const result = await validator.validateMigrationPlan(plan);
+
       expect(result.rollback_safety.non_reversible_migrations).toContain('001_irreversible');
       expect(result.warnings.some(w => w.code === 'NON_REVERSIBLE_MIGRATION')).toBe(true);
     });
@@ -445,10 +461,12 @@ describe('Migration Validator', () => {
       };
 
       const result = await validator.validateMigrationPlan(plan);
+
       expect(result.rollback_safety.data_loss_risks.length).toBeGreaterThan(0);
 
       // Should have both high and critical risks
       const riskLevels = result.rollback_safety.data_loss_risks.map(r => r.risk_level);
+
       expect(riskLevels).toContain('critical'); // DROP TABLE
       expect(riskLevels).toContain('high'); // DROP COLUMN and DELETE
     });
@@ -498,6 +516,7 @@ describe('Migration Validator', () => {
       };
 
       const result = await validator.validateMigrationPlan(plan);
+
       expect(result.errors.some(e => e.code === 'INVALID_VERSION_PROGRESSION')).toBe(false);
     });
 
@@ -544,6 +563,7 @@ describe('Migration Validator', () => {
       };
 
       const result = await validator.validateMigrationPlan(plan);
+
       expect(result.errors.some(e => e.code === 'INVALID_VERSION_PROGRESSION')).toBe(true);
     });
 
@@ -590,6 +610,7 @@ describe('Migration Validator', () => {
       };
 
       const result = await validator.validateMigrationPlan(plan);
+
       expect(result.warnings.some(w => w.code === 'MAJOR_VERSION_SKIP')).toBe(true);
     });
   });
@@ -609,6 +630,7 @@ describe('Migration Validator', () => {
       };
 
       const result = await validateMigration(migration, true);
+
       expect(result.is_valid).toBe(true);
     });
 
@@ -655,6 +677,7 @@ describe('Migration Validator', () => {
       };
 
       const result = await validatePlan(plan, true);
+
       expect(result.is_valid).toBe(true);
     });
   });
@@ -683,6 +706,7 @@ describe('Migration Validator', () => {
 
       const result = await validator.validateMigration(migration);
       const warningCodes = result.warnings.map(w => w.code);
+
       expect(warningCodes).toContain('FOREIGN_KEY_CHANGES');
       expect(warningCodes).toContain('INDEX_CHANGES');
       expect(warningCodes).toContain('TRIGGER_CHANGES');

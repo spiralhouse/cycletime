@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import {
   ProviderConfigValidator,
   validateProviderConfig,
@@ -41,7 +42,7 @@ const validLinearConfig: LinearProviderConfig = {
   apiToken: 'lin_api_1234567890abcdef',
   teamId: '12345678-1234-5678-9012-123456789012',
   apiUrl: 'https://api.linear.app',
-  timeout: 10000,
+  timeout: 10_000,
 };
 
 const validGitHubConfig: GitHubProviderConfig = {
@@ -53,7 +54,7 @@ const validGitHubConfig: GitHubProviderConfig = {
   owner: 'test-owner',
   repo: 'test-repo',
   apiUrl: 'https://api.github.com',
-  timeout: 15000,
+  timeout: 15_000,
 };
 
 const validJiraConfig: JiraProviderConfig = {
@@ -65,7 +66,7 @@ const validJiraConfig: JiraProviderConfig = {
   username: 'user@company.com',
   apiToken: 'jira_token_1234567890',
   projectKey: 'PROJ',
-  timeout: 20000,
+  timeout: 20_000,
 };
 
 // =============================================================================
@@ -85,6 +86,7 @@ describe('ProviderConfigValidator', () => {
 
       for (const config of configs) {
         const result = validator.validate(config);
+
         expect(result.isValid).toBe(true);
         expect(result.errors).toHaveLength(0);
         expect(result.sanitizedConfig).toBeDefined();
@@ -147,6 +149,7 @@ describe('ProviderConfigValidator', () => {
         };
 
         const result = validator.validate(config);
+
         expect(result.isValid).toBe(false);
         expect(result.errors.some(e => e.field === 'id')).toBe(true);
       }
@@ -168,6 +171,7 @@ describe('ProviderConfigValidator', () => {
         };
 
         const result = validator.validate(config);
+
         expect(result.isValid).toBe(true);
       }
     });
@@ -197,6 +201,7 @@ describe('ProviderConfigValidator', () => {
 
       for (const config of configs) {
         const result = validator.validate(config);
+
         expect(result.isValid).toBe(false);
         expect(result.errors.some(e => e.field === 'name')).toBe(true);
       }
@@ -253,7 +258,7 @@ describe('ProviderConfigValidator', () => {
       const invalidConfig = {
         ...validSQLiteConfig,
         cacheSize: 50, // Below minimum
-        timeout: 500000, // Above maximum
+        timeout: 500_000, // Above maximum
       };
 
       const result = validator.validate(invalidConfig);
@@ -272,6 +277,7 @@ describe('ProviderConfigValidator', () => {
 
       for (const config of devConfigs) {
         const result = validator.validate(config);
+
         expect(result.isValid).toBe(true);
         expect(result.warnings.some(w => w.field === 'databasePath')).toBe(true);
       }
@@ -337,6 +343,7 @@ describe('ProviderConfigValidator', () => {
         };
 
         const result = validator.validate(config);
+
         expect(result.isValid).toBe(false);
         expect(result.errors.some(e => e.field === 'teamId')).toBe(true);
       }
@@ -423,6 +430,7 @@ describe('ProviderConfigValidator', () => {
         };
 
         const result = validator.validate(config);
+
         expect(result.isValid).toBe(true);
       }
     });
@@ -462,6 +470,7 @@ describe('ProviderConfigValidator', () => {
         };
 
         const result = validator.validate(config);
+
         expect(result.isValid).toBe(false);
         expect(result.errors.some(e => e.field === 'baseUrl' && e.rule === 'url')).toBe(true);
       }
@@ -483,6 +492,7 @@ describe('ProviderConfigValidator', () => {
         };
 
         const result = validator.validate(config);
+
         expect(result.isValid).toBe(false);
         expect(result.errors.some(e => e.field === 'projectKey')).toBe(true);
       }
@@ -498,6 +508,7 @@ describe('ProviderConfigValidator', () => {
         };
 
         const result = validator.validate(config);
+
         expect(result.isValid).toBe(true);
       }
     });
@@ -601,8 +612,8 @@ describe('ProviderConfigValidator', () => {
   describe('Timeout Validation', () => {
     it('should validate timeout ranges for all provider types', () => {
       const timeoutTests = [
-        { config: validSQLiteConfig, field: 'timeout', min: 1000, max: 300000 },
-        { config: validLinearConfig, field: 'timeout', min: 1000, max: 120000 },
+        { config: validSQLiteConfig, field: 'timeout', min: 1000, max: 300_000 },
+        { config: validLinearConfig, field: 'timeout', min: 1000, max: 120_000 },
         { config: validGitHubConfig, field: 'timeout', min: 1000, max: undefined },
         { config: validJiraConfig, field: 'timeout', min: 1000, max: undefined },
       ];
@@ -611,6 +622,7 @@ describe('ProviderConfigValidator', () => {
         // Test below minimum
         const belowMinConfig = { ...test.config, [test.field]: test.min - 1 };
         const belowMinResult = validator.validate(belowMinConfig);
+
         expect(belowMinResult.isValid).toBe(false);
         expect(belowMinResult.errors.some(e => e.field === test.field)).toBe(true);
 
@@ -618,6 +630,7 @@ describe('ProviderConfigValidator', () => {
         if (test.max) {
           const aboveMaxConfig = { ...test.config, [test.field]: test.max + 1 };
           const aboveMaxResult = validator.validate(aboveMaxConfig);
+
           expect(aboveMaxResult.isValid).toBe(false);
           expect(aboveMaxResult.errors.some(e => e.field === test.field)).toBe(true);
         }
@@ -625,6 +638,7 @@ describe('ProviderConfigValidator', () => {
         // Test valid range
         const validConfig = { ...test.config, [test.field]: test.min + 1000 };
         const validResult = validator.validate(validConfig);
+
         expect(validResult.isValid).toBe(true);
       }
     });
@@ -672,6 +686,7 @@ describe('Validation Utilities', () => {
     expect(customValidator).toBeInstanceOf(ProviderConfigValidator);
 
     const result = customValidator.validate(validSQLiteConfig);
+
     expect(result.isValid).toBe(true);
   });
 });
@@ -699,6 +714,7 @@ describe('Edge Cases', () => {
 
     for (const config of configs) {
       const result = validator.validate(config as any);
+
       expect(result.isValid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
     }
@@ -724,7 +740,7 @@ describe('Edge Cases', () => {
       ...validSQLiteConfig,
       id: 'x'.repeat(1000), // Very long ID
       name: 'y'.repeat(1000), // Very long name
-      customField: 'z'.repeat(10000), // Very long custom field
+      customField: 'z'.repeat(10_000), // Very long custom field
     } as any;
 
     const result = validator.validate(largeConfig);

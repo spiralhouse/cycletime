@@ -5,8 +5,8 @@
 import { describe, it, expect } from 'vitest';
 
 import { MCPConfigManager } from '../../src/mcp/config/mcp-config-manager.js';
-import { HealthChecker } from '../../src/mcp/health/health-check.js';
 import { ComponentStatus } from '../../src/mcp/health/component-status.js';
+import { HealthChecker } from '../../src/mcp/health/health-check.js';
 
 describe('MCP System Integration', () => {
   it('should integrate configuration management with health checking', async () => {
@@ -54,6 +54,7 @@ describe('MCP System Integration', () => {
     
     // Check specific components
     const runningComponents = componentStatus.getComponentsByStatus('running');
+
     expect(runningComponents).toContain('config');
     expect(runningComponents).toContain('health');
     expect(runningComponents).not.toContain('server');

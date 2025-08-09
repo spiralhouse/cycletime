@@ -5,15 +5,16 @@
  * caching, validation, metadata management, and lifecycle operations.
  */
 
-import type { 
-  Resource, 
-  ResourceMetadata, 
-  ResourceContent 
-} from './resource-interface.js';
 import { 
   ResourceError, 
   ResourceURI, 
   InvalidResourceURIError 
+} from './resource-interface.js';
+
+import type { 
+  Resource, 
+  ResourceMetadata, 
+  ResourceContent 
 } from './resource-interface.js';
 
 /**
@@ -118,6 +119,7 @@ export class BaseResource implements Resource {
       // Check cache first if TTL is specified
       if (this.metadata.ttl && this.cache && this.isCacheValid()) {
         this.statistics.cacheHits++;
+
         return this.cache.content;
       }
 
@@ -167,7 +169,7 @@ export class BaseResource implements Resource {
       
       // Default to available if no checker provided
       return true;
-    } catch (error) {
+    } catch {
       // Availability check failed - assume unavailable
       return false;
     }
@@ -207,6 +209,7 @@ export class BaseResource implements Resource {
    */
   resetStatistics(): void {
     const createdAt = this.statistics.createdAt;
+
     this.statistics = {
       accessCount: 0,
       cacheHits: 0,
@@ -226,6 +229,7 @@ export class BaseResource implements Resource {
     }
 
     const age = Date.now() - this.cache.timestamp;
+
     return age < this.cache.ttl;
   }
 

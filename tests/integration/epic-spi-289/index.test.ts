@@ -15,23 +15,27 @@
  * - Migration & Rollback Capabilities
  */
 
-import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import { join } from 'node:path';
+
+import { describe, test, expect, beforeAll, afterAll } from 'vitest';
+
 import { testUtils } from '../../setup.js';
 
 // Import performance tracking
 import {
-  globalPerformanceTracker,
-  globalReporter,
-  PerformanceTracker,
-  PerformanceReporter,
-} from '../../utils/performance-helpers.js';
-
-// Import validation utilities
-import {
   createMigrationValidator,
   createRollbackValidator,
 } from '../../utils/migration-validators.js';
+import {
+  globalPerformanceTracker,
+  globalReporter,
+  PerformanceReporter,
+} from '../../utils/performance-helpers.js';
+
+import type {
+  PerformanceTracker} from '../../utils/performance-helpers.js';
+
+// Import validation utilities
 
 describe('Epic SPI-289: Core Infrastructure & Foundation - Complete Integration Test Suite', () => {
   let testDir: string;
@@ -62,6 +66,7 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Complete Integration 
     console.log('\n📊 Generating Epic SPI-289 Integration Test Report...');
 
     const performanceReport = await performanceReporter.generateReport();
+
     performanceReporter.logPerformanceSummary(performanceReport);
 
     // Clean up test environment
@@ -122,14 +127,15 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Complete Integration 
     );
 
     // Verify all criteria are met
-    const allCriteriaMet = Object.values(epicValidation).every(criterion => criterion === true);
+    const allCriteriaMet = Object.values(epicValidation).every(Boolean);
+
     expect(allCriteriaMet).toBe(true);
 
     performanceTracker.recordMetric('epic-validation-duration', validationDuration);
 
     console.log(`\n⏱️  Epic validation completed in ${validationDuration.toFixed(2)}ms`);
     console.log('✅ All Epic SPI-289 success criteria PASSED');
-  }, 300000); // 5 minute timeout for comprehensive Epic validation
+  }, 300_000); // 5 minute timeout for comprehensive Epic validation
 
   // =============================================================================
   // Implementation Wave Validation
@@ -161,7 +167,8 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Complete Integration 
       `Wave 4 - SQLite Provider & Integration Testing: ${waveValidation.wave4_SQLiteProviderIntegrationTesting ? '✅ COMPLETE' : '❌ INCOMPLETE'}`
     );
 
-    const allWavesComplete = Object.values(waveValidation).every(wave => wave === true);
+    const allWavesComplete = Object.values(waveValidation).every(Boolean);
+
     expect(allWavesComplete).toBe(true);
 
     console.log('\n✅ All implementation waves COMPLETE');
@@ -202,8 +209,9 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Complete Integration 
     );
 
     const allIntegrationsPassing = Object.values(integrationValidation).every(
-      test => test === true
+      Boolean
     );
+
     expect(allIntegrationsPassing).toBe(true);
 
     console.log('\n✅ All cross-provider integrations WORKING');
@@ -259,7 +267,8 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Complete Integration 
       `Unicode & Special Characters: ${reliabilityValidation.unicodeSupport ? '✅ SUPPORTED' : '❌ LIMITED'}`
     );
 
-    const systemIsReliable = Object.values(reliabilityValidation).every(test => test === true);
+    const systemIsReliable = Object.values(reliabilityValidation).every(Boolean);
+
     expect(systemIsReliable).toBe(true);
 
     console.log('\n✅ System is RELIABLE and PRODUCTION-READY');
@@ -311,7 +320,8 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Complete Integration 
       `Cross-Session Continuity: ${workflowValidation.crossSessionContinuity ? '✅ PERSISTENT' : '❌ TRANSIENT'}`
     );
 
-    const allWorkflowsWorking = Object.values(workflowValidation).every(test => test === true);
+    const allWorkflowsWorking = Object.values(workflowValidation).every(Boolean);
+
     expect(allWorkflowsWorking).toBe(true);
 
     console.log('\n✅ All end-to-end workflows WORKING CORRECTLY');
@@ -361,7 +371,8 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Complete Integration 
       `✅ Production Readiness Confirmed: ${epicCompletionStatus.productionReadinessConfirmed ? 'YES' : 'NO'}`
     );
 
-    const epicIsComplete = Object.values(epicCompletionStatus).every(status => status === true);
+    const epicIsComplete = Object.values(epicCompletionStatus).every(Boolean);
+
     expect(epicIsComplete).toBe(true);
 
     console.log('\n🏆 EPIC SPI-289 STATUS: COMPLETE ✅');

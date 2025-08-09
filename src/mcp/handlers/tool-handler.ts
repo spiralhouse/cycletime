@@ -7,24 +7,22 @@
  */
 
 import { createLogger } from '../../utils/logger.js';
+import { ProtocolHandler } from '../server/protocol-handler.js';
+import { ToolError } from '../tools/tool-interface.js';
+import { ToolMetadataManager } from '../tools/tool-metadata.js';
 
+import type { Logger } from '../../utils/logger.js';
 import type { 
   JSONRPCRequest, 
   JSONRPCResponse, 
   JSONRPCError 
 } from '../server/protocol-handler.js';
-import { ProtocolHandler } from '../server/protocol-handler.js';
-
 import type { 
   ToolExecutionContext, 
   ToolExecutionResult 
 } from '../tools/tool-interface.js';
-import { ToolError } from '../tools/tool-interface.js';
-import type { ToolRegistry } from '../tools/tool-registry.js';
 import type { MCPToolSchema } from '../tools/tool-metadata.js';
-import { ToolMetadataManager } from '../tools/tool-metadata.js';
-
-import type { Logger } from '../../utils/logger.js';
+import type { ToolRegistry } from '../tools/tool-registry.js';
 
 /**
  * MCP tool list request parameters
@@ -61,14 +59,14 @@ export interface ToolCallParams {
  */
 export interface ToolCallResponse {
   /** Tool execution content/result */
-  content: Array<{
+  content: {
     /** Content type */
     type: 'text' | 'resource';
     
     /** Content text or resource reference */
     text?: string;
     resource?: string;
-  }>;
+  }[];
   
   /** Whether the tool call was successful */
   isError?: boolean;
@@ -196,6 +194,7 @@ export class ToolHandler {
 
       // Get tool from registry
       const tool = this.registry.get(params.name);
+
       if (!tool) {
         this.logger.warn('Tool not found', {
           id: request.id,
@@ -215,6 +214,7 @@ export class ToolHandler {
 
       // Check tool availability
       const isAvailable = await tool.isAvailable();
+
       if (!isAvailable) {
         this.logger.warn('Tool unavailable', {
           id: request.id,
@@ -397,6 +397,7 @@ export class ToolHandler {
 
     // Update average execution time
     const totalTime = this.executionStats.averageExecutionTime * (this.executionStats.totalExecutions - 1) + executionTime;
+
     this.executionStats.averageExecutionTime = totalTime / this.executionStats.totalExecutions;
 
     // Update per-tool statistics
@@ -410,12 +411,16 @@ export class ToolHandler {
     switch (toolErrorCode) {
       case 'VALIDATION_ERROR':
         return ProtocolHandler.ErrorCodes.INVALID_PARAMS;
+
       case 'TOOL_UNAVAILABLE':
         return ProtocolHandler.ErrorCodes.INTERNAL_ERROR;
+
       case 'EXECUTION_ERROR':
         return ProtocolHandler.ErrorCodes.INTERNAL_ERROR;
+
       case 'INVALID_NAME':
         return ProtocolHandler.ErrorCodes.METHOD_NOT_FOUND;
+
       default:
         return ProtocolHandler.ErrorCodes.INTERNAL_ERROR;
     }

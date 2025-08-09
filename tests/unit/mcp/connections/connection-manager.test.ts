@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import { ConnectionManager, ConnectionConfig } from '../../../../src/mcp/connections/connection-manager.js';
+import { ConnectionManager } from '../../../../src/mcp/connections/connection-manager.js';
 import { ConnectionStatus } from '../../../../src/mcp/connections/connection-state.js';
+
+import type { ConnectionConfig } from '../../../../src/mcp/connections/connection-manager.js';
 import type { Logger } from '../../../../src/utils/logger.js';
 
 // Mock logger
@@ -17,11 +19,12 @@ describe('ConnectionManager - Simple Tests', () => {
   const mockConfig: ConnectionConfig = {
     maxConnections: 10,
     messageTimeout: 5000,
-    connectionTimeout: 10000,
+    connectionTimeout: 10_000,
   };
 
   it('should initialize with correct configuration', () => {
     const connectionManager = new ConnectionManager(mockConfig, mockLogger);
+
     expect(connectionManager.getMaxConnections()).toBe(mockConfig.maxConnections);
     expect(connectionManager.getActiveConnectionCount()).toBe(0);
     expect(connectionManager.isAtCapacity()).toBe(false);
@@ -29,6 +32,7 @@ describe('ConnectionManager - Simple Tests', () => {
 
   it('should initialize with default configuration', () => {
     const defaultManager = new ConnectionManager();
+
     expect(defaultManager.getMaxConnections()).toBe(100); // default
   });
 
@@ -43,6 +47,7 @@ describe('ConnectionManager - Simple Tests', () => {
 
   it('should prevent duplicate connections', async () => {
     const connectionManager = new ConnectionManager(mockConfig, mockLogger);
+
     await connectionManager.createConnection('client-1');
     const result = await connectionManager.createConnection('client-1');
     
@@ -53,6 +58,7 @@ describe('ConnectionManager - Simple Tests', () => {
 
   it('should connect successfully', async () => {
     const connectionManager = new ConnectionManager(mockConfig, mockLogger);
+
     await connectionManager.createConnection('client-1');
     const result = await connectionManager.connect('client-1');
     
@@ -76,12 +82,14 @@ describe('ConnectionManager - Simple Tests', () => {
     expect(smallManager.isAtCapacity()).toBe(true);
     
     const result = await smallManager.createConnection('client-3');
+
     expect(result.success).toBe(false);
     expect(result.error).toContain('Maximum connections reached');
   });
 
   it('should queue messages successfully', async () => {
     const connectionManager = new ConnectionManager(mockConfig, mockLogger);
+
     await connectionManager.createConnection('client-1');
     await connectionManager.connect('client-1');
     
@@ -93,13 +101,16 @@ describe('ConnectionManager - Simple Tests', () => {
 
   it('should process queued messages', async () => {
     const connectionManager = new ConnectionManager(mockConfig, mockLogger);
+
     await connectionManager.createConnection('client-1');
     await connectionManager.connect('client-1');
     
     const message = { id: 'msg-1', type: 'request', data: { method: 'test' } };
+
     await connectionManager.queueMessage('client-1', message);
     
     const processedMessage = await connectionManager.processNextMessage('client-1');
+
     expect(processedMessage).toBeDefined();
     expect(processedMessage?.message.id).toBe('msg-1');
   });
@@ -137,6 +148,7 @@ describe('ConnectionManager - Simple Tests', () => {
 
   it('should list all connections', async () => {
     const connectionManager = new ConnectionManager(mockConfig, mockLogger);
+
     await connectionManager.createConnection('client-1');
     await connectionManager.createConnection('client-2');
     
@@ -148,11 +160,13 @@ describe('ConnectionManager - Simple Tests', () => {
 
   it('should remove connections', async () => {
     const connectionManager = new ConnectionManager(mockConfig, mockLogger);
+
     await connectionManager.createConnection('client-1');
     
     expect(connectionManager.getActiveConnectionCount()).toBe(1);
     
     const result = await connectionManager.removeConnection('client-1');
+
     expect(result.success).toBe(true);
     expect(connectionManager.getActiveConnectionCount()).toBe(0);
   });
@@ -160,6 +174,7 @@ describe('ConnectionManager - Simple Tests', () => {
   it('should cleanup stale connections', () => {
     const connectionManager = new ConnectionManager(mockConfig, mockLogger);
     const staleCount = connectionManager.cleanupStaleConnections();
+
     expect(staleCount).toBe(0); // No stale connections in fresh test
   });
 });
