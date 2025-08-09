@@ -17,7 +17,7 @@ const mockLogger: Logger = {
 describe('ConnectionPool', () => {
   it('should initialize with default configuration', () => {
     const pool = new ConnectionPool({}, mockLogger);
-    
+
     expect(pool.getSize()).toBe(0);
     expect(pool.getMaxSize()).toBe(100);
     expect(pool.isEmpty()).toBe(true);
@@ -26,14 +26,14 @@ describe('ConnectionPool', () => {
   it('should initialize with custom configuration', () => {
     const config: PoolConfig = { maxSize: 50, cleanupInterval: 30_000 };
     const pool = new ConnectionPool(config, mockLogger);
-    
+
     expect(pool.getMaxSize()).toBe(50);
   });
 
   it('should add connections to pool', async () => {
     const pool = new ConnectionPool({}, mockLogger);
     const result = await pool.addConnection('conn-1', { type: 'stdio' });
-    
+
     expect(result.success).toBe(true);
     expect(pool.getSize()).toBe(1);
     expect(pool.isEmpty()).toBe(false);
@@ -43,7 +43,7 @@ describe('ConnectionPool', () => {
     const pool = new ConnectionPool({}, mockLogger);
 
     await pool.addConnection('conn-1', { type: 'stdio' });
-    
+
     const result = await pool.addConnection('conn-1', { type: 'stdio' });
 
     expect(result.success).toBe(false);
@@ -52,10 +52,10 @@ describe('ConnectionPool', () => {
 
   it('should respect maximum pool size', async () => {
     const pool = new ConnectionPool({ maxSize: 2 }, mockLogger);
-    
+
     await pool.addConnection('conn-1', { type: 'stdio' });
     await pool.addConnection('conn-2', { type: 'stdio' });
-    
+
     const result = await pool.addConnection('conn-3', { type: 'stdio' });
 
     expect(result.success).toBe(false);
@@ -66,7 +66,7 @@ describe('ConnectionPool', () => {
     const pool = new ConnectionPool({}, mockLogger);
 
     await pool.addConnection('conn-1', { type: 'stdio' });
-    
+
     const connection = pool.getConnection('conn-1');
 
     expect(connection).toBeDefined();
@@ -77,7 +77,7 @@ describe('ConnectionPool', () => {
     const pool = new ConnectionPool({}, mockLogger);
 
     await pool.addConnection('conn-1', { type: 'stdio' });
-    
+
     const result = await pool.removeConnection('conn-1');
 
     expect(result.success).toBe(true);
@@ -89,7 +89,7 @@ describe('ConnectionPool', () => {
 
     await pool.addConnection('conn-1', { type: 'stdio' });
     await pool.addConnection('conn-2', { type: 'websocket' });
-    
+
     const connections = pool.getAllConnections();
 
     expect(connections).toHaveLength(2);
@@ -100,7 +100,7 @@ describe('ConnectionPool', () => {
     const pool = new ConnectionPool({}, mockLogger);
 
     await pool.addConnection('conn-1', { type: 'stdio' });
-    
+
     const stats = pool.getStatistics();
 
     expect(stats.totalConnections).toBe(1);
@@ -111,7 +111,7 @@ describe('ConnectionPool', () => {
   it('should handle pool cleanup', () => {
     const pool = new ConnectionPool({}, mockLogger);
     const removedCount = pool.performCleanup();
-    
+
     expect(removedCount).toBe(0); // No stale connections to remove
   });
 
@@ -120,7 +120,7 @@ describe('ConnectionPool', () => {
 
     await pool.addConnection('conn-1', { type: 'stdio' });
     await pool.addConnection('conn-2', { type: 'stdio' });
-    
+
     const result = await pool.clear();
 
     expect(result.success).toBe(true);

@@ -1,6 +1,6 @@
 /**
  * Resource Registry
- * 
+ *
  * Manages lifecycle operations, discovery, cleanup, and coordination
  * of JCVD MCP resources. Provides centralized resource management
  * with event-driven architecture and comprehensive discovery capabilities.
@@ -18,13 +18,13 @@ import type { Resource, ResourceCapability } from './resource-interface.js';
 export interface ResourceInfo {
   /** The registered resource */
   resource: Resource;
-  
+
   /** Registration timestamp */
   registeredAt: number;
-  
+
   /** Last access timestamp */
   lastAccessed: number;
-  
+
   /** Access count */
   accessCount: number;
 }
@@ -35,10 +35,10 @@ export interface ResourceInfo {
 export interface ResourceHealthCheck {
   /** Whether the resource is available */
   isAvailable: boolean;
-  
+
   /** Health check timestamp */
   checkedAt: number;
-  
+
   /** Optional error message if unavailable */
   error?: string;
 }
@@ -49,19 +49,19 @@ export interface ResourceHealthCheck {
 export interface RegistryStatistics {
   /** Total number of registered resources */
   totalResources: number;
-  
+
   /** Resources grouped by project ID */
   resourcesByProject: Record<string, number>;
-  
+
   /** Resources grouped by content type */
   resourcesByContentType: Record<string, number>;
-  
+
   /** Resources grouped by capabilities */
   resourcesByCapability: Record<string, number>;
-  
+
   /** Total access count across all resources */
   totalAccesses: number;
-  
+
   /** Registry uptime in milliseconds */
   uptime: number;
 }
@@ -72,7 +72,7 @@ export interface RegistryStatistics {
 export interface BatchRegistrationResult {
   /** Successfully registered resources */
   successful: Resource[];
-  
+
   /** Failed registrations with errors */
   failed: { resource: Resource; error: string }[];
 }
@@ -117,7 +117,7 @@ export class ResourceRegistry extends EventEmitter {
       resource,
       registeredAt: now,
       lastAccessed: 0,
-      accessCount: 0
+      accessCount: 0,
     };
 
     this.resources.set(resource.uri, resourceInfo);
@@ -125,7 +125,7 @@ export class ResourceRegistry extends EventEmitter {
     this.emit('resource-registered', {
       uri: resource.uri,
       resource,
-      registeredAt: now
+      registeredAt: now,
     });
   }
 
@@ -144,7 +144,7 @@ export class ResourceRegistry extends EventEmitter {
     this.emit('resource-unregistered', {
       uri,
       resource: resourceInfo.resource,
-      unregisteredAt: Date.now()
+      unregisteredAt: Date.now(),
     });
   }
 
@@ -210,7 +210,7 @@ export class ResourceRegistry extends EventEmitter {
     this.emit('batch-registered', {
       resources,
       count: resources.length,
-      registeredAt
+      registeredAt,
     });
   }
 
@@ -228,7 +228,7 @@ export class ResourceRegistry extends EventEmitter {
       } catch (error) {
         failed.push({
           resource,
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -237,7 +237,7 @@ export class ResourceRegistry extends EventEmitter {
       this.emit('batch-registered', {
         resources: successful,
         count: successful.length,
-        registeredAt: Date.now()
+        registeredAt: Date.now(),
       });
     }
 
@@ -309,9 +309,9 @@ export class ResourceRegistry extends EventEmitter {
     // Convert glob pattern to regex
     // Escape special regex characters first, then handle wildcards
     const regexPattern = pattern
-      .replace(/[$()+.?[\\\]^{|}]/g, '\\$&')  // Escape special regex chars
-      .replace(/\\\*/g, '.*');                // Convert \* back to .* for wildcards
-    
+      .replace(/[$()+.?[\\\]^{|}]/g, '\\$&') // Escape special regex chars
+      .replace(/\\\*/g, '.*'); // Convert \* back to .* for wildcards
+
     const regex = new RegExp(`^${regexPattern}$`);
 
     for (const [uri, resourceInfo] of this.resources) {
@@ -328,12 +328,12 @@ export class ResourceRegistry extends EventEmitter {
    */
   async checkResourceHealth(uri: string): Promise<ResourceHealthCheck> {
     const resourceInfo = this.resources.get(uri);
-    
+
     if (!resourceInfo) {
       return {
         isAvailable: false,
         checkedAt: Date.now(),
-        error: 'Resource not found in registry'
+        error: 'Resource not found in registry',
       };
     }
 
@@ -342,13 +342,13 @@ export class ResourceRegistry extends EventEmitter {
 
       return {
         isAvailable,
-        checkedAt: Date.now()
+        checkedAt: Date.now(),
       };
     } catch (error) {
       return {
         isAvailable: false,
         checkedAt: Date.now(),
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -374,7 +374,8 @@ export class ResourceRegistry extends EventEmitter {
       const parsedUri = ResourceURI.parse(uri);
 
       if (parsedUri) {
-        resourcesByProject[parsedUri.projectId] = (resourcesByProject[parsedUri.projectId] || 0) + 1;
+        resourcesByProject[parsedUri.projectId] =
+          (resourcesByProject[parsedUri.projectId] || 0) + 1;
       }
 
       // Count by content type
@@ -397,7 +398,7 @@ export class ResourceRegistry extends EventEmitter {
       resourcesByContentType,
       resourcesByCapability,
       totalAccesses,
-      uptime: Date.now() - this.createdAt
+      uptime: Date.now() - this.createdAt,
     };
   }
 
@@ -412,7 +413,7 @@ export class ResourceRegistry extends EventEmitter {
     this.emit('cleanup-completed', {
       cleanupType: 'full',
       resourcesRemoved: resourceCount,
-      completedAt: Date.now()
+      completedAt: Date.now(),
     });
   }
 
@@ -437,7 +438,7 @@ export class ResourceRegistry extends EventEmitter {
     this.emit('cleanup-completed', {
       cleanupType: `project:${projectId}`,
       resourcesRemoved: urisToRemove.length,
-      completedAt: Date.now()
+      completedAt: Date.now(),
     });
   }
 
@@ -462,7 +463,7 @@ export class ResourceRegistry extends EventEmitter {
       this.emit('cleanup-completed', {
         cleanupType: 'stale',
         resourcesRemoved: urisToRemove.length,
-        completedAt: Date.now()
+        completedAt: Date.now(),
       });
     }
 

@@ -1,6 +1,6 @@
 /**
  * Resource Registry Tests
- * 
+ *
  * Tests for the resource registry system that manages lifecycle operations,
  * discovery, cleanup, and coordination of JCVD MCP resources.
  */
@@ -10,10 +10,10 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { BaseResource } from '../../../../src/mcp/resources/base-resource.js';
 import { ResourceRegistry } from '../../../../src/mcp/resources/resource-registry.js';
 
-import type { 
-  Resource, 
-  ResourceMetadata, 
-  ResourceContent 
+import type {
+  Resource,
+  ResourceMetadata,
+  ResourceContent,
 } from '../../../../src/mcp/resources/resource-interface.js';
 
 describe('ResourceRegistry', () => {
@@ -21,16 +21,18 @@ describe('ResourceRegistry', () => {
   const createRegistry = () => new ResourceRegistry();
 
   // Helper function to create test resources
-  const createTestResource = (options: {
-    uri?: string;
-    name?: string;
-    contentType?: string;
-    capabilities?: string[];
-  } = {}) => {
+  const createTestResource = (
+    options: {
+      uri?: string;
+      name?: string;
+      contentType?: string;
+      capabilities?: string[];
+    } = {}
+  ) => {
     const mockContent = vi.fn().mockResolvedValue({
       content: { test: 'data' },
       contentType: options.contentType || 'application/json',
-      size: 15
+      size: 15,
     });
 
     const metadata: ResourceMetadata = {
@@ -38,7 +40,7 @@ describe('ResourceRegistry', () => {
       description: 'A test resource',
       contentType: options.contentType || 'application/json',
       version: '1.0.0',
-      capabilities: options.capabilities || ['read']
+      capabilities: options.capabilities || ['read'],
     };
 
     return new BaseResource(
@@ -133,7 +135,7 @@ describe('ResourceRegistry', () => {
       expect(eventListener).toHaveBeenCalledWith({
         uri: resource.uri,
         resource: resource,
-        unregisteredAt: expect.any(Number)
+        unregisteredAt: expect.any(Number),
       });
     });
   });
@@ -163,17 +165,17 @@ describe('ResourceRegistry', () => {
 
     it('should find resources by content type', () => {
       const registry = createRegistry();
-      const jsonResource1 = createTestResource({ 
+      const jsonResource1 = createTestResource({
         uri: 'jcvd://project/test/json1',
-        contentType: 'application/json'
+        contentType: 'application/json',
       });
-      const jsonResource2 = createTestResource({ 
+      const jsonResource2 = createTestResource({
         uri: 'jcvd://project/test/json2',
-        contentType: 'application/json'
+        contentType: 'application/json',
       });
-      const textResource = createTestResource({ 
+      const textResource = createTestResource({
         uri: 'jcvd://project/test/text',
-        contentType: 'text/plain'
+        contentType: 'text/plain',
       });
 
       registry.register(jsonResource1);
@@ -191,13 +193,13 @@ describe('ResourceRegistry', () => {
 
     it('should find resources by capability', () => {
       const registry = createRegistry();
-      const readOnlyResource = createTestResource({ 
+      const readOnlyResource = createTestResource({
         uri: 'jcvd://project/test/readonly',
-        capabilities: ['read']
+        capabilities: ['read'],
       });
-      const readWriteResource = createTestResource({ 
+      const readWriteResource = createTestResource({
         uri: 'jcvd://project/test/readwrite',
-        capabilities: ['read', 'write']
+        capabilities: ['read', 'write'],
       });
 
       registry.register(readOnlyResource);
@@ -217,7 +219,9 @@ describe('ResourceRegistry', () => {
       const registry = createRegistry();
       const contextResource = createTestResource({ uri: 'jcvd://project/test-123/context' });
       const tasksResource = createTestResource({ uri: 'jcvd://project/test-123/tasks/unblocked' });
-      const dependenciesResource = createTestResource({ uri: 'jcvd://project/test-456/dependencies' });
+      const dependenciesResource = createTestResource({
+        uri: 'jcvd://project/test-456/dependencies',
+      });
 
       registry.register(contextResource);
       registry.register(tasksResource);
@@ -246,7 +250,7 @@ describe('ResourceRegistry', () => {
       expect(eventListener).toHaveBeenCalledWith({
         uri: resource.uri,
         resource: resource,
-        registeredAt: expect.any(Number)
+        registeredAt: expect.any(Number),
       });
     });
 
@@ -255,7 +259,7 @@ describe('ResourceRegistry', () => {
       const resources = [
         createTestResource({ uri: 'jcvd://project/test/resource1' }),
         createTestResource({ uri: 'jcvd://project/test/resource2' }),
-        createTestResource({ uri: 'jcvd://project/test/resource3' })
+        createTestResource({ uri: 'jcvd://project/test/resource3' }),
       ];
       const eventListener = vi.fn();
 
@@ -265,7 +269,7 @@ describe('ResourceRegistry', () => {
       expect(eventListener).toHaveBeenCalledWith({
         resources: resources,
         count: 3,
-        registeredAt: expect.any(Number)
+        registeredAt: expect.any(Number),
       });
     });
 
@@ -281,7 +285,7 @@ describe('ResourceRegistry', () => {
       expect(eventListener).toHaveBeenCalledWith({
         cleanupType: 'full',
         resourcesRemoved: 1,
-        completedAt: expect.any(Number)
+        completedAt: expect.any(Number),
       });
     });
   });
@@ -292,7 +296,7 @@ describe('ResourceRegistry', () => {
       const resources = [
         createTestResource({ uri: 'jcvd://project/test/resource1' }),
         createTestResource({ uri: 'jcvd://project/test/resource2' }),
-        createTestResource({ uri: 'jcvd://project/test/resource3' })
+        createTestResource({ uri: 'jcvd://project/test/resource3' }),
       ];
 
       registry.registerBatch(resources);
@@ -308,7 +312,7 @@ describe('ResourceRegistry', () => {
       const resources = [
         createTestResource({ uri: 'jcvd://project/test/resource1' }),
         createTestResource({ uri: 'jcvd://project/test/resource2' }),
-        createTestResource({ uri: 'jcvd://project/test/resource3' })
+        createTestResource({ uri: 'jcvd://project/test/resource3' }),
       ];
 
       registry.registerBatch(resources);
@@ -358,7 +362,7 @@ describe('ResourceRegistry', () => {
       const registry = createRegistry();
       const resources = [
         createTestResource({ uri: 'jcvd://project/test/resource1' }),
-        createTestResource({ uri: 'jcvd://project/test/resource2' })
+        createTestResource({ uri: 'jcvd://project/test/resource2' }),
       ];
 
       registry.registerBatch(resources);
@@ -376,7 +380,7 @@ describe('ResourceRegistry', () => {
       const registry = createRegistry();
       const resources = [
         createTestResource({ uri: 'jcvd://project/test/resource1' }),
-        createTestResource({ uri: 'jcvd://project/test/resource2' })
+        createTestResource({ uri: 'jcvd://project/test/resource2' }),
       ];
 
       registry.registerBatch(resources);
@@ -390,11 +394,9 @@ describe('ResourceRegistry', () => {
       const registry = createRegistry();
       const proj1Resources = [
         createTestResource({ uri: 'jcvd://project/proj1/resource1' }),
-        createTestResource({ uri: 'jcvd://project/proj1/resource2' })
+        createTestResource({ uri: 'jcvd://project/proj1/resource2' }),
       ];
-      const proj2Resources = [
-        createTestResource({ uri: 'jcvd://project/proj2/resource1' })
-      ];
+      const proj2Resources = [createTestResource({ uri: 'jcvd://project/proj2/resource1' })];
 
       registry.registerBatch([...proj1Resources, ...proj2Resources]);
       expect(registry.getAll()).toHaveLength(3);
@@ -426,7 +428,7 @@ describe('ResourceRegistry', () => {
   describe('Error Handling', () => {
     it('should handle resource registration errors gracefully', () => {
       const registry = createRegistry();
-      
+
       // Try to register a resource with invalid URI
       expect(() => {
         const invalidResource = {
@@ -436,10 +438,10 @@ describe('ResourceRegistry', () => {
             description: 'Test',
             contentType: 'application/json',
             version: '1.0.0',
-            capabilities: ['read']
-          }
+            capabilities: ['read'],
+          },
         } as Resource;
-        
+
         registry.register(invalidResource);
       }).toThrow();
     });
@@ -454,12 +456,12 @@ describe('ResourceRegistry', () => {
           description: 'Test',
           contentType: 'application/json',
           version: '1.0.0',
-          capabilities: ['read']
-        }
+          capabilities: ['read'],
+        },
       } as Resource;
 
       const result = registry.registerBatchSafe([validResource, invalidResource]);
-      
+
       expect(result.successful).toHaveLength(1);
       expect(result.failed).toHaveLength(1);
       expect(registry.getAll()).toHaveLength(1);

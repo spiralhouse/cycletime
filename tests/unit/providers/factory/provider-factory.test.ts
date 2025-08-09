@@ -285,7 +285,7 @@ describe('EnhancedProviderFactory', () => {
     it('should list registered providers', async () => {
       const uniqueSQLiteConfig = { ...mockSQLiteConfig, id: 'test-sqlite-list' };
       const uniqueLinearConfig = { ...mockLinearConfig, id: 'test-linear-list' };
-      
+
       await factory.createProvider(uniqueSQLiteConfig);
       await factory.createProvider(uniqueLinearConfig);
 
@@ -299,7 +299,7 @@ describe('EnhancedProviderFactory', () => {
     it('should provide registry statistics', async () => {
       const uniqueSQLiteConfig = { ...mockSQLiteConfig, id: 'test-sqlite-stats' };
       const uniqueLinearConfig = { ...mockLinearConfig, id: 'test-linear-stats' };
-      
+
       await factory.createProvider(uniqueSQLiteConfig);
       await factory.createProvider(uniqueLinearConfig);
 
@@ -432,7 +432,7 @@ describe('Provider Factory Integration', () => {
 
   it('should handle complete provider lifecycle', async () => {
     const uniqueConfig = { ...mockSQLiteConfig, id: 'test-sqlite-lifecycle' };
-    
+
     // Create provider
     const provider = await factory.createProvider(uniqueConfig);
 

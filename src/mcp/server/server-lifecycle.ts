@@ -195,7 +195,9 @@ export class ServerLifecycle {
         shutdownResult = await Promise.race([
           shutdownPromise,
           new Promise((_, reject) =>
-            setTimeout(() => { reject(new Error('Shutdown timeout')); }, shutdownTimeout)
+            setTimeout(() => {
+              reject(new Error('Shutdown timeout'));
+            }, shutdownTimeout)
           ),
         ]);
       } catch (error) {

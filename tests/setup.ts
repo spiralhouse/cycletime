@@ -47,7 +47,15 @@ declare global {
 // Custom matchers
 expect.extend({
   toBeValidJCVDConfig(received: any) {
-    const required = ['name', 'version', 'database', 'logging', 'agents', 'providers', 'workflows'];
+    const required = [
+      'name',
+      'version',
+      'database',
+      'logging',
+      'taskCoordination',
+      'providers',
+      'workflows',
+    ];
     const missing = required.filter(key => !(key in received));
 
     if (missing.length > 0) {
@@ -145,7 +153,10 @@ export const testData = {
       format: 'json' as const,
       outputs: [],
     },
-    agents: [],
+    taskCoordination: {
+      defaultAgent: 'developer',
+      fallbackAgent: 'general-purpose',
+    },
     providers: [],
     workflows: [],
     ...overrides,

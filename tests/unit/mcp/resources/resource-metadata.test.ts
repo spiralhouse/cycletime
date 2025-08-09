@@ -1,16 +1,16 @@
 /**
  * Resource Metadata Management Tests
- * 
+ *
  * Tests for the resource metadata system that manages capability advertisement,
  * validation, and metadata operations for JCVD MCP resources.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { 
+import {
   ResourceMetadataManager,
   type ResourceCapabilityInfo,
-  type ResourceDiscoveryInfo
+  type ResourceDiscoveryInfo,
 } from '../../../../src/mcp/resources/resource-metadata.js';
 
 import type { ResourceMetadata } from '../../../../src/mcp/resources/resource-interface.js';
@@ -28,7 +28,7 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/context',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       };
 
       metadataManager.registerCapability('project-context', capabilityInfo);
@@ -46,7 +46,7 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/context',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       };
 
       const capability2: ResourceCapabilityInfo = {
@@ -55,7 +55,7 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/tasks/unblocked',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       };
 
       metadataManager.registerCapability('project-context', capability1);
@@ -76,7 +76,7 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/temp',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       };
 
       metadataManager.registerCapability('temp-resource', capabilityInfo);
@@ -94,11 +94,11 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/test',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       };
 
       metadataManager.registerCapability('duplicate-test', capabilityInfo);
-      
+
       expect(() => {
         metadataManager.registerCapability('duplicate-test', capabilityInfo);
       }).toThrow('Capability already registered');
@@ -113,7 +113,7 @@ describe('ResourceMetadataManager', () => {
         description: 'A valid resource',
         contentType: 'application/json',
         version: '1.0.0',
-        capabilities: ['read']
+        capabilities: ['read'],
       };
 
       const result = metadataManager.validateMetadata(validMetadata);
@@ -145,7 +145,7 @@ describe('ResourceMetadataManager', () => {
         description: 'Test',
         contentType: 'invalid-content-type',
         version: '1.0.0',
-        capabilities: ['read']
+        capabilities: ['read'],
       };
 
       const result = metadataManager.validateMetadata(invalidContentType);
@@ -161,7 +161,7 @@ describe('ResourceMetadataManager', () => {
         description: 'Test',
         contentType: 'application/json',
         version: 'not-a-version',
-        capabilities: ['read']
+        capabilities: ['read'],
       };
 
       const result = metadataManager.validateMetadata(invalidVersion);
@@ -177,7 +177,7 @@ describe('ResourceMetadataManager', () => {
         description: 'Test',
         contentType: 'application/json',
         version: '1.0.0',
-        capabilities: ['invalid-capability' as any]
+        capabilities: ['invalid-capability' as any],
       };
 
       const result = metadataManager.validateMetadata(invalidCapabilities);
@@ -197,7 +197,7 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/context',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       });
 
       const matches = metadataManager.findCapabilitiesByURI('jcvd://project/test-123/context');
@@ -215,7 +215,7 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/json',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       });
 
       metadataManager.registerCapability('text-resource', {
@@ -224,7 +224,7 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/text',
         contentType: 'text/plain',
-        version: '1.0.0'
+        version: '1.0.0',
       });
 
       const jsonCapabilities = metadataManager.findCapabilitiesByContentType('application/json');
@@ -247,7 +247,7 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/readonly',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       });
 
       metadataManager.registerCapability('read-write', {
@@ -256,7 +256,7 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read', 'write'],
         uriPattern: 'jcvd://project/{projectId}/readwrite',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       });
 
       const readCapabilities = metadataManager.findCapabilitiesByOperation('read');
@@ -280,7 +280,7 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/context',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       });
 
       const advertisement = metadataManager.generateMCPAdvertisement();
@@ -289,7 +289,7 @@ describe('ResourceMetadataManager', () => {
       expect(advertisement.resources.listChanged).toBe(true);
       expect(advertisement.resources.subscribe).toBe(true);
       expect(advertisement.resources.capabilities).toHaveLength(1);
-      
+
       const capability = advertisement.resources.capabilities[0];
 
       expect(capability.name).toBe('project-context');
@@ -306,7 +306,7 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/test',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       });
 
       // Simulate some usage
@@ -315,7 +315,7 @@ describe('ResourceMetadataManager', () => {
 
       const advertisement = metadataManager.generateMCPAdvertisement();
       const stats = advertisement.serverInfo?.statistics;
-      
+
       expect(stats).toBeDefined();
       expect(stats.totalCapabilities).toBe(1);
       expect(stats.totalAccesses).toBe(2);
@@ -335,14 +335,14 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/test',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       };
 
       metadataManager.registerCapability('test-capability', capabilityInfo);
 
       expect(eventListener).toHaveBeenCalledWith({
         name: 'test-capability',
-        capability: capabilityInfo
+        capability: capabilityInfo,
       });
     });
 
@@ -359,14 +359,14 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/temp',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       });
 
       // Then unregister
       metadataManager.unregisterCapability('temp-capability');
 
       expect(eventListener).toHaveBeenCalledWith({
-        name: 'temp-capability'
+        name: 'temp-capability',
       });
     });
   });
@@ -380,7 +380,7 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/cached',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       };
 
       metadataManager.registerCapability('cached-resource', capabilityInfo);
@@ -401,7 +401,7 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read'],
         uriPattern: 'jcvd://project/{projectId}/original',
         contentType: 'application/json',
-        version: '1.0.0'
+        version: '1.0.0',
       };
 
       metadataManager.registerCapability('changing-resource', originalCapability);
@@ -417,7 +417,7 @@ describe('ResourceMetadataManager', () => {
         supportedOperations: ['read', 'write'],
         uriPattern: 'jcvd://project/{projectId}/updated',
         contentType: 'application/json',
-        version: '1.1.0'
+        version: '1.1.0',
       };
 
       metadataManager.registerCapability('changing-resource', updatedCapability);

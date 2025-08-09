@@ -88,7 +88,7 @@ describe('MCPServerInitializer', () => {
 
     it('should cleanup on initialization failure', async () => {
       const cleanupSpy = vi.spyOn(initializer as any, 'cleanup');
-      
+
       vi.spyOn(initializer as any, 'initializeResources').mockRejectedValue(
         new Error('Resource initialization failed')
       );
@@ -195,7 +195,7 @@ describe('MCPServerInitializer', () => {
 
     it('should track component status during initialization', async () => {
       const initPromise = initializer.initialize();
-      
+
       // Check status during initialization
       const duringStatus = initializer.getStatus();
 
@@ -248,7 +248,7 @@ describe('MCPServerInitializer', () => {
   describe('addDependency', () => {
     it('should add component dependency', () => {
       initializer.addDependency('resources', 'server');
-      
+
       const dependencies = (initializer as any).getDependencies('resources');
 
       expect(dependencies).toContain('server');
@@ -256,7 +256,7 @@ describe('MCPServerInitializer', () => {
 
     it('should prevent circular dependencies', () => {
       initializer.addDependency('server', 'resources');
-      
+
       expect(() => {
         initializer.addDependency('resources', 'server');
       }).toThrow('Circular dependency detected');

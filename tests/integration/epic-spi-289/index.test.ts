@@ -32,8 +32,7 @@ import {
   PerformanceReporter,
 } from '../../utils/performance-helpers.js';
 
-import type {
-  PerformanceTracker} from '../../utils/performance-helpers.js';
+import type { PerformanceTracker } from '../../utils/performance-helpers.js';
 
 // Import validation utilities
 
@@ -208,9 +207,7 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Complete Integration 
       `Workflow State Consistency: ${integrationValidation.workflowStateConsistency ? '✅ CONSISTENT' : '❌ INCONSISTENT'}`
     );
 
-    const allIntegrationsPassing = Object.values(integrationValidation).every(
-      Boolean
-    );
+    const allIntegrationsPassing = Object.values(integrationValidation).every(Boolean);
 
     expect(allIntegrationsPassing).toBe(true);
 

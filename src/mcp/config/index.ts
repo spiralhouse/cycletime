@@ -12,11 +12,7 @@ export {
   isValidMCPConfig,
 } from './mcp-config.js';
 
-export type {
-  MCPServerConfig,
-  MCPTransport,
-  MCPProviderType,
-} from './mcp-config.js';
+export type { MCPServerConfig, MCPTransport, MCPProviderType } from './mcp-config.js';
 
 export type {
   InitializationResult,

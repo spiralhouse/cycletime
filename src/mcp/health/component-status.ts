@@ -5,7 +5,7 @@
 /**
  * Component status types
  */
-export type ComponentStatusType = 
+export type ComponentStatusType =
   | 'initializing'
   | 'running'
   | 'stopping'
@@ -46,15 +46,15 @@ export class ComponentStatus {
       status,
       timestamp: Date.now(),
     };
-    
+
     if (metadata) {
       statusInfo.metadata = metadata;
     }
-    
+
     if (error) {
       statusInfo.error = error;
     }
-    
+
     this.statuses.set(componentName, statusInfo);
   }
 
@@ -70,11 +70,11 @@ export class ComponentStatus {
    */
   getAllStatuses(): Record<string, ComponentStatusInfo> {
     const result: Record<string, ComponentStatusInfo> = {};
-    
+
     for (const [name, status] of this.statuses.entries()) {
       result[name] = status;
     }
-    
+
     return result;
   }
 
@@ -90,13 +90,13 @@ export class ComponentStatus {
    */
   getComponentsByStatus(status: ComponentStatusType): string[] {
     const components: string[] = [];
-    
+
     for (const [name, info] of this.statuses.entries()) {
       if (info.status === status) {
         components.push(name);
       }
     }
-    
+
     return components;
   }
 
@@ -118,12 +118,12 @@ export class ComponentStatus {
    */
   getStatusCounts(): Record<ComponentStatusType, number> {
     const counts: Record<ComponentStatusType, number> = {
-      'initializing': 0,
-      'running': 0,
-      'stopping': 0,
-      'stopped': 0,
-      'error': 0,
-      'unknown': 0,
+      initializing: 0,
+      running: 0,
+      stopping: 0,
+      stopped: 0,
+      error: 0,
+      unknown: 0,
     };
 
     for (const [, info] of this.statuses.entries()) {
@@ -198,19 +198,17 @@ export class ComponentStatus {
           break;
 
         case 'error':
-
         case 'stopped':
           unhealthy++;
+
           break;
 
         case 'unknown':
-
         case 'initializing':
-
         case 'stopping':
-
         default:
           unknown++;
+
           break;
       }
     }

@@ -1,28 +1,28 @@
 /**
  * Base Tool Implementation
- * 
+ *
  * Abstract base class providing common functionality for JCVD tools.
  * Handles parameter validation, metadata management, and execution coordination.
  */
 
 import { createLogger } from '../../utils/logger.js';
 
-import { 
-  ToolName, 
-  ToolValidationError, 
-  ToolExecutionError, 
+import {
+  ToolName,
+  ToolValidationError,
+  ToolExecutionError,
   ToolUnavailableError,
-  InvalidToolNameError 
+  InvalidToolNameError,
 } from './tool-interface.js';
 import { ToolValidator } from './tool-validator.js';
 
-import type { 
-  Tool, 
-  ToolMetadata, 
-  ToolExecutionContext, 
-  ToolExecutionResult, 
+import type {
+  Tool,
+  ToolMetadata,
+  ToolExecutionContext,
+  ToolExecutionResult,
   ToolParameterValidationResult,
-  ToolCapability 
+  ToolCapability,
 } from './tool-interface.js';
 import type { Logger } from '../../utils/logger.js';
 
@@ -37,17 +37,17 @@ export abstract class BaseTool implements Tool {
   constructor(metadata: ToolMetadata) {
     this.logger = createLogger(`tool:${metadata.name}`);
     this.validator = new ToolValidator();
-    
+
     // Validate metadata during construction
     this.validateMetadata(metadata);
-    
+
     // Store metadata as immutable
     this._metadata = Object.freeze({ ...metadata });
-    
+
     this.logger.debug('Tool initialized', {
       name: metadata.name,
       version: metadata.version,
-      capabilities: metadata.capabilities
+      capabilities: metadata.capabilities,
     });
   }
 
@@ -79,23 +79,23 @@ export abstract class BaseTool implements Tool {
   async validateParameters(parameters: any): Promise<ToolParameterValidationResult> {
     try {
       this.logger.debug('Validating parameters', { parameters });
-      
+
       const result = await this.validator.validate(parameters, this._metadata.parameters);
-      
+
       if (!result.valid) {
-        this.logger.debug('Parameter validation failed', { 
-          errors: result.errors 
+        this.logger.debug('Parameter validation failed', {
+          errors: result.errors,
         });
       } else {
         this.logger.debug('Parameter validation passed');
       }
-      
+
       return result;
     } catch (error) {
-      this.logger.error('Parameter validation error', { 
-        error: error instanceof Error ? error.message : String(error) 
+      this.logger.error('Parameter validation error', {
+        error: error instanceof Error ? error.message : String(error),
       });
-      
+
       throw new ToolValidationError(
         `Parameter validation failed: ${error instanceof Error ? error.message : String(error)}`,
         this.name,
@@ -109,11 +109,11 @@ export abstract class BaseTool implements Tool {
    */
   async execute(parameters: any, context: ToolExecutionContext): Promise<ToolExecutionResult> {
     const startTime = Date.now();
-    
+
     try {
       this.logger.info('Executing tool', {
         requestId: context.requestId,
-        parameters: this.sanitizeParametersForLogging(parameters)
+        parameters: this.sanitizeParametersForLogging(parameters),
       });
 
       // Check availability
@@ -130,9 +130,9 @@ export abstract class BaseTool implements Tool {
         const errorMessage = `Parameter validation failed: ${validation.errors?.join(', ')}`;
 
         this.logger.warn('Tool execution aborted due to validation errors', {
-          errors: validation.errors
+          errors: validation.errors,
         });
-        
+
         return {
           success: false,
           error: {
@@ -140,23 +140,20 @@ export abstract class BaseTool implements Tool {
             message: errorMessage,
             code: 'VALIDATION_ERROR',
             toolName: this.name,
-            details: { validationErrors: validation.errors }
-          }
+            details: { validationErrors: validation.errors },
+          },
         };
       }
 
       // Execute with validated parameters
-      const result = await this.executeImpl(
-        validation.sanitizedParameters || parameters, 
-        context
-      );
+      const result = await this.executeImpl(validation.sanitizedParameters || parameters, context);
 
       const executionTime = Date.now() - startTime;
-      
+
       this.logger.info('Tool execution completed', {
         requestId: context.requestId,
         success: result.success,
-        executionTime
+        executionTime,
       });
 
       // Add execution metadata
@@ -164,23 +161,24 @@ export abstract class BaseTool implements Tool {
         ...result,
         metadata: {
           executionTime,
-          ...result.metadata
-        }
+          ...result.metadata,
+        },
       };
-
     } catch (error) {
       const executionTime = Date.now() - startTime;
-      
+
       this.logger.error('Tool execution failed', {
         requestId: context.requestId,
         error: error instanceof Error ? error.message : String(error),
-        executionTime
+        executionTime,
       });
 
       // Handle known tool errors
-      if (error instanceof ToolValidationError || 
-          error instanceof ToolExecutionError ||
-          error instanceof ToolUnavailableError) {
+      if (
+        error instanceof ToolValidationError ||
+        error instanceof ToolExecutionError ||
+        error instanceof ToolUnavailableError
+      ) {
         return {
           success: false,
           error: {
@@ -188,9 +186,9 @@ export abstract class BaseTool implements Tool {
             message: error.message,
             code: error.code,
             toolName: this.name,
-            details: error.details
+            details: error.details,
           },
-          metadata: { executionTime }
+          metadata: { executionTime },
         };
       }
 
@@ -202,9 +200,9 @@ export abstract class BaseTool implements Tool {
           message: `Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
           code: 'EXECUTION_ERROR',
           toolName: this.name,
-          details: { originalError: error }
+          details: { originalError: error },
         },
-        metadata: { executionTime }
+        metadata: { executionTime },
       };
     }
   }
@@ -235,7 +233,7 @@ export abstract class BaseTool implements Tool {
    * Must be implemented by subclasses
    */
   protected abstract executeImpl(
-    parameters: any, 
+    parameters: any,
     context: ToolExecutionContext
   ): Promise<ToolExecutionResult>;
 
@@ -267,7 +265,9 @@ export abstract class BaseTool implements Tool {
 
     for (const capability of metadata.capabilities) {
       if (!validCapabilities.includes(capability)) {
-        throw new Error(`Invalid capability: ${capability}. Must be one of: ${validCapabilities.join(', ')}`);
+        throw new Error(
+          `Invalid capability: ${capability}. Must be one of: ${validCapabilities.join(', ')}`
+        );
       }
     }
 
@@ -292,7 +292,7 @@ export abstract class BaseTool implements Tool {
     }
 
     const sanitized = { ...parameters };
-    
+
     // Remove common sensitive fields
     const sensitiveFields = ['password', 'token', 'secret', 'key', 'apiKey'];
 
@@ -314,11 +314,11 @@ export abstract class BaseTool implements Tool {
     if (affectedResources !== undefined) {
       metadata.affectedResources = affectedResources;
     }
-    
+
     return {
       success: true,
       data,
-      metadata
+      metadata,
     };
   }
 
@@ -326,8 +326,8 @@ export abstract class BaseTool implements Tool {
    * Create a standardized error result
    */
   protected createErrorResult(
-    message: string, 
-    code: string = 'EXECUTION_ERROR', 
+    message: string,
+    code: string = 'EXECUTION_ERROR',
     details?: any
   ): ToolExecutionResult {
     return {
@@ -337,8 +337,8 @@ export abstract class BaseTool implements Tool {
         message,
         code,
         toolName: this.name,
-        details
-      }
+        details,
+      },
     };
   }
 
@@ -348,11 +348,9 @@ export abstract class BaseTool implements Tool {
   protected validateRequiredParameters(parameters: any, required: string[]): void {
     for (const param of required) {
       if (parameters[param] === undefined || parameters[param] === null) {
-        throw new ToolValidationError(
-          `Required parameter '${param}' is missing`,
-          this.name,
-          { missingParameter: param }
-        );
+        throw new ToolValidationError(`Required parameter '${param}' is missing`, this.name, {
+          missingParameter: param,
+        });
       }
     }
   }
@@ -362,13 +360,13 @@ export abstract class BaseTool implements Tool {
    */
   protected applyParameterDefaults(parameters: any, defaults: Record<string, any>): any {
     const result = { ...parameters };
-    
+
     for (const [key, defaultValue] of Object.entries(defaults)) {
       if (result[key] === undefined) {
         result[key] = defaultValue;
       }
     }
-    
+
     return result;
   }
 }

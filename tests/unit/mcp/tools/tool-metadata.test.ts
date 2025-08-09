@@ -1,16 +1,16 @@
 /**
  * Tool Metadata Tests
- * 
+ *
  * Tests for tool metadata management and schema handling.
  * Following TDD principles - these tests define expected metadata behavior.
  */
 
 import { describe, test, expect } from 'vitest';
 
-import type { 
-  ToolMetadata, 
+import type {
+  ToolMetadata,
   ToolParameterSchema,
-  ToolCapability 
+  ToolCapability,
 } from '../../../../src/mcp/tools/tool-interface.js';
 
 // We'll test this when we implement it
@@ -31,29 +31,29 @@ describe('ToolMetadataManager', () => {
               type: 'string',
               description: 'The issue title',
               minLength: 1,
-              maxLength: 200
+              maxLength: 200,
             },
             type: {
               type: 'string',
               enum: ['epic', 'story', 'subtask'],
-              description: 'Issue type'
-            }
+              description: 'Issue type',
+            },
           },
           required: ['title', 'type'],
-          additionalProperties: false
-        }
+          additionalProperties: false,
+        },
       };
 
       // const manager = new ToolMetadataManager();
       // const result = manager.validateMetadata(validMetadata);
-      
+
       // expect(result.valid).toBe(true);
       // expect(result.errors).toBeUndefined();
-      
+
       // Test validation concept
       const mockValidate = (metadata: ToolMetadata) => {
         const errors: string[] = [];
-        
+
         if (!metadata.name?.startsWith('jcvd_')) {
           errors.push('name must start with jcvd_');
         }
@@ -66,7 +66,7 @@ describe('ToolMetadataManager', () => {
         if (!metadata.capabilities || metadata.capabilities.length === 0) {
           errors.push('at least one capability is required');
         }
-        
+
         return { valid: errors.length === 0, errors: errors.length > 0 ? errors : undefined };
       };
 
@@ -84,16 +84,16 @@ describe('ToolMetadataManager', () => {
         parameters: {
           type: 'object',
           properties: {},
-          required: []
-        }
+          required: [],
+        },
       };
 
       // const manager = new ToolMetadataManager();
       // const result = manager.validateMetadata(invalidMetadata);
-      
+
       // expect(result.valid).toBe(false);
       // expect(result.errors).toContain('name must start with jcvd_');
-      
+
       // Test name validation
       const isValidName = (name: string) => /^jcvd_[a-z][\d_a-z]*$/.test(name);
 
@@ -109,8 +109,8 @@ describe('ToolMetadataManager', () => {
         parameters: {
           type: 'object',
           properties: {},
-          required: []
-        }
+          required: [],
+        },
       };
 
       // Test version validation
@@ -129,8 +129,8 @@ describe('ToolMetadataManager', () => {
         parameters: {
           type: 'object',
           properties: {},
-          required: []
-        }
+          required: [],
+        },
       };
 
       // Test description validation
@@ -150,29 +150,29 @@ describe('ToolMetadataManager', () => {
             type: 'string',
             description: 'Issue title',
             minLength: 1,
-            maxLength: 200
+            maxLength: 200,
           },
           priority: {
             type: 'number',
             minimum: 1,
             maximum: 4,
-            default: 3
+            default: 3,
           },
           tags: {
             type: 'array',
             items: { type: 'string' },
-            uniqueItems: true
-          }
+            uniqueItems: true,
+          },
         },
         required: ['title'],
-        additionalProperties: false
+        additionalProperties: false,
       };
 
       // const manager = new ToolMetadataManager();
       // const result = manager.validateParameterSchema(validSchema);
-      
+
       // expect(result.valid).toBe(true);
-      
+
       // Test schema structure
       expect(validSchema.type).toBe('object');
       expect(validSchema.properties).toBeDefined();
@@ -191,11 +191,11 @@ describe('ToolMetadataManager', () => {
                 type: 'object',
                 properties: {
                   autoClose: { type: 'boolean' },
-                  notifications: { type: 'boolean', default: true }
-                }
-              }
+                  notifications: { type: 'boolean', default: true },
+                },
+              },
             },
-            required: ['name']
+            required: ['name'],
           },
           options: {
             type: 'array',
@@ -203,13 +203,13 @@ describe('ToolMetadataManager', () => {
               type: 'object',
               properties: {
                 key: { type: 'string' },
-                value: { type: 'string' }
+                value: { type: 'string' },
               },
-              required: ['key', 'value']
-            }
-          }
+              required: ['key', 'value'],
+            },
+          },
         },
-        required: ['project']
+        required: ['project'],
       };
 
       // Test nested structure
@@ -225,20 +225,24 @@ describe('ToolMetadataManager', () => {
           status: {
             type: 'string',
             enum: ['backlog', 'todo', 'in_progress', 'done', 'canceled'],
-            description: 'Issue status'
+            description: 'Issue status',
           },
           priority: {
             type: 'number',
             enum: [1, 2, 3, 4],
-            description: 'Priority level'
-          }
+            description: 'Priority level',
+          },
         },
-        required: ['status']
+        required: ['status'],
       };
 
       // Test enum constraints
       expect(enumSchema.properties.status.enum).toEqual([
-        'backlog', 'todo', 'in_progress', 'done', 'canceled'
+        'backlog',
+        'todo',
+        'in_progress',
+        'done',
+        'canceled',
       ]);
       expect(enumSchema.properties.priority.enum).toEqual([1, 2, 3, 4]);
     });
@@ -246,36 +250,32 @@ describe('ToolMetadataManager', () => {
 
   describe('Capability Management', () => {
     test('should validate capability values', () => {
-      const validCapabilities: ToolCapability[] = [
-        'execute',
-        'validate', 
-        'preview'
-      ];
+      const validCapabilities: ToolCapability[] = ['execute', 'validate', 'preview'];
 
       const invalidCapabilities = [
         'invalid_capability',
         'EXECUTE', // Wrong case
-        ''         // Empty string
+        '', // Empty string
       ];
 
       // const manager = new ToolMetadataManager();
-      
+
       // for (const capability of validCapabilities) {
       //   expect(manager.isValidCapability(capability)).toBe(true);
       // }
-      
+
       // for (const capability of invalidCapabilities) {
       //   expect(manager.isValidCapability(capability)).toBe(false);
       // }
-      
+
       // Test capability validation
       const validCapabilityValues = ['execute', 'validate', 'preview'];
       const isValidCapability = (cap: string) => validCapabilityValues.includes(cap);
-      
+
       for (const capability of validCapabilities) {
         expect(isValidCapability(capability)).toBe(true);
       }
-      
+
       for (const capability of invalidCapabilities) {
         expect(isValidCapability(capability)).toBe(false);
       }
@@ -290,14 +290,14 @@ describe('ToolMetadataManager', () => {
         parameters: {
           type: 'object',
           properties: {},
-          required: []
-        }
+          required: [],
+        },
       };
 
       // Test capability requirement
-      const hasCapabilities = (metadata: ToolMetadata) => 
+      const hasCapabilities = (metadata: ToolMetadata) =>
         metadata.capabilities && metadata.capabilities.length > 0;
-      
+
       expect(hasCapabilities(metadataWithoutCapabilities)).toBe(false);
     });
   });
@@ -312,22 +312,22 @@ describe('ToolMetadataManager', () => {
         parameters: {
           type: 'object',
           properties: {
-            title: { type: 'string' }
+            title: { type: 'string' },
           },
-          required: ['title']
-        }
+          required: ['title'],
+        },
       };
 
       // const manager = new ToolMetadataManager();
       // const serialized = manager.serialize(metadata);
       // const deserialized = manager.deserialize(serialized);
-      
+
       // expect(deserialized).toEqual(metadata);
-      
+
       // Test serialization concept
       const serialized = JSON.stringify(metadata);
       const deserialized = JSON.parse(serialized);
-      
+
       expect(deserialized).toEqual(metadata);
       expect(typeof serialized).toBe('string');
     });
@@ -341,28 +341,28 @@ describe('ToolMetadataManager', () => {
         parameters: {
           type: 'object',
           properties: {},
-          required: []
+          required: [],
         },
         tags: ['testing', 'optional'],
         category: 'development',
         inputSchema: {
           type: 'object',
           properties: {
-            input: { type: 'string' }
-          }
+            input: { type: 'string' },
+          },
         },
         outputSchema: {
           type: 'object',
           properties: {
-            result: { type: 'string' }
-          }
-        }
+            result: { type: 'string' },
+          },
+        },
       };
 
       // Test optional field handling
       const serialized = JSON.stringify(metadataWithOptionals);
       const deserialized = JSON.parse(serialized);
-      
+
       expect(deserialized.tags).toEqual(['testing', 'optional']);
       expect(deserialized.category).toBe('development');
       expect(deserialized.inputSchema).toBeDefined();
@@ -382,29 +382,29 @@ describe('ToolMetadataManager', () => {
           properties: {
             title: {
               type: 'string',
-              description: 'The issue title'
+              description: 'The issue title',
             },
             type: {
               type: 'string',
-              enum: ['epic', 'story', 'subtask']
-            }
+              enum: ['epic', 'story', 'subtask'],
+            },
           },
-          required: ['title', 'type']
-        }
+          required: ['title', 'type'],
+        },
       };
 
       // const manager = new ToolMetadataManager();
       // const mcpSchema = manager.generateMCPSchema(metadata);
-      
+
       // expect(mcpSchema.name).toBe('jcvd_create_issue');
       // expect(mcpSchema.description).toBe('Creates new issues with proper hierarchy and validation');
       // expect(mcpSchema.inputSchema).toEqual(metadata.parameters);
-      
+
       // Test MCP schema generation concept
       const mcpSchema = {
         name: metadata.name,
         description: metadata.description,
-        inputSchema: metadata.parameters
+        inputSchema: metadata.parameters,
       };
 
       expect(mcpSchema.name).toBe('jcvd_create_issue');
@@ -423,37 +423,37 @@ describe('ToolMetadataManager', () => {
         parameters: {
           type: 'object',
           properties: {},
-          required: []
-        }
+          required: [],
+        },
       };
 
       const updatedMetadata: ToolMetadata = {
         ...originalMetadata,
         description: 'Updated description',
-        version: '1.1.0'
+        version: '1.1.0',
       };
 
       // const manager = new ToolMetadataManager();
       // const changes = manager.compareMetadata(originalMetadata, updatedMetadata);
-      
+
       // expect(changes.hasChanges).toBe(true);
       // expect(changes.changedFields).toContain('description');
       // expect(changes.changedFields).toContain('version');
-      
+
       // Test metadata comparison concept
       const compareMetadata = (original: ToolMetadata, updated: ToolMetadata) => {
         const changes: string[] = [];
-        
+
         if (original.description !== updated.description) {
           changes.push('description');
         }
         if (original.version !== updated.version) {
           changes.push('version');
         }
-        
+
         return {
           hasChanges: changes.length > 0,
-          changedFields: changes
+          changedFields: changes,
         };
       };
 

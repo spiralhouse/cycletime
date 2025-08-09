@@ -1,6 +1,6 @@
 /**
  * Resource Server Integration Tests
- * 
+ *
  * Integration tests for the ResourceServer class and MCP resource protocol
  * implementation, testing the complete flow from MCP requests to resource responses.
  */
@@ -10,10 +10,10 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { BaseResource } from '../../../src/mcp/resources/base-resource.js';
 import { ResourceServer } from '../../../src/mcp/server/resource-server.js';
 
-import type { 
+import type {
   ResourceServerConfig,
   ResourceMetadata,
-  ResourceContent 
+  ResourceContent,
 } from '../../../src/mcp/index.js';
 
 describe('ResourceServer Integration', () => {
@@ -29,8 +29,8 @@ describe('ResourceServer Integration', () => {
         discovery: true,
         maxResourcesPerProject: 100,
         defaultCacheTTL: 300,
-        healthMonitoring: true
-      }
+        healthMonitoring: true,
+      },
     };
 
     server = new ResourceServer(config);
@@ -40,7 +40,7 @@ describe('ResourceServer Integration', () => {
   afterEach(async () => {
     // Clean up all resources before stopping server
     server.cleanupAllResources();
-    
+
     if (server.isRunning()) {
       await server.stop();
     }
@@ -52,19 +52,21 @@ describe('ResourceServer Integration', () => {
       const testResource = createTestResource({
         uri: 'jcvd://project/test-123/context',
         name: 'Test Project Context',
-        content: { projectName: 'Test Project', status: 'active' }
+        content: { projectName: 'Test Project', status: 'active' },
       });
 
       // Register the resource
       server.registerResource(testResource);
 
       // Test resources/list request
-      const listResponse = await server.handleMessage(JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'resources/list',
-        params: {}
-      }));
+      const listResponse = await server.handleMessage(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'resources/list',
+          params: {},
+        })
+      );
 
       expect(listResponse).toBeTruthy();
       const listResult = JSON.parse(listResponse!);
@@ -73,7 +75,7 @@ describe('ResourceServer Integration', () => {
       expect(listResult.result.resources[0]).toMatchObject({
         uri: 'jcvd://project/test-123/context',
         name: 'Test Project Context',
-        mimeType: 'application/json'
+        mimeType: 'application/json',
       });
     });
 
@@ -83,18 +85,20 @@ describe('ResourceServer Integration', () => {
       const testResource = createTestResource({
         uri: 'jcvd://project/test-456/data',
         name: 'Test Data Resource',
-        content: testContent
+        content: testContent,
       });
 
       server.registerResource(testResource);
 
       // Test resources/read request
-      const readResponse = await server.handleMessage(JSON.stringify({
-        jsonrpc: '2.0',
-        id: 2,
-        method: 'resources/read',
-        params: { uri: 'jcvd://project/test-456/data' }
-      }));
+      const readResponse = await server.handleMessage(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'resources/read',
+          params: { uri: 'jcvd://project/test-456/data' },
+        })
+      );
 
       expect(readResponse).toBeTruthy();
       const readResult = JSON.parse(readResponse!);
@@ -103,18 +107,20 @@ describe('ResourceServer Integration', () => {
       expect(readResult.result.contents[0]).toMatchObject({
         uri: 'jcvd://project/test-456/data',
         mimeType: 'application/json',
-        text: JSON.stringify(testContent)
+        text: JSON.stringify(testContent),
       });
     });
 
     it('should handle resource not found errors', async () => {
       // Test reading non-existent resource
-      const readResponse = await server.handleMessage(JSON.stringify({
-        jsonrpc: '2.0',
-        id: 3,
-        method: 'resources/read',
-        params: { uri: 'jcvd://project/non-existent/resource' }
-      }));
+      const readResponse = await server.handleMessage(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'resources/read',
+          params: { uri: 'jcvd://project/non-existent/resource' },
+        })
+      );
 
       expect(readResponse).toBeTruthy();
       const readResult = JSON.parse(readResponse!);
@@ -129,42 +135,44 @@ describe('ResourceServer Integration', () => {
     it('should register multiple resources and list them all', async () => {
       // Ensure clean state
       server.cleanupAllResources();
-      
+
       // Create multiple test resources
       const resources = [
         createTestResource({
           uri: 'jcvd://project/multi-test/context',
           name: 'Context Resource',
-          content: { type: 'context' }
+          content: { type: 'context' },
         }),
         createTestResource({
           uri: 'jcvd://project/multi-test/tasks',
           name: 'Tasks Resource',
-          content: { type: 'tasks' }
+          content: { type: 'tasks' },
         }),
         createTestResource({
           uri: 'jcvd://project/multi-test/dependencies',
           name: 'Dependencies Resource',
-          content: { type: 'dependencies' }
-        })
+          content: { type: 'dependencies' },
+        }),
       ];
 
       // Register all resources in batch
       server.registerResources(resources);
 
       // Test resources/list request
-      const listResponse = await server.handleMessage(JSON.stringify({
-        jsonrpc: '2.0',
-        id: 4,
-        method: 'resources/list',
-        params: {}
-      }));
+      const listResponse = await server.handleMessage(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 4,
+          method: 'resources/list',
+          params: {},
+        })
+      );
 
       expect(listResponse).toBeTruthy();
       const listResult = JSON.parse(listResponse!);
 
       expect(listResult.result.resources.length).toBeGreaterThanOrEqual(3);
-      
+
       const uris = listResult.result.resources.map((r: any) => r.uri);
 
       expect(uris).toContain('jcvd://project/multi-test/context');
@@ -175,15 +183,13 @@ describe('ResourceServer Integration', () => {
     it('should find resources by project ID', async () => {
       // Ensure clean state
       server.cleanupAllResources();
-      
+
       // Register resources for different projects
       const proj1Resources = [
         createTestResource({ uri: 'jcvd://project/proj1/context' }),
-        createTestResource({ uri: 'jcvd://project/proj1/tasks' })
+        createTestResource({ uri: 'jcvd://project/proj1/tasks' }),
       ];
-      const proj2Resources = [
-        createTestResource({ uri: 'jcvd://project/proj2/context' })
-      ];
+      const proj2Resources = [createTestResource({ uri: 'jcvd://project/proj2/context' })];
 
       server.registerResources([...proj1Resources, ...proj2Resources]);
 
@@ -191,11 +197,11 @@ describe('ResourceServer Integration', () => {
       const proj1Found = server.findResourcesByProject('proj1');
 
       expect(proj1Found.length).toBeGreaterThanOrEqual(2);
-      
+
       const proj2Found = server.findResourcesByProject('proj2');
 
       expect(proj2Found.length).toBeGreaterThanOrEqual(1);
-      
+
       const nonExistentFound = server.findResourcesByProject('non-existent');
 
       expect(nonExistentFound).toHaveLength(0);
@@ -206,27 +212,31 @@ describe('ResourceServer Integration', () => {
     it('should track resource access statistics', async () => {
       // Clean state first
       server.cleanupAllResources();
-      
+
       const testResource = createTestResource({
-        uri: 'jcvd://project/stats-test/resource'
+        uri: 'jcvd://project/stats-test/resource',
       });
 
       server.registerResource(testResource);
 
       // Access the resource multiple times
-      await server.handleMessage(JSON.stringify({
-        jsonrpc: '2.0',
-        id: 5,
-        method: 'resources/read',
-        params: { uri: 'jcvd://project/stats-test/resource' }
-      }));
+      await server.handleMessage(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 5,
+          method: 'resources/read',
+          params: { uri: 'jcvd://project/stats-test/resource' },
+        })
+      );
 
-      await server.handleMessage(JSON.stringify({
-        jsonrpc: '2.0',
-        id: 6,
-        method: 'resources/read',
-        params: { uri: 'jcvd://project/stats-test/resource' }
-      }));
+      await server.handleMessage(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 6,
+          method: 'resources/read',
+          params: { uri: 'jcvd://project/stats-test/resource' },
+        })
+      );
 
       // Check statistics
       const stats = server.getResourceStatistics();
@@ -237,7 +247,7 @@ describe('ResourceServer Integration', () => {
 
     it('should check resource health', async () => {
       const testResource = createTestResource({
-        uri: 'jcvd://project/health-test/resource'
+        uri: 'jcvd://project/health-test/resource',
       });
 
       server.registerResource(testResource);
@@ -254,12 +264,12 @@ describe('ResourceServer Integration', () => {
     it('should cleanup resources by project', async () => {
       // Ensure clean state
       server.cleanupAllResources();
-      
+
       // Register resources for multiple projects
       const resources = [
         createTestResource({ uri: 'jcvd://project/cleanup1/resource1' }),
         createTestResource({ uri: 'jcvd://project/cleanup1/resource2' }),
-        createTestResource({ uri: 'jcvd://project/cleanup2/resource1' })
+        createTestResource({ uri: 'jcvd://project/cleanup2/resource1' }),
       ];
 
       server.registerResources(resources);
@@ -275,7 +285,7 @@ describe('ResourceServer Integration', () => {
       // Register multiple resources
       const resources = [
         createTestResource({ uri: 'jcvd://project/cleanup/resource1' }),
-        createTestResource({ uri: 'jcvd://project/cleanup/resource2' })
+        createTestResource({ uri: 'jcvd://project/cleanup/resource2' }),
       ];
 
       server.registerResources(resources);
@@ -292,27 +302,29 @@ describe('ResourceServer Integration', () => {
       // Set up error event listener to catch the error event (expected behavior)
       const errorEvents: any[] = [];
 
-      server.on('error', (event) => errorEvents.push(event));
-      
+      server.on('error', event => errorEvents.push(event));
+
       const invalidResponse = await server.handleMessage('invalid json');
-      
+
       expect(invalidResponse).toBeTruthy();
       const result = JSON.parse(invalidResponse!);
 
       expect(result.error).toBeDefined();
       expect(result.error.code).toBe(-32_700); // Parse error
-      
+
       // Verify that an error event was emitted
       expect(errorEvents.length).toBeGreaterThan(0);
     });
 
     it('should handle unsupported resource methods', async () => {
-      const unsupportedResponse = await server.handleMessage(JSON.stringify({
-        jsonrpc: '2.0',
-        id: 7,
-        method: 'resources/unsupported',
-        params: {}
-      }));
+      const unsupportedResponse = await server.handleMessage(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 7,
+          method: 'resources/unsupported',
+          params: {},
+        })
+      );
 
       expect(unsupportedResponse).toBeTruthy();
       const result = JSON.parse(unsupportedResponse!);
@@ -329,8 +341,8 @@ describe('ResourceServer Integration', () => {
           description: 'Test',
           contentType: 'application/json',
           version: '1.0.0',
-          capabilities: ['read']
-        }
+          capabilities: ['read'],
+        },
       } as any;
 
       expect(() => {
@@ -343,10 +355,10 @@ describe('ResourceServer Integration', () => {
     it('should maintain resources across server restart', async () => {
       // Clean state first
       server.cleanupAllResources();
-      
+
       // Register a resource
       const testResource = createTestResource({
-        uri: 'jcvd://project/lifecycle-test/resource'
+        uri: 'jcvd://project/lifecycle-test/resource',
       });
 
       server.registerResource(testResource);
@@ -355,7 +367,7 @@ describe('ResourceServer Integration', () => {
       // Restart server
       await server.restart();
       expect(server.isRunning()).toBe(true);
-      
+
       // Resources should still be available (in-memory registry)
       expect(server.getAllResources().length).toBeGreaterThanOrEqual(1);
     });
@@ -363,16 +375,16 @@ describe('ResourceServer Integration', () => {
     it('should emit resource events', async () => {
       // Clean state first
       server.cleanupAllResources();
-      
+
       const events: any[] = [];
-      
-      server.on('resource-registered', (event) => events.push({ type: 'registered', ...event }));
-      server.on('resource-unregistered', (event) => events.push({ type: 'unregistered', ...event }));
-      server.on('resource-accessed', (event) => events.push({ type: 'accessed', ...event }));
+
+      server.on('resource-registered', event => events.push({ type: 'registered', ...event }));
+      server.on('resource-unregistered', event => events.push({ type: 'unregistered', ...event }));
+      server.on('resource-accessed', event => events.push({ type: 'accessed', ...event }));
 
       // Register a resource
       const testResource = createTestResource({
-        uri: 'jcvd://project/events-test/resource'
+        uri: 'jcvd://project/events-test/resource',
       });
 
       server.registerResource(testResource);
@@ -389,16 +401,18 @@ describe('ResourceServer Integration', () => {
   });
 
   // Helper function to create test resources
-  function createTestResource(options: {
-    uri?: string;
-    name?: string;
-    content?: any;
-    contentType?: string;
-  } = {}) {
+  function createTestResource(
+    options: {
+      uri?: string;
+      name?: string;
+      content?: any;
+      contentType?: string;
+    } = {}
+  ) {
     const mockContent = vi.fn().mockResolvedValue({
       content: options.content || { test: 'data' },
       contentType: options.contentType || 'application/json',
-      size: JSON.stringify(options.content || { test: 'data' }).length
+      size: JSON.stringify(options.content || { test: 'data' }).length,
     });
 
     const metadata: ResourceMetadata = {
@@ -406,7 +420,7 @@ describe('ResourceServer Integration', () => {
       description: 'A test resource for integration testing',
       contentType: options.contentType || 'application/json',
       version: '1.0.0',
-      capabilities: ['read']
+      capabilities: ['read'],
     };
 
     return new BaseResource(

@@ -11,7 +11,6 @@ import { join } from 'node:path';
 
 import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
-
 // Import provider implementations
 import { CapabilityAwareFactory } from '../../../src/providers/capabilities/capability-aware-factory.js';
 import { ProviderFactory } from '../../../src/providers/factory/index.js';

@@ -1,6 +1,6 @@
 /**
  * MCP Tool Protocol Handler
- * 
+ *
  * Handles MCP tool protocol messages including tool listing,
  * execution, and capability advertisement. Integrates with
  * the tool registry to provide MCP-compliant tool services.
@@ -12,15 +12,8 @@ import { ToolError } from '../tools/tool-interface.js';
 import { ToolMetadataManager } from '../tools/tool-metadata.js';
 
 import type { Logger } from '../../utils/logger.js';
-import type { 
-  JSONRPCRequest, 
-  JSONRPCResponse, 
-  JSONRPCError 
-} from '../server/protocol-handler.js';
-import type { 
-  ToolExecutionContext, 
-  ToolExecutionResult 
-} from '../tools/tool-interface.js';
+import type { JSONRPCRequest, JSONRPCResponse, JSONRPCError } from '../server/protocol-handler.js';
+import type { ToolExecutionContext, ToolExecutionResult } from '../tools/tool-interface.js';
 import type { MCPToolSchema } from '../tools/tool-metadata.js';
 import type { ToolRegistry } from '../tools/tool-registry.js';
 
@@ -38,7 +31,7 @@ export interface ToolListParams {
 export interface ToolListResponse {
   /** Array of available tools */
   tools: MCPToolSchema[];
-  
+
   /** Optional cursor for next page */
   nextCursor?: string;
 }
@@ -49,7 +42,7 @@ export interface ToolListResponse {
 export interface ToolCallParams {
   /** Name of the tool to execute */
   name: string;
-  
+
   /** Arguments to pass to the tool */
   arguments?: any;
 }
@@ -62,12 +55,12 @@ export interface ToolCallResponse {
   content: {
     /** Content type */
     type: 'text' | 'resource';
-    
+
     /** Content text or resource reference */
     text?: string;
     resource?: string;
   }[];
-  
+
   /** Whether the tool call was successful */
   isError?: boolean;
 }
@@ -78,16 +71,16 @@ export interface ToolCallResponse {
 export interface ToolExecutionStats {
   /** Total tool executions */
   totalExecutions: number;
-  
+
   /** Successful executions */
   successfulExecutions: number;
-  
+
   /** Failed executions */
   failedExecutions: number;
-  
+
   /** Average execution time in milliseconds */
   averageExecutionTime: number;
-  
+
   /** Tool execution counts by tool name */
   executionsByTool: Record<string, number>;
 }
@@ -105,13 +98,13 @@ export class ToolHandler {
     this.logger = createLogger('tool-handler');
     this.registry = registry;
     this.metadataManager = new ToolMetadataManager();
-    
+
     this.executionStats = {
       totalExecutions: 0,
       successfulExecutions: 0,
       failedExecutions: 0,
       averageExecutionTime: 0,
-      executionsByTool: {}
+      executionsByTool: {},
     };
 
     this.logger.debug('Tool handler initialized');
@@ -128,40 +121,37 @@ export class ToolHandler {
       const tools = this.registry.getAllTools();
 
       // Convert tools to MCP schema format
-      const mcpTools: MCPToolSchema[] = tools.map(tool => 
+      const mcpTools: MCPToolSchema[] = tools.map(tool =>
         this.metadataManager.generateMCPSchema(tool.metadata)
       );
 
       // TODO: Implement pagination if needed
       const response: ToolListResponse = {
-        tools: mcpTools
+        tools: mcpTools,
       };
 
       this.logger.info('Tools list request completed', {
         id: request.id,
-        toolCount: mcpTools.length
+        toolCount: mcpTools.length,
       });
 
       return {
         jsonrpc: '2.0',
         id: request.id,
-        result: response
+        result: response,
       };
-
     } catch (error) {
       this.logger.error('Tools list request failed', {
         id: request.id,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return {
         jsonrpc: '2.0',
         id: request.id,
-        error: this.createError(
-          ProtocolHandler.ErrorCodes.INTERNAL_ERROR,
-          'Failed to list tools',
-          { details: error instanceof Error ? error.message : String(error) }
-        )
+        error: this.createError(ProtocolHandler.ErrorCodes.INTERNAL_ERROR, 'Failed to list tools', {
+          details: error instanceof Error ? error.message : String(error),
+        }),
       };
     }
   }
@@ -171,15 +161,15 @@ export class ToolHandler {
    */
   async handleToolCall(request: JSONRPCRequest): Promise<JSONRPCResponse> {
     const startTime = Date.now();
-    
+
     try {
       this.logger.debug('Handling tool call request', {
         id: request.id,
-        params: request.params
+        params: request.params,
       });
 
       const params = request.params as ToolCallParams;
-      
+
       if (!params?.name) {
         return {
           jsonrpc: '2.0',
@@ -188,7 +178,7 @@ export class ToolHandler {
             ProtocolHandler.ErrorCodes.INVALID_PARAMS,
             'Tool name is required',
             { provided: params }
-          )
+          ),
         };
       }
 
@@ -198,7 +188,7 @@ export class ToolHandler {
       if (!tool) {
         this.logger.warn('Tool not found', {
           id: request.id,
-          toolName: params.name
+          toolName: params.name,
         });
 
         return {
@@ -208,7 +198,7 @@ export class ToolHandler {
             ProtocolHandler.ErrorCodes.METHOD_NOT_FOUND,
             `Tool not found: ${params.name}`,
             { toolName: params.name }
-          )
+          ),
         };
       }
 
@@ -218,7 +208,7 @@ export class ToolHandler {
       if (!isAvailable) {
         this.logger.warn('Tool unavailable', {
           id: request.id,
-          toolName: params.name
+          toolName: params.name,
         });
 
         return {
@@ -228,7 +218,7 @@ export class ToolHandler {
             ProtocolHandler.ErrorCodes.INTERNAL_ERROR,
             `Tool unavailable: ${params.name}`,
             { toolName: params.name, reason: 'Tool is currently unavailable' }
-          )
+          ),
         };
       }
 
@@ -238,8 +228,8 @@ export class ToolHandler {
         timestamp: Date.now(),
         metadata: {
           source: 'mcp',
-          protocolVersion: '2024-11-05'
-        }
+          protocolVersion: '2024-11-05',
+        },
       };
 
       // Execute tool
@@ -256,19 +246,18 @@ export class ToolHandler {
         id: request.id,
         toolName: params.name,
         success: result.success,
-        executionTime
+        executionTime,
       });
 
       return {
         jsonrpc: '2.0',
         id: request.id,
-        result: mcpResponse
+        result: mcpResponse,
       };
-
     } catch (error) {
       const executionTime = Date.now() - startTime;
       const params = request.params as ToolCallParams;
-      
+
       // Update statistics for failed execution
       if (params?.name) {
         this.updateExecutionStats(params.name, false, executionTime);
@@ -278,7 +267,7 @@ export class ToolHandler {
         id: request.id,
         toolName: params?.name,
         error: error instanceof Error ? error.message : String(error),
-        executionTime
+        executionTime,
       });
 
       // Handle specific tool errors
@@ -286,14 +275,10 @@ export class ToolHandler {
         return {
           jsonrpc: '2.0',
           id: request.id,
-          error: this.createError(
-            this.mapToolErrorToMCPCode(error.code),
-            error.message,
-            { 
-              toolName: error.toolName,
-              details: error.details 
-            }
-          )
+          error: this.createError(this.mapToolErrorToMCPCode(error.code), error.message, {
+            toolName: error.toolName,
+            details: error.details,
+          }),
         };
       }
 
@@ -303,11 +288,11 @@ export class ToolHandler {
         error: this.createError(
           ProtocolHandler.ErrorCodes.INTERNAL_ERROR,
           'Tool execution failed',
-          { 
+          {
             details: error instanceof Error ? error.message : String(error),
-            toolName: params?.name
+            toolName: params?.name,
           }
-        )
+        ),
       };
     }
   }
@@ -328,7 +313,7 @@ export class ToolHandler {
       successfulExecutions: 0,
       failedExecutions: 0,
       averageExecutionTime: 0,
-      executionsByTool: {}
+      executionsByTool: {},
     };
 
     this.logger.info('Execution statistics reset');
@@ -345,9 +330,8 @@ export class ToolHandler {
       if (result.data) {
         content.push({
           type: 'text',
-          text: typeof result.data === 'string' 
-            ? result.data 
-            : JSON.stringify(result.data, null, 2)
+          text:
+            typeof result.data === 'string' ? result.data : JSON.stringify(result.data, null, 2),
         });
       }
 
@@ -356,7 +340,7 @@ export class ToolHandler {
         for (const resource of result.metadata.affectedResources) {
           content.push({
             type: 'resource',
-            resource
+            resource,
           });
         }
       }
@@ -364,7 +348,7 @@ export class ToolHandler {
       // For failed results, include error information
       content.push({
         type: 'text',
-        text: result.error?.message || 'Tool execution failed'
+        text: result.error?.message || 'Tool execution failed',
       });
     }
 
@@ -372,13 +356,13 @@ export class ToolHandler {
     if (content.length === 0) {
       content.push({
         type: 'text',
-        text: result.success ? 'Tool executed successfully' : 'Tool execution failed'
+        text: result.success ? 'Tool executed successfully' : 'Tool execution failed',
       });
     }
 
     return {
       content,
-      isError: !result.success
+      isError: !result.success,
     };
   }
 
@@ -388,7 +372,7 @@ export class ToolHandler {
   private updateExecutionStats(toolName: string, success: boolean, executionTime: number): void {
     this.executionStats.totalExecutions++;
     this.registry.incrementExecutionCount();
-    
+
     if (success) {
       this.executionStats.successfulExecutions++;
     } else {
@@ -396,12 +380,15 @@ export class ToolHandler {
     }
 
     // Update average execution time
-    const totalTime = this.executionStats.averageExecutionTime * (this.executionStats.totalExecutions - 1) + executionTime;
+    const totalTime =
+      this.executionStats.averageExecutionTime * (this.executionStats.totalExecutions - 1) +
+      executionTime;
 
     this.executionStats.averageExecutionTime = totalTime / this.executionStats.totalExecutions;
 
     // Update per-tool statistics
-    this.executionStats.executionsByTool[toolName] = (this.executionStats.executionsByTool[toolName] || 0) + 1;
+    this.executionStats.executionsByTool[toolName] =
+      (this.executionStats.executionsByTool[toolName] || 0) + 1;
   }
 
   /**
@@ -449,8 +436,8 @@ export class ToolHandler {
   getCapabilities(): any {
     return {
       tools: {
-        listChanged: false // We don't currently support dynamic tool list changes
-      }
+        listChanged: false, // We don't currently support dynamic tool list changes
+      },
     };
   }
 
@@ -470,7 +457,7 @@ export class ToolHandler {
 
     return {
       valid: errors.length === 0,
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors.length > 0 ? errors : undefined,
     } as { valid: boolean; errors?: string[] };
   }
 
@@ -479,12 +466,12 @@ export class ToolHandler {
    */
   getStatus(): any {
     const registryStats = this.registry.getStatistics();
-    
+
     return {
       totalTools: registryStats.totalTools,
       availableTools: registryStats.availableTools,
       executionStats: this.executionStats,
-      uptime: this.registry.getUptime()
+      uptime: this.registry.getUptime(),
     };
   }
 }

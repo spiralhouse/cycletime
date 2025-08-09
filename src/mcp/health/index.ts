@@ -13,7 +13,4 @@ export type {
   HealthCheckOperationResult,
 } from './health-check.js';
 
-export type {
-  ComponentStatusType,
-  ComponentStatusInfo,
-} from './component-status.js';
+export type { ComponentStatusType, ComponentStatusInfo } from './component-status.js';

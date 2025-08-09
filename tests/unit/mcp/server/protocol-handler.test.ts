@@ -21,7 +21,7 @@ describe('ProtocolHandler', () => {
       });
 
       const result = handler.parseMessage(validRequest);
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toEqual({
         jsonrpc: '2.0',
@@ -47,7 +47,7 @@ describe('ProtocolHandler', () => {
       });
 
       const result = handler.parseMessage(validNotification);
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toEqual({
         jsonrpc: '2.0',
@@ -61,7 +61,7 @@ describe('ProtocolHandler', () => {
       const invalidJson = '{ invalid json }';
 
       const result = handler.parseMessage(invalidJson);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Invalid JSON');
     });
@@ -74,7 +74,7 @@ describe('ProtocolHandler', () => {
       });
 
       const result = handler.parseMessage(missingJsonRpc);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Missing jsonrpc field');
     });
@@ -88,7 +88,7 @@ describe('ProtocolHandler', () => {
       });
 
       const result = handler.parseMessage(wrongVersion);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Unsupported JSON-RPC version');
     });
@@ -101,7 +101,7 @@ describe('ProtocolHandler', () => {
       });
 
       const result = handler.parseMessage(missingMethod);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Missing method field');
     });
@@ -162,21 +162,21 @@ describe('ProtocolHandler', () => {
     it('should support current MCP protocol version', () => {
       const handler = new ProtocolHandler();
       const result = handler.isSupportedProtocolVersion('2024-11-05');
-      
+
       expect(result).toBe(true);
     });
 
     it('should reject unsupported protocol versions', () => {
       const handler = new ProtocolHandler();
       const result = handler.isSupportedProtocolVersion('2023-01-01');
-      
+
       expect(result).toBe(false);
     });
 
     it('should return supported protocol versions', () => {
       const handler = new ProtocolHandler();
       const versions = handler.getSupportedProtocolVersions();
-      
+
       expect(versions).toContain('2024-11-05');
       expect(Array.isArray(versions)).toBe(true);
       expect(versions.length).toBeGreaterThan(0);
@@ -186,7 +186,7 @@ describe('ProtocolHandler', () => {
       const handler = new ProtocolHandler();
       const clientVersions = ['2024-11-05', '2023-12-01'];
       const negotiated = handler.negotiateProtocolVersion(clientVersions);
-      
+
       expect(negotiated).toBe('2024-11-05');
     });
 
@@ -194,7 +194,7 @@ describe('ProtocolHandler', () => {
       const handler = new ProtocolHandler();
       const clientVersions = ['2023-01-01', '2022-12-31'];
       const negotiated = handler.negotiateProtocolVersion(clientVersions);
-      
+
       expect(negotiated).toBeNull();
     });
   });
@@ -210,7 +210,7 @@ describe('ProtocolHandler', () => {
       };
 
       const result = handler.validateMessage(validRequest);
-      
+
       expect(result.isValid).toBe(true);
       expect(result.messageType).toBe('request');
     });
@@ -224,7 +224,7 @@ describe('ProtocolHandler', () => {
       };
 
       const result = handler.validateMessage(validNotification);
-      
+
       expect(result.isValid).toBe(true);
       expect(result.messageType).toBe('notification');
     });
@@ -238,7 +238,7 @@ describe('ProtocolHandler', () => {
       };
 
       const result = handler.validateMessage(validResponse);
-      
+
       expect(result.isValid).toBe(true);
       expect(result.messageType).toBe('response');
     });
@@ -251,7 +251,7 @@ describe('ProtocolHandler', () => {
       };
 
       const result = handler.validateMessage(invalidMessage);
-      
+
       expect(result.isValid).toBe(false);
       expect(result.error).toBeDefined();
     });

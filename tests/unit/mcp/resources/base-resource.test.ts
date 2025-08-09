@@ -1,6 +1,6 @@
 /**
  * Base Resource Implementation Tests
- * 
+ *
  * Tests for the base resource class that provides common functionality
  * for all JCVD MCP resources including caching, validation, and lifecycle management.
  */
@@ -9,16 +9,21 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
 import { BaseResource } from '../../../../src/mcp/resources/base-resource.js';
 
-import type { ResourceMetadata, ResourceContent } from '../../../../src/mcp/resources/resource-interface.js';
+import type {
+  ResourceMetadata,
+  ResourceContent,
+} from '../../../../src/mcp/resources/resource-interface.js';
 
 describe('BaseResource', () => {
   // Helper function to create a basic resource for tests
-  const createTestResource = (options: {
-    uri?: string;
-    metadata?: Partial<ResourceMetadata>;
-    mockContent?: vi.MockedFunction<any>;
-    mockAvailability?: vi.MockedFunction<any>;
-  } = {}) => {
+  const createTestResource = (
+    options: {
+      uri?: string;
+      metadata?: Partial<ResourceMetadata>;
+      mockContent?: vi.MockedFunction<any>;
+      mockAvailability?: vi.MockedFunction<any>;
+    } = {}
+  ) => {
     const mockGetContent = options.mockContent || vi.fn();
     const mockCheckAvailability = options.mockAvailability || vi.fn();
 
@@ -29,7 +34,7 @@ describe('BaseResource', () => {
       version: '1.0.0',
       capabilities: ['read'],
       ttl: 300, // 5 minutes
-      ...options.metadata
+      ...options.metadata,
     };
 
     const uri = options.uri || 'jcvd://project/test-123/context';
@@ -37,14 +42,14 @@ describe('BaseResource', () => {
     return {
       resource: new BaseResource(uri, defaultMetadata, mockGetContent, mockCheckAvailability),
       mockGetContent,
-      mockCheckAvailability
+      mockCheckAvailability,
     };
   };
 
   describe('Construction and Basic Properties', () => {
     it('should initialize with correct URI and metadata', () => {
       const { resource } = createTestResource();
-      
+
       expect(resource.uri).toBe('jcvd://project/test-123/context');
       expect(resource.metadata.name).toBe('Test Resource');
       expect(resource.metadata.contentType).toBe('application/json');
@@ -59,12 +64,7 @@ describe('BaseResource', () => {
 
     it('should require valid metadata during construction', () => {
       expect(() => {
-        new BaseResource(
-          'jcvd://project/test/context',
-          null as any,
-          vi.fn(),
-          vi.fn()
-        );
+        new BaseResource('jcvd://project/test/context', null as any, vi.fn(), vi.fn());
       }).toThrow('Resource metadata is required');
     });
 
@@ -77,7 +77,7 @@ describe('BaseResource', () => {
             description: 'Test',
             contentType: 'application/json',
             version: '1.0.0',
-            capabilities: ['read']
+            capabilities: ['read'],
           },
           null as any,
           vi.fn()
@@ -91,7 +91,7 @@ describe('BaseResource', () => {
       const mockContent: ResourceContent = {
         content: { test: 'data' },
         contentType: 'application/json',
-        size: 15
+        size: 15,
       };
 
       const { resource, mockGetContent } = createTestResource();
@@ -106,7 +106,7 @@ describe('BaseResource', () => {
 
     it('should handle content provider errors gracefully', async () => {
       const { resource, mockGetContent } = createTestResource({
-        uri: 'jcvd://project/test-error/context'
+        uri: 'jcvd://project/test-error/context',
       });
 
       mockGetContent.mockRejectedValue(new Error('Database connection failed'));
@@ -119,7 +119,7 @@ describe('BaseResource', () => {
       const mockContent: ResourceContent = {
         content: { test: 'data' },
         contentType: 'text/plain', // Mismatched content type
-        size: 15
+        size: 15,
       };
 
       const { resource, mockGetContent } = createTestResource();
@@ -142,7 +142,7 @@ describe('BaseResource', () => {
           contentType: 'application/json',
           version: '1.0.0',
           capabilities: ['read'],
-          ttl: 300 // 5 minutes
+          ttl: 300, // 5 minutes
         },
         testMockGetContent
       );
@@ -150,7 +150,7 @@ describe('BaseResource', () => {
       const mockContent: ResourceContent = {
         content: { test: 'data' },
         contentType: 'application/json',
-        size: 15
+        size: 15,
       };
 
       testMockGetContent.mockResolvedValue(mockContent);
@@ -170,7 +170,7 @@ describe('BaseResource', () => {
     it('should not cache content when TTL is not specified', async () => {
       // Create a fresh mock for this test
       const testMockGetContent = vi.fn();
-      
+
       const noCacheResource = new BaseResource(
         'jcvd://project/test-nocache/context',
         {
@@ -178,7 +178,7 @@ describe('BaseResource', () => {
           description: 'Test',
           contentType: 'application/json',
           version: '1.0.0',
-          capabilities: ['read']
+          capabilities: ['read'],
           // No TTL specified
         },
         testMockGetContent
@@ -187,7 +187,7 @@ describe('BaseResource', () => {
       const mockContent: ResourceContent = {
         content: { test: 'data' },
         contentType: 'application/json',
-        size: 15
+        size: 15,
       };
 
       testMockGetContent.mockResolvedValue(mockContent);
@@ -195,14 +195,14 @@ describe('BaseResource', () => {
       // Each call should invoke content provider
       await noCacheResource.getContent();
       await noCacheResource.getContent();
-      
+
       expect(testMockGetContent).toHaveBeenCalledTimes(2);
     });
 
     it('should expire cached content after TTL', async () => {
       // Create a fresh mock for this test
       const testMockGetContent = vi.fn();
-      
+
       const shortTTLResource = new BaseResource(
         'jcvd://project/test-shortttl/context',
         {
@@ -211,7 +211,7 @@ describe('BaseResource', () => {
           contentType: 'application/json',
           version: '1.0.0',
           capabilities: ['read'],
-          ttl: 0.001 // 1ms TTL
+          ttl: 0.001, // 1ms TTL
         },
         testMockGetContent
       );
@@ -219,7 +219,7 @@ describe('BaseResource', () => {
       const mockContent: ResourceContent = {
         content: { test: 'data' },
         contentType: 'application/json',
-        size: 15
+        size: 15,
       };
 
       testMockGetContent.mockResolvedValue(mockContent);
@@ -247,7 +247,7 @@ describe('BaseResource', () => {
           contentType: 'application/json',
           version: '1.0.0',
           capabilities: ['read'],
-          ttl: 300 // 5 minutes
+          ttl: 300, // 5 minutes
         },
         testMockGetContent
       );
@@ -255,7 +255,7 @@ describe('BaseResource', () => {
       const mockContent: ResourceContent = {
         content: { test: 'data' },
         contentType: 'application/json',
-        size: 15
+        size: 15,
       };
 
       testMockGetContent.mockResolvedValue(mockContent);
@@ -294,7 +294,7 @@ describe('BaseResource', () => {
           description: 'Test',
           contentType: 'application/json',
           version: '1.0.0',
-          capabilities: ['read']
+          capabilities: ['read'],
         },
         testMockGetContent,
         testMockCheckAvailability
@@ -317,7 +317,7 @@ describe('BaseResource', () => {
           description: 'Test',
           contentType: 'application/json',
           version: '1.0.0',
-          capabilities: ['read']
+          capabilities: ['read'],
         },
         mockGetContent
         // No availability checker provided
@@ -337,7 +337,7 @@ describe('BaseResource', () => {
         contentType: 'application/json',
         version: '1.1.0',
         capabilities: ['read', 'write'],
-        ttl: 600
+        ttl: 600,
       };
 
       baseResource.updateMetadata(newMetadata);
@@ -359,7 +359,7 @@ describe('BaseResource', () => {
           contentType: 'application/json',
           version: '1.0.0',
           capabilities: ['read'],
-          ttl: 300 // 5 minutes
+          ttl: 300, // 5 minutes
         },
         testMockGetContent
       );
@@ -367,7 +367,7 @@ describe('BaseResource', () => {
       const mockContent: ResourceContent = {
         content: { test: 'data' },
         contentType: 'application/json',
-        size: 15
+        size: 15,
       };
 
       testMockGetContent.mockResolvedValue(mockContent);
@@ -379,7 +379,7 @@ describe('BaseResource', () => {
       // Update metadata
       testResource.updateMetadata({
         ...testResource.metadata,
-        version: '1.1.0'
+        version: '1.1.0',
       });
 
       // Next call should not use cache
@@ -394,7 +394,7 @@ describe('BaseResource', () => {
       setTimeout(() => {
         baseResource.updateMetadata({
           ...baseResource.metadata,
-          description: 'Updated description'
+          description: 'Updated description',
         });
 
         expect(baseResource.metadata.lastModified).not.toEqual(originalLastModified);
@@ -431,7 +431,7 @@ describe('BaseResource', () => {
           contentType: 'application/json',
           version: '1.0.0',
           capabilities: ['read'],
-          ttl: 300 // 5 minutes to enable caching
+          ttl: 300, // 5 minutes to enable caching
         },
         testMockGetContent
       );
@@ -439,7 +439,7 @@ describe('BaseResource', () => {
       const mockContent: ResourceContent = {
         content: { test: 'data' },
         contentType: 'application/json',
-        size: 15
+        size: 15,
       };
 
       testMockGetContent.mockResolvedValue(mockContent);
@@ -459,17 +459,18 @@ describe('BaseResource', () => {
 
     it('should track error statistics', async () => {
       // Create a fresh mock for this test
-      const testMockGetContent = vi.fn()
+      const testMockGetContent = vi
+        .fn()
         .mockResolvedValueOnce({
           content: { test: 'data' },
           contentType: 'application/json',
-          size: 15
+          size: 15,
         })
         .mockRejectedValueOnce(new Error('Test error'))
         .mockResolvedValueOnce({
           content: { test: 'data' },
           contentType: 'application/json',
-          size: 15
+          size: 15,
         });
 
       const testResource = new BaseResource(
@@ -479,7 +480,7 @@ describe('BaseResource', () => {
           description: 'Test',
           contentType: 'application/json',
           version: '1.0.0',
-          capabilities: ['read']
+          capabilities: ['read'],
         },
         testMockGetContent
       );

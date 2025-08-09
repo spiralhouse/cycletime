@@ -4,11 +4,11 @@
 
 import { createLogger } from '../../utils/logger.js';
 
-import { 
-  DEFAULT_MCP_CONFIG, 
+import {
+  DEFAULT_MCP_CONFIG,
   PRODUCTION_MCP_CONFIG,
   MCP_ENV_VAR_MAPPING,
-  type MCPServerConfig 
+  type MCPServerConfig,
 } from './mcp-config.js';
 
 import type { Logger } from '../../utils/logger.js';
@@ -58,7 +58,9 @@ export class MCPConfigManager {
   /**
    * Load MCP configuration for production environment
    */
-  static async loadProductionMCPConfig(overrides?: Partial<MCPServerConfig>): Promise<MCPServerConfig> {
+  static async loadProductionMCPConfig(
+    overrides?: Partial<MCPServerConfig>
+  ): Promise<MCPServerConfig> {
     this.logger.debug('Loading production MCP configuration...');
 
     // Start with production defaults
@@ -119,22 +121,38 @@ export class MCPConfigManager {
       throw new Error('MCP configuration validation failed: server configuration is required');
     }
 
-    if (!config.server.name || typeof config.server.name !== 'string' || config.server.name.trim() === '') {
-      throw new Error('MCP configuration validation failed: server.name is required and must be non-empty');
+    if (
+      !config.server.name ||
+      typeof config.server.name !== 'string' ||
+      config.server.name.trim() === ''
+    ) {
+      throw new Error(
+        'MCP configuration validation failed: server.name is required and must be non-empty'
+      );
     }
 
-    if (!config.server.version || typeof config.server.version !== 'string' || config.server.version.trim() === '') {
-      throw new Error('MCP configuration validation failed: server.version is required and must be non-empty');
+    if (
+      !config.server.version ||
+      typeof config.server.version !== 'string' ||
+      config.server.version.trim() === ''
+    ) {
+      throw new Error(
+        'MCP configuration validation failed: server.version is required and must be non-empty'
+      );
     }
 
     if (!config.server.transport || !['stdio', 'websocket'].includes(config.server.transport)) {
-      throw new Error('MCP configuration validation failed: transport must be either "stdio" or "websocket"');
+      throw new Error(
+        'MCP configuration validation failed: transport must be either "stdio" or "websocket"'
+      );
     }
 
     // Validate websocket-specific requirements
     if (config.server.transport === 'websocket') {
       if (!config.server.port || typeof config.server.port !== 'number') {
-        throw new Error('MCP configuration validation failed: port is required when transport is "websocket"');
+        throw new Error(
+          'MCP configuration validation failed: port is required when transport is "websocket"'
+        );
       }
 
       if (config.server.port < 1 || config.server.port > 65_535) {
@@ -161,7 +179,9 @@ export class MCPConfigManager {
     }
 
     if (typeof config.tools.validationEnabled !== 'boolean') {
-      throw new Error('MCP configuration validation failed: tools.validationEnabled must be a boolean');
+      throw new Error(
+        'MCP configuration validation failed: tools.validationEnabled must be a boolean'
+      );
     }
 
     // Validate health configuration
@@ -174,8 +194,13 @@ export class MCPConfigManager {
       throw new Error('MCP configuration validation failed: provider configuration is required');
     }
 
-    if (!config.provider.type || !['sqlite', 'linear', 'github', 'jira'].includes(config.provider.type)) {
-      throw new Error('MCP configuration validation failed: provider.type must be one of: sqlite, linear, github, jira');
+    if (
+      !config.provider.type ||
+      !['sqlite', 'linear', 'github', 'jira'].includes(config.provider.type)
+    ) {
+      throw new Error(
+        'MCP configuration validation failed: provider.type must be one of: sqlite, linear, github, jira'
+      );
     }
 
     if (!config.provider.config || typeof config.provider.config !== 'object') {
@@ -183,24 +208,49 @@ export class MCPConfigManager {
     }
 
     // Validate optional numeric fields
-    if (config.resources.cacheSize !== undefined && (typeof config.resources.cacheSize !== 'number' || config.resources.cacheSize < 1)) {
-      throw new Error('MCP configuration validation failed: resources.cacheSize must be a positive number');
+    if (
+      config.resources.cacheSize !== undefined &&
+      (typeof config.resources.cacheSize !== 'number' || config.resources.cacheSize < 1)
+    ) {
+      throw new Error(
+        'MCP configuration validation failed: resources.cacheSize must be a positive number'
+      );
     }
 
-    if (config.resources.cacheTTL !== undefined && (typeof config.resources.cacheTTL !== 'number' || config.resources.cacheTTL < 1)) {
-      throw new Error('MCP configuration validation failed: resources.cacheTTL must be a positive number');
+    if (
+      config.resources.cacheTTL !== undefined &&
+      (typeof config.resources.cacheTTL !== 'number' || config.resources.cacheTTL < 1)
+    ) {
+      throw new Error(
+        'MCP configuration validation failed: resources.cacheTTL must be a positive number'
+      );
     }
 
-    if (config.tools.executionTimeout !== undefined && (typeof config.tools.executionTimeout !== 'number' || config.tools.executionTimeout < 1000)) {
-      throw new Error('MCP configuration validation failed: tools.executionTimeout must be at least 1000ms');
+    if (
+      config.tools.executionTimeout !== undefined &&
+      (typeof config.tools.executionTimeout !== 'number' || config.tools.executionTimeout < 1000)
+    ) {
+      throw new Error(
+        'MCP configuration validation failed: tools.executionTimeout must be at least 1000ms'
+      );
     }
 
-    if (config.health.checkInterval !== undefined && (typeof config.health.checkInterval !== 'number' || config.health.checkInterval < 1000)) {
-      throw new Error('MCP configuration validation failed: health.checkInterval must be at least 1000ms');
+    if (
+      config.health.checkInterval !== undefined &&
+      (typeof config.health.checkInterval !== 'number' || config.health.checkInterval < 1000)
+    ) {
+      throw new Error(
+        'MCP configuration validation failed: health.checkInterval must be at least 1000ms'
+      );
     }
 
-    if (config.health.timeoutMs !== undefined && (typeof config.health.timeoutMs !== 'number' || config.health.timeoutMs < 100)) {
-      throw new Error('MCP configuration validation failed: health.timeoutMs must be at least 100ms');
+    if (
+      config.health.timeoutMs !== undefined &&
+      (typeof config.health.timeoutMs !== 'number' || config.health.timeoutMs < 100)
+    ) {
+      throw new Error(
+        'MCP configuration validation failed: health.timeoutMs must be at least 100ms'
+      );
     }
 
     this.logger.debug('MCP configuration validation passed');
@@ -209,7 +259,10 @@ export class MCPConfigManager {
   /**
    * Merge two MCP configurations with deep merge logic
    */
-  private static mergeConfigs(base: MCPServerConfig, override: Partial<MCPServerConfig>): MCPServerConfig {
+  private static mergeConfigs(
+    base: MCPServerConfig,
+    override: Partial<MCPServerConfig>
+  ): MCPServerConfig {
     const merged = { ...base };
 
     for (const [key, value] of Object.entries(override)) {

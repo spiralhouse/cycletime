@@ -41,7 +41,7 @@ describe('ServerLifecycle', () => {
       };
 
       const result = await lifecycle.initialize(config);
-      
+
       expect(result.success).toBe(true);
       expect(lifecycle.isInitialized()).toBe(true);
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -57,7 +57,7 @@ describe('ServerLifecycle', () => {
       };
 
       const result = await lifecycle.initialize(invalidConfig as any);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Invalid server configuration');
       expect(lifecycle.isInitialized()).toBe(false);
@@ -72,7 +72,7 @@ describe('ServerLifecycle', () => {
 
       await lifecycle.initialize(config);
       const secondResult = await lifecycle.initialize(config);
-      
+
       expect(secondResult.success).toBe(false);
       expect(secondResult.error).toContain('Server already initialized');
     });
@@ -88,7 +88,7 @@ describe('ServerLifecycle', () => {
 
       await lifecycle.initialize(config);
       const afterInit = Date.now();
-      
+
       const timestamp = lifecycle.getInitializationTimestamp();
 
       expect(timestamp).toBeGreaterThanOrEqual(beforeInit);
@@ -106,7 +106,7 @@ describe('ServerLifecycle', () => {
 
       await lifecycle.initialize(config);
       const result = await lifecycle.start();
-      
+
       expect(result.success).toBe(true);
       expect(lifecycle.isRunning()).toBe(true);
       expect(mockLogger.info).toHaveBeenCalledWith('Server started successfully');
@@ -114,7 +114,7 @@ describe('ServerLifecycle', () => {
 
     it('should reject start without initialization', async () => {
       const result = await lifecycle.start();
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Server not initialized');
       expect(lifecycle.isRunning()).toBe(false);
@@ -130,7 +130,7 @@ describe('ServerLifecycle', () => {
       await lifecycle.initialize(config);
       await lifecycle.start();
       const secondResult = await lifecycle.start();
-      
+
       expect(secondResult.success).toBe(false);
       expect(secondResult.error).toContain('Server already running');
     });
@@ -145,7 +145,7 @@ describe('ServerLifecycle', () => {
 
       await lifecycle.initialize(config);
       const result = await lifecycle.start();
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
       expect(lifecycle.isRunning()).toBe(false);
@@ -164,7 +164,7 @@ describe('ServerLifecycle', () => {
       await lifecycle.initialize(config);
       await lifecycle.start();
       const result = await lifecycle.shutdown();
-      
+
       expect(result.success).toBe(true);
       expect(lifecycle.isRunning()).toBe(false);
       expect(mockLogger.info).toHaveBeenCalledWith('Server shutdown completed');
@@ -172,9 +172,11 @@ describe('ServerLifecycle', () => {
 
     it('should handle shutdown when server not running', async () => {
       const result = await lifecycle.shutdown();
-      
+
       expect(result.success).toBe(true);
-      expect(mockLogger.debug).toHaveBeenCalledWith('Server shutdown requested but server not running');
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        'Server shutdown requested but server not running'
+      );
     });
 
     it('should cleanup resources during shutdown', async () => {
@@ -186,12 +188,12 @@ describe('ServerLifecycle', () => {
 
       await lifecycle.initialize(config);
       await lifecycle.start();
-      
+
       // Verify server is running before shutdown
       expect(lifecycle.isRunning()).toBe(true);
-      
+
       await lifecycle.shutdown();
-      
+
       // Verify cleanup
       expect(lifecycle.isRunning()).toBe(false);
       expect(lifecycle.isInitialized()).toBe(false);
@@ -209,7 +211,7 @@ describe('ServerLifecycle', () => {
       await lifecycle.initialize(config);
       await lifecycle.start();
       const result = await lifecycle.shutdown();
-      
+
       expect(result.success).toBe(true);
       expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.stringContaining('Shutdown timeout'),
@@ -247,9 +249,9 @@ describe('ServerLifecycle', () => {
 
       await lifecycle.initialize(config);
       await lifecycle.start();
-      
+
       const health = lifecycle.getHealthInfo();
-      
+
       expect(health).toEqual({
         status: 'running',
         uptime: expect.any(Number),
@@ -272,10 +274,10 @@ describe('ServerLifecycle', () => {
 
       await lifecycle.initialize(config);
       await lifecycle.start();
-      
+
       // Wait a small amount to ensure uptime > 0
       await new Promise(resolve => setTimeout(resolve, 10));
-      
+
       const uptime = lifecycle.getUptime();
 
       expect(uptime).toBeGreaterThan(0);
@@ -287,7 +289,7 @@ describe('ServerLifecycle', () => {
       const invalidConfig = null;
 
       const result = await lifecycle.initialize(invalidConfig as any);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
       expect(mockLogger.error).toHaveBeenCalled();

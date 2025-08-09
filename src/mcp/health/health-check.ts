@@ -79,7 +79,7 @@ export class HealthChecker extends EventEmitter {
 
   constructor(config: HealthCheckConfig = {}) {
     super();
-    
+
     this.logger = createLogger('health-checker');
     this.config = {
       checkInterval: config.checkInterval ?? 30_000, // 30 seconds
@@ -100,7 +100,7 @@ export class HealthChecker extends EventEmitter {
 
     try {
       this.running = true;
-      
+
       // Perform initial health check (only if components are registered)
       if (this.components.size > 0) {
         await this.performHealthCheck();
@@ -126,7 +126,7 @@ export class HealthChecker extends EventEmitter {
       return { success: true };
     } catch (error) {
       this.running = false;
-      
+
       return {
         success: false,
         error: `Failed to start health checker: ${error instanceof Error ? error.message : String(error)}`,
@@ -166,7 +166,7 @@ export class HealthChecker extends EventEmitter {
    */
   registerComponent(componentName: string, healthCheck: HealthCheckFunction): void {
     this.components.set(componentName, healthCheck);
-    
+
     this.logger.debug('Component registered for health checking', {
       componentName,
       totalComponents: this.components.size,
@@ -178,7 +178,7 @@ export class HealthChecker extends EventEmitter {
    */
   unregisterComponent(componentName: string): void {
     this.components.delete(componentName);
-    
+
     this.logger.debug('Component unregistered from health checking', {
       componentName,
       totalComponents: this.components.size,
@@ -216,7 +216,7 @@ export class HealthChecker extends EventEmitter {
       try {
         const result = await this.runHealthCheckWithTimeout(healthCheckFn);
         const timestamp = Date.now();
-        
+
         componentResults[componentName] = {
           ...result,
           timestamp,
@@ -242,7 +242,7 @@ export class HealthChecker extends EventEmitter {
 
         overallHealthy = false;
         this.emit('component-unhealthy', { component: componentName, result });
-        
+
         this.logger.warn('Health check failed for component', {
           componentName,
           error: error instanceof Error ? error.message : String(error),
@@ -290,7 +290,9 @@ export class HealthChecker extends EventEmitter {
   /**
    * Run health check function with timeout
    */
-  private async runHealthCheckWithTimeout(healthCheckFn: HealthCheckFunction): Promise<HealthCheckResult> {
+  private async runHealthCheckWithTimeout(
+    healthCheckFn: HealthCheckFunction
+  ): Promise<HealthCheckResult> {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error(`Health check timeout after ${this.config.timeoutMs}ms`));

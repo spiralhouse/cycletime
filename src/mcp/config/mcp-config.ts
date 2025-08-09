@@ -129,18 +129,18 @@ export const PRODUCTION_MCP_CONFIG: Partial<MCPServerConfig> = {
  * Environment variable mapping for MCP configuration
  */
 export const MCP_ENV_VAR_MAPPING = {
-  'JCVD_MCP_SERVER_NAME': 'server.name',
-  'JCVD_MCP_SERVER_VERSION': 'server.version',
-  'JCVD_MCP_TRANSPORT': 'server.transport',
-  'JCVD_MCP_PORT': 'server.port',
-  'JCVD_MCP_RESOURCES_ENABLED': 'resources.enabled',
-  'JCVD_MCP_RESOURCES_CACHE_SIZE': 'resources.cacheSize',
-  'JCVD_MCP_RESOURCES_CACHE_TTL': 'resources.cacheTTL',
-  'JCVD_MCP_TOOLS_ENABLED': 'tools.enabled',
-  'JCVD_MCP_TOOLS_VALIDATION_ENABLED': 'tools.validationEnabled',
-  'JCVD_MCP_TOOLS_EXECUTION_TIMEOUT': 'tools.executionTimeout',
-  'JCVD_MCP_HEALTH_CHECK_INTERVAL': 'health.checkInterval',
-  'JCVD_MCP_HEALTH_TIMEOUT': 'health.timeoutMs',
+  JCVD_MCP_SERVER_NAME: 'server.name',
+  JCVD_MCP_SERVER_VERSION: 'server.version',
+  JCVD_MCP_TRANSPORT: 'server.transport',
+  JCVD_MCP_PORT: 'server.port',
+  JCVD_MCP_RESOURCES_ENABLED: 'resources.enabled',
+  JCVD_MCP_RESOURCES_CACHE_SIZE: 'resources.cacheSize',
+  JCVD_MCP_RESOURCES_CACHE_TTL: 'resources.cacheTTL',
+  JCVD_MCP_TOOLS_ENABLED: 'tools.enabled',
+  JCVD_MCP_TOOLS_VALIDATION_ENABLED: 'tools.validationEnabled',
+  JCVD_MCP_TOOLS_EXECUTION_TIMEOUT: 'tools.executionTimeout',
+  JCVD_MCP_HEALTH_CHECK_INTERVAL: 'health.checkInterval',
+  JCVD_MCP_HEALTH_TIMEOUT: 'health.timeoutMs',
 } as const;
 
 /**

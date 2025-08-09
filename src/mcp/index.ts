@@ -1,6 +1,6 @@
 /**
  * JCVD MCP Framework
- * 
+ *
  * Complete Model Context Protocol implementation with integrated
  * resource framework for exposing JCVD project data to Claude Code.
  */
@@ -12,14 +12,14 @@ export {
   type ServerStatus,
   type HealthInfo,
   type ServerEvents,
-  type ConfigUpdateOptions
+  type ConfigUpdateOptions,
 } from './server/mcp-server.js';
 
 // Resource-enabled MCP Server
 export {
   ResourceServer,
   type ResourceServerConfig,
-  type ResourceServerEvents
+  type ResourceServerEvents,
 } from './server/resource-server.js';
 
 // Server Infrastructure
@@ -29,7 +29,7 @@ export {
   type NotificationHandler,
   type RequestMiddleware,
   type NotificationMiddleware,
-  type RouterStatistics
+  type RouterStatistics,
 } from './server/message-router.js';
 
 export {
@@ -38,13 +38,13 @@ export {
   type JSONRPCResponse,
   type JSONRPCNotification,
   type JSONRPCError,
-  type ValidationResult
+  type ValidationResult,
 } from './server/protocol-handler.js';
 
 export {
   ServerLifecycle,
   type ServerConfig,
-  type OperationResult
+  type OperationResult,
 } from './server/server-lifecycle.js';
 
 // Resource Handlers
@@ -54,7 +54,7 @@ export {
   type ResourceReadParams,
   type ResourceSubscribeParams,
   type ResourceListResponse,
-  type ResourceReadResponse
+  type ResourceReadResponse,
 } from './handlers/resource-handler.js';
 
 // Resource Framework (re-export from resources/index.ts)

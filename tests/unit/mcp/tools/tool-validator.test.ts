@@ -1,15 +1,15 @@
 /**
  * Tool Validator Tests
- * 
+ *
  * Tests for tool parameter validation using JSON schema.
  * Following TDD principles - these tests define expected validation behavior.
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
 
-import type { 
+import type {
   ToolParameterSchema,
-  ToolParameterValidationResult 
+  ToolParameterValidationResult,
 } from '../../../../src/mcp/tools/tool-interface.js';
 
 // We'll test this when we implement it
@@ -24,32 +24,32 @@ describe('ToolValidator', () => {
           title: {
             type: 'string',
             minLength: 1,
-            maxLength: 100
-          }
+            maxLength: 100,
+          },
         },
-        required: ['title']
+        required: ['title'],
       };
 
       const validParams = { title: 'Valid Title' };
       const invalidParams = { title: '' }; // Too short
 
       // const validator = new ToolValidator();
-      
+
       // const validResult = validator.validate(validParams, schema);
       // expect(validResult.valid).toBe(true);
-      
+
       // const invalidResult = validator.validate(invalidParams, schema);
       // expect(invalidResult.valid).toBe(false);
       // expect(invalidResult.errors).toContain('title must be at least 1 characters');
-      
+
       // Test validation concept
       const mockValidate = (params: any, schema: ToolParameterSchema) => {
         const errors: string[] = [];
-        
+
         if (schema.required?.includes('title') && !params.title) {
           errors.push('title is required');
         }
-        
+
         if (params.title !== undefined) {
           if (typeof params.title !== 'string') {
             errors.push('title must be a string');
@@ -64,14 +64,14 @@ describe('ToolValidator', () => {
             }
           }
         }
-        
+
         return { valid: errors.length === 0, errors: errors.length > 0 ? errors : undefined };
       };
 
       const validResult = mockValidate(validParams, schema);
 
       expect(validResult.valid).toBe(true);
-      
+
       const invalidResult = mockValidate(invalidParams, schema);
 
       expect(invalidResult.valid).toBe(false);
@@ -85,10 +85,10 @@ describe('ToolValidator', () => {
           priority: {
             type: 'number',
             minimum: 1,
-            maximum: 4
-          }
+            maximum: 4,
+          },
         },
-        required: ['priority']
+        required: ['priority'],
       };
 
       const validParams = { priority: 3 };
@@ -99,11 +99,11 @@ describe('ToolValidator', () => {
       // Test number validation concept
       const mockValidateNumber = (params: any, schema: ToolParameterSchema) => {
         const errors: string[] = [];
-        
+
         if (schema.required?.includes('priority') && params.priority === undefined) {
           errors.push('priority is required');
         }
-        
+
         if (params.priority !== undefined) {
           if (typeof params.priority !== 'number') {
             errors.push('priority must be a number');
@@ -118,7 +118,7 @@ describe('ToolValidator', () => {
             }
           }
         }
-        
+
         return { valid: errors.length === 0, errors: errors.length > 0 ? errors : undefined };
       };
 
@@ -133,8 +133,8 @@ describe('ToolValidator', () => {
         type: 'object',
         properties: {
           enabled: { type: 'boolean' },
-          autoClose: { type: 'boolean', default: true }
-        }
+          autoClose: { type: 'boolean', default: true },
+        },
       };
 
       const validParams = { enabled: true, autoClose: false };
@@ -143,14 +143,14 @@ describe('ToolValidator', () => {
       // Test boolean validation
       const mockValidateBoolean = (params: any, schema: ToolParameterSchema) => {
         const errors: string[] = [];
-        
+
         if (params.enabled !== undefined && typeof params.enabled !== 'boolean') {
           errors.push('enabled must be a boolean');
         }
         if (params.autoClose !== undefined && typeof params.autoClose !== 'boolean') {
           errors.push('autoClose must be a boolean');
         }
-        
+
         return { valid: errors.length === 0, errors: errors.length > 0 ? errors : undefined };
       };
 
@@ -169,9 +169,9 @@ describe('ToolValidator', () => {
             items: { type: 'string' },
             minItems: 1,
             maxItems: 5,
-            uniqueItems: true
-          }
-        }
+            uniqueItems: true,
+          },
+        },
       };
 
       const validParams = { tags: ['bug', 'frontend'] };
@@ -182,20 +182,20 @@ describe('ToolValidator', () => {
       // Test array validation concept
       const mockValidateArray = (params: any, schema: ToolParameterSchema) => {
         const errors: string[] = [];
-        
+
         if (params.tags !== undefined) {
           if (!Array.isArray(params.tags)) {
             errors.push('tags must be an array');
           } else {
             const tagsProp = schema.properties?.tags;
-            
+
             if (tagsProp?.minItems && params.tags.length < tagsProp.minItems) {
               errors.push(`tags must have at least ${tagsProp.minItems} items`);
             }
             if (tagsProp?.maxItems && params.tags.length > tagsProp.maxItems) {
               errors.push(`tags must have at most ${tagsProp.maxItems} items`);
             }
-            
+
             // Check item types
             if (tagsProp?.items?.type === 'string') {
               for (const item of params.tags) {
@@ -205,7 +205,7 @@ describe('ToolValidator', () => {
                 }
               }
             }
-            
+
             // Check uniqueness
             if (tagsProp?.uniqueItems) {
               const unique = new Set(params.tags);
@@ -216,7 +216,7 @@ describe('ToolValidator', () => {
             }
           }
         }
-        
+
         return { valid: errors.length === 0, errors: errors.length > 0 ? errors : undefined };
       };
 
@@ -241,14 +241,14 @@ describe('ToolValidator', () => {
                 type: 'object',
                 properties: {
                   autoClose: { type: 'boolean' },
-                  priority: { type: 'number', minimum: 1, maximum: 4 }
-                }
-              }
+                  priority: { type: 'number', minimum: 1, maximum: 4 },
+                },
+              },
             },
-            required: ['name']
-          }
+            required: ['name'],
+          },
         },
-        required: ['project']
+        required: ['project'],
       };
 
       const validParams = {
@@ -257,26 +257,26 @@ describe('ToolValidator', () => {
           description: 'A test project',
           settings: {
             autoClose: true,
-            priority: 2
-          }
-        }
+            priority: 2,
+          },
+        },
       };
 
       const invalidParams = {
         project: {
           // Missing required 'name'
-          description: 'Invalid project'
-        }
+          description: 'Invalid project',
+        },
       };
 
       // Test nested object validation concept
       const mockValidateNested = (params: any, schema: ToolParameterSchema) => {
         const errors: string[] = [];
-        
+
         if (schema.required?.includes('project') && !params.project) {
           errors.push('project is required');
         }
-        
+
         if (params.project) {
           if (typeof params.project !== 'object') {
             errors.push('project must be an object');
@@ -291,7 +291,7 @@ describe('ToolValidator', () => {
             }
           }
         }
-        
+
         return { valid: errors.length === 0, errors: errors.length > 0 ? errors : undefined };
       };
 
@@ -307,14 +307,14 @@ describe('ToolValidator', () => {
         properties: {
           status: {
             type: 'string',
-            enum: ['backlog', 'todo', 'in_progress', 'done', 'canceled']
+            enum: ['backlog', 'todo', 'in_progress', 'done', 'canceled'],
           },
           priority: {
             type: 'number',
-            enum: [1, 2, 3, 4]
-          }
+            enum: [1, 2, 3, 4],
+          },
         },
-        required: ['status']
+        required: ['status'],
       };
 
       const validParams = { status: 'todo', priority: 2 };
@@ -324,11 +324,11 @@ describe('ToolValidator', () => {
       // Test enum validation concept
       const mockValidateEnum = (params: any, schema: ToolParameterSchema) => {
         const errors: string[] = [];
-        
+
         if (schema.required?.includes('status') && !params.status) {
           errors.push('status is required');
         }
-        
+
         if (params.status !== undefined) {
           const statusProp = schema.properties?.status;
 
@@ -336,7 +336,7 @@ describe('ToolValidator', () => {
             errors.push(`status must be one of: ${statusProp.enum.join(', ')}`);
           }
         }
-        
+
         if (params.priority !== undefined) {
           const priorityProp = schema.properties?.priority;
 
@@ -344,7 +344,7 @@ describe('ToolValidator', () => {
             errors.push(`priority must be one of: ${priorityProp.enum.join(', ')}`);
           }
         }
-        
+
         return { valid: errors.length === 0, errors: errors.length > 0 ? errors : undefined };
       };
 
@@ -359,10 +359,10 @@ describe('ToolValidator', () => {
       const schema: ToolParameterSchema = {
         type: 'object',
         properties: {
-          title: { type: 'string' }
+          title: { type: 'string' },
         },
         required: ['title'],
-        additionalProperties: false
+        additionalProperties: false,
       };
 
       const validParams = { title: 'Valid Title' };
@@ -371,18 +371,18 @@ describe('ToolValidator', () => {
       // Test additional properties validation
       const mockValidateAdditional = (params: any, schema: ToolParameterSchema) => {
         const errors: string[] = [];
-        
+
         if (schema.additionalProperties === false) {
           const allowedProps = Object.keys(schema.properties || {});
           const paramProps = Object.keys(params);
-          
+
           for (const prop of paramProps) {
             if (!allowedProps.includes(prop)) {
               errors.push(`additional property '${prop}' is not allowed`);
             }
           }
         }
-        
+
         return { valid: errors.length === 0, errors: errors.length > 0 ? errors : undefined };
       };
 
@@ -398,9 +398,9 @@ describe('ToolValidator', () => {
         properties: {
           title: { type: 'string' },
           priority: { type: 'number', default: 3 },
-          enabled: { type: 'boolean', default: true }
+          enabled: { type: 'boolean', default: true },
         },
-        required: ['title']
+        required: ['title'],
       };
 
       const inputParams = { title: 'Test Title' };
@@ -408,7 +408,7 @@ describe('ToolValidator', () => {
       // Test default value application
       const mockApplyDefaults = (params: any, schema: ToolParameterSchema) => {
         const result = { ...params };
-        
+
         if (schema.properties) {
           for (const [key, prop] of Object.entries(schema.properties)) {
             if (result[key] === undefined && 'default' in prop) {
@@ -416,12 +416,12 @@ describe('ToolValidator', () => {
             }
           }
         }
-        
+
         return result;
       };
 
       const paramsWithDefaults = mockApplyDefaults(inputParams, schema);
-      
+
       expect(paramsWithDefaults.title).toBe('Test Title');
       expect(paramsWithDefaults.priority).toBe(3);
       expect(paramsWithDefaults.enabled).toBe(true);
@@ -437,37 +437,37 @@ describe('ToolValidator', () => {
             type: 'string',
             description: 'The issue title',
             minLength: 1,
-            maxLength: 200
+            maxLength: 200,
           },
           description: {
             type: 'string',
-            description: 'Optional issue description'
+            description: 'Optional issue description',
           },
           type: {
             type: 'string',
             enum: ['epic', 'story', 'subtask'],
-            description: 'Issue type'
+            description: 'Issue type',
           },
           parentId: {
             type: 'string',
-            description: 'Parent issue ID for hierarchical issues'
+            description: 'Parent issue ID for hierarchical issues',
           },
           estimate: {
             type: 'number',
             minimum: 1,
             maximum: 13,
-            description: 'Effort estimate in story points'
+            description: 'Effort estimate in story points',
           },
           priority: {
             type: 'number',
             minimum: 1,
             maximum: 4,
             default: 3,
-            description: 'Priority level'
-          }
+            description: 'Priority level',
+          },
         },
         required: ['title', 'type'],
-        additionalProperties: false
+        additionalProperties: false,
       };
 
       const validParams = {
@@ -475,27 +475,27 @@ describe('ToolValidator', () => {
         description: 'Add search capability for user content',
         type: 'story',
         estimate: 5,
-        priority: 2
+        priority: 2,
       };
 
       const invalidParams = {
         title: '', // Too short
         type: 'invalid_type', // Not in enum
         estimate: 15, // Too high
-        extraField: 'not allowed' // Additional property
+        extraField: 'not allowed', // Additional property
       };
 
       // Test comprehensive validation
       const mockValidateComplex = (params: any, schema: ToolParameterSchema) => {
         const errors: string[] = [];
-        
+
         // Required fields
         for (const required of schema.required || []) {
           if (!params[required]) {
             errors.push(`${required} is required`);
           }
         }
-        
+
         // Title validation
         if (params.title !== undefined) {
           if (typeof params.title !== 'string') {
@@ -504,7 +504,7 @@ describe('ToolValidator', () => {
             errors.push('title must not be empty');
           }
         }
-        
+
         // Type validation
         if (params.type !== undefined) {
           const validTypes = ['epic', 'story', 'subtask'];
@@ -513,14 +513,14 @@ describe('ToolValidator', () => {
             errors.push(`type must be one of: ${validTypes.join(', ')}`);
           }
         }
-        
+
         // Estimate validation
         if (params.estimate !== undefined) {
           if (typeof params.estimate !== 'number' || params.estimate < 1 || params.estimate > 13) {
             errors.push('estimate must be a number between 1 and 13');
           }
         }
-        
+
         // Additional properties
         if (schema.additionalProperties === false) {
           const allowedProps = Object.keys(schema.properties || {});
@@ -531,12 +531,12 @@ describe('ToolValidator', () => {
             }
           }
         }
-        
+
         return { valid: errors.length === 0, errors: errors.length > 0 ? errors : undefined };
       };
 
       expect(mockValidateComplex(validParams, createIssueSchema).valid).toBe(true);
-      
+
       const invalidResult = mockValidateComplex(invalidParams, createIssueSchema);
 
       expect(invalidResult.valid).toBe(false);
@@ -556,26 +556,26 @@ describe('ToolValidator', () => {
               settings: {
                 type: 'object',
                 properties: {
-                  priority: { type: 'number', minimum: 1, maximum: 4 }
-                }
-              }
-            }
-          }
-        }
+                  priority: { type: 'number', minimum: 1, maximum: 4 },
+                },
+              },
+            },
+          },
+        },
       };
 
       const invalidParams = {
         project: {
           settings: {
-            priority: 5 // Invalid value
-          }
-        }
+            priority: 5, // Invalid value
+          },
+        },
       };
 
       // Test detailed error path reporting
       const mockValidateWithPaths = (params: any, schema: ToolParameterSchema, path = '') => {
         const errors: string[] = [];
-        
+
         if (params.project?.settings?.priority !== undefined) {
           const priority = params.project.settings.priority;
 
@@ -583,7 +583,7 @@ describe('ToolValidator', () => {
             errors.push('project.settings.priority must be a number between 1 and 4');
           }
         }
-        
+
         return { valid: errors.length === 0, errors: errors.length > 0 ? errors : undefined };
       };
 

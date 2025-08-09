@@ -71,7 +71,7 @@ export class ConnectionPool {
    * Add a connection to the pool
    */
   async addConnection(
-    id: string, 
+    id: string,
     connectionData: { type: string; metadata?: Record<string, any> }
   ): Promise<PoolResult> {
     try {
@@ -99,17 +99,17 @@ export class ConnectionPool {
 
       this.connections.set(id, connection);
 
-      this.logger.info('Connection added to pool', { 
-        connectionId: id, 
+      this.logger.info('Connection added to pool', {
+        connectionId: id,
         type: connectionData.type,
-        poolSize: this.connections.size 
+        poolSize: this.connections.size,
       });
 
       return { success: true };
     } catch (error) {
-      this.logger.error('Failed to add connection to pool', { 
+      this.logger.error('Failed to add connection to pool', {
         connectionId: id,
-        error: error instanceof Error ? error.message : String(error) 
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return {
@@ -125,7 +125,7 @@ export class ConnectionPool {
   async removeConnection(id: string): Promise<PoolResult> {
     try {
       const connection = this.connections.get(id);
-      
+
       if (!connection) {
         return {
           success: false,
@@ -135,16 +135,16 @@ export class ConnectionPool {
 
       this.connections.delete(id);
 
-      this.logger.info('Connection removed from pool', { 
+      this.logger.info('Connection removed from pool', {
         connectionId: id,
-        poolSize: this.connections.size 
+        poolSize: this.connections.size,
       });
 
       return { success: true };
     } catch (error) {
-      this.logger.error('Failed to remove connection from pool', { 
+      this.logger.error('Failed to remove connection from pool', {
         connectionId: id,
-        error: error instanceof Error ? error.message : String(error) 
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return {
@@ -159,7 +159,7 @@ export class ConnectionPool {
    */
   getConnection(id: string): PoolConnection | undefined {
     const connection = this.connections.get(id);
-    
+
     if (connection) {
       // Update last activity
       connection.lastActivity = Date.now();
@@ -221,13 +221,13 @@ export class ConnectionPool {
 
       this.logger.info('Pool cleared', { removedCount });
 
-      return { 
+      return {
         success: true,
-        data: { removedCount } 
+        data: { removedCount },
       };
     } catch (error) {
-      this.logger.error('Failed to clear pool', { 
-        error: error instanceof Error ? error.message : String(error) 
+      this.logger.error('Failed to clear pool', {
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return {
@@ -243,7 +243,7 @@ export class ConnectionPool {
   getStatistics(): PoolStatistics {
     const connections = this.getAllConnections();
     const now = Date.now();
-    
+
     let totalAge = 0;
     let oldestConnection: PoolConnection | undefined;
     let newestConnection: PoolConnection | undefined;
@@ -284,23 +284,23 @@ export class ConnectionPool {
 
     for (const [id, connection] of this.connections.entries()) {
       const idleTime = now - connection.lastActivity;
-      
+
       if (idleTime > this.config.maxIdleTime) {
         this.connections.delete(id);
         removedCount++;
-        
+
         this.logger.debug('Removed idle connection from pool', {
           connectionId: id,
           idleTime: `${idleTime}ms`,
-          maxIdleTime: `${this.config.maxIdleTime}ms`
+          maxIdleTime: `${this.config.maxIdleTime}ms`,
         });
       }
     }
 
     if (removedCount > 0) {
-      this.logger.info('Pool cleanup completed', { 
+      this.logger.info('Pool cleanup completed', {
         removedCount,
-        remainingConnections: this.connections.size 
+        remainingConnections: this.connections.size,
       });
     }
 
@@ -319,8 +319,8 @@ export class ConnectionPool {
       this.performCleanup();
     }, this.config.cleanupInterval);
 
-    this.logger.debug('Pool cleanup timer started', { 
-      interval: `${this.config.cleanupInterval}ms` 
+    this.logger.debug('Pool cleanup timer started', {
+      interval: `${this.config.cleanupInterval}ms`,
     });
   }
 
@@ -331,7 +331,7 @@ export class ConnectionPool {
     if (this.cleanupTimer) {
       clearInterval(this.cleanupTimer);
       this.cleanupTimer = undefined;
-      
+
       this.logger.debug('Pool cleanup timer stopped');
     }
   }
@@ -342,7 +342,7 @@ export class ConnectionPool {
   destroy(): void {
     this.stopCleanupTimer();
     this.connections.clear();
-    
+
     this.logger.info('Connection pool destroyed');
   }
 }

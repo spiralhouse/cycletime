@@ -5,7 +5,12 @@
 import { createLogger } from '../../utils/logger.js';
 
 import { ConnectionState, ConnectionStatus, type ConnectionMetadata } from './connection-state.js';
-import { MessageQueue, type Message, type QueuedMessage, MessagePriority } from './message-queue.js';
+import {
+  MessageQueue,
+  type Message,
+  type QueuedMessage,
+  MessagePriority,
+} from './message-queue.js';
 
 import type { Logger } from '../../utils/logger.js';
 
@@ -85,7 +90,7 @@ export class ConnectionManager {
    * Create a new connection
    */
   async createConnection(
-    connectionId: string, 
+    connectionId: string,
     metadata: ConnectionMetadata = {}
   ): Promise<ConnectionResult<{ connectionId: string }>> {
     try {
@@ -119,9 +124,9 @@ export class ConnectionManager {
         data: { connectionId },
       };
     } catch (error) {
-      this.logger.error('Failed to create connection', { 
-        connectionId, 
-        error: error instanceof Error ? error.message : String(error) 
+      this.logger.error('Failed to create connection', {
+        connectionId,
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return {
@@ -137,7 +142,7 @@ export class ConnectionManager {
   async connect(connectionId: string): Promise<ConnectionResult> {
     try {
       const connectionData = this.connections.get(connectionId);
-      
+
       if (!connectionData) {
         return {
           success: false,
@@ -146,10 +151,10 @@ export class ConnectionManager {
       }
 
       connectionData.state.setStatus(ConnectionStatus.CONNECTING);
-      
+
       // Simulate connection process with a minimal delay
       await new Promise(resolve => setImmediate(resolve));
-      
+
       connectionData.state.setStatus(ConnectionStatus.CONNECTED);
       connectionData.state.updateActivity();
       connectionData.lastActivity = Date.now();
@@ -164,9 +169,9 @@ export class ConnectionManager {
         connectionData.state.setStatus(ConnectionStatus.ERROR, error as Error);
       }
 
-      this.logger.error('Failed to connect', { 
-        connectionId, 
-        error: error instanceof Error ? error.message : String(error) 
+      this.logger.error('Failed to connect', {
+        connectionId,
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return {
@@ -182,7 +187,7 @@ export class ConnectionManager {
   async disconnect(connectionId: string): Promise<ConnectionResult> {
     try {
       const connectionData = this.connections.get(connectionId);
-      
+
       if (!connectionData) {
         return {
           success: false,
@@ -191,10 +196,10 @@ export class ConnectionManager {
       }
 
       connectionData.state.setStatus(ConnectionStatus.DISCONNECTING);
-      
+
       // Simulate disconnection process with minimal delay
       await new Promise(resolve => setImmediate(resolve));
-      
+
       connectionData.state.setStatus(ConnectionStatus.DISCONNECTED);
       connectionData.lastActivity = Date.now();
 
@@ -202,9 +207,9 @@ export class ConnectionManager {
 
       return { success: true };
     } catch (error) {
-      this.logger.error('Failed to disconnect', { 
-        connectionId, 
-        error: error instanceof Error ? error.message : String(error) 
+      this.logger.error('Failed to disconnect', {
+        connectionId,
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return {
@@ -236,7 +241,7 @@ export class ConnectionManager {
   async removeConnection(connectionId: string): Promise<ConnectionResult> {
     try {
       const connectionData = this.connections.get(connectionId);
-      
+
       if (!connectionData) {
         return {
           success: false,
@@ -251,7 +256,7 @@ export class ConnectionManager {
 
       // Clear message queue
       connectionData.messageQueue.clear();
-      
+
       // Remove from connections
       this.connections.delete(connectionId);
 
@@ -259,9 +264,9 @@ export class ConnectionManager {
 
       return { success: true };
     } catch (error) {
-      this.logger.error('Failed to remove connection', { 
-        connectionId, 
-        error: error instanceof Error ? error.message : String(error) 
+      this.logger.error('Failed to remove connection', {
+        connectionId,
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return {
@@ -275,13 +280,13 @@ export class ConnectionManager {
    * Queue a message for a connection
    */
   async queueMessage(
-    connectionId: string, 
-    message: Message, 
+    connectionId: string,
+    message: Message,
     priority: MessagePriority = MessagePriority.NORMAL
   ): Promise<ConnectionResult> {
     try {
       const connectionData = this.connections.get(connectionId);
-      
+
       if (!connectionData) {
         return {
           success: false,
@@ -301,10 +306,10 @@ export class ConnectionManager {
 
       return { success: true };
     } catch (error) {
-      this.logger.error('Failed to queue message', { 
-        connectionId, 
+      this.logger.error('Failed to queue message', {
+        connectionId,
         messageId: message.id,
-        error: error instanceof Error ? error.message : String(error) 
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return {
@@ -320,9 +325,11 @@ export class ConnectionManager {
   async processNextMessage(connectionId: string): Promise<QueuedMessage | null> {
     try {
       const connectionData = this.connections.get(connectionId);
-      
+
       if (!connectionData) {
-        this.logger.warn('Attempted to process message for non-existent connection', { connectionId });
+        this.logger.warn('Attempted to process message for non-existent connection', {
+          connectionId,
+        });
 
         return null;
       }
@@ -338,9 +345,9 @@ export class ConnectionManager {
 
       return queuedMessage;
     } catch (error) {
-      this.logger.error('Failed to process message', { 
-        connectionId, 
-        error: error instanceof Error ? error.message : String(error) 
+      this.logger.error('Failed to process message', {
+        connectionId,
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return null;
@@ -404,11 +411,11 @@ export class ConnectionManager {
   getStatistics(): ConnectionManagerStatistics {
     const connections = this.getAllConnections();
     const activeConnections = this.getConnectedConnectionCount();
-    
+
     const totalUptime = connections
       .filter(conn => conn.isConnected())
       .reduce((sum, conn) => sum + conn.getUptime(), 0);
-    
+
     const averageUptime = activeConnections > 0 ? totalUptime / activeConnections : 0;
 
     return {
@@ -425,10 +432,12 @@ export class ConnectionManager {
    */
   getHealthInfo(): HealthInfo {
     const connections = this.getAllConnections();
-    const errorConnections = connections.filter(conn => conn.getStatus() === ConnectionStatus.ERROR);
-    
+    const errorConnections = connections.filter(
+      conn => conn.getStatus() === ConnectionStatus.ERROR
+    );
+
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    
+
     if (errorConnections.length > 0) {
       const errorRate = errorConnections.length / connections.length;
 
@@ -463,11 +472,11 @@ export class ConnectionManager {
 
     for (const [connectionId, connectionData] of this.connections.entries()) {
       const inactiveTime = now - connectionData.lastActivity;
-      
+
       if (inactiveTime > staleThreshold) {
-        this.logger.info('Removing stale connection', { 
-          connectionId, 
-          inactiveTime: `${inactiveTime}ms` 
+        this.logger.info('Removing stale connection', {
+          connectionId,
+          inactiveTime: `${inactiveTime}ms`,
         });
 
         this.removeConnection(connectionId);

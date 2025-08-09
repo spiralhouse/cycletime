@@ -16,8 +16,14 @@ export type NotificationHandler = (params?: any) => Promise<void>;
 /**
  * Middleware function types
  */
-export type RequestMiddleware = (request: JSONRPCRequest, next: (req: JSONRPCRequest) => Promise<JSONRPCResponse>) => Promise<JSONRPCResponse>;
-export type NotificationMiddleware = (notification: JSONRPCNotification, next: (notif: JSONRPCNotification) => Promise<void>) => Promise<void>;
+export type RequestMiddleware = (
+  request: JSONRPCRequest,
+  next: (req: JSONRPCRequest) => Promise<JSONRPCResponse>
+) => Promise<JSONRPCResponse>;
+export type NotificationMiddleware = (
+  notification: JSONRPCNotification,
+  next: (notif: JSONRPCNotification) => Promise<void>
+) => Promise<void>;
 
 /**
  * Statistics interface
@@ -27,12 +33,15 @@ export interface RouterStatistics {
   successfulRequests: number;
   failedRequests: number;
   totalNotifications: number;
-  methodStats: Record<string, {
-    count: number;
-    successes: number;
-    failures: number;
-    averageResponseTime: number;
-  }>;
+  methodStats: Record<
+    string,
+    {
+      count: number;
+      successes: number;
+      failures: number;
+      averageResponseTime: number;
+    }
+  >;
 }
 
 /**
@@ -154,9 +163,9 @@ export class MessageRouter {
 
     try {
       // Apply middleware chain
-      const response = await this.applyRequestMiddleware(request, async (req) => {
+      const response = await this.applyRequestMiddleware(request, async req => {
         const handler = this.requestHandlers.get(req.method);
-        
+
         if (!handler) {
           const protocolHandler = new ProtocolHandler();
 
@@ -172,14 +181,13 @@ export class MessageRouter {
 
         // Apply timeout
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => { reject(new Error('Request timeout')); }, this.requestTimeout)
+          setTimeout(() => {
+            reject(new Error('Request timeout'));
+          }, this.requestTimeout)
         );
 
         try {
-          const result = await Promise.race([
-            handler(req.params),
-            timeoutPromise,
-          ]);
+          const result = await Promise.race([handler(req.params), timeoutPromise]);
 
           const protocolHandler = new ProtocolHandler();
 
@@ -209,11 +217,9 @@ export class MessageRouter {
 
       return protocolHandler.formatErrorResponse(
         request.id,
-        ProtocolHandler.createError(
-          ProtocolHandler.ErrorCodes.INTERNAL_ERROR,
-          'Internal error',
-          { error: error instanceof Error ? error.message : String(error) }
-        )
+        ProtocolHandler.createError(ProtocolHandler.ErrorCodes.INTERNAL_ERROR, 'Internal error', {
+          error: error instanceof Error ? error.message : String(error),
+        })
       );
     }
   }
@@ -226,9 +232,9 @@ export class MessageRouter {
 
     try {
       // Apply middleware chain
-      await this.applyNotificationMiddleware(notification, async (notif) => {
+      await this.applyNotificationMiddleware(notification, async notif => {
         const handler = this.notificationHandlers.get(notif.method);
-        
+
         if (!handler) {
           this.logger.debug('No handler registered for notification', {
             method: notif.method,
@@ -322,7 +328,11 @@ export class MessageRouter {
   /**
    * Update method statistics
    */
-  private updateMethodStats(method: string, type: 'request' | 'success' | 'failure', responseTime?: number): void {
+  private updateMethodStats(
+    method: string,
+    type: 'request' | 'success' | 'failure',
+    responseTime?: number
+  ): void {
     if (!this.statistics.methodStats[method]) {
       this.statistics.methodStats[method] = {
         count: 0,

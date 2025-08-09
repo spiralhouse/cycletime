@@ -1,6 +1,6 @@
 /**
  * JCVD MCP Resources
- * 
+ *
  * Central export for the JCVD MCP resource framework including
  * interfaces, base classes, metadata management, and registry.
  */
@@ -18,7 +18,7 @@ export {
   ResourceError,
   ResourceNotFoundError,
   ResourceUnavailableError,
-  InvalidResourceURIError
+  InvalidResourceURIError,
 } from './resource-interface.js';
 
 // Base resource implementation
@@ -26,7 +26,7 @@ export {
   BaseResource,
   type ContentProvider,
   type AvailabilityChecker,
-  type ResourceStatistics
+  type ResourceStatistics,
 } from './base-resource.js';
 
 // Metadata management
@@ -35,7 +35,7 @@ export {
   type ResourceCapabilityInfo,
   type ResourceDiscoveryInfo,
   type MetadataValidationResult,
-  type MCPAdvertisement
+  type MCPAdvertisement,
 } from './resource-metadata.js';
 
 // Resource registry
@@ -45,5 +45,5 @@ export {
   type ResourceHealthCheck,
   type RegistryStatistics,
   type BatchRegistrationResult,
-  type RegistryEvents
+  type RegistryEvents,
 } from './resource-registry.js';

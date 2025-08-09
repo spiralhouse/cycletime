@@ -24,26 +24,26 @@ describe('MessageRouter', () => {
   describe('Route registration', () => {
     it('should register request handlers', () => {
       const handler = vi.fn().mockResolvedValue({ result: 'success' });
-      
+
       router.registerHandler('initialize', handler);
-      
+
       expect(router.hasHandler('initialize')).toBe(true);
     });
 
     it('should register notification handlers', () => {
       const handler = vi.fn().mockResolvedValue(undefined);
-      
+
       router.registerNotificationHandler('notifications/initialized', handler);
-      
+
       expect(router.hasNotificationHandler('notifications/initialized')).toBe(true);
     });
 
     it('should prevent duplicate handler registration', () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
-      
+
       router.registerHandler('test', handler1);
-      
+
       expect(() => {
         router.registerHandler('test', handler2);
       }).toThrow('Handler already registered for method: test');
@@ -51,10 +51,10 @@ describe('MessageRouter', () => {
 
     it('should unregister handlers', () => {
       const handler = vi.fn();
-      
+
       router.registerHandler('test', handler);
       expect(router.hasHandler('test')).toBe(true);
-      
+
       router.unregisterHandler('test');
       expect(router.hasHandler('test')).toBe(false);
     });
@@ -62,10 +62,10 @@ describe('MessageRouter', () => {
     it('should get registered handler methods', () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
-      
+
       router.registerHandler('method1', handler1);
       router.registerHandler('method2', handler2);
-      
+
       const methods = router.getRegisteredMethods();
 
       expect(methods).toContain('method1');
@@ -83,10 +83,10 @@ describe('MessageRouter', () => {
         method: 'test',
         params: { input: 'test' },
       };
-      
+
       router.registerHandler('test', handler);
       const response = await router.routeRequest(request);
-      
+
       expect(handler).toHaveBeenCalledWith({ input: 'test' });
       expect(response).toEqual({
         jsonrpc: '2.0',
@@ -102,10 +102,10 @@ describe('MessageRouter', () => {
         id: 1,
         method: 'test',
       };
-      
+
       router.registerHandler('test', handler);
       const response = await router.routeRequest(request);
-      
+
       expect(handler).toHaveBeenCalledWith(undefined);
       expect(response.result).toEqual({ result: 'success' });
     });
@@ -117,9 +117,9 @@ describe('MessageRouter', () => {
         method: 'unknown',
         params: {},
       };
-      
+
       const response = await router.routeRequest(request);
-      
+
       expect(response).toEqual({
         jsonrpc: '2.0',
         id: 1,
@@ -139,10 +139,10 @@ describe('MessageRouter', () => {
         method: 'test',
         params: {},
       };
-      
+
       router.registerHandler('test', handler);
       const response = await router.routeRequest(request);
-      
+
       expect(response).toEqual({
         jsonrpc: '2.0',
         id: 1,
@@ -156,21 +156,21 @@ describe('MessageRouter', () => {
     });
 
     it('should handle handler timeout', async () => {
-      const slowHandler = vi.fn().mockImplementation(
-        () => new Promise(resolve => setTimeout(resolve, 1000))
-      );
+      const slowHandler = vi
+        .fn()
+        .mockImplementation(() => new Promise(resolve => setTimeout(resolve, 1000)));
       const request = {
         jsonrpc: '2.0' as const,
         id: 1,
         method: 'test',
         params: {},
       };
-      
+
       router.registerHandler('test', slowHandler);
       router.setRequestTimeout(100); // 100ms timeout
-      
+
       const response = await router.routeRequest(request);
-      
+
       expect(response).toEqual({
         jsonrpc: '2.0',
         id: 1,
@@ -191,10 +191,10 @@ describe('MessageRouter', () => {
         method: 'notifications/test',
         params: { data: 'test' },
       };
-      
+
       router.registerNotificationHandler('notifications/test', handler);
       await router.routeNotification(notification);
-      
+
       expect(handler).toHaveBeenCalledWith({ data: 'test' });
     });
 
@@ -204,10 +204,10 @@ describe('MessageRouter', () => {
         jsonrpc: '2.0' as const,
         method: 'notifications/test',
       };
-      
+
       router.registerNotificationHandler('notifications/test', handler);
       await router.routeNotification(notification);
-      
+
       expect(handler).toHaveBeenCalledWith(undefined);
     });
 
@@ -217,14 +217,13 @@ describe('MessageRouter', () => {
         method: 'notifications/unknown',
         params: {},
       };
-      
+
       // Should not throw
       await router.routeNotification(notification);
-      
-      expect(mockLogger.debug).toHaveBeenCalledWith(
-        'No handler registered for notification',
-        { method: 'notifications/unknown' }
-      );
+
+      expect(mockLogger.debug).toHaveBeenCalledWith('No handler registered for notification', {
+        method: 'notifications/unknown',
+      });
     });
 
     it('should handle notification handler errors gracefully', async () => {
@@ -234,12 +233,12 @@ describe('MessageRouter', () => {
         method: 'notifications/test',
         params: {},
       };
-      
+
       router.registerNotificationHandler('notifications/test', handler);
-      
+
       // Should not throw
       await router.routeNotification(notification);
-      
+
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Error in notification handler',
         expect.objectContaining({
@@ -264,12 +263,12 @@ describe('MessageRouter', () => {
         method: 'test',
         params: { input: 'test' },
       };
-      
+
       router.addRequestMiddleware(middleware);
       router.registerHandler('test', handler);
-      
+
       await router.routeRequest(request);
-      
+
       expect(middleware).toHaveBeenCalled();
       expect(handler).toHaveBeenCalledWith({ input: 'test', middleware: true });
     });
@@ -286,12 +285,12 @@ describe('MessageRouter', () => {
         method: 'notifications/test',
         params: { data: 'test' },
       };
-      
+
       router.addNotificationMiddleware(middleware);
       router.registerNotificationHandler('notifications/test', handler);
-      
+
       await router.routeNotification(notification);
-      
+
       expect(middleware).toHaveBeenCalled();
       expect(handler).toHaveBeenCalledWith({ data: 'test', middleware: true });
     });
@@ -305,12 +304,12 @@ describe('MessageRouter', () => {
         method: 'test',
         params: {},
       };
-      
+
       router.addRequestMiddleware(middleware);
       router.registerHandler('test', handler);
-      
+
       const response = await router.routeRequest(request);
-      
+
       expect(response).toEqual({
         jsonrpc: '2.0',
         id: 1,
@@ -333,10 +332,10 @@ describe('MessageRouter', () => {
         method: 'test',
         params: {},
       };
-      
+
       router.registerHandler('test', handler);
       await router.routeRequest(request);
-      
+
       const stats = router.getStatistics();
 
       expect(stats.totalRequests).toBe(1);
@@ -357,10 +356,10 @@ describe('MessageRouter', () => {
         method: 'notifications/test',
         params: {},
       };
-      
+
       router.registerNotificationHandler('notifications/test', handler);
       await router.routeNotification(notification);
-      
+
       const stats = router.getStatistics();
 
       expect(stats.totalNotifications).toBe(1);
@@ -374,10 +373,10 @@ describe('MessageRouter', () => {
         method: 'test',
         params: {},
       };
-      
+
       router.registerHandler('test', handler);
       await router.routeRequest(request);
-      
+
       const stats = router.getStatistics();
 
       expect(stats.totalRequests).toBe(1);
@@ -393,14 +392,14 @@ describe('MessageRouter', () => {
         method: 'test',
         params: {},
       };
-      
+
       router.registerHandler('test', handler);
       await router.routeRequest(request);
-      
+
       let stats = router.getStatistics();
 
       expect(stats.totalRequests).toBe(1);
-      
+
       router.resetStatistics();
       stats = router.getStatistics();
       expect(stats.totalRequests).toBe(0);

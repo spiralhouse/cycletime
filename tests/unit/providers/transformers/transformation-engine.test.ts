@@ -5,12 +5,9 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import {
-  createTransformationEngine,
-} from '../../../../src/providers/transformers/transformation-engine.js';
+import { createTransformationEngine } from '../../../../src/providers/transformers/transformation-engine.js';
 
-import type {
-  JCVDTransformationEngine} from '../../../../src/providers/transformers/transformation-engine.js';
+import type { JCVDTransformationEngine } from '../../../../src/providers/transformers/transformation-engine.js';
 import type {
   ProviderTransformerBase,
   EntityTransformer,
@@ -273,7 +270,8 @@ class MockEntityTransformer<TProvider, TUnified> implements EntityTransformer<TP
         totalEntities: sources.length,
         successfulEntities: sources.length,
         failedEntities: 0,
-        averageProcessingTime: sources.length > 0 ? (endTime.getTime() - startTime.getTime()) / sources.length : 0,
+        averageProcessingTime:
+          sources.length > 0 ? (endTime.getTime() - startTime.getTime()) / sources.length : 0,
         fieldsTransformed: sources.length * 5,
         relationshipsProcessed: 0,
       },
@@ -304,7 +302,8 @@ class MockEntityTransformer<TProvider, TUnified> implements EntityTransformer<TP
         totalEntities: targets.length,
         successfulEntities: targets.length,
         failedEntities: 0,
-        averageProcessingTime: targets.length > 0 ? (endTime.getTime() - startTime.getTime()) / targets.length : 0,
+        averageProcessingTime:
+          targets.length > 0 ? (endTime.getTime() - startTime.getTime()) / targets.length : 0,
         fieldsTransformed: targets.length * 5,
         relationshipsProcessed: 0,
       },

@@ -1,6 +1,6 @@
 /**
  * MCP Tool Interface Definitions
- * 
+ *
  * Defines the core contracts for JCVD MCP tools following the MCP specification.
  * Tools provide operations that Claude Code can execute to modify project state.
  */
@@ -39,28 +39,28 @@ export interface ToolParameterSchema {
 export interface ToolMetadata {
   /** Tool name following jcvd_ naming convention */
   name: string;
-  
+
   /** Human-readable description of the tool's purpose */
   description: string;
-  
+
   /** Tool version for compatibility tracking */
   version: string;
-  
+
   /** List of operations this tool supports */
   capabilities: ToolCapability[];
-  
+
   /** JSON Schema for parameter validation */
   parameters: ToolParameterSchema;
-  
+
   /** Optional tags for categorization and discovery */
   tags?: string[];
-  
+
   /** Optional category for grouping related tools */
   category?: string;
-  
+
   /** Optional input schema for MCP integration */
   inputSchema?: ToolParameterSchema;
-  
+
   /** Optional output schema for result validation */
   outputSchema?: ToolParameterSchema;
 }
@@ -71,16 +71,16 @@ export interface ToolMetadata {
 export interface ToolExecutionContext {
   /** Unique request identifier for tracking */
   requestId: string;
-  
+
   /** Execution timestamp */
   timestamp: number;
-  
+
   /** Project ID if available */
   projectId?: string;
-  
+
   /** User ID if available */
   userId?: string;
-  
+
   /** Optional additional metadata */
   metadata?: Record<string, any>;
 }
@@ -91,10 +91,10 @@ export interface ToolExecutionContext {
 export interface ToolParameterValidationResult {
   /** Whether validation passed */
   valid: boolean;
-  
+
   /** Validation error messages if validation failed */
   errors?: string[];
-  
+
   /** Sanitized/normalized parameters with defaults applied */
   sanitizedParameters?: any;
 }
@@ -105,21 +105,21 @@ export interface ToolParameterValidationResult {
 export interface ToolExecutionResult {
   /** Whether execution was successful */
   success: boolean;
-  
+
   /** Result data if successful */
   data?: any;
-  
+
   /** Error information if execution failed */
   error?: IToolError;
-  
+
   /** Optional execution metadata */
   metadata?: {
     /** Execution time in milliseconds */
     executionTime?: number;
-    
+
     /** Resources affected by this operation */
     affectedResources?: string[];
-    
+
     /** Additional tool-specific metadata */
     [key: string]: any;
   };
@@ -131,16 +131,16 @@ export interface ToolExecutionResult {
 export interface IToolError {
   /** Error name */
   name: string;
-  
+
   /** Error message */
   message: string;
-  
+
   /** Error code for programmatic handling */
   code: string;
-  
+
   /** Tool that generated the error */
   toolName?: string;
-  
+
   /** Additional error details */
   details?: any;
 }
@@ -151,23 +151,23 @@ export interface IToolError {
 export interface Tool {
   /** Tool name following jcvd_ naming convention */
   readonly name: string;
-  
+
   /** Tool metadata including capabilities and parameter schema */
   readonly metadata: ToolMetadata;
-  
+
   /**
    * Check if this tool is currently available for execution
    * @returns Promise that resolves to true if tool can be executed
    */
   isAvailable: () => Promise<boolean>;
-  
+
   /**
    * Validate parameters against the tool's parameter schema
    * @param parameters Parameters to validate
    * @returns Promise that resolves to validation result
    */
   validateParameters: (parameters: any) => Promise<ToolParameterValidationResult>;
-  
+
   /**
    * Execute the tool with validated parameters
    * @param parameters Tool parameters (should be pre-validated)
@@ -175,7 +175,7 @@ export interface Tool {
    * @returns Promise that resolves to execution result
    */
   execute: (parameters: any, context: ToolExecutionContext) => Promise<ToolExecutionResult>;
-  
+
   /**
    * Get the capabilities supported by this tool
    * @returns Array of supported capabilities
@@ -206,7 +206,7 @@ export type ToolFactory = (...args: any[]) => Promise<Tool>;
  */
 export class ToolName {
   private static readonly NAME_PATTERN = /^jcvd_[a-z][\d_a-z]*$/;
-  
+
   /**
    * Validate if a tool name follows JCVD naming conventions
    * @param name Tool name to validate
@@ -215,7 +215,7 @@ export class ToolName {
   static isValid(name: string): boolean {
     return this.NAME_PATTERN.test(name);
   }
-  
+
   /**
    * Extract the operation part from a tool name
    * @param name Tool name (e.g., 'jcvd_create_issue')
@@ -228,7 +228,7 @@ export class ToolName {
 
     return name.slice(5); // Remove 'jcvd_' prefix
   }
-  
+
   /**
    * Create a JCVD tool name from operation
    * @param operation Operation name (e.g., 'create_issue')
@@ -237,7 +237,7 @@ export class ToolName {
   static create(operation: string): string {
     return `jcvd_${operation}`;
   }
-  
+
   /**
    * Get the category from a tool name based on naming patterns
    * @param name Tool name
@@ -249,7 +249,7 @@ export class ToolName {
     if (!operation) {
       return 'general';
     }
-    
+
     if (operation.includes('issue') || operation.includes('task')) {
       return 'issue_management';
     }
@@ -259,7 +259,7 @@ export class ToolName {
     if (operation.includes('dependency') || operation.includes('relation')) {
       return 'dependency_management';
     }
-    
+
     return 'general';
   }
 }
@@ -271,13 +271,8 @@ export class ToolError extends Error {
   public readonly code: string;
   public readonly toolName?: string;
   public readonly details?: any;
-  
-  constructor(
-    message: string,
-    code: string,
-    toolName?: string,
-    details?: any
-  ) {
+
+  constructor(message: string, code: string, toolName?: string, details?: any) {
     super(message);
     this.name = 'ToolError';
     this.code = code;

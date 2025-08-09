@@ -1,6 +1,6 @@
 /**
  * Tool Registry
- * 
+ *
  * Manages lifecycle operations, discovery, cleanup, and coordination
  * of JCVD MCP tools. Provides centralized tool management with
  * event-driven architecture and comprehensive discovery capabilities.
@@ -10,17 +10,10 @@ import EventEmitter from 'node:events';
 
 import { createLogger } from '../../utils/logger.js';
 
-import { 
-  ToolName, 
-  ToolError, 
-  InvalidToolNameError 
-} from './tool-interface.js';
+import { ToolName, ToolError, InvalidToolNameError } from './tool-interface.js';
 import { ToolMetadataManager } from './tool-metadata.js';
 
-import type { 
-  Tool, 
-  ToolCapability
-} from './tool-interface.js';
+import type { Tool, ToolCapability } from './tool-interface.js';
 import type { Logger } from '../../utils/logger.js';
 
 /**
@@ -29,19 +22,19 @@ import type { Logger } from '../../utils/logger.js';
 export interface ToolInfo {
   /** The registered tool */
   tool: Tool;
-  
+
   /** Registration timestamp */
   registeredAt: number;
-  
+
   /** Last access timestamp */
   lastAccessed: number;
-  
+
   /** Access count */
   accessCount: number;
-  
+
   /** Whether tool is currently available */
   isAvailable?: boolean;
-  
+
   /** Last health check timestamp */
   lastHealthCheck?: number;
 }
@@ -52,13 +45,13 @@ export interface ToolInfo {
 export interface ToolHealthCheck {
   /** Whether the tool is available */
   isAvailable: boolean;
-  
+
   /** Health check timestamp */
   checkedAt: number;
-  
+
   /** Optional error message if unavailable */
   error?: string;
-  
+
   /** Health check duration in milliseconds */
   checkDuration?: number;
 }
@@ -69,16 +62,16 @@ export interface ToolHealthCheck {
 export interface ToolDiscovery {
   /** Find tools by capability */
   findByCapability: (capability: ToolCapability) => Tool[];
-  
+
   /** Find tools by category */
   findByCategory: (category: string) => Tool[];
-  
+
   /** Find tools by name pattern */
   findByPattern: (pattern: string) => Tool[];
-  
+
   /** Find tools by tag */
   findByTag: (tag: string) => Tool[];
-  
+
   /** Get all tools */
   getAllTools: () => Tool[];
 }
@@ -89,25 +82,25 @@ export interface ToolDiscovery {
 export interface RegistryStatistics {
   /** Total number of registered tools */
   totalTools: number;
-  
+
   /** Tools grouped by capability */
   toolsByCapability: Record<string, number>;
-  
+
   /** Tools grouped by category */
   toolsByCategory: Record<string, number>;
-  
+
   /** Total tool executions */
   totalExecutions: number;
-  
+
   /** Total access count across all tools */
   totalAccesses: number;
-  
+
   /** Registry uptime in milliseconds */
   uptime: number;
-  
+
   /** Available tools count */
   availableTools: number;
-  
+
   /** Unavailable tools count */
   unavailableTools: number;
 }
@@ -118,7 +111,7 @@ export interface RegistryStatistics {
 export interface BatchRegistrationResult {
   /** Successfully registered tools */
   successful: Tool[];
-  
+
   /** Failed registrations with errors */
   failed: { tool: Tool; error: string }[];
 }
@@ -185,7 +178,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
       tool,
       registeredAt: now,
       lastAccessed: 0,
-      accessCount: 0
+      accessCount: 0,
     };
 
     this.tools.set(tool.name, toolInfo);
@@ -193,13 +186,13 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
     this.logger.info('Tool registered', {
       toolName: tool.name,
       version: tool.metadata.version,
-      capabilities: tool.metadata.capabilities
+      capabilities: tool.metadata.capabilities,
     });
 
     this.emit('tool-registered', {
       toolName: tool.name,
       tool,
-      registeredAt: now
+      registeredAt: now,
     });
   }
 
@@ -222,7 +215,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
     this.emit('tool-unregistered', {
       toolName,
       tool: toolInfo.tool,
-      unregisteredAt: Date.now()
+      unregisteredAt: Date.now(),
     });
   }
 
@@ -249,7 +242,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
       this.emit('tool-accessed', {
         toolName,
         accessCount: toolInfo.accessCount,
-        accessedAt: now
+        accessedAt: now,
       });
 
       return toolInfo.tool;
@@ -285,15 +278,14 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
       this.logger.info('Batch registration completed', {
         toolCount: tools.length,
-        totalTools: this.tools.size
+        totalTools: this.tools.size,
       });
 
       this.emit('batch-registered', {
         tools,
         count: tools.length,
-        registeredAt
+        registeredAt,
       });
-
     } catch (error) {
       // If any registration fails, rollback all tools registered in this batch
       const failedTool = tools.find(t => t.name === (error as any).toolName);
@@ -306,7 +298,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
       this.logger.error('Batch registration failed, rolled back', {
         attemptedCount: tools.length,
         rolledBack: toolsToRollback.length,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       throw error;
@@ -327,7 +319,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
       } catch (error) {
         failed.push({
           tool,
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -336,13 +328,13 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
       this.logger.info('Safe batch registration completed', {
         successful: successful.length,
         failed: failed.length,
-        totalTools: this.tools.size
+        totalTools: this.tools.size,
       });
 
       this.emit('batch-registered', {
         tools: successful,
         count: successful.length,
-        registeredAt: Date.now()
+        registeredAt: Date.now(),
       });
     }
 
@@ -359,7 +351,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
     this.logger.info('Batch unregistration completed', {
       toolCount: toolNames.length,
-      totalTools: this.tools.size
+      totalTools: this.tools.size,
     });
   }
 
@@ -377,7 +369,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
     this.logger.debug('Tools found by capability', {
       capability,
-      count: results.length
+      count: results.length,
     });
 
     return results;
@@ -390,7 +382,8 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
     const results: Tool[] = [];
 
     for (const toolInfo of this.tools.values()) {
-      const toolCategory = toolInfo.tool.metadata.category || ToolName.inferCategory(toolInfo.tool.name);
+      const toolCategory =
+        toolInfo.tool.metadata.category || ToolName.inferCategory(toolInfo.tool.name);
 
       if (toolCategory === category) {
         results.push(toolInfo.tool);
@@ -399,7 +392,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
     this.logger.debug('Tools found by category', {
       category,
-      count: results.length
+      count: results.length,
     });
 
     return results;
@@ -413,9 +406,9 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
     // Convert glob pattern to regex
     const regexPattern = pattern
-      .replace(/[$()+.?[\\\]^{|}]/g, '\\$&')  // Escape special regex chars
-      .replace(/\\\*/g, '.*');                // Convert \* back to .* for wildcards
-    
+      .replace(/[$()+.?[\\\]^{|}]/g, '\\$&') // Escape special regex chars
+      .replace(/\\\*/g, '.*'); // Convert \* back to .* for wildcards
+
     const regex = new RegExp(`^${regexPattern}$`);
 
     for (const [toolName, toolInfo] of this.tools) {
@@ -426,7 +419,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
     this.logger.debug('Tools found by pattern', {
       pattern,
-      count: results.length
+      count: results.length,
     });
 
     return results;
@@ -446,7 +439,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
     this.logger.debug('Tools found by tag', {
       tag,
-      count: results.length
+      count: results.length,
     });
 
     return results;
@@ -457,12 +450,12 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
    */
   async checkToolHealth(toolName: string): Promise<ToolHealthCheck> {
     const toolInfo = this.tools.get(toolName);
-    
+
     if (!toolInfo) {
       return {
         isAvailable: false,
         checkedAt: Date.now(),
-        error: 'Tool not found in registry'
+        error: 'Tool not found in registry',
       };
     }
 
@@ -484,22 +477,21 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
         this.emit('tool-health-changed', {
           toolName,
           isAvailable,
-          checkedAt
+          checkedAt,
         });
       }
 
       this.logger.debug('Tool health checked', {
         toolName,
         isAvailable,
-        checkDuration
+        checkDuration,
       });
 
       return {
         isAvailable,
         checkedAt,
-        checkDuration
+        checkDuration,
       };
-
     } catch (error) {
       const checkedAt = Date.now();
       const checkDuration = checkedAt - startTime;
@@ -512,14 +504,14 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
       this.logger.warn('Tool health check failed', {
         toolName,
         error: errorMessage,
-        checkDuration
+        checkDuration,
       });
 
       return {
         isAvailable: false,
         checkedAt,
         error: errorMessage,
-        checkDuration
+        checkDuration,
       };
     }
   }
@@ -543,7 +535,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
     this.logger.info('All tools health checked', {
       totalTools: Object.keys(results).length,
-      availableTools: Object.values(results).filter(r => r.isAvailable).length
+      availableTools: Object.values(results).filter(r => r.isAvailable).length,
     });
 
     return results;
@@ -591,7 +583,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
       totalAccesses,
       uptime: Date.now() - this.createdAt,
       availableTools,
-      unavailableTools
+      unavailableTools,
     };
   }
 
@@ -616,7 +608,7 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
     this.emit('cleanup-completed', {
       cleanupType: 'full',
       toolsRemoved: toolCount,
-      completedAt: Date.now()
+      completedAt: Date.now(),
     });
   }
 
@@ -640,13 +632,13 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
 
     this.logger.info('Category cleanup completed', {
       category,
-      toolsRemoved: toolsToRemove.length
+      toolsRemoved: toolsToRemove.length,
     });
 
     this.emit('cleanup-completed', {
       cleanupType: `category:${category}`,
       toolsRemoved: toolsToRemove.length,
-      completedAt: Date.now()
+      completedAt: Date.now(),
     });
   }
 
@@ -670,13 +662,13 @@ export class ToolRegistry extends EventEmitter implements ToolDiscovery {
     if (toolsToRemove.length > 0) {
       this.logger.info('Stale tools cleanup completed', {
         toolsRemoved: toolsToRemove.length,
-        maxAgeMs
+        maxAgeMs,
       });
 
       this.emit('cleanup-completed', {
         cleanupType: 'stale',
         toolsRemoved: toolsToRemove.length,
-        completedAt: Date.now()
+        completedAt: Date.now(),
       });
     }
 

@@ -38,12 +38,12 @@ describe('HealthChecker', () => {
         checkInterval: 100,
         timeoutMs: 50,
       });
-      
+
       const result = await isolatedChecker.start();
 
       expect(result.success).toBe(true);
       expect(isolatedChecker.isRunning()).toBe(true);
-      
+
       await isolatedChecker.stop();
     });
 
@@ -52,14 +52,14 @@ describe('HealthChecker', () => {
         checkInterval: 100,
         timeoutMs: 50,
       });
-      
+
       await isolatedChecker.start();
-      
+
       const result = await isolatedChecker.start();
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('already running');
-      
+
       await isolatedChecker.stop();
     });
   });
@@ -67,7 +67,7 @@ describe('HealthChecker', () => {
   describe('stop', () => {
     it('should stop health monitoring', async () => {
       await healthChecker.start();
-      
+
       const result = await healthChecker.stop();
 
       expect(result.success).toBe(true);
@@ -112,12 +112,12 @@ describe('HealthChecker', () => {
         checkInterval: 100,
         timeoutMs: 50,
       });
-      
+
       isolatedChecker.registerComponent('component1', async () => ({ healthy: true }));
       isolatedChecker.registerComponent('component2', async () => ({ healthy: true }));
 
       const health = await isolatedChecker.checkHealth();
-      
+
       expect(health.status).toBe('healthy');
       expect(health.components).toHaveProperty('component1');
       expect(health.components).toHaveProperty('component2');
@@ -127,9 +127,9 @@ describe('HealthChecker', () => {
 
     it('should return unhealthy status if any component is unhealthy', async () => {
       healthChecker.registerComponent('healthy-component', async () => ({ healthy: true }));
-      healthChecker.registerComponent('unhealthy-component', async () => ({ 
-        healthy: false, 
-        error: 'Component is down' 
+      healthChecker.registerComponent('unhealthy-component', async () => ({
+        healthy: false,
+        error: 'Component is down',
       }));
 
       const health = await healthChecker.checkHealth();
@@ -169,7 +169,7 @@ describe('HealthChecker', () => {
   describe('getHealthStatus', () => {
     it('should return cached health status', async () => {
       healthChecker.registerComponent('test-component', async () => ({ healthy: true }));
-      
+
       // Manually call checkHealth to populate the cache
       await healthChecker.checkHealth();
 
@@ -189,7 +189,7 @@ describe('HealthChecker', () => {
   describe('unregisterComponent', () => {
     it('should remove component from health checking', () => {
       healthChecker.registerComponent('test-component', async () => ({ healthy: true }));
-      
+
       const beforeUnregister = healthChecker.getRegisteredComponents();
 
       expect(beforeUnregister).toContain('test-component');
@@ -282,11 +282,11 @@ describe('ComponentStatus', () => {
   describe('removeComponent', () => {
     it('should remove component status', () => {
       componentStatus.setStatus('test-component', 'running');
-      
+
       expect(componentStatus.getStatus('test-component')).toBeDefined();
-      
+
       componentStatus.removeComponent('test-component');
-      
+
       expect(componentStatus.getStatus('test-component')).toBeUndefined();
     });
   });

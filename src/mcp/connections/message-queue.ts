@@ -141,7 +141,7 @@ export class MessageQueue {
     const insertIndex = this.findInsertIndex(priority);
 
     this.messages.splice(insertIndex, 0, queuedMessage);
-    
+
     // Update mapping
     this.updateMessageMap();
     this.totalEnqueued++;
@@ -160,7 +160,7 @@ export class MessageQueue {
     const queuedMessage = this.messages.shift()!;
 
     this.updateMessageMap();
-    
+
     // Track wait time
     const waitTime = Date.now() - queuedMessage.enqueuedAt;
 
@@ -182,7 +182,7 @@ export class MessageQueue {
    */
   remove(messageId: string): QueueResult<QueuedMessage> {
     const index = this.messageMap.get(messageId);
-    
+
     if (index === undefined) {
       return {
         success: false,
@@ -248,7 +248,7 @@ export class MessageQueue {
   removeTimedOutMessages(timeout: number): QueuedMessage[] {
     const cutoffTime = Date.now() - timeout;
     const timedOutMessages: QueuedMessage[] = [];
-    
+
     // Filter out timed out messages
     this.messages = this.messages.filter(msg => {
       if (msg.enqueuedAt < cutoffTime) {
@@ -291,9 +291,7 @@ export class MessageQueue {
       { low: 0, normal: 0, high: 0 }
     );
 
-    const averageWaitTime = this.totalDequeued > 0 
-      ? this.totalWaitTime / this.totalDequeued 
-      : 0;
+    const averageWaitTime = this.totalDequeued > 0 ? this.totalWaitTime / this.totalDequeued : 0;
 
     return {
       connectionId: this.connectionId,

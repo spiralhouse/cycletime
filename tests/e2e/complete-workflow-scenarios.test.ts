@@ -12,10 +12,9 @@ import { performance } from 'node:perf_hooks';
 
 import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
-
 // Import core JCVD components
 import { ConfigManager } from '../../src/config/config-manager.js';
-import { MultiAgentCoordinator } from '../../src/core/multi-agent-coordinator.js';
+import { Orchestrator } from '../../src/core/orchestrator.js';
 import { ProviderFactory } from '../../src/providers/factory/index.js';
 import { SQLiteProvider } from '../../src/providers/sqlite/index.js';
 import { testUtils, testData } from '../setup.js';
@@ -28,7 +27,7 @@ interface E2ETestContext {
   provider: SQLiteProvider;
   factory: ProviderFactory;
   configManager: ConfigManager;
-  coordinator: MultiAgentCoordinator;
+  coordinator: Orchestrator;
 }
 
 describe('Complete End-to-End Workflow Scenarios', () => {
@@ -91,7 +90,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
     });
 
     const configManager = new ConfigManager(jcvdConfig);
-    const coordinator = new MultiAgentCoordinator(configManager);
+    const coordinator = new Orchestrator(jcvdConfig);
 
     // Initialize all components
     await provider.initialize();

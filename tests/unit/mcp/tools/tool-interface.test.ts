@@ -1,20 +1,20 @@
 /**
  * Tool Interface Tests
- * 
+ *
  * Tests for the core Tool interface contracts and type definitions.
  * Following TDD principles - these tests define the expected behavior.
  */
 
 import { describe, test, expect } from 'vitest';
 
-import type { 
-  Tool, 
-  ToolCapability, 
-  ToolMetadata, 
-  ToolExecutionContext, 
+import type {
+  Tool,
+  ToolCapability,
+  ToolMetadata,
+  ToolExecutionContext,
   ToolExecutionResult,
   ToolParameterSchema,
-  ToolError
+  ToolError,
 } from '../../../../src/mcp/tools/tool-interface.js';
 
 describe('Tool Interface Contracts', () => {
@@ -28,8 +28,8 @@ describe('Tool Interface Contracts', () => {
         parameters: {
           type: 'object',
           properties: {},
-          required: []
-        }
+          required: [],
+        },
       };
 
       expect(metadata.name).toBe('test_tool');
@@ -48,22 +48,22 @@ describe('Tool Interface Contracts', () => {
         parameters: {
           type: 'object',
           properties: {},
-          required: []
+          required: [],
         },
         tags: ['testing', 'mcp'],
         category: 'development',
         inputSchema: {
           type: 'object',
           properties: {
-            input: { type: 'string' }
-          }
+            input: { type: 'string' },
+          },
         },
         outputSchema: {
           type: 'object',
           properties: {
-            result: { type: 'string' }
-          }
-        }
+            result: { type: 'string' },
+          },
+        },
       };
 
       expect(metadata.tags).toEqual(['testing', 'mcp']);
@@ -80,21 +80,21 @@ describe('Tool Interface Contracts', () => {
         properties: {
           title: {
             type: 'string',
-            description: 'The title of the item'
+            description: 'The title of the item',
           },
           priority: {
             type: 'number',
             minimum: 1,
             maximum: 4,
-            default: 3
+            default: 3,
           },
           tags: {
             type: 'array',
-            items: { type: 'string' }
-          }
+            items: { type: 'string' },
+          },
         },
         required: ['title'],
-        additionalProperties: false
+        additionalProperties: false,
       };
 
       expect(schema.type).toBe('object');
@@ -110,7 +110,7 @@ describe('Tool Interface Contracts', () => {
         requestId: 'req_123',
         timestamp: Date.now(),
         projectId: 'proj_456',
-        userId: 'user_789'
+        userId: 'user_789',
       };
 
       expect(context.requestId).toBe('req_123');
@@ -127,8 +127,8 @@ describe('Tool Interface Contracts', () => {
         userId: 'user_789',
         metadata: {
           sessionId: 'session_123',
-          source: 'claude-code'
-        }
+          source: 'claude-code',
+        },
       };
 
       expect(context.metadata).toBeDefined();
@@ -142,12 +142,12 @@ describe('Tool Interface Contracts', () => {
         success: true,
         data: {
           message: 'Operation completed successfully',
-          itemId: 'item_123'
+          itemId: 'item_123',
         },
         metadata: {
           executionTime: 150,
-          affectedResources: ['jcvd://project/proj_456/context']
-        }
+          affectedResources: ['jcvd://project/proj_456/context'],
+        },
       };
 
       expect(result.success).toBe(true);
@@ -163,9 +163,9 @@ describe('Tool Interface Contracts', () => {
           message: 'Invalid parameters provided',
           details: {
             field: 'title',
-            reason: 'Required field missing'
-          }
-        }
+            reason: 'Required field missing',
+          },
+        },
       };
 
       expect(result.success).toBe(false);
@@ -176,11 +176,7 @@ describe('Tool Interface Contracts', () => {
 
   describe('ToolCapability', () => {
     test('should define standard capabilities', () => {
-      const capabilities: ToolCapability[] = [
-        'execute',
-        'validate',
-        'preview'
-      ];
+      const capabilities: ToolCapability[] = ['execute', 'validate', 'preview'];
 
       expect(capabilities).toContain('execute');
       expect(capabilities).toContain('validate');
@@ -197,17 +193,17 @@ describe('Tool Interface Contracts', () => {
         isAvailable: 'function returning Promise<boolean>',
         validateParameters: 'function returning Promise<validation result>',
         execute: 'function returning Promise<ToolExecutionResult>',
-        getCapabilities: 'function returning ToolCapability[]'
+        getCapabilities: 'function returning ToolCapability[]',
       };
 
       // Verify the interface has the expected structure
       expect(Object.keys(toolInterface)).toEqual([
         'name',
-        'metadata', 
+        'metadata',
         'isAvailable',
         'validateParameters',
         'execute',
-        'getCapabilities'
+        'getCapabilities',
       ]);
     });
   });
@@ -221,8 +217,8 @@ describe('Tool Interface Contracts', () => {
         toolName: 'test_tool',
         details: {
           step: 'validation',
-          reason: 'Invalid input'
-        }
+          reason: 'Invalid input',
+        },
       };
 
       expect(error.name).toBe('ToolError');
@@ -239,7 +235,7 @@ describe('Tool Naming Conventions', () => {
       'jcvd_create_issue',
       'jcvd_update_issue_status',
       'jcvd_add_dependency',
-      'jcvd_initialize_project'
+      'jcvd_initialize_project',
     ];
 
     for (const name of validNames) {
@@ -249,12 +245,12 @@ describe('Tool Naming Conventions', () => {
 
   test('should reject invalid naming patterns', () => {
     const invalidNames = [
-      'create_issue',          // Missing jcvd_ prefix
-      'jcvd_CreateIssue',      // PascalCase not allowed
-      'jcvd_create-issue',     // Hyphens not allowed
-      'JCVD_CREATE_ISSUE',     // All caps not allowed
-      'jcvd_',                 // Empty suffix
-      'jcvd_123'               // Starting with number
+      'create_issue', // Missing jcvd_ prefix
+      'jcvd_CreateIssue', // PascalCase not allowed
+      'jcvd_create-issue', // Hyphens not allowed
+      'JCVD_CREATE_ISSUE', // All caps not allowed
+      'jcvd_', // Empty suffix
+      'jcvd_123', // Starting with number
     ];
 
     for (const name of invalidNames) {
@@ -272,37 +268,37 @@ describe('Parameter Schema Validation', () => {
           type: 'string',
           description: 'The issue title',
           minLength: 1,
-          maxLength: 200
+          maxLength: 200,
         },
         description: {
           type: 'string',
-          description: 'Optional issue description'
+          description: 'Optional issue description',
         },
         type: {
           type: 'string',
           enum: ['epic', 'story', 'subtask'],
-          description: 'Issue type'
+          description: 'Issue type',
         },
         parentId: {
           type: 'string',
-          description: 'Parent issue ID for hierarchical issues'
+          description: 'Parent issue ID for hierarchical issues',
         },
         estimate: {
           type: 'number',
           minimum: 1,
           maximum: 13,
-          description: 'Effort estimate in story points'
+          description: 'Effort estimate in story points',
         },
         priority: {
           type: 'number',
           minimum: 1,
           maximum: 4,
           default: 3,
-          description: 'Priority level (1=urgent, 4=low)'
-        }
+          description: 'Priority level (1=urgent, 4=low)',
+        },
       },
       required: ['title', 'type'],
-      additionalProperties: false
+      additionalProperties: false,
     };
 
     expect(createIssueSchema.properties.title).toBeDefined();
@@ -323,11 +319,11 @@ describe('Parameter Schema Validation', () => {
               type: 'object',
               properties: {
                 autoClose: { type: 'boolean' },
-                notifications: { type: 'boolean' }
-              }
-            }
+                notifications: { type: 'boolean' },
+              },
+            },
           },
-          required: ['name']
+          required: ['name'],
         },
         options: {
           type: 'array',
@@ -335,12 +331,12 @@ describe('Parameter Schema Validation', () => {
             type: 'object',
             properties: {
               key: { type: 'string' },
-              value: { type: 'string' }
-            }
-          }
-        }
+              value: { type: 'string' },
+            },
+          },
+        },
       },
-      required: ['project']
+      required: ['project'],
     };
 
     expect(complexSchema.properties.project).toBeDefined();

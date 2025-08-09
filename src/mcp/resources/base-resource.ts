@@ -1,21 +1,13 @@
 /**
  * Base Resource Implementation
- * 
+ *
  * Provides common functionality for all JCVD MCP resources including
  * caching, validation, metadata management, and lifecycle operations.
  */
 
-import { 
-  ResourceError, 
-  ResourceURI, 
-  InvalidResourceURIError 
-} from './resource-interface.js';
+import { ResourceError, ResourceURI, InvalidResourceURIError } from './resource-interface.js';
 
-import type { 
-  Resource, 
-  ResourceMetadata, 
-  ResourceContent 
-} from './resource-interface.js';
+import type { Resource, ResourceMetadata, ResourceContent } from './resource-interface.js';
 
 /**
  * Content provider function type
@@ -62,7 +54,7 @@ export class BaseResource implements Resource {
 
   /**
    * Create a new BaseResource instance
-   * 
+   *
    * @param uri Resource URI following jcvd://project/{projectId}/{resourceType} pattern
    * @param metadata Resource metadata including capabilities and content type
    * @param contentProvider Function that generates the resource content
@@ -92,7 +84,7 @@ export class BaseResource implements Resource {
     this.uri = uri;
     this.metadata = {
       ...metadata,
-      lastModified: metadata.lastModified || new Date()
+      lastModified: metadata.lastModified || new Date(),
     };
     this.contentProvider = contentProvider;
     this.availabilityChecker = availabilityChecker;
@@ -104,7 +96,7 @@ export class BaseResource implements Resource {
       cacheMisses: 0,
       errorCount: 0,
       lastAccessed: 0,
-      createdAt: Date.now()
+      createdAt: Date.now(),
     };
   }
 
@@ -141,18 +133,18 @@ export class BaseResource implements Resource {
         this.cache = {
           content,
           timestamp: Date.now(),
-          ttl: this.metadata.ttl * 1000 // Convert to milliseconds
+          ttl: this.metadata.ttl * 1000, // Convert to milliseconds
         };
       }
 
       return content;
     } catch (error) {
       this.statistics.errorCount++;
-      
+
       if (error instanceof ResourceError) {
         throw error;
       }
-      
+
       // Re-throw the original error to maintain test expectations
       throw error;
     }
@@ -166,7 +158,7 @@ export class BaseResource implements Resource {
       if (this.availabilityChecker) {
         return await this.availabilityChecker();
       }
-      
+
       // Default to available if no checker provided
       return true;
     } catch {
@@ -184,15 +176,15 @@ export class BaseResource implements Resource {
 
   /**
    * Update resource metadata
-   * 
+   *
    * @param newMetadata New metadata to apply
    */
   updateMetadata(newMetadata: ResourceMetadata): void {
     this.metadata = {
       ...newMetadata,
-      lastModified: new Date()
+      lastModified: new Date(),
     };
-    
+
     // Invalidate cache when metadata changes
     this.cache = undefined as CacheEntry | undefined;
   }
@@ -216,7 +208,7 @@ export class BaseResource implements Resource {
       cacheMisses: 0,
       errorCount: 0,
       lastAccessed: 0,
-      createdAt
+      createdAt,
     };
   }
 
@@ -279,7 +271,7 @@ export class BaseResource implements Resource {
       cached: !!this.cache,
       cacheValid: this.cache ? this.isCacheValid() : false,
       projectId: this.getProjectId(),
-      resourcePath: this.getResourcePath()
+      resourcePath: this.getResourcePath(),
     };
   }
 }

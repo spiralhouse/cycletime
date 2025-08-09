@@ -24,7 +24,6 @@ import {
   generateSchemaFingerprint,
 } from '../../../../src/database/migrations/schema-versioning';
 
-
 describe('Schema Versioning System', () => {
   describe('parseSemanticVersion', () => {
     it('should parse valid semantic versions', () => {

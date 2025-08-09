@@ -18,7 +18,7 @@ describe('MCPServer', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    
+
     // If there's an existing server, clean it up first
     if (server) {
       try {
@@ -29,16 +29,19 @@ describe('MCPServer', () => {
         // Ignore cleanup errors
       }
     }
-    
-    server = new MCPServer({
-      name: 'test-server',
-      version: '1.0.0',
-      capabilities: {
-        resources: {},
-        tools: {},
-        prompts: {},
+
+    server = new MCPServer(
+      {
+        name: 'test-server',
+        version: '1.0.0',
+        capabilities: {
+          resources: {},
+          tools: {},
+          prompts: {},
+        },
       },
-    }, mockLogger);
+      mockLogger
+    );
   });
 
   afterEach(async () => {
@@ -88,7 +91,7 @@ describe('MCPServer', () => {
   describe('Server lifecycle', () => {
     it('should start server successfully', async () => {
       const result = await server.start();
-      
+
       expect(result.success).toBe(true);
       expect(server.isRunning()).toBe(true);
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -100,7 +103,7 @@ describe('MCPServer', () => {
     it('should stop server successfully', async () => {
       await server.start();
       const result = await server.stop();
-      
+
       expect(result.success).toBe(true);
       expect(server.isRunning()).toBe(false);
       expect(mockLogger.info).toHaveBeenCalledWith('MCP server stopped');
@@ -108,7 +111,7 @@ describe('MCPServer', () => {
 
     it('should handle stop when not running', async () => {
       const result = await server.stop();
-      
+
       expect(result.success).toBe(true);
       expect(mockLogger.debug).toHaveBeenCalledWith('Server stop requested but server not running');
     });
@@ -116,7 +119,7 @@ describe('MCPServer', () => {
     it('should prevent double start', async () => {
       await server.start();
       const result = await server.start();
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Server already running');
     });
@@ -124,7 +127,7 @@ describe('MCPServer', () => {
     it('should restart server', async () => {
       await server.start();
       const result = await server.restart();
-      
+
       expect(result.success).toBe(true);
       expect(server.isRunning()).toBe(true);
       expect(mockLogger.info).toHaveBeenCalledWith('MCP server restarted');
@@ -166,7 +169,7 @@ describe('MCPServer', () => {
 
       const response = await server.handleMessage(JSON.stringify(request));
       const parsedResponse = JSON.parse(response);
-      
+
       expect(parsedResponse.id).toBe(1);
       expect(parsedResponse.result).toEqual({
         protocolVersion: '2024-11-05',
@@ -191,7 +194,7 @@ describe('MCPServer', () => {
 
       const response = await server.handleMessage(JSON.stringify(request));
       const parsedResponse = JSON.parse(response);
-      
+
       expect(parsedResponse.id).toBe(2);
       expect(parsedResponse.result).toEqual({});
     });
@@ -211,7 +214,7 @@ describe('MCPServer', () => {
     it('should handle invalid JSON gracefully', async () => {
       const response = await server.handleMessage('{ invalid json }');
       const parsedResponse = JSON.parse(response);
-      
+
       expect(parsedResponse.error).toEqual({
         code: -32_700,
         message: 'Parse error',
@@ -229,7 +232,7 @@ describe('MCPServer', () => {
 
       const response = await server.handleMessage(JSON.stringify(request));
       const parsedResponse = JSON.parse(response);
-      
+
       expect(parsedResponse.id).toBe(3);
       expect(parsedResponse.error).toEqual({
         code: -32_601,
@@ -246,7 +249,7 @@ describe('MCPServer', () => {
 
       const response = await server.handleMessage(JSON.stringify(malformedRequest));
       const parsedResponse = JSON.parse(response);
-      
+
       expect(parsedResponse.error).toEqual({
         code: -32_600,
         message: 'Invalid Request',
@@ -258,7 +261,7 @@ describe('MCPServer', () => {
   describe('Server information', () => {
     it('should provide server status', () => {
       const status = server.getStatus();
-      
+
       expect(status).toEqual({
         name: 'test-server',
         version: '1.0.0',
@@ -274,9 +277,9 @@ describe('MCPServer', () => {
 
     it('should provide server health info', async () => {
       await server.start();
-      
+
       const health = server.getHealthInfo();
-      
+
       expect(health).toEqual({
         status: 'healthy',
         uptime: expect.any(Number),
@@ -288,10 +291,10 @@ describe('MCPServer', () => {
 
     it('should track uptime correctly', async () => {
       await server.start();
-      
+
       // Wait a small amount to ensure uptime > 0
       await new Promise(resolve => setTimeout(resolve, 10));
-      
+
       const status = server.getStatus();
 
       expect(status.uptime).toBeGreaterThan(0);
@@ -299,7 +302,7 @@ describe('MCPServer', () => {
 
     it('should provide capabilities information', () => {
       const capabilities = server.getCapabilities();
-      
+
       expect(capabilities).toEqual({
         resources: {},
         tools: {},
@@ -312,13 +315,13 @@ describe('MCPServer', () => {
     it('should emit server events', async () => {
       const startListener = vi.fn();
       const stopListener = vi.fn();
-      
+
       server.on('start', startListener);
       server.on('stop', stopListener);
-      
+
       await server.start();
       await server.stop();
-      
+
       expect(startListener).toHaveBeenCalledWith({
         serverName: 'test-server',
         timestamp: expect.any(Number),
@@ -331,10 +334,10 @@ describe('MCPServer', () => {
 
     it('should emit message events', async () => {
       const messageListener = vi.fn();
-      
+
       server.on('message', messageListener);
       await server.start();
-      
+
       const request = {
         jsonrpc: '2.0' as const,
         id: 1,
@@ -342,7 +345,7 @@ describe('MCPServer', () => {
       };
 
       await server.handleMessage(JSON.stringify(request));
-      
+
       expect(messageListener).toHaveBeenCalledWith({
         type: 'request',
         method: 'ping',
@@ -353,12 +356,12 @@ describe('MCPServer', () => {
 
     it('should emit error events', async () => {
       const errorListener = vi.fn();
-      
+
       server.on('error', errorListener);
       await server.start();
-      
+
       await server.handleMessage('{ invalid json }');
-      
+
       expect(errorListener).toHaveBeenCalledWith({
         error: expect.any(Object),
         timestamp: expect.any(Number),
@@ -375,7 +378,7 @@ describe('MCPServer', () => {
       };
 
       server.updateCapabilities(newCapabilities);
-      
+
       expect(server.getCapabilities()).toEqual(newCapabilities);
     });
 
@@ -385,7 +388,7 @@ describe('MCPServer', () => {
       };
 
       server.updateCapabilities(newCapabilities);
-      
+
       const capabilities = server.getCapabilities();
 
       expect(capabilities.resources).toEqual({ files: true });
@@ -399,7 +402,7 @@ describe('MCPServer', () => {
       };
 
       server.updateCapabilities(newCapabilities, { replace: true });
-      
+
       const capabilities = server.getCapabilities();
 
       expect(capabilities).toEqual({
@@ -418,7 +421,7 @@ describe('MCPServer', () => {
       });
 
       const result = await faultyServer.start();
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
       expect(faultyServer.isRunning()).toBe(false);
@@ -426,7 +429,7 @@ describe('MCPServer', () => {
 
     it('should handle message processing errors', async () => {
       await server.start();
-      
+
       // Mock a message that will cause an internal error
       const problematicMessage = JSON.stringify({
         jsonrpc: '2.0',
@@ -436,7 +439,7 @@ describe('MCPServer', () => {
       });
 
       const response = await server.handleMessage(problematicMessage);
-      
+
       // Should still return a valid JSON-RPC error response
       expect(() => JSON.parse(response)).not.toThrow();
     });

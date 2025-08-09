@@ -1,6 +1,6 @@
 /**
  * Resource-Enabled MCP Server
- * 
+ *
  * Extends the base MCP server with resource framework integration,
  * providing JCVD resource management capabilities through MCP protocol.
  */
@@ -60,9 +60,9 @@ export class ResourceServer extends MCPServer {
         ...config.capabilities,
         resources: {
           subscribe: false, // Not yet implemented
-          listChanged: false // Not yet implemented
-        }
-      }
+          listChanged: false, // Not yet implemented
+        },
+      },
     };
 
     super(enhancedConfig, logger);
@@ -88,28 +88,28 @@ export class ResourceServer extends MCPServer {
   registerResource(resource: Resource): void {
     try {
       this.resourceRegistry.register(resource);
-      
+
       this.resourceLogger.info('Resource registered', {
         uri: resource.uri,
         name: resource.metadata.name,
-        contentType: resource.metadata.contentType
+        contentType: resource.metadata.contentType,
       });
 
       this.emit('resource-registered', {
         uri: resource.uri,
         resource,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     } catch (error) {
       this.resourceLogger.error('Failed to register resource', {
         uri: resource.uri,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       this.emit('resource-error', {
         uri: resource.uri,
         error: error instanceof Error ? error.message : String(error),
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       throw error;
@@ -122,23 +122,23 @@ export class ResourceServer extends MCPServer {
   unregisterResource(uri: string): void {
     try {
       this.resourceRegistry.unregister(uri);
-      
+
       this.resourceLogger.info('Resource unregistered', { uri });
 
       this.emit('resource-unregistered', {
         uri,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     } catch (error) {
       this.resourceLogger.error('Failed to unregister resource', {
         uri,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       this.emit('resource-error', {
         uri,
         error: error instanceof Error ? error.message : String(error),
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       throw error;
@@ -151,10 +151,10 @@ export class ResourceServer extends MCPServer {
   registerResources(resources: Resource[]): void {
     try {
       this.resourceRegistry.registerBatch(resources);
-      
+
       this.resourceLogger.info('Batch resources registered', {
         count: resources.length,
-        uris: resources.map(r => r.uri)
+        uris: resources.map(r => r.uri),
       });
 
       // Emit individual registration events
@@ -162,13 +162,13 @@ export class ResourceServer extends MCPServer {
         this.emit('resource-registered', {
           uri: resource.uri,
           resource,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
       });
     } catch (error) {
       this.resourceLogger.error('Failed to register batch resources', {
         count: resources.length,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       throw error;
@@ -180,12 +180,12 @@ export class ResourceServer extends MCPServer {
    */
   getResource(uri: string): Resource | undefined {
     const resource = this.resourceRegistry.get(uri);
-    
+
     if (resource) {
       this.emit('resource-accessed', {
         uri,
         accessCount: this.resourceRegistry.getResourceStatistics(uri)?.accessCount || 0,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
 
@@ -221,8 +221,8 @@ export class ResourceServer extends MCPServer {
       registry: this.resourceRegistry.getRegistryStatistics(),
       handler: this.resourceHandler.getStatistics(),
       metadata: {
-        capabilities: this.metadataManager.getRegisteredCapabilities().length
-      }
+        capabilities: this.metadataManager.getRegisteredCapabilities().length,
+      },
     };
   }
 
@@ -231,7 +231,7 @@ export class ResourceServer extends MCPServer {
    */
   cleanupProjectResources(projectId: string): void {
     this.resourceRegistry.cleanupByProject(projectId);
-    
+
     this.resourceLogger.info('Project resources cleaned up', { projectId });
   }
 
@@ -240,7 +240,7 @@ export class ResourceServer extends MCPServer {
    */
   cleanupAllResources(): void {
     this.resourceRegistry.cleanup();
-    
+
     this.resourceLogger.info('All resources cleaned up');
   }
 
@@ -249,12 +249,12 @@ export class ResourceServer extends MCPServer {
    */
   override async restart(): Promise<any> {
     const result = await super.restart();
-    
+
     if (result.success) {
       // Re-setup resource framework after restart
       this.setupResourceFramework();
     }
-    
+
     return result;
   }
 
@@ -264,7 +264,7 @@ export class ResourceServer extends MCPServer {
   private setupResourceFramework(): void {
     // Get access to the message router from parent class (protected access would be better)
     const messageRouter = (this as any).messageRouter;
-    
+
     if (messageRouter) {
       // Register resource handlers with the message router (check if not already registered)
       this.resourceHandler.registerHandlers((method, handler) => {
@@ -272,9 +272,9 @@ export class ResourceServer extends MCPServer {
           messageRouter.registerHandler(method, handler);
         }
       });
-      
+
       this.resourceLogger.debug('Resource handlers registered with message router', {
-        handlers: ['resources/list', 'resources/read', 'resources/subscribe']
+        handlers: ['resources/list', 'resources/read', 'resources/subscribe'],
       });
     } else {
       this.resourceLogger.warn('Message router not available, resource handlers not registered');
@@ -286,7 +286,7 @@ export class ResourceServer extends MCPServer {
     this.updateCapabilities({ resources: resourceCapabilities });
 
     this.resourceLogger.debug('Resource framework integrated with MCP server', {
-      capabilities: resourceCapabilities
+      capabilities: resourceCapabilities,
     });
   }
 
@@ -295,33 +295,33 @@ export class ResourceServer extends MCPServer {
    */
   private setupResourceEventHandlers(): void {
     // Forward registry events
-    this.resourceRegistry.on('resource-registered', (event) => {
+    this.resourceRegistry.on('resource-registered', event => {
       this.emit('resource-registered', {
         uri: event.uri,
         resource: event.resource,
-        timestamp: event.registeredAt
+        timestamp: event.registeredAt,
       });
     });
 
-    this.resourceRegistry.on('resource-unregistered', (event) => {
+    this.resourceRegistry.on('resource-unregistered', event => {
       this.emit('resource-unregistered', {
         uri: event.uri,
-        timestamp: event.unregisteredAt
+        timestamp: event.unregisteredAt,
       });
     });
 
-    this.resourceRegistry.on('batch-registered', (event) => {
+    this.resourceRegistry.on('batch-registered', event => {
       this.resourceLogger.debug('Batch resources registered', {
         count: event.count,
-        timestamp: event.registeredAt
+        timestamp: event.registeredAt,
       });
     });
 
-    this.resourceRegistry.on('cleanup-completed', (event) => {
+    this.resourceRegistry.on('cleanup-completed', event => {
       this.resourceLogger.debug('Resource cleanup completed', {
         type: event.cleanupType,
         removed: event.resourcesRemoved,
-        timestamp: event.completedAt
+        timestamp: event.completedAt,
       });
     });
 

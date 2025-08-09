@@ -1,6 +1,6 @@
 /**
  * Resource Metadata Management System
- * 
+ *
  * Manages capability advertisement, validation, and metadata operations
  * for JCVD MCP resources including discovery and lifecycle events.
  */
@@ -15,25 +15,25 @@ import type { ResourceMetadata, ResourceCapability } from './resource-interface.
 export interface ResourceCapabilityInfo {
   /** Unique capability name */
   name: string;
-  
+
   /** Human-readable description */
   description: string;
-  
+
   /** Supported operations (read, write, subscribe) */
   supportedOperations: ResourceCapability[];
-  
+
   /** URI pattern for this capability (e.g., jcvd://project/{projectId}/context) */
   uriPattern: string;
-  
+
   /** Content type returned by this capability */
   contentType: string;
-  
+
   /** Capability version */
   version: string;
-  
+
   /** Optional tags for categorization */
   tags?: string[];
-  
+
   /** Optional JSON schema for content validation */
   contentSchema?: any;
 }
@@ -44,7 +44,7 @@ export interface ResourceCapabilityInfo {
 export interface ResourceDiscoveryInfo {
   /** Matching capabilities */
   capabilities: ResourceCapabilityInfo[];
-  
+
   /** Discovery metadata */
   metadata: {
     totalMatches: number;
@@ -59,10 +59,10 @@ export interface ResourceDiscoveryInfo {
 export interface MetadataValidationResult {
   /** Whether metadata is valid */
   isValid: boolean;
-  
+
   /** Validation error messages */
   errors: string[];
-  
+
   /** Validation warnings */
   warnings?: string[];
 }
@@ -82,7 +82,7 @@ export interface MCPAdvertisement {
       mimeType: string;
     }[];
   };
-  
+
   /** Server information */
   serverInfo?: {
     name: string;
@@ -114,7 +114,7 @@ export class ResourceMetadataManager extends EventEmitter {
 
     this.capabilities.set(name, info);
     this.invalidateCache();
-    
+
     this.emit('capability-registered', { name, capability: info });
   }
 
@@ -129,7 +129,7 @@ export class ResourceMetadataManager extends EventEmitter {
     this.capabilities.delete(name);
     this.accessStats.delete(name);
     this.invalidateCache();
-    
+
     this.emit('capability-unregistered', { name });
   }
 
@@ -148,7 +148,7 @@ export class ResourceMetadataManager extends EventEmitter {
     if (capability) {
       this.capabilityCache.set(name, capability);
     }
-    
+
     return capability;
   }
 
@@ -165,13 +165,13 @@ export class ResourceMetadataManager extends EventEmitter {
   findCapabilitiesByURI(uri: string): ResourceCapabilityInfo[] {
     const cacheKey = `uri:${uri}`;
     const cached = this.discoveryCache.get(cacheKey);
-    
+
     if (cached && this.isCacheValid(cached.metadata.timestamp)) {
       return cached.capabilities;
     }
 
     const matches: ResourceCapabilityInfo[] = [];
-    
+
     for (const capability of this.capabilities.values()) {
       if (this.uriMatchesPattern(uri, capability.uriPattern)) {
         matches.push(capability);
@@ -183,8 +183,8 @@ export class ResourceMetadataManager extends EventEmitter {
       metadata: {
         totalMatches: matches.length,
         searchCriteria: `URI: ${uri}`,
-        timestamp: Date.now()
-      }
+        timestamp: Date.now(),
+      },
     });
 
     return matches;
@@ -196,21 +196,22 @@ export class ResourceMetadataManager extends EventEmitter {
   findCapabilitiesByContentType(contentType: string): ResourceCapabilityInfo[] {
     const cacheKey = `contentType:${contentType}`;
     const cached = this.discoveryCache.get(cacheKey);
-    
+
     if (cached && this.isCacheValid(cached.metadata.timestamp)) {
       return cached.capabilities;
     }
 
-    const matches = Array.from(this.capabilities.values())
-      .filter(cap => cap.contentType === contentType);
+    const matches = Array.from(this.capabilities.values()).filter(
+      cap => cap.contentType === contentType
+    );
 
     this.discoveryCache.set(cacheKey, {
       capabilities: matches,
       metadata: {
         totalMatches: matches.length,
         searchCriteria: `Content-Type: ${contentType}`,
-        timestamp: Date.now()
-      }
+        timestamp: Date.now(),
+      },
     });
 
     return matches;
@@ -222,21 +223,22 @@ export class ResourceMetadataManager extends EventEmitter {
   findCapabilitiesByOperation(operation: ResourceCapability): ResourceCapabilityInfo[] {
     const cacheKey = `operation:${operation}`;
     const cached = this.discoveryCache.get(cacheKey);
-    
+
     if (cached && this.isCacheValid(cached.metadata.timestamp)) {
       return cached.capabilities;
     }
 
-    const matches = Array.from(this.capabilities.values())
-      .filter(cap => cap.supportedOperations.includes(operation));
+    const matches = Array.from(this.capabilities.values()).filter(cap =>
+      cap.supportedOperations.includes(operation)
+    );
 
     this.discoveryCache.set(cacheKey, {
       capabilities: matches,
       metadata: {
         totalMatches: matches.length,
         searchCriteria: `Operation: ${operation}`,
-        timestamp: Date.now()
-      }
+        timestamp: Date.now(),
+      },
     });
 
     return matches;
@@ -288,7 +290,7 @@ export class ResourceMetadataManager extends EventEmitter {
     return {
       isValid: errors.length === 0,
       errors,
-      warnings
+      warnings,
     };
   }
 
@@ -300,26 +302,28 @@ export class ResourceMetadataManager extends EventEmitter {
       name: cap.name,
       description: cap.description,
       uriTemplate: cap.uriPattern,
-      mimeType: cap.contentType
+      mimeType: cap.contentType,
     }));
 
-    const totalAccesses = Array.from(this.accessStats.values())
-      .reduce((sum, count) => sum + count, 0);
+    const totalAccesses = Array.from(this.accessStats.values()).reduce(
+      (sum, count) => sum + count,
+      0
+    );
 
     return {
       resources: {
         listChanged: true,
         subscribe: true,
-        capabilities
+        capabilities,
       },
       serverInfo: {
         name: 'JCVD Resource Server',
         version: '1.0.0',
         statistics: {
           totalCapabilities: this.capabilities.size,
-          totalAccesses
-        }
-      }
+          totalAccesses,
+        },
+      },
     };
   }
 
@@ -374,10 +378,8 @@ export class ResourceMetadataManager extends EventEmitter {
   private uriMatchesPattern(uri: string, pattern: string): boolean {
     // Convert pattern to regex
     // jcvd://project/{projectId}/context -> jcvd://project/([^/]+)/context
-    const regexPattern = pattern
-      .replace(/{[^}]+}/g, '([^/]+)')
-      .replace(/\./g, '\\.');
-    
+    const regexPattern = pattern.replace(/{[^}]+}/g, '([^/]+)').replace(/\./g, '\\.');
+
     const regex = new RegExp(`^${regexPattern}$`);
 
     return regex.test(uri);

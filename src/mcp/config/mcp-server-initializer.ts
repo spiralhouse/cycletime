@@ -88,16 +88,16 @@ export class MCPServerInitializer {
 
       // Initialize in dependency order
       const initOrder = this.getInitializationOrder();
-      
+
       for (const component of initOrder) {
         await this.initializeComponent(component);
       }
 
       this.initialized = true;
-      
+
       this.logger.info('MCP server initialization completed successfully');
-      
-      return { 
+
+      return {
         success: true,
         details: {
           initOrder,
@@ -128,7 +128,7 @@ export class MCPServerInitializer {
     try {
       // Shutdown in reverse dependency order
       const shutdownOrder = this.getInitializationOrder().reverse();
-      
+
       for (const component of shutdownOrder) {
         await this.shutdownComponent(component);
       }
@@ -138,7 +138,7 @@ export class MCPServerInitializer {
       this.componentStatus.clear();
 
       this.logger.info('MCP server shutdown completed successfully');
-      
+
       return { success: true };
     } catch (error) {
       this.logger.error('MCP server shutdown failed', {
@@ -186,7 +186,7 @@ export class MCPServerInitializer {
 
         // Restart with new configuration
         const restartResult = await this.restart();
-        
+
         if (!restartResult.success) {
           // Rollback on failure
           this.config = oldConfig;
@@ -195,7 +195,7 @@ export class MCPServerInitializer {
         }
 
         this.logger.info('MCP server reconfiguration completed successfully');
-        
+
         return { success: true };
       } catch (error) {
         // Rollback configuration
@@ -325,7 +325,7 @@ export class MCPServerInitializer {
    */
   private hasCircularDependency(component: string, newDep: string): boolean {
     const visited = new Set<string>();
-    
+
     const checkCycle = (current: string): boolean => {
       if (current === component) {
         return true;
@@ -333,9 +333,9 @@ export class MCPServerInitializer {
       if (visited.has(current)) {
         return false;
       }
-      
+
       visited.add(current);
-      
+
       const deps = this.getDependencies(current);
 
       for (const dep of deps) {
@@ -343,7 +343,7 @@ export class MCPServerInitializer {
           return true;
         }
       }
-      
+
       return false;
     };
 
@@ -355,7 +355,7 @@ export class MCPServerInitializer {
    */
   private async initializeComponent(component: string): Promise<void> {
     this.logger.debug(`Initializing component: ${component}`);
-    
+
     this.componentStatuses.set(component, {
       initialized: false,
       timestamp: Date.now(),
@@ -399,11 +399,11 @@ export class MCPServerInitializer {
       });
 
       this.componentStatus.setStatus(component, 'running');
-      
+
       this.logger.debug(`Component initialized successfully: ${component}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      
+
       this.componentStatuses.set(component, {
         initialized: false,
         error: errorMessage,
@@ -411,7 +411,7 @@ export class MCPServerInitializer {
       });
 
       this.componentStatus.setStatus(component, 'error', {}, errorMessage);
-      
+
       throw new Error(`Failed to initialize ${component}: ${errorMessage}`);
     }
   }
@@ -421,7 +421,7 @@ export class MCPServerInitializer {
    */
   private async shutdownComponent(component: string): Promise<void> {
     this.logger.debug(`Shutting down component: ${component}`);
-    
+
     this.componentStatus.setStatus(component, 'stopping');
 
     try {
@@ -451,7 +451,7 @@ export class MCPServerInitializer {
       }
 
       this.componentStatus.setStatus(component, 'stopped');
-      
+
       this.logger.debug(`Component shut down successfully: ${component}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);

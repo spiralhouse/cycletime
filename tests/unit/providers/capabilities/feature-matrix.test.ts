@@ -20,7 +20,6 @@ import {
   type ProviderComparison,
 } from '../../../../src/providers/capabilities/feature-matrix.js';
 
-
 import type { IssueProvider, ProviderInfo } from '../../../../src/providers/types.js';
 
 // =============================================================================

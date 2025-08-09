@@ -68,7 +68,7 @@ export class ProtocolHandler {
     try {
       const message = JSON.parse(messageString);
       const validation = this.validateMessage(message);
-      
+
       if (!validation.isValid) {
         return {
           success: false,
@@ -115,7 +115,7 @@ export class ProtocolHandler {
 
     // Determine message type
     let messageType: 'request' | 'notification' | 'response';
-    
+
     if (message.result !== undefined || message.error !== undefined) {
       messageType = 'response';
     } else if (message.id !== undefined) {
@@ -176,7 +176,7 @@ export class ProtocolHandler {
         return clientVersion;
       }
     }
-    
+
     return null;
   }
 

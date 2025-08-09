@@ -112,7 +112,9 @@ describe('MCPConfigManager', () => {
         },
       };
 
-      expect(() => { MCPConfigManager.validateMCPConfig(validConfig); }).not.toThrow();
+      expect(() => {
+        MCPConfigManager.validateMCPConfig(validConfig);
+      }).not.toThrow();
     });
 
     it('should throw for missing required server.name', () => {
@@ -127,8 +129,9 @@ describe('MCPConfigManager', () => {
         provider: { type: 'sqlite' as const, config: {} },
       };
 
-      expect(() => { MCPConfigManager.validateMCPConfig(invalidConfig as any); })
-        .toThrow('server.name is required and must be non-empty');
+      expect(() => {
+        MCPConfigManager.validateMCPConfig(invalidConfig as any);
+      }).toThrow('server.name is required and must be non-empty');
     });
 
     it('should throw for invalid transport type', () => {
@@ -144,8 +147,9 @@ describe('MCPConfigManager', () => {
         provider: { type: 'sqlite', config: {} },
       };
 
-      expect(() => { MCPConfigManager.validateMCPConfig(invalidConfig as any); })
-        .toThrow('transport must be either "stdio" or "websocket"');
+      expect(() => {
+        MCPConfigManager.validateMCPConfig(invalidConfig as any);
+      }).toThrow('transport must be either "stdio" or "websocket"');
     });
 
     it('should throw for websocket transport without port', () => {
@@ -162,8 +166,9 @@ describe('MCPConfigManager', () => {
         provider: { type: 'sqlite', config: {} },
       };
 
-      expect(() => { MCPConfigManager.validateMCPConfig(invalidConfig); })
-        .toThrow('port is required when transport is "websocket"');
+      expect(() => {
+        MCPConfigManager.validateMCPConfig(invalidConfig);
+      }).toThrow('port is required when transport is "websocket"');
     });
 
     it('should throw for invalid port range', () => {
@@ -180,8 +185,9 @@ describe('MCPConfigManager', () => {
         provider: { type: 'sqlite', config: {} },
       };
 
-      expect(() => { MCPConfigManager.validateMCPConfig(invalidConfig); })
-        .toThrow('port must be between 1 and 65535');
+      expect(() => {
+        MCPConfigManager.validateMCPConfig(invalidConfig);
+      }).toThrow('port must be between 1 and 65535');
     });
   });
 

@@ -19,8 +19,7 @@ import {
   TaskRecommendationEngine,
 } from '../../../src/providers/sqlite/index.js';
 
-import type {
-  SQLiteProvider} from '../../../src/providers/sqlite/index.js';
+import type { SQLiteProvider } from '../../../src/providers/sqlite/index.js';
 import type {
   SQLiteProviderConfig,
   Project,

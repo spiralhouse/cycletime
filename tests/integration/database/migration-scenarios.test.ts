@@ -11,10 +11,7 @@ import {
   MigrationEngine,
   DefaultMigrationEngineFactory,
 } from '../../../src/database/migrations/migration-engine';
-import {
-  MigrationMode,
-  SemanticVersion,
-} from '../../../src/database/migrations/migration-types';
+import { MigrationMode, SemanticVersion } from '../../../src/database/migrations/migration-types';
 import { MigrationValidator } from '../../../src/database/migrations/migration-validator';
 import {
   parseSemanticVersion,
@@ -24,7 +21,8 @@ import { SchemaInspector } from '../../../src/database/utils/schema-inspector';
 
 import type {
   MigrationEngineConfig,
-  Migration} from '../../../src/database/migrations/migration-types';
+  Migration,
+} from '../../../src/database/migrations/migration-types';
 
 // Mock database class for testing
 class MockDatabase {

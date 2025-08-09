@@ -9,9 +9,12 @@ import { ToolHandler } from '../handlers/tool-handler.js';
 import { ToolRegistry } from '../tools/tool-registry.js';
 
 import { MessageRouter } from './message-router.js';
-import { ProtocolHandler, type JSONRPCRequest, type JSONRPCNotification } from './protocol-handler.js';
+import {
+  ProtocolHandler,
+  type JSONRPCRequest,
+  type JSONRPCNotification,
+} from './protocol-handler.js';
 import { ServerLifecycle, type ServerConfig, type OperationResult } from './server-lifecycle.js';
-
 
 import type { Logger } from '../../utils/logger.js';
 
@@ -52,7 +55,12 @@ export interface HealthInfo {
 export interface ServerEvents {
   start: { serverName: string; timestamp: number };
   stop: { serverName: string; timestamp: number };
-  message: { type: 'request' | 'notification'; method: string; id?: string | number; timestamp: number };
+  message: {
+    type: 'request' | 'notification';
+    method: string;
+    id?: string | number;
+    timestamp: number;
+  };
   error: { error: any; timestamp: number };
 }
 
@@ -81,7 +89,7 @@ export class MCPServer extends EventEmitter {
 
     this.logger = logger || createLogger('mcp-server');
     this.validateConfig(config);
-    
+
     this.config = {
       ...config,
       capabilities: {
@@ -95,7 +103,7 @@ export class MCPServer extends EventEmitter {
     this.protocolHandler = new ProtocolHandler(this.logger);
     this.messageRouter = new MessageRouter(this.logger);
     this.lifecycle = new ServerLifecycle(this.logger);
-    
+
     // Initialize tool support
     this.toolRegistry = new ToolRegistry();
     this.toolHandler = new ToolHandler(this.toolRegistry);
@@ -173,9 +181,9 @@ export class MCPServer extends EventEmitter {
       }
 
       const result = await this.lifecycle.shutdown();
-      
+
       this.logger.info('MCP server stopped');
-      
+
       this.emit('stop', {
         serverName: this.config.name,
         timestamp: Date.now(),
@@ -211,7 +219,7 @@ export class MCPServer extends EventEmitter {
     }
 
     this.logger.info('MCP server restarted');
-    
+
     return { success: true };
   }
 
@@ -230,13 +238,11 @@ export class MCPServer extends EventEmitter {
       } catch (error) {
         const errorResponse = this.protocolHandler.formatErrorResponse(
           null,
-          ProtocolHandler.createError(
-            ProtocolHandler.ErrorCodes.PARSE_ERROR,
-            'Parse error',
-            { details: error instanceof Error ? error.message : String(error) }
-          )
+          ProtocolHandler.createError(ProtocolHandler.ErrorCodes.PARSE_ERROR, 'Parse error', {
+            details: error instanceof Error ? error.message : String(error),
+          })
         );
-        
+
         // Emit error event for parse errors
         this.emit('error', {
           error: error instanceof Error ? error : new Error(String(error)),
@@ -267,7 +273,7 @@ export class MCPServer extends EventEmitter {
       // Route the message based on type
       if (validation.messageType === 'request') {
         const request = message as JSONRPCRequest;
-        
+
         this.emit('message', {
           type: 'request',
           method: request.method,
@@ -280,7 +286,7 @@ export class MCPServer extends EventEmitter {
         return JSON.stringify(response);
       } else if (validation.messageType === 'notification') {
         const notification = message as JSONRPCNotification;
-        
+
         this.emit('message', {
           type: 'notification',
           method: notification.method,
@@ -305,11 +311,9 @@ export class MCPServer extends EventEmitter {
 
       const errorResponse = this.protocolHandler.formatErrorResponse(
         null,
-        ProtocolHandler.createError(
-          ProtocolHandler.ErrorCodes.INTERNAL_ERROR,
-          'Internal error',
-          { details: error instanceof Error ? error.message : String(error) }
-        )
+        ProtocolHandler.createError(ProtocolHandler.ErrorCodes.INTERNAL_ERROR, 'Internal error', {
+          details: error instanceof Error ? error.message : String(error),
+        })
       );
 
       return JSON.stringify(errorResponse);
@@ -342,15 +346,15 @@ export class MCPServer extends EventEmitter {
    */
   getCapabilities(): MCPCapabilities {
     const baseCapabilities = { ...this.config.capabilities };
-    
+
     // Add tool capabilities if tools are registered
     if (!this.toolRegistry.isEmpty()) {
       baseCapabilities.tools = {
         ...baseCapabilities.tools,
-        ...this.toolHandler.getCapabilities().tools
+        ...this.toolHandler.getCapabilities().tools,
       };
     }
-    
+
     return baseCapabilities;
   }
 
@@ -358,10 +362,12 @@ export class MCPServer extends EventEmitter {
    * Update server capabilities
    */
   updateCapabilities(newCapabilities: MCPCapabilities, options: ConfigUpdateOptions = {}): void {
-    this.config.capabilities = options.replace ? { ...newCapabilities } : {
-        ...this.config.capabilities,
-        ...newCapabilities,
-      };
+    this.config.capabilities = options.replace
+      ? { ...newCapabilities }
+      : {
+          ...this.config.capabilities,
+          ...newCapabilities,
+        };
 
     this.logger.debug('Server capabilities updated', {
       capabilities: this.config.capabilities,
@@ -399,7 +405,7 @@ export class MCPServer extends EventEmitter {
    */
   private setupDefaultHandlers(): void {
     // Initialize handler
-    this.messageRouter.registerHandler('initialize', async (params) => {
+    this.messageRouter.registerHandler('initialize', async params => {
       const protocolVersion = params?.protocolVersion;
 
       // Validate protocol version
@@ -435,7 +441,7 @@ export class MCPServer extends EventEmitter {
    */
   private setupToolHandlers(): void {
     this.toolHandler.registerHandlers(this.messageRouter);
-    
+
     this.logger.debug('Tool handlers registered');
   }
 
@@ -458,10 +464,10 @@ export class MCPServer extends EventEmitter {
    */
   registerTool(tool: any): void {
     this.toolRegistry.register(tool);
-    
+
     this.logger.info('Tool registered with server', {
       toolName: tool.name,
-      version: tool.metadata.version
+      version: tool.metadata.version,
     });
   }
 
@@ -470,9 +476,9 @@ export class MCPServer extends EventEmitter {
    */
   registerTools(tools: any[]): void {
     this.toolRegistry.registerBatch(tools);
-    
+
     this.logger.info('Tools registered with server', {
-      toolCount: tools.length
+      toolCount: tools.length,
     });
   }
 
@@ -482,10 +488,10 @@ export class MCPServer extends EventEmitter {
   getServerStatus(): any {
     const baseStatus = this.getStatus();
     const toolStatus = this.toolHandler.getStatus();
-    
+
     return {
       ...baseStatus,
-      tools: toolStatus
+      tools: toolStatus,
     };
   }
 
@@ -498,7 +504,9 @@ export class MCPServer extends EventEmitter {
     }
 
     if (!config.name || typeof config.name !== 'string' || config.name.trim() === '') {
-      throw new Error('Invalid server configuration: name is required and must be a non-empty string');
+      throw new Error(
+        'Invalid server configuration: name is required and must be a non-empty string'
+      );
     }
 
     if (!config.version || typeof config.version !== 'string') {

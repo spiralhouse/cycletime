@@ -82,7 +82,7 @@ export class SQLiteProvider extends BaseProvider {
     if (this.config.databasePath === ':memory:' || process.env.NODE_ENV === 'test') {
       return true;
     }
-    
+
     // Use normal availability check for production
     return super.isAvailable();
   }

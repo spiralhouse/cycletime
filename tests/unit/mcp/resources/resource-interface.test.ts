@@ -1,20 +1,24 @@
 /**
  * Resource Interface Contract Tests
- * 
+ *
  * Tests the core contract that all MCP resources must implement.
  * These tests define the expected behavior for JCVD resources.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 
-import type { Resource, ResourceMetadata, ResourceContent } from '../../../../src/mcp/resources/resource-interface.js';
+import type {
+  Resource,
+  ResourceMetadata,
+  ResourceContent,
+} from '../../../../src/mcp/resources/resource-interface.js';
 
 describe('Resource Interface Contract', () => {
   describe('Resource Interface', () => {
     it('should define required properties for resource identification', () => {
       // This test ensures the Resource interface has the correct shape
       // We'll create a mock implementation to validate the contract
-      
+
       const mockResource: Resource = {
         uri: 'jcvd://project/test-123/context',
         metadata: {
@@ -22,15 +26,15 @@ describe('Resource Interface Contract', () => {
           description: 'A test resource for validation',
           contentType: 'application/json',
           version: '1.0.0',
-          capabilities: ['read']
+          capabilities: ['read'],
         },
         getContent: async () => ({
           content: { test: 'data' },
           contentType: 'application/json',
-          size: 15
+          size: 15,
         }),
         isAvailable: async () => true,
-        invalidate: async () => void 0
+        invalidate: async () => void 0,
       };
 
       expect(mockResource.uri).toBe('jcvd://project/test-123/context');
@@ -43,10 +47,10 @@ describe('Resource Interface Contract', () => {
 
     it('should support URI-based resource identification', () => {
       const uri = 'jcvd://project/proj-456/tasks/unblocked';
-      
+
       // URI should follow jcvd://project/{projectId}/{resourceType} pattern
       expect(uri).toMatch(/^jcvd:\/\/project\/[\w-]+\/[\w/]+$/);
-      
+
       // Should be able to parse project ID from URI
       const projectIdMatch = uri.match(/jcvd:\/\/project\/([\w-]+)/);
 
@@ -60,15 +64,15 @@ describe('Resource Interface Contract', () => {
         description: 'Resource returning JSON data',
         contentType: 'application/json',
         version: '1.0.0',
-        capabilities: ['read']
+        capabilities: ['read'],
       };
 
       const textMetadata: ResourceMetadata = {
-        name: 'Text Resource', 
+        name: 'Text Resource',
         description: 'Resource returning plain text',
         contentType: 'text/plain',
         version: '1.0.0',
-        capabilities: ['read']
+        capabilities: ['read'],
       };
 
       expect(jsonMetadata.contentType).toBe('application/json');
@@ -84,19 +88,19 @@ describe('Resource Interface Contract', () => {
           description: 'Test',
           contentType: 'application/json',
           version: '1.0.0',
-          capabilities: ['read']
+          capabilities: ['read'],
         },
         getContent: async () => ({
           content: { projectId: 'test', status: 'active' },
           contentType: 'application/json',
-          size: 42
+          size: 42,
         }),
         isAvailable: async () => true,
-        invalidate: async () => void 0
+        invalidate: async () => void 0,
       };
 
       const content = await mockResource.getContent();
-      
+
       expect(content).toHaveProperty('content');
       expect(content).toHaveProperty('contentType');
       expect(content).toHaveProperty('size');
@@ -112,15 +116,15 @@ describe('Resource Interface Contract', () => {
           description: 'Test',
           contentType: 'application/json',
           version: '1.0.0',
-          capabilities: ['read']
+          capabilities: ['read'],
         },
         getContent: async () => ({
           content: {},
           contentType: 'application/json',
-          size: 2
+          size: 2,
         }),
         isAvailable: async () => true,
-        invalidate: async () => void 0
+        invalidate: async () => void 0,
       };
 
       const unavailableResource: Resource = {
@@ -130,13 +134,13 @@ describe('Resource Interface Contract', () => {
           description: 'Test',
           contentType: 'application/json',
           version: '1.0.0',
-          capabilities: ['read']
+          capabilities: ['read'],
         },
         getContent: async () => {
           throw new Error('Resource not available');
         },
         isAvailable: async () => false,
-        invalidate: async () => void 0
+        invalidate: async () => void 0,
       };
 
       expect(await availableResource.isAvailable()).toBe(true);
@@ -153,17 +157,17 @@ describe('Resource Interface Contract', () => {
           description: 'Test',
           contentType: 'application/json',
           version: '1.0.0',
-          capabilities: ['read']
+          capabilities: ['read'],
         },
         getContent: async () => ({
           content: {},
           contentType: 'application/json',
-          size: 2
+          size: 2,
         }),
         isAvailable: async () => true,
         invalidate: async () => {
           invalidated = true;
-        }
+        },
       };
 
       await resource.invalidate();
@@ -181,7 +185,7 @@ describe('Resource Interface Contract', () => {
         capabilities: ['read'],
         tags: ['project', 'context'],
         lastModified: new Date('2025-08-01T10:00:00Z'),
-        ttl: 300 // 5 minutes cache TTL
+        ttl: 300, // 5 minutes cache TTL
       };
 
       expect(metadata.name).toBe('Project Context');
@@ -200,7 +204,7 @@ describe('Resource Interface Contract', () => {
         description: 'Test',
         contentType: 'application/json',
         version: '1.0.0',
-        capabilities: ['read']
+        capabilities: ['read'],
       };
 
       const readWriteMetadata: ResourceMetadata = {
@@ -208,7 +212,7 @@ describe('Resource Interface Contract', () => {
         description: 'Test',
         contentType: 'application/json',
         version: '1.0.0',
-        capabilities: ['read', 'write']
+        capabilities: ['read', 'write'],
       };
 
       const subscribableMetadata: ResourceMetadata = {
@@ -216,7 +220,7 @@ describe('Resource Interface Contract', () => {
         description: 'Test',
         contentType: 'application/json',
         version: '1.0.0',
-        capabilities: ['read', 'subscribe']
+        capabilities: ['read', 'subscribe'],
       };
 
       expect(readOnlyMetadata.capabilities).toEqual(['read']);
@@ -230,18 +234,18 @@ describe('Resource Interface Contract', () => {
       const jsonContent: ResourceContent = {
         content: {
           project: { id: 'test-123', name: 'Test Project' },
-          statistics: { totalIssues: 5, completedIssues: 2 }
+          statistics: { totalIssues: 5, completedIssues: 2 },
         },
         contentType: 'application/json',
         size: 156,
         etag: 'abc123',
-        lastModified: new Date('2025-08-01T15:30:00Z')
+        lastModified: new Date('2025-08-01T15:30:00Z'),
       };
 
       const textContent: ResourceContent = {
         content: 'Plain text resource content',
         contentType: 'text/plain',
-        size: 27
+        size: 27,
       };
 
       expect(jsonContent.content).toHaveProperty('project');
@@ -260,18 +264,18 @@ describe('Resource Interface Contract', () => {
         {
           content: { data: 'json' },
           contentType: 'application/json',
-          size: 16
+          size: 16,
         },
         {
           content: 'text data',
           contentType: 'text/plain',
-          size: 9
+          size: 9,
         },
         {
           content: '<html><body>Test</body></html>',
           contentType: 'text/html',
-          size: 30
-        }
+          size: 30,
+        },
       ];
 
       contents.forEach(content => {

@@ -13,7 +13,7 @@ import type { SemanticVersion, SchemaComparison } from './migration-types.js';
  * Parse a semantic version string into components
  */
 export function parseSemanticVersion(versionString: string): SemanticVersion {
-  const versionRegex = /^(\d+)\.(\d+)\.(\d+)(?:-([\d.A-Za-z\-]+))?(?:\+([\d.A-Za-z\-]+))?$/;
+  const versionRegex = /^(\d+)\.(\d+)\.(\d+)(?:-([\d.A-Za-z-]+))?(?:\+([\d.A-Za-z-]+))?$/;
   const match = versionString.match(versionRegex);
 
   if (!match) {
@@ -120,14 +120,14 @@ function comparePrerelease(a: string, b: string): number {
     const aNum = Number.parseInt(aPart, 10);
     const bNum = Number.parseInt(bPart, 10);
 
-    if (!isNaN(aNum) && !isNaN(bNum)) {
+    if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) {
       if (aNum !== bNum) {
         return aNum < bNum ? -1 : 1;
       }
     } else {
       // Numeric identifiers have lower precedence than non-numeric
-      if (!isNaN(aNum) && isNaN(bNum)) return -1;
-      if (isNaN(aNum) && !isNaN(bNum)) return 1;
+      if (!Number.isNaN(aNum) && Number.isNaN(bNum)) return -1;
+      if (Number.isNaN(aNum) && !Number.isNaN(bNum)) return 1;
 
       // Lexical comparison for non-numeric parts
       if (aPart !== bPart) {

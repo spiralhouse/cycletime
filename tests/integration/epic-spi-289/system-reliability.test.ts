@@ -12,7 +12,6 @@ import { performance } from 'node:perf_hooks';
 
 import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
-
 // Import core JCVD components
 import { createMigrationEngine } from '../../../src/database/migrations/migration-engine.js';
 import { ProviderFactory } from '../../../src/providers/factory/index.js';
@@ -858,9 +857,7 @@ describe('System Reliability and Error Handling', () => {
       edgeCaseHandling: true,
     };
 
-    const allReliabilityTestsPassed = Object.values(reliabilityValidation).every(
-      Boolean
-    );
+    const allReliabilityTestsPassed = Object.values(reliabilityValidation).every(Boolean);
 
     expect(allReliabilityTestsPassed).toBe(true);
 

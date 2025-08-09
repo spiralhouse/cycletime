@@ -12,8 +12,7 @@ import {
   createLookupMapping,
 } from '../../../../src/providers/transformers/field-mapper.js';
 
-import type {
-  FieldMapper} from '../../../../src/providers/transformers/field-mapper.js';
+import type { FieldMapper } from '../../../../src/providers/transformers/field-mapper.js';
 import type {
   FieldMapping,
   TransformationContext,

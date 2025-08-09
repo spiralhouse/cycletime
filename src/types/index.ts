@@ -85,6 +85,7 @@ export interface StatusInfo {
   lastActivity: Date;
   taskCoordination: string;
   activeProviders: number;
+  activeAgents: number;
   errors: JCVDError[];
 }
 

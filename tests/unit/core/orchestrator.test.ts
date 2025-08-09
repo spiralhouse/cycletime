@@ -46,12 +46,8 @@ describe('Orchestrator', () => {
       expect(status.uptime).toBeGreaterThan(0);
     });
 
-    it('should initialize with configured agents and providers', async () => {
+    it('should initialize with configured providers', async () => {
       const configWithComponents = testData.createJCVDConfig({
-        agents: [
-          testData.createAgentConfig({ id: 'agent-1' }),
-          testData.createAgentConfig({ id: 'agent-2', enabled: false }),
-        ],
         providers: [testData.createProviderConfig({ id: 'provider-1' })],
       });
 
@@ -62,7 +58,7 @@ describe('Orchestrator', () => {
 
       const status = orchestratorWithComponents.getStatus();
 
-      expect(status.activeAgents).toBe(1); // Only enabled agents
+      expect(status.activeAgents).toBe(0); // JCVD does not manage agents
       expect(status.activeProviders).toBe(1);
     });
 
@@ -98,24 +94,28 @@ describe('Orchestrator', () => {
 
   describe('shutdown', () => {
     it('should shutdown successfully after initialization', async () => {
-      await orchestrator.initialize();
+      // Create a fresh orchestrator instance for this test
+      const freshOrchestrator = new Orchestrator(testData.createJCVDConfig());
+      await freshOrchestrator.initialize();
 
-      const result = await orchestrator.shutdown();
+      const result = await freshOrchestrator.shutdown();
 
       expect(result.success).toBe(true);
 
-      const status = orchestrator.getStatus();
+      const status = freshOrchestrator.getStatus();
 
       expect(status.status).toBe('stopped');
     });
 
     it('should emit shutdown event on success', async () => {
+      // Create a fresh orchestrator instance for this test
+      const freshOrchestrator = new Orchestrator(testData.createJCVDConfig());
       const shutdownSpy = vi.fn();
 
-      orchestrator.on('orchestrator.shutdown', shutdownSpy);
+      freshOrchestrator.on('orchestrator.shutdown', shutdownSpy);
 
-      await orchestrator.initialize();
-      await orchestrator.shutdown();
+      await freshOrchestrator.initialize();
+      await freshOrchestrator.shutdown();
 
       expect(shutdownSpy).toHaveBeenCalledOnce();
     });
@@ -133,27 +133,24 @@ describe('Orchestrator', () => {
 
   describe('getStatus', () => {
     it('should return correct status information', async () => {
-      const beforeInit = orchestrator.getStatus();
+      // Create a fresh orchestrator instance to ensure clean state
+      const freshOrchestrator = new Orchestrator(testData.createJCVDConfig());
+      const beforeInit = freshOrchestrator.getStatus();
 
       expect(beforeInit.status).toBe('idle');
       expect(beforeInit.uptime).toBe(0);
 
-      await orchestrator.initialize();
+      await freshOrchestrator.initialize();
 
-      const afterInit = orchestrator.getStatus();
+      const afterInit = freshOrchestrator.getStatus();
 
       expect(afterInit.status).toBe('running');
       expect(afterInit.uptime).toBeGreaterThan(0);
       expect(afterInit.lastActivity).toBeInstanceOf(Date);
     });
 
-    it('should count active agents and providers correctly', async () => {
+    it('should count active providers correctly', async () => {
       const configWithMixed = testData.createJCVDConfig({
-        agents: [
-          testData.createAgentConfig({ id: 'agent-1', enabled: true }),
-          testData.createAgentConfig({ id: 'agent-2', enabled: false }),
-          testData.createAgentConfig({ id: 'agent-3', enabled: true }),
-        ],
         providers: [
           testData.createProviderConfig({ id: 'provider-1', enabled: true }),
           testData.createProviderConfig({ id: 'provider-2', enabled: false }),
@@ -166,7 +163,7 @@ describe('Orchestrator', () => {
 
       const status = orchestratorWithMixed.getStatus();
 
-      expect(status.activeAgents).toBe(2); // Only enabled agents
+      expect(status.activeAgents).toBe(0); // JCVD does not manage agents
       expect(status.activeProviders).toBe(1); // Only enabled providers
     });
   });
@@ -194,7 +191,6 @@ describe('Orchestrator', () => {
   describe('configuration handling', () => {
     it('should handle minimal configuration', () => {
       const minimalConfig = testData.createJCVDConfig({
-        agents: [],
         providers: [],
         workflows: [],
       });
@@ -208,17 +204,6 @@ describe('Orchestrator', () => {
 
     it('should handle complex configuration', () => {
       const complexConfig = testData.createJCVDConfig({
-        agents: [
-          testData.createAgentConfig({
-            id: 'pm',
-            type: 'product-manager',
-            dependencies: ['architect'],
-          }),
-          testData.createAgentConfig({
-            id: 'architect',
-            type: 'architect',
-          }),
-        ],
         providers: [
           testData.createProviderConfig({
             id: 'linear',

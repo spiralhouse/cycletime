@@ -1,6 +1,6 @@
 /**
  * MCP Resource Interface Definitions
- * 
+ *
  * Defines the core contracts for JCVD MCP resources following the MCP specification.
  * Resources provide structured project data to Claude Code through URI-based access.
  */
@@ -16,25 +16,25 @@ export type ResourceCapability = 'read' | 'write' | 'subscribe';
 export interface ResourceMetadata {
   /** Human-readable resource name */
   name: string;
-  
+
   /** Detailed description of the resource's purpose and content */
   description: string;
-  
+
   /** MIME type of the content returned by this resource */
   contentType: string;
-  
+
   /** Resource version for compatibility tracking */
   version: string;
-  
+
   /** List of operations this resource supports */
   capabilities: ResourceCapability[];
-  
+
   /** Optional tags for categorization and discovery */
   tags?: string[];
-  
+
   /** Last modification timestamp for cache validation */
   lastModified?: Date;
-  
+
   /** Cache TTL in seconds (undefined means no caching) */
   ttl?: number;
 }
@@ -45,16 +45,16 @@ export interface ResourceMetadata {
 export interface ResourceContent {
   /** The actual resource content (JSON object, string, etc.) */
   content: any;
-  
+
   /** MIME type of the content */
   contentType: string;
-  
+
   /** Size of the content in bytes */
   size: number;
-  
+
   /** Optional ETag for cache validation */
   etag?: string;
-  
+
   /** Optional last modified timestamp */
   lastModified?: Date;
 }
@@ -65,23 +65,23 @@ export interface ResourceContent {
 export interface Resource {
   /** Unique resource URI following jcvd://project/{projectId}/{resourceType} pattern */
   uri: string;
-  
+
   /** Resource metadata including capabilities and content type */
   metadata: ResourceMetadata;
-  
+
   /**
    * Get the current content of this resource
    * @returns Promise that resolves to the resource content
    * @throws Error if resource is not available or content cannot be generated
    */
   getContent: () => Promise<ResourceContent>;
-  
+
   /**
    * Check if this resource is currently available
    * @returns Promise that resolves to true if resource can provide content
    */
   isAvailable: () => Promise<boolean>;
-  
+
   /**
    * Invalidate any cached content for this resource
    * @returns Promise that resolves when cache is cleared
@@ -99,7 +99,7 @@ export interface SubscribableResource extends Resource {
    * @returns Unsubscribe function
    */
   subscribe: (callback: (content: ResourceContent) => void) => () => void;
-  
+
   /**
    * Get the current number of active subscriptions
    */
@@ -117,7 +117,7 @@ export interface WritableResource extends Resource {
    * @throws Error if update fails or is not permitted
    */
   updateContent: (content: any) => Promise<void>;
-  
+
   /**
    * Validate if the given content is acceptable for this resource
    * @param content Content to validate
@@ -136,7 +136,7 @@ export type ResourceFactory = (projectId: string, ...args: any[]) => Promise<Res
  */
 export class ResourceURI {
   private static readonly URI_PATTERN = /^jcvd:\/\/project\/([\w-]+)\/([\w/-]+)$/;
-  
+
   /**
    * Parse a JCVD resource URI into its components
    * @param uri Resource URI to parse
@@ -148,13 +148,13 @@ export class ResourceURI {
     if (!match) {
       return null;
     }
-    
+
     return {
       projectId: match[1]!,
-      resourcePath: match[2]!
+      resourcePath: match[2]!,
     };
   }
-  
+
   /**
    * Validate if a URI follows the JCVD resource URI pattern
    * @param uri URI to validate
@@ -163,7 +163,7 @@ export class ResourceURI {
   static isValid(uri: string): boolean {
     return this.URI_PATTERN.test(uri);
   }
-  
+
   /**
    * Create a JCVD resource URI from components
    * @param projectId Project identifier
@@ -173,7 +173,7 @@ export class ResourceURI {
   static create(projectId: string, resourcePath: string): string {
     return `jcvd://project/${projectId}/${resourcePath}`;
   }
-  
+
   /**
    * Extract project ID from a resource URI
    * @param uri Resource URI
@@ -184,7 +184,7 @@ export class ResourceURI {
 
     return parsed?.projectId || null;
   }
-  
+
   /**
    * Extract resource path from a resource URI
    * @param uri Resource URI

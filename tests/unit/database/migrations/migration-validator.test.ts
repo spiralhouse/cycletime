@@ -15,9 +15,7 @@ import {
 } from '../../../../src/database/migrations/migration-validator';
 import { parseSemanticVersion } from '../../../../src/database/migrations/schema-versioning';
 
-import type {
-  Migration,
-  MigrationPlan} from '../../../../src/database/migrations/migration-types';
+import type { Migration, MigrationPlan } from '../../../../src/database/migrations/migration-types';
 
 describe('Migration Validator', () => {
   let validator: MigrationValidator;

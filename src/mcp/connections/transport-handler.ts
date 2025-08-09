@@ -102,9 +102,9 @@ export class TransportHandler {
 
       return { success: true };
     } catch (error) {
-      this.logger.error('Failed to initialize transport', { 
+      this.logger.error('Failed to initialize transport', {
         type: this.config.type,
-        error: error instanceof Error ? error.message : String(error) 
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return {
@@ -126,10 +126,10 @@ export class TransportHandler {
         };
       }
 
-      this.logger.debug('Sending message', { 
-        connectionId, 
+      this.logger.debug('Sending message', {
+        connectionId,
         messageLength: message.length,
-        type: this.config.type
+        type: this.config.type,
       });
 
       // Simulate sending based on transport type
@@ -153,9 +153,9 @@ export class TransportHandler {
 
       return { success: true };
     } catch (error) {
-      this.logger.error('Failed to send message', { 
+      this.logger.error('Failed to send message', {
         connectionId,
-        error: error instanceof Error ? error.message : String(error) 
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return {
@@ -230,9 +230,9 @@ export class TransportHandler {
 
       return { success: true };
     } catch (error) {
-      this.logger.error('Failed to cleanup transport', { 
+      this.logger.error('Failed to cleanup transport', {
         type: this.config.type,
-        error: error instanceof Error ? error.message : String(error) 
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return {
@@ -267,11 +267,11 @@ export class TransportHandler {
     // In a real implementation, this would create WebSocket server/client
     // For now, just simulate with a minimal delay
     await new Promise(resolve => setImmediate(resolve));
-    
+
     this.logger.debug('WebSocket transport initialized', {
       host: this.config.host,
       port: this.config.port,
-      secure: this.config.secure
+      secure: this.config.secure,
     });
   }
 

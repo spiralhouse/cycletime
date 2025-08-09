@@ -1,12 +1,16 @@
 /**
  * MCP Resource Handler
- * 
+ *
  * Handles MCP resource protocol methods including resources/list, resources/read,
  * and resources/subscribe requests. Integrates the JCVD resource framework
  * with the MCP server infrastructure.
  */
 
-import { ResourceError, ResourceNotFoundError, ResourceUnavailableError } from '../resources/resource-interface.js';
+import {
+  ResourceError,
+  ResourceNotFoundError,
+  ResourceUnavailableError,
+} from '../resources/resource-interface.js';
 
 import type { Logger } from '../../utils/logger.js';
 import type { ResourceMetadataManager } from '../resources/resource-metadata.js';
@@ -97,24 +101,26 @@ export class ResourceHandler {
         uri: resource.uri,
         name: resource.metadata.name,
         description: resource.metadata.description,
-        mimeType: resource.metadata.contentType
+        mimeType: resource.metadata.contentType,
       }));
 
       const response: ResourceListResponse = {
-        resources: mcpResources
+        resources: mcpResources,
       };
 
-      this.logger.debug('resources/list completed', { 
-        resourceCount: mcpResources.length 
+      this.logger.debug('resources/list completed', {
+        resourceCount: mcpResources.length,
       });
 
       return response;
     } catch (error) {
       this.logger.error('Error handling resources/list', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
-      throw new Error(`Failed to list resources: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to list resources: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   };
 
@@ -148,33 +154,38 @@ export class ResourceHandler {
 
       // Convert to MCP format
       const response: ResourceReadResponse = {
-        contents: [{
-          uri: params.uri,
-          mimeType: content.contentType,
-          text: typeof content.content === 'string' 
-            ? content.content 
-            : JSON.stringify(content.content)
-        }]
+        contents: [
+          {
+            uri: params.uri,
+            mimeType: content.contentType,
+            text:
+              typeof content.content === 'string'
+                ? content.content
+                : JSON.stringify(content.content),
+          },
+        ],
       };
 
-      this.logger.debug('resources/read completed', { 
+      this.logger.debug('resources/read completed', {
         uri: params.uri,
         contentType: content.contentType,
-        size: content.size
+        size: content.size,
       });
 
       return response;
     } catch (error) {
       this.logger.error('Error handling resources/read', {
         uri: params?.uri,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       if (error instanceof ResourceError) {
         throw error;
       }
 
-      throw new Error(`Failed to read resource: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to read resource: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   };
 
@@ -195,10 +206,12 @@ export class ResourceHandler {
     } catch (error) {
       this.logger.error('Error handling resources/subscribe', {
         uri: params?.uri,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
-      throw new Error(`Failed to subscribe to resource: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to subscribe to resource: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   };
 
@@ -221,7 +234,7 @@ export class ResourceHandler {
     registerHandler('resources/subscribe', this.handleResourcesSubscribe);
 
     this.logger.info('Resource handlers registered', {
-      handlers: ['resources/list', 'resources/read', 'resources/subscribe']
+      handlers: ['resources/list', 'resources/read', 'resources/subscribe'],
     });
   }
 
@@ -233,7 +246,7 @@ export class ResourceHandler {
 
     return {
       registry: registryStats,
-      capabilities: this.metadataManager.getRegisteredCapabilities().length
+      capabilities: this.metadataManager.getRegisteredCapabilities().length,
     };
   }
 }
