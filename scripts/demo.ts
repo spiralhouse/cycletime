@@ -25,10 +25,10 @@ async function runDemo() {
     const jcvd = await createJCVD();
     const status = jcvd.getStatus();
 
-    console.log('✅ JCVD framework initialized successfully');
+    console.log('✅ JCVD context provider initialized successfully');
     console.log(`   Status: ${status.status}`);
-    console.log(`   Task coordination: ${status.taskCoordination}`);
-    console.log(`   Active providers: ${status.activeProviders}`);
+    console.log(`   Role: ${status.role}`);
+    console.log(`   Capabilities: ${status.capabilities.join(', ')}`);
     await jcvd.stop();
     console.log('✅ JCVD framework stopped gracefully');
   } catch (error) {

@@ -1,139 +1,127 @@
 /**
- * JCVD - Multi-agent orchestration framework for Claude Code
+ * JCVD - Simple Context Provider for Claude Code
  *
- * Transforms Claude Code into a specialized software development team
- * through a provider-agnostic, multi-agent architecture.
+ * Provides structured project data and cross-session continuity for solo developers.
+ * Built as a simple MCP server that focuses on data persistence and context provision.
  */
 
-import { ConfigManager } from './config/config-manager.js';
-import { Orchestrator } from './core/orchestrator.js';
-import { logger } from './utils/logger.js';
+import { createLogger } from './utils/logger.js';
+import { 
+  JCVDContextProvider, 
+  JCVDMCPResourceServer, 
+  SQLiteProjectStore
+} from './jcvd-simple.js';
 
-import type { JCVDConfig } from './types/config.js';
+const logger = createLogger('jcvd');
 
 /**
- * Main JCVD framework entry point
+ * Simple JCVD Context Provider - this is what JCVD should actually be
  */
 export class JCVD {
-  private orchestrator: Orchestrator;
-  private config: JCVDConfig;
+  private contextProvider: JCVDContextProvider;
+  private mcpServer: JCVDMCPResourceServer;
+  private store: SQLiteProjectStore;
 
-  constructor(config?: Partial<JCVDConfig>) {
-    this.config = ConfigManager.load(config);
-    this.orchestrator = new Orchestrator(this.config);
+  constructor(options: { dbPath?: string } = {}) {
+    // Simple initialization - just a data store and context provider
+    const dbPath = options.dbPath || '.jcvd/database.sqlite';
+    this.store = new SQLiteProjectStore(dbPath);
+    this.contextProvider = new JCVDContextProvider(this.store);
+    this.mcpServer = new JCVDMCPResourceServer(this.contextProvider);
 
-    logger.info('JCVD framework initialized', {
+    logger.info('JCVD context provider initialized', {
       version: '0.1.0',
-      providers: this.config.providers.length,
-      defaultAgent: this.config.taskCoordination.defaultAgent,
+      dbPath,
+      role: 'simple-context-provider',
     });
   }
 
   /**
-   * Start the JCVD orchestration framework
+   * Start the JCVD MCP server - simple startup
    */
   async start(): Promise<void> {
     try {
-      await this.orchestrator.initialize();
-      logger.info('JCVD framework started successfully');
+      logger.info('JCVD context provider started successfully');
+      // Note: In a real implementation, this would start the MCP server listener
+      // For now, we're just marking it as available
     } catch (error) {
-      logger.error('Failed to start JCVD framework', { error });
+      logger.error('Failed to start JCVD context provider', { error });
       throw error;
     }
   }
 
   /**
-   * Stop the JCVD orchestration framework
+   * Stop the JCVD context provider - simple shutdown
    */
   async stop(): Promise<void> {
     try {
-      await this.orchestrator.shutdown();
-      logger.info('JCVD framework stopped successfully');
+      logger.info('JCVD context provider stopped successfully');
+      // Simple shutdown - no complex orchestration to shut down
     } catch (error) {
-      logger.error('Failed to stop JCVD framework gracefully', { error });
+      logger.error('Failed to stop JCVD context provider gracefully', { error });
       throw error;
     }
   }
 
   /**
-   * Get framework status
+   * Get context provider for direct usage
+   */
+  getContextProvider(): JCVDContextProvider {
+    return this.contextProvider;
+  }
+
+  /**
+   * Handle MCP resource request
+   */
+  async handleMCPResource(uri: string): Promise<any> {
+    return this.mcpServer.handleResourceRequest(uri);
+  }
+
+  /**
+   * Handle MCP tool call
+   */
+  async handleMCPTool(name: string, params: any): Promise<any> {
+    return this.mcpServer.handleToolCall(name, params);
+  }
+
+  /**
+   * Simple status - just whether we're running
    */
   getStatus() {
-    return this.orchestrator.getStatus();
+    return {
+      status: 'running' as const,
+      role: 'simple-context-provider',
+      capabilities: ['project-context', 'cross-session-continuity', 'basic-crud'],
+    };
   }
 }
 
-// Export main class and types
+// Export main class and simplified types
 export default JCVD;
 
-// Export core types (avoiding conflicts)
-export type {
-  Awaitable,
-  Optional,
-  RequiredKeys,
-  OptionalKeys,
-  JCVDError,
-  ValidationError,
-  ConfigError,
-  TaskCoordinationError,
-  Status,
-  StatusInfo,
-  EventBase,
-  TaskCoordinationEvent,
-  ProviderEvent,
-  WorkflowEvent,
-  JCVDEvent,
-  LogLevel,
-  LogEntry,
-  Result,
-} from './types/index.js';
-
-// Export provider system
-export type {
-  IssueProvider,
-  ProviderInfo,
-  ProviderCapabilities,
-  ProviderStatus,
-  ProviderType,
-  ProviderConfig,
-  SQLiteProviderConfig,
-  LinearProviderConfig,
-  GitHubProviderConfig,
-  JiraProviderConfig,
-  EnhancedIssue,
-  ProjectConfig,
-  IssueConfig,
-  Dependency,
-  DependencyGraph,
-  TaskRecommendation,
-  OperationResult,
-  ImportResult,
-  SyncResult,
-  ExportData,
-  IssueProviderError,
-  IssueProviderErrorCode,
-} from './types/index.js';
-
-// Export provider registry functions
-export {
-  registerProvider,
-  getProviderImplementation,
-  getRegisteredProviderTypes,
-} from './providers/index.js';
-
-// Export core functionality
-export * from './core/index.js';
+// Export the simple architecture types
+export type { 
+  ProjectContext, 
+  Issue, 
+  Project, 
+  ProjectStore,
+  JCVDContextProvider,
+  JCVDMCPResourceServer,
+  SQLiteProjectStore
+} from './jcvd-simple.js';
 
 /**
- * Create and start JCVD framework instance
+ * Create and start simple JCVD context provider
  */
-export async function createJCVD(config?: Partial<JCVDConfig>): Promise<JCVD> {
-  const jcvd = new JCVD(config);
-
+export async function createJCVD(options?: { dbPath?: string }): Promise<JCVD> {
+  const jcvd = new JCVD(options);
   await jcvd.start();
-
   return jcvd;
 }
 
-// TODO: Handle graceful shutdown with global instance management
-// For now, individual instances handle their own shutdown
+/**
+ * Create JCVD context provider for MCP server usage
+ */
+export function createMCPServer(options?: { dbPath?: string }): JCVD {
+  return new JCVD(options);
+}

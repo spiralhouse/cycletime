@@ -1,7 +1,6 @@
 ---
 name: software-architect
-description:
-  Design system architecture, make technical decisions, and ensure scalability
+description: Design system architecture, make technical decisions, and ensure scalability
 tools:
   Task, Bash, Glob, Grep, LS, ExitPlanMode, Read, Edit, MultiEdit, Write,
   NotebookRead, NotebookEdit, WebFetch, TodoWrite, WebSearch,

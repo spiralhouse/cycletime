@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * JCVD CLI - Command-line interface for the multi-agent orchestration framework
+ * JCVD CLI - Simple command-line interface for the context provider
  */
 
 import { readFileSync } from 'node:fs';
@@ -10,7 +10,6 @@ import { fileURLToPath } from 'node:url';
 
 import { Command } from 'commander';
 
-import { ConfigManager } from './config/config-manager.js';
 import { createLogger } from './utils/logger.js';
 
 import { createJCVD } from './index.js';
@@ -29,31 +28,28 @@ const cliLogger = createLogger('cli');
 
 cli
   .name('jcvd')
-  .description('JCVD - Multi-agent orchestration framework for Claude Code')
+  .description('JCVD - Simple context provider for Claude Code')
   .version(version, '-v, --version', 'output the current version');
 
 // Start command
 cli
   .command('start')
-  .description('Start the JCVD orchestration framework')
+  .description('Start the JCVD context provider')
   .option('-c, --config <path>', 'path to configuration file')
   .option('-d, --daemon', 'run as daemon process')
   .option('--log-level <level>', 'set log level (debug, info, warn, error)', 'info')
   .action(async options => {
     try {
-      cliLogger.info('Starting JCVD framework...', { options });
+      cliLogger.info('Starting JCVD context provider...', { options });
 
       // Set log level from CLI option
       process.env.LOG_LEVEL = options.logLevel;
 
-      // Load configuration
-      const config = ConfigManager.load();
-
-      // Create and start JCVD instance
-      const jcvd = await createJCVD(config);
+      // Create and start simple JCVD instance
+      const jcvd = await createJCVD();
 
       if (options.daemon) {
-        cliLogger.info('JCVD started in daemon mode');
+        cliLogger.info('JCVD context provider started in daemon mode');
         // Keep process running
         process.on('SIGINT', async () => {
           cliLogger.info('Received SIGINT, shutting down...');
@@ -61,13 +57,13 @@ cli
           process.exit(0);
         });
       } else {
-        cliLogger.info('JCVD started in foreground mode');
+        cliLogger.info('JCVD context provider started in foreground mode');
         const status = jcvd.getStatus();
 
-        console.log('✅ JCVD framework started successfully');
+        console.log('✅ JCVD context provider started successfully');
         console.log(`📊 Status: ${status.status}`);
-        console.log(`🎯 Task coordination: ${status.taskCoordination}`);
-        console.log(`🔌 Active providers: ${status.activeProviders}`);
+        console.log(`🎯 Role: ${status.role}`);
+        console.log(`⚡ Capabilities: ${status.capabilities.join(', ')}`);
         console.log('');
         console.log('Press Ctrl+C to stop');
 
@@ -75,9 +71,9 @@ cli
         await new Promise(() => {});
       }
     } catch (error) {
-      cliLogger.error('Failed to start JCVD framework', { error });
+      cliLogger.error('Failed to start JCVD context provider', { error });
       console.error(
-        '❌ Failed to start JCVD framework:',
+        '❌ Failed to start JCVD context provider:',
         error instanceof Error ? error.message : error
       );
       process.exit(1);
@@ -87,28 +83,19 @@ cli
 // Status command
 cli
   .command('status')
-  .description('Show JCVD framework status')
+  .description('Show JCVD context provider status')
   .action(async () => {
     try {
-      // TODO: Implement status check for running instance
-      // For now, just show configuration validation
-      const config = ConfigManager.load();
-
-      console.log('📋 JCVD Configuration Status');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(`Name: ${config.name}`);
-      console.log(`Version: ${config.version}`);
-      console.log(`Database: ${config.database.path}`);
-      console.log(`Task Coordination: ${config.taskCoordination.defaultAgent} (default)`);
-      console.log(`Providers: ${config.providers.length} configured`);
-      console.log(`Workflows: ${config.workflows.length} configured`);
-
-      if (config.mcp) {
-        console.log(`MCP Server: ${config.mcp.host}:${config.mcp.port}`);
-      }
-
+      // Simple status - just show that we're a basic context provider
+      console.log('📋 JCVD Context Provider Status');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('Name: JCVD');
+      console.log(`Version: ${version}`);
+      console.log('Role: Simple Context Provider');
+      console.log('Database: SQLite (.jcvd/database.sqlite)');
+      console.log('Capabilities: project-context, cross-session-continuity, basic-crud');
       console.log('');
-      console.log('✅ Configuration is valid');
+      console.log('✅ Simple architecture - no complex configuration needed');
     } catch (error) {
       cliLogger.error('Failed to get status', { error });
       console.error('❌ Failed to get status:', error instanceof Error ? error.message : error);
@@ -119,29 +106,18 @@ cli
 // Config command
 cli
   .command('config')
-  .description('Configuration management commands')
-  .option('--validate', 'validate configuration file')
-  .option('--show', 'show current configuration')
-  .option('--init', 'initialize a new configuration file')
-  .action(async options => {
+  .description('Show simple configuration info')
+  .action(async () => {
     try {
-      if (options.validate) {
-        const config = ConfigManager.load();
-
-        console.log('✅ Configuration is valid');
-        console.log(
-          `📋 Task coordination: ${config.taskCoordination.defaultAgent}, ${config.providers.length} providers, ${config.workflows.length} workflows`
-        );
-      } else if (options.show) {
-        const config = ConfigManager.load();
-
-        console.log(JSON.stringify(config, null, 2));
-      } else if (options.init) {
-        console.log('🚧 Configuration initialization not yet implemented');
-        console.log('📝 Please create a jcvd.config.json file manually for now');
-      } else {
-        console.log('Please specify an action: --validate, --show, or --init');
-      }
+      console.log('📋 JCVD Configuration');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('JCVD uses a simple architecture with minimal configuration.');
+      console.log('');
+      console.log('Database: SQLite file at .jcvd/database.sqlite');
+      console.log('Role: Simple context provider for Claude Code');
+      console.log('MCP Integration: Provides project context via MCP resources');
+      console.log('');
+      console.log('✅ No complex configuration files needed');
     } catch (error) {
       cliLogger.error('Config command failed', { error });
       console.error('❌ Config command failed:', error instanceof Error ? error.message : error);
@@ -149,113 +125,52 @@ cli
     }
   });
 
-// Task coordination command
+// Info command (simplified from coordination)
 cli
-  .command('coordination')
-  .description('Manage task coordination with Claude Code agents')
-  .option('--status', 'show task coordination configuration')
-  .option('--agents', 'show available Claude Code agents')
-  .action(async options => {
+  .command('info')
+  .description('Show information about JCVD and Claude Code integration')
+  .action(async () => {
     try {
-      if (options.status) {
-        const config = ConfigManager.load();
-
-        console.log('🎯 Task Coordination Configuration');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log(`Default Agent: ${config.taskCoordination.defaultAgent}`);
-        console.log(`Fallback Agent: ${config.taskCoordination.fallbackAgent}`);
-
-        if (config.taskCoordination.routing && config.taskCoordination.routing.length > 0) {
-          console.log('\nRouting Rules:');
-          for (const rule of config.taskCoordination.routing) {
-            console.log(`  • ${rule.taskType} → ${rule.agent} (priority: ${rule.priority})`);
-          }
-        }
-
-        if (config.taskCoordination.preferences) {
-          console.log('\nAgent Preferences:');
-          for (const [agent, pref] of Object.entries(config.taskCoordination.preferences)) {
-            const status = pref.enabled ? '✅' : '❌';
-
-            console.log(
-              `  ${status} ${agent}${pref.timeout ? ` (timeout: ${pref.timeout}m)` : ''}`
-            );
-          }
-        }
-      } else if (options.agents) {
-        const agentTypes = [
-          'general-purpose - General development tasks',
-          'product-manager - Requirements gathering and stakeholder communication',
-          'tech-lead - Task coordination and dependency management',
-          'software-architect - System design and architecture decisions',
-          'developer - Code implementation and unit testing',
-          'qa - Test planning and quality assurance',
-          'code-reviewer - Code review and quality checks',
-        ];
-
-        console.log('🤖 Available Claude Code Agents');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-        for (const type of agentTypes) {
-          console.log(`  • ${type}`);
-        }
-      } else {
-        console.log('Please specify an action: --status or --agents');
-      }
+      console.log('📋 JCVD Context Provider Information');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('');
+      console.log('🎯 Role: Simple context provider for Claude Code');
+      console.log('📊 Purpose: Provides structured project data and cross-session continuity');
+      console.log('🔗 Integration: MCP (Model Context Protocol) resources and tools');
+      console.log('');
+      console.log('Claude Code handles all agent coordination and task orchestration.');
+      console.log('JCVD focuses only on data persistence and context provision.');
+      console.log('');
+      console.log('✅ Aligned with JCVD architectural principles');
     } catch (error) {
-      cliLogger.error('Task coordination command failed', { error });
-      console.error('❌ Agents command failed:', error instanceof Error ? error.message : error);
+      cliLogger.error('Info command failed', { error });
+      console.error('❌ Info command failed:', error instanceof Error ? error.message : error);
       process.exit(1);
     }
   });
 
-// Providers command
+// Data command (simplified from providers)
 cli
-  .command('providers')
-  .description('Manage JCVD providers')
-  .option('--list', 'list all configured providers')
-  .option('--types', 'show available provider types')
-  .action(async options => {
+  .command('data')
+  .description('Show information about data storage')
+  .action(async () => {
     try {
-      if (options.list) {
-        const config = ConfigManager.load();
-
-        if (config.providers.length === 0) {
-          console.log('No providers configured');
-
-          return;
-        }
-
-        console.log('🔌 Configured Providers');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━');
-
-        for (const provider of config.providers) {
-          const status = provider.enabled ? '✅' : '❌';
-
-          console.log(`${status} ${provider.id} (${provider.type}) - ${provider.name}`);
-          if (provider.description) {
-            console.log(`   ${provider.description}`);
-          }
-        }
-      } else if (options.types) {
-        const providerTypes = [
-          'linear - Linear issue tracking integration',
-          'github - GitHub repository integration',
-          'local - Local filesystem provider',
-        ];
-
-        console.log('🔌 Available Provider Types');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-        for (const type of providerTypes) {
-          console.log(`  • ${type}`);
-        }
-      } else {
-        console.log('Please specify an action: --list or --types');
-      }
+      console.log('📊 JCVD Data Storage Information');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('');
+      console.log('Database: SQLite');
+      console.log('Location: .jcvd/database.sqlite');
+      console.log('Schema: Simple projects and issues tables');
+      console.log('');
+      console.log('Data Types:');
+      console.log('  • Projects - Basic project metadata');
+      console.log('  • Issues - Hierarchical issues (epics, stories, subtasks)');
+      console.log('');
+      console.log('Operations: Basic CRUD (Create, Read, Update, Delete)');
+      console.log('✅ Simple SQLite operations only - no complex providers');
     } catch (error) {
-      cliLogger.error('Providers command failed', { error });
-      console.error('❌ Providers command failed:', error instanceof Error ? error.message : error);
+      cliLogger.error('Data command failed', { error });
+      console.error('❌ Data command failed:', error instanceof Error ? error.message : error);
       process.exit(1);
     }
   });
