@@ -122,7 +122,7 @@ describe('ProtocolHandler', () => {
     it('should format error responses correctly', () => {
       const handler = new ProtocolHandler();
       const error = {
-        code: -32600,
+        code: -32_600,
         message: 'Invalid Request',
         data: { detail: 'Missing required field' },
       };
@@ -132,7 +132,7 @@ describe('ProtocolHandler', () => {
         jsonrpc: '2.0',
         id: 123,
         error: {
-          code: -32600,
+          code: -32_600,
           message: 'Invalid Request',
           data: { detail: 'Missing required field' },
         },
@@ -142,7 +142,7 @@ describe('ProtocolHandler', () => {
     it('should handle null id for error responses', () => {
       const handler = new ProtocolHandler();
       const error = {
-        code: -32700,
+        code: -32_700,
         message: 'Parse error',
       };
       const response = handler.formatErrorResponse(null, error);
@@ -151,7 +151,7 @@ describe('ProtocolHandler', () => {
         jsonrpc: '2.0',
         id: null,
         error: {
-          code: -32700,
+          code: -32_700,
           message: 'Parse error',
         },
       });

@@ -4,8 +4,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { HealthChecker } from '../../../../src/mcp/health/health-check.js';
 import { ComponentStatus } from '../../../../src/mcp/health/component-status.js';
+import { HealthChecker } from '../../../../src/mcp/health/health-check.js';
 
 describe('HealthChecker', () => {
   let healthChecker: HealthChecker;
@@ -24,6 +24,7 @@ describe('HealthChecker', () => {
     }
     // Clear all registered components to avoid test pollution
     const components = healthChecker.getRegisteredComponents();
+
     for (const component of components) {
       healthChecker.unregisterComponent(component);
     }
@@ -87,6 +88,7 @@ describe('HealthChecker', () => {
       healthChecker.registerComponent('test-component', mockHealthCheck);
 
       const components = healthChecker.getRegisteredComponents();
+
       expect(components).toContain('test-component');
     });
 
@@ -98,6 +100,7 @@ describe('HealthChecker', () => {
       healthChecker.registerComponent('test-component', secondCheck);
 
       const components = healthChecker.getRegisteredComponents();
+
       expect(components).toHaveLength(1);
     });
   });
@@ -139,6 +142,7 @@ describe('HealthChecker', () => {
     it('should handle component health check timeout', async () => {
       healthChecker.registerComponent('slow-component', async () => {
         await new Promise(resolve => setTimeout(resolve, 100)); // Longer than timeout
+
         return { healthy: true };
       });
 
@@ -187,11 +191,13 @@ describe('HealthChecker', () => {
       healthChecker.registerComponent('test-component', async () => ({ healthy: true }));
       
       const beforeUnregister = healthChecker.getRegisteredComponents();
+
       expect(beforeUnregister).toContain('test-component');
 
       healthChecker.unregisterComponent('test-component');
 
       const afterUnregister = healthChecker.getRegisteredComponents();
+
       expect(afterUnregister).not.toContain('test-component');
     });
 
@@ -219,6 +225,7 @@ describe('ComponentStatus', () => {
       componentStatus.setStatus('test-component', 'running', { message: 'All good' });
 
       const status = componentStatus.getStatus('test-component');
+
       expect(status?.status).toBe('running');
       expect(status?.metadata?.message).toBe('All good');
     });
@@ -228,6 +235,7 @@ describe('ComponentStatus', () => {
       componentStatus.setStatus('test-component', 'running');
 
       const status = componentStatus.getStatus('test-component');
+
       expect(status?.status).toBe('running');
     });
   });
@@ -235,15 +243,18 @@ describe('ComponentStatus', () => {
   describe('getStatus', () => {
     it('should return undefined for unknown component', () => {
       const status = componentStatus.getStatus('unknown-component');
+
       expect(status).toBeUndefined();
     });
 
     it('should return component status with timestamp', () => {
       const beforeTime = Date.now();
+
       componentStatus.setStatus('test-component', 'running');
       const afterTime = Date.now();
 
       const status = componentStatus.getStatus('test-component');
+
       expect(status?.timestamp).toBeGreaterThanOrEqual(beforeTime);
       expect(status?.timestamp).toBeLessThanOrEqual(afterTime);
     });
@@ -263,6 +274,7 @@ describe('ComponentStatus', () => {
 
     it('should return empty object when no components', () => {
       const allStatuses = componentStatus.getAllStatuses();
+
       expect(allStatuses).toEqual({});
     });
   });

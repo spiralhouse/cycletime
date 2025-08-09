@@ -6,17 +6,19 @@
  * system working together as a solo developer would experience it.
  */
 
-import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
-import { performance } from 'node:perf_hooks';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { testUtils, testData } from '../setup.js';
+import { performance } from 'node:perf_hooks';
+
+import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+
 
 // Import core JCVD components
-import { SQLiteProvider } from '../../src/providers/sqlite/index.js';
-import { ProviderFactory } from '../../src/providers/factory/index.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
 import { MultiAgentCoordinator } from '../../src/core/multi-agent-coordinator.js';
+import { ProviderFactory } from '../../src/providers/factory/index.js';
+import { SQLiteProvider } from '../../src/providers/sqlite/index.js';
+import { testUtils, testData } from '../setup.js';
 
 // Import test utilities
 import { generateLargeDataset } from '../utils/test-data-generators.js';
@@ -35,6 +37,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
   beforeAll(async () => {
     // Create test environment
     const testDir = await testUtils.createTempDir();
+
     console.log(`E2E test directory: ${testDir}`);
 
     // Initialize complete JCVD system
@@ -47,9 +50,9 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         databasePath: join(testDir, 'e2e-workflow.db'),
         walMode: true,
         performance: {
-          queryTimeout: 10000,
+          queryTimeout: 10_000,
           maxConnections: 20,
-          cacheSizeKB: 20000,
+          cacheSizeKB: 20_000,
         },
       },
     };
@@ -319,6 +322,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
       console.log('Phase 4: Validating project structure and dependencies');
 
       const dependencyGraph = await provider.getDependencyGraph(project.id);
+
       expect(dependencyGraph.issues).toHaveLength(7); // 2 epics + 2 stories + 2 subtasks + 1 project
       expect(dependencyGraph.dependencies).toHaveLength(2);
 
@@ -337,6 +341,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
       expect(subtasks.every(s => stories.some(st => st.id === s.parentId))).toBe(true);
 
       const projectSetupTime = performance.now() - projectStart;
+
       console.log(`Project setup completed in ${projectSetupTime.toFixed(2)}ms`);
 
       // Phase 5: Simulate Development Progress
@@ -344,6 +349,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
 
       // Start working on schema subtask
       let updatedTask = await provider.updateIssueState(schemaSubtask.id, 'in-progress');
+
       expect(updatedTask.stateId).toBe('in-progress');
 
       // Complete schema subtask
@@ -370,6 +376,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
       console.log('Phase 6: Exporting project state for backup');
 
       const exportData = await provider.exportData(project.id);
+
       expect(exportData.projects).toHaveLength(1);
       expect(exportData.issues).toHaveLength(6); // All issues except project itself
       expect(exportData.dependencies).toHaveLength(2);
@@ -380,7 +387,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
       expect(exportData.projects[0].name).toBe('Task Management App');
 
       console.log('✅ Complete solo developer workflow test passed');
-    }, 60000); // 60 second timeout
+    }, 60_000); // 60 second timeout
 
     test('Multi-Epic project with complex dependencies', async () => {
       const { provider } = context;
@@ -426,6 +433,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         priority: 1,
         labels: ['backend', 'infrastructure', 'api'],
       });
+
       epics.push(backendEpic);
 
       // Frontend User Interface Epic
@@ -437,6 +445,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         priority: 2,
         labels: ['frontend', 'ui', 'customer'],
       });
+
       epics.push(frontendEpic);
 
       // Admin Dashboard Epic
@@ -448,6 +457,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         priority: 2,
         labels: ['admin', 'dashboard', 'management'],
       });
+
       epics.push(adminEpic);
 
       // Payment & Security Epic
@@ -459,6 +469,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         priority: 1,
         labels: ['payment', 'security', 'integration'],
       });
+
       epics.push(paymentEpic);
 
       // Create stories for each epic with realistic estimates
@@ -475,6 +486,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         assigneeId: 'solo-developer',
         labels: ['database', 'models'],
       });
+
       stories.push(dbStory);
 
       const apiStory = await provider.createIssue({
@@ -487,6 +499,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         assigneeId: 'solo-developer',
         labels: ['api', 'rest'],
       });
+
       stories.push(apiStory);
 
       // Frontend Epic Stories
@@ -500,6 +513,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         assigneeId: 'solo-developer',
         labels: ['catalog', 'products'],
       });
+
       stories.push(catalogStory);
 
       const cartStory = await provider.createIssue({
@@ -512,6 +526,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         assigneeId: 'solo-developer',
         labels: ['cart', 'shopping'],
       });
+
       stories.push(cartStory);
 
       // Admin Epic Stories
@@ -525,6 +540,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         assigneeId: 'solo-developer',
         labels: ['admin', 'interface'],
       });
+
       stories.push(adminPanelStory);
 
       // Payment Epic Stories
@@ -538,6 +554,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         assigneeId: 'solo-developer',
         labels: ['payment', 'gateway', 'stripe'],
       });
+
       stories.push(paymentIntegrationStory);
 
       // Create complex dependency chains
@@ -561,11 +578,13 @@ describe('Complete End-to-End Workflow Scenarios', () => {
 
       // Validate complex project structure
       const dependencyGraph = await provider.getDependencyGraph(project.id);
+
       expect(dependencyGraph.issues).toHaveLength(10); // 4 epics + 6 stories
       expect(dependencyGraph.dependencies).toHaveLength(6);
 
       // Test dependency chain validation
       const issues = await provider.listIssues({ projectId: project.id });
+
       expect(issues).toHaveLength(10);
 
       // Verify all issues have proper hierarchy and estimates
@@ -580,17 +599,19 @@ describe('Complete End-to-End Workflow Scenarios', () => {
 
       // All stories should have Fibonacci estimates
       const fibonacciNumbers = [1, 2, 3, 5, 8, 13, 21, 34];
+
       expect(storiesFromDB.every(s => s.estimate && fibonacciNumbers.includes(s.estimate))).toBe(
         true
       );
 
       // Calculate total project estimate
       const totalEstimate = storiesFromDB.reduce((sum, story) => sum + (story.estimate || 0), 0);
+
       console.log(`Total project estimate: ${totalEstimate} story points`);
       expect(totalEstimate).toBeGreaterThan(50); // Substantial project
 
       console.log('✅ Complex multi-epic project test passed');
-    }, 45000); // 45 second timeout
+    }, 45_000); // 45 second timeout
   });
 
   // =============================================================================
@@ -619,6 +640,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
       });
 
       const stories = [];
+
       for (let i = 1; i <= 5; i++) {
         const story = await sourceProvider.createIssue({
           projectId: project.id,
@@ -631,11 +653,13 @@ describe('Complete End-to-End Workflow Scenarios', () => {
           assigneeId: 'solo-developer',
           labels: [`feature-${i}`, 'implementation'],
         });
+
         stories.push(story);
       }
 
       // Add some subtasks
       const subtasks = [];
+
       for (let i = 0; i < 2; i++) {
         const subtask = await sourceProvider.createIssue({
           projectId: project.id,
@@ -647,6 +671,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
           assigneeId: 'solo-developer',
           labels: ['implementation', 'detail'],
         });
+
         subtasks.push(subtask);
       }
 
@@ -672,6 +697,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
       };
 
       const destProvider = new SQLiteProvider(destConfig);
+
       await destProvider.initialize();
 
       try {
@@ -700,13 +726,16 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         console.log('Verifying migration integrity...');
 
         const destProjects = await destProvider.listProjects();
+
         expect(destProjects).toHaveLength(1);
         expect(destProjects[0].name).toBe('Migration Test Project');
 
         const destIssues = await destProvider.listIssues({ projectId: project.id });
+
         expect(destIssues).toHaveLength(8);
 
         const destDependencies = await destProvider.getDependencyGraph(project.id);
+
         expect(destDependencies.dependencies).toHaveLength(2);
 
         // Verify hierarchy is preserved
@@ -748,13 +777,14 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         expect(newIssue.title).toBe('Post-Migration Test Issue');
 
         const updatedIssues = await destProvider.listIssues({ projectId: project.id });
+
         expect(updatedIssues).toHaveLength(9); // Original 8 + new 1
 
         console.log('✅ Complete provider migration workflow test passed');
       } finally {
         await destProvider.disconnect();
       }
-    }, 60000); // 60 second timeout
+    }, 60_000); // 60 second timeout
   });
 
   // =============================================================================
@@ -800,6 +830,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
 
         // Update issue state for workflow stage
         const updatedIssue = await provider.updateIssueState(story.id, stage.stateId);
+
         expect(updatedIssue.stateId).toBe(stage.stateId);
 
         // Simulate work time for each stage
@@ -813,11 +844,13 @@ describe('Complete End-to-End Workflow Scenarios', () => {
 
         // For testing, we verify the state change was recorded
         const currentState = await provider.getIssue(story.id);
+
         expect(currentState.stateId).toBe(stage.stateId);
       }
 
       // Verify final state
       const completedStory = await provider.getIssue(story.id);
+
       expect(completedStory.stateId).toBe('done');
       expect(completedStory.title).toBe('Story: Feature with full workflow');
 
@@ -850,6 +883,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
           assigneeId: `developer-${i}`,
           labels: [`parallel-${i}`, 'independent'],
         });
+
         parallelStories.push(story);
       }
 
@@ -879,6 +913,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
       );
 
       const updatedParallelStories = await Promise.all(parallelUpdates);
+
       expect(updatedParallelStories.every(s => s.stateId === 'in-progress')).toBe(true);
 
       // Complete parallel stories one by one
@@ -890,6 +925,7 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         if (i < parallelStories.length - 1) {
           // Try to start integration (should be blocked by remaining dependencies)
           const integrationIssue = await provider.getIssue(integrationStory.id);
+
           // In a real system, workflow engine would prevent starting blocked tasks
           expect(integrationIssue.stateId).not.toBe('in-progress');
         }
@@ -900,19 +936,23 @@ describe('Complete End-to-End Workflow Scenarios', () => {
         integrationStory.id,
         'in-progress'
       );
+
       expect(startedIntegration.stateId).toBe('in-progress');
 
       // Complete integration
       const completedIntegration = await provider.updateIssueState(integrationStory.id, 'done');
+
       expect(completedIntegration.stateId).toBe('done');
 
       // Verify all stories are completed
       const finalIssues = await provider.listIssues({ projectId: project.id });
       const allStories = finalIssues.filter(i => i.issueType === 'story');
+
       expect(allStories.every(s => s.stateId === 'done')).toBe(true);
 
       // Verify dependency graph integrity
       const dependencyGraph = await provider.getDependencyGraph(project.id);
+
       expect(dependencyGraph.dependencies).toHaveLength(3); // 3 parallel → 1 integration
 
       console.log('✅ Parallel workflow with dependencies test passed');
@@ -943,7 +983,8 @@ describe('Complete End-to-End Workflow Scenarios', () => {
       parallelWorkflows: true,
     };
 
-    const allWorkflowsWorking = Object.values(workflowValidation).every(test => test === true);
+    const allWorkflowsWorking = Object.values(workflowValidation).every(Boolean);
+
     expect(allWorkflowsWorking).toBe(true);
 
     console.log('\nE2E Workflow Features Validated:');

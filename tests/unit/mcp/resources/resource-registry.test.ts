@@ -7,8 +7,9 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
-import { ResourceRegistry } from '../../../../src/mcp/resources/resource-registry.js';
 import { BaseResource } from '../../../../src/mcp/resources/base-resource.js';
+import { ResourceRegistry } from '../../../../src/mcp/resources/resource-registry.js';
+
 import type { 
   Resource, 
   ResourceMetadata, 
@@ -88,10 +89,12 @@ describe('ResourceRegistry', () => {
       const resource = createTestResource();
 
       const beforeRegistration = Date.now();
+
       registry.register(resource);
       const afterRegistration = Date.now();
 
       const info = registry.getResourceInfo(resource.uri);
+
       expect(info.registeredAt).toBeGreaterThanOrEqual(beforeRegistration);
       expect(info.registeredAt).toBeLessThanOrEqual(afterRegistration);
     });
@@ -147,11 +150,13 @@ describe('ResourceRegistry', () => {
       registry.register(resource3);
 
       const proj123Resources = registry.findByProjectId('proj-123');
+
       expect(proj123Resources).toHaveLength(2);
       expect(proj123Resources.map(r => r.uri)).toContain('jcvd://project/proj-123/context');
       expect(proj123Resources.map(r => r.uri)).toContain('jcvd://project/proj-123/tasks');
 
       const proj456Resources = registry.findByProjectId('proj-456');
+
       expect(proj456Resources).toHaveLength(1);
       expect(proj456Resources[0].uri).toBe('jcvd://project/proj-456/context');
     });
@@ -176,9 +181,11 @@ describe('ResourceRegistry', () => {
       registry.register(textResource);
 
       const jsonResources = registry.findByContentType('application/json');
+
       expect(jsonResources).toHaveLength(2);
 
       const textResources = registry.findByContentType('text/plain');
+
       expect(textResources).toHaveLength(1);
     });
 
@@ -197,9 +204,11 @@ describe('ResourceRegistry', () => {
       registry.register(readWriteResource);
 
       const readCapableResources = registry.findByCapability('read');
+
       expect(readCapableResources).toHaveLength(2);
 
       const writeCapableResources = registry.findByCapability('write');
+
       expect(writeCapableResources).toHaveLength(1);
       expect(writeCapableResources[0].uri).toBe('jcvd://project/test/readwrite');
     });
@@ -215,9 +224,11 @@ describe('ResourceRegistry', () => {
       registry.register(dependenciesResource);
 
       const test123Resources = registry.findByPattern('jcvd://project/test-123/*');
+
       expect(test123Resources).toHaveLength(2);
 
       const taskResources = registry.findByPattern('jcvd://project/*/tasks/*');
+
       expect(taskResources).toHaveLength(1);
       expect(taskResources[0].uri).toBe('jcvd://project/test-123/tasks/unblocked');
     });
@@ -304,6 +315,7 @@ describe('ResourceRegistry', () => {
       expect(registry.getAll()).toHaveLength(3);
 
       const urisToRemove = [resources[0].uri, resources[2].uri];
+
       registry.unregisterBatch(urisToRemove);
 
       expect(registry.getAll()).toHaveLength(1);
@@ -325,6 +337,7 @@ describe('ResourceRegistry', () => {
       registry.get(resource.uri);
 
       const stats = registry.getResourceStatistics(resource.uri);
+
       expect(stats.accessCount).toBe(2);
       expect(stats.lastAccessed).toBeGreaterThan(0);
     });
@@ -336,6 +349,7 @@ describe('ResourceRegistry', () => {
       registry.register(resource);
 
       const availability = await registry.checkResourceHealth(resource.uri);
+
       expect(availability.isAvailable).toBe(true);
       expect(availability.checkedAt).toBeGreaterThan(0);
     });
@@ -350,6 +364,7 @@ describe('ResourceRegistry', () => {
       registry.registerBatch(resources);
 
       const stats = registry.getRegistryStatistics();
+
       expect(stats.totalResources).toBe(2);
       expect(stats.resourcesByProject).toHaveProperty('test');
       expect(stats.resourcesByContentType).toHaveProperty('application/json');
@@ -402,6 +417,7 @@ describe('ResourceRegistry', () => {
 
       // Cleanup resources older than 5ms (should remove the resource)
       const removed = registry.cleanupStale(5);
+
       expect(removed).toBe(1);
       expect(registry.getAll()).toHaveLength(0);
     });

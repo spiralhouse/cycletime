@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
 import {
   CapabilityRegistry,
   CapabilityDiscoveryEngine,
@@ -83,10 +84,12 @@ describe('CapabilityRegistry', () => {
 
   it('should initialize with default capabilities', () => {
     const allCapabilities = registry.getAllCapabilities();
+
     expect(allCapabilities.length).toBeGreaterThan(0);
 
     // Check for some expected capabilities
     const projectsCreate = registry.getCapability('projects.create');
+
     expect(projectsCreate).toBeDefined();
     expect(projectsCreate?.name).toBe('Project Creation');
     expect(projectsCreate?.required).toBe(true);
@@ -106,11 +109,13 @@ describe('CapabilityRegistry', () => {
     registry.registerCapability(customCapability);
 
     const retrieved = registry.getCapability('test.custom');
+
     expect(retrieved).toEqual(customCapability);
   });
 
   it('should get capabilities by category', () => {
     const coreCapabilities = registry.getCapabilitiesByCategory('core');
+
     expect(coreCapabilities.length).toBeGreaterThan(0);
 
     coreCapabilities.forEach(cap => {
@@ -120,6 +125,7 @@ describe('CapabilityRegistry', () => {
 
   it('should get required capabilities', () => {
     const requiredCapabilities = registry.getRequiredCapabilities();
+
     expect(requiredCapabilities.length).toBeGreaterThan(0);
 
     requiredCapabilities.forEach(cap => {

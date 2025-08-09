@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+
 import { testMCPServer, testMCPTransport } from '../../src/mcp/hello-mcp.js';
 
 describe('MCP Integration Tests', () => {

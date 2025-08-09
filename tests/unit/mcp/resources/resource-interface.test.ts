@@ -45,10 +45,11 @@ describe('Resource Interface Contract', () => {
       const uri = 'jcvd://project/proj-456/tasks/unblocked';
       
       // URI should follow jcvd://project/{projectId}/{resourceType} pattern
-      expect(uri).toMatch(/^jcvd:\/\/project\/[\w-]+\/[\w\/]+$/);
+      expect(uri).toMatch(/^jcvd:\/\/project\/[\w-]+\/[\w/]+$/);
       
       // Should be able to parse project ID from URI
       const projectIdMatch = uri.match(/jcvd:\/\/project\/([\w-]+)/);
+
       expect(projectIdMatch).toBeTruthy();
       expect(projectIdMatch![1]).toBe('proj-456');
     });

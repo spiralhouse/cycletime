@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
 import { SimpleProviderFactory } from '../../../../src/providers/factory/simple-factory.js';
 
 import type {
@@ -111,6 +112,7 @@ describe('SimpleProviderFactory', () => {
 
       for (const config of configs) {
         const result = factory.validateConfig(config);
+
         expect(result.isValid).toBe(true);
         expect(result.errors).toHaveLength(0);
       }
@@ -257,6 +259,7 @@ describe('SimpleProviderFactory', () => {
       const provider = await factory.createProvider(validSQLiteConfig);
 
       const registeredProvider = factory.getProvider('test-sqlite');
+
       expect(registeredProvider).toBe(provider);
     });
 
@@ -269,6 +272,7 @@ describe('SimpleProviderFactory', () => {
       });
 
       const providers = factory.listProviders();
+
       expect(providers).toHaveLength(2);
       expect(providers.map(p => p.id)).toContain('test-sqlite');
       expect(providers.map(p => p.id)).toContain('test-linear-2');
@@ -331,11 +335,13 @@ describe('SimpleProviderFactory', () => {
       await factory.createProvider(validLinearConfig);
 
       const providersBefore = factory.listProviders();
+
       expect(providersBefore).toHaveLength(2);
 
       await factory.cleanup();
 
       const providersAfter = factory.listProviders();
+
       expect(providersAfter).toHaveLength(0);
     });
   });

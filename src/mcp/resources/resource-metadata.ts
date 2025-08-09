@@ -75,12 +75,12 @@ export interface MCPAdvertisement {
   resources: {
     listChanged: boolean;
     subscribe: boolean;
-    capabilities: Array<{
+    capabilities: {
       name: string;
       description: string;
       uriTemplate: string;
       mimeType: string;
-    }>;
+    }[];
   };
   
   /** Server information */
@@ -102,7 +102,7 @@ export class ResourceMetadataManager extends EventEmitter {
   private accessStats = new Map<string, number>();
   private capabilityCache = new Map<string, ResourceCapabilityInfo>();
   private discoveryCache = new Map<string, ResourceDiscoveryInfo>();
-  private cacheTimeout = 60000; // 1 minute
+  private cacheTimeout = 60_000; // 1 minute
 
   /**
    * Register a new resource capability
@@ -138,11 +138,13 @@ export class ResourceMetadataManager extends EventEmitter {
    */
   getCapability(name: string): ResourceCapabilityInfo | undefined {
     const cached = this.capabilityCache.get(name);
+
     if (cached) {
       return cached;
     }
 
     const capability = this.capabilities.get(name);
+
     if (capability) {
       this.capabilityCache.set(name, capability);
     }
@@ -333,6 +335,7 @@ export class ResourceMetadataManager extends EventEmitter {
    */
   recordResourceAccess(capabilityName: string): void {
     const current = this.accessStats.get(capabilityName) || 0;
+
     this.accessStats.set(capabilityName, current + 1);
   }
 
@@ -372,10 +375,11 @@ export class ResourceMetadataManager extends EventEmitter {
     // Convert pattern to regex
     // jcvd://project/{projectId}/context -> jcvd://project/([^/]+)/context
     const regexPattern = pattern
-      .replace(/\{[^}]+\}/g, '([^/]+)')
+      .replace(/{[^}]+}/g, '([^/]+)')
       .replace(/\./g, '\\.');
     
     const regex = new RegExp(`^${regexPattern}$`);
+
     return regex.test(uri);
   }
 
@@ -383,7 +387,8 @@ export class ResourceMetadataManager extends EventEmitter {
    * Validate MIME type format
    */
   private isValidMimeType(mimeType: string): boolean {
-    const mimeTypeRegex = /^[a-zA-Z][a-zA-Z0-9]*\/[a-zA-Z0-9][a-zA-Z0-9\-\.\+]*$/;
+    const mimeTypeRegex = /^[A-Za-z][\dA-Za-z]*\/[\dA-Za-z][\d+.A-Za-z\-]*$/;
+
     return mimeTypeRegex.test(mimeType);
   }
 
@@ -391,7 +396,8 @@ export class ResourceMetadataManager extends EventEmitter {
    * Validate semantic version format
    */
   private isValidSemVer(version: string): boolean {
-    const semVerRegex = /^\d+\.\d+\.\d+(?:-[a-zA-Z0-9\-\.]+)?(?:\+[a-zA-Z0-9\-\.]+)?$/;
+    const semVerRegex = /^\d+\.\d+\.\d+(?:-[\d.A-Za-z\-]+)?(?:\+[\d.A-Za-z\-]+)?$/;
+
     return semVerRegex.test(version);
   }
 
@@ -400,6 +406,7 @@ export class ResourceMetadataManager extends EventEmitter {
    */
   private areValidCapabilities(capabilities: any[]): boolean {
     const validCapabilities: ResourceCapability[] = ['read', 'write', 'subscribe'];
+
     return capabilities.every(cap => validCapabilities.includes(cap));
   }
 }

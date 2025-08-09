@@ -4,10 +4,13 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
 import {
-  JCVDTransformationEngine,
   createTransformationEngine,
 } from '../../../../src/providers/transformers/transformation-engine.js';
+
+import type {
+  JCVDTransformationEngine} from '../../../../src/providers/transformers/transformation-engine.js';
 import type {
   ProviderTransformerBase,
   EntityTransformer,
@@ -251,6 +254,7 @@ class MockEntityTransformer<TProvider, TUnified> implements EntityTransformer<TP
     context: TransformationContext
   ): Promise<BatchTransformationResult<TUnified>> {
     const startTime = new Date();
+
     // Simulate some processing time for more realistic tests
     await new Promise(resolve => setTimeout(resolve, 1));
     const endTime = new Date();
@@ -281,6 +285,7 @@ class MockEntityTransformer<TProvider, TUnified> implements EntityTransformer<TP
     context: TransformationContext
   ): Promise<BatchTransformationResult<TProvider>> {
     const startTime = new Date();
+
     // Simulate some processing time for more realistic tests
     await new Promise(resolve => setTimeout(resolve, 1));
     const endTime = new Date();
@@ -480,6 +485,7 @@ describe('JCVDTransformationEngine', () => {
 
       // Should process more than 100 items per second
       const itemsPerSecond = (1000 / duration) * 1000;
+
       expect(itemsPerSecond).toBeGreaterThan(100);
     });
   });
@@ -577,8 +583,10 @@ describe('JCVDTransformationEngine', () => {
     it('should track failed transformations in statistics', async () => {
       // Create a failing transformer
       const failingTransformer = new MockLinearTransformer();
+
       vi.spyOn(failingTransformer, 'getEntityTransformer').mockImplementation(() => {
         const transformer = new MockEntityTransformer('issue', 'linear');
+
         vi.spyOn(transformer, 'transformBatch').mockResolvedValue({
           success: false,
           successful: [],
@@ -602,16 +610,19 @@ describe('JCVDTransformationEngine', () => {
             relationshipsProcessed: 0,
           },
         });
+
         return transformer as any;
       });
 
       const engine = createTransformationEngine();
+
       engine.registerTransformer(failingTransformer);
       engine.registerTransformer(mockSQLiteTransformer);
 
       await engine.transform([{ id: '1' }], 'linear', 'sqlite', 'issue');
 
       const stats = engine.getTransformationStats();
+
       expect(stats.failedTransformations).toBeGreaterThan(0);
     });
   });

@@ -6,11 +6,11 @@
  * with the MCP server infrastructure.
  */
 
-import { ResourceRegistry } from '../resources/resource-registry.js';
-import { ResourceMetadataManager } from '../resources/resource-metadata.js';
 import { ResourceError, ResourceNotFoundError, ResourceUnavailableError } from '../resources/resource-interface.js';
 
 import type { Logger } from '../../utils/logger.js';
+import type { ResourceMetadataManager } from '../resources/resource-metadata.js';
+import type { ResourceRegistry } from '../resources/resource-registry.js';
 import type { RequestHandler } from '../server/message-router.js';
 
 /**
@@ -42,7 +42,7 @@ export interface ResourceSubscribeParams {
  */
 export interface ResourceListResponse {
   /** List of available resources */
-  resources: Array<{
+  resources: {
     /** Resource URI */
     uri: string;
     /** Optional resource name */
@@ -51,7 +51,7 @@ export interface ResourceListResponse {
     description?: string;
     /** Optional MIME type */
     mimeType?: string;
-  }>;
+  }[];
   /** Optional cursor for next page */
   nextCursor?: string;
 }
@@ -61,7 +61,7 @@ export interface ResourceListResponse {
  */
 export interface ResourceReadResponse {
   /** Resource contents */
-  contents: Array<{
+  contents: {
     /** Resource URI */
     uri: string;
     /** MIME type of the content */
@@ -69,7 +69,7 @@ export interface ResourceReadResponse {
     /** The actual content (string or base64 for binary) */
     text?: string;
     blob?: string;
-  }>;
+  }[];
 }
 
 /**
@@ -131,12 +131,14 @@ export class ResourceHandler {
 
       // Get the resource from registry
       const resource = this.registry.get(params.uri);
+
       if (!resource) {
         throw new ResourceNotFoundError(params.uri);
       }
 
       // Check if resource is available
       const isAvailable = await resource.isAvailable();
+
       if (!isAvailable) {
         throw new ResourceUnavailableError(params.uri);
       }
@@ -205,6 +207,7 @@ export class ResourceHandler {
    */
   getResourceCapabilities(): any {
     const advertisement = this.metadataManager.generateMCPAdvertisement();
+
     return advertisement.resources;
   }
 
@@ -227,6 +230,7 @@ export class ResourceHandler {
    */
   getStatistics(): Record<string, any> {
     const registryStats = this.registry.getRegistryStatistics();
+
     return {
       registry: registryStats,
       capabilities: this.metadataManager.getRegisteredCapabilities().length

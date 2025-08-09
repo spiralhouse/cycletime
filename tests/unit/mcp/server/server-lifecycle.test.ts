@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { ServerLifecycle } from '../../../../src/mcp/server/server-lifecycle.js';
+
 import type { Logger } from '../../../../src/utils/logger.js';
 
 // Mock logger
@@ -84,10 +85,12 @@ describe('ServerLifecycle', () => {
       };
 
       const beforeInit = Date.now();
+
       await lifecycle.initialize(config);
       const afterInit = Date.now();
       
       const timestamp = lifecycle.getInitializationTimestamp();
+
       expect(timestamp).toBeGreaterThanOrEqual(beforeInit);
       expect(timestamp).toBeLessThanOrEqual(afterInit);
     });
@@ -274,6 +277,7 @@ describe('ServerLifecycle', () => {
       await new Promise(resolve => setTimeout(resolve, 10));
       
       const uptime = lifecycle.getUptime();
+
       expect(uptime).toBeGreaterThan(0);
     });
   });
@@ -302,6 +306,7 @@ describe('ServerLifecycle', () => {
       };
 
       const result = await lifecycle.initialize(validConfig);
+
       expect(result.success).toBe(true);
       expect(lifecycle.isInitialized()).toBe(true);
     });

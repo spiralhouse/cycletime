@@ -75,7 +75,7 @@ export class MessageQueue {
 
   constructor(connectionId: string, config: QueueConfig = {}) {
     this.connectionId = connectionId;
-    this.maxSize = config.maxSize || 100;
+    this.maxSize = config.maxSize ?? 100;
   }
 
   /**
@@ -139,6 +139,7 @@ export class MessageQueue {
 
     // Insert message in priority order (high to low)
     const insertIndex = this.findInsertIndex(priority);
+
     this.messages.splice(insertIndex, 0, queuedMessage);
     
     // Update mapping
@@ -157,10 +158,12 @@ export class MessageQueue {
     }
 
     const queuedMessage = this.messages.shift()!;
+
     this.updateMessageMap();
     
     // Track wait time
     const waitTime = Date.now() - queuedMessage.enqueuedAt;
+
     this.totalWaitTime += waitTime;
     this.totalDequeued++;
 
@@ -188,6 +191,7 @@ export class MessageQueue {
     }
 
     const queuedMessage = this.messages[index];
+
     this.messages.splice(index, 1);
     this.updateMessageMap();
 
@@ -234,6 +238,7 @@ export class MessageQueue {
    */
   getAgedMessages(ageThreshold: number): QueuedMessage[] {
     const cutoffTime = Date.now() - ageThreshold;
+
     return this.messages.filter(msg => msg.enqueuedAt < cutoffTime);
   }
 
@@ -248,8 +253,10 @@ export class MessageQueue {
     this.messages = this.messages.filter(msg => {
       if (msg.enqueuedAt < cutoffTime) {
         timedOutMessages.push(msg);
+
         return false;
       }
+
       return true;
     });
 
@@ -269,13 +276,16 @@ export class MessageQueue {
           case MessagePriority.LOW:
             dist.low++;
             break;
+
           case MessagePriority.NORMAL:
             dist.normal++;
             break;
+
           case MessagePriority.HIGH:
             dist.high++;
             break;
         }
+
         return dist;
       },
       { low: 0, normal: 0, high: 0 }
@@ -302,10 +312,12 @@ export class MessageQueue {
   private findInsertIndex(priority: MessagePriority): number {
     for (let i = 0; i < this.messages.length; i++) {
       const message = this.messages[i];
+
       if (message && message.priority < priority) {
         return i;
       }
     }
+
     return this.messages.length;
   }
 

@@ -3,15 +3,16 @@
  */
 
 import { createLogger } from '../../utils/logger.js';
-import { MCPServer } from '../server/mcp-server.js';
-import { HealthChecker } from '../health/health-check.js';
 import { ComponentStatus } from '../health/component-status.js';
+import { HealthChecker } from '../health/health-check.js';
 import { ResourceRegistry } from '../resources/resource-registry.js';
+import { MCPServer } from '../server/mcp-server.js';
 import { ToolRegistry } from '../tools/tool-registry.js';
+
 import { MCPConfigManager } from './mcp-config-manager.js';
 
-import type { Logger } from '../../utils/logger.js';
 import type { MCPServerConfig } from './mcp-config.js';
+import type { Logger } from '../../utils/logger.js';
 
 /**
  * Initialization result
@@ -44,9 +45,7 @@ export interface InitializationStatus {
 /**
  * Dependency graph for component initialization
  */
-interface DependencyGraph {
-  [component: string]: string[];
-}
+type DependencyGraph = Record<string, string[]>;
 
 /**
  * MCP Server initializer with dependency management and proper sequencing
@@ -160,6 +159,7 @@ export class MCPServerInitializer {
     this.logger.info('Restarting MCP server...');
 
     const shutdownResult = await this.shutdown();
+
     if (!shutdownResult.success) {
       return shutdownResult;
     }
@@ -298,6 +298,7 @@ export class MCPServerInitializer {
       visiting.add(component);
 
       const deps = this.getDependencies(component);
+
       for (const dep of deps) {
         visit(dep);
       }
@@ -309,6 +310,7 @@ export class MCPServerInitializer {
 
     // Visit all components
     const allComponents = ['config', 'server', 'resources', 'tools', 'health'];
+
     for (const component of allComponents) {
       if (!visited.has(component)) {
         visit(component);
@@ -335,6 +337,7 @@ export class MCPServerInitializer {
       visited.add(current);
       
       const deps = this.getDependencies(current);
+
       for (const dep of deps) {
         if (checkCycle(dep)) {
           return true;
@@ -365,22 +368,27 @@ export class MCPServerInitializer {
         case 'config':
           await this.initializeConfig();
           break;
+
         case 'server':
           await this.initializeServer();
           break;
+
         case 'resources':
           if (this.config.resources.enabled) {
             await this.initializeResources();
           }
           break;
+
         case 'tools':
           if (this.config.tools.enabled) {
             await this.initializeTools();
           }
           break;
+
         case 'health':
           await this.initializeHealthChecks();
           break;
+
         default:
           throw new Error(`Unknown component: ${component}`);
       }
@@ -421,18 +429,23 @@ export class MCPServerInitializer {
         case 'health':
           await this.shutdownHealthChecks();
           break;
+
         case 'tools':
           await this.shutdownTools();
           break;
+
         case 'resources':
           await this.shutdownResources();
           break;
+
         case 'server':
           await this.shutdownServer();
           break;
+
         case 'config':
           // Config doesn't need shutdown
           break;
+
         default:
           this.logger.warn(`Unknown component for shutdown: ${component}`);
       }
@@ -442,6 +455,7 @@ export class MCPServerInitializer {
       this.logger.debug(`Component shut down successfully: ${component}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
+
       this.componentStatus.setStatus(component, 'error', {}, errorMessage);
       throw new Error(`Failed to shutdown ${component}: ${errorMessage}`);
     }
@@ -469,6 +483,7 @@ export class MCPServerInitializer {
     });
 
     const result = await this.server.start();
+
     if (!result.success) {
       throw new Error(result.error || 'Server failed to start');
     }
@@ -495,7 +510,7 @@ export class MCPServerInitializer {
    */
   private async initializeHealthChecks(): Promise<void> {
     this.healthChecker = new HealthChecker({
-      checkInterval: this.config.health.checkInterval ?? 30000,
+      checkInterval: this.config.health.checkInterval ?? 30_000,
       timeoutMs: this.config.health.timeoutMs ?? 5000,
     });
 
@@ -519,6 +534,7 @@ export class MCPServerInitializer {
     }
 
     const result = await this.healthChecker.start();
+
     if (!result.success) {
       throw new Error(result.error || 'Health checker failed to start');
     }
@@ -556,6 +572,7 @@ export class MCPServerInitializer {
   private async shutdownServer(): Promise<void> {
     if (this.server) {
       const result = await this.server.stop();
+
       if (!result.success) {
         throw new Error(result.error || 'Server failed to stop');
       }

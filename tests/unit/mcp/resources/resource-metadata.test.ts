@@ -12,6 +12,7 @@ import {
   type ResourceCapabilityInfo,
   type ResourceDiscoveryInfo
 } from '../../../../src/mcp/resources/resource-metadata.js';
+
 import type { ResourceMetadata } from '../../../../src/mcp/resources/resource-interface.js';
 
 describe('ResourceMetadataManager', () => {
@@ -33,6 +34,7 @@ describe('ResourceMetadataManager', () => {
       metadataManager.registerCapability('project-context', capabilityInfo);
 
       const registered = metadataManager.getCapability('project-context');
+
       expect(registered).toEqual(capabilityInfo);
     });
 
@@ -60,6 +62,7 @@ describe('ResourceMetadataManager', () => {
       metadataManager.registerCapability('unblocked-tasks', capability2);
 
       const capabilities = metadataManager.getAllCapabilities();
+
       expect(capabilities).toHaveLength(2);
       expect(capabilities.map(c => c.name)).toContain('project-context');
       expect(capabilities.map(c => c.name)).toContain('unblocked-tasks');
@@ -114,6 +117,7 @@ describe('ResourceMetadataManager', () => {
       };
 
       const result = metadataManager.validateMetadata(validMetadata);
+
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
@@ -126,6 +130,7 @@ describe('ResourceMetadataManager', () => {
       } as ResourceMetadata;
 
       const result = metadataManager.validateMetadata(invalidMetadata);
+
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('description is required');
       expect(result.errors).toContain('contentType is required');
@@ -144,6 +149,7 @@ describe('ResourceMetadataManager', () => {
       };
 
       const result = metadataManager.validateMetadata(invalidContentType);
+
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('contentType must be a valid MIME type');
     });
@@ -159,6 +165,7 @@ describe('ResourceMetadataManager', () => {
       };
 
       const result = metadataManager.validateMetadata(invalidVersion);
+
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('version must follow semantic versioning');
     });
@@ -174,6 +181,7 @@ describe('ResourceMetadataManager', () => {
       };
 
       const result = metadataManager.validateMetadata(invalidCapabilities);
+
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('capabilities contains invalid values');
     });
@@ -182,6 +190,7 @@ describe('ResourceMetadataManager', () => {
   describe('Resource Discovery', () => {
     it('should discover resources by URI pattern', () => {
       const metadataManager = createManager();
+
       metadataManager.registerCapability('project-context', {
         name: 'project-context',
         description: 'Project context',
@@ -192,12 +201,14 @@ describe('ResourceMetadataManager', () => {
       });
 
       const matches = metadataManager.findCapabilitiesByURI('jcvd://project/test-123/context');
+
       expect(matches).toHaveLength(1);
       expect(matches[0].name).toBe('project-context');
     });
 
     it('should discover resources by content type', () => {
       const metadataManager = createManager();
+
       metadataManager.registerCapability('json-resource', {
         name: 'json-resource',
         description: 'JSON resource',
@@ -217,16 +228,19 @@ describe('ResourceMetadataManager', () => {
       });
 
       const jsonCapabilities = metadataManager.findCapabilitiesByContentType('application/json');
+
       expect(jsonCapabilities).toHaveLength(1);
       expect(jsonCapabilities[0].name).toBe('json-resource');
 
       const textCapabilities = metadataManager.findCapabilitiesByContentType('text/plain');
+
       expect(textCapabilities).toHaveLength(1);
       expect(textCapabilities[0].name).toBe('text-resource');
     });
 
     it('should discover resources by operation support', () => {
       const metadataManager = createManager();
+
       metadataManager.registerCapability('read-only', {
         name: 'read-only',
         description: 'Read only resource',
@@ -246,9 +260,11 @@ describe('ResourceMetadataManager', () => {
       });
 
       const readCapabilities = metadataManager.findCapabilitiesByOperation('read');
+
       expect(readCapabilities).toHaveLength(2);
 
       const writeCapabilities = metadataManager.findCapabilitiesByOperation('write');
+
       expect(writeCapabilities).toHaveLength(1);
       expect(writeCapabilities[0].name).toBe('read-write');
     });
@@ -257,6 +273,7 @@ describe('ResourceMetadataManager', () => {
   describe('MCP Advertisement', () => {
     it('should generate MCP resource advertisement', () => {
       const metadataManager = createManager();
+
       metadataManager.registerCapability('project-context', {
         name: 'project-context',
         description: 'Provides comprehensive project context for Claude Code analysis',
@@ -274,6 +291,7 @@ describe('ResourceMetadataManager', () => {
       expect(advertisement.resources.capabilities).toHaveLength(1);
       
       const capability = advertisement.resources.capabilities[0];
+
       expect(capability.name).toBe('project-context');
       expect(capability.description).toContain('Claude Code');
       expect(capability.uriTemplate).toBe('jcvd://project/{projectId}/context');
@@ -281,6 +299,7 @@ describe('ResourceMetadataManager', () => {
 
     it('should include resource statistics in advertisement', () => {
       const metadataManager = createManager();
+
       metadataManager.registerCapability('test-resource', {
         name: 'test-resource',
         description: 'Test resource',
@@ -307,6 +326,7 @@ describe('ResourceMetadataManager', () => {
     it('should emit events when capabilities are registered', () => {
       const metadataManager = createManager();
       const eventListener = vi.fn();
+
       metadataManager.on('capability-registered', eventListener);
 
       const capabilityInfo: ResourceCapabilityInfo = {
@@ -329,6 +349,7 @@ describe('ResourceMetadataManager', () => {
     it('should emit events when capabilities are unregistered', () => {
       const metadataManager = createManager();
       const eventListener = vi.fn();
+
       metadataManager.on('capability-unregistered', eventListener);
 
       // First register

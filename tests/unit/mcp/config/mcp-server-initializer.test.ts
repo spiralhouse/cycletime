@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 import { MCPServerInitializer } from '../../../../src/mcp/config/mcp-server-initializer.js';
+
 import type { MCPServerConfig } from '../../../../src/mcp/config/mcp-config.js';
 
 describe('MCPServerInitializer', () => {
@@ -26,7 +27,7 @@ describe('MCPServerInitializer', () => {
       tools: {
         enabled: true,
         validationEnabled: true,
-        executionTimeout: 30000,
+        executionTimeout: 30_000,
       },
       health: {
         checkInterval: 5000,
@@ -197,11 +198,13 @@ describe('MCPServerInitializer', () => {
       
       // Check status during initialization
       const duringStatus = initializer.getStatus();
+
       expect(duringStatus.initialized).toBe(false);
 
       await initPromise;
 
       const afterStatus = initializer.getStatus();
+
       expect(afterStatus.initialized).toBe(true);
     });
   });
@@ -247,6 +250,7 @@ describe('MCPServerInitializer', () => {
       initializer.addDependency('resources', 'server');
       
       const dependencies = (initializer as any).getDependencies('resources');
+
       expect(dependencies).toContain('server');
     });
 

@@ -7,14 +7,6 @@
 
 import { createLogger } from '../../utils/logger.js';
 
-import type { 
-  Tool, 
-  ToolMetadata, 
-  ToolExecutionContext, 
-  ToolExecutionResult, 
-  ToolParameterValidationResult,
-  ToolCapability 
-} from './tool-interface.js';
 import { 
   ToolName, 
   ToolValidationError, 
@@ -24,6 +16,14 @@ import {
 } from './tool-interface.js';
 import { ToolValidator } from './tool-validator.js';
 
+import type { 
+  Tool, 
+  ToolMetadata, 
+  ToolExecutionContext, 
+  ToolExecutionResult, 
+  ToolParameterValidationResult,
+  ToolCapability 
+} from './tool-interface.js';
 import type { Logger } from '../../utils/logger.js';
 
 /**
@@ -118,14 +118,17 @@ export abstract class BaseTool implements Tool {
 
       // Check availability
       const available = await this.isAvailable();
+
       if (!available) {
         throw new ToolUnavailableError(this.name, 'Tool is currently unavailable');
       }
 
       // Validate parameters
       const validation = await this.validateParameters(parameters);
+
       if (!validation.valid) {
         const errorMessage = `Parameter validation failed: ${validation.errors?.join(', ')}`;
+
         this.logger.warn('Tool execution aborted due to validation errors', {
           errors: validation.errors
         });
@@ -261,6 +264,7 @@ export abstract class BaseTool implements Tool {
     }
 
     const validCapabilities: ToolCapability[] = ['execute', 'validate', 'preview'];
+
     for (const capability of metadata.capabilities) {
       if (!validCapabilities.includes(capability)) {
         throw new Error(`Invalid capability: ${capability}. Must be one of: ${validCapabilities.join(', ')}`);
@@ -273,6 +277,7 @@ export abstract class BaseTool implements Tool {
     }
 
     const schemaValidation = ToolValidator.validateSchema(metadata.parameters);
+
     if (!schemaValidation.valid) {
       throw new Error(`Invalid parameter schema: ${schemaValidation.errors?.join(', ')}`);
     }
@@ -290,6 +295,7 @@ export abstract class BaseTool implements Tool {
     
     // Remove common sensitive fields
     const sensitiveFields = ['password', 'token', 'secret', 'key', 'apiKey'];
+
     for (const field of sensitiveFields) {
       if (field in sanitized) {
         sanitized[field] = '[REDACTED]';
@@ -304,6 +310,7 @@ export abstract class BaseTool implements Tool {
    */
   protected createSuccessResult(data: any, affectedResources?: string[]): ToolExecutionResult {
     const metadata: any = {};
+
     if (affectedResources !== undefined) {
       metadata.affectedResources = affectedResources;
     }

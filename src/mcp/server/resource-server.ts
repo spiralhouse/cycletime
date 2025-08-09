@@ -5,15 +5,15 @@
  * providing JCVD resource management capabilities through MCP protocol.
  */
 
-import { MCPServer } from './mcp-server.js';
-import { ResourceRegistry } from '../resources/resource-registry.js';
-import { ResourceMetadataManager } from '../resources/resource-metadata.js';
-import { ResourceHandler } from '../handlers/resource-handler.js';
-
 import { createLogger } from '../../utils/logger.js';
+import { ResourceHandler } from '../handlers/resource-handler.js';
+import { ResourceMetadataManager } from '../resources/resource-metadata.js';
+import { ResourceRegistry } from '../resources/resource-registry.js';
 
-import type { Logger } from '../../utils/logger.js';
+import { MCPServer } from './mcp-server.js';
+
 import type { ServerConfig } from './server-lifecycle.js';
+import type { Logger } from '../../utils/logger.js';
 import type { Resource } from '../resources/resource-interface.js';
 
 /**
@@ -282,6 +282,7 @@ export class ResourceServer extends MCPServer {
 
     // Update server capabilities with resource information
     const resourceCapabilities = this.resourceHandler.getResourceCapabilities();
+
     this.updateCapabilities({ resources: resourceCapabilities });
 
     this.resourceLogger.debug('Resource framework integrated with MCP server', {

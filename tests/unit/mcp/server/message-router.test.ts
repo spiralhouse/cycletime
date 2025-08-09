@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { MessageRouter } from '../../../../src/mcp/server/message-router.js';
+
 import type { Logger } from '../../../../src/utils/logger.js';
 
 // Mock logger
@@ -66,6 +67,7 @@ describe('MessageRouter', () => {
       router.registerHandler('method2', handler2);
       
       const methods = router.getRegisteredMethods();
+
       expect(methods).toContain('method1');
       expect(methods).toContain('method2');
       expect(methods).toHaveLength(2);
@@ -122,7 +124,7 @@ describe('MessageRouter', () => {
         jsonrpc: '2.0',
         id: 1,
         error: {
-          code: -32601,
+          code: -32_601,
           message: 'Method not found',
           data: { method: 'unknown' },
         },
@@ -145,7 +147,7 @@ describe('MessageRouter', () => {
         jsonrpc: '2.0',
         id: 1,
         error: {
-          code: -32603,
+          code: -32_603,
           message: 'Internal error',
           data: { error: 'Handler failed' },
         },
@@ -173,7 +175,7 @@ describe('MessageRouter', () => {
         jsonrpc: '2.0',
         id: 1,
         error: {
-          code: -32603,
+          code: -32_603,
           message: 'Internal error',
           data: { error: 'Request timeout' },
         },
@@ -252,6 +254,7 @@ describe('MessageRouter', () => {
     it('should apply request middleware', async () => {
       const middleware = vi.fn().mockImplementation(async (req, next) => {
         req.params = { ...req.params, middleware: true };
+
         return next(req);
       });
       const handler = vi.fn().mockResolvedValue({ result: 'success' });
@@ -274,6 +277,7 @@ describe('MessageRouter', () => {
     it('should apply notification middleware', async () => {
       const middleware = vi.fn().mockImplementation(async (notif, next) => {
         notif.params = { ...notif.params, middleware: true };
+
         return next(notif);
       });
       const handler = vi.fn().mockResolvedValue(undefined);
@@ -311,7 +315,7 @@ describe('MessageRouter', () => {
         jsonrpc: '2.0',
         id: 1,
         error: {
-          code: -32603,
+          code: -32_603,
           message: 'Internal error',
           data: { error: 'Middleware failed' },
         },
@@ -334,6 +338,7 @@ describe('MessageRouter', () => {
       await router.routeRequest(request);
       
       const stats = router.getStatistics();
+
       expect(stats.totalRequests).toBe(1);
       expect(stats.successfulRequests).toBe(1);
       expect(stats.failedRequests).toBe(0);
@@ -357,6 +362,7 @@ describe('MessageRouter', () => {
       await router.routeNotification(notification);
       
       const stats = router.getStatistics();
+
       expect(stats.totalNotifications).toBe(1);
     });
 
@@ -373,6 +379,7 @@ describe('MessageRouter', () => {
       await router.routeRequest(request);
       
       const stats = router.getStatistics();
+
       expect(stats.totalRequests).toBe(1);
       expect(stats.successfulRequests).toBe(0);
       expect(stats.failedRequests).toBe(1);
@@ -391,6 +398,7 @@ describe('MessageRouter', () => {
       await router.routeRequest(request);
       
       let stats = router.getStatistics();
+
       expect(stats.totalRequests).toBe(1);
       
       router.resetStatistics();

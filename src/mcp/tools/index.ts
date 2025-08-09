@@ -167,6 +167,7 @@ export const ToolUtils = {
   ): any {
     // Dynamic import to avoid circular dependencies
     const manager = new (require('./tool-metadata.js').ToolMetadataManager)();
+
     return manager.createFromTemplate(name, description, capabilities as any);
   },
   
@@ -174,7 +175,7 @@ export const ToolUtils = {
    * Validate tool name format
    */
   isValidToolName(name: string): boolean {
-    return /^jcvd_[a-z][a-z0-9_]*$/.test(name);
+    return /^jcvd_[a-z][\d_a-z]*$/.test(name);
   },
   
   /**
@@ -191,7 +192,8 @@ export const ToolUtils = {
     if (!this.isValidToolName(toolName)) {
       return null;
     }
-    return toolName.substring(5); // Remove 'jcvd_' prefix
+
+    return toolName.slice(5); // Remove 'jcvd_' prefix
   },
   
   /**
@@ -199,6 +201,7 @@ export const ToolUtils = {
    */
   inferCategory(toolName: string): string {
     const operation = this.getOperation(toolName);
+
     if (!operation) {
       return 'general';
     }

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { MCPServer } from '../../../../src/mcp/server/mcp-server.js';
+
 import type { Logger } from '../../../../src/utils/logger.js';
 
 // Mock logger
@@ -24,7 +25,7 @@ describe('MCPServer', () => {
         if (server.isRunning()) {
           await server.stop();
         }
-      } catch (error) {
+      } catch {
         // Ignore cleanup errors
       }
     }
@@ -45,7 +46,7 @@ describe('MCPServer', () => {
       if (server && server.isRunning()) {
         await server.stop();
       }
-    } catch (error) {
+    } catch {
       // Ignore cleanup errors in tests
     }
   });
@@ -75,6 +76,7 @@ describe('MCPServer', () => {
       });
 
       const capabilities = basicServer.getCapabilities();
+
       expect(capabilities).toEqual({
         resources: {},
         tools: {},
@@ -133,6 +135,7 @@ describe('MCPServer', () => {
     beforeEach(async () => {
       if (!server.isRunning()) {
         const result = await server.start();
+
         if (!result.success) {
           throw new Error(`Failed to start server in Message handling beforeEach: ${result.error}`);
         }
@@ -201,6 +204,7 @@ describe('MCPServer', () => {
 
       // Should not throw and should not return a response
       const response = await server.handleMessage(JSON.stringify(notification));
+
       expect(response).toBeNull();
     });
 
@@ -209,7 +213,7 @@ describe('MCPServer', () => {
       const parsedResponse = JSON.parse(response);
       
       expect(parsedResponse.error).toEqual({
-        code: -32700,
+        code: -32_700,
         message: 'Parse error',
         data: expect.any(Object),
       });
@@ -228,7 +232,7 @@ describe('MCPServer', () => {
       
       expect(parsedResponse.id).toBe(3);
       expect(parsedResponse.error).toEqual({
-        code: -32601,
+        code: -32_601,
         message: 'Method not found',
         data: { method: 'unknown/method' },
       });
@@ -244,7 +248,7 @@ describe('MCPServer', () => {
       const parsedResponse = JSON.parse(response);
       
       expect(parsedResponse.error).toEqual({
-        code: -32600,
+        code: -32_600,
         message: 'Invalid Request',
         data: expect.any(Object),
       });
@@ -289,6 +293,7 @@ describe('MCPServer', () => {
       await new Promise(resolve => setTimeout(resolve, 10));
       
       const status = server.getStatus();
+
       expect(status.uptime).toBeGreaterThan(0);
     });
 
@@ -382,6 +387,7 @@ describe('MCPServer', () => {
       server.updateCapabilities(newCapabilities);
       
       const capabilities = server.getCapabilities();
+
       expect(capabilities.resources).toEqual({ files: true });
       expect(capabilities.tools).toEqual({});
       expect(capabilities.prompts).toEqual({});
@@ -395,6 +401,7 @@ describe('MCPServer', () => {
       server.updateCapabilities(newCapabilities, { replace: true });
       
       const capabilities = server.getCapabilities();
+
       expect(capabilities).toEqual({
         resources: { files: true },
       });

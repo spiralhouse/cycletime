@@ -99,6 +99,7 @@ export class ToolValidator {
         expected: schema.type,
         actual: typeof value
       });
+
       return; // Skip further validation if type is wrong
     }
     
@@ -107,12 +108,15 @@ export class ToolValidator {
       case 'object':
         this.validateObject(value, schema, path, errors);
         break;
+
       case 'array':
         this.validateArray(value, schema, path, errors);
         break;
+
       case 'string':
         this.validateString(value, schema, path, errors);
         break;
+
       case 'number':
         this.validateNumber(value, schema, path, errors);
         break;
@@ -143,14 +147,19 @@ export class ToolValidator {
     switch (expectedType) {
       case 'array':
         return Array.isArray(value);
+
       case 'object':
         return typeof value === 'object' && !Array.isArray(value);
+
       case 'string':
         return typeof value === 'string';
+
       case 'number':
         return typeof value === 'number' && !isNaN(value);
+
       case 'boolean':
         return typeof value === 'boolean';
+
       default:
         return false;
     }
@@ -202,6 +211,7 @@ export class ToolValidator {
     // Additional properties validation
     if (schema.additionalProperties === false) {
       const allowedProps = Object.keys(schema.properties);
+
       for (const prop of Object.keys(value)) {
         if (!allowedProps.includes(prop)) {
           errors.push({
@@ -254,6 +264,7 @@ export class ToolValidator {
       
       for (const item of value) {
         const key = JSON.stringify(item);
+
         if (seen.has(key)) {
           duplicates.add(item);
         } else {
@@ -319,6 +330,7 @@ export class ToolValidator {
     // Pattern validation
     if (schema.pattern) {
       const regex = new RegExp(schema.pattern);
+
       if (!regex.test(value)) {
         errors.push({
           path,
@@ -385,17 +397,22 @@ export class ToolValidator {
     switch (format) {
       case 'email':
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
       case 'uri':
         try {
           new URL(value);
+
           return true;
         } catch {
           return false;
         }
+
       case 'date':
         return !isNaN(Date.parse(value));
+
       case 'uuid':
-        return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+        return /^[\da-f]{8}-[\da-f]{4}-[1-5][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i.test(value);
+
       default:
         return true; // Unknown formats pass validation
     }
@@ -416,7 +433,7 @@ export class ToolValidator {
       return basePath + component;
     }
     
-    return basePath + '.' + component;
+    return `${basePath  }.${  component}`;
   }
   
   /**
@@ -426,6 +443,7 @@ export class ToolValidator {
    */
   private formatError(error: ValidationError): string {
     const fieldPath = error.path || 'root';
+
     return `${fieldPath} ${error.message}`;
   }
   
@@ -447,6 +465,7 @@ export class ToolValidator {
         // Validate each property schema recursively
         for (const [propName, propSchema] of Object.entries(schema.properties)) {
           const propValidation = this.validateSchema(propSchema);
+
           if (!propValidation.valid) {
             errors.push(...(propValidation.errors || []).map(e => `properties.${propName}.${e}`));
           }
@@ -459,6 +478,7 @@ export class ToolValidator {
           errors.push('required must be an array');
         } else if (schema.properties) {
           const propNames = Object.keys(schema.properties);
+
           for (const required of schema.required) {
             if (!propNames.includes(required)) {
               errors.push(`required field '${required}' not found in properties`);
@@ -470,6 +490,7 @@ export class ToolValidator {
     
     if (schema.type === 'array' && schema.items) {
       const itemsValidation = this.validateSchema(schema.items);
+
       if (!itemsValidation.valid) {
         errors.push(...(itemsValidation.errors || []).map(e => `items.${e}`));
       }

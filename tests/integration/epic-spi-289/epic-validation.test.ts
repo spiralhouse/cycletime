@@ -13,16 +13,18 @@
  * 5. Linear Compatibility - Schema structure validated against Linear patterns
  */
 
-import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
-import { performance } from 'node:perf_hooks';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { testUtils, testData } from '../../setup.js';
+import { performance } from 'node:perf_hooks';
+
+import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+
 
 // Import core JCVD components
-import { SQLiteProvider } from '../../../src/providers/sqlite/index.js';
-import { ProviderFactory } from '../../../src/providers/factory/index.js';
 import { createMigrationEngine } from '../../../src/database/migrations/migration-engine.js';
+import { ProviderFactory } from '../../../src/providers/factory/index.js';
+import { SQLiteProvider } from '../../../src/providers/sqlite/index.js';
+import { testUtils, testData } from '../../setup.js';
 
 // Import test utilities (to be created)
 import {
@@ -56,7 +58,7 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Success Criteria Vali
         performance: {
           queryTimeout: 5000,
           maxConnections: 10,
-          cacheSizeKB: 10000,
+          cacheSizeKB: 10_000,
         },
       },
     };
@@ -144,9 +146,11 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Success Criteria Vali
 
     test('Provider availability and health checks work correctly', async () => {
       const isAvailable = await sqliteProvider.isAvailable();
+
       expect(isAvailable).toBe(true);
 
       const health = await sqliteProvider.checkHealth();
+
       expect(health.isHealthy).toBe(true);
       expect(health.errors).toEqual([]);
       expect(health.warnings).toEqual([]);
@@ -169,7 +173,7 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Success Criteria Vali
       console.log('Generating 10,000 test issues...');
       const issues = await generateLargeDataset({
         projectId: project.id,
-        issueCount: 10000,
+        issueCount: 10_000,
         epicsCount: 100,
         storiesPerEpic: 50,
         subtasksPerStory: 20,
@@ -178,10 +182,12 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Success Criteria Vali
 
       // Batch insert the issues for performance
       const insertStart = performance.now();
+
       for (const issue of issues) {
         await sqliteProvider.createIssue(issue);
       }
       const insertTime = performance.now() - insertStart;
+
       console.log(`Created ${issues.length} issues in ${insertTime.toFixed(2)}ms`);
 
       // Test query performance scenarios
@@ -243,7 +249,7 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Success Criteria Vali
         expect(duration).toBeLessThan(100);
         expect(Array.isArray(result) || typeof result === 'object').toBe(true);
       }
-    }, 60000); // 60 second timeout for large dataset test
+    }, 60_000); // 60 second timeout for large dataset test
 
     test('Database indexes are optimized for performance', async () => {
       // Verify critical indexes exist and are being used
@@ -431,11 +437,13 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Success Criteria Vali
       };
 
       const newProvider = new SQLiteProvider(newProviderConfig);
+
       await newProvider.initialize();
 
       try {
         // Import data to new provider
         const importResult = await newProvider.importData(exportData);
+
         expect(importResult.success).toBe(true);
         expect(importResult.errors).toEqual([]);
 
@@ -452,6 +460,7 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Success Criteria Vali
         // Verify data integrity field by field
         for (const originalIssue of originalIssues) {
           const newIssue = newIssues.find(i => i.id === originalIssue.id);
+
           expect(newIssue).toBeDefined();
           expect(newIssue!.title).toBe(originalIssue.title);
           expect(newIssue!.description).toBe(originalIssue.description);
@@ -463,6 +472,7 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Success Criteria Vali
 
         // Verify hierarchical relationships are preserved
         const hierarchyValidation = await validateProviderParity(originalIssues, newIssues);
+
         expect(hierarchyValidation.hierarchyIntact).toBe(true);
         expect(hierarchyValidation.dependenciesIntact).toBe(true);
         expect(hierarchyValidation.dataLossDetected).toBe(false);
@@ -535,6 +545,7 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Success Criteria Vali
 
       // Validate Linear-compatible field mappings
       const exportedStory = exportData.issues.find(i => i.issueType === 'story');
+
       expect(exportedStory).toBeDefined();
       expect(exportedStory!.estimate).toBe(8); // Fibonacci scale
       expect(exportedStory!.priority).toBe(2); // Linear priority mapping
@@ -567,7 +578,8 @@ describe('Epic SPI-289: Core Infrastructure & Foundation - Success Criteria Vali
       linearCompatibility: true,
     };
 
-    const allCriteriaMet = Object.values(epicValidation).every(criterion => criterion === true);
+    const allCriteriaMet = Object.values(epicValidation).every(Boolean);
+
     expect(allCriteriaMet).toBe(true);
 
     // Log implementation status of all Epic components

@@ -7,6 +7,7 @@ describe('MessageQueue - Simple Tests', () => {
 
   it('should initialize with correct properties', () => {
     const messageQueue = new MessageQueue(mockConnectionId);
+
     expect(messageQueue.getConnectionId()).toBe(mockConnectionId);
     expect(messageQueue.size()).toBe(0);
     expect(messageQueue.isEmpty()).toBe(true);
@@ -40,12 +41,15 @@ describe('MessageQueue - Simple Tests', () => {
     messageQueue.enqueue({ id: '3', content: 'high msg' }, MessagePriority.HIGH);
 
     const highMsg = messageQueue.dequeue();
+
     expect(highMsg?.message.content).toBe('high msg');
     
     const normalMsg = messageQueue.dequeue();
+
     expect(normalMsg?.message.content).toBe('normal msg');
     
     const lowMsg = messageQueue.dequeue();
+
     expect(lowMsg?.message.content).toBe('low msg');
   });
 

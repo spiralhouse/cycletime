@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
 import {
   EnhancedProviderFactory,
   createProviderFactory,
@@ -268,7 +269,7 @@ describe('EnhancedProviderFactory', () => {
 
       expect(result.successful).toHaveLength(10);
       expect(result.failed).toHaveLength(0);
-      expect(duration).toBeLessThan(10000); // Should complete within 10 seconds
+      expect(duration).toBeLessThan(10_000); // Should complete within 10 seconds
     });
   });
 
@@ -277,6 +278,7 @@ describe('EnhancedProviderFactory', () => {
       const provider = await factory.createProvider(mockSQLiteConfig);
 
       const registeredProvider = factory.getProviderFromRegistry('test-sqlite');
+
       expect(registeredProvider).toBe(provider);
     });
 
@@ -288,6 +290,7 @@ describe('EnhancedProviderFactory', () => {
       await factory.createProvider(uniqueLinearConfig);
 
       const providers = factory.listRegisteredProviders();
+
       expect(providers.length).toBeGreaterThanOrEqual(2);
       expect(providers.map(p => p.id)).toContain('test-sqlite-list');
       expect(providers.map(p => p.id)).toContain('test-linear-list');
@@ -386,6 +389,7 @@ describe('Factory Utilities', () => {
     });
 
     const stats = factory.getFactoryStatistics();
+
     expect(stats.factory.validationEnabled).toBe(false);
     expect(stats.factory.autoRegistrationEnabled).toBe(false);
   });
@@ -399,6 +403,7 @@ describe('Factory Utilities', () => {
 
   it('should reset global factory', () => {
     const factory1 = getGlobalProviderFactory();
+
     resetGlobalProviderFactory();
     const factory2 = getGlobalProviderFactory();
 
@@ -430,18 +435,22 @@ describe('Provider Factory Integration', () => {
     
     // Create provider
     const provider = await factory.createProvider(uniqueConfig);
+
     expect(provider.getProviderInfo().status.isHealthy).toBe(true);
 
     // Verify registration
     const registeredProvider = factory.getProviderFromRegistry('test-sqlite-lifecycle');
+
     expect(registeredProvider).toBe(provider);
 
     // Check availability
     const isAvailable = await provider.isAvailable();
+
     expect(isAvailable).toBe(true);
 
     // Perform health check
     const healthStatus = await provider.healthCheck();
+
     expect(healthStatus.isHealthy).toBe(true);
 
     // Cleanup
@@ -464,6 +473,7 @@ describe('Provider Factory Integration', () => {
 
     // Verify all are registered and healthy
     const stats = factory.getFactoryStatistics();
+
     expect(stats.registry.totalProviders).toBeGreaterThanOrEqual(3);
     expect(stats.registry.healthyProviders).toBeGreaterThanOrEqual(3);
 

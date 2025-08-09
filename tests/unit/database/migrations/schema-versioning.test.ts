@@ -3,6 +3,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+
+import { SemanticVersion } from '../../../../src/database/migrations/migration-types';
 import {
   SchemaVersioning,
   parseSemanticVersion,
@@ -22,7 +24,6 @@ import {
   generateSchemaFingerprint,
 } from '../../../../src/database/migrations/schema-versioning';
 
-import { SemanticVersion } from '../../../../src/database/migrations/migration-types';
 
 describe('Schema Versioning System', () => {
   describe('parseSemanticVersion', () => {
@@ -42,6 +43,7 @@ describe('Schema Versioning System', () => {
 
       for (const testCase of testCases) {
         const result = parseSemanticVersion(testCase.input);
+
         expect(result).toEqual(testCase.expected);
       }
     });
@@ -69,6 +71,7 @@ describe('Schema Versioning System', () => {
 
       for (const testCase of testCases) {
         const result = formatSemanticVersion(testCase.input);
+
         expect(result).toBe(testCase.expected);
       }
     });
@@ -92,6 +95,7 @@ describe('Schema Versioning System', () => {
         const a = parseSemanticVersion(testCase.a);
         const b = parseSemanticVersion(testCase.b);
         const result = compareSemanticVersions(a, b);
+
         expect(result).toBe(testCase.expected);
       }
     });
@@ -130,21 +134,25 @@ describe('Schema Versioning System', () => {
 
     it('should increment major version', () => {
       const next = getNextVersion(currentVersion, 'major');
+
       expect(formatSemanticVersion(next)).toBe('2.0.0');
     });
 
     it('should increment minor version', () => {
       const next = getNextVersion(currentVersion, 'minor');
+
       expect(formatSemanticVersion(next)).toBe('1.3.0');
     });
 
     it('should increment patch version', () => {
       const next = getNextVersion(currentVersion, 'patch');
+
       expect(formatSemanticVersion(next)).toBe('1.2.4');
     });
 
     it('should handle prerelease versions', () => {
       const next = getNextVersion(currentVersion, 'minor', 'alpha');
+
       expect(formatSemanticVersion(next)).toBe('1.3.0-alpha');
     });
   });
@@ -163,6 +171,7 @@ describe('Schema Versioning System', () => {
 
       for (const testCase of testCases) {
         const result = parseVersionRange(testCase.input);
+
         expect(result.operator).toBe(testCase.expected.operator);
         expect(formatSemanticVersion(result.version)).toBe(
           formatSemanticVersion(testCase.expected.version)
@@ -194,6 +203,7 @@ describe('Schema Versioning System', () => {
         const version = parseSemanticVersion(testCase.version);
         const range = parseVersionRange(testCase.range);
         const result = satisfiesRange(version, range);
+
         expect(result).toBe(testCase.expected);
       }
     });
@@ -212,6 +222,7 @@ describe('Schema Versioning System', () => {
         const from = parseSemanticVersion(testCase.from);
         const to = parseSemanticVersion(testCase.to);
         const result = analyzeSchemaChanges(from, to);
+
         expect(result).toBe(testCase.expected);
       }
     });
@@ -219,6 +230,7 @@ describe('Schema Versioning System', () => {
     it('should throw error for backward version analysis', () => {
       const from = parseSemanticVersion('2.0.0');
       const to = parseSemanticVersion('1.0.0');
+
       expect(() => analyzeSchemaChanges(from, to)).toThrow();
     });
   });
@@ -300,9 +312,11 @@ describe('Schema Versioning System', () => {
 
     it('should work with utility object methods', () => {
       const version = SchemaVersioning.parse('1.2.3');
+
       expect(SchemaVersioning.format(version)).toBe('1.2.3');
 
       const next = SchemaVersioning.getNext(version, 'minor');
+
       expect(SchemaVersioning.format(next)).toBe('1.3.0');
 
       expect(SchemaVersioning.isGreater(next, version)).toBe(true);
@@ -321,6 +335,7 @@ describe('Schema Versioning System', () => {
         const a = parseSemanticVersion(testCase.a);
         const b = parseSemanticVersion(testCase.b);
         const result = compareSemanticVersions(a, b);
+
         expect(result).toBe(testCase.expected);
       }
     });
@@ -337,6 +352,7 @@ describe('Schema Versioning System', () => {
         const version = parseSemanticVersion(testCase.version);
         const range = parseVersionRange(testCase.range);
         const result = satisfiesRange(version, range);
+
         expect(result).toBe(testCase.expected);
       }
     });

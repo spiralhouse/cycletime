@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+
 import {
   CapabilityCacheManager,
   LRUCache,
@@ -18,7 +19,6 @@ import type {
   CapabilityProbeResult,
   CapabilityDiscoveryOptions,
 } from '../../../../src/providers/capabilities/capability-discovery.js';
-
 import type {
   ProviderFeatureMatrix,
   ProviderComparison,
@@ -94,7 +94,7 @@ function createMockFeatureMatrix(providerId: string): ProviderFeatureMatrix {
     overallScore: 0.95,
     categoryScores: new Map([['core', 1.0]]),
     generatedAt: new Date(),
-    validUntil: new Date(Date.now() + 60000),
+    validUntil: new Date(Date.now() + 60_000),
   };
 }
 
@@ -155,7 +155,7 @@ describe('LRUCache', () => {
   const config: CacheConfig = {
     maxSizeBytes: 1000,
     defaultTTL: 5000,
-    matrixTTL: 10000,
+    matrixTTL: 10_000,
     comparisonTTL: 8000,
     maxEntriesPerProvider: 50,
     enableLRU: true,
@@ -191,6 +191,7 @@ describe('LRUCache', () => {
     expect(cache.size()).toBeGreaterThan(0);
 
     const initialSize = cache.size();
+
     cache.set('key2', 'another small value');
     expect(cache.size()).toBeGreaterThan(initialSize);
   });
@@ -215,6 +216,7 @@ describe('LRUCache', () => {
 
     setTimeout(() => {
       const cleaned = cache.cleanup();
+
       expect(cleaned).toBe(1); // Only key1 should be expired
       expect(cache.count()).toBe(1); // Only key2 should remain
       done();
@@ -391,6 +393,7 @@ describe('CapabilityCacheManager', () => {
     expect(cacheManager.getCachedMatrix(providerId)).toBeUndefined();
 
     const stats = cacheManager.getStatistics();
+
     expect(stats.entryCount).toBe(0);
     expect(stats.currentSizeBytes).toBe(0);
   });
@@ -461,9 +464,9 @@ describe('Cache Integration', () => {
   it('should handle cache warming scenario', async () => {
     const cacheManager = new CapabilityCacheManager({
       maxSizeBytes: 1024 * 1024, // 1MB
-      defaultTTL: 60000, // 1 minute
-      matrixTTL: 300000, // 5 minutes
-      comparisonTTL: 180000, // 3 minutes
+      defaultTTL: 60_000, // 1 minute
+      matrixTTL: 300_000, // 5 minutes
+      comparisonTTL: 180_000, // 3 minutes
       maxEntriesPerProvider: 50,
       enableLRU: true,
       persistToDisk: false,
@@ -478,15 +481,18 @@ describe('Cache Integration', () => {
     for (const providerId of providers) {
       for (const capabilityId of commonCapabilities) {
         const probeResult = createMockProbeResult(capabilityId);
+
         cacheManager.cacheProbe(providerId, capabilityId, options, probeResult);
       }
 
       const discoveryResult = createMockDiscoveryResult(providerId);
+
       cacheManager.cacheDiscovery(providerId, options, discoveryResult);
     }
 
     // Verify cache is warmed
     const stats = cacheManager.getStatistics();
+
     expect(stats.entryCount).toBe(providers.length * (commonCapabilities.length + 1)); // Probes + discoveries
 
     // Test cache hits
@@ -500,15 +506,16 @@ describe('Cache Integration', () => {
 
     // Verify hit ratio improved
     const finalStats = cacheManager.getStatistics();
+
     expect(finalStats.hitRatio).toBeGreaterThan(0);
   });
 
   it('should handle memory pressure and eviction', () => {
     const smallCache = new CapabilityCacheManager({
       maxSizeBytes: 1024, // Very small - 1KB
-      defaultTTL: 60000,
-      matrixTTL: 300000,
-      comparisonTTL: 180000,
+      defaultTTL: 60_000,
+      matrixTTL: 300_000,
+      comparisonTTL: 180_000,
       maxEntriesPerProvider: 10,
       enableLRU: true,
       persistToDisk: false,
@@ -520,6 +527,7 @@ describe('Cache Integration', () => {
     for (let i = 0; i < 20; i++) {
       const providerId = `provider-${i}`;
       const result = createMockDiscoveryResult(providerId);
+
       smallCache.cacheDiscovery(providerId, options, result);
     }
 

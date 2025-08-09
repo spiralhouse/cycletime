@@ -3,6 +3,7 @@
  */
 
 import { createLogger } from '../../utils/logger.js';
+
 import { 
   DEFAULT_MCP_CONFIG, 
   PRODUCTION_MCP_CONFIG,
@@ -29,6 +30,7 @@ export class MCPConfigManager {
 
     // Load from environment variables
     const envConfig = this.getEnvironmentVariables();
+
     if (Object.keys(envConfig).length > 0) {
       config = this.mergeConfigs(config, envConfig);
       this.logger.debug('Applied environment variable configuration');
@@ -64,6 +66,7 @@ export class MCPConfigManager {
 
     // Apply environment variables
     const envConfig = this.getEnvironmentVariables();
+
     if (Object.keys(envConfig).length > 0) {
       config = this.mergeConfigs(config, envConfig);
     }
@@ -91,6 +94,7 @@ export class MCPConfigManager {
 
     for (const [envVar, configPath] of Object.entries(MCP_ENV_VAR_MAPPING)) {
       const value = process.env[envVar];
+
       if (value !== undefined) {
         this.setNestedValue(envConfig, configPath, this.parseEnvironmentValue(value));
       }
@@ -133,7 +137,7 @@ export class MCPConfigManager {
         throw new Error('MCP configuration validation failed: port is required when transport is "websocket"');
       }
 
-      if (config.server.port < 1 || config.server.port > 65535) {
+      if (config.server.port < 1 || config.server.port > 65_535) {
         throw new Error('MCP configuration validation failed: port must be between 1 and 65535');
       }
     }
@@ -235,6 +239,7 @@ export class MCPConfigManager {
 
     for (let i = 0; i < keys.length - 1; i++) {
       const key = keys[i];
+
       if (!key) continue; // Skip empty keys
       if (!(key in current) || typeof current[key] !== 'object') {
         current[key] = {};
@@ -243,6 +248,7 @@ export class MCPConfigManager {
     }
 
     const finalKey = keys[keys.length - 1];
+
     if (finalKey) {
       current[finalKey] = value;
     }
@@ -258,6 +264,7 @@ export class MCPConfigManager {
 
     // Numeric values
     const num = Number(value);
+
     if (!isNaN(num) && isFinite(num)) {
       return num;
     }
@@ -275,7 +282,7 @@ export class MCPConfigManager {
         name: { type: 'string', required: true },
         version: { type: 'string', required: true },
         transport: { type: 'string', enum: ['stdio', 'websocket'], required: true },
-        port: { type: 'number', min: 1, max: 65535, conditionallyRequired: true },
+        port: { type: 'number', min: 1, max: 65_535, conditionallyRequired: true },
       },
       resources: {
         enabled: { type: 'boolean', required: true },

@@ -21,9 +21,7 @@ export type MessageType = 'request' | 'response' | 'notification';
 /**
  * Connection metadata interface
  */
-export interface ConnectionMetadata {
-  [key: string]: any;
-}
+export type ConnectionMetadata = Record<string, any>;
 
 /**
  * Message count statistics
@@ -87,6 +85,7 @@ export class ConnectionState {
    */
   setStatus(status: ConnectionStatus, error?: Error): void {
     const previousStatus = this.status;
+
     this.status = status;
 
     // Handle status-specific logic
@@ -139,6 +138,7 @@ export class ConnectionState {
     if (!this.connectedAt || !this.isConnected()) {
       return 0;
     }
+
     return Date.now() - this.connectedAt;
   }
 

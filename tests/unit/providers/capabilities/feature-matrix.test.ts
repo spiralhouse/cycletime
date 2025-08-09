@@ -5,6 +5,12 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+
+import {
+  CapabilityRegistry,
+  type CapabilityDiscoveryResult,
+  type CapabilityDefinition,
+} from '../../../../src/providers/capabilities/capability-discovery.js';
 import {
   FeatureMatrixGenerator,
   ProviderComparisonEngine,
@@ -14,11 +20,6 @@ import {
   type ProviderComparison,
 } from '../../../../src/providers/capabilities/feature-matrix.js';
 
-import {
-  CapabilityRegistry,
-  type CapabilityDiscoveryResult,
-  type CapabilityDefinition,
-} from '../../../../src/providers/capabilities/capability-discovery.js';
 
 import type { IssueProvider, ProviderInfo } from '../../../../src/providers/types.js';
 
@@ -167,9 +168,11 @@ describe('FeatureMatrixGenerator', () => {
 
     // Check specific feature support levels
     const projectsCreate = matrix.features.get('projects.create');
+
     expect(projectsCreate?.supportLevel).toBe('full');
 
     const dependenciesCreate = matrix.features.get('dependencies.create');
+
     expect(dependenciesCreate?.supportLevel).toBe('none');
   });
 
@@ -189,10 +192,12 @@ describe('FeatureMatrixGenerator', () => {
 
     // Core category should have lower score due to missing issues.read
     const coreScore = matrix.categoryScores.get('core');
+
     expect(coreScore).toBeLessThan(1.0);
 
     // Hierarchy category should have high score
     const hierarchyScore = matrix.categoryScores.get('hierarchy');
+
     expect(hierarchyScore).toBeGreaterThan(0.8);
   });
 
@@ -204,6 +209,7 @@ describe('FeatureMatrixGenerator', () => {
 
     // Manually adjust the result to show limitations
     const workflowProbe = discoveryResult.capabilities.get('workflow.states')!;
+
     workflowProbe.metadata = {
       implementationDetails: 'Linear workflow states',
       limitations: ['Cannot create custom states via API'],
@@ -212,6 +218,7 @@ describe('FeatureMatrixGenerator', () => {
     const matrix = await generator.generateFeatureMatrix(provider, discoveryResult);
 
     const workflowFeature = matrix.features.get('workflow.states');
+
     expect(workflowFeature?.supportLevel).toBe('partial');
     expect(workflowFeature?.limitations).toContain('Cannot create custom states via API');
   });
@@ -382,6 +389,7 @@ describe('ProviderComparisonEngine', () => {
 
     // Should have recommendations for alternatives
     const dependencyComparison = comparison.capabilityComparison.get('dependencies.create');
+
     expect(dependencyComparison?.recommendations.length).toBeGreaterThan(0);
   });
 });
@@ -438,6 +446,7 @@ describe('FeatureMatrixUtils', () => {
 
     // Export to JSON
     const json = FeatureMatrixUtils.exportToJSON(originalMatrix);
+
     expect(json).toContain('"providerId":"test-provider"');
     expect(json).toContain('"providerType":"sqlite"');
 
@@ -579,6 +588,7 @@ describe('Feature Matrix Integration', () => {
     // Feature entries should match
     for (const [featureId, feature1] of matrix1.features) {
       const feature2 = matrix2.features.get(featureId);
+
       expect(feature2).toBeDefined();
       expect(feature1.supportLevel).toBe(feature2!.supportLevel);
       expect(feature1.implementationNotes).toBe(feature2!.implementationNotes);

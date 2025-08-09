@@ -5,13 +5,14 @@
  * and MCP schema generation for tool registration.
  */
 
+import { ToolName } from './tool-interface.js';
+import { ToolValidator } from './tool-validator.js';
+
 import type { 
   ToolMetadata, 
   ToolParameterSchema,
   ToolCapability 
 } from './tool-interface.js';
-import { ToolName } from './tool-interface.js';
-import { ToolValidator } from './tool-validator.js';
 
 /**
  * MCP tool schema for tool registration
@@ -107,6 +108,7 @@ export class ToolMetadataManager {
       errors.push('parameters schema is required');
     } else {
       const schemaValidation = ToolValidator.validateSchema(metadata.parameters);
+
       if (!schemaValidation.valid) {
         errors.push(...(schemaValidation.errors || []).map(e => `parameters.${e}`));
       }
@@ -123,6 +125,7 @@ export class ToolMetadataManager {
     
     if (metadata.inputSchema) {
       const inputSchemaValidation = ToolValidator.validateSchema(metadata.inputSchema);
+
       if (!inputSchemaValidation.valid) {
         errors.push(...(inputSchemaValidation.errors || []).map(e => `inputSchema.${e}`));
       }
@@ -130,6 +133,7 @@ export class ToolMetadataManager {
     
     if (metadata.outputSchema) {
       const outputSchemaValidation = ToolValidator.validateSchema(metadata.outputSchema);
+
       if (!outputSchemaValidation.valid) {
         errors.push(...(outputSchemaValidation.errors || []).map(e => `outputSchema.${e}`));
       }
@@ -148,6 +152,7 @@ export class ToolMetadataManager {
    */
   validateParameterSchema(schema: ToolParameterSchema): MetadataValidationResult {
     const validation = ToolValidator.validateSchema(schema);
+
     return {
       valid: validation.valid,
       errors: validation.errors
@@ -183,6 +188,7 @@ export class ToolMetadataManager {
       
       // Validate the deserialized metadata
       const validation = this.validateMetadata(metadata);
+
       if (!validation.valid) {
         throw new Error(`Invalid metadata: ${validation.errors?.join(', ')}`);
       }
@@ -323,6 +329,7 @@ export class ToolMetadataManager {
     
     // Validate merged metadata
     const validation = this.validateMetadata(merged);
+
     if (!validation.valid) {
       throw new Error(`Invalid merged metadata: ${validation.errors?.join(', ')}`);
     }

@@ -82,7 +82,7 @@ export class HealthChecker extends EventEmitter {
     
     this.logger = createLogger('health-checker');
     this.config = {
-      checkInterval: config.checkInterval ?? 30000, // 30 seconds
+      checkInterval: config.checkInterval ?? 30_000, // 30 seconds
       timeoutMs: config.timeoutMs ?? 5000, // 5 seconds
     };
   }
@@ -283,6 +283,7 @@ export class HealthChecker extends EventEmitter {
    */
   private async performHealthCheck(): Promise<void> {
     const healthStatus = await this.checkHealth();
+
     this.emit('health-check', healthStatus);
   }
 
