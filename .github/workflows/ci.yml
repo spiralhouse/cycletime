@@ -133,7 +133,7 @@ jobs:
     timeout-minutes: 20
     needs: [build]
 
-    services:
+    # services:
       # Add any services needed for integration tests
       # e.g., databases, message queues, etc.
 
