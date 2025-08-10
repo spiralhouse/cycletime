@@ -10,6 +10,7 @@ import type {
 } from './types.js';
 import type { SessionApplicationService } from '../../application/services/session-application-service.js';
 import type { SessionContext } from '../../domain/entities/session.js';
+import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
 
 
 /**
@@ -21,6 +22,7 @@ export class SessionManager implements SessionManagerInterface {
 
   constructor(
     private readonly sessionService: SessionApplicationService,
+    private readonly timeProvider: TimeProvider,
     config: SessionConfig = {}
   ) {
     // Set default configuration
@@ -243,11 +245,17 @@ export class SessionManager implements SessionManagerInterface {
    */
   async expireSessions(olderThan?: Date): Promise<number> {
     try {
-      const cutoffDate = olderThan || new Date(Date.now() - this.config.maxAge!);
+      let maxAge: number;
       
-      const result = await this.sessionService.cleanupExpiredSessions(
-        cutoffDate.getTime() - Date.now()
-      );
+      if (olderThan) {
+        // If specific cutoff date provided, calculate maxAge from it
+        maxAge = this.timeProvider.now().getTime() - olderThan.getTime();
+      } else {
+        // Use configured maxAge
+        maxAge = this.config.maxAge!;
+      }
+      
+      const result = await this.sessionService.cleanupExpiredSessions(maxAge);
       
       if (!result.success) {
         throw new SessionStorageError('expire sessions', new Error(result.error));
@@ -316,7 +324,7 @@ export class SessionManager implements SessionManagerInterface {
    * Check if a session is expired based on last activity
    */
   private isSessionExpired(lastActivity: Date): boolean {
-    const age = Date.now() - lastActivity.getTime();
+    const age = this.timeProvider.now().getTime() - lastActivity.getTime();
 
     return age > this.config.maxAge!;
   }
