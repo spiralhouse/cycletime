@@ -5,6 +5,7 @@ import {
 } from '../../domain/errors/session-errors.js';
 
 import type { SessionRepository, UnitOfWork } from '../../domain/repositories/session-repository.js';
+import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
 import type {
   SessionStateDto,
   CreateSessionCommand,
@@ -18,7 +19,8 @@ import type {
 export class SessionApplicationService {
   constructor(
     private readonly sessionRepository: SessionRepository,
-    private readonly unitOfWork: UnitOfWork
+    private readonly unitOfWork: UnitOfWork,
+    private readonly timeProvider?: TimeProvider
   ) {}
 
   /**
@@ -26,7 +28,7 @@ export class SessionApplicationService {
    */
   async createSession(command: CreateSessionCommand): Promise<SessionOperationResult> {
     try {
-      const session = Session.create(command.projectId, command.initialContext);
+      const session = Session.create(command.projectId, command.initialContext, this.timeProvider);
       
       await this.unitOfWork.execute(async () => {
         await this.sessionRepository.save(session);
