@@ -2,6 +2,8 @@
 #
 # This configuration ensures dependencies are compatible with AGPL-3.0
 # and maintains security standards for the project.
+#
+# Using allow-list approach: only explicitly approved licenses are permitted.
 
 # Security Settings - fail on critical and high severity vulnerabilities
 fail_on_severity: 'high'
@@ -15,8 +17,8 @@ fail_on_scopes:
 vulnerability_check: true
 license_check: true
 
-# AGPL-3.0 Compatible Licenses
-# These licenses are generally compatible with AGPL-3.0
+# AGPL-3.0 Compatible Licenses (ALLOW-LIST ONLY)
+# Only these licenses are permitted for dependencies
 allow_licenses:
   # Permissive licenses (compatible with AGPL-3.0)
   - 'MIT'
@@ -51,20 +53,10 @@ allow_licenses:
   - 'Unlicense'
   - 'WTFPL'
 
-# Licenses that are NOT compatible with AGPL-3.0
-# Using only valid SPDX license identifiers
-deny_licenses:
-  # GPL-2.0 only (incompatible with AGPL-3.0 due to version conflict)
-  - 'GPL-2.0'
-  - 'GPL-2.0-only'
-  
-  # Restrictive licenses
-  - 'JSON'
-  
-  # Non-commercial licenses (incompatible with AGPL-3.0's freedom principles)
-  - 'CC-BY-NC-4.0'
-  - 'CC-BY-NC-SA-4.0'
-
-# Note: Proprietary, commercial, and custom licenses cannot be specified here
-# as they don't have standard SPDX identifiers. The action will flag
-# any unlicensed or unrecognized licenses automatically.
+# Note: This allow-list approach means that:
+# - GPL-2.0-only is automatically blocked (not in allow list)
+# - Proprietary licenses are automatically blocked (not in allow list)  
+# - Commercial licenses are automatically blocked (not in allow list)
+# - Any license not explicitly listed above will fail the check
+# 
+# This provides stronger protection for AGPL-3.0 compatibility than a deny-list approach.
