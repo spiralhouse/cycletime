@@ -1,5 +1,6 @@
 import { InvalidSessionDataError } from '../errors/session-errors.js';
 import { SessionKey } from '../value-objects/session-key.js';
+import type { TimeProvider } from '../interfaces/time-provider.js';
 
 /**
  * Session context data structure
@@ -28,7 +29,8 @@ export class Session {
     currentContext: SessionContext,
     lastActivity: Date,
     createdAt?: Date | undefined,
-    updatedAt?: Date | undefined
+    updatedAt?: Date | undefined,
+    private readonly timeProvider?: TimeProvider
   ) {
     this._sessionKey = typeof sessionKey === 'string' 
       ? SessionKey.from(sessionKey) 
@@ -36,8 +38,15 @@ export class Session {
     this._projectId = projectId;
     this._currentContext = this.validateContext(currentContext);
     this._lastActivity = new Date(lastActivity);
-    this._createdAt = createdAt ? new Date(createdAt) : new Date();
-    this._updatedAt = updatedAt ? new Date(updatedAt) : new Date();
+    this._createdAt = createdAt ? new Date(createdAt) : this.getCurrentTime();
+    this._updatedAt = updatedAt ? new Date(updatedAt) : this.getCurrentTime();
+  }
+
+  /**
+   * Get current time from provider or fall back to system time
+   */
+  private getCurrentTime(): Date {
+    return this.timeProvider?.now() ?? new Date();
   }
 
   /**
@@ -140,8 +149,9 @@ export class Session {
    * Touch session to update last activity
    */
   touch(): void {
-    this._lastActivity = new Date();
-    this._updatedAt = new Date();
+    const now = this.getCurrentTime();
+    this._lastActivity = now;
+    this._updatedAt = now;
   }
 
   /**
@@ -209,9 +219,13 @@ export class Session {
   /**
    * Static factory method to create new session
    */
-  static create(projectId?: string, initialContext: SessionContext = {}): Session {
+  static create(
+    projectId?: string, 
+    initialContext: SessionContext = {}, 
+    timeProvider?: TimeProvider
+  ): Session {
     const sessionKey = SessionKey.generate();
-    const now = new Date();
+    const now = timeProvider?.now() ?? new Date();
     
     return new Session(
       sessionKey,
@@ -219,28 +233,33 @@ export class Session {
       initialContext,
       now,
       now,
-      now
+      now,
+      timeProvider
     );
   }
 
   /**
    * Static factory method to create from stored data
    */
-  static fromPlainObject(data: {
-    sessionKey: string;
-    projectId?: string;
-    currentContext: SessionContext;
-    lastActivity: Date | string | number;
-    createdAt?: Date | string | number;
-    updatedAt?: Date | string | number;
-  }): Session {
+  static fromPlainObject(
+    data: {
+      sessionKey: string;
+      projectId?: string;
+      currentContext: SessionContext;
+      lastActivity: Date | string | number;
+      createdAt?: Date | string | number;
+      updatedAt?: Date | string | number;
+    },
+    timeProvider?: TimeProvider
+  ): Session {
     return new Session(
       data.sessionKey,
       data.projectId,
       data.currentContext,
       new Date(data.lastActivity),
       data.createdAt ? new Date(data.createdAt) : undefined,
-      data.updatedAt ? new Date(data.updatedAt) : undefined
+      data.updatedAt ? new Date(data.updatedAt) : undefined,
+      timeProvider
     );
   }
 }
