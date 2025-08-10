@@ -45,25 +45,31 @@ export type {
 import { SessionApplicationService } from '../../application/services/session-application-service.js';
 import { SqliteSessionRepository } from '../../infrastructure/database/repositories/sqlite-session-repository.js';
 import { SqliteUnitOfWork } from '../../infrastructure/database/sqlite-unit-of-work.js';
+import { RealTimeProvider } from '../../domain/interfaces/time-provider.js';
 
 import { SessionManager } from './manager.js';
 
 import type { SessionConfig } from './types.js';
+import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
 import type Database from 'better-sqlite3';
 
 export function createSessionManager(
   db: Database.Database,
-  config?: SessionConfig
+  config?: SessionConfig,
+  timeProvider?: TimeProvider
 ): SessionManager {
+  // Use provided timeProvider or create real one
+  const actualTimeProvider = timeProvider ?? new RealTimeProvider();
+  
   // Create infrastructure layer
-  const sessionRepository = new SqliteSessionRepository(db);
+  const sessionRepository = new SqliteSessionRepository(db, actualTimeProvider);
   const unitOfWork = new SqliteUnitOfWork(db);
 
   // Create application layer  
-  const sessionService = new SessionApplicationService(sessionRepository, unitOfWork);
+  const sessionService = new SessionApplicationService(sessionRepository, unitOfWork, actualTimeProvider);
 
   // Create MCP layer
-  return new SessionManager(sessionService, config);
+  return new SessionManager(sessionService, actualTimeProvider, config);
 }
 
 /**
