@@ -1,358 +1,352 @@
 /**
- * JCVD: Simple Context Provider for Claude Code
- *
- * This is what JCVD should actually be - a simple data and context provider
- * that focuses on cross-session continuity for solo developers.
- *
- * Based on ARCHITECTURE.md, LIMITATIONS.md, and PRD.md
+ * JCVD Simple Implementation
+ * 
+ * A straightforward implementation of JCVD functionality using SQLite storage.
+ * This module provides the core interfaces and implementations needed for
+ * basic project orchestration without complex abstractions.
  */
 
-import { createLogger } from './utils/logger.js';
-import type { Logger } from './utils/logger.js';
+import { SqliteStore } from './sqlite-store.js';
+import { JcvdMcpServer } from './mcp-server.js';
 
-/**
- * Simple project context data structure
- */
-export interface ProjectContext {
-  id: string;
-  name: string;
-  phase: string;
-  statistics: {
-    totalIssues: number;
-    completedIssues: number;
-    inProgressIssues: number;
-    unblockedIssues: number;
-  };
-  recentActivity: Array<{
-    issueId: string;
-    title: string;
-    status: string;
-    completedAt?: string;
-  }>;
-}
-
-/**
- * Basic issue data structure
- */
-export interface Issue {
-  id: string;
-  projectId: string;
-  parentId?: string;
-  title: string;
-  description?: string;
-  status: string;
-  type: 'epic' | 'story' | 'subtask';
-  estimate?: number;
-  priority: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-/**
- * Simple project data structure
- */
+// Core interfaces
 export interface Project {
   id: string;
   name: string;
-  description?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  description: string;
+  path: string;
+  created_at: string;
+  updated_at: string;
+  status: 'active' | 'completed' | 'archived';
+}
+
+export interface Issue {
+  id: string;
+  project_id: string;
+  title: string;
+  description: string;
+  status: 'todo' | 'in_progress' | 'done' | 'canceled';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  created_at: string;
+  updated_at: string;
+  assignee?: string;
+  labels?: string[];
+}
+
+export interface ProjectContext {
+  project: Project;
+  issues: Issue[];
+  activeIssues: Issue[];
+  completedIssues: Issue[];
+}
+
+export interface JCVDConfig {
+  databasePath?: string;
+  mcpPort?: number;
 }
 
 /**
- * Simple project store interface - just basic CRUD
+ * SQLite-backed project store implementation
  */
-export interface ProjectStore {
-  // Projects
-  createProject(data: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<Project>;
-  getProject(id: string): Promise<Project | null>;
-  listProjects(): Promise<Project[]>;
-  updateProject(id: string, data: Partial<Project>): Promise<Project>;
-  deleteProject(id: string): Promise<void>;
+export class SqliteProjectStore {
+  private store: SqliteStore;
 
-  // Issues
-  createIssue(data: Omit<Issue, 'id' | 'createdAt' | 'updatedAt'>): Promise<Issue>;
-  getIssue(id: string): Promise<Issue | null>;
-  listIssues(projectId: string): Promise<Issue[]>;
-  updateIssue(id: string, data: Partial<Issue>): Promise<Issue>;
-  deleteIssue(id: string): Promise<void>;
-}
-
-/**
- * Simple SQLite implementation of ProjectStore
- */
-export class SQLiteProjectStore implements ProjectStore {
-  private logger: Logger = createLogger('sqlite-store');
-
-  constructor(private dbPath: string) {
-    this.logger.debug('SQLite store initialized', { dbPath: this.dbPath });
+  constructor(databasePath: string) {
+    this.store = new SqliteStore(databasePath);
   }
 
-  async createProject(data: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<Project> {
-    // TODO: Implement with basic SQLite operations
-    this.logger.debug('Creating project', { data });
-    throw new Error('Not implemented - simple SQLite operations only');
+  async initialize(): Promise<void> {
+    // Store is initialized in constructor
+  }
+
+  async close(): Promise<void> {
+    this.store.close();
+  }
+
+  // Project operations
+  async createProject(projectData: Omit<Project, 'id' | 'created_at' | 'updated_at'>): Promise<Project> {
+    const project = await this.store.createProject(projectData);
+    return project;
   }
 
   async getProject(id: string): Promise<Project | null> {
-    // TODO: Simple SELECT operation
-    this.logger.debug('Getting project', { id });
-    throw new Error('Not implemented - simple SQLite operations only');
+    return await this.store.getProject(id);
   }
 
-  async listProjects(): Promise<Project[]> {
-    // TODO: Simple SELECT operation
-    throw new Error('Not implemented - simple SQLite operations only');
-  }
-
-  async updateProject(id: string, data: Partial<Project>): Promise<Project> {
-    // TODO: Simple UPDATE operation
-    this.logger.debug('Updating project', { id, data });
-    throw new Error('Not implemented - simple SQLite operations only');
+  async updateProject(id: string, updates: Partial<Omit<Project, 'id' | 'created_at'>>): Promise<Project> {
+    const project = await this.store.updateProject(id, updates);
+    if (!project) {
+      throw new Error(`Project ${id} not found`);
+    }
+    return project;
   }
 
   async deleteProject(id: string): Promise<void> {
-    // TODO: Simple DELETE operation
-    this.logger.debug('Deleting project', { id });
-    throw new Error('Not implemented - simple SQLite operations only');
+    const success = await this.store.deleteProject(id);
+    if (!success) {
+      throw new Error(`Project ${id} not found`);
+    }
   }
 
-  async createIssue(data: Omit<Issue, 'id' | 'createdAt' | 'updatedAt'>): Promise<Issue> {
-    // TODO: Simple INSERT operation
-    this.logger.debug('Creating issue', { data });
-    throw new Error('Not implemented - simple SQLite operations only');
+  async listProjects(): Promise<Project[]> {
+    return await this.store.listProjects();
+  }
+
+  // Issue operations
+  async createIssue(issueData: Omit<Issue, 'id' | 'created_at' | 'updated_at'>): Promise<Issue> {
+    const issue = await this.store.createIssue(issueData);
+    return issue;
   }
 
   async getIssue(id: string): Promise<Issue | null> {
-    // TODO: Simple SELECT operation
-    this.logger.debug('Getting issue', { id });
-    throw new Error('Not implemented - simple SQLite operations only');
+    return await this.store.getIssue(id);
   }
 
-  async listIssues(projectId: string): Promise<Issue[]> {
-    // TODO: Simple SELECT with WHERE clause
-    this.logger.debug('Listing issues', { projectId });
-    throw new Error('Not implemented - simple SQLite operations only');
-  }
-
-  async updateIssue(id: string, data: Partial<Issue>): Promise<Issue> {
-    // TODO: Simple UPDATE operation
-    this.logger.debug('Updating issue', { id, data });
-    throw new Error('Not implemented - simple SQLite operations only');
+  async updateIssue(id: string, updates: Partial<Omit<Issue, 'id' | 'created_at'>>): Promise<Issue> {
+    const issue = await this.store.updateIssue(id, updates);
+    if (!issue) {
+      throw new Error(`Issue ${id} not found`);
+    }
+    return issue;
   }
 
   async deleteIssue(id: string): Promise<void> {
-    // TODO: Simple DELETE operation
-    this.logger.debug('Deleting issue', { id });
-    throw new Error('Not implemented - simple SQLite operations only');
+    const success = await this.store.deleteIssue(id);
+    if (!success) {
+      throw new Error(`Issue ${id} not found`);
+    }
   }
-}
 
-/**
- * Simple context provider - this is what JCVD should be
- */
-export class JCVDContextProvider {
-  private logger: Logger = createLogger('jcvd-context-provider');
-  
-  constructor(private store: ProjectStore) {}
+  async listIssues(projectId?: string): Promise<Issue[]> {
+    return await this.store.listIssues(projectId || '');
+  }
 
-  /**
-   * Get project context for Claude Code
-   * This is the main function - providing structured project data
-   */
   async getProjectContext(projectId: string): Promise<ProjectContext | null> {
-    try {
-      const project = await this.store.getProject(projectId);
-      if (!project) return null;
-
-      const issues = await this.store.listIssues(projectId);
-
-      // Simple statistics calculation
-      const completedIssues = issues.filter(issue => issue.status === 'completed').length;
-      const inProgressIssues = issues.filter(issue => issue.status === 'in_progress').length;
-      const unblockedIssues = this.findUnblockedIssues(issues).length;
-
-      // Simple recent activity (last 5 completed issues)
-      const recentActivity = issues
-        .filter(issue => issue.status === 'completed')
-        .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-        .slice(0, 5)
-        .map(issue => ({
-          issueId: issue.id,
-          title: issue.title,
-          status: issue.status,
-          completedAt: issue.updatedAt.toISOString(),
-        }));
-
-      return {
-        id: project.id,
-        name: project.name,
-        phase: 'Development', // Simple static phase for now
-        statistics: {
-          totalIssues: issues.length,
-          completedIssues,
-          inProgressIssues,
-          unblockedIssues,
-        },
-        recentActivity,
-      };
-    } catch (error) {
-      this.logger.error('Failed to get project context', { projectId, error });
+    const project = await this.getProject(projectId);
+    if (!project) {
       return null;
     }
-  }
 
-  /**
-   * Get unblocked tasks - simple dependency checking
-   */
-  async getUnblockedTasks(projectId: string): Promise<Issue[]> {
-    const issues = await this.store.listIssues(projectId);
-    return this.findUnblockedIssues(issues);
-  }
-
-  /**
-   * Simple dependency checking - no complex analysis
-   * For now, just return issues that aren't completed or in progress
-   */
-  private findUnblockedIssues(issues: Issue[]): Issue[] {
-    return issues.filter(issue => 
-      issue.status !== 'completed' && 
-      issue.status !== 'in_progress'
+    const issues = await this.listIssues(projectId);
+    const activeIssues = issues.filter(issue => 
+      issue.status === 'todo' || issue.status === 'in_progress'
     );
-  }
+    const completedIssues = issues.filter(issue => 
+      issue.status === 'done'
+    );
 
-  /**
-   * Create basic project structure
-   */
-  async createProject(name: string, description?: string): Promise<Project> {
-    const projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt'> = { name };
-    if (description !== undefined) {
-      projectData.description = description;
-    }
-    return this.store.createProject(projectData);
-  }
-
-  /**
-   * Create basic issue
-   */
-  async createIssue(projectId: string, title: string, type: 'epic' | 'story' | 'subtask', options: {
-    description?: string;
-    parentId?: string;
-    estimate?: number;
-    priority?: number;
-  } = {}): Promise<Issue> {
-    const issueData: Omit<Issue, 'id' | 'createdAt' | 'updatedAt'> = {
-      projectId,
-      title,
-      type,
-      priority: options.priority ?? 3,
-      status: 'todo',
+    return {
+      project,
+      issues,
+      activeIssues,
+      completedIssues
     };
-    if (options.description !== undefined) {
-      issueData.description = options.description;
-    }
-    if (options.parentId !== undefined) {
-      issueData.parentId = options.parentId;
-    }
-    if (options.estimate !== undefined) {
-      issueData.estimate = options.estimate;
-    }
-    return this.store.createIssue(issueData);
-  }
-
-  /**
-   * Update issue status - basic operation
-   */
-  async updateIssueStatus(issueId: string, status: string): Promise<Issue> {
-    return this.store.updateIssue(issueId, { status, updatedAt: new Date() });
   }
 }
 
 /**
- * Simple MCP Resource server - this is what we should expose to Claude Code
+ * Context provider for JCVD operations
  */
-export class JCVDMCPResourceServer {
-  private logger: Logger = createLogger('jcvd-mcp-server');
+export class JCVDContextProvider {
+  private store: SqliteProjectStore;
 
-  constructor(private contextProvider: JCVDContextProvider) {}
-
-  /**
-   * Handle MCP resource requests
-   */
-  async handleResourceRequest(uri: string): Promise<any> {
-    this.logger.debug('Handling MCP resource request', { uri });
-
-    try {
-      // Simple URI parsing - jcvd://project/{id}/context
-      const match = uri.match(/^jcvd:\/\/project\/([^\/]+)\/(.+)$/);
-      if (!match) {
-        throw new Error(`Unsupported resource URI: ${uri}`);
-      }
-
-      const [, projectId, resource] = match;
-      
-      if (!projectId || !resource) {
-        throw new Error(`Invalid resource URI format: ${uri}`);
-      }
-
-      switch (resource) {
-        case 'context':
-          return await this.contextProvider.getProjectContext(projectId);
-        
-        case 'tasks/unblocked':
-          if (!projectId) {
-            throw new Error('Project ID is required for tasks/unblocked resource');
-          }
-          return await this.contextProvider.getUnblockedTasks(projectId);
-        
-        default:
-          throw new Error(`Unsupported resource: ${resource}`);
-      }
-    } catch (error) {
-      this.logger.error('Failed to handle resource request', { uri, error });
-      throw error;
-    }
+  constructor(store: SqliteProjectStore) {
+    this.store = store;
   }
 
-  /**
-   * Handle MCP tool calls
-   */
-  async handleToolCall(name: string, params: any): Promise<any> {
-    this.logger.debug('Handling MCP tool call', { name, params });
-
-    try {
-      switch (name) {
-        case 'jcvd_create_project':
-          if (typeof params.name !== 'string') {
-            throw new Error('Project name is required and must be a string');
-          }
-          return await this.contextProvider.createProject(
-            params.name, 
-            typeof params.description === 'string' ? params.description : undefined
-          );
-        
-        case 'jcvd_create_issue':
-          return await this.contextProvider.createIssue(
-            params.projectId,
-            params.title,
-            params.type,
-            {
-              description: params.description,
-              parentId: params.parentId,
-              estimate: params.estimate,
-              priority: params.priority,
-            }
-          );
-        
-        case 'jcvd_update_issue_status':
-          return await this.contextProvider.updateIssueStatus(params.issueId, params.status);
-        
-        default:
-          throw new Error(`Unsupported tool: ${name}`);
-      }
-    } catch (error) {
-      this.logger.error('Failed to handle tool call', { name, params, error });
-      throw error;
+  async getCurrentProject(): Promise<Project | null> {
+    // Get the most recently updated active project
+    const projects = await this.store.listProjects();
+    const activeProjects = projects.filter(p => p.status === 'active');
+    
+    if (activeProjects.length === 0) {
+      return null;
     }
+
+    // Sort by updated_at descending and return the first one
+    activeProjects.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    return activeProjects[0] || null;
+  }
+
+  async getProjectContext(projectId?: string): Promise<ProjectContext | null> {
+    let targetProjectId = projectId;
+    
+    if (!targetProjectId) {
+      const currentProject = await this.getCurrentProject();
+      if (!currentProject) {
+        return null;
+      }
+      targetProjectId = currentProject.id;
+    }
+
+    return await this.store.getProjectContext(targetProjectId);
+  }
+
+  async getActiveIssues(projectId?: string): Promise<Issue[]> {
+    const context = await this.getProjectContext(projectId);
+    return context?.activeIssues || [];
+  }
+
+  async getIssuesByStatus(status: Issue['status'], projectId?: string): Promise<Issue[]> {
+    const issues = await this.store.listIssues(projectId);
+    return issues.filter(issue => issue.status === status);
+  }
+
+  async searchIssues(query: string, projectId?: string): Promise<Issue[]> {
+    const issues = await this.store.listIssues(projectId);
+    const lowercaseQuery = query.toLowerCase();
+    
+    return issues.filter(issue => 
+      issue.title.toLowerCase().includes(lowercaseQuery) ||
+      issue.description.toLowerCase().includes(lowercaseQuery)
+    );
   }
 }
+
+/**
+ * MCP Resource Server for JCVD
+ */
+export class JCVDMCPResourceServer {
+  private mcpServer: JcvdMcpServer;
+
+  constructor(_store: SqliteProjectStore) {
+    this.mcpServer = new JcvdMcpServer();
+  }
+
+  async start(_transport?: any): Promise<void> {
+    await this.mcpServer.start();
+  }
+
+  async stop(): Promise<void> {
+    // Simple stop - no complex cleanup needed
+  }
+
+  getServer() {
+    return this.mcpServer;
+  }
+}
+
+/**
+ * Main JCVD class - Simple orchestration interface
+ */
+export class JCVD {
+  private store: SqliteProjectStore;
+  private contextProvider: JCVDContextProvider;
+  private mcpServer?: JCVDMCPResourceServer | undefined;
+  private config: JCVDConfig;
+
+  constructor(config: JCVDConfig = {}) {
+    this.config = {
+      databasePath: config.databasePath || './jcvd.db',
+      mcpPort: config.mcpPort || 3000
+    };
+    
+    this.store = new SqliteProjectStore(this.config.databasePath!);
+    this.contextProvider = new JCVDContextProvider(this.store);
+  }
+
+  async initialize(): Promise<void> {
+    await this.store.initialize();
+  }
+
+  async close(): Promise<void> {
+    if (this.mcpServer) {
+      await this.mcpServer.stop();
+    }
+    await this.store.close();
+  }
+
+  // Direct store access for simple operations
+  get projects() {
+    return this.store;
+  }
+
+  // Context operations
+  get context() {
+    return this.contextProvider;
+  }
+
+  // MCP Server operations
+  async startMCPServer(transport?: any): Promise<void> {
+    if (!this.mcpServer) {
+      this.mcpServer = new JCVDMCPResourceServer(this.store);
+    }
+    await this.mcpServer.start(transport);
+  }
+
+  async stopMCPServer(): Promise<void> {
+    if (this.mcpServer) {
+      await this.mcpServer.stop();
+      this.mcpServer = undefined;
+    }
+  }
+
+  getMCPServer() {
+    return this.mcpServer?.getServer();
+  }
+
+  // Status and lifecycle methods for CLI compatibility
+  getStatus() {
+    return {
+      status: 'running' as const,
+      role: 'simple-context-provider',
+      capabilities: ['project-context', 'cross-session-continuity', 'basic-crud'],
+    };
+  }
+
+  async stop(): Promise<void> {
+    await this.close();
+  }
+
+  // Convenience methods for common operations
+  async createProjectWithIssues(
+    projectData: Omit<Project, 'id' | 'created_at' | 'updated_at'>,
+    issuesData: Omit<Issue, 'id' | 'project_id' | 'created_at' | 'updated_at'>[]
+  ): Promise<{ project: Project; issues: Issue[] }> {
+    const project = await this.store.createProject(projectData);
+    
+    const issues = await Promise.all(
+      issuesData.map(issueData => 
+        this.store.createIssue({
+          ...issueData,
+          project_id: project.id
+        })
+      )
+    );
+
+    return { project, issues };
+  }
+
+  async getCurrentProjectSummary(): Promise<{
+    project: Project | null;
+    totalIssues: number;
+    activeIssues: number;
+    completedIssues: number;
+  } | null> {
+    const context = await this.contextProvider.getProjectContext();
+    
+    if (!context) {
+      return null;
+    }
+
+    return {
+      project: context.project,
+      totalIssues: context.issues.length,
+      activeIssues: context.activeIssues.length,
+      completedIssues: context.completedIssues.length
+    };
+  }
+}
+
+// Default export for simple usage
+export default JCVD;
+
+// Factory function for quick setup
+export async function createJCVD(config: JCVDConfig = {}): Promise<JCVD> {
+  const jcvd = new JCVD(config);
+  await jcvd.initialize();
+  return jcvd;
+}
+
+// Legacy aliases for backward compatibility
+export const SQLiteProjectStore = SqliteProjectStore;

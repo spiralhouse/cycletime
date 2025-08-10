@@ -9,10 +9,8 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { Command } from 'commander';
-
+import { createJCVD } from './jcvd-simple.js';
 import { createLogger } from './utils/logger.js';
-
-import { createJCVD } from './index.js';
 
 // Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -178,95 +176,45 @@ cli
 // Test command for proof of concept
 cli
   .command('test')
-  .description('Run proof of concept tests')
-  .option('--database', 'test database connectivity')
-  .option('--mcp', 'test MCP server integration')
-  .option('--all', 'run all proof of concept tests')
-  .action(async options => {
+  .description('Test JCVD functionality')
+  .action(async () => {
     try {
-      let allSuccess = true;
-
-      if (options.database || options.all) {
-        console.log('🧪 Testing SQLite database connectivity...');
-
-        // Import test functions
-        const { testDatabase, testDatabaseFile } = await import('./database/hello-db.js');
-
-        // Test in-memory database
-        const memoryResult = testDatabase();
-
-        if (memoryResult.success) {
-          console.log('✅ In-memory database test passed');
-          console.log(`   Original: ${memoryResult.data?.originalMessage}`);
-          console.log(`   Updated:  ${memoryResult.data?.updatedMessage}`);
-        } else {
-          console.log('❌ In-memory database test failed:', memoryResult.message);
-          allSuccess = false;
-        }
-
-        // Test file database
-        const fileResult = testDatabaseFile();
-
-        if (fileResult.success) {
-          console.log('✅ File database test passed');
-          console.log(`   Message: ${fileResult.data?.message}`);
-          console.log(`   File: ${fileResult.data?.dbFile}`);
-        } else {
-          console.log('❌ File database test failed:', fileResult.message);
-          allSuccess = false;
-        }
+      console.log('🧪 Testing JCVD functionality...');
+      
+      const jcvd = await createJCVD();
+      
+      // Test basic functionality
+      const project = await jcvd.projects.createProject({
+        name: 'Test Project',
+        description: 'A test project',
+        path: process.cwd(),
+        status: 'active'
+      });
+      
+      console.log('✅ Project creation test passed');
+      
+      const issue = await jcvd.projects.createIssue({
+        project_id: project.id,
+        title: 'Test Issue',
+        description: 'A test issue',
+        status: 'todo',
+        priority: 'medium'
+      });
+      
+      console.log('✅ Issue creation test passed');
+      console.log(`   Issue: ${issue.title}`);
+      
+      const context = await jcvd.context.getProjectContext();
+      
+      if (context) {
+        console.log('✅ Context retrieval test passed');
+        console.log(`   Project: ${context.project.name}`);
+        console.log(`   Total issues: ${context.issues.length}`);
       }
-
-      if (options.mcp || options.all) {
-        if (options.database || options.all) {
-          console.log(''); // Add spacing between test sections
-        }
-
-        console.log('🧪 Testing MCP server integration...');
-
-        // Import MCP test functions
-        const { testMCPServer, testMCPTransport } = await import('./mcp/hello-mcp.js');
-
-        // Test MCP server
-        const serverResult = await testMCPServer();
-
-        if (serverResult.success) {
-          console.log('✅ MCP server test passed');
-          console.log(`   SDK Imported: ${serverResult.data?.sdkImported}`);
-          console.log(`   Server Created: ${serverResult.data?.serverCreated}`);
-          console.log(`   Has RequestHandler: ${serverResult.data?.hasRequestHandler}`);
-        } else {
-          console.log('❌ MCP server test failed:', serverResult.message);
-          allSuccess = false;
-        }
-
-        // Test MCP transport
-        const transportResult = testMCPTransport();
-
-        if (transportResult.success) {
-          console.log('✅ MCP transport test passed');
-          console.log(`   Type: ${transportResult.data?.transportType}`);
-          console.log(`   Capabilities: ${transportResult.data?.capabilities?.join(', ')}`);
-        } else {
-          console.log('❌ MCP transport test failed:', transportResult.message);
-          allSuccess = false;
-        }
-      }
-
-      if (!options.database && !options.mcp && !options.all) {
-        console.log('Please specify test type: --database, --mcp, or --all');
-
-        return;
-      }
-
-      // Overall result
-      console.log('');
-      if (allSuccess) {
-        console.log('🎉 All tests passed! Technology stack integration is working.');
-      } else {
-        console.log('⚠️  Some tests failed.');
-        process.exit(1);
-      }
+      
+      await jcvd.close();
+      console.log('🎉 All tests passed!');
+      
     } catch (error) {
       cliLogger.error('Test command failed', { error });
       console.error('❌ Test command failed:', error instanceof Error ? error.message : error);
