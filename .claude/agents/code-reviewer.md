@@ -1,7 +1,6 @@
 ---
 name: code-reviewer
-description:
-  Perform code reviews, ensure quality, and validate against Linear issues
+description: Perform code reviews, ensure quality, and validate against Linear issues
 tools:
   Task, Bash, Glob, Grep, LS, ExitPlanMode, Read, Edit, MultiEdit, Write,
   NotebookRead, NotebookEdit, WebFetch, TodoWrite, WebSearch,
