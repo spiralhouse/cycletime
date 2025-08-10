@@ -478,12 +478,226 @@ export class ResourceCache {
 
 ## Migration Requirements
 
-### Database Migrations
+### Database Migration Strategy
 
-1. **Migration 001**: Add resource_metadata table
-2. **Migration 002**: Add session_states table  
-3. **Migration 003**: Add resource_access_logs table
-4. **Migration 004**: Add indexes for performance
+JCVD uses a **simple, linear migration approach** that aligns with the "simplicity first" architectural principle. Migrations are just SQL DDL statements executed in order.
+
+#### Migration Structure
+
+```typescript
+// src/database/migrations.ts
+export interface Migration {
+  version: string;
+  description: string;
+  sql: string;
+}
+
+export const migrations: Migration[] = [
+  {
+    version: '001',
+    description: 'Add resource metadata tracking',
+    sql: `
+      CREATE TABLE IF NOT EXISTS resource_metadata (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        resource_type TEXT NOT NULL,
+        resource_id TEXT NOT NULL,
+        last_accessed INTEGER NOT NULL DEFAULT (unixepoch()),
+        access_count INTEGER NOT NULL DEFAULT 0,
+        metadata_json TEXT,
+        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        UNIQUE(resource_type, resource_id)
+      );
+    `
+  },
+  {
+    version: '002',
+    description: 'Add session state tracking',
+    sql: `
+      CREATE TABLE IF NOT EXISTS session_states (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        session_key TEXT UNIQUE NOT NULL,
+        project_id TEXT,
+        current_context TEXT,
+        last_activity INTEGER NOT NULL DEFAULT (unixepoch()),
+        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        FOREIGN KEY (project_id) REFERENCES projects(id)
+      );
+    `
+  },
+  {
+    version: '003', 
+    description: 'Add resource access logging',
+    sql: `
+      CREATE TABLE IF NOT EXISTS resource_access_logs (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        session_key TEXT,
+        resource_uri TEXT NOT NULL,
+        operation TEXT NOT NULL,
+        success BOOLEAN NOT NULL DEFAULT true,
+        error_message TEXT,
+        timestamp INTEGER NOT NULL DEFAULT (unixepoch())
+      );
+    `
+  },
+  {
+    version: '004',
+    description: 'Add performance indexes', 
+    sql: `
+      CREATE INDEX IF NOT EXISTS idx_resource_metadata_type 
+        ON resource_metadata(resource_type);
+      CREATE INDEX IF NOT EXISTS idx_resource_metadata_access 
+        ON resource_metadata(last_accessed);
+      CREATE INDEX IF NOT EXISTS idx_session_states_key 
+        ON session_states(session_key);
+      CREATE INDEX IF NOT EXISTS idx_session_states_activity 
+        ON session_states(last_activity);
+      CREATE INDEX IF NOT EXISTS idx_resource_logs_uri 
+        ON resource_access_logs(resource_uri);
+      CREATE INDEX IF NOT EXISTS idx_resource_logs_timestamp 
+        ON resource_access_logs(timestamp);
+    `
+  }
+];
+```
+
+#### Migration Runner Implementation
+
+```typescript
+// src/database/migration-runner.ts
+export class MigrationRunner {
+  private db: Database.Database;
+  
+  constructor(db: Database.Database) {
+    this.db = db;
+    this.initializeMigrationTable();
+  }
+  
+  private initializeMigrationTable(): void {
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        version TEXT PRIMARY KEY,
+        description TEXT NOT NULL,
+        applied_at INTEGER NOT NULL DEFAULT (unixepoch())
+      );
+    `);
+  }
+  
+  async runMigrations(): Promise<void> {
+    const appliedMigrations = this.getAppliedMigrations();
+    const pendingMigrations = migrations.filter(
+      migration => !appliedMigrations.has(migration.version)
+    );
+    
+    for (const migration of pendingMigrations) {
+      console.log(`Applying migration ${migration.version}: ${migration.description}`);
+      
+      try {
+        this.db.exec(migration.sql);
+        this.recordMigration(migration);
+        console.log(`✅ Migration ${migration.version} completed`);
+      } catch (error) {
+        console.error(`❌ Migration ${migration.version} failed:`, error);
+        throw error;
+      }
+    }
+  }
+  
+  private getAppliedMigrations(): Set<string> {
+    const stmt = this.db.prepare('SELECT version FROM schema_migrations');
+    const rows = stmt.all() as { version: string }[];
+    return new Set(rows.map(row => row.version));
+  }
+  
+  private recordMigration(migration: Migration): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO schema_migrations (version, description) 
+      VALUES (?, ?)
+    `);
+    stmt.run(migration.version, migration.description);
+  }
+}
+```
+
+#### Integration with SqliteStore
+
+```typescript
+// Updated src/sqlite-store.ts initialization
+export class SqliteStore {
+  private db: Database.Database;
+  private migrationRunner: MigrationRunner;
+  
+  constructor(dbPath: string = 'jcvd.db') {
+    this.db = new Database(dbPath);
+    this.migrationRunner = new MigrationRunner(this.db);
+    this.initialize();
+  }
+  
+  private async initialize(): Promise<void> {
+    // Run any pending migrations first
+    await this.migrationRunner.runMigrations();
+    
+    // Then ensure core tables exist (for compatibility)
+    this.ensureCoreTables();
+  }
+  
+  private ensureCoreTables(): void {
+    // Basic tables that existed before migration system
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS projects (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        path TEXT,
+        status TEXT,
+        created_at TEXT,
+        updated_at TEXT
+      );
+      
+      CREATE TABLE IF NOT EXISTS issues (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT,
+        priority TEXT,
+        created_at TEXT,
+        updated_at TEXT,
+        assignee TEXT,
+        labels TEXT,
+        FOREIGN KEY (project_id) REFERENCES projects(id)
+      );
+    `);
+  }
+}
+```
+
+### Migration Principles
+
+**✅ Simple & Linear**
+- **Sequential execution**: Migrations run in version order (001, 002, 003...)
+- **Idempotent operations**: Use `IF NOT EXISTS` and `IF NOT EXISTS` patterns
+- **No rollbacks**: Forward-only migrations (align with simplicity principle)
+
+**✅ Minimal Complexity**
+- **Pure SQL DDL**: No complex data transformations or business logic
+- **No external dependencies**: Migrations are just SQL strings
+- **No branching**: Linear sequence without conditional logic
+
+**✅ Error Handling**
+- **Fail fast**: Stop on first migration error
+- **Clear logging**: Console output for migration progress and errors
+- **Transaction safety**: Each migration runs in isolation
+
+### Migration Lifecycle
+
+1. **Development**: Add new migration to `migrations` array
+2. **Testing**: Verify migration runs cleanly on test databases
+3. **Deployment**: Migrations run automatically on `SqliteStore` initialization
+4. **Production**: Applied migrations tracked in `schema_migrations` table
+
+This approach provides **database evolution** while maintaining JCVD's core principle of simplicity over complexity.
 
 ### Configuration Updates
 
