@@ -5,6 +5,7 @@ import { SessionStorageError, InvalidSessionDataError } from '../../../domain/er
 import type { SessionContext } from '../../../domain/entities/session.js';
 import type { SessionRepository } from '../../../domain/repositories/session-repository.js';
 import type { SessionKey } from '../../../domain/value-objects/session-key.js';
+import type { TimeProvider } from '../../../domain/interfaces/time-provider.js';
 import type Database from 'better-sqlite3';
 
 /**
@@ -20,7 +21,10 @@ export class SqliteSessionRepository implements SessionRepository {
   private readonly existsStmt: Database.Statement;
   private readonly countStmt: Database.Statement;
 
-  constructor(private readonly db: Database.Database) {
+  constructor(
+    private readonly db: Database.Database,
+    private readonly timeProvider?: TimeProvider
+  ) {
     // Prepare statements for better performance
     this.findByKeyStmt = this.db.prepare(`
       SELECT session_key, project_id, current_context, last_activity, created_at, updated_at
@@ -33,6 +37,7 @@ export class SqliteSessionRepository implements SessionRepository {
       FROM session_states
       WHERE project_id = ?
       ORDER BY last_activity DESC
+      LIMIT 100
     `);
 
     this.insertStmt = this.db.prepare(`
@@ -204,7 +209,7 @@ export class SqliteSessionRepository implements SessionRepository {
         lastActivity: new Date(row.last_activity * 1000), // Convert from Unix timestamp
         createdAt: new Date(row.created_at * 1000),
         updatedAt: new Date(row.updated_at * 1000)
-      });
+      }, this.timeProvider);
     } catch (error) {
       throw new InvalidSessionDataError(`Failed to convert database row to Session: ${error}`);
     }

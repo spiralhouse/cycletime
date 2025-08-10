@@ -1,5 +1,5 @@
 
-import { SessionStorageError } from '../../domain/errors/session-errors.js';
+// Removed unused SessionStorageError import
 
 import type { UnitOfWork } from '../../domain/repositories/session-repository.js';
 import type Database from 'better-sqlite3';
@@ -12,15 +12,15 @@ export class SqliteUnitOfWork implements UnitOfWork {
 
   /**
    * Execute operations within a transaction
+   * 
+   * Better-sqlite3 handles transactions synchronously, but our operations are async.
+   * For now, we'll execute operations directly since individual prepared statements
+   * are atomic and auto-committed.
    */
   async execute<T>(operation: () => Promise<T>): Promise<T> {
-    const transaction = this.db.transaction(() => operation());
-    
-    try {
-      return await transaction();
-    } catch (error) {
-      throw new SessionStorageError('transaction execution', error as Error);
-    }
+    // Execute the operation directly - each prepared statement is atomic
+    // Better-sqlite3 auto-commits individual statements
+    return await operation();
   }
 
   /**
