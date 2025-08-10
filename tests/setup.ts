@@ -37,9 +37,9 @@ afterEach(async () => {
 declare global {
   namespace Vi {
     interface CustomMatchers<R = unknown> {
-      toBeValidJCVDConfig(): R;
-      toBeValidAgentConfig(): R;
-      toBeValidProviderConfig(): R;
+      toBeValidJCVDConfig: () => R;
+      toBeValidAgentConfig: () => R;
+      toBeValidProviderConfig: () => R;
     }
   }
 }

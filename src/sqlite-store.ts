@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import Database from 'better-sqlite3';
 
 export interface Project {
@@ -67,7 +69,7 @@ export class SqliteStore {
   async createProject(
     project: Omit<Project, 'id' | 'created_at' | 'updated_at'>
   ): Promise<Project> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const now = new Date().toISOString();
 
     const newProject: Project = {
@@ -92,6 +94,7 @@ export class SqliteStore {
         newProject.created_at,
         newProject.updated_at
       );
+
       return newProject;
     } catch (error) {
       throw new Error(`Failed to create project: ${error}`);
@@ -101,16 +104,19 @@ export class SqliteStore {
   async getProject(id: string): Promise<Project | null> {
     const stmt = this.db.prepare('SELECT * FROM projects WHERE id = ?');
     const row = stmt.get(id) as any;
-    return row || null;
+
+    return row ?? null;
   }
 
   async listProjects(): Promise<Project[]> {
     const stmt = this.db.prepare('SELECT * FROM projects ORDER BY created_at DESC');
+
     return stmt.all() as Project[];
   }
 
   async updateProject(id: string, updates: Partial<Project>): Promise<Project | null> {
     const existing = await this.getProject(id);
+
     if (!existing) {
       return null;
     }
@@ -137,6 +143,7 @@ export class SqliteStore {
         updatedProject.updated_at,
         id
       );
+
       return updatedProject;
     } catch (error) {
       throw new Error(`Failed to update project: ${error}`);
@@ -146,12 +153,13 @@ export class SqliteStore {
   async deleteProject(id: string): Promise<boolean> {
     const stmt = this.db.prepare('DELETE FROM projects WHERE id = ?');
     const result = stmt.run(id);
+
     return result.changes > 0;
   }
 
   // Issue operations
   async createIssue(issue: Omit<Issue, 'id' | 'created_at' | 'updated_at'>): Promise<Issue> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const now = new Date().toISOString();
 
     const newIssue: Issue = {
@@ -176,9 +184,10 @@ export class SqliteStore {
         newIssue.priority,
         newIssue.created_at,
         newIssue.updated_at,
-        newIssue.assignee || null,
-        newIssue.labels?.join(',') || null
+        newIssue.assignee ?? null,
+        newIssue.labels?.join(',') ?? null
       );
+
       return newIssue;
     } catch (error) {
       throw new Error(`Failed to create issue: ${error}`);
@@ -188,10 +197,12 @@ export class SqliteStore {
   async getIssue(id: string): Promise<Issue | null> {
     const stmt = this.db.prepare('SELECT * FROM issues WHERE id = ?');
     const row = stmt.get(id) as any;
-    if (row && row.labels) {
+
+    if (row?.labels) {
       row.labels = row.labels.split(',').filter((l: string) => l.trim());
     }
-    return row || null;
+
+    return row ?? null;
   }
 
   async listIssues(projectId: string): Promise<Issue[]> {
@@ -199,6 +210,7 @@ export class SqliteStore {
       'SELECT * FROM issues WHERE project_id = ? ORDER BY created_at DESC'
     );
     const rows = stmt.all(projectId) as any[];
+
     return rows.map(row => ({
       ...row,
       labels: row.labels ? row.labels.split(',').filter((l: string) => l.trim()) : [],
@@ -207,6 +219,7 @@ export class SqliteStore {
 
   async updateIssue(id: string, updates: Partial<Issue>): Promise<Issue | null> {
     const existing = await this.getIssue(id);
+
     if (!existing) {
       return null;
     }
@@ -235,6 +248,7 @@ export class SqliteStore {
         updatedIssue.updated_at,
         id
       );
+
       return updatedIssue;
     } catch (error) {
       throw new Error(`Failed to update issue: ${error}`);
@@ -244,6 +258,7 @@ export class SqliteStore {
   async deleteIssue(id: string): Promise<boolean> {
     const stmt = this.db.prepare('DELETE FROM issues WHERE id = ?');
     const result = stmt.run(id);
+
     return result.changes > 0;
   }
 

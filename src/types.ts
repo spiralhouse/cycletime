@@ -39,11 +39,14 @@ export interface TaskItem {
 }
 
 export interface StoreInterface {
-  initialize(): Promise<void>;
-  createSession(projectPath: string): Promise<Session>;
-  getActiveSession(): Promise<Session | null>;
-  updateSession(sessionId: string, updates: Partial<Session>): Promise<void>;
-  addTask(sessionId: string, task: Omit<TaskItem, 'id' | 'sessionId' | 'createdAt' | 'updatedAt'>): Promise<TaskItem>;
-  getTasks(sessionId: string): Promise<TaskItem[]>;
-  updateTask(taskId: string, updates: Partial<TaskItem>): Promise<void>;
+  initialize: () => Promise<void>;
+  createSession: (_projectPath: string) => Promise<Session>;
+  getActiveSession: () => Promise<Session | null>;
+  updateSession: (_sessionId: string, _updates: Partial<Session>) => Promise<void>;
+  addTask: (
+    _sessionId: string,
+    _task: Omit<TaskItem, 'id' | 'sessionId' | 'createdAt' | 'updatedAt'>
+  ) => Promise<TaskItem>;
+  getTasks: (_sessionId: string) => Promise<TaskItem[]>;
+  updateTask: (_taskId: string, _updates: Partial<TaskItem>) => Promise<void>;
 }

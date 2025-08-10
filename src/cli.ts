@@ -9,6 +9,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { Command } from 'commander';
+
 import { createJCVD } from './jcvd-simple.js';
 import { createLogger } from './utils/logger.js';
 

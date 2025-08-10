@@ -1,7 +1,11 @@
+import { mkdirSync, rmSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, rmSync, existsSync } from 'fs';
-import { join } from 'path';
-import { createJCVD, JCVD } from '../../src/jcvd-simple.js';
+
+import { createJCVD } from '../../src/jcvd-simple.js';
+
+import type { JCVD } from '../../src/jcvd-simple.js';
 
 const TEST_PROJECT_PATH = join(process.cwd(), 'test-project');
 
@@ -24,7 +28,7 @@ describe('JCVD Simple', () => {
   afterEach(async () => {
     try {
       await jcvd.close();
-    } catch (e) {
+    } catch {
       // Ignore close errors in tests
     }
     if (existsSync(TEST_PROJECT_PATH)) {
@@ -51,8 +55,9 @@ describe('JCVD Simple', () => {
 
       expect(project).toBeDefined();
       expect(project.name).toBe('Test Project');
-      
+
       const context = await jcvd.context.getProjectContext(project.id);
+
       expect(context).toBeDefined();
       expect(context?.project.name).toBe('Test Project');
     });
@@ -66,6 +71,7 @@ describe('JCVD Simple', () => {
       });
 
       const status = jcvd.getStatus();
+
       expect(status.status).toBe('running');
       expect(status.role).toBe('simple-context-provider');
       expect(status.capabilities).toContain('project-context');

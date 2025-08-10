@@ -6,8 +6,8 @@
  * basic project orchestration without complex abstractions.
  */
 
-import { SqliteStore } from './sqlite-store.js';
 import { JcvdMcpServer } from './mcp-server.js';
+import { SqliteStore } from './sqlite-store.js';
 
 // Core interfaces
 export interface Project {
@@ -68,6 +68,7 @@ export class SqliteProjectStore {
     projectData: Omit<Project, 'id' | 'created_at' | 'updated_at'>
   ): Promise<Project> {
     const project = await this.store.createProject(projectData);
+
     return project;
   }
 
@@ -80,14 +81,17 @@ export class SqliteProjectStore {
     updates: Partial<Omit<Project, 'id' | 'created_at'>>
   ): Promise<Project> {
     const project = await this.store.updateProject(id, updates);
+
     if (!project) {
       throw new Error(`Project ${id} not found`);
     }
+
     return project;
   }
 
   async deleteProject(id: string): Promise<void> {
     const success = await this.store.deleteProject(id);
+
     if (!success) {
       throw new Error(`Project ${id} not found`);
     }
@@ -100,6 +104,7 @@ export class SqliteProjectStore {
   // Issue operations
   async createIssue(issueData: Omit<Issue, 'id' | 'created_at' | 'updated_at'>): Promise<Issue> {
     const issue = await this.store.createIssue(issueData);
+
     return issue;
   }
 
@@ -112,25 +117,29 @@ export class SqliteProjectStore {
     updates: Partial<Omit<Issue, 'id' | 'created_at'>>
   ): Promise<Issue> {
     const issue = await this.store.updateIssue(id, updates);
+
     if (!issue) {
       throw new Error(`Issue ${id} not found`);
     }
+
     return issue;
   }
 
   async deleteIssue(id: string): Promise<void> {
     const success = await this.store.deleteIssue(id);
+
     if (!success) {
       throw new Error(`Issue ${id} not found`);
     }
   }
 
   async listIssues(projectId?: string): Promise<Issue[]> {
-    return await this.store.listIssues(projectId || '');
+    return await this.store.listIssues(projectId ?? '');
   }
 
   async getProjectContext(projectId: string): Promise<ProjectContext | null> {
     const project = await this.getProject(projectId);
+
     if (!project) {
       return null;
     }
@@ -173,6 +182,7 @@ export class JCVDContextProvider {
     activeProjects.sort(
       (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
     );
+
     return activeProjects[0] || null;
   }
 
@@ -181,6 +191,7 @@ export class JCVDContextProvider {
 
     if (!targetProjectId) {
       const currentProject = await this.getCurrentProject();
+
       if (!currentProject) {
         return null;
       }
@@ -192,11 +203,13 @@ export class JCVDContextProvider {
 
   async getActiveIssues(projectId?: string): Promise<Issue[]> {
     const context = await this.getProjectContext(projectId);
+
     return context?.activeIssues || [];
   }
 
   async getIssuesByStatus(status: Issue['status'], projectId?: string): Promise<Issue[]> {
     const issues = await this.store.listIssues(projectId);
+
     return issues.filter(issue => issue.status === status);
   }
 
@@ -353,7 +366,9 @@ export default JCVD;
 // Factory function for quick setup
 export async function createJCVD(config: JCVDConfig = {}): Promise<JCVD> {
   const jcvd = new JCVD(config);
+
   await jcvd.initialize();
+
   return jcvd;
 }
 
