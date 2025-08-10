@@ -1,23 +1,18 @@
 /**
  * JCVD - Simple Context Provider for Claude Code
- * 
+ *
  * Main entry point for JCVD functionality
  */
 
-export { 
+export {
   JCVD,
-  SqliteProjectStore, 
+  SqliteProjectStore,
   JCVDContextProvider,
   JCVDMCPResourceServer,
-  createJCVD
+  createJCVD,
 } from './jcvd-simple.js';
 
-export type {
-  Project,
-  Issue, 
-  ProjectContext,
-  JCVDConfig
-} from './jcvd-simple.js';
+export type { Project, Issue, ProjectContext, JCVDConfig } from './jcvd-simple.js';
 
 export { SqliteStore } from './sqlite-store.js';
 export { JcvdMcpServer } from './mcp-server.js';

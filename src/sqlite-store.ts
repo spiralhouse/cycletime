@@ -64,15 +64,17 @@ export class SqliteStore {
   }
 
   // Project operations
-  async createProject(project: Omit<Project, 'id' | 'created_at' | 'updated_at'>): Promise<Project> {
+  async createProject(
+    project: Omit<Project, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Project> {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    
+
     const newProject: Project = {
       id,
       ...project,
       created_at: now,
-      updated_at: now
+      updated_at: now,
     };
 
     const stmt = this.db.prepare(`
@@ -81,7 +83,15 @@ export class SqliteStore {
     `);
 
     try {
-      stmt.run(newProject.id, newProject.name, newProject.description, newProject.path, newProject.status, newProject.created_at, newProject.updated_at);
+      stmt.run(
+        newProject.id,
+        newProject.name,
+        newProject.description,
+        newProject.path,
+        newProject.status,
+        newProject.created_at,
+        newProject.updated_at
+      );
       return newProject;
     } catch (error) {
       throw new Error(`Failed to create project: ${error}`);
@@ -109,7 +119,7 @@ export class SqliteStore {
       ...existing,
       ...updates,
       id, // Ensure ID cannot be changed
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     const stmt = this.db.prepare(`
@@ -119,7 +129,14 @@ export class SqliteStore {
     `);
 
     try {
-      stmt.run(updatedProject.name, updatedProject.description, updatedProject.path, updatedProject.status, updatedProject.updated_at, id);
+      stmt.run(
+        updatedProject.name,
+        updatedProject.description,
+        updatedProject.path,
+        updatedProject.status,
+        updatedProject.updated_at,
+        id
+      );
       return updatedProject;
     } catch (error) {
       throw new Error(`Failed to update project: ${error}`);
@@ -136,12 +153,12 @@ export class SqliteStore {
   async createIssue(issue: Omit<Issue, 'id' | 'created_at' | 'updated_at'>): Promise<Issue> {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    
+
     const newIssue: Issue = {
       id,
       ...issue,
       created_at: now,
-      updated_at: now
+      updated_at: now,
     };
 
     const stmt = this.db.prepare(`
@@ -178,11 +195,13 @@ export class SqliteStore {
   }
 
   async listIssues(projectId: string): Promise<Issue[]> {
-    const stmt = this.db.prepare('SELECT * FROM issues WHERE project_id = ? ORDER BY created_at DESC');
+    const stmt = this.db.prepare(
+      'SELECT * FROM issues WHERE project_id = ? ORDER BY created_at DESC'
+    );
     const rows = stmt.all(projectId) as any[];
     return rows.map(row => ({
       ...row,
-      labels: row.labels ? row.labels.split(',').filter((l: string) => l.trim()) : []
+      labels: row.labels ? row.labels.split(',').filter((l: string) => l.trim()) : [],
     }));
   }
 
@@ -196,7 +215,7 @@ export class SqliteStore {
       ...existing,
       ...updates,
       id, // Ensure ID cannot be changed
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     const stmt = this.db.prepare(`

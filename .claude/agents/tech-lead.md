@@ -1,6 +1,7 @@
 ---
 name: tech-lead
-description: Break down technical work, manage dependencies, and coordinate implementation
+description:
+  Break down technical work, manage dependencies, and coordinate implementation
 tools:
   Task, Bash, Glob, Grep, LS, ExitPlanMode, Read, Edit, MultiEdit, Write,
   NotebookRead, NotebookEdit, WebFetch, TodoWrite, WebSearch,

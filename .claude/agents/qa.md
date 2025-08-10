@@ -1,6 +1,7 @@
 ---
 name: qa
-description: Validate implementation, ensure quality standards, and verify requirements
+description:
+  Validate implementation, ensure quality standards, and verify requirements
 tools:
   Task, Bash, Glob, Grep, LS, ExitPlanMode, Read, Edit, MultiEdit, Write,
   NotebookRead, NotebookEdit, WebFetch, TodoWrite, WebSearch,

@@ -180,41 +180,40 @@ cli
   .action(async () => {
     try {
       console.log('🧪 Testing JCVD functionality...');
-      
+
       const jcvd = await createJCVD();
-      
+
       // Test basic functionality
       const project = await jcvd.projects.createProject({
         name: 'Test Project',
         description: 'A test project',
         path: process.cwd(),
-        status: 'active'
+        status: 'active',
       });
-      
+
       console.log('✅ Project creation test passed');
-      
+
       const issue = await jcvd.projects.createIssue({
         project_id: project.id,
         title: 'Test Issue',
         description: 'A test issue',
         status: 'todo',
-        priority: 'medium'
+        priority: 'medium',
       });
-      
+
       console.log('✅ Issue creation test passed');
       console.log(`   Issue: ${issue.title}`);
-      
+
       const context = await jcvd.context.getProjectContext();
-      
+
       if (context) {
         console.log('✅ Context retrieval test passed');
         console.log(`   Project: ${context.project.name}`);
         console.log(`   Total issues: ${context.issues.length}`);
       }
-      
+
       await jcvd.close();
       console.log('🎉 All tests passed!');
-      
     } catch (error) {
       cliLogger.error('Test command failed', { error });
       console.error('❌ Test command failed:', error instanceof Error ? error.message : error);

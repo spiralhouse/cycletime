@@ -1,6 +1,6 @@
 /**
  * JCVD Simple Implementation
- * 
+ *
  * A straightforward implementation of JCVD functionality using SQLite storage.
  * This module provides the core interfaces and implementations needed for
  * basic project orchestration without complex abstractions.
@@ -64,7 +64,9 @@ export class SqliteProjectStore {
   }
 
   // Project operations
-  async createProject(projectData: Omit<Project, 'id' | 'created_at' | 'updated_at'>): Promise<Project> {
+  async createProject(
+    projectData: Omit<Project, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Project> {
     const project = await this.store.createProject(projectData);
     return project;
   }
@@ -73,7 +75,10 @@ export class SqliteProjectStore {
     return await this.store.getProject(id);
   }
 
-  async updateProject(id: string, updates: Partial<Omit<Project, 'id' | 'created_at'>>): Promise<Project> {
+  async updateProject(
+    id: string,
+    updates: Partial<Omit<Project, 'id' | 'created_at'>>
+  ): Promise<Project> {
     const project = await this.store.updateProject(id, updates);
     if (!project) {
       throw new Error(`Project ${id} not found`);
@@ -102,7 +107,10 @@ export class SqliteProjectStore {
     return await this.store.getIssue(id);
   }
 
-  async updateIssue(id: string, updates: Partial<Omit<Issue, 'id' | 'created_at'>>): Promise<Issue> {
+  async updateIssue(
+    id: string,
+    updates: Partial<Omit<Issue, 'id' | 'created_at'>>
+  ): Promise<Issue> {
     const issue = await this.store.updateIssue(id, updates);
     if (!issue) {
       throw new Error(`Issue ${id} not found`);
@@ -128,18 +136,16 @@ export class SqliteProjectStore {
     }
 
     const issues = await this.listIssues(projectId);
-    const activeIssues = issues.filter(issue => 
-      issue.status === 'todo' || issue.status === 'in_progress'
+    const activeIssues = issues.filter(
+      issue => issue.status === 'todo' || issue.status === 'in_progress'
     );
-    const completedIssues = issues.filter(issue => 
-      issue.status === 'done'
-    );
+    const completedIssues = issues.filter(issue => issue.status === 'done');
 
     return {
       project,
       issues,
       activeIssues,
-      completedIssues
+      completedIssues,
     };
   }
 }
@@ -158,19 +164,21 @@ export class JCVDContextProvider {
     // Get the most recently updated active project
     const projects = await this.store.listProjects();
     const activeProjects = projects.filter(p => p.status === 'active');
-    
+
     if (activeProjects.length === 0) {
       return null;
     }
 
     // Sort by updated_at descending and return the first one
-    activeProjects.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    activeProjects.sort(
+      (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    );
     return activeProjects[0] || null;
   }
 
   async getProjectContext(projectId?: string): Promise<ProjectContext | null> {
     let targetProjectId = projectId;
-    
+
     if (!targetProjectId) {
       const currentProject = await this.getCurrentProject();
       if (!currentProject) {
@@ -195,10 +203,11 @@ export class JCVDContextProvider {
   async searchIssues(query: string, projectId?: string): Promise<Issue[]> {
     const issues = await this.store.listIssues(projectId);
     const lowercaseQuery = query.toLowerCase();
-    
-    return issues.filter(issue => 
-      issue.title.toLowerCase().includes(lowercaseQuery) ||
-      issue.description.toLowerCase().includes(lowercaseQuery)
+
+    return issues.filter(
+      issue =>
+        issue.title.toLowerCase().includes(lowercaseQuery) ||
+        issue.description.toLowerCase().includes(lowercaseQuery)
     );
   }
 }
@@ -238,9 +247,9 @@ export class JCVD {
   constructor(config: JCVDConfig = {}) {
     this.config = {
       databasePath: config.databasePath || './jcvd.db',
-      mcpPort: config.mcpPort || 3000
+      mcpPort: config.mcpPort || 3000,
     };
-    
+
     this.store = new SqliteProjectStore(this.config.databasePath!);
     this.contextProvider = new JCVDContextProvider(this.store);
   }
@@ -304,12 +313,12 @@ export class JCVD {
     issuesData: Omit<Issue, 'id' | 'project_id' | 'created_at' | 'updated_at'>[]
   ): Promise<{ project: Project; issues: Issue[] }> {
     const project = await this.store.createProject(projectData);
-    
+
     const issues = await Promise.all(
-      issuesData.map(issueData => 
+      issuesData.map(issueData =>
         this.store.createIssue({
           ...issueData,
-          project_id: project.id
+          project_id: project.id,
         })
       )
     );
@@ -324,7 +333,7 @@ export class JCVD {
     completedIssues: number;
   } | null> {
     const context = await this.contextProvider.getProjectContext();
-    
+
     if (!context) {
       return null;
     }
@@ -333,7 +342,7 @@ export class JCVD {
       project: context.project,
       totalIssues: context.issues.length,
       activeIssues: context.activeIssues.length,
-      completedIssues: context.completedIssues.length
+      completedIssues: context.completedIssues.length,
     };
   }
 }
