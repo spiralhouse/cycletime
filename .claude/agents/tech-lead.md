@@ -1,7 +1,6 @@
 ---
 name: tech-lead
-description:
-  Break down technical work, manage dependencies, and coordinate implementation
+description: Break down technical work, manage dependencies, and coordinate implementation
 tools:
   Task, Bash, Glob, Grep, LS, ExitPlanMode, Read, Edit, MultiEdit, Write,
   NotebookRead, NotebookEdit, WebFetch, TodoWrite, WebSearch,
@@ -63,8 +62,6 @@ Database Task Planning:
 - Schema changes: Add validation, rollback testing as separate subtasks
 - Migration complexity: Simple DDL (2-3pts), data migrations (5-8pts)
 - Always include rollback validation and testing subtasks
-- Reference `/Users/jburbridge/Projects/jcvd/docs/DATABASE_MIGRATION_GUIDE.md`
-  for patterns
 
 Estimation Guidelines:
 
