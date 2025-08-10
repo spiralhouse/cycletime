@@ -1,0 +1,83 @@
+# Dependency Review Configuration for JCVD (AGPL-3.0)
+#
+# This configuration ensures dependencies are compatible with AGPL-3.0
+# and maintains security standards for the project.
+
+# Security Settings
+fail-on-severity: high
+fail-on-scopes:
+  - runtime
+  - development
+
+# Vulnerability checking
+vulnerability-check: true
+
+# License checking 
+license-check: true
+
+# AGPL-3.0 Compatible Licenses
+# These licenses are generally compatible with AGPL-3.0
+allow-licenses:
+  # Permissive licenses (compatible with AGPL-3.0)
+  - MIT
+  - Apache-2.0
+  - BSD-2-Clause
+  - BSD-3-Clause
+  - ISC
+  - 0BSD
+  
+  # AGPL/GPL family (same or compatible)
+  - AGPL-3.0
+  - AGPL-3.0-only
+  - AGPL-3.0-or-later
+  - GPL-3.0
+  - GPL-3.0-only
+  - GPL-3.0-or-later
+  - GPL-2.0-or-later
+  
+  # LGPL (compatible with AGPL-3.0)
+  - LGPL-3.0
+  - LGPL-3.0-only
+  - LGPL-3.0-or-later
+  - LGPL-2.1
+  - LGPL-2.1-only
+  - LGPL-2.1-or-later
+  
+  # Creative Commons (for documentation/assets)
+  - CC0-1.0
+  - CC-BY-4.0
+  
+  # Public Domain
+  - Unlicense
+  - WTFPL
+
+# Licenses that are NOT compatible with AGPL-3.0
+deny-licenses:
+  # Proprietary/Commercial licenses
+  - "Proprietary"
+  - "Commercial"
+  - "Custom"
+  
+  # GPL-2.0 only (incompatible with AGPL-3.0)
+  - GPL-2.0
+  - GPL-2.0-only
+  
+  # Restrictive licenses
+  - "Facebook BSD+Patents"
+  - "JSON"
+  
+  # Non-commercial licenses (incompatible with AGPL-3.0's freedom)
+  - "CC-BY-NC-4.0"
+  - "CC-BY-NC-SA-4.0"
+
+# Additional security settings
+allow-dependencies-licenses: true
+base-ref: main
+head-ref: ${{ github.event.pull_request.head.sha }}
+
+# Comment configuration
+comment-summary-in-pr: always
+warn-only: false
+
+# Exemptions for specific packages (if needed)
+# allow-ghsas: []  # Allow specific GitHub Security Advisories if needed
