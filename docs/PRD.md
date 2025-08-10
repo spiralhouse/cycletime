@@ -14,10 +14,7 @@
 
 ## Executive Summary
 
-**JCVD** is a comprehensive project orchestration framework designed
-specifically for the Claude Code ecosystem, transforming Claude Code from an
-excellent coding assistant into a complete software development lifecycle
-management platform. Building on Claude Code's proven agent capabilities and
+**JCVD** is a data and context provider designed specifically for the Claude Code ecosystem, providing structured project information that enhances Claude Code's existing capabilities with cross-session continuity and intelligent task recommendations. Building on Claude Code's proven agent capabilities and
 natural language workflow, JCVD creates and manages ALL artifacts required to
 execute a software project from inception to deployment, including
 specifications, architecture documentation, issue tracking and management, and
@@ -37,11 +34,7 @@ ensuring structured progression from high-level design through proof-of-concept
 delivery, all while preserving Claude Code's familiar agent-based interaction
 model.
 
-**Primary Value Proposition:** Transform Claude Code into a project
-orchestration platform by providing structured project data, dependency
-tracking, and cross-session continuity through embedded database persistence and
-MCP Resource integration, enabling solo developers and freelancers to manage
-complete project lifecycles while preserving Claude Code's natural development
+**Primary Value Proposition:** Enhance Claude Code with structured project data, dependency tracking, and cross-session continuity through embedded database persistence and MCP Resource integration, enabling solo developers and freelancers to maintain project context while preserving Claude Code's natural development
 experience.
 
 **Supporting Benefits:**
@@ -602,6 +595,4 @@ limitations, see [ONBOARDING.md](ONBOARDING.md).
 - Clear integration pathways that preserve team velocity
 - Simple validation and recommendation system
 
-This comprehensive approach transforms JCVD from a coding assistant into a
-complete project orchestration platform that handles every aspect of software
-development from conception to delivery.
+This approach provides JCVD as a data and context provider that enhances Claude Code's existing capabilities with structured project information, cross-session continuity, and intelligent task recommendations.
