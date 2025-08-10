@@ -565,6 +565,7 @@ export class ProjectApplicationService {
     return this.projectRepo.findByStatus(ProjectStatus.ACTIVE);
   }
 }
+```
 
 #### Key Benefits of Domain-Driven Design Architecture
 
