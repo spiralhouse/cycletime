@@ -3,7 +3,7 @@
  */
 export abstract class SessionError extends Error {
   abstract readonly code: string;
-  
+
   constructor(message: string, cause?: Error) {
     super(message);
     this.name = this.constructor.name;
@@ -16,7 +16,7 @@ export abstract class SessionError extends Error {
  */
 export class SessionNotFoundError extends SessionError {
   readonly code = 'SESSION_NOT_FOUND';
-  
+
   constructor(sessionKey: string, cause?: Error) {
     super(`Session with key '${sessionKey}' was not found`, cause);
   }
@@ -27,7 +27,7 @@ export class SessionNotFoundError extends SessionError {
  */
 export class InvalidSessionDataError extends SessionError {
   readonly code = 'INVALID_SESSION_DATA';
-  
+
   constructor(message: string, cause?: Error) {
     super(`Invalid session data: ${message}`, cause);
   }
@@ -38,7 +38,7 @@ export class InvalidSessionDataError extends SessionError {
  */
 export class SessionExpiredError extends SessionError {
   readonly code = 'SESSION_EXPIRED';
-  
+
   constructor(sessionKey: string, expiredAt: Date, cause?: Error) {
     super(`Session '${sessionKey}' expired at ${expiredAt.toISOString()}`, cause);
   }
@@ -49,7 +49,7 @@ export class SessionExpiredError extends SessionError {
  */
 export class SessionStorageError extends SessionError {
   readonly code = 'SESSION_STORAGE_ERROR';
-  
+
   constructor(operation: string, cause?: Error) {
     super(`Session storage error during ${operation}`, cause);
   }

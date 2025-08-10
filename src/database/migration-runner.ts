@@ -6,7 +6,6 @@
 import type { Migration } from './migrations.js';
 import type Database from 'better-sqlite3';
 
-
 /**
  * MigrationRunner handles applying database migrations in a safe, trackable manner
  * Follows JCVD's linear migration approach with automatic rollback on failure
@@ -31,7 +30,7 @@ export class MigrationRunner {
         applied_at INTEGER NOT NULL DEFAULT (unixepoch())
       )
     `;
-    
+
     this.db.exec(createMigrationTable);
   }
 
@@ -42,7 +41,7 @@ export class MigrationRunner {
     const query = this.db.prepare(`
       SELECT version FROM schema_migrations ORDER BY version
     `);
-    
+
     const rows = query.all() as { version: string }[];
 
     return new Set(rows.map(row => row.version));
@@ -54,21 +53,21 @@ export class MigrationRunner {
    */
   async runMigrations(migrations: Migration[]): Promise<number> {
     const applied = this.getAppliedMigrations();
-    
+
     let appliedCount = 0;
 
     for (const migration of migrations) {
       if (!applied.has(migration.version)) {
         console.log(`Applying migration ${migration.version}: ${migration.description}`);
-        
+
         const transaction = this.db.transaction(() => {
           this.db.exec(migration.sql);
-          
+
           const insertMigration = this.db.prepare(`
             INSERT INTO schema_migrations (version, description)
             VALUES (?, ?)
           `);
-          
+
           insertMigration.run(migration.version, migration.description);
         });
 
@@ -93,7 +92,7 @@ export class MigrationRunner {
     const applied = this.getAppliedMigrations();
 
     if (applied.size === 0) return '000';
-    
+
     const versions = Array.from(applied).sort();
 
     return versions[versions.length - 1] ?? '000';

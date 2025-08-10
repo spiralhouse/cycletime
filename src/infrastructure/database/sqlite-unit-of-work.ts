@@ -1,4 +1,3 @@
-
 // Removed unused SessionStorageError import
 
 import type { UnitOfWork } from '../../domain/repositories/session-repository.js';
@@ -12,7 +11,7 @@ export class SqliteUnitOfWork implements UnitOfWork {
 
   /**
    * Execute operations within a transaction
-   * 
+   *
    * Better-sqlite3 handles transactions synchronously, but our operations are async.
    * For now, we'll execute operations directly since individual prepared statements
    * are atomic and auto-committed.

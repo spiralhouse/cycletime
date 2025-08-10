@@ -1,16 +1,16 @@
 import { Session } from '../../domain/entities/session.js';
-import {
-  SessionNotFoundError,
-  SessionStorageError
-} from '../../domain/errors/session-errors.js';
+import { SessionNotFoundError, SessionStorageError } from '../../domain/errors/session-errors.js';
 
-import type { SessionRepository, UnitOfWork } from '../../domain/repositories/session-repository.js';
 import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
+import type {
+  SessionRepository,
+  UnitOfWork,
+} from '../../domain/repositories/session-repository.js';
 import type {
   SessionStateDto,
   CreateSessionCommand,
   UpdateSessionCommand,
-  SessionOperationResult
+  SessionOperationResult,
 } from '../dtos/session-dto.js';
 
 /**
@@ -29,21 +29,21 @@ export class SessionApplicationService {
   async createSession(command: CreateSessionCommand): Promise<SessionOperationResult> {
     try {
       const session = Session.create(command.projectId, command.initialContext, this.timeProvider);
-      
+
       await this.unitOfWork.execute(async () => {
         await this.sessionRepository.save(session);
       });
 
       return {
         success: true,
-        sessionKey: session.sessionKey.value
+        sessionKey: session.sessionKey.value,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       return {
         success: false,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
@@ -54,7 +54,7 @@ export class SessionApplicationService {
   async getSession(sessionKey: string): Promise<SessionStateDto | null> {
     try {
       const session = await this.sessionRepository.findBySessionKey(sessionKey);
-      
+
       if (!session) {
         return null;
       }
@@ -72,7 +72,7 @@ export class SessionApplicationService {
     try {
       return await this.unitOfWork.execute(async () => {
         const session = await this.sessionRepository.findBySessionKey(command.sessionKey);
-        
+
         if (!session) {
           throw new SessionNotFoundError(command.sessionKey);
         }
@@ -91,15 +91,15 @@ export class SessionApplicationService {
 
         return {
           success: true,
-          sessionKey: session.sessionKey.value
+          sessionKey: session.sessionKey.value,
         };
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       return {
         success: false,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
@@ -110,17 +110,17 @@ export class SessionApplicationService {
   async deleteSession(sessionKey: string): Promise<SessionOperationResult> {
     try {
       const deleted = await this.sessionRepository.delete(sessionKey);
-      
+
       return {
         success: true,
-        affectedCount: deleted ? 1 : 0
+        affectedCount: deleted ? 1 : 0,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       return {
         success: false,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
@@ -145,7 +145,7 @@ export class SessionApplicationService {
     try {
       return await this.unitOfWork.execute(async () => {
         const session = await this.sessionRepository.findBySessionKey(sessionKey);
-        
+
         if (!session) {
           throw new SessionNotFoundError(sessionKey);
         }
@@ -155,15 +155,15 @@ export class SessionApplicationService {
 
         return {
           success: true,
-          sessionKey: session.sessionKey.value
+          sessionKey: session.sessionKey.value,
         };
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       return {
         success: false,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
@@ -175,7 +175,7 @@ export class SessionApplicationService {
     try {
       return await this.unitOfWork.execute(async () => {
         const session = await this.sessionRepository.findBySessionKey(sessionKey);
-        
+
         if (!session) {
           throw new SessionNotFoundError(sessionKey);
         }
@@ -185,15 +185,15 @@ export class SessionApplicationService {
 
         return {
           success: true,
-          sessionKey: session.sessionKey.value
+          sessionKey: session.sessionKey.value,
         };
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       return {
         success: false,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
@@ -201,24 +201,26 @@ export class SessionApplicationService {
   /**
    * Clean up expired sessions
    */
-  async cleanupExpiredSessions(maxAge: number = 7 * 24 * 60 * 60 * 1000): Promise<SessionOperationResult> {
+  async cleanupExpiredSessions(
+    maxAge: number = 7 * 24 * 60 * 60 * 1000
+  ): Promise<SessionOperationResult> {
     try {
       const cutoffDate = new Date(Date.now() - maxAge);
-      
+
       const affectedCount = await this.unitOfWork.execute(async () => {
         return await this.sessionRepository.deleteExpired(cutoffDate);
       });
 
       return {
         success: true,
-        affectedCount
+        affectedCount,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       return {
         success: false,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
@@ -233,7 +235,7 @@ export class SessionApplicationService {
       currentContext: session.currentContext,
       lastActivity: session.lastActivity,
       createdAt: session.createdAt,
-      updatedAt: session.updatedAt
+      updatedAt: session.updatedAt,
     };
   }
 }

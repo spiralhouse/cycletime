@@ -33,7 +33,10 @@ export interface SessionManagerInterface {
   /**
    * Create a new session
    */
-  createSession: (projectId?: string | undefined, initialContext?: SessionContext | undefined) => Promise<string>;
+  createSession: (
+    projectId?: string | undefined,
+    initialContext?: SessionContext | undefined
+  ) => Promise<string>;
 
   /**
    * Get session by key

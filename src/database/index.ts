@@ -17,5 +17,5 @@ export type {
   CreateResourceAccessLog,
   SessionStateFilter,
   ResourceMetadataFilter,
-  ResourceAccessLogFilter
+  ResourceAccessLogFilter,
 } from './types.js';

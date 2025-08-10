@@ -24,10 +24,10 @@ export const migrations: Migration[] = [
         updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
         FOREIGN KEY (project_id) REFERENCES projects(id)
       );
-    `
+    `,
   },
   {
-    version: '003', 
+    version: '003',
     description: 'Add resource metadata tracking',
     sql: `
       CREATE TABLE IF NOT EXISTS resource_metadata (
@@ -41,7 +41,7 @@ export const migrations: Migration[] = [
         updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
         UNIQUE(resource_type, resource_id)
       );
-    `
+    `,
   },
   {
     version: '004',
@@ -56,11 +56,11 @@ export const migrations: Migration[] = [
         error_message TEXT,
         timestamp INTEGER NOT NULL DEFAULT (unixepoch())
       );
-    `
+    `,
   },
   {
     version: '005',
-    description: 'Add performance indexes', 
+    description: 'Add performance indexes',
     sql: `
       CREATE INDEX IF NOT EXISTS idx_resource_metadata_type 
         ON resource_metadata(resource_type);
@@ -74,6 +74,6 @@ export const migrations: Migration[] = [
         ON resource_access_logs(resource_uri);
       CREATE INDEX IF NOT EXISTS idx_resource_logs_timestamp 
         ON resource_access_logs(timestamp);
-    `
-  }
+    `,
+  },
 ];

@@ -11,9 +11,12 @@ export {
   SessionNotFoundError,
   InvalidSessionDataError,
   SessionExpiredError,
-  SessionStorageError
+  SessionStorageError,
 } from '../../domain/errors/session-errors.js';
-export type { SessionRepository, UnitOfWork } from '../../domain/repositories/session-repository.js';
+export type {
+  SessionRepository,
+  UnitOfWork,
+} from '../../domain/repositories/session-repository.js';
 
 // Application exports
 export { SessionApplicationService } from '../../application/services/session-application-service.js';
@@ -23,7 +26,7 @@ export type {
   UpdateSessionContextDto,
   CreateSessionCommand,
   UpdateSessionCommand,
-  SessionOperationResult
+  SessionOperationResult,
 } from '../../application/dtos/session-dto.js';
 
 // Infrastructure exports
@@ -32,20 +35,16 @@ export { SqliteUnitOfWork } from '../../infrastructure/database/sqlite-unit-of-w
 
 // MCP exports
 export { SessionManager } from './manager.js';
-export type {
-  SessionState,
-  SessionConfig,
-  SessionManagerInterface
-} from './types.js';
+export type { SessionState, SessionConfig, SessionManagerInterface } from './types.js';
 
 /**
  * Factory function to create a complete SessionManager instance
  */
 
 import { SessionApplicationService } from '../../application/services/session-application-service.js';
+import { RealTimeProvider } from '../../domain/interfaces/time-provider.js';
 import { SqliteSessionRepository } from '../../infrastructure/database/repositories/sqlite-session-repository.js';
 import { SqliteUnitOfWork } from '../../infrastructure/database/sqlite-unit-of-work.js';
-import { RealTimeProvider } from '../../domain/interfaces/time-provider.js';
 
 import { SessionManager } from './manager.js';
 
@@ -60,13 +59,17 @@ export function createSessionManager(
 ): SessionManager {
   // Use provided timeProvider or create real one
   const actualTimeProvider = timeProvider ?? new RealTimeProvider();
-  
+
   // Create infrastructure layer
   const sessionRepository = new SqliteSessionRepository(db, actualTimeProvider);
   const unitOfWork = new SqliteUnitOfWork(db);
 
-  // Create application layer  
-  const sessionService = new SessionApplicationService(sessionRepository, unitOfWork, actualTimeProvider);
+  // Create application layer
+  const sessionService = new SessionApplicationService(
+    sessionRepository,
+    unitOfWork,
+    actualTimeProvider
+  );
 
   // Create MCP layer
   return new SessionManager(sessionService, actualTimeProvider, config);
@@ -79,5 +82,5 @@ export const DEFAULT_SESSION_CONFIG: SessionConfig = {
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   autoCleanup: true,
   cleanupInterval: 60 * 60 * 1000, // 1 hour
-  maxSessionsPerProject: 0 // unlimited
+  maxSessionsPerProject: 0, // unlimited
 };

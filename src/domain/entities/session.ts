@@ -1,5 +1,6 @@
 import { InvalidSessionDataError } from '../errors/session-errors.js';
 import { SessionKey } from '../value-objects/session-key.js';
+
 import type { TimeProvider } from '../interfaces/time-provider.js';
 
 /**
@@ -32,9 +33,7 @@ export class Session {
     updatedAt?: Date | undefined,
     private readonly timeProvider?: TimeProvider
   ) {
-    this._sessionKey = typeof sessionKey === 'string' 
-      ? SessionKey.from(sessionKey) 
-      : sessionKey;
+    this._sessionKey = typeof sessionKey === 'string' ? SessionKey.from(sessionKey) : sessionKey;
     this._projectId = projectId;
     this._currentContext = this.validateContext(currentContext);
     this._lastActivity = new Date(lastActivity);
@@ -75,7 +74,17 @@ export class Session {
    * Get current context
    */
   get currentContext(): SessionContext {
-    return { ...this._currentContext };
+    return {
+      ...this._currentContext,
+      // Deep copy arrays to prevent external mutation
+      ...(this._currentContext.activeIssues !== undefined && {
+        activeIssues: [...this._currentContext.activeIssues],
+      }),
+      // Deep copy contextData if it exists
+      ...(this._currentContext.contextData !== undefined && {
+        contextData: JSON.parse(JSON.stringify(this._currentContext.contextData)),
+      }),
+    };
   }
 
   /**
@@ -105,9 +114,9 @@ export class Session {
   updateContext(contextUpdate: Partial<SessionContext>): void {
     const newContext = {
       ...this._currentContext,
-      ...contextUpdate
+      ...contextUpdate,
     };
-    
+
     this._currentContext = this.validateContext(newContext);
     this.touch();
   }
@@ -120,7 +129,7 @@ export class Session {
 
     if (!activeIssues.includes(issueId)) {
       this.updateContext({
-        activeIssues: [...activeIssues, issueId]
+        activeIssues: [...activeIssues, issueId],
       });
     }
   }
@@ -132,7 +141,7 @@ export class Session {
     const activeIssues = this._currentContext.activeIssues || [];
 
     this.updateContext({
-      activeIssues: activeIssues.filter(id => id !== issueId)
+      activeIssues: activeIssues.filter(id => id !== issueId),
     });
   }
 
@@ -140,7 +149,8 @@ export class Session {
    * Check if session is expired
    */
   isExpired(maxAge: number): boolean {
-    const ageMs = Date.now() - this._lastActivity.getTime();
+    const currentTime = this.getCurrentTime().getTime();
+    const ageMs = currentTime - this._lastActivity.getTime();
 
     return ageMs > maxAge;
   }
@@ -150,6 +160,7 @@ export class Session {
    */
   touch(): void {
     const now = this.getCurrentTime();
+
     this._lastActivity = now;
     this._updatedAt = now;
   }
@@ -164,7 +175,7 @@ export class Session {
       currentContext: this._currentContext,
       lastActivity: this._lastActivity,
       createdAt: this._createdAt,
-      updatedAt: this._updatedAt
+      updatedAt: this._updatedAt,
     };
   }
 
@@ -207,7 +218,11 @@ export class Session {
 
     // Validate contextData
     if (context.contextData !== undefined) {
-      if (!context.contextData || typeof context.contextData !== 'object' || Array.isArray(context.contextData)) {
+      if (
+        !context.contextData ||
+        typeof context.contextData !== 'object' ||
+        Array.isArray(context.contextData)
+      ) {
         throw new InvalidSessionDataError('contextData must be a valid object');
       }
       validated.contextData = { ...context.contextData };
@@ -220,22 +235,14 @@ export class Session {
    * Static factory method to create new session
    */
   static create(
-    projectId?: string, 
-    initialContext: SessionContext = {}, 
+    projectId?: string,
+    initialContext: SessionContext = {},
     timeProvider?: TimeProvider
   ): Session {
     const sessionKey = SessionKey.generate();
     const now = timeProvider?.now() ?? new Date();
-    
-    return new Session(
-      sessionKey,
-      projectId,
-      initialContext,
-      now,
-      now,
-      now,
-      timeProvider
-    );
+
+    return new Session(sessionKey, projectId, initialContext, now, now, now, timeProvider);
   }
 
   /**

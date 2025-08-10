@@ -6,7 +6,7 @@ export interface TimeProvider {
   /**
    * Get current time
    */
-  now(): Date;
+  now: () => Date;
 }
 
 /**
@@ -23,25 +23,25 @@ export class RealTimeProvider implements TimeProvider {
  */
 export class MockTimeProvider implements TimeProvider {
   private currentTime: Date = new Date('2024-01-01T00:00:00.000Z');
-  
+
   now(): Date {
     return new Date(this.currentTime);
   }
-  
+
   /**
    * Set the current time for testing
    */
   setTime(time: string | Date): void {
     this.currentTime = typeof time === 'string' ? new Date(time) : new Date(time);
   }
-  
+
   /**
    * Advance time by specified milliseconds
    */
   advance(milliseconds: number): void {
     this.currentTime = new Date(this.currentTime.getTime() + milliseconds);
   }
-  
+
   /**
    * Reset to default test time
    */

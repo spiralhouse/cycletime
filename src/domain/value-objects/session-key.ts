@@ -36,7 +36,7 @@ export class SessionKey {
     if (!key || typeof key !== 'string') {
       throw new Error('Session key must be a non-empty string');
     }
-    
+
     if (key.length < 8) {
       throw new Error('Session key must be at least 8 characters long');
     }

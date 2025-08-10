@@ -33,7 +33,7 @@ describe('Session Entity Unit Tests', () => {
     it('should create session with initial context', () => {
       const initialContext: SessionContext = {
         activeIssues: ['ISSUE-1'],
-        workflowStage: 'planning'
+        workflowStage: 'planning',
       };
 
       const session = Session.create('test-project', initialContext, mockTimeProvider);
@@ -53,21 +53,25 @@ describe('Session Entity Unit Tests', () => {
     let session: Session;
 
     beforeEach(() => {
-      session = Session.create('test-project', {
-        activeIssues: ['ISSUE-1'],
-        workflowStage: 'planning'
-      }, mockTimeProvider);
+      session = Session.create(
+        'test-project',
+        {
+          activeIssues: ['ISSUE-1'],
+          workflowStage: 'planning',
+        },
+        mockTimeProvider
+      );
     });
 
     it('should update context and touch activity', () => {
       const originalActivity = session.lastActivity;
-      
+
       // Advance time before update
       mockTimeProvider.advance(1000);
 
       session.updateContext({
         workflowStage: 'development',
-        lastAction: 'started coding'
+        lastAction: 'started coding',
       });
 
       expect(session.currentContext.workflowStage).toBe('development');
@@ -95,9 +99,19 @@ describe('Session Entity Unit Tests', () => {
     });
 
     it('should handle removing non-existent issue', () => {
-      session.removeActiveIssue('NON-EXISTENT');
+      // Create fresh session for this test to avoid side effects from previous test
+      const freshSession = Session.create(
+        'test-project',
+        {
+          activeIssues: ['ISSUE-1'],
+          workflowStage: 'planning',
+        },
+        mockTimeProvider
+      );
 
-      expect(session.currentContext.activeIssues).toEqual(['ISSUE-1']);
+      freshSession.removeActiveIssue('NON-EXISTENT');
+
+      expect(freshSession.currentContext.activeIssues).toEqual(['ISSUE-1']);
     });
   });
 
@@ -127,78 +141,89 @@ describe('Session Entity Unit Tests', () => {
       // Session should not be expired initially
       expect(session.isExpired(maxAge)).toBe(false);
 
-      // Advance system time (simulating real-world time passage)
-      const realNow = Date.now;
-      const futureTime = mockTimeProvider.now().getTime() + maxAge + 1;
-      Date.now = () => futureTime;
+      // Advance mock time (session uses time provider now)
+      mockTimeProvider.advance(maxAge + 1);
 
-      try {
-        expect(session.isExpired(maxAge)).toBe(true);
-      } finally {
-        // Restore Date.now
-        Date.now = realNow;
-      }
+      expect(session.isExpired(maxAge)).toBe(true);
     });
 
     it('should not expire recent sessions', () => {
       const session = Session.create('test-project', {}, mockTimeProvider);
-      const maxAge = 10000; // 10 seconds
+      const maxAge = 10_000; // 10 seconds
 
-      // Advance system time but not beyond maxAge
-      const realNow = Date.now;
-      const nearFutureTime = mockTimeProvider.now().getTime() + maxAge - 1000;
-      Date.now = () => nearFutureTime;
+      // Advance mock time but not beyond maxAge
+      mockTimeProvider.advance(maxAge - 1000);
 
-      try {
-        expect(session.isExpired(maxAge)).toBe(false);
-      } finally {
-        Date.now = realNow;
-      }
+      expect(session.isExpired(maxAge)).toBe(false);
     });
   });
 
   describe('Session Data Validation', () => {
     it('should validate activeIssues as array of strings', () => {
       expect(() => {
-        Session.create('test-project', {
-          activeIssues: 'invalid' as any
-        }, mockTimeProvider);
+        Session.create(
+          'test-project',
+          {
+            activeIssues: 'invalid' as any,
+          },
+          mockTimeProvider
+        );
       }).toThrow(InvalidSessionDataError);
 
       expect(() => {
-        Session.create('test-project', {
-          activeIssues: [123, 'valid'] as any
-        }, mockTimeProvider);
+        Session.create(
+          'test-project',
+          {
+            activeIssues: [123, 'valid'] as any,
+          },
+          mockTimeProvider
+        );
       }).toThrow(InvalidSessionDataError);
     });
 
     it('should validate workflowStage as string', () => {
       expect(() => {
-        Session.create('test-project', {
-          workflowStage: 123 as any
-        }, mockTimeProvider);
+        Session.create(
+          'test-project',
+          {
+            workflowStage: 123 as any,
+          },
+          mockTimeProvider
+        );
       }).toThrow(InvalidSessionDataError);
     });
 
     it('should validate lastAction as string', () => {
       expect(() => {
-        Session.create('test-project', {
-          lastAction: ['array'] as any
-        }, mockTimeProvider);
+        Session.create(
+          'test-project',
+          {
+            lastAction: ['array'] as any,
+          },
+          mockTimeProvider
+        );
       }).toThrow(InvalidSessionDataError);
     });
 
     it('should validate contextData as object', () => {
       expect(() => {
-        Session.create('test-project', {
-          contextData: 'not-object' as any
-        }, mockTimeProvider);
+        Session.create(
+          'test-project',
+          {
+            contextData: 'not-object' as any,
+          },
+          mockTimeProvider
+        );
       }).toThrow(InvalidSessionDataError);
 
       expect(() => {
-        Session.create('test-project', {
-          contextData: ['array'] as any
-        }, mockTimeProvider);
+        Session.create(
+          'test-project',
+          {
+            contextData: ['array'] as any,
+          },
+          mockTimeProvider
+        );
       }).toThrow(InvalidSessionDataError);
     });
 
@@ -210,8 +235,8 @@ describe('Session Entity Unit Tests', () => {
         contextData: {
           customField: 'value',
           numericField: 42,
-          nested: { data: true }
-        }
+          nested: { data: true },
+        },
       };
 
       const session = Session.create('test-project', validContext, mockTimeProvider);
@@ -224,7 +249,7 @@ describe('Session Entity Unit Tests', () => {
     it('should convert to plain object for storage', () => {
       const initialContext: SessionContext = {
         activeIssues: ['ISSUE-1'],
-        workflowStage: 'planning'
+        workflowStage: 'planning',
       };
 
       const session = Session.create('test-project', initialContext, mockTimeProvider);
@@ -236,15 +261,19 @@ describe('Session Entity Unit Tests', () => {
         currentContext: initialContext,
         lastActivity: mockTimeProvider.now(),
         createdAt: mockTimeProvider.now(),
-        updatedAt: mockTimeProvider.now()
+        updatedAt: mockTimeProvider.now(),
       });
     });
 
     it('should recreate from plain object with time provider', () => {
-      const originalSession = Session.create('test-project', {
-        activeIssues: ['ISSUE-1'],
-        workflowStage: 'planning'
-      }, mockTimeProvider);
+      const originalSession = Session.create(
+        'test-project',
+        {
+          activeIssues: ['ISSUE-1'],
+          workflowStage: 'planning',
+        },
+        mockTimeProvider
+      );
 
       const plainObject = originalSession.toPlainObject();
       const recreatedSession = Session.fromPlainObject(plainObject, mockTimeProvider);
@@ -261,8 +290,8 @@ describe('Session Entity Unit Tests', () => {
         projectId: 'test-project',
         currentContext: { workflowStage: 'development' },
         lastActivity: '2024-01-01T12:00:00Z', // String timestamp
-        createdAt: 1704110400000, // Number timestamp
-        updatedAt: new Date('2024-01-01T12:00:00Z') // Date timestamp
+        createdAt: 1_704_110_400_000, // Number timestamp
+        updatedAt: new Date('2024-01-01T12:00:00Z'), // Date timestamp
       };
 
       const session = Session.fromPlainObject(plainObject, mockTimeProvider);
@@ -275,9 +304,13 @@ describe('Session Entity Unit Tests', () => {
 
   describe('Immutability and Defensive Copying', () => {
     it('should return defensive copies of context', () => {
-      const session = Session.create('test-project', {
-        activeIssues: ['ISSUE-1']
-      }, mockTimeProvider);
+      const session = Session.create(
+        'test-project',
+        {
+          activeIssues: ['ISSUE-1'],
+        },
+        mockTimeProvider
+      );
 
       const context1 = session.currentContext;
       const context2 = session.currentContext;
@@ -297,11 +330,16 @@ describe('Session Entity Unit Tests', () => {
     });
 
     it('should not allow external mutation of context arrays', () => {
-      const session = Session.create('test-project', {
-        activeIssues: ['ISSUE-1']
-      }, mockTimeProvider);
+      const session = Session.create(
+        'test-project',
+        {
+          activeIssues: ['ISSUE-1'],
+        },
+        mockTimeProvider
+      );
 
       const context = session.currentContext;
+
       if (context.activeIssues) {
         context.activeIssues.push('ISSUE-2');
       }

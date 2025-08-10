@@ -1,17 +1,9 @@
-import { 
-  SessionNotFoundError, 
-  SessionStorageError
-} from '../../domain/errors/session-errors.js';
+import { SessionNotFoundError, SessionStorageError } from '../../domain/errors/session-errors.js';
 
-import type { 
-  SessionState, 
-  SessionConfig, 
-  SessionManagerInterface
-} from './types.js';
+import type { SessionState, SessionConfig, SessionManagerInterface } from './types.js';
 import type { SessionApplicationService } from '../../application/services/session-application-service.js';
 import type { SessionContext } from '../../domain/entities/session.js';
 import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
-
 
 /**
  * Session Manager implementation for MCP integration
@@ -31,7 +23,7 @@ export class SessionManager implements SessionManagerInterface {
       autoCleanup: true,
       cleanupInterval: 60 * 60 * 1000, // 1 hour
       maxSessionsPerProject: 0, // unlimited
-      ...config
+      ...config,
     };
 
     // Start automatic cleanup if enabled
@@ -47,7 +39,7 @@ export class SessionManager implements SessionManagerInterface {
     try {
       const result = await this.sessionService.createSession({
         projectId,
-        initialContext
+        initialContext,
       });
 
       if (!result.success) {
@@ -69,7 +61,7 @@ export class SessionManager implements SessionManagerInterface {
   async getSession(sessionKey: string): Promise<SessionState | null> {
     try {
       const sessionDto = await this.sessionService.getSession(sessionKey);
-      
+
       if (!sessionDto) {
         return null;
       }
@@ -88,7 +80,7 @@ export class SessionManager implements SessionManagerInterface {
         currentContext: sessionDto.currentContext,
         lastActivity: sessionDto.lastActivity,
         createdAt: sessionDto.createdAt,
-        updatedAt: sessionDto.updatedAt
+        updatedAt: sessionDto.updatedAt,
       };
     } catch (error) {
       if (error instanceof Error) {
@@ -105,7 +97,7 @@ export class SessionManager implements SessionManagerInterface {
     try {
       const result = await this.sessionService.updateSession({
         sessionKey,
-        contextUpdate
+        contextUpdate,
       });
 
       if (!result.success) {
@@ -128,7 +120,7 @@ export class SessionManager implements SessionManagerInterface {
   async deleteSession(sessionKey: string): Promise<boolean> {
     try {
       const result = await this.sessionService.deleteSession(sessionKey);
-      
+
       if (!result.success) {
         throw new SessionStorageError('delete session', new Error(result.error));
       }
@@ -148,7 +140,7 @@ export class SessionManager implements SessionManagerInterface {
   async getProjectSessions(projectId: string): Promise<SessionState[]> {
     try {
       const sessions = await this.sessionService.getProjectSessions(projectId);
-      
+
       // Filter out expired sessions
       const validSessions: SessionState[] = [];
 
@@ -160,7 +152,7 @@ export class SessionManager implements SessionManagerInterface {
             currentContext: session.currentContext,
             lastActivity: session.lastActivity,
             createdAt: session.createdAt,
-            updatedAt: session.updatedAt
+            updatedAt: session.updatedAt,
           });
         }
       }
@@ -180,7 +172,7 @@ export class SessionManager implements SessionManagerInterface {
   async addActiveIssue(sessionKey: string, issueId: string): Promise<void> {
     try {
       const result = await this.sessionService.addActiveIssue(sessionKey, issueId);
-      
+
       if (!result.success) {
         if (result.error?.includes('not found')) {
           throw new SessionNotFoundError(sessionKey);
@@ -201,7 +193,7 @@ export class SessionManager implements SessionManagerInterface {
   async removeActiveIssue(sessionKey: string, issueId: string): Promise<void> {
     try {
       const result = await this.sessionService.removeActiveIssue(sessionKey, issueId);
-      
+
       if (!result.success) {
         if (result.error?.includes('not found')) {
           throw new SessionNotFoundError(sessionKey);
@@ -223,7 +215,7 @@ export class SessionManager implements SessionManagerInterface {
     try {
       const result = await this.sessionService.updateSession({
         sessionKey,
-        touchActivity: true
+        touchActivity: true,
       });
 
       if (!result.success) {
@@ -246,7 +238,7 @@ export class SessionManager implements SessionManagerInterface {
   async expireSessions(olderThan?: Date): Promise<number> {
     try {
       let maxAge: number;
-      
+
       if (olderThan) {
         // If specific cutoff date provided, calculate maxAge from it
         maxAge = this.timeProvider.now().getTime() - olderThan.getTime();
@@ -254,9 +246,9 @@ export class SessionManager implements SessionManagerInterface {
         // Use configured maxAge
         maxAge = this.config.maxAge!;
       }
-      
+
       const result = await this.sessionService.cleanupExpiredSessions(maxAge);
-      
+
       if (!result.success) {
         throw new SessionStorageError('expire sessions', new Error(result.error));
       }
@@ -301,7 +293,7 @@ export class SessionManager implements SessionManagerInterface {
    */
   updateConfig(config: Partial<SessionConfig>): void {
     const oldAutoCleanup = this.config.autoCleanup;
-    
+
     this.config = { ...this.config, ...config };
 
     // Restart auto cleanup if setting changed
