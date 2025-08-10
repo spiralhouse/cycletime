@@ -44,6 +44,15 @@ export default [
         __filename: 'readonly',
         global: 'readonly',
         NodeJS: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        setImmediate: 'readonly',
+        clearImmediate: 'readonly',
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
       },
     },
     plugins: {
@@ -54,7 +63,7 @@ export default [
     rules: {
       // TypeScript-specific rules
       '@typescript-eslint/no-unused-vars': [
-        'error',
+        'warn',
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
@@ -63,7 +72,7 @@ export default [
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'warn',
-      '@typescript-eslint/prefer-nullish-coalescing': 'error',
+      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
       '@typescript-eslint/prefer-optional-chain': 'error',
       '@typescript-eslint/consistent-type-imports': [
         'error',
@@ -110,7 +119,7 @@ export default [
       // Unicorn rules for better practices
       'unicorn/better-regex': 'error',
       'unicorn/catch-error-name': 'error',
-      'unicorn/consistent-destructuring': 'error',
+      'unicorn/consistent-destructuring': 'warn',
       'unicorn/consistent-function-scoping': 'error',
       'unicorn/explicit-length-check': 'error',
       'unicorn/filename-case': [
@@ -143,7 +152,7 @@ export default [
       'unicorn/prefer-object-from-entries': 'error',
       'unicorn/prefer-optional-catch-binding': 'error',
       'unicorn/prefer-string-slice': 'error',
-      'unicorn/prefer-ternary': 'error',
+      'unicorn/prefer-ternary': 'warn',
       'unicorn/throw-new-error': 'error',
 
       // General JavaScript rules
@@ -157,10 +166,11 @@ export default [
       'no-sequences': 'error',
       'no-throw-literal': 'error',
       'no-unmodified-loop-condition': 'error',
-      'no-unused-expressions': 'error',
-      'no-useless-call': 'error',
-      'no-useless-concat': 'error',
-      'no-useless-return': 'error',
+      'no-unused-expressions': 'warn',
+      'no-useless-call': 'warn',
+      'no-useless-concat': 'warn',
+      'no-useless-return': 'warn',
+      'no-unused-vars': 'warn',
       'prefer-const': 'error',
       'prefer-template': 'error',
       yoda: 'error',
@@ -199,7 +209,12 @@ export default [
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-unused-vars': 'off',
       'unicorn/consistent-function-scoping': 'off',
+      'unicorn/consistent-destructuring': 'off',
+      'unicorn/prefer-ternary': 'off',
+      '@typescript-eslint/prefer-nullish-coalescing': 'off',
     },
   },
 

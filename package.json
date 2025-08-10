@@ -1,18 +1,14 @@
 {
   "name": "jcvd",
   "version": "0.1.0",
-  "description": "Multi-agent orchestration framework for Claude Code that transforms Claude into a specialized software development team",
+  "description": "Simple context provider for Claude Code that enables cross-session continuity and project data management",
   "keywords": [
     "claude-code",
-    "multi-agent",
-    "orchestration",
-    "framework",
-    "development",
-    "automation",
-    "ai-agents",
     "typescript",
     "sqlite",
-    "mcp"
+    "mcp",
+    "development",
+    "context-provider"
   ],
   "homepage": "https://github.com/jburbridge/jcvd#readme",
   "bugs": {
@@ -44,9 +40,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "build:watch": "tsc -p tsconfig.build.json --watch",
-    "dev": "tsx src/index.ts",
-    "dev:watch": "tsx watch src/index.ts",
-    "start": "node dist/index.js",
+    "dev": "tsx src/jcvd-simple.ts",
+    "dev:watch": "tsx watch src/jcvd-simple.ts",
+    "start": "node dist/jcvd-simple.js",
     "clean": "rimraf dist",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch",
@@ -59,12 +55,8 @@
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
     "test:watch": "vitest --watch",
-    "db:migrate": "tsx scripts/migrate.ts",
-    "db:reset": "tsx scripts/reset-db.ts",
-    "db:seed": "tsx scripts/seed.ts",
     "prepack": "npm run clean && npm run build",
     "prepublishOnly": "npm run test:run && npm run lint && npm run type-check",
-    "setup": "tsx scripts/setup.ts",
     "validate": "npm run type-check && npm run lint && npm run test:run",
     "ci": "npm run validate && npm run build"
   },
@@ -73,11 +65,10 @@
     "npm": ">=10.0.0"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
     "better-sqlite3": "^11.8.0",
     "commander": "^12.1.0",
-    "consola": "^3.2.3",
-    "dotenv": "^16.4.7",
-    "zod": "^3.24.1"
+    "consola": "^3.2.3"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.11",
