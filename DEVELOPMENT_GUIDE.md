@@ -97,17 +97,15 @@ jcvd/
 ├── src/                    # Source code
 │   ├── index.ts           # Main entry point
 │   ├── cli.ts             # CLI interface
-│   ├── types/             # TypeScript types
-│   ├── core/              # Core framework and task coordination
-│   ├── providers/         # Provider implementations
-│   ├── database/          # Database layer
-│   ├── mcp/               # MCP integration
-│   ├── config/            # Configuration management
+│   ├── mcp-server.ts      # MCP server implementation
+│   ├── sqlite-store.ts    # SQLite database layer
+│   ├── jcvd-simple.ts     # Core JCVD functionality
+│   ├── types.ts           # Main type definitions
+│   ├── types/             # TypeScript type definitions
 │   └── utils/             # Utility functions
 ├── tests/                 # Test suites
 ├── examples/              # Example configurations
-├── docs/                  # Documentation
-└── scripts/               # Development scripts
+└── docs/                  # Documentation
 ```
 
 ## Key Commands
@@ -257,6 +255,107 @@ logger.info('Operation started', { context: 'value' });
 logger.error('Operation failed', { error, context: 'value' });
 ```
 
+## Technical Design Documentation
+
+### Creating Technical Designs
+
+Before implementing complex features (Epics with multiple Stories), create comprehensive technical design documents to guide development.
+
+#### When to Create Technical Designs
+
+- **Epic-level features** with multiple Stories and complex implementation
+- **Architecture changes** that affect multiple components
+- **New integrations** with external systems or protocols
+- **Database schema changes** requiring migrations
+- **Performance-critical features** requiring optimization planning
+
+#### Technical Design Process
+
+1. **Analyze Requirements**
+   - Review Epic and Story descriptions from Linear
+   - Understand architecture constraints from `docs/ARCHITECTURE.md`
+   - Check scope limitations from `docs/LIMITATIONS.md`
+   - Consider user workflows from `docs/USER_EXPERIENCE.md`
+
+2. **Create Design Document**
+   ```bash
+   # Create new technical design document
+   # Format: docs/technical-design/[LINEAR-ID]-[short-name].md
+   touch docs/technical-design/SPI-290-mcp-resource-integration.md
+   ```
+
+3. **Document Structure Template**
+   ```markdown
+   # Technical Design: [Linear-ID] [Epic Title]
+   
+   ## Overview
+   - Epic summary and design principles
+   - Architecture alignment verification
+   
+   ## Architecture Overview
+   - High-level component diagram
+   - Core components list
+   
+   ## Database Schema Extensions
+   - New tables and indexes required
+   
+   ## Story Implementation Specifications
+   ### [Story-ID]: [Story Title]
+   - Subtask breakdown with complexity estimates (Fibonacci: 1,2,3,5,8)
+   - TypeScript interfaces and class structures
+   - Implementation details and patterns
+   
+   ## Error Handling Strategy
+   ## Testing Strategy
+   ## Performance Considerations
+   ## Security Considerations
+   ## Success Criteria
+   ```
+
+4. **Story Decomposition Guidelines**
+   - Break each Story into **specific subtasks** (1-5 points each)
+   - Provide **TypeScript interfaces** for new components
+   - Define **database changes** and migration requirements
+   - Include **testing requirements** and acceptance criteria
+   - Estimate complexity using **Fibonacci scale** (1,2,3,5,8,13)
+
+#### Implementation Workflow
+
+1. **Branch Creation**
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b feat/[linear-id]-[short-name]
+   ```
+
+2. **Technical Design Review**
+   - Create PR for technical design document
+   - Review with team for architecture alignment
+   - Update based on feedback before implementation
+
+3. **Development Execution**
+   - Follow subtask breakdown from technical design
+   - Implement in Story priority order
+   - Update Linear Issues with progress
+
+#### Naming Conventions
+
+- **File names**: `[LINEAR-ID]-[short-descriptive-name].md`
+  - Example: `SPI-290-mcp-resource-integration.md`
+- **Branch names**: `feat/[linear-id]-[short-name]`
+  - Example: `feat/spi-290-mcp-resource-integration`
+- **PR titles**: `feat: [Epic title] - Technical Design`
+  - Example: `feat: MCP Resource Integration - Technical Design`
+
+#### Architecture Alignment Checklist
+
+- [ ] Follows "Context Provision Over Automation" principle
+- [ ] Respects LIMITATIONS.md scope boundaries
+- [ ] Implements MCP_RESOURCES.md patterns correctly  
+- [ ] Supports USER_EXPERIENCE.md workflow requirements
+- [ ] Uses existing database schema patterns
+- [ ] Maintains TypeScript strict mode compatibility
+
 ## Configuration
 
 ### Basic Configuration
@@ -382,46 +481,30 @@ npm run db:migrate
 #### Memory usage
 
 - Monitor with `node --inspect`
-- Check for memory leaks in task coordination
-- Verify proper cleanup in providers
+- Check for memory leaks in SQLite operations
+- Verify proper cleanup in MCP server resources
 
 ## Advanced Topics
 
-### Task Coordination with Claude Code Agents
+### MCP Server Extension
 
 ```typescript
-import { TaskCoordinator } from '@/core/task-coordinator';
-
-// Coordinate work through Claude Code's built-in agents
-const coordinator = new TaskCoordinator();
-await coordinator.delegateTask('developer', {
-  description: 'Implement user authentication',
-  context: projectContext,
-  requirements: taskRequirements,
-});
+// Extend MCP server with custom resources and tools
+// See docs/technical-design/ for implementation guidance
 ```
 
-### Custom Providers
+### SQLite Performance Optimization
 
 ```typescript
-import { BaseProvider } from '@/providers/base';
-
-export class CustomProvider extends BaseProvider {
-  async connect(): Promise<Result<void>> {
-    // Custom provider implementation
-  }
-}
+// Optimize SQLite queries for better performance
+// Use indexes and prepared statements for frequent operations
 ```
 
-### MCP Integration
+### Custom Development Workflows
 
 ```typescript
-import { MCPServer } from '@/mcp/server';
-
-// Extend MCP server with custom tools
-server.addTool('custom-tool', async params => {
-  // Custom tool implementation
-});
+// Integrate with existing development tooling
+// Follow technical design documentation patterns
 ```
 
 ## Resources
