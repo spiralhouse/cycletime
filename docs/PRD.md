@@ -14,11 +14,13 @@
 
 ## Executive Summary
 
-**JCVD** is a data and context provider designed specifically for the Claude Code ecosystem, providing structured project information that enhances Claude Code's existing capabilities with cross-session continuity and intelligent task recommendations. Building on Claude Code's proven agent capabilities and
-natural language workflow, JCVD creates and manages ALL artifacts required to
-execute a software project from inception to deployment, including
-specifications, architecture documentation, issue tracking and management, and
-repository setup.
+**JCVD** is a data and context provider designed specifically for the Claude
+Code ecosystem, providing structured project information that enhances Claude
+Code's existing capabilities with cross-session continuity and intelligent task
+recommendations. Building on Claude Code's proven agent capabilities and natural
+language workflow, JCVD creates and manages ALL artifacts required to execute a
+software project from inception to deployment, including specifications,
+architecture documentation, issue tracking and management, and repository setup.
 
 Targeting the growing community of solo developers and freelancers who rely on
 Claude Code for productivity, JCVD addresses the specific challenges these users
@@ -34,8 +36,11 @@ ensuring structured progression from high-level design through proof-of-concept
 delivery, all while preserving Claude Code's familiar agent-based interaction
 model.
 
-**Primary Value Proposition:** Enhance Claude Code with structured project data, dependency tracking, and cross-session continuity through embedded database persistence and MCP Resource integration, enabling solo developers and freelancers to maintain project context while preserving Claude Code's natural development
-experience.
+**Primary Value Proposition:** Enhance Claude Code with structured project data,
+dependency tracking, and cross-session continuity through embedded database
+persistence and MCP Resource integration, enabling solo developers and
+freelancers to maintain project context while preserving Claude Code's natural
+development experience.
 
 **Supporting Benefits:**
 
@@ -595,4 +600,6 @@ limitations, see [ONBOARDING.md](ONBOARDING.md).
 - Clear integration pathways that preserve team velocity
 - Simple validation and recommendation system
 
-This approach provides JCVD as a data and context provider that enhances Claude Code's existing capabilities with structured project information, cross-session continuity, and intelligent task recommendations.
+This approach provides JCVD as a data and context provider that enhances Claude
+Code's existing capabilities with structured project information, cross-session
+continuity, and intelligent task recommendations.
