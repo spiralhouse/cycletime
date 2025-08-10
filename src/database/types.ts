@@ -4,9 +4,9 @@
  */
 
 /**
- * Session state record for maintaining data across Claude Code sessions
+ * Database session state record for maintaining data across Claude Code sessions
  */
-export interface SessionState {
+export interface SessionStateData {
   id: string;
   session_key: string;
   project_id?: string;

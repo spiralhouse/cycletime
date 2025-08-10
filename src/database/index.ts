@@ -7,7 +7,7 @@ export { migrations } from './migrations.js';
 export type { Migration } from './migrations.js';
 export { MigrationRunner } from './migration-runner.js';
 export type {
-  SessionState,
+  SessionStateData,
   CreateSessionState,
   UpdateSessionState,
   ResourceMetadata,
