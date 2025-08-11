@@ -57,8 +57,6 @@ Database Migrations:
 - Run migrations: `npm run migrate` (CLI runner with status tracking)
 - Create new migrations: Follow `NNN_description_with_underscores.sql` pattern
 - Test database changes with rollback validation before committing
-- Reference `/Users/jburbridge/Projects/jcvd/docs/DATABASE_MIGRATION_GUIDE.md`
-  for templates
 
 Workflow Integration:
 

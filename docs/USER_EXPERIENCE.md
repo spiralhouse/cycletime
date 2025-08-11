@@ -453,6 +453,190 @@ that cover all the user authentication requirements from your PRD."
 
 ## Cross-Session Continuity
 
+### Session Lifecycle Management
+
+JCVD automatically manages session state across Claude Code interactions with intelligent validation and persistence:
+
+#### Session Creation
+```
+User: "Start working on my project"
+
+Claude: [JCVD creates new session with unique SessionKey]
+"I've initialized a new development session for your project.
+
+Session Details:
+- Session ID: abc-123-def-456
+- Project: DevLog
+- Created: 2025-01-15 10:00 AM
+- Expires: 2025-01-22 10:00 AM (7 days)
+- Status: Active
+
+Your session will persist across Claude Code restarts and maintain:
+- Active issues you're working on
+- Current workflow stage
+- Project context and decisions
+- Recent actions and progress"
+```
+
+#### Session Recovery with Validation
+```
+User: [Starts new Claude Code session after a break]
+"Continue with my project work"
+
+Claude: [JCVD retrieves and validates existing session]
+"Welcome back! I've restored your development session.
+
+Session Status:
+- Session Age: 2 days, 4 hours
+- Last Activity: 2 hours ago
+- Session Health: ✅ Valid (auto-repaired minor timestamp issue)
+- Time Remaining: 4 days, 20 hours
+
+Context Restored:
+- Active Issues: PROJ-15 (User Authentication)
+- Workflow Stage: Implementation
+- Last Action: Completed unit tests for User model
+- Issues Accessed: 5 in this session
+
+Ready to continue where you left off?"
+```
+
+#### Session Expiration Handling
+```
+User: [Returns after 8 days]
+"Continue working on the project"
+
+Claude: [JCVD detects expired session]
+"Your previous session has expired (older than 7 days).
+
+Previous Session Summary:
+- Duration: 7 days
+- Issues Completed: 3
+- Total Active Time: 12 hours
+- Last Known State: Working on PROJ-15
+
+I'll create a fresh session and help you resume from your last known progress.
+
+[Creates new session and loads project state]
+
+New session initialized. Based on your git history and issue tracker:
+- PROJ-15 was completed 
+- Next recommended: PROJ-16 'API Endpoints'
+
+Shall we continue with the API implementation?"
+```
+
+#### Session Metadata Tracking
+```
+User: "Show me my session information"
+
+Claude: [JCVD provides detailed session metadata]
+"Current Session Information:
+
+Session Details:
+- Key: abc-123-def-456
+- Project: DevLog
+- Created: 2025-01-15 10:00 AM
+- Last Activity: 5 minutes ago
+
+Session Metrics:
+- Update Count: 47 (context updates)
+- Total Active Time: 6 hours, 30 minutes
+- Issues Accessed: [PROJ-12, PROJ-15, PROJ-16]
+- Workflow Transitions: 8
+
+Session Context:
+- Active Issues: ['PROJ-16', 'PROJ-17']
+- Current Stage: 'implementation'
+- Last Action: 'Updated API endpoint tests'
+- Custom Context: {
+    'preferredTestFramework': 'jest',
+    'apiVersion': 'v2',
+    'deploymentTarget': 'staging'
+  }
+
+Session Health:
+- Validation Status: ✅ Valid
+- Data Integrity: 100%
+- Expires In: 5 days, 14 hours"
+```
+
+#### Session Corruption Recovery
+```
+User: "Continue with development"
+
+Claude: [JCVD detects and repairs corrupted session]
+"I detected some issues with your session data and automatically repaired them:
+
+Repairs Applied:
+- ✅ Removed duplicate issue IDs from active list
+- ✅ Fixed timestamp inconsistency (updatedAt was before createdAt)
+- ✅ Sanitized context data (removed null bytes)
+- ✅ Restored valid workflow stage
+
+Your session is now healthy and we can continue. Your current context shows
+you were working on PROJ-16 'API Endpoints' in the implementation stage."
+```
+
+#### Manual Session Management
+```
+User: "Clear my current session and start fresh"
+
+Claude: [JCVD provides session control]
+"I'll clear your current session and create a fresh one.
+
+Closing Session Summary:
+- Duration: 3 days, 8 hours
+- Issues Completed: 2
+- Total Active Time: 8 hours
+- Final State: PROJ-16 in progress
+
+[Session cleared]
+
+Fresh session created. Would you like to:
+1. Continue from where you left off (PROJ-16)
+2. Start a different task
+3. Review project status first"
+```
+
+### Automatic Session Cleanup
+
+JCVD performs hourly background cleanup to maintain system health:
+
+```
+System: [Background cleanup process runs]
+
+Cleanup Report (Automatic):
+- Expired Sessions Removed: 3
+- Orphaned Sessions Cleaned: 1 (no associated project)
+- Corrupted Sessions Purged: 0
+- Active Sessions Maintained: 2
+
+Next cleanup scheduled: 1 hour
+```
+
+### Session Configuration
+
+Sessions can be configured per project needs:
+
+```
+User: "Configure longer session timeout for this project"
+
+Claude: [JCVD adjusts session configuration]
+"I've updated the session configuration for your project:
+
+Session Configuration:
+- Max Age: 14 days (increased from 7)
+- Auto-Cleanup: Enabled
+- Cleanup Interval: Every hour
+- Max Sessions per Project: Unlimited
+- Validation: Strict mode enabled
+
+These settings will apply to all future sessions for this project."
+```
+
+## Cross-Session Continuity
+
 ```
 User: [Starts new Claude Code session]
 "Continue with my project work"

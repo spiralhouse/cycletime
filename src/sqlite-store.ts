@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto';
 
 import Database from 'better-sqlite3';
 
+import { MigrationRunner, migrations } from './database/index.js';
+
 export interface Project {
   id: string;
   name: string;
@@ -27,13 +29,22 @@ export interface Issue {
 
 export class SqliteStore {
   private db: Database.Database;
+  private migrationRunner: MigrationRunner;
 
   constructor(dbPath: string = 'jcvd.db') {
     this.db = new Database(dbPath);
-    this.initializeDatabase();
+    this.migrationRunner = new MigrationRunner(this.db);
+    // Initialize database asynchronously - migrations will run on first access
+    this.initializeDatabase().catch(error => {
+      console.error('Failed to initialize database:', error);
+      throw error;
+    });
   }
 
-  private initializeDatabase(): void {
+  private async initializeDatabase(): Promise<void> {
+    // Run database migrations first to ensure cross-session state tables exist
+    await this.migrationRunner.runMigrations(migrations);
+
     // Create projects table
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS projects (

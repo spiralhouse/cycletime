@@ -17,5 +17,9 @@ export type { Project, Issue, ProjectContext, JCVDConfig } from './jcvd-simple.j
 export { SqliteStore } from './sqlite-store.js';
 export { JcvdMcpServer } from './mcp-server.js';
 
+// Database and session management exports
+export * from './database/index.js';
+export * from './mcp/session/index.js';
+
 // Default export is the main JCVD class
 export { default } from './jcvd-simple.js';

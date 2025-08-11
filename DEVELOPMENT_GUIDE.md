@@ -259,7 +259,8 @@ logger.error('Operation failed', { error, context: 'value' });
 
 ### Creating Technical Designs
 
-Before implementing complex features (Epics with multiple Stories), create comprehensive technical design documents to guide development.
+Before implementing complex features (Epics with multiple Stories), create
+comprehensive technical design documents to guide development.
 
 #### When to Create Technical Designs
 
@@ -278,6 +279,7 @@ Before implementing complex features (Epics with multiple Stories), create compr
    - Consider user workflows from `docs/USER_EXPERIENCE.md`
 
 2. **Create Design Document**
+
    ```bash
    # Create new technical design document
    # Format: docs/technical-design/[LINEAR-ID]-[short-name].md
@@ -285,30 +287,40 @@ Before implementing complex features (Epics with multiple Stories), create compr
    ```
 
 3. **Document Structure Template**
+
    ```markdown
    # Technical Design: [Linear-ID] [Epic Title]
-   
+
    ## Overview
+
    - Epic summary and design principles
    - Architecture alignment verification
-   
+
    ## Architecture Overview
+
    - High-level component diagram
    - Core components list
-   
+
    ## Database Schema Extensions
+
    - New tables and indexes required
-   
+
    ## Story Implementation Specifications
+
    ### [Story-ID]: [Story Title]
+
    - Subtask breakdown with complexity estimates (Fibonacci: 1,2,3,5,8)
    - TypeScript interfaces and class structures
    - Implementation details and patterns
-   
+
    ## Error Handling Strategy
+
    ## Testing Strategy
+
    ## Performance Considerations
+
    ## Security Considerations
+
    ## Success Criteria
    ```
 
@@ -322,6 +334,7 @@ Before implementing complex features (Epics with multiple Stories), create compr
 #### Implementation Workflow
 
 1. **Branch Creation**
+
    ```bash
    git checkout main
    git pull origin main
@@ -351,7 +364,7 @@ Before implementing complex features (Epics with multiple Stories), create compr
 
 - [ ] Follows "Context Provision Over Automation" principle
 - [ ] Respects LIMITATIONS.md scope boundaries
-- [ ] Implements MCP_RESOURCES.md patterns correctly  
+- [ ] Implements MCP_RESOURCES.md patterns correctly
 - [ ] Supports USER_EXPERIENCE.md workflow requirements
 - [ ] Uses existing database schema patterns
 - [ ] Maintains TypeScript strict mode compatibility
