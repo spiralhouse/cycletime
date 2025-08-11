@@ -44,76 +44,183 @@ database and MCP Resource integration.
 - Manual workflows with context support rather than automated orchestration
 - Human-driven decisions supported by structured data access
 
-## Simplified Storage Architecture
+## Domain-Driven Design Architecture
 
-### SQLite-First Approach
+### Layered Architecture Approach
 
-JCVD starts with embedded SQLite and adds providers incrementally based on
-proven need:
+JCVD follows **Domain-Driven Design** and **Hexagonal Architecture** principles with clear separation of concerns:
 
 ```typescript
-interface IssueProvider {
-  // Basic CRUD operations
-  createIssue(config: IssueConfig): Promise<Issue>;
-  getIssue(id: string): Promise<Issue>;
-  updateIssue(id: string, updates: Partial<Issue>): Promise<Issue>;
-  listIssues(filters: IssueFilters): Promise<Issue[]>;
+// Domain Layer - Core business logic (no external dependencies)
+export interface ProjectRepository {
+  findById(id: ProjectId): Promise<Project | null>;
+  findByStatus(status: ProjectStatus): Promise<Project[]>;
+  save(project: Project): Promise<void>;
+  delete(id: ProjectId): Promise<void>;
+}
 
-  // Simple dependency tracking
-  addDependency(blockerId: string, blockedId: string): Promise<void>;
-  removeDependency(blockerId: string, blockedId: string): Promise<void>;
-  getDependencies(issueId: string): Promise<string[]>;
+export interface IssueRepository {
+  findById(id: IssueId): Promise<Issue | null>;
+  findByProject(projectId: ProjectId): Promise<Issue[]>;
+  save(issue: Issue): Promise<void>;
+  delete(id: IssueId): Promise<void>;
+}
 
-  // Basic project operations
-  createProject(name: string): Promise<Project>;
-  getProject(id: string): Promise<Project>;
+// Application Layer - Use case orchestration
+export class ProjectApplicationService {
+  constructor(
+    private projectRepo: ProjectRepository,
+    private issueRepo: IssueRepository,
+    private unitOfWork: UnitOfWork,
+    private domainService: ProjectDomainService
+  ) {}
 
-  // Data export for provider switching
-  exportData(projectId: string): Promise<ExportData>;
-  importData(data: ExportData): Promise<void>;
+  async createProject(command: CreateProjectCommand): Promise<Project>;
+  async archiveProject(projectId: ProjectId): Promise<void>;
+  async createIssue(command: CreateIssueCommand): Promise<Issue>;
+}
+
+// Infrastructure Layer - Technical implementations
+export class SqliteProjectRepository implements ProjectRepository {
+  constructor(private db: Database.Database) {}
+  // SQLite-specific implementation
+}
+
+// MCP Layer - Claude Code integration
+export class ProjectResource extends BaseResource {
+  constructor(private projectService: ProjectApplicationService) {}
+  // MCP Resource implementation
 }
 ```
 
-### Unified Data Model
+### Domain Model Design
 
-All providers implement a consistent data model based on standard issue tracking
-patterns:
+JCVD implements rich domain entities with business logic and value objects for type safety:
 
 ```typescript
-interface Issue {
+// Domain Entities - Rich business logic
+export class Project {
+  constructor(
+    public readonly id: ProjectId,
+    private _name: string,
+    private _status: ProjectStatus,
+    private _issues: Issue[] = []
+  ) {}
+
+  get name(): string { return this._name; }
+  get status(): ProjectStatus { return this._status; }
+
+  addIssue(title: string, description: string): Issue {
+    // Business rule enforcement
+    if (this._status === ProjectStatus.ARCHIVED) {
+      throw new DomainError('Cannot add issues to archived project');
+    }
+
+    const issue = new Issue(
+      IssueId.generate(),
+      this.id,
+      new IssueTitle(title),
+      description
+    );
+
+    this._issues.push(issue);
+    return issue;
+  }
+
+  archive(): void {
+    if (this._issues.some(issue => !issue.isCompleted)) {
+      throw new DomainError('Cannot archive project with incomplete issues');
+    }
+    this._status = ProjectStatus.ARCHIVED;
+  }
+}
+
+export class Issue {
+  constructor(
+    public readonly id: IssueId,
+    public readonly projectId: ProjectId,
+    private _title: IssueTitle,
+    private _description: string,
+    private _status: IssueStatus = IssueStatus.TODO,
+    private _priority: IssuePriority = IssuePriority.MEDIUM,
+    private _estimate?: EstimatePoints
+  ) {}
+
+  get title(): IssueTitle { return this._title; }
+  get status(): IssueStatus { return this._status; }
+  get isCompleted(): boolean { return this._status.isCompleted; }
+
+  updateStatus(newStatus: IssueStatus): void {
+    // Business logic for status transitions
+    if (!this._status.canTransitionTo(newStatus)) {
+      throw new DomainError(`Cannot transition from ${this._status} to ${newStatus}`);
+    }
+    this._status = newStatus;
+  }
+}
+
+// Value Objects - Type safety and validation
+export class ProjectId {
+  constructor(public readonly value: string) {
+    if (!value || value.length < 1) {
+      throw new Error('ProjectId cannot be empty');
+    }
+  }
+}
+
+export class IssueTitle {
+  constructor(public readonly value: string) {
+    if (!value || value.trim().length < 1) {
+      throw new Error('Issue title cannot be empty');
+    }
+    if (value.length > 255) {
+      throw new Error('Issue title too long');
+    }
+  }
+}
+
+export class ProjectStatus {
+  private constructor(private readonly status: string) {}
+  
+  static readonly ACTIVE = new ProjectStatus('active');
+  static readonly ARCHIVED = new ProjectStatus('archived');
+  static readonly COMPLETED = new ProjectStatus('completed');
+  
+  static fromString(status: string): ProjectStatus {
+    switch (status) {
+      case 'active': return ProjectStatus.ACTIVE;
+      case 'archived': return ProjectStatus.ARCHIVED;
+      case 'completed': return ProjectStatus.COMPLETED;
+      default: throw new Error(`Unknown project status: ${status}`);
+    }
+  }
+  
+  toString(): string { return this.status; }
+}
+
+// Data Transfer Objects - Infrastructure layer
+export interface ProjectData {
   id: string;
-  projectId: string;
-  parentId?: string; // Epic → Story → Subtask hierarchy
+  name: string;
+  description: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IssueData {
+  id: string;
+  project_id: string;
+  parent_id?: string;
   title: string;
   description?: string;
-  stateId: string; // Workflow state identifier
-  priority: number; // 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low
-  estimate?: number; // Story points (Fibonacci scale)
-  issueType: 'epic' | 'story' | 'subtask';
-  assigneeId?: string;
-  labels: string[];
-  dependencies: Dependency[];
-  createdAt: Date;
-  updatedAt: Date;
-
-  // Provider-specific extensions
-  providerMetadata?: Record<string, any>;
-}
-
-interface Dependency {
-  id: string;
-  blockerId: string; // Issue that must complete first
-  blockedId: string; // Issue that waits for blocker
-  dependencyType: 'blocks' | 'related' | 'duplicate';
-  createdAt: Date;
-}
-
-interface WorkflowState {
-  id: string;
-  name: string; // 'Backlog', 'Todo', 'In Progress', 'Done'
-  type: 'backlog' | 'unstarted' | 'started' | 'completed' | 'canceled';
-  position: number; // Display order
-  color: string; // UI color representation
+  status: string;
+  priority: string;
+  estimate?: number;
+  issue_type: 'epic' | 'story' | 'subtask';
+  assignee_id?: string;
+  created_at: string;
+  updated_at: string;
 }
 ```
 
@@ -262,82 +369,211 @@ interface ExportData {
 }
 ```
 
-## Core System Components
+## Layered Architecture Components
 
-### 1. Inception Engine
+### 1. Domain Layer
 
-**Purpose**: Orchestrates project creation from requirements gathering through
-initial structure setup.
+**Purpose**: Contains core business logic, entities, and domain services with no external dependencies.
 
-**Key Responsibilities:**
+**Key Components:**
 
-- Interactive requirements gathering through structured interviews
-- PRD validation and enhancement for user-provided requirements
-- Project type detection and appropriate scaffolding generation
-- Provider-agnostic project initialization and issue structure creation
+- **Entities**: `Project`, `Issue` with rich business logic and invariants
+- **Value Objects**: `ProjectId`, `ProjectStatus`, `IssueTitle` for type safety  
+- **Repository Interfaces**: `ProjectRepository`, `IssueRepository` as ports
+- **Domain Services**: Complex business logic spanning multiple entities
 
-**Implementation Pattern:**
+**Domain Entity Example:**
 
 ```typescript
-class InceptionEngine {
-  async conductRequirementsInterview(
-    context: InterviewContext
-  ): Promise<PRDData>;
-  async validatePRD(prd: PRDData): Promise<ValidationResult>;
-  async generateProjectStructure(prd: PRDData): Promise<ProjectStructure>;
-  async initializeIssueTracking(
-    structure: ProjectStructure,
-    provider: IssueProvider
-  ): Promise<Project>;
+export class Project {
+  constructor(
+    public readonly id: ProjectId,
+    private _name: string,
+    private _status: ProjectStatus,
+    private _issues: Issue[] = []
+  ) {}
+
+  addIssue(title: string, description: string): Issue {
+    // Business rule enforcement at domain level
+    if (this._status === ProjectStatus.ARCHIVED) {
+      throw new DomainError('Cannot add issues to archived project');
+    }
+
+    const issue = new Issue(
+      IssueId.generate(),
+      this.id,
+      new IssueTitle(title),
+      description
+    );
+
+    this._issues.push(issue);
+    return issue;
+  }
+
+  getUnblockedIssues(): Issue[] {
+    return this._issues.filter(issue => issue.hasNoBlockingDependencies());
+  }
 }
 ```
 
-### 2. Context Provision Engine
+### 2. Application Layer
 
-**Purpose**: Provides structured project data and context to Claude Code agents
-through MCP Resources.
+**Purpose**: Orchestrates use cases and coordinates between domain and infrastructure layers.
 
-**Key Responsibilities:**
+**Key Components:**
 
-- Simple dependency graph traversal to identify unblocked tasks
-- Structured data queries for project state and issue relationships
-- MCP Resource generation for Claude Code context provision
-- Cross-session project data persistence and recovery
+- **Application Services**: `ProjectApplicationService` - use case orchestration
+- **Commands**: `CreateProjectCommand`, `CreateIssueCommand` - input contracts
+- **Unit of Work**: Transaction coordination across repositories
+- **Domain Event Handlers**: Cross-aggregate coordination
 
-**Core Operations:**
+**Application Service Example:**
 
 ```typescript
-class ContextProvisionEngine {
-  // Provide project context for Claude Code analysis
-  async getProjectContext(projectId: string): Promise<ProjectContext> {
-    const project = await this.provider.getProject(projectId);
-    const issues = await this.provider.listIssues({ projectId });
-    const unblocked = this.findUnblockedTasks(issues);
+export class ProjectApplicationService {
+  constructor(
+    private projectRepo: ProjectRepository,
+    private issueRepo: IssueRepository,
+    private unitOfWork: UnitOfWork,
+    private domainService: ProjectDomainService
+  ) {}
 
-    return {
-      project,
-      totalIssues: issues.length,
-      unblockedTasks: unblocked,
-      dependencyGraph: this.buildSimpleGraph(issues),
-    };
-  }
+  async createIssue(command: CreateIssueCommand): Promise<Issue> {
+    return this.unitOfWork.execute(async () => {
+      // Load aggregate
+      const project = await this.projectRepo.findById(command.projectId);
+      if (!project) {
+        throw new NotFoundError(`Project ${command.projectId.value} not found`);
+      }
 
-  // Simple dependency traversal - no complex analysis
-  findUnblockedTasks(issues: Issue[]): Issue[] {
-    return issues.filter(issue => {
-      const dependencies = issue.dependencies || [];
-      return dependencies.every(dep => this.isCompleted(dep.blockerId));
+      // Domain logic through aggregate
+      const issue = project.addIssue(command.title.value, command.description);
+
+      // Persist changes
+      await this.projectRepo.save(project);
+      await this.issueRepo.save(issue);
+
+      return issue;
     });
   }
 
-  // Export project context as MCP Resource
-  async generateMCPResource(projectId: string): Promise<MCPResource> {
-    const context = await this.getProjectContext(projectId);
+  async getProjectContext(projectId: ProjectId): Promise<ProjectContext> {
+    const project = await this.projectRepo.findById(projectId);
+    if (!project) return null;
+
+    const issues = await this.issueRepo.findByProject(projectId);
+    const unblockedIssues = project.getUnblockedIssues();
+
+    return new ProjectContext(project, issues, unblockedIssues);
+  }
+}
+```
+
+### 3. Infrastructure Layer
+
+**Purpose**: Provides technical implementations of domain interfaces and external system integrations.
+
+**Key Components:**
+
+- **Repository Implementations**: `SqliteProjectRepository`, `SqliteIssueRepository`
+- **Unit of Work Implementation**: `SqliteUnitOfWork` for transaction management
+- **Database Migrations**: `MigrationRunner` for schema evolution
+- **External Integrations**: Linear API, GitHub API adapters
+
+**Repository Implementation Example:**
+
+```typescript
+export class SqliteProjectRepository implements ProjectRepository {
+  constructor(private db: Database.Database) {}
+
+  async findById(id: ProjectId): Promise<Project | null> {
+    const stmt = this.db.prepare('SELECT * FROM projects WHERE id = ?');
+    const row = stmt.get(id.value) as ProjectData | undefined;
+    
+    return row ? this.toDomainEntity(row) : null;
+  }
+
+  async save(project: Project): Promise<void> {
+    const data = this.toDataModel(project);
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO projects (id, name, description, status, updated_at)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    stmt.run(data.id, data.name, data.description, data.status, data.updated_at);
+  }
+
+  private toDomainEntity(data: ProjectData): Project {
+    return new Project(
+      new ProjectId(data.id),
+      data.name,
+      data.description,
+      ProjectStatus.fromString(data.status)
+    );
+  }
+
+  private toDataModel(project: Project): ProjectData {
     return {
-      uri: `jcvd://project/${projectId}/context`,
-      name: 'Project Context',
+      id: project.id.value,
+      name: project.name,
+      description: project.description,
+      status: project.status.toString(),
+      updated_at: new Date().toISOString()
+    };
+  }
+}
+```
+
+### 4. MCP Layer (Presentation/Interface)
+
+**Purpose**: Exposes domain functionality to Claude Code through Model Context Protocol.
+
+**Key Components:**
+
+- **Resource Registry**: Discovery and routing for MCP Resources
+- **Resource Implementations**: `ProjectResource`, `IssueResource` - read-only data access  
+- **Tool Registry**: MCP Tool discovery and validation
+- **Tool Implementations**: `CreateIssueTool`, `UpdateIssueTool` - write operations
+
+**MCP Resource Implementation:**
+
+```typescript
+export class ProjectResource extends BaseResource {
+  constructor(private projectService: ProjectApplicationService) {}
+
+  async read(uri: string): Promise<ResourceContent> {
+    const projectIdString = this.parseProjectUri(uri);
+    const projectId = new ProjectId(projectIdString);
+
+    // Use Application Service - no direct repository access
+    const project = await this.projectService.getProjectDetails(projectId);
+
+    if (!project) {
+      throw new ResourceNotFoundError(`Project ${projectId.value} not found`);
+    }
+
+    return {
+      uri,
       mimeType: 'application/json',
-      data: JSON.stringify(context),
+      text: JSON.stringify({
+        id: project.id.value,
+        name: project.name,
+        status: project.status.toString(),
+        issueCount: project.getActiveIssueCount(),
+        unblockedTasks: project.getUnblockedIssues().length
+      })
+    };
+  }
+
+  async list(): Promise<ResourceListResult> {
+    const projects = await this.projectService.listActiveProjects();
+    
+    return {
+      resources: projects.map(project => ({
+        uri: `project://${project.id.value}`,
+        name: project.name,
+        description: project.description || '',
+        mimeType: 'application/json'
+      }))
     };
   }
 }
