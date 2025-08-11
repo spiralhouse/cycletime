@@ -70,7 +70,7 @@ const issueData = await mcp.readResource('issue://def-456');
 }
 ```
 
-#### The Three Resource Types
+#### Resource Types
 
 1. **Project Resource** (`project://PROJECT_ID`)
    - **Purpose**: Expose project metadata, status, and basic information
@@ -87,6 +87,12 @@ const issueData = await mcp.readResource('issue://def-456');
    - **Purpose**: Expose workflow state and process information
    - **Data**: Current stage, available transitions, blocking conditions
    - **Usage**: Process context for Claude Code to understand development flow
+
+4. **Session Resource** (`session://SESSION_KEY`) *(Implemented in SPI-346)*
+   - **Purpose**: Expose session state and metadata for cross-session continuity
+   - **Data**: Session context, active issues, workflow stage, last activity, expiration
+   - **Usage**: Maintain development context across Claude Code sessions
+   - **Implementation**: Complete with SessionManager, SessionValidator, and persistence layer
 
 #### Key Benefits for JCVD
 
@@ -669,6 +675,74 @@ export class ProjectApplicationService {
    - **Error Handling**: Domain-specific exceptions with proper boundary
      translation
    - **Logging and Monitoring**: Structured logging across all layers
+
+### Session Resource Implementation (Completed in SPI-346)
+
+The Session Resource has been fully implemented as part of SPI-346, providing cross-session state persistence:
+
+```typescript
+export class SessionResource extends BaseResource {
+  constructor(
+    private sessionManager: SessionManager,
+    private sessionService: SessionApplicationService
+  ) {
+    super('session', 'Session state and metadata for cross-session continuity');
+  }
+
+  async read(uri: string): Promise<ResourceReadResult> {
+    const sessionKey = this.extractSessionKey(uri);
+    const sessionInfo = await this.sessionManager.getSessionInfo(sessionKey);
+    
+    if (!sessionInfo) {
+      throw new ResourceNotFoundError(uri);
+    }
+
+    return {
+      uri,
+      mimeType: 'application/json',
+      text: JSON.stringify({
+        sessionKey: sessionInfo.sessionKey,
+        projectId: sessionInfo.projectId,
+        context: sessionInfo.currentContext,
+        metadata: {
+          createdAt: sessionInfo.createdAt,
+          lastActivity: sessionInfo.lastActivity,
+          updateCount: sessionInfo.metadata.updateCount,
+          totalActiveTime: sessionInfo.metadata.totalActiveTime,
+          issuesAccessed: sessionInfo.metadata.issuesAccessed,
+          isExpired: sessionInfo.isExpired,
+          expiresAt: sessionInfo.expiresAt
+        }
+      })
+    };
+  }
+
+  async list(): Promise<ResourceListResult> {
+    const sessions = await this.sessionService.findActiveSessions();
+    
+    return {
+      resources: sessions.map(session => ({
+        uri: `session://${session.sessionKey}`,
+        name: `Session ${session.sessionKey.substring(0, 8)}...`,
+        description: `Project: ${session.projectId || 'None'}, Active: ${session.currentContext?.activeIssues?.length || 0} issues`,
+        mimeType: 'application/json'
+      }))
+    };
+  }
+}
+```
+
+**Integration with MCP Server:**
+
+```typescript
+// In MCP Server initialization
+const sessionResource = new SessionResource(sessionManager, sessionService);
+resourceRegistry.register(sessionResource);
+
+// Claude Code can now access session state
+const sessionData = await mcp.readResource('session://abc-123-def-456');
+const activeSessions = await mcp.listResources('session');
+```
 
 ## Database Schema Extensions
 
