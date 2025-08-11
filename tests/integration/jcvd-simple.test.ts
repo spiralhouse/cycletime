@@ -1,5 +1,6 @@
 import { mkdirSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
@@ -7,7 +8,7 @@ import { createJCVD } from '../../src/jcvd-simple.js';
 
 import type { JCVD } from '../../src/jcvd-simple.js';
 
-const TEST_PROJECT_PATH = join(process.cwd(), 'test-project');
+const TEST_PROJECT_PATH = join(tmpdir(), `jcvd-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
 describe('JCVD Simple', () => {
   let jcvd: JCVD;
