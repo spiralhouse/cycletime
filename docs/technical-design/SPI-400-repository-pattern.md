@@ -15,10 +15,10 @@ This document outlines the technical design for implementing SQLite repository i
 
 ### 2. Test-Driven Development Approach
 
-- Write integration tests first using in-memory SQLite databases
-- Test transaction rollback scenarios
-- Verify entity reconstitution accuracy
-- Mock repositories for unit testing application layer
+- Write **unit tests** first with mocked database to drive implementation
+- Mock Database and Statement objects from better-sqlite3
+- Test repository logic, mapping, and error handling in isolation
+- Integration tests come **after** implementation to verify actual database operations
 
 ### 3. Maintain Simplicity
 
@@ -764,7 +764,106 @@ export class RepositoryError extends Error {
 
 ## Testing Strategy
 
-### 1. Integration Tests
+### 1. Unit Tests (TDD - Write First)
+
+```typescript
+// tests/unit/sqlite-project-repository.unit.test.ts
+
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { SqliteProjectRepository } from '../../src/infrastructure/database/repositories/sqlite-project-repository.js';
+import { Project } from '../../src/domain/entities/project.js';
+import { ProjectId } from '../../src/domain/value-objects/project-id.js';
+
+describe('SqliteProjectRepository Unit Tests', () => {
+  let mockDb: any;
+  let mockStmt: any;
+  let repository: SqliteProjectRepository;
+
+  beforeEach(() => {
+    // Mock the database and prepared statements
+    mockStmt = {
+      get: vi.fn(),
+      run: vi.fn().mockReturnValue({ changes: 1 }),
+      all: vi.fn().mockReturnValue([])
+    };
+
+    mockDb = {
+      open: true,
+      prepare: vi.fn().mockReturnValue(mockStmt),
+      transaction: vi.fn((fn) => fn),
+      inTransaction: false
+    };
+
+    repository = new SqliteProjectRepository(mockDb);
+  });
+
+  describe('findById', () => {
+    it('should return null when project not found', async () => {
+      mockStmt.get.mockReturnValue(undefined);
+      
+      const result = await repository.findById(ProjectId.generate());
+      
+      expect(result).toBeNull();
+      expect(mockStmt.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('should reconstitute project from database row', async () => {
+      const projectId = ProjectId.generate();
+      const mockRow = {
+        id: projectId.value,
+        name: 'Test Project',
+        description: 'Description',
+        status: 'Planning',
+        created_at: Math.floor(Date.now() / 1000),
+        updated_at: Math.floor(Date.now() / 1000)
+      };
+      
+      mockStmt.get.mockReturnValue(mockRow);
+      mockStmt.all.mockReturnValue([]); // No issues
+      
+      const result = await repository.findById(projectId);
+      
+      expect(result).not.toBeNull();
+      expect(result!.name).toBe('Test Project');
+      expect(result!.description).toBe('Description');
+    });
+
+    it('should handle database errors', async () => {
+      mockStmt.get.mockImplementation(() => {
+        throw new Error('Database error');
+      });
+      
+      await expect(repository.findById(ProjectId.generate()))
+        .rejects.toThrow('Repository operation failed: find project by id');
+    });
+  });
+
+  describe('save', () => {
+    it('should insert new project', async () => {
+      const project = Project.create('New Project', 'Description');
+      const existsSpy = vi.spyOn(repository as any, 'exists').mockResolvedValue(false);
+      
+      await repository.save(project);
+      
+      expect(mockDb.prepare).toHaveBeenCalled();
+      expect(mockStmt.run).toHaveBeenCalled();
+      expect(existsSpy).toHaveBeenCalledWith(project.id);
+    });
+
+    it('should update existing project', async () => {
+      const project = Project.create('Existing Project', 'Description');
+      const existsSpy = vi.spyOn(repository as any, 'exists').mockResolvedValue(true);
+      
+      await repository.save(project);
+      
+      expect(existsSpy).toHaveBeenCalledWith(project.id);
+      expect(mockStmt.run).toHaveBeenCalled();
+    });
+  });
+});
+```
+
+### 2. Integration Tests (Write After Implementation)
 
 ```typescript
 // tests/integration/sqlite-project-repository.integration.test.ts
@@ -899,9 +998,9 @@ describe('SqliteProjectRepository Integration Tests', () => {
 });
 ```
 
-### 2. Test Patterns for Issue and Workflow Repositories
+### 3. Test Patterns for Issue and Workflow Repositories
 
-Similar integration test patterns should be implemented for:
+Similar unit and integration test patterns should be implemented for:
 - `SqliteIssueRepository`: Test hierarchy validation, dependencies, estimates
 - `SqliteWorkflowRepository`: Test stage transitions, JSON serialization
 
@@ -913,12 +1012,11 @@ Similar integration test patterns should be implemented for:
    - Run migration to create tables
 
 2. **Phase 2: Repository Implementation (TDD)**
-   - Write integration tests for SqliteProjectRepository
-   - Implement SqliteProjectRepository
-   - Write integration tests for SqliteIssueRepository
-   - Implement SqliteIssueRepository
-   - Write integration tests for SqliteWorkflowRepository
-   - Implement SqliteWorkflowRepository
+   - Write **unit tests** for SqliteProjectRepository (with mocked database)
+   - Implement SqliteProjectRepository to pass unit tests
+   - Write **integration tests** to verify actual database operations
+   - Repeat for SqliteIssueRepository
+   - Repeat for SqliteWorkflowRepository
 
 3. **Phase 3: Integration Testing**
    - Test transaction scenarios
