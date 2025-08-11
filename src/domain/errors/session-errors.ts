@@ -54,3 +54,32 @@ export class SessionStorageError extends SessionError {
     super(`Session storage error during ${operation}`, cause);
   }
 }
+
+/**
+ * Error thrown when session data fails validation
+ */
+export class SessionValidationError extends SessionError {
+  readonly code = 'SESSION_VALIDATION_ERROR';
+  readonly validationErrors: Array<{ field: string; message: string }>;
+
+  constructor(
+    sessionKey: string,
+    validationErrors: Array<{ field: string; message: string }>,
+    cause?: Error
+  ) {
+    const errorMessages = validationErrors.map(e => `${e.field}: ${e.message}`).join(', ');
+    super(`Session '${sessionKey}' failed validation: ${errorMessages}`, cause);
+    this.validationErrors = validationErrors;
+  }
+}
+
+/**
+ * Error thrown when session data is corrupted beyond repair
+ */
+export class SessionCorruptionError extends SessionError {
+  readonly code = 'SESSION_CORRUPTION_ERROR';
+
+  constructor(sessionKey: string, details: string, cause?: Error) {
+    super(`Session '${sessionKey}' is corrupted: ${details}`, cause);
+  }
+}
