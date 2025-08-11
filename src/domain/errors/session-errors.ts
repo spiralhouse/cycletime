@@ -60,14 +60,15 @@ export class SessionStorageError extends SessionError {
  */
 export class SessionValidationError extends SessionError {
   readonly code = 'SESSION_VALIDATION_ERROR';
-  readonly validationErrors: Array<{ field: string; message: string }>;
+  readonly validationErrors: { field: string; message: string }[];
 
   constructor(
     sessionKey: string,
-    validationErrors: Array<{ field: string; message: string }>,
+    validationErrors: { field: string; message: string }[],
     cause?: Error
   ) {
     const errorMessages = validationErrors.map(e => `${e.field}: ${e.message}`).join(', ');
+
     super(`Session '${sessionKey}' failed validation: ${errorMessages}`, cause);
     this.validationErrors = validationErrors;
   }

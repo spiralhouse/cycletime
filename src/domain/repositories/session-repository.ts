@@ -39,6 +39,16 @@ export interface SessionRepository {
    * Count total number of sessions
    */
   count: () => Promise<number>;
+
+  /**
+   * Find all sessions
+   */
+  findAll: () => Promise<Session[]>;
+
+  /**
+   * Optimize storage (e.g., vacuum database)
+   */
+  optimizeStorage: () => Promise<void>;
 }
 
 /**

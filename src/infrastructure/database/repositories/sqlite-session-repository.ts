@@ -274,4 +274,37 @@ export class SqliteSessionRepository implements SessionRepository {
       throw new InvalidSessionDataError(`Failed to convert database row to Session: ${error}`);
     }
   }
+
+  /**
+   * Find all sessions
+   */
+  async findAll(): Promise<Session[]> {
+    const stmt = this.db.prepare(`
+      SELECT session_key, project_id, current_context, last_activity, created_at, updated_at
+      FROM session_states
+      ORDER BY last_activity DESC
+    `);
+
+    const rows = stmt.all() as any[];
+
+    return rows.map(row => this.rowToSession(row));
+  }
+
+  /**
+   * Optimize storage (vacuum database)
+   */
+  async optimizeStorage(): Promise<void> {
+    try {
+      // Run VACUUM to reclaim unused space
+      this.db.exec('VACUUM');
+      
+      // Analyze tables for query optimization
+      this.db.exec('ANALYZE');
+    } catch (error) {
+      throw new SessionStorageError(
+        'optimize storage',
+        error instanceof Error ? error : new Error('Failed to optimize database')
+      );
+    }
+  }
 }

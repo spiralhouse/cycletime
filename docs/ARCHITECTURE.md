@@ -48,7 +48,8 @@ database and MCP Resource integration.
 
 ### Layered Architecture Approach
 
-JCVD follows **Domain-Driven Design** and **Hexagonal Architecture** principles with clear separation of concerns:
+JCVD follows **Domain-Driven Design** and **Hexagonal Architecture** principles
+with clear separation of concerns:
 
 ```typescript
 // Domain Layer - Core business logic (no external dependencies)
@@ -95,7 +96,8 @@ export class ProjectResource extends BaseResource {
 
 ### Domain Model Design
 
-JCVD implements rich domain entities with business logic and value objects for type safety:
+JCVD implements rich domain entities with business logic and value objects for
+type safety:
 
 ```typescript
 // Domain Entities - Rich business logic
@@ -107,8 +109,12 @@ export class Project {
     private _issues: Issue[] = []
   ) {}
 
-  get name(): string { return this._name; }
-  get status(): ProjectStatus { return this._status; }
+  get name(): string {
+    return this._name;
+  }
+  get status(): ProjectStatus {
+    return this._status;
+  }
 
   addIssue(title: string, description: string): Issue {
     // Business rule enforcement
@@ -146,14 +152,22 @@ export class Issue {
     private _estimate?: EstimatePoints
   ) {}
 
-  get title(): IssueTitle { return this._title; }
-  get status(): IssueStatus { return this._status; }
-  get isCompleted(): boolean { return this._status.isCompleted; }
+  get title(): IssueTitle {
+    return this._title;
+  }
+  get status(): IssueStatus {
+    return this._status;
+  }
+  get isCompleted(): boolean {
+    return this._status.isCompleted;
+  }
 
   updateStatus(newStatus: IssueStatus): void {
     // Business logic for status transitions
     if (!this._status.canTransitionTo(newStatus)) {
-      throw new DomainError(`Cannot transition from ${this._status} to ${newStatus}`);
+      throw new DomainError(
+        `Cannot transition from ${this._status} to ${newStatus}`
+      );
     }
     this._status = newStatus;
   }
@@ -181,21 +195,27 @@ export class IssueTitle {
 
 export class ProjectStatus {
   private constructor(private readonly status: string) {}
-  
+
   static readonly ACTIVE = new ProjectStatus('active');
   static readonly ARCHIVED = new ProjectStatus('archived');
   static readonly COMPLETED = new ProjectStatus('completed');
-  
+
   static fromString(status: string): ProjectStatus {
     switch (status) {
-      case 'active': return ProjectStatus.ACTIVE;
-      case 'archived': return ProjectStatus.ARCHIVED;
-      case 'completed': return ProjectStatus.COMPLETED;
-      default: throw new Error(`Unknown project status: ${status}`);
+      case 'active':
+        return ProjectStatus.ACTIVE;
+      case 'archived':
+        return ProjectStatus.ARCHIVED;
+      case 'completed':
+        return ProjectStatus.COMPLETED;
+      default:
+        throw new Error(`Unknown project status: ${status}`);
     }
   }
-  
-  toString(): string { return this.status; }
+
+  toString(): string {
+    return this.status;
+  }
 }
 
 // Data Transfer Objects - Infrastructure layer
@@ -373,12 +393,13 @@ interface ExportData {
 
 ### 1. Domain Layer
 
-**Purpose**: Contains core business logic, entities, and domain services with no external dependencies.
+**Purpose**: Contains core business logic, entities, and domain services with no
+external dependencies.
 
 **Key Components:**
 
 - **Entities**: `Project`, `Issue` with rich business logic and invariants
-- **Value Objects**: `ProjectId`, `ProjectStatus`, `IssueTitle` for type safety  
+- **Value Objects**: `ProjectId`, `ProjectStatus`, `IssueTitle` for type safety
 - **Repository Interfaces**: `ProjectRepository`, `IssueRepository` as ports
 - **Domain Services**: Complex business logic spanning multiple entities
 
@@ -418,7 +439,8 @@ export class Project {
 
 ### 2. Application Layer
 
-**Purpose**: Orchestrates use cases and coordinates between domain and infrastructure layers.
+**Purpose**: Orchestrates use cases and coordinates between domain and
+infrastructure layers.
 
 **Key Components:**
 
@@ -471,11 +493,13 @@ export class ProjectApplicationService {
 
 ### 3. Infrastructure Layer
 
-**Purpose**: Provides technical implementations of domain interfaces and external system integrations.
+**Purpose**: Provides technical implementations of domain interfaces and
+external system integrations.
 
 **Key Components:**
 
-- **Repository Implementations**: `SqliteProjectRepository`, `SqliteIssueRepository`
+- **Repository Implementations**: `SqliteProjectRepository`,
+  `SqliteIssueRepository`
 - **Unit of Work Implementation**: `SqliteUnitOfWork` for transaction management
 - **Database Migrations**: `MigrationRunner` for schema evolution
 - **External Integrations**: Linear API, GitHub API adapters
@@ -489,7 +513,7 @@ export class SqliteProjectRepository implements ProjectRepository {
   async findById(id: ProjectId): Promise<Project | null> {
     const stmt = this.db.prepare('SELECT * FROM projects WHERE id = ?');
     const row = stmt.get(id.value) as ProjectData | undefined;
-    
+
     return row ? this.toDomainEntity(row) : null;
   }
 
@@ -499,7 +523,13 @@ export class SqliteProjectRepository implements ProjectRepository {
       INSERT OR REPLACE INTO projects (id, name, description, status, updated_at)
       VALUES (?, ?, ?, ?, ?)
     `);
-    stmt.run(data.id, data.name, data.description, data.status, data.updated_at);
+    stmt.run(
+      data.id,
+      data.name,
+      data.description,
+      data.status,
+      data.updated_at
+    );
   }
 
   private toDomainEntity(data: ProjectData): Project {
@@ -517,7 +547,7 @@ export class SqliteProjectRepository implements ProjectRepository {
       name: project.name,
       description: project.description,
       status: project.status.toString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
   }
 }
@@ -525,14 +555,17 @@ export class SqliteProjectRepository implements ProjectRepository {
 
 ### 4. MCP Layer (Presentation/Interface)
 
-**Purpose**: Exposes domain functionality to Claude Code through Model Context Protocol.
+**Purpose**: Exposes domain functionality to Claude Code through Model Context
+Protocol.
 
 **Key Components:**
 
 - **Resource Registry**: Discovery and routing for MCP Resources
-- **Resource Implementations**: `ProjectResource`, `IssueResource` - read-only data access  
+- **Resource Implementations**: `ProjectResource`, `IssueResource` - read-only
+  data access
 - **Tool Registry**: MCP Tool discovery and validation
-- **Tool Implementations**: `CreateIssueTool`, `UpdateIssueTool` - write operations
+- **Tool Implementations**: `CreateIssueTool`, `UpdateIssueTool` - write
+  operations
 
 **MCP Resource Implementation:**
 
@@ -559,21 +592,21 @@ export class ProjectResource extends BaseResource {
         name: project.name,
         status: project.status.toString(),
         issueCount: project.getActiveIssueCount(),
-        unblockedTasks: project.getUnblockedIssues().length
-      })
+        unblockedTasks: project.getUnblockedIssues().length,
+      }),
     };
   }
 
   async list(): Promise<ResourceListResult> {
     const projects = await this.projectService.listActiveProjects();
-    
+
     return {
       resources: projects.map(project => ({
         uri: `project://${project.id.value}`,
         name: project.name,
         description: project.description || '',
-        mimeType: 'application/json'
-      }))
+        mimeType: 'application/json',
+      })),
     };
   }
 }

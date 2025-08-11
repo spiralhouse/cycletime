@@ -1,6 +1,5 @@
-import { InvalidSessionDataError, SessionStorageError } from '../errors/session-errors.js';
-import type { SessionContext } from '../entities/session.js';
 import type { SessionStateDto } from '../../application/dtos/session-dto.js';
+import type { SessionContext } from '../entities/session.js';
 
 /**
  * Validation result for session state
@@ -91,34 +90,35 @@ export class SessionValidator {
 
     // Validate timestamps
     const timestampValidation = this.validateTimestamps(sessionDto);
-    if (!timestampValidation.isValid) {
-      errors.push(...timestampValidation.errors);
-      if (timestampValidation.repaired) {
-        repaired = { ...repaired, ...timestampValidation.repaired };
-      }
+
+    errors.push(...timestampValidation.errors);
+    if (timestampValidation.repaired) {
+      repaired = { ...repaired, ...timestampValidation.repaired };
     }
 
     // Validate context
     const contextValidation = this.validateContext(sessionDto.currentContext);
-    if (!contextValidation.isValid) {
-      errors.push(...contextValidation.errors);
-      warnings.push(...contextValidation.warnings);
-      if (contextValidation.repaired) {
-        repaired = { ...repaired, currentContext: contextValidation.repaired as SessionContext };
-      }
+
+    // Always collect errors and warnings
+    errors.push(...contextValidation.errors);
+    warnings.push(...contextValidation.warnings);
+    
+    if (contextValidation.repaired) {
+      repaired = { ...repaired, currentContext: contextValidation.repaired as SessionContext };
     }
 
     // Check for data corruption indicators
     const corruptionCheck = this.checkForCorruption(sessionDto);
+
     if (!corruptionCheck.isValid) {
       errors.push(...corruptionCheck.errors);
     }
 
     return {
-      isValid: errors.filter(e => e.severity === 'critical').length === 0,
+      isValid: errors.length === 0,
       errors,
       warnings,
-      repaired,
+      ...(repaired && { repaired }),
     };
   }
 
@@ -132,7 +132,8 @@ export class SessionValidator {
 
     // Session keys should be UUIDs or similar format
     // Format: alphanumeric with hyphens, 8-36 characters
-    const keyPattern = /^[a-zA-Z0-9-]{8,36}$/;
+    const keyPattern = /^[\dA-Za-z-]{8,36}$/;
+
     return keyPattern.test(key);
   }
 
@@ -148,19 +149,19 @@ export class SessionValidator {
     let repaired: Partial<SessionStateDto> | undefined;
 
     const now = new Date();
-    const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-    const oneYearFromNow = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+    const tenYearsAgo = new Date(now.getTime() - 10 * 365 * 24 * 60 * 60 * 1000);
 
     // Validate createdAt
     const createdAt = new Date(sessionDto.createdAt);
-    if (isNaN(createdAt.getTime())) {
+
+    if (Number.isNaN(createdAt.getTime())) {
       errors.push({
         field: 'createdAt',
         message: 'Invalid creation timestamp',
         value: sessionDto.createdAt,
         severity: 'critical',
       });
-    } else if (createdAt < oneYearAgo || createdAt > now) {
+    } else if (createdAt < tenYearsAgo || createdAt > now) {
       errors.push({
         field: 'createdAt',
         message: 'Creation timestamp is outside reasonable range',
@@ -171,7 +172,8 @@ export class SessionValidator {
 
     // Validate lastActivity
     const lastActivity = new Date(sessionDto.lastActivity);
-    if (isNaN(lastActivity.getTime())) {
+
+    if (Number.isNaN(lastActivity.getTime())) {
       errors.push({
         field: 'lastActivity',
         message: 'Invalid last activity timestamp',
@@ -189,7 +191,8 @@ export class SessionValidator {
 
     // Validate updatedAt
     const updatedAt = new Date(sessionDto.updatedAt);
-    if (isNaN(updatedAt.getTime())) {
+
+    if (Number.isNaN(updatedAt.getTime())) {
       errors.push({
         field: 'updatedAt',
         message: 'Invalid update timestamp',
@@ -199,7 +202,7 @@ export class SessionValidator {
     }
 
     // Check timestamp consistency
-    if (!isNaN(createdAt.getTime()) && !isNaN(lastActivity.getTime())) {
+    if (!Number.isNaN(createdAt.getTime()) && !Number.isNaN(lastActivity.getTime())) {
       if (lastActivity < createdAt) {
         // Attempt repair: set lastActivity to createdAt
         repaired = {
@@ -213,7 +216,7 @@ export class SessionValidator {
       }
     }
 
-    if (!isNaN(createdAt.getTime()) && !isNaN(updatedAt.getTime())) {
+    if (!Number.isNaN(createdAt.getTime()) && !Number.isNaN(updatedAt.getTime())) {
       if (updatedAt < createdAt) {
         // Attempt repair: set updatedAt to createdAt
         repaired = {
@@ -231,7 +234,7 @@ export class SessionValidator {
     return {
       isValid: errors.length === 0,
       errors,
-      repaired,
+      ...(repaired && { repaired }),
     };
   }
 
@@ -257,6 +260,7 @@ export class SessionValidator {
         value: context,
         severity: 'error',
       });
+
       return { isValid: false, errors, warnings, repaired };
     }
 
@@ -274,6 +278,7 @@ export class SessionValidator {
       } else {
         // Validate array contents
         const validIssues = context.activeIssues.filter(issue => typeof issue === 'string');
+
         if (validIssues.length !== context.activeIssues.length) {
           errors.push({
             field: 'currentContext.activeIssues',
@@ -285,13 +290,14 @@ export class SessionValidator {
 
         // Check for duplicates
         const uniqueIssues = [...new Set(validIssues)];
+
         if (uniqueIssues.length !== validIssues.length) {
           warnings.push({
             field: 'currentContext.activeIssues',
             message: 'Duplicate issues found',
             suggestion: 'Remove duplicate issue IDs',
           });
-          repaired = { ...repaired || context, activeIssues: uniqueIssues };
+          repaired = { ...(repaired ?? context), activeIssues: uniqueIssues };
         }
 
         // Check count limit
@@ -314,15 +320,23 @@ export class SessionValidator {
           value: context.workflowStage,
           severity: 'error',
         });
-        repaired = { ...repaired || context, workflowStage: undefined };
+        const { workflowStage: _workflowStage, ...restContext } = repaired ?? context;
+
+        repaired = restContext;
       } else if (context.workflowStage.length > this.rules.maxStringLength) {
         errors.push({
           field: 'currentContext.workflowStage',
           message: `Workflow stage too long (${context.workflowStage.length} > ${this.rules.maxStringLength})`,
           severity: 'error',
         });
-        repaired = { ...repaired || context, workflowStage: context.workflowStage.substring(0, this.rules.maxStringLength) };
-      } else if (this.rules.allowedWorkflowStages && !this.rules.allowedWorkflowStages.includes(context.workflowStage)) {
+        repaired = {
+          ...(repaired ?? context),
+          workflowStage: context.workflowStage.slice(0, Math.max(0, this.rules.maxStringLength)),
+        };
+      } else if (
+        this.rules.allowedWorkflowStages &&
+        !this.rules.allowedWorkflowStages.includes(context.workflowStage)
+      ) {
         warnings.push({
           field: 'currentContext.workflowStage',
           message: `Unknown workflow stage: ${context.workflowStage}`,
@@ -340,37 +354,51 @@ export class SessionValidator {
           value: context.lastAction,
           severity: 'error',
         });
-        repaired = { ...repaired || context, lastAction: undefined };
+        const { lastAction: _lastAction, ...restContext } = repaired ?? context;
+
+        repaired = restContext;
       } else if (context.lastAction.length > this.rules.maxStringLength) {
         errors.push({
           field: 'currentContext.lastAction',
           message: `Last action too long (${context.lastAction.length} > ${this.rules.maxStringLength})`,
           severity: 'error',
         });
-        repaired = { ...repaired || context, lastAction: context.lastAction.substring(0, this.rules.maxStringLength) };
+        repaired = {
+          ...(repaired ?? context),
+          lastAction: context.lastAction.slice(0, Math.max(0, this.rules.maxStringLength)),
+        };
       }
     }
 
     // Validate contextData
     if (context.contextData !== undefined) {
-      if (!context.contextData || typeof context.contextData !== 'object' || Array.isArray(context.contextData)) {
+      if (
+        !context.contextData ||
+        typeof context.contextData !== 'object' ||
+        Array.isArray(context.contextData)
+      ) {
         errors.push({
           field: 'currentContext.contextData',
           message: 'Context data must be a valid object',
           value: context.contextData,
           severity: 'error',
         });
-        repaired = { ...repaired || context, contextData: undefined };
+        const { contextData: _contextData, ...restContext } = repaired ?? context;
+
+        repaired = restContext;
       } else {
         // Check size
         const contextSize = JSON.stringify(context.contextData).length;
+
         if (contextSize > this.rules.maxContextSize) {
           errors.push({
             field: 'currentContext.contextData',
             message: `Context data too large (${contextSize} > ${this.rules.maxContextSize})`,
             severity: 'error',
           });
-          repaired = { ...repaired || context, contextData: undefined };
+          const { contextData: _contextData, ...restContext } = repaired ?? context;
+
+          repaired = restContext;
         }
       }
     }
@@ -379,7 +407,7 @@ export class SessionValidator {
       isValid: errors.length === 0,
       errors,
       warnings,
-      repaired,
+      ...(repaired && { repaired }),
     };
   }
 
@@ -408,6 +436,7 @@ export class SessionValidator {
           });
         }
         // Check for non-printable characters (except common whitespace)
+        // eslint-disable-next-line no-control-regex
         if (/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(value)) {
           errors.push({
             field,
@@ -427,7 +456,10 @@ export class SessionValidator {
   /**
    * Detect conflicts between sessions
    */
-  detectConflicts(session1: SessionStateDto, session2: SessionStateDto): {
+  detectConflicts(
+    session1: SessionStateDto,
+    session2: SessionStateDto
+  ): {
     hasConflicts: boolean;
     conflicts: ConflictDetail[];
   } {
@@ -515,7 +547,15 @@ export class SessionValidator {
 
     // Apply automatic repairs from validation
     if (validation.repaired) {
-      repaired = { ...repaired, ...validation.repaired };
+      // Handle currentContext separately if it exists in the repaired data
+      const { currentContext: repairedContext, ...otherRepairs } = validation.repaired;
+      
+      repaired = {
+        ...repaired,
+        ...otherRepairs,
+        // Only apply repaired context if it exists
+        ...(repairedContext && { currentContext: repairedContext })
+      };
       repairs.push('Applied automatic repairs from validation');
     }
 
@@ -531,13 +571,19 @@ export class SessionValidator {
             };
 
           case 'createdAt':
+
+          // eslint-disable-next-line no-fallthrough
           case 'lastActivity':
-          case 'updatedAt':
+
+          // eslint-disable-next-line no-fallthrough
+          case 'updatedAt': {
             // Set to current time if timestamp is invalid
             const now = new Date();
+
             repaired = { ...repaired, [error.field]: now };
             repairs.push(`Reset ${error.field} to current time`);
             break;
+          }
         }
       }
     }
@@ -547,7 +593,7 @@ export class SessionValidator {
 
     return {
       success: revalidation.isValid,
-      repaired: revalidation.isValid ? repaired : undefined,
+      ...(revalidation.isValid && { repaired }),
       repairs,
     };
   }

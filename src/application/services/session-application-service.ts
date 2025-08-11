@@ -226,6 +226,32 @@ export class SessionApplicationService {
   }
 
   /**
+   * Get all sessions
+   */
+  async getAllSessions(): Promise<SessionStateDto[]> {
+    try {
+      const sessions = await this.sessionRepository.findAll();
+
+      return sessions.map(session => this.toDto(session));
+    } catch (error) {
+      throw new SessionStorageError('get all sessions', error as Error);
+    }
+  }
+
+  /**
+   * Optimize storage (e.g., database vacuum)
+   */
+  async optimizeStorage(): Promise<void> {
+    try {
+      await this.unitOfWork.execute(async () => {
+        await this.sessionRepository.optimizeStorage();
+      });
+    } catch (error) {
+      throw new SessionStorageError('optimize storage', error as Error);
+    }
+  }
+
+  /**
    * Convert domain session to DTO
    */
   private toDto(session: Session): SessionStateDto {
