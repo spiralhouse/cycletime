@@ -1,6 +1,6 @@
 import { SessionNotFoundError, SessionStorageError } from '../../domain/errors/session-errors.js';
 
-import type { SessionState, SessionConfig, SessionManagerInterface } from './types.js';
+import type { SessionState, SessionConfig, SessionManagerInterface, SessionInfo, SessionMetadata } from './types.js';
 import type { SessionApplicationService } from '../../application/services/session-application-service.js';
 import type { SessionContext } from '../../domain/entities/session.js';
 import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
@@ -282,6 +282,60 @@ export class SessionManager implements SessionManagerInterface {
   }
 
   /**
+   * Get session information including metadata
+   */
+  async getSessionInfo(sessionKey: string): Promise<SessionInfo | null> {
+    try {
+      // Get raw session data without expiration check
+      const sessionDto = await this.sessionService.getSession(sessionKey);
+      
+      if (!sessionDto) {
+        return null;
+      }
+
+      const now = this.timeProvider.now();
+      const sessionAge = now.getTime() - sessionDto.lastActivity.getTime();
+      const timeToExpiration = this.config.maxAge! - sessionAge;
+      const isExpired = sessionAge >= this.config.maxAge!;
+
+      // Convert DTO to SessionState
+      const session: SessionState = {
+        sessionKey: sessionDto.sessionKey,
+        projectId: sessionDto.projectId,
+        currentContext: sessionDto.currentContext,
+        lastActivity: sessionDto.lastActivity,
+        createdAt: sessionDto.createdAt,
+        updatedAt: sessionDto.updatedAt,
+      };
+
+      // Calculate metadata
+      const metadata: SessionMetadata = {
+        updateCount: 0, // Will be tracked in future enhancement
+        totalActiveTime: now.getTime() - session.createdAt.getTime(),
+        issuesAccessed: session.currentContext.activeIssues?.length || 0,
+        lastAction: session.currentContext.lastAction,
+        source: 'mcp', // Default source
+        customData: session.currentContext.contextData,
+      };
+
+      return {
+        state: session,
+        metadata,
+        isExpired,
+        timeToExpiration: isExpired ? 0 : timeToExpiration,
+      };
+    } catch (error) {
+      if (error instanceof SessionNotFoundError) {
+        return null;
+      }
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new SessionStorageError('get session info', new Error('Unknown error'));
+    }
+  }
+
+  /**
    * Get current session configuration
    */
   getConfig(): SessionConfig {
@@ -318,7 +372,7 @@ export class SessionManager implements SessionManagerInterface {
   private isSessionExpired(lastActivity: Date): boolean {
     const age = this.timeProvider.now().getTime() - lastActivity.getTime();
 
-    return age > this.config.maxAge!;
+    return age >= this.config.maxAge!;
   }
 
   /**
