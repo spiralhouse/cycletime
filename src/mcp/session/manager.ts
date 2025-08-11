@@ -1,9 +1,11 @@
 import { SessionNotFoundError, SessionStorageError } from '../../domain/errors/session-errors.js';
+import { SessionValidator } from '../../domain/services/session-validator.js';
 
 import type { SessionState, SessionConfig, SessionManagerInterface, SessionInfo, SessionMetadata } from './types.js';
 import type { SessionApplicationService } from '../../application/services/session-application-service.js';
 import type { SessionContext } from '../../domain/entities/session.js';
 import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
+import type { ValidationRules } from '../../domain/services/session-validator.js';
 
 /**
  * Session Manager implementation for MCP integration
@@ -11,11 +13,13 @@ import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
 export class SessionManager implements SessionManagerInterface {
   private config: SessionConfig;
   private cleanupTimer?: NodeJS.Timeout | undefined;
+  private readonly validator: SessionValidator;
 
   constructor(
     private readonly sessionService: SessionApplicationService,
     private readonly timeProvider: TimeProvider,
-    config: SessionConfig = {}
+    config: SessionConfig = {},
+    validationRules?: Partial<ValidationRules>
   ) {
     // Set default configuration
     this.config = {
@@ -25,6 +29,9 @@ export class SessionManager implements SessionManagerInterface {
       maxSessionsPerProject: 0, // unlimited
       ...config,
     };
+
+    // Initialize validator
+    this.validator = new SessionValidator(validationRules);
 
     // Start automatic cleanup if enabled
     if (this.config.autoCleanup) {
@@ -56,7 +63,7 @@ export class SessionManager implements SessionManagerInterface {
   }
 
   /**
-   * Get session by key
+   * Get session by key with validation and repair
    */
   async getSession(sessionKey: string): Promise<SessionState | null> {
     try {
@@ -66,11 +73,63 @@ export class SessionManager implements SessionManagerInterface {
         return null;
       }
 
+      // Validate session data
+      const validation = this.validator.validateSessionState(sessionDto);
+      
+      if (!validation.isValid) {
+        // Attempt to repair the session
+        const repairResult = this.validator.repairSession(sessionDto);
+        
+        if (!repairResult.success) {
+          // Log critical validation errors
+          console.error(`Session ${sessionKey} validation failed:`, validation.errors);
+          
+          // Delete corrupted session
+          await this.deleteSession(sessionKey);
+          throw new SessionStorageError(
+            'get session',
+            new Error(`Session data is corrupted and cannot be repaired: ${validation.errors.map(e => e.message).join(', ')}`)
+          );
+        }
+
+        // Use repaired session data
+        const repairedDto = repairResult.repaired!;
+        
+        // Log repairs for monitoring
+        console.warn(`Session ${sessionKey} was repaired:`, repairResult.repairs);
+        
+        // Update the session with repaired data
+        await this.sessionService.updateSession({
+          sessionKey,
+          contextUpdate: repairedDto.currentContext,
+        });
+
+        // Check if session is expired
+        if (this.isSessionExpired(repairedDto.lastActivity)) {
+          // Clean up expired session
+          await this.deleteSession(sessionKey);
+          return null;
+        }
+
+        return {
+          sessionKey: repairedDto.sessionKey,
+          projectId: repairedDto.projectId,
+          currentContext: repairedDto.currentContext,
+          lastActivity: repairedDto.lastActivity,
+          createdAt: repairedDto.createdAt,
+          updatedAt: repairedDto.updatedAt,
+        };
+      }
+
+      // Log warnings if any
+      if (validation.warnings.length > 0) {
+        console.warn(`Session ${sessionKey} has warnings:`, validation.warnings);
+      }
+
       // Check if session is expired
       if (this.isSessionExpired(sessionDto.lastActivity)) {
         // Clean up expired session
         await this.deleteSession(sessionKey);
-
         return null;
       }
 
@@ -278,6 +337,59 @@ export class SessionManager implements SessionManagerInterface {
         throw error;
       }
       throw new SessionStorageError('check session existence', new Error('Unknown error'));
+    }
+  }
+
+  /**
+   * Detect conflicts between sessions for the same project
+   */
+  async detectSessionConflicts(projectId: string): Promise<{
+    hasConflicts: boolean;
+    conflicts: Array<{
+      sessions: string[];
+      type: string;
+      description: string;
+    }>;
+  }> {
+    try {
+      const sessions = await this.sessionService.getProjectSessions(projectId);
+      
+      if (sessions.length < 2) {
+        return { hasConflicts: false, conflicts: [] };
+      }
+
+      const allConflicts: Array<{
+        sessions: string[];
+        type: string;
+        description: string;
+      }> = [];
+
+      // Compare each pair of sessions
+      for (let i = 0; i < sessions.length - 1; i++) {
+        for (let j = i + 1; j < sessions.length; j++) {
+          const conflictResult = this.validator.detectConflicts(sessions[i], sessions[j]);
+          
+          if (conflictResult.hasConflicts) {
+            for (const conflict of conflictResult.conflicts) {
+              allConflicts.push({
+                sessions: [sessions[i].sessionKey, sessions[j].sessionKey],
+                type: conflict.type,
+                description: conflict.description,
+              });
+            }
+          }
+        }
+      }
+
+      return {
+        hasConflicts: allConflicts.length > 0,
+        conflicts: allConflicts,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new SessionStorageError('detect conflicts', new Error('Unknown error'));
     }
   }
 
