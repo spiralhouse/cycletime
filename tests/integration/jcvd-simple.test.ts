@@ -8,21 +8,23 @@ import { createJCVD } from '../../src/jcvd-simple.js';
 
 import type { JCVD } from '../../src/jcvd-simple.js';
 
-const TEST_PROJECT_PATH = join(tmpdir(), `jcvd-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-
 describe('JCVD Simple', () => {
   let jcvd: JCVD;
+  let testProjectPath: string;
 
   beforeEach(async () => {
+    // Generate unique path for each test
+    testProjectPath = join(tmpdir(), `jcvd-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    
     // Clean up and create test directory
-    if (existsSync(TEST_PROJECT_PATH)) {
-      rmSync(TEST_PROJECT_PATH, { recursive: true, force: true });
+    if (existsSync(testProjectPath)) {
+      rmSync(testProjectPath, { recursive: true, force: true });
     }
-    mkdirSync(TEST_PROJECT_PATH, { recursive: true });
+    mkdirSync(testProjectPath, { recursive: true });
 
     // Initialize JCVD
     jcvd = await createJCVD({
-      databasePath: join(TEST_PROJECT_PATH, 'test.db'),
+      databasePath: join(testProjectPath, 'test.db'),
     });
   });
 
@@ -32,8 +34,8 @@ describe('JCVD Simple', () => {
     } catch {
       // Ignore close errors in tests
     }
-    if (existsSync(TEST_PROJECT_PATH)) {
-      rmSync(TEST_PROJECT_PATH, { recursive: true, force: true });
+    if (existsSync(testProjectPath)) {
+      rmSync(testProjectPath, { recursive: true, force: true });
     }
   });
 
@@ -50,7 +52,7 @@ describe('JCVD Simple', () => {
       const project = await jcvd.projects.createProject({
         name: 'Test Project',
         description: 'A test project',
-        path: TEST_PROJECT_PATH,
+        path: testProjectPath,
         status: 'active',
       });
 
@@ -67,7 +69,7 @@ describe('JCVD Simple', () => {
       await jcvd.projects.createProject({
         name: 'Test Project 2',
         description: 'Another test project',
-        path: TEST_PROJECT_PATH,
+        path: testProjectPath,
         status: 'active',
       });
 
