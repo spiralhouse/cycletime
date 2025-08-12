@@ -1,6 +1,7 @@
 import { IssueId } from '../value-objects/issue-id.js';
 import { IssueStatus } from '../value-objects/issue-status.js';
 import { IssueType } from '../value-objects/issue-type.js';
+import { ProjectId } from '../value-objects/project-id.js';
 
 import type { TimeProvider } from '../interfaces/time-provider.js';
 
@@ -10,6 +11,7 @@ export interface IssueSnapshot {
   description: string;
   type: string;
   status: string;
+  projectId?: string;
   parentId?: string;
   childIds: string[];
   dependencies: string[];
@@ -24,6 +26,7 @@ export class Issue {
   private _description: string;
   private _type: string;
   private _status: string;
+  private _projectId?: ProjectId;
   private _parentId?: IssueId;
   private _childIds: IssueId[];
   private _dependencies: IssueId[];
@@ -43,6 +46,7 @@ export class Issue {
     childIds: IssueId[],
     dependencies: IssueId[],
     parentId: IssueId | undefined,
+    projectId: ProjectId | undefined,
     estimate: number | undefined,
     createdAt: Date,
     updatedAt: Date,
@@ -53,6 +57,9 @@ export class Issue {
     this._description = description;
     this._type = type;
     this._status = status;
+    if (projectId !== undefined) {
+      this._projectId = projectId;
+    }
     if (parentId !== undefined) {
       this._parentId = parentId;
     }
@@ -85,6 +92,10 @@ export class Issue {
     return this._status;
   }
 
+  get projectId(): ProjectId | undefined {
+    return this._projectId;
+  }
+
   get parentId(): IssueId | undefined {
     return this._parentId;
   }
@@ -113,7 +124,8 @@ export class Issue {
     title: string,
     description: string,
     type: string,
-    timeProvider?: TimeProvider
+    timeProvider?: TimeProvider,
+    projectId?: ProjectId
   ): Issue {
     const id = IssueId.generate();
     const now = timeProvider?.now() ?? new Date();
@@ -127,6 +139,7 @@ export class Issue {
       [],
       [],
       undefined,
+      projectId,
       undefined,
       now,
       now,
@@ -139,6 +152,7 @@ export class Issue {
     timeProvider?: TimeProvider
   ): Issue {
     const id = IssueId.from(snapshot.id);
+    const projectId = snapshot.projectId ? ProjectId.from(snapshot.projectId) : undefined;
     const parentId = snapshot.parentId ? IssueId.from(snapshot.parentId) : undefined;
     const childIds = snapshot.childIds.map(childId => IssueId.from(childId));
     const dependencies = snapshot.dependencies.map(depId => IssueId.from(depId));
@@ -152,6 +166,7 @@ export class Issue {
       childIds,
       dependencies,
       parentId,
+      projectId,
       snapshot.estimate,
       snapshot.createdAt,
       snapshot.updatedAt,
@@ -171,6 +186,10 @@ export class Issue {
       createdAt: this._createdAt,
       updatedAt: this._updatedAt
     };
+    
+    if (this._projectId !== undefined) {
+      snapshot.projectId = this._projectId.toString();
+    }
     
     if (this._parentId !== undefined) {
       snapshot.parentId = this._parentId.toString();
