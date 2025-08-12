@@ -4,6 +4,7 @@ import { Issue } from '../../src/domain/entities/issue.js';
 import { IssueId } from '../../src/domain/value-objects/issue-id.js';
 import { IssueStatus } from '../../src/domain/value-objects/issue-status.js';
 import { IssueType } from '../../src/domain/value-objects/issue-type.js';
+import { ProjectId } from '../../src/domain/value-objects/project-id.js';
 import { MockTimeProvider } from '../fixtures/mock-time-provider.js';
 
 describe('Issue Entity Unit Tests', () => {
@@ -78,6 +79,42 @@ describe('Issue Entity Unit Tests', () => {
 
       expect(issue.description).toBe('');
     });
+
+    it('should create issue with project association', () => {
+      const projectId = ProjectId.generate();
+      const issue = Issue.create(
+        'Test Issue',
+        'Issue description',
+        IssueType.Story,
+        mockTimeProvider,
+        projectId
+      );
+
+      expect(issue.id).toBeDefined();
+      expect(issue.title).toBe('Test Issue');
+      expect(issue.description).toBe('Issue description');
+      expect(issue.type).toBe(IssueType.Story);
+      expect(issue.status).toBe(IssueStatus.Backlog);
+      expect(issue.projectId).toBe(projectId);
+      expect(issue.parentId).toBeUndefined();
+      expect(issue.childIds).toEqual([]);
+      expect(issue.dependencies).toEqual([]);
+      expect(issue.estimate).toBeUndefined();
+      expect(issue.createdAt).toEqual(mockTimeProvider.now());
+      expect(issue.updatedAt).toEqual(mockTimeProvider.now());
+    });
+
+    it('should create issue without project association (backward compatibility)', () => {
+      const issue = Issue.create(
+        'Test Issue',
+        'Issue description',
+        IssueType.Story,
+        mockTimeProvider
+      );
+
+      expect(issue.id).toBeDefined();
+      expect(issue.projectId).toBeUndefined();
+    });
   });
 
   describe('Snapshot Pattern', () => {
@@ -118,6 +155,34 @@ describe('Issue Entity Unit Tests', () => {
       expect(issue.updatedAt).toEqual(updatedAt);
     });
 
+    it('should create issue from snapshot with projectId', () => {
+      const issueId = IssueId.generate();
+      const projectId = ProjectId.generate();
+      const createdAt = new Date('2024-01-01T10:00:00Z');
+      const updatedAt = new Date('2024-01-01T11:00:00Z');
+
+      const snapshot = {
+        id: issueId.toString(),
+        title: 'Snapshot Issue',
+        description: 'From snapshot',
+        type: IssueType.Story,
+        status: IssueStatus.InProgress,
+        projectId: projectId.toString(),
+        parentId: undefined,
+        childIds: [],
+        dependencies: [],
+        estimate: undefined,
+        createdAt,
+        updatedAt
+      };
+
+      const issue = Issue.fromSnapshot(snapshot, mockTimeProvider);
+
+      expect(issue.id.toString()).toBe(issueId.toString());
+      expect(issue.projectId?.toString()).toBe(projectId.toString());
+      expect(issue.title).toBe('Snapshot Issue');
+    });
+
     it('should convert issue to snapshot', () => {
       const issue = Issue.create(
         'Test Issue',
@@ -150,6 +215,26 @@ describe('Issue Entity Unit Tests', () => {
       expect(snapshot.estimate).toBe(8);
       expect(snapshot.createdAt).toEqual(issue.createdAt);
       expect(snapshot.updatedAt).toEqual(issue.updatedAt);
+    });
+
+    it('should convert issue with projectId to snapshot', () => {
+      const projectId = ProjectId.generate();
+      const issue = Issue.create(
+        'Test Issue',
+        'Description',
+        IssueType.Story,
+        mockTimeProvider,
+        projectId
+      );
+      
+      const snapshot = issue.toSnapshot();
+
+      expect(snapshot.id).toBe(issue.id.toString());
+      expect(snapshot.projectId).toBe(projectId.toString());
+      expect(snapshot.title).toBe('Test Issue');
+      expect(snapshot.description).toBe('Description');
+      expect(snapshot.type).toBe(IssueType.Story);
+      expect(snapshot.status).toBe(IssueStatus.Backlog);
     });
 
     it('should convert issue with children to snapshot', () => {

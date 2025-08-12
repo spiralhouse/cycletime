@@ -6,4 +6,5 @@ export interface IssueRepository {
   findById: (id: IssueId) => Promise<Issue | null>;
   findByProjectId: (projectId: ProjectId) => Promise<Issue[]>;
   save: (issue: Issue) => Promise<void>;
+  saveToProject: (issue: Issue, projectId: ProjectId) => Promise<void>;
 }
