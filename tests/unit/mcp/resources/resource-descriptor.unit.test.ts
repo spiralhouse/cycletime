@@ -1,49 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-
-// Define the types inline for now (these will be imported from the actual implementation later)
-interface ResourceContent {
-  uri: string;
-  mimeType: string;
-  text: string;
-}
-
-interface ResourceListResult {
-  resources: Array<{
-    uri: string;
-    name: string;
-    description: string;
-    mimeType?: string;
-  }>;
-  nextCursor?: string;
-}
-
-interface ResourceHandler {
-  list(cursor?: string, limit?: number): Promise<ResourceListResult>;
-  read(uri: string): Promise<ResourceContent>;
-}
-
-interface ResourceDescriptor {
-  type: string;
-  name: string;
-  description: string;
-  mimeType?: string;
-  handler: ResourceHandler;
-  metadata?: Record<string, any>;
-}
-
-// Placeholder for BaseResource - will be replaced with actual import
-abstract class BaseResource {
-  abstract type: string;
-  abstract name: string;
-  abstract description: string;
-
-  abstract list(cursor?: string, limit?: number): Promise<ResourceListResult>;
-  abstract read(uri: string): Promise<ResourceContent>;
-
-  protected validateUri(uri: string): boolean {
-    return uri.startsWith(`${this.type}://`);
-  }
-}
+import type { 
+  ResourceDescriptor, 
+  ResourceHandler,
+  ResourceContent,
+  ResourceListResult 
+} from '../../../../src/mcp/resources/types';
+import { BaseResource } from '../../../../src/mcp/resources/BaseResource';
 
 describe('ResourceDescriptor Interface', () => {
   describe('ResourceDescriptor Type Contract', () => {

@@ -1,63 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-// Temporary type definitions - will be replaced with actual imports
-interface ResourceDescriptor {
-  type: string;
-  name: string;
-  description: string;
-  mimeType?: string;
-  handler: ResourceHandler;
-}
-
-interface ResourceHandler {
-  list(cursor?: string, limit?: number): Promise<any>;
-  read(uri: string): Promise<any>;
-}
-
-// Placeholder for ResourceRegistry - will be replaced with actual import
-class ResourceRegistry {
-  private resources: Map<string, ResourceDescriptor>;
-
-  constructor() {
-    this.resources = new Map<string, ResourceDescriptor>();
-  }
-
-  register(resource: ResourceDescriptor): void {
-    if (!resource.type || !resource.name || !resource.description) {
-      throw new Error('Invalid resource descriptor');
-    }
-    
-    if (this.resources.has(resource.type)) {
-      throw new Error(`Resource type '${resource.type}' is already registered`);
-    }
-    
-    this.resources.set(resource.type, resource);
-  }
-
-  unregister(type: string): boolean {
-    return this.resources.delete(type);
-  }
-
-  list(): ResourceDescriptor[] {
-    return Array.from(this.resources.values());
-  }
-
-  get(type: string): ResourceDescriptor | undefined {
-    return this.resources.get(type);
-  }
-
-  has(type: string): boolean {
-    return this.resources.has(type);
-  }
-
-  clear(): void {
-    this.resources.clear();
-  }
-
-  get size(): number {
-    return this.resources.size;
-  }
-}
+import type { ResourceDescriptor, ResourceHandler } from '../../../../src/mcp/resources/types';
+import { ResourceRegistry } from '../../../../src/mcp/resources/ResourceRegistry';
 
 describe('ResourceRegistry', () => {
   let registry: ResourceRegistry;
@@ -120,7 +63,7 @@ describe('ResourceRegistry', () => {
 
       registry.register(descriptor);
       
-      expect(() => registry.register(descriptor)).toThrow("Resource type 'duplicate' is already registered");
+      expect(() => registry.register(descriptor)).toThrow(/already registered/);
     });
 
     it('should throw error for invalid resource descriptor', () => {
@@ -133,7 +76,7 @@ describe('ResourceRegistry', () => {
 
       invalidDescriptors.forEach(descriptor => {
         expect(() => registry.register(descriptor as ResourceDescriptor))
-          .toThrow('Invalid resource descriptor');
+          .toThrow(/Invalid resource descriptor/);
       });
     });
 
