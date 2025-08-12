@@ -259,8 +259,8 @@ describe('SqliteIssueRepository Unit Tests', () => {
       
       mockStmt.all
         .mockReturnValueOnce(mockRows) // Issues for project
-        .mockReturnValueOnce([{ id: childId.value }]) // Children for parent
-        .mockReturnValueOnce([]); // No dependencies
+        .mockReturnValueOnce([{ parent_id: parentId.value, id: childId.value }]) // All children batch query
+        .mockReturnValueOnce([]); // All dependencies batch query
       
       const result = await repository.findByProjectId(projectId);
       

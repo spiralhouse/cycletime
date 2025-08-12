@@ -684,7 +684,20 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       const issue = Issue.create('Orphan Issue', 'No project', 'Story');
       
       await expect(repository.saveToProject(issue, nonExistentProjectId))
-        .rejects.toThrow();
+        .rejects.toThrow(RepositoryError);
+    });
+
+    it('should provide meaningful error message for foreign key constraint failures', async () => {
+      const nonExistentProjectId = ProjectId.generate();
+      const issue = Issue.create('Orphan Issue', 'No project', 'Story');
+      
+      try {
+        await repository.saveToProject(issue, nonExistentProjectId);
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error).toBeInstanceOf(RepositoryError);
+        expect((error as RepositoryError).message).toContain('project does not exist');
+      }
     });
 
     it('should handle re-association to same project', async () => {
@@ -713,6 +726,87 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       const projectIssues = await repository.findByProjectId(projectId);
 
       expect(projectIssues).toHaveLength(1);
+    });
+
+    it('should preserve projectId when reconstructing issue from database', async () => {
+      const projectId = ProjectId.generate();
+      
+      // Create project
+      db.prepare(`
+        INSERT INTO projects (id, name, description, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(
+        projectId.value,
+        'Test Project',
+        'Test Description',
+        'Planning',
+        Date.now(),
+        Date.now()
+      );
+      
+      // Create issue with projectId
+      const issue = Issue.create('Issue with Project', 'Description', 'Story', undefined, projectId);
+      
+      // Save to project
+      await repository.saveToProject(issue, projectId);
+      
+      // Retrieve issue by ID
+      const retrievedIssue = await repository.findById(issue.id);
+      
+      expect(retrievedIssue).not.toBeNull();
+      expect(retrievedIssue!.projectId).toBeDefined();
+      expect(retrievedIssue!.projectId!.value).toBe(projectId.value);
+      
+      // Also verify when retrieved via findByProjectId
+      const projectIssues = await repository.findByProjectId(projectId);
+      
+      expect(projectIssues).toHaveLength(1);
+      expect(projectIssues[0]!.projectId).toBeDefined();
+      expect(projectIssues[0]!.projectId!.value).toBe(projectId.value);
+    });
+
+    it('should efficiently handle large projects with 100+ issues', async () => {
+      const projectId = ProjectId.generate();
+      
+      // Create project
+      db.prepare(`
+        INSERT INTO projects (id, name, description, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(
+        projectId.value,
+        'Large Project',
+        'Test Description',
+        'Active',
+        Date.now(),
+        Date.now()
+      );
+      
+      // Create 100 issues with some having children and dependencies
+      const issues: Issue[] = [];
+
+      for (let i = 0; i < 100; i++) {
+        const issue = Issue.create(`Issue ${i}`, `Description ${i}`, i % 10 === 0 ? 'Epic' : 'Story');
+
+        issues.push(issue);
+        await repository.saveToProject(issue, projectId);
+      }
+      
+      // Add some children and dependencies
+      for (let i = 1; i < 10; i++) {
+        issues[0]!.addChild(issues[i]!.id);
+        issues[i]!.setParent(issues[0]!.id);
+        await repository.save(issues[0]!);
+        await repository.save(issues[i]!);
+      }
+      
+      // Measure performance of findByProjectId
+      const startTime = Date.now();
+      const projectIssues = await repository.findByProjectId(projectId);
+      const endTime = Date.now();
+      
+      expect(projectIssues).toHaveLength(100);
+      // Should complete in under 100ms even with 100 issues
+      expect(endTime - startTime).toBeLessThan(100);
     });
   });
 });

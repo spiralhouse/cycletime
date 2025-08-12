@@ -14,6 +14,9 @@ export class SqliteIssueRepository implements IssueRepository {
   private findByProjectIdStmt?: Database.Statement;
   private findChildrenStmt?: Database.Statement;
   private findDependenciesStmt?: Database.Statement;
+  private findProjectIdStmt?: Database.Statement;
+  private findAllChildrenForIssuesStmt?: Database.Statement;
+  private findAllDependenciesForIssuesStmt?: Database.Statement;
   private insertIssueStmt?: Database.Statement;
   private updateIssueStmt?: Database.Statement;
   private deleteChildrenStmt?: Database.Statement;
@@ -62,6 +65,18 @@ export class SqliteIssueRepository implements IssueRepository {
         ORDER BY created_at ASC
       `);
 
+      this.findAllChildrenForIssuesStmt = this.db.prepare(`
+        SELECT parent_id, id FROM issues
+        WHERE parent_id IN (SELECT id FROM issues i JOIN project_issues pi ON i.id = pi.issue_id WHERE pi.project_id = ?)
+        ORDER BY created_at ASC
+      `);
+
+      this.findAllDependenciesForIssuesStmt = this.db.prepare(`
+        SELECT dependent_id, dependency_id FROM issue_dependencies
+        WHERE dependent_id IN (SELECT id FROM issues i JOIN project_issues pi ON i.id = pi.issue_id WHERE pi.project_id = ?)
+        ORDER BY created_at ASC
+      `);
+
       this.insertIssueStmt = this.db.prepare(`
         INSERT INTO issues (id, title, description, type, status, parent_id, estimate, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -95,6 +110,10 @@ export class SqliteIssueRepository implements IssueRepository {
         VALUES (?, ?, ?)
       `);
 
+      this.findProjectIdStmt = this.db.prepare(`
+        SELECT project_id FROM project_issues WHERE issue_id = ? LIMIT 1
+      `);
+
       this.existsStmt = this.db.prepare(`
         SELECT 1 FROM issues WHERE id = ? LIMIT 1
       `);
@@ -112,7 +131,7 @@ export class SqliteIssueRepository implements IssueRepository {
   async findById(id: IssueId): Promise<Issue | null> {
     try {
       this.ensureStatementsReady();
-      if (!this.findByIdStmt || !this.findChildrenStmt || !this.findDependenciesStmt) {
+      if (!this.findByIdStmt || !this.findChildrenStmt || !this.findDependenciesStmt || !this.findProjectIdStmt) {
         throw new Error('Unable to prepare database statements');
       }
 
@@ -130,7 +149,11 @@ export class SqliteIssueRepository implements IssueRepository {
       const depRows = this.findDependenciesStmt.all(id.value) as any[];
       const dependencies = depRows.map(row => row.dependency_id);
 
-      return this.rowToIssue(issueRow, childIds, dependencies);
+      // Get project ID if exists
+      const projectRow = this.findProjectIdStmt.get(id.value) as any;
+      const projectId = projectRow?.project_id;
+
+      return this.rowToIssue(issueRow, childIds, dependencies, projectId);
     } catch (error) {
       throw new RepositoryError('find issue by id', error as Error);
     }
@@ -139,23 +162,51 @@ export class SqliteIssueRepository implements IssueRepository {
   async findByProjectId(projectId: ProjectId): Promise<Issue[]> {
     try {
       this.ensureStatementsReady();
-      if (!this.findByProjectIdStmt || !this.findChildrenStmt || !this.findDependenciesStmt) {
+      if (!this.findByProjectIdStmt || !this.findAllChildrenForIssuesStmt || !this.findAllDependenciesForIssuesStmt) {
         throw new Error('Unable to prepare database statements');
       }
 
+      // Get all issues for the project (1 query)
       const issueRows = this.findByProjectIdStmt.all(projectId.value) as any[];
+      
+      if (issueRows.length === 0) {
+        return [];
+      }
+
+      // Get all children for all issues in one query (1 query)
+      const allChildRows = this.findAllChildrenForIssuesStmt.all(projectId.value) as any[];
+      const childrenByParent = new Map<string, string[]>();
+
+      for (const row of allChildRows) {
+        const parentId = row.parent_id;
+
+        if (!childrenByParent.has(parentId)) {
+          childrenByParent.set(parentId, []);
+        }
+        childrenByParent.get(parentId)!.push(row.id);
+      }
+
+      // Get all dependencies for all issues in one query (1 query)
+      const allDepRows = this.findAllDependenciesForIssuesStmt.all(projectId.value) as any[];
+      const dependenciesByIssue = new Map<string, string[]>();
+
+      for (const row of allDepRows) {
+        const dependentId = row.dependent_id;
+
+        if (!dependenciesByIssue.has(dependentId)) {
+          dependenciesByIssue.set(dependentId, []);
+        }
+        dependenciesByIssue.get(dependentId)!.push(row.dependency_id);
+      }
+
+      // Build issues with pre-fetched data
       const issues: Issue[] = [];
 
       for (const row of issueRows) {
-        // Get children IDs
-        const childRows = this.findChildrenStmt.all(row.id) as any[];
-        const childIds = childRows.map(r => r.id);
+        const childIds = childrenByParent.get(row.id) || [];
+        const dependencies = dependenciesByIssue.get(row.id) || [];
 
-        // Get dependency IDs
-        const depRows = this.findDependenciesStmt.all(row.id) as any[];
-        const dependencies = depRows.map(r => r.dependency_id);
-
-        issues.push(this.rowToIssue(row, childIds, dependencies));
+        issues.push(this.rowToIssue(row, childIds, dependencies, projectId.value));
       }
 
       return issues;
@@ -298,12 +349,20 @@ export class SqliteIssueRepository implements IssueRepository {
       });
 
       saveIssueToProject();
-    } catch (error) {
+    } catch (error: any) {
+      // Provide more meaningful error messages for common constraints
+      if (error.code === 'SQLITE_CONSTRAINT_FOREIGNKEY' || 
+          (error.message?.includes('FOREIGN KEY constraint failed'))) {
+        throw new RepositoryError(
+          `Cannot save issue to project: project does not exist (${projectId.value})`, 
+          error as Error
+        );
+      }
       throw new RepositoryError('save issue to project', error as Error);
     }
   }
 
-  private rowToIssue(row: any, childIds: string[], dependencies: string[]): Issue {
+  private rowToIssue(row: any, childIds: string[], dependencies: string[], projectId?: string): Issue {
     const snapshot: IssueSnapshot = {
       id: row.id,
       title: row.title,
@@ -317,6 +376,11 @@ export class SqliteIssueRepository implements IssueRepository {
       createdAt: new Date(row.created_at * 1000),
       updatedAt: new Date(row.updated_at * 1000),
     };
+    
+    // Add projectId only if it's defined
+    if (projectId) {
+      snapshot.projectId = projectId;
+    }
 
     return Issue.fromSnapshot(snapshot, this.timeProvider);
   }
