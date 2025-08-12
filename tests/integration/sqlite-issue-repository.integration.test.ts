@@ -597,11 +597,13 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       
       // Verify issue was saved
       const savedIssue = await repository.findById(issue.id);
+
       expect(savedIssue).not.toBeNull();
       expect(savedIssue!.title).toBe('New Issue');
       
       // Verify project association was created
       const projectIssues = await repository.findByProjectId(projectId);
+
       expect(projectIssues).toHaveLength(1);
       expect(projectIssues[0]!.id.value).toBe(issue.id.value);
     });
@@ -624,6 +626,7 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       
       // Create and save issue first without project association
       const issue = Issue.create('Existing Issue', 'Will be associated', 'Story');
+
       await repository.save(issue);
       
       // Update and associate with project
@@ -632,10 +635,12 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       
       // Verify update
       const savedIssue = await repository.findById(issue.id);
+
       expect(savedIssue!.title).toBe('Updated Issue');
       
       // Verify association
       const projectIssues = await repository.findByProjectId(projectId);
+
       expect(projectIssues).toHaveLength(1);
     });
 
@@ -664,9 +669,11 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       await repository.saveToProject(issue3, projectId);
       
       const projectIssues = await repository.findByProjectId(projectId);
+
       expect(projectIssues).toHaveLength(3);
       
       const titles = projectIssues.map(i => i.title);
+
       expect(titles).toContain('Issue 1');
       expect(titles).toContain('Issue 2');
       expect(titles).toContain('Issue 3');
@@ -704,6 +711,7 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       
       // Should only have one association
       const projectIssues = await repository.findByProjectId(projectId);
+
       expect(projectIssues).toHaveLength(1);
     });
   });

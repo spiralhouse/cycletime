@@ -672,6 +672,7 @@ describe.sequential('Repository End-to-End Integration Tests', () => {
       
       // Debug: Check if project exists
       const checkProject = await projectRepository.findById(project.id);
+
       expect(checkProject).not.toBeNull();
       
       expect(finalIssues).toHaveLength(7); // 6 planned + 1 bug
