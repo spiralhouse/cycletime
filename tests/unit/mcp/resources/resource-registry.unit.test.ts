@@ -3,11 +3,9 @@ import type { ResourceDescriptor, ResourceHandler } from '../../../../src/mcp/re
 import { ResourceRegistry } from '../../../../src/mcp/resources/ResourceRegistry';
 
 describe('ResourceRegistry', () => {
-  let registry: ResourceRegistry;
   let mockHandler: ResourceHandler;
 
   beforeEach(() => {
-    registry = new ResourceRegistry();
     mockHandler = {
       list: vi.fn().mockResolvedValue({ resources: [] }),
       read: vi.fn().mockResolvedValue({ uri: 'test://123', mimeType: 'application/json', text: '{}' })
@@ -16,6 +14,7 @@ describe('ResourceRegistry', () => {
 
   describe('Resource Registration', () => {
     it('should register a valid resource descriptor', () => {
+      const registry = new ResourceRegistry();
       const descriptor: ResourceDescriptor = {
         type: 'test-resource',
         name: 'Test Resource',
@@ -31,6 +30,8 @@ describe('ResourceRegistry', () => {
     });
 
     it('should register multiple resources with different types', () => {
+      const registry = new ResourceRegistry();
+      
       const resource1: ResourceDescriptor = {
         type: 'resource-1',
         name: 'Resource 1',
@@ -46,14 +47,16 @@ describe('ResourceRegistry', () => {
       };
 
       registry.register(resource1);
+      expect(registry.size).toBe(1); // After first registration
+      
       registry.register(resource2);
-
-      expect(registry.size).toBe(2);
+      expect(registry.size).toBe(2); // After second registration
       expect(registry.has('resource-1')).toBe(true);
       expect(registry.has('resource-2')).toBe(true);
     });
 
     it('should throw error when registering duplicate resource type', () => {
+      const registry = new ResourceRegistry();
       const descriptor: ResourceDescriptor = {
         type: 'duplicate',
         name: 'Duplicate Resource',
@@ -67,6 +70,7 @@ describe('ResourceRegistry', () => {
     });
 
     it('should throw error for invalid resource descriptor', () => {
+      const registry = new ResourceRegistry();
       const invalidDescriptors = [
         { type: '', name: 'Name', description: 'Desc', handler: mockHandler },
         { type: 'Type', name: '', description: 'Desc', handler: mockHandler },
@@ -81,6 +85,7 @@ describe('ResourceRegistry', () => {
     });
 
     it('should allow resources with same name but different types', () => {
+      const registry = new ResourceRegistry();
       const resource1: ResourceDescriptor = {
         type: 'type-1',
         name: 'Same Name',
@@ -103,7 +108,10 @@ describe('ResourceRegistry', () => {
   });
 
   describe('Resource Deregistration', () => {
+    let registry: ResourceRegistry;
+
     beforeEach(() => {
+      registry = new ResourceRegistry();
       const descriptor: ResourceDescriptor = {
         type: 'test-resource',
         name: 'Test Resource',
@@ -124,10 +132,11 @@ describe('ResourceRegistry', () => {
     });
 
     it('should return false when unregistering non-existent resource', () => {
+      // The registry starts empty now, no resource from beforeEach
       const result = registry.unregister('non-existent');
       
       expect(result).toBe(false);
-      expect(registry.size).toBe(1); // Original resource still registered
+      expect(registry.size).toBe(0); // No resources registered
     });
 
     it('should allow re-registration after unregistering', () => {
@@ -148,7 +157,10 @@ describe('ResourceRegistry', () => {
   });
 
   describe('Resource Discovery', () => {
+    let registry: ResourceRegistry;
+
     beforeEach(() => {
+      registry = new ResourceRegistry();
       const resources = [
         { type: 'resource-1', name: 'Resource 1', description: 'First resource' },
         { type: 'resource-2', name: 'Resource 2', description: 'Second resource' },
@@ -201,6 +213,12 @@ describe('ResourceRegistry', () => {
   });
 
   describe('Registry Management', () => {
+    let registry: ResourceRegistry;
+
+    beforeEach(() => {
+      registry = new ResourceRegistry();
+    });
+
     it('should clear all registered resources', () => {
       const resources = [
         { type: 'resource-1', name: 'Resource 1', description: 'First' },
@@ -247,6 +265,7 @@ describe('ResourceRegistry', () => {
 
   describe('Thread Safety and Concurrent Access', () => {
     it('should handle concurrent registration attempts safely', async () => {
+      const registry = new ResourceRegistry();
       const resources = Array.from({ length: 10 }, (_, i) => ({
         type: `concurrent-${i}`,
         name: `Concurrent Resource ${i}`,
@@ -268,6 +287,7 @@ describe('ResourceRegistry', () => {
     });
 
     it('should handle concurrent read operations safely', async () => {
+      const registry = new ResourceRegistry();
       const descriptor: ResourceDescriptor = {
         type: 'concurrent-read',
         name: 'Concurrent Read Test',
@@ -292,6 +312,12 @@ describe('ResourceRegistry', () => {
   });
 
   describe('Error Scenarios', () => {
+    let registry: ResourceRegistry;
+
+    beforeEach(() => {
+      registry = new ResourceRegistry();
+    });
+
     it('should handle null or undefined types gracefully', () => {
       expect(registry.get(null as any)).toBeUndefined();
       expect(registry.get(undefined as any)).toBeUndefined();
@@ -325,6 +351,12 @@ describe('ResourceRegistry', () => {
   });
 
   describe('JCVD-Specific Resource Registration', () => {
+    let registry: ResourceRegistry;
+
+    beforeEach(() => {
+      registry = new ResourceRegistry();
+    });
+
     it('should register JCVD project context resource', () => {
       const projectContextResource: ResourceDescriptor = {
         type: 'jcvd-project-context',
