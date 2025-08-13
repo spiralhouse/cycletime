@@ -3,8 +3,16 @@
  * Manages registration and discovery of MCP resources
  */
 
-import type { ResourceDescriptor } from './types';
-import { ResourceValidationError, ResourceConflictError } from './errors';
+import type { 
+  ResourceDescriptor, 
+  MCPResourceListResponse, 
+  MCPResourceContent, 
+  MCPRequest,
+  MCPResponse,
+  MCPSession,
+  MCPListOptions
+} from './types.js';
+import { ResourceValidationError, ResourceConflictError } from './errors.js';
 
 /**
  * Registry for managing MCP resources
@@ -12,6 +20,8 @@ import { ResourceValidationError, ResourceConflictError } from './errors';
  */
 export class ResourceRegistry {
   private resources: Map<string, ResourceDescriptor>;
+  private networkInterrupted = false;
+  private sessions = new Map<string, MCPSession>();
 
   constructor() {
     // Ensure each instance gets a fresh Map
@@ -136,5 +146,144 @@ export class ResourceRegistry {
    */
   getByMimeType(mimeType: string): ResourceDescriptor[] {
     return this.find(r => r.mimeType === mimeType);
+  }
+
+  // MCP Integration Methods
+
+  /**
+   * List resources via MCP protocol
+   */
+  async listResourcesViaMCP(_options?: MCPListOptions): Promise<MCPResourceListResponse> {
+    if (this.networkInterrupted) {
+      throw new Error('Network interrupted');
+    }
+
+    const resources = this.list();
+    
+    return {
+      resources: resources.map(resource => ({
+        uri: `mcp://resource/${resource.type}`,
+        name: resource.name || resource.type,
+        description: resource.description,
+        mimeType: resource.mimeType || 'application/json'
+      }))
+    };
+  }
+
+  /**
+   * Fetch resource content via MCP protocol
+   */
+  async fetchResourceContent(
+    type: string, 
+    params: Record<string, unknown> = {}, 
+    _options?: MCPListOptions
+  ): Promise<MCPResourceContent> {
+    if (this.networkInterrupted) {
+      throw new Error('Network interrupted');
+    }
+
+    const resource = this.get(type);
+    if (!resource) {
+      throw new Error(`Resource not found: ${type}`);
+    }
+
+    // Generate content based on resource type and params
+    const content = await this.generateResourceContent(resource, params);
+    
+    return {
+      uri: `mcp://resource/${type}`,
+      mimeType: resource.mimeType || 'application/json',
+      text: JSON.stringify(content, null, 2)
+    };
+  }
+
+  /**
+   * Handle MCP request
+   */
+  async handleMCPRequest(request: MCPRequest): Promise<MCPResponse> {
+    if (this.networkInterrupted) {
+      throw new Error('Network interrupted');
+    }
+
+    try {
+      let result: any;
+
+      switch (request.method) {
+        case 'resources/list':
+          result = await this.listResourcesViaMCP(request.params);
+          break;
+        
+        case 'resources/read':
+          const { uri } = request.params as { uri: string };
+          const type = this.extractTypeFromUri(uri);
+          result = await this.fetchResourceContent(type, request.params);
+          break;
+        
+        default:
+          throw new Error(`Unsupported method: ${request.method}`);
+      }
+
+      return {
+        id: request.id,
+        result
+      };
+    } catch (error) {
+      return {
+        id: request.id,
+        error: {
+          code: -32603,
+          message: error instanceof Error ? error.message : 'Internal error',
+          data: error instanceof Error ? { stack: error.stack } : undefined
+        }
+      };
+    }
+  }
+
+  /**
+   * Create MCP session
+   */
+  async createMCPSession(clientId: string): Promise<MCPSession> {
+    if (this.networkInterrupted) {
+      throw new Error('Network interrupted');
+    }
+
+    const session: MCPSession = {
+      id: `session_${clientId}_${Date.now()}`,
+      clientId,
+      createdAt: new Date(),
+      active: true
+    };
+
+    this.sessions.set(session.id, session);
+    return session;
+  }
+
+  /**
+   * Simulate network interruption for testing
+   */
+  simulateNetworkInterruption(enabled: boolean): void {
+    this.networkInterrupted = enabled;
+  }
+
+  /**
+   * Generate content for a resource (for testing/simulation)
+   */
+  private async generateResourceContent(resource: ResourceDescriptor, params: Record<string, unknown>) {
+    return {
+      type: resource.type,
+      name: resource.name || resource.type,
+      description: resource.description,
+      params,
+      timestamp: new Date().toISOString(),
+      data: `Generated content for ${resource.type}`
+    };
+  }
+
+  /**
+   * Extract resource type from URI
+   */
+  private extractTypeFromUri(uri: string): string {
+    const match = uri.match(/mcp:\/\/resource\/(.+)/);
+    return match?.[1] || uri;
   }
 }

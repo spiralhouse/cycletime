@@ -13,9 +13,9 @@ export type {
   MCPResourceRequest,
   MCPResourceResponse,
   MCPError,
-} from './types';
+} from './types.js';
 
-export { ErrorCodes } from './types';
+export { ErrorCodes } from './types.js';
 
 // Export error classes
 export {
@@ -26,8 +26,8 @@ export {
   ResourceConflictError,
   ResourceAccessDeniedError,
   InternalResourceError,
-} from './errors';
+} from './errors.js';
 
 // Export base classes
-export { BaseResource } from './BaseResource';
-export { ResourceRegistry } from './ResourceRegistry';
+export { BaseResource } from './BaseResource.js';
+export { ResourceRegistry } from './ResourceRegistry.js';

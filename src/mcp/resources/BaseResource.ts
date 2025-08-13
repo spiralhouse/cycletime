@@ -3,8 +3,8 @@
  * Provides base functionality for all MCP resources
  */
 
-import type { ResourceContent, ResourceListResult } from './types';
-import { InvalidUriError } from './errors';
+import type { ResourceContent, ResourceListResult } from './types.js';
+import { InvalidUriError } from './errors.js';
 
 /**
  * Abstract base class for MCP resources

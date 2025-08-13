@@ -106,6 +106,75 @@ export interface MCPError {
   timestamp: string;
 }
 
+// Additional types needed for integration tests
+
+/**
+ * MCP Resource List Response for integration tests
+ */
+export interface MCPResourceListResponse {
+  resources: Array<{
+    uri: string;
+    name: string;
+    description?: string;
+    mimeType?: string;
+  }>;
+  total?: number;
+  hasMore?: boolean;
+}
+
+/**
+ * MCP Resource Content for integration tests
+ */
+export interface MCPResourceContent {
+  uri: string;
+  mimeType: string;
+  text?: string;
+  blob?: Uint8Array;
+}
+
+/**
+ * MCP Request structure
+ */
+export interface MCPRequest {
+  id: string;
+  method: string;
+  params?: any;
+}
+
+/**
+ * MCP Response structure
+ */
+export interface MCPResponse {
+  id: string;
+  result?: any;
+  error?: {
+    code: number;
+    message: string;
+    data?: any;
+  };
+}
+
+/**
+ * MCP Session structure
+ */
+export interface MCPSession {
+  id: string;
+  clientId: string;
+  createdAt: Date;
+  active: boolean;
+}
+
+/**
+ * Options for listing resources
+ */
+export interface MCPListOptions {
+  limit?: number;
+  offset?: number;
+  type?: string;
+  useCache?: boolean;
+  timeout?: number;
+}
+
 /**
  * Standard MCP Error codes
  */

@@ -3,14 +3,14 @@
  * Custom error types for resource operations
  */
 
-import { ErrorCodes } from './types';
+import { ErrorCodes } from './types.js';
 
 /**
  * Base error class for all resource-related errors
  */
 export abstract class ResourceError extends Error {
   public readonly code: ErrorCodes;
-  public readonly details?: Record<string, unknown>;
+  public readonly details: Record<string, unknown> | undefined;
   public readonly timestamp: string;
 
   constructor(message: string, code: ErrorCodes, details?: Record<string, unknown>) {
@@ -33,7 +33,7 @@ export abstract class ResourceError extends Error {
     return {
       code: this.code,
       message: this.message,
-      details: this.details,
+      details: this.details || {},
       timestamp: this.timestamp,
     };
   }
