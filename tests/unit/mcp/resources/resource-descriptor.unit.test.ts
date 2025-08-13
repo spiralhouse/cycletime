@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 
-import { BaseResource } from '../../../../src/mcp/resources/BaseResource';
+import { BaseResource } from '../../../../src/mcp/resources/BaseResource.js';
 
 import type { 
   ResourceDescriptor, 
@@ -25,6 +25,7 @@ describe('ResourceDescriptor Interface', () => {
       expect(descriptor.name).toBeDefined();
       expect(descriptor.description).toBeDefined();
       expect(descriptor.handler).toBeDefined();
+      expect(descriptor.mimeType).toBe('application/json');
     });
 
     it('should allow optional mimeType field', () => {
@@ -43,7 +44,16 @@ describe('ResourceDescriptor Interface', () => {
         handler: {} as ResourceHandler
       };
 
+      expect(descriptorWithMime.type).toBe('test-resource');
+      expect(descriptorWithMime.name).toBe('Test Resource');
+      expect(descriptorWithMime.description).toBe('A test resource');
       expect(descriptorWithMime.mimeType).toBe('application/json');
+      expect(descriptorWithMime.handler).toBeDefined();
+      
+      expect(descriptorWithoutMime.type).toBe('test-resource');
+      expect(descriptorWithoutMime.name).toBe('Test Resource');
+      expect(descriptorWithoutMime.description).toBe('A test resource');
+      expect(descriptorWithoutMime.handler).toBeDefined();
       expect(descriptorWithoutMime.mimeType).toBeUndefined();
     });
 
@@ -298,10 +308,18 @@ describe('BaseResource Abstract Class', () => {
         metadata
       };
 
+      expect(descriptor.type).toBe('test');
+      expect(descriptor.name).toBe('Test Resource');
+      expect(descriptor.description).toBe('Test resource with metadata');
+      expect(descriptor.mimeType).toBe('application/json');
+      expect(descriptor.handler).toBeDefined();
       expect(descriptor.metadata).toBeDefined();
       expect(descriptor.metadata?.version).toBe('1.0.0');
+      expect(descriptor.metadata?.author).toBe('test-user');
       expect(descriptor.metadata?.tags).toContain('test');
       expect(descriptor.metadata?.permissions?.read).toBe(true);
+      expect(descriptor.metadata?.permissions?.write).toBe(false);
+      expect(descriptor.metadata?.permissions?.delete).toBe(false);
     });
 
     it('should handle missing optional metadata gracefully', () => {
@@ -312,6 +330,10 @@ describe('BaseResource Abstract Class', () => {
         handler: {} as ResourceHandler
       };
 
+      expect(descriptor.type).toBe('test');
+      expect(descriptor.name).toBe('Test Resource');
+      expect(descriptor.description).toBe('Test resource without metadata');
+      expect(descriptor.handler).toBeDefined();
       expect(descriptor.metadata).toBeUndefined();
     });
   });

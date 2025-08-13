@@ -584,6 +584,10 @@ export class SessionValidator {
             repairs.push(`Reset ${error.field} to current time`);
             break;
           }
+
+          default:
+            // For other critical errors, we can't repair them automatically
+            break;
         }
       }
     }

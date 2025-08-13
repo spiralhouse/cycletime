@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 
 // These imports will fail until we implement the actual modules (RED phase)
-import { BaseResource } from '../../../../src/mcp/resources/BaseResource';
-import { ResourceValidationError, InvalidUriError } from '../../../../src/mcp/resources/errors';
+import { BaseResource } from '../../../../src/mcp/resources/BaseResource.js';
+import { ResourceValidationError, InvalidUriError } from '../../../../src/mcp/resources/errors.js';
 
 import type { 
   ResourceDescriptor, 

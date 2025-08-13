@@ -258,6 +258,7 @@ export class BasicResourceCache implements ResourceCache {
       
       case 'FIFO':
 
+      // eslint-disable-next-line no-fallthrough
       default: {
         // First In, First Out
         let oldestTime = Number.MAX_SAFE_INTEGER;

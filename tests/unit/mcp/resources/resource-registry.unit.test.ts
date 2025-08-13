@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { ResourceRegistry } from '../../../../src/mcp/resources/ResourceRegistry';
+import { ResourceRegistry } from '../../../../src/mcp/resources/ResourceRegistry.js';
 
 import type { ResourceDescriptor, ResourceHandler } from '../../../../src/mcp/resources/types';
 
@@ -68,7 +68,9 @@ describe('ResourceRegistry', () => {
 
       registry.register(descriptor);
       
-      expect(() => registry.register(descriptor)).toThrow(/already registered/);
+      expect(() => {
+        registry.register(descriptor);
+      }).toThrow(/already registered/);
     });
 
     it('should throw error for invalid resource descriptor', () => {
@@ -81,8 +83,9 @@ describe('ResourceRegistry', () => {
       ];
 
       invalidDescriptors.forEach(descriptor => {
-        expect(() => registry.register(descriptor as ResourceDescriptor))
-          .toThrow(/Invalid resource descriptor/);
+        expect(() => {
+          registry.register(descriptor as ResourceDescriptor);
+        }).toThrow(/Invalid resource descriptor/);
       });
     });
 
@@ -279,7 +282,9 @@ describe('ResourceRegistry', () => {
 
       // Simulate concurrent registrations
       const registrations = resources.map(r => 
-        Promise.resolve().then(() => registry.register(r))
+        Promise.resolve().then(() => {
+          registry.register(r);
+        })
       );
 
       await Promise.all(registrations);

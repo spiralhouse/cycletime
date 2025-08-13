@@ -398,12 +398,13 @@ export class ResourceRegistry {
           result = await this.listResourcesViaMCP(request.params);
           break;
         
-        case 'resources/read':
+        case 'resources/read': {
           const { uri } = request.params as { uri: string };
           const type = this.extractTypeFromUri(uri);
 
           result = await this.fetchResourceContent(type, request.params);
           break;
+        }
         
         default:
           throw new Error(`Unsupported method: ${request.method}`);
