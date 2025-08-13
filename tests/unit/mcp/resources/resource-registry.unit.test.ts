@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { ResourceDescriptor, ResourceHandler } from '../../../../src/mcp/resources/types';
+
 import { ResourceRegistry } from '../../../../src/mcp/resources/ResourceRegistry';
+
+import type { ResourceDescriptor, ResourceHandler } from '../../../../src/mcp/resources/types';
 
 describe('ResourceRegistry', () => {
   let mockHandler: ResourceHandler;
@@ -118,6 +120,7 @@ describe('ResourceRegistry', () => {
         description: 'A test resource',
         handler: mockHandler
       };
+
       registry.register(descriptor);
     });
 
@@ -152,6 +155,7 @@ describe('ResourceRegistry', () => {
       registry.register(newDescriptor);
       
       const retrieved = registry.get('test-resource');
+
       expect(retrieved?.name).toBe('New Test Resource');
     });
   });
@@ -340,7 +344,7 @@ describe('ResourceRegistry', () => {
       // Try to register invalid resource (should fail)
       try {
         registry.register({ type: '', name: 'Invalid', description: 'Invalid', handler: mockHandler });
-      } catch (e) {
+      } catch {
         // Expected error
       }
 
@@ -369,6 +373,7 @@ describe('ResourceRegistry', () => {
       registry.register(projectContextResource);
       
       const retrieved = registry.get('jcvd-project-context');
+
       expect(retrieved).toBeDefined();
       expect(retrieved?.name).toBe('JCVD Project Context');
     });

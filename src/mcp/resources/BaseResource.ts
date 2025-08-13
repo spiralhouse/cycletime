@@ -3,8 +3,9 @@
  * Provides base functionality for all MCP resources
  */
 
-import type { ResourceContent, ResourceListResult } from './types.js';
 import { InvalidUriError } from './errors.js';
+
+import type { ResourceContent, ResourceListResult } from './types.js';
 
 /**
  * Abstract base class for MCP resources
@@ -51,6 +52,7 @@ export abstract class BaseResource {
     
     // Check if URI starts with the resource type followed by ://
     const prefix = `${this.type}://`;
+
     return uri.startsWith(prefix);
   }
 
@@ -65,7 +67,7 @@ export abstract class BaseResource {
     }
     
     const prefix = `${this.type}://`;
-    const resourceId = uri.substring(prefix.length);
+    const resourceId = uri.slice(prefix.length);
     
     // Return null if resource ID is empty
     return resourceId || null;
@@ -102,7 +104,7 @@ export abstract class BaseResource {
     }
     
     const prefix = `${this.type}://`;
-    const path = uri.substring(prefix.length);
+    const path = uri.slice(prefix.length);
     const segments = path.split('/').filter(s => s.length > 0);
     
     return {

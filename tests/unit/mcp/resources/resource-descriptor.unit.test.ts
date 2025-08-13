@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+
+import { BaseResource } from '../../../../src/mcp/resources/BaseResource';
+
 import type { 
   ResourceDescriptor, 
   ResourceHandler,
   ResourceContent,
   ResourceListResult 
 } from '../../../../src/mcp/resources/types';
-import { BaseResource } from '../../../../src/mcp/resources/BaseResource';
 
 describe('ResourceDescriptor Interface', () => {
   describe('ResourceDescriptor Type Contract', () => {
@@ -50,6 +52,7 @@ describe('ResourceDescriptor Interface', () => {
         if (!type || !name || !description) {
           throw new Error('Required fields cannot be empty');
         }
+
         return { type, name, description, handler: {} as ResourceHandler };
       };
 
@@ -78,6 +81,7 @@ describe('ResourceDescriptor Interface', () => {
       };
 
       const result = await handler.list();
+
       expect(result).toHaveProperty('resources');
       expect(result.resources).toBeInstanceOf(Array);
     });
@@ -97,6 +101,7 @@ describe('ResourceDescriptor Interface', () => {
       };
 
       const content = await handler.read('jcvd://test/123');
+
       expect(content).toHaveProperty('uri');
       expect(content).toHaveProperty('mimeType');
       expect(content).toHaveProperty('text');
@@ -193,6 +198,7 @@ describe('BaseResource Abstract Class', () => {
         if (!this.validateJCVDUri(uri)) {
           throw new Error('Invalid JCVD URI format');
         }
+
         return {
           uri,
           mimeType: 'application/json',
@@ -204,17 +210,20 @@ describe('BaseResource Abstract Class', () => {
         if (!this.validateUri(uri)) return false;
         
         // JCVD URIs must follow pattern: jcvd://project/{projectId}/{resourceType}
-        const pattern = /^jcvd:\/\/project\/[a-zA-Z0-9-]+\/(context|tasks\/unblocked|dependencies|hierarchy)$/;
+        const pattern = /^jcvd:\/\/project\/[\dA-Za-z-]+\/(context|tasks\/unblocked|dependencies|hierarchy)$/;
+
         return pattern.test(uri);
       }
 
       extractProjectId(uri: string): string | null {
-        const match = uri.match(/^jcvd:\/\/project\/([a-zA-Z0-9-]+)\//);
+        const match = uri.match(/^jcvd:\/\/project\/([\dA-Za-z-]+)\//);
+
         return match ? match[1] : null;
       }
 
       extractResourceType(uri: string): string | null {
-        const match = uri.match(/^jcvd:\/\/project\/[a-zA-Z0-9-]+\/(.+)$/);
+        const match = uri.match(/^jcvd:\/\/project\/[\dA-Za-z-]+\/(.+)$/);
+
         return match ? match[1] : null;
       }
     }
@@ -323,6 +332,7 @@ describe('BaseResource Abstract Class', () => {
         }
         
         const resourceId = uri.split('://')[1];
+
         if (!resourceId || resourceId === 'not-found') {
           throw new Error('Resource not found');
         }

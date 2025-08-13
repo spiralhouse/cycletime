@@ -82,6 +82,7 @@ export class ResourceNotFoundError extends ResourceError {
 export class ResourceConflictError extends ResourceError {
   constructor(type: string, message?: string) {
     const errorMessage = message || `Resource type '${type}' is already registered`;
+
     super(errorMessage, ErrorCodes.RESOURCE_CONFLICT, { type });
   }
 }

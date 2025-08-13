@@ -9,7 +9,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
 import { ResourceRegistry } from '../../src/mcp/resources/ResourceRegistry';
+
 import type { ResourceDescriptor } from '../../src/mcp/resources/types';
 
 describe('MCP Resource Integration Tests', () => {
@@ -22,7 +24,8 @@ describe('MCP Resource Integration Tests', () => {
     registry = new ResourceRegistry();
     
     // Use unique resource types to avoid conflicts between tests
-    const uniqueId = Math.random().toString(36).substring(7);
+    const uniqueId = Math.random().toString(36).slice(7);
+
     testResource = {
       type: `file-reader-${uniqueId}`,
       name: 'Test Resource',
@@ -76,6 +79,7 @@ describe('MCP Resource Integration Tests', () => {
           description: `Test resource ${i}`,
           handler: testResource.handler
         };
+
         registry.register(resource);
       }
       
@@ -140,7 +144,7 @@ describe('MCP Resource Integration Tests', () => {
       // @ts-expect-error - Method doesn't exist yet
       await expect(registry.fetchResourceContent('', {}))
         .rejects.toMatchObject({
-          code: -32602,
+          code: -32_602,
           message: 'Invalid params',
           data: { field: 'resourceType' }
         });
@@ -169,7 +173,7 @@ describe('MCP Resource Integration Tests', () => {
       // @ts-expect-error - Method doesn't exist yet
       await expect(registry.handleMCPRequest({ invalidField: true }))
         .rejects.toMatchObject({
-          code: -32600,
+          code: -32_600,
           message: 'Invalid Request'
         });
     });
@@ -235,12 +239,14 @@ describe('MCP Resource Integration Tests', () => {
       
       // Should be available in session
       const resources = await session.listResources();
+
       expect(resources).toHaveLength(1);
       
       // Should not be available in other sessions
       // @ts-expect-error - Method doesn't exist yet
       const otherSession = await registry.createMCPSession('client-456');
       const otherResources = await otherSession.listResources();
+
       expect(otherResources).toHaveLength(0);
     });
   });

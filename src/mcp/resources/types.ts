@@ -48,13 +48,13 @@ export interface ResourceHandler {
    * @param cursor - Optional cursor for pagination
    * @param limit - Optional limit on number of results
    */
-  list(cursor?: string, limit?: number): Promise<ResourceListResult>;
+  list: (cursor?: string, limit?: number) => Promise<ResourceListResult>;
   
   /**
    * Read a specific resource by URI
    * @param uri - The URI of the resource to read
    */
-  read(uri: string): Promise<ResourceContent>;
+  read: (uri: string) => Promise<ResourceContent>;
 }
 
 /**
@@ -112,12 +112,12 @@ export interface MCPError {
  * MCP Resource List Response for integration tests
  */
 export interface MCPResourceListResponse {
-  resources: Array<{
+  resources: {
     uri: string;
     name: string;
     description?: string;
     mimeType?: string;
-  }>;
+  }[];
   total?: number;
   hasMore?: boolean;
 }

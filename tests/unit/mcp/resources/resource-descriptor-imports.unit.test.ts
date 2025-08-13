@@ -1,13 +1,15 @@
 import { describe, it, expect } from 'vitest';
+
 // These imports will fail until we implement the actual modules (RED phase)
+import { BaseResource } from '../../../../src/mcp/resources/BaseResource';
+import { ResourceValidationError, InvalidUriError } from '../../../../src/mcp/resources/errors';
+
 import type { 
   ResourceDescriptor, 
   ResourceHandler,
   ResourceContent,
   ResourceListResult 
 } from '../../../../src/mcp/resources/types';
-import { BaseResource } from '../../../../src/mcp/resources/BaseResource';
-import { ResourceValidationError, InvalidUriError } from '../../../../src/mcp/resources/errors';
 
 describe('ResourceDescriptor Module Imports', () => {
   it('should export ResourceDescriptor type from types module', () => {
@@ -39,6 +41,7 @@ describe('ResourceDescriptor Module Imports', () => {
     }
     
     const resource = new TestResource();
+
     expect(resource).toBeInstanceOf(BaseResource);
   });
 
