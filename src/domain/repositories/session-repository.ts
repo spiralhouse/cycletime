@@ -8,32 +8,32 @@ export interface SessionRepository {
   /**
    * Find a session by its unique key
    */
-  findBySessionKey: (sessionKey: SessionKey | string) => Promise<Session | null>;
+  findBySessionKey: (_sessionKey: SessionKey | string) => Promise<Session | null>;
 
   /**
    * Find all sessions associated with a project
    */
-  findByProjectId: (projectId: string) => Promise<Session[]>;
+  findByProjectId: (_projectId: string) => Promise<Session[]>;
 
   /**
    * Save a session (insert or update)
    */
-  save: (session: Session) => Promise<void>;
+  save: (_session: Session) => Promise<void>;
 
   /**
    * Delete a session by its key
    */
-  delete: (sessionKey: SessionKey | string) => Promise<boolean>;
+  delete: (_sessionKey: SessionKey | string) => Promise<boolean>;
 
   /**
    * Delete all sessions older than the specified date
    */
-  deleteExpired: (olderThan: Date) => Promise<number>;
+  deleteExpired: (_olderThan: Date) => Promise<number>;
 
   /**
    * Check if a session exists with the given key
    */
-  exists: (sessionKey: SessionKey | string) => Promise<boolean>;
+  exists: (_sessionKey: SessionKey | string) => Promise<boolean>;
 
   /**
    * Count total number of sessions
@@ -58,7 +58,7 @@ export interface UnitOfWork {
   /**
    * Execute operations within a transaction
    */
-  execute: <T>(operation: () => Promise<T>) => Promise<T>;
+  execute: <T>(_operation: () => Promise<T>) => Promise<T>;
 
   /**
    * Check if currently in a transaction

@@ -93,6 +93,10 @@ class JCVDLogger implements Logger {
       case 'error':
         this.consola.error(message, context);
         break;
+
+      default:
+        this.consola.info(message, context);
+        break;
     }
 
     // Emit log entry for other outputs (file, http, etc.)

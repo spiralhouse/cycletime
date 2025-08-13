@@ -125,7 +125,7 @@ export class Session {
    * Add active issue to context
    */
   addActiveIssue(issueId: string): void {
-    const activeIssues = this._currentContext.activeIssues || [];
+    const activeIssues = this._currentContext.activeIssues ?? [];
 
     if (!activeIssues.includes(issueId)) {
       this.updateContext({
@@ -138,7 +138,7 @@ export class Session {
    * Remove active issue from context
    */
   removeActiveIssue(issueId: string): void {
-    const activeIssues = this._currentContext.activeIssues || [];
+    const activeIssues = this._currentContext.activeIssues ?? [];
 
     this.updateContext({
       activeIssues: activeIssues.filter(id => id !== issueId),
