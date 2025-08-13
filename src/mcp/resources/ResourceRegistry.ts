@@ -14,6 +14,7 @@ export class ResourceRegistry {
   private resources: Map<string, ResourceDescriptor>;
 
   constructor() {
+    // Ensure each instance gets a fresh Map
     this.resources = new Map<string, ResourceDescriptor>();
   }
 
