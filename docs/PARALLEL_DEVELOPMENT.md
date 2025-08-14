@@ -1,17 +1,17 @@
 # Parallel Agent Development
 
-This document describes how to enable multiple agents to work on independent features simultaneously using Git Worktrees, following Test-Driven Development (TDD) cycles with Claude orchestration.
+This document describes how to enable multiple agents to work on independent features simultaneously using Git Worktrees with Claude orchestration. Parallel development can be used with any development workflow.
 
 ## Overview
 
-Parallel development in JCVD allows multiple features to be developed simultaneously by leveraging Git Worktrees. Each feature follows a complete TDD cycle with Claude-orchestrated specialized agents within its own isolated workspace.
+Parallel development in JCVD allows multiple features to be developed simultaneously by leveraging Git Worktrees. Each feature can follow any development workflow with Claude-orchestrated specialized agents within its own isolated workspace.
 
 ### Key Concepts
 
 - **Feature-Level Parallelism**: Multiple independent features developed simultaneously
 - **Claude Orchestration**: Claude coordinates all agents and phase transitions
 - **Isolated Workspaces**: Each feature gets its own worktree to prevent conflicts
-- **Structured TDD**: RED → GREEN → REFACTOR cycle with automated monitoring
+- **Flexible Workflows**: Support for TDD, direct implementation, bug fixes, and custom workflows
 
 ## Orchestration Responsibility
 
@@ -85,7 +85,7 @@ which claude
 ```bash
 # VERIFY prompt files exist in main repository (should be committed beforehand)
 ls -la .claude/prompts/
-# Should show: qa-agent.txt, developer-agent.txt, reviewer-agent.txt
+# Should show: task-agent.txt, test-agent.txt, implementation-agent.txt, review-agent.txt (and legacy TDD agents)
 
 # If prompt files are committed to main branch, they will automatically be 
 # available in all worktrees created from that branch
@@ -124,11 +124,23 @@ claude -p "[TASK_DESCRIPTION]" \
 
 ### Agent Types and Their Prompt Files
 
-| Agent Type | Prompt File | Purpose | TDD Phase |
-|------------|-------------|---------|-----------|
-| QA Agent | `qa-agent.txt` | Create comprehensive failing tests | RED |
-| Developer Agent | `developer-agent.txt` | Implement minimal passing code | GREEN |
-| Code Review Agent | `reviewer-agent.txt` | Review and refactor code | REFACTOR |
+| Agent Type | Prompt File | Purpose | Use Cases |
+|------------|-------------|---------|----------|
+| Task Agent | `task-agent.txt` | General purpose development tasks | Feature implementation, bug fixes, refactoring |
+| Test Agent | `test-agent.txt` | Testing specialist (all modes) | TDD tests, validation tests, regression tests |
+| Implementation Agent | `implementation-agent.txt` | Code implementation specialist | Direct implementation, TDD GREEN phase |
+| Review Agent | `review-agent.txt` | Code review and quality assurance | Code review, TDD REFACTOR phase, quality gates |
+
+### Development Workflow Options
+
+Parallel development supports multiple workflows:
+
+- **TDD Workflow**: Test-first development with RED → GREEN → REFACTOR cycles (see `docs/TDD_WORKFLOW.md`)
+- **Direct Implementation**: Build features directly from specifications (see `.claude/workflows/direct-workflow.md`)
+- **Bug Fix Workflow**: Reproduce → Fix → Verify process (see `.claude/workflows/bugfix-workflow.md`)
+- **Custom Workflows**: Define your own agent sequences using the generic agents
+
+Choose the workflow that best fits your requirements, team preferences, and project constraints.
 
 ## Parallel Agent Execution
 
@@ -142,24 +154,24 @@ When running parallel agents, monitor completion using BashOutput. Completion ti
 
 **METHOD**: Use Bash tool with `run_in_background=true` for each agent.
 
-**Example: Launch 3 QA Agents in Parallel (RED Phase)**
+**Example: Launch 3 Task Agents in Parallel (Direct Implementation)**
 
 ```python
-# Agent 1: red-thingy worktree
+# Agent 1: user-authentication feature
 Bash(
-    command="cd /Users/[user]/Projects/jcvd/.worktrees/red-thingy && claude -p 'Create failing tests for a red-thingy feature. The feature should have a createRedThing() function that returns \"Hello from red-thingy!\" and a getRedThingInfo() function that returns an object with name: \"red-thingy\" and version properties. Write comprehensive tests using Vitest that cover both functions and edge cases. All tests should initially FAIL since no implementation exists yet.' --append-system-prompt \"$(cat .claude/prompts/qa-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[user]/Projects/jcvd/.worktrees/authentication && claude -p 'Implement user authentication system with login, logout, and session management. Create secure, production-ready code following project patterns.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     run_in_background=true  # Returns bash_id like "bash_5"
 )
 
-# Agent 2: broken-fix worktree
+# Agent 2: user-profile feature
 Bash(
-    command="cd /Users/[user]/Projects/jcvd/.worktrees/broken-fix && claude -p 'Create failing tests for a bug fix feature. The feature should have a fixBrokenThing() function that returns \"Fixed: broken thing now works!\" and a getBugFixInfo() function that returns an object with name: \"broken-fix\" and version properties. Write comprehensive tests using Vitest that cover both functions and edge cases. All tests should initially FAIL since no implementation exists yet.' --append-system-prompt \"$(cat .claude/prompts/qa-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[user]/Projects/jcvd/.worktrees/user-profile && claude -p 'Implement user profile management with create, read, update operations. Include validation and error handling.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     run_in_background=true  # Returns bash_id like "bash_6"
 )
 
-# Agent 3: widget-one worktree for additional feature
+# Agent 3: password-reset feature
 Bash(
-    command="cd /Users/[user]/Projects/jcvd/.worktrees/widget-one && claude -p 'Create failing tests for an additional widget-two feature. The feature should have a createSecondWidget() function that returns \"Second widget from widget-one!\" and a getSecondWidgetInfo() function that returns an object with name: \"widget-two\" and version properties. Write comprehensive tests using Vitest that cover both functions and edge cases. All tests should initially FAIL since no implementation exists yet.' --append-system-prompt \"$(cat .claude/prompts/qa-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[user]/Projects/jcvd/.worktrees/password-reset && claude -p 'Implement secure password reset flow with email verification and token-based reset process.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     run_in_background=true  # Returns bash_id like "bash_7"
 )
 ```
@@ -170,12 +182,12 @@ Bash(
 
 ```python
 # Check individual agent status
-BashOutput(bash_id="bash_5")  # Check red-thingy QA agent
-BashOutput(bash_id="bash_6")  # Check broken-fix QA agent  
-BashOutput(bash_id="bash_7")  # Check widget-one QA agent
+BashOutput(bash_id="bash_5")  # Check authentication task agent
+BashOutput(bash_id="bash_6")  # Check user-profile task agent  
+BashOutput(bash_id="bash_7")  # Check password-reset task agent
 
 # Filter for important events (faster monitoring)
-BashOutput(bash_id="bash_5", filter="test:run|Tests|Test Files|commit|feat:|ERROR")
+BashOutput(bash_id="bash_5", filter="commit|feat:|fix:|ERROR|completed")
 ```
 
 **Status Indicators**:
@@ -185,20 +197,20 @@ BashOutput(bash_id="bash_5", filter="test:run|Tests|Test Files|commit|feat:|ERRO
 - `"exit_code": 0` - Success
 - `"exit_code": 127` - Command not found (claude CLI missing)
 
-### Sequential Phase Execution
+### Sequential Workflow Phases
 
-**Launch Developer Agents (GREEN Phase) After QA Completion:**
+**Launch Follow-up Agents After Initial Phase Completion:**
 
 ```python
-# ONLY after ALL QA agents show "status": "completed" with "exit_code": 0
-# Launch Developer agents for GREEN phase
+# Example: Add validation tests after direct implementation
+# ONLY after ALL implementation agents show "status": "completed" with "exit_code": 0
 
 Bash(
-    command="cd /Users/[user]/Projects/jcvd/.worktrees/red-thingy && claude -p 'Implement the minimal code needed to make the failing red-thingy tests pass. Create the implementation for createRedThing() and getRedThingInfo() functions based on the test requirements. Follow TDD GREEN phase principles - write only enough code to pass the tests.' --append-system-prompt \"$(cat .claude/prompts/developer-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[user]/Projects/jcvd/.worktrees/authentication && claude -p 'Add comprehensive validation tests for the implemented authentication system. Focus on security, edge cases, and integration testing.' --append-system-prompt \"$(cat .claude/prompts/test-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     run_in_background=true
 )
 
-# Repeat for broken-fix and widget-one worktrees...
+# Repeat for other features as needed...
 ```
 
 ## Common Failures and Solutions
@@ -232,7 +244,7 @@ Bash(
 ### Failure 2: Missing prompt files
 
 **Symptom**: Agent fails during startup
-**Error Message**: `cat: .claude/prompts/qa-agent.txt: No such file or directory`
+**Error Message**: `cat: .claude/prompts/test-agent.txt: No such file or directory`
 **Root Cause**: Prompt files not committed to main branch before creating worktrees
 
 **Solution**:
@@ -291,17 +303,14 @@ ls .worktrees/feature-name/.claude/prompts/
 **Location**: `.claude/prompts/` (must exist in EACH worktree)
 **File Permissions**: Read-accessible by claude CLI process
 
-#### qa-agent.txt (RED Phase Specialist)
+#### Legacy TDD-Specific Agents (For Backward Compatibility)
 
-Specializes in creating comprehensive failing tests that drive implementation. See `.claude/prompts/qa-agent.txt` for full prompt content.
+The original TDD-specific agents are still available:
+- `qa-agent.txt` - TDD RED phase specialist
+- `developer-agent.txt` - TDD GREEN phase specialist  
+- `reviewer-agent.txt` - TDD REFACTOR phase specialist
 
-#### developer-agent.txt (GREEN Phase Specialist)
-
-Specializes in implementing minimal code to make failing tests pass. See `.claude/prompts/developer-agent.txt` for full prompt content.
-
-#### reviewer-agent.txt (REFACTOR Phase Specialist)
-
-Specializes in code review and refactoring while maintaining test coverage. See `.claude/prompts/reviewer-agent.txt` for full prompt content.
+For new workflows, use the generic agents listed above which provide more flexibility.
 
 ### Prompt File Management
 
@@ -328,7 +337,7 @@ Use parallel development when:
 - Multiple independent features can be developed simultaneously
 - Features have minimal dependencies on each other
 - Clear scope boundaries can be established
-- Each feature can follow a complete TDD cycle independently
+- Each feature can follow any development workflow independently
 
 ### Feature Selection Criteria
 
@@ -344,48 +353,44 @@ Use parallel development when:
 - Major architectural changes
 - Database schema migrations
 
-## TDD Workflow per Feature Branch
+## Workflow Execution
 
-Each feature follows a structured TDD cycle orchestrated by Claude:
+Each feature branch can follow different development workflows orchestrated by Claude:
 
 ```mermaid
 flowchart TD
-    A[QA Agent: Write failing tests<br/>RED Phase] --> B[Claude monitors completion<br/>via BashOutput]
-    B --> C[Developer: Implement code<br/>GREEN Phase]
-    C --> D[Claude verifies tests pass]
-    D --> E[Code Reviewer: Review & refactor<br/>REFACTOR Phase]
-    E --> F[Claude coordinates final approval]
-    F --> G[Ready for Pull Request]
-    
-    style A fill:#cc3333,color:#ffffff
-    style C fill:#228833,color:#ffffff
-    style E fill:#3366cc,color:#ffffff
-    style G fill:#cc9900,color:#ffffff
+    A[Choose Workflow] --> B{Workflow Type}
+    B -->|TDD| C[Test → Implement → Review]
+    B -->|Direct| D[Implement → Test → Review]
+    B -->|Bug Fix| E[Reproduce → Fix → Verify]
+    B -->|Custom| F[Define Agent Sequence]
+    C --> G[Claude Orchestrates Agent Sequence]
+    D --> G
+    E --> G
+    F --> G
+    G --> H[Monitor Progress via BashOutput]
+    H --> I[Ready for Pull Request]
 ```
 
-### Phase Responsibilities
+### Workflow Coordination
 
-#### 1. RED Phase (QA Agent)
-- Create comprehensive test specifications
-- Write failing tests that define expected behavior  
-- Ensure tests cover edge cases and error conditions
-- Document acceptance criteria
-- **Claude Verifies**: All tests fail with meaningful error messages
+**Claude's Role**:
+- Choose appropriate agents based on selected workflow
+- Launch agents in correct sequence (parallel or sequential)
+- Monitor agent completion via BashOutput
+- Coordinate phase transitions and dependencies
+- Verify quality gates and success criteria
 
-#### 2. GREEN Phase (Developer)
-- Implement minimal code to make tests pass
-- Focus on functionality over optimization
-- Ensure all tests transition from failing to passing
-- **Claude Verifies**: All tests pass, functionality complete
+**Agent Independence**:
+- Each agent reads filesystem state to understand context
+- Agents perform their specialized tasks autonomously
+- No inter-agent communication required
+- Claude coordinates agents through filesystem state and monitoring
 
-#### 3. REFACTOR Phase (Code Reviewer)
-- Review implementation quality and completeness
-- Optimize code for clarity and performance
-- Remove code duplication and improve structure
-- Ensure tests continue to pass after refactoring
-- **Claude Verifies**: Code quality improved, all tests still pass
-
-**Note**: Claude coordinates between phases by monitoring agent completion status and launching the next phase only when the current phase completes successfully.
+For specific workflow details, see:
+- **TDD Workflow**: `docs/TDD_WORKFLOW.md`
+- **Direct Implementation**: `.claude/workflows/direct-workflow.md`
+- **Bug Fix Process**: `.claude/workflows/bugfix-workflow.md`
 
 ## Worktree Organization
 
@@ -455,35 +460,36 @@ Each Claude CLI agent:
 - Launching next phase only after all current phase agents complete
 - No JSON files, no manual handoffs, no inter-agent communication
 
-### Phase Coordination Examples
+### Workflow Coordination Examples
 
-#### QA → Developer Coordination (RED → GREEN)
+#### Implementation → Review Coordination
 
-**CRITICAL**: Only launch Developer agents AFTER all QA agents complete successfully.
+**CRITICAL**: Only launch review agents AFTER all implementation agents complete successfully.
 
 ```python
-# 1. VERIFY QA agents completed successfully
+# 1. VERIFY implementation agents completed successfully
 for bash_id in ["bash_5", "bash_6", "bash_7"]:
     result = BashOutput(bash_id=bash_id)
     # Must show: "status": "completed", "exit_code": 0
 
-# 2. Launch Developer agents for GREEN phase
+# 2. Launch review agents for quality assurance
 Bash(
-    command="cd /Users/[user]/Projects/jcvd/.worktrees/red-thingy && claude -p 'Implement the minimal code needed to make the failing red-thingy tests pass. Create the implementation for createRedThing() and getRedThingInfo() functions based on the test requirements. Follow TDD GREEN phase principles - write only enough code to pass the tests.' --append-system-prompt \"$(cat .claude/prompts/developer-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[user]/Projects/jcvd/.worktrees/authentication && claude -p 'Review the authentication implementation for code quality, security, performance, and adherence to project standards. Suggest improvements and ensure best practices are followed.' --append-system-prompt \"$(cat .claude/prompts/review-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     run_in_background=true
 )
 
-# Repeat for each worktree...
+# Repeat for each feature worktree...
 ```
 
-#### Developer → Code Review Coordination (GREEN → REFACTOR)
+#### Multi-Phase Workflow Example
 
 ```python
-# After all Developer agents complete successfully
-Bash(
-    command="cd /Users/[user]/Projects/jcvd/.worktrees/red-thingy && claude -p 'Review and refactor the red-thingy implementation while maintaining all test coverage. Analyze the code for quality, performance, and adherence to project standards. Make improvements without changing behavior and ensure all tests continue to pass.' --append-system-prompt \"$(cat .claude/prompts/reviewer-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
-    run_in_background=true
-)
+# Example: TDD workflow coordination
+# Phase 1: Create tests (using test-agent in TDD mode)
+# Phase 2: Implement code (using implementation-agent in test-driven mode)  
+# Phase 3: Review and refactor (using review-agent)
+
+# See docs/TDD_WORKFLOW.md for complete TDD coordination examples
 ```
 
 ### Benefits of Claude CLI Coordination
@@ -663,18 +669,25 @@ git worktree remove --force .worktrees/abandoned-feature
 # Force delete branch
 git branch -D feat/abandoned-feature
 ```
-## Quick Start: Complete Parallel TDD Workflow
+## Quick Start: Complete Parallel Development Workflow
 
 **ORCHESTRATION MODE**: This workflow assumes Claude is orchestrating. Users can follow these steps manually, but Claude should execute them automatically when parallel development is requested.
 
 ### When to Use This Workflow
 
-- User requests: "Implement three features in parallel"
-- User requests: "Use parallel agents for multiple bug fixes"  
-- User explicitly asks for TDD workflow across multiple features
-- NOT for single feature development (use standard workflow)
+- User requests: "Implement these features in parallel"
+- User requests: "Use parallel agents for multiple tasks"  
+- User explicitly asks for parallel development across multiple independent items
+- NOT for single feature development (use standard sequential workflow)
 
-**CRITICAL**: This section provides a complete, tested workflow for 3 parallel features using Claude CLI agents.
+### Workflow Selection
+
+Before starting, choose appropriate workflow:
+- **TDD**: For test-first development (see `docs/TDD_WORKFLOW.md`)
+- **Direct Implementation**: For direct feature building (see `.claude/workflows/direct-workflow.md`)
+- **Bug Fixes**: For systematic bug resolution (see `.claude/workflows/bugfix-workflow.md`)
+
+**CRITICAL**: This section provides a complete, tested workflow for parallel development using Claude CLI agents with any workflow.
 
 ### Prerequisites Checklist
 
@@ -689,7 +702,7 @@ pwd
 
 # 3. Verify prompt files exist
 ls -la .claude/prompts/
-# Should show: qa-agent.txt, developer-agent.txt, reviewer-agent.txt
+# Should show: task-agent.txt, test-agent.txt, implementation-agent.txt, review-agent.txt (and legacy TDD agents)
 ```
 
 ### Step 1: Setup Parallel Worktrees
@@ -737,84 +750,84 @@ for worktree in .worktrees/*/; do
 done
 ```
 
-### Step 4: Launch Parallel QA Agents (RED Phase)
+### Step 4: Launch Parallel Agents (Example: Direct Implementation)
 
 **Use these EXACT commands with appropriate path adjustments:**
 
 ```python
-# Launch QA Agent 1: red-thingy feature
+# Launch Task Agent 1: authentication feature
 Bash(
-    command="cd /Users/[USER]/Projects/jcvd/.worktrees/red-thingy && claude -p 'Create failing tests for a red-thingy feature. The feature should have a createRedThing() function that returns \"Hello from red-thingy!\" and a getRedThingInfo() function that returns an object with name: \"red-thingy\" and version properties. Write comprehensive tests using Vitest that cover both functions and edge cases. All tests should initially FAIL since no implementation exists yet.' --append-system-prompt \"$(cat .claude/prompts/qa-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
-    description="Launch QA agent for red-thingy feature (RED phase)",
+    command="cd /Users/[USER]/Projects/jcvd/.worktrees/authentication && claude -p 'Implement user authentication system with secure login, logout, and session management. Include proper validation, error handling, and security best practices.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    description="Launch task agent for authentication feature",
     run_in_background=true  
 )
 # Returns bash_id (e.g., "bash_5")
 
-# Launch QA Agent 2: broken-fix feature  
+# Launch Task Agent 2: user profile feature  
 Bash(
-    command="cd /Users/[USER]/Projects/jcvd/.worktrees/broken-fix && claude -p 'Create failing tests for a bug fix feature. The feature should have a fixBrokenThing() function that returns \"Fixed: broken thing now works!\" and a getBugFixInfo() function that returns an object with name: \"broken-fix\" and version properties. Write comprehensive tests using Vitest that cover both functions and edge cases. All tests should initially FAIL since no implementation exists yet.' --append-system-prompt \"$(cat .claude/prompts/qa-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
-    description="Launch QA agent for broken-fix feature (RED phase)",
+    command="cd /Users/[USER]/Projects/jcvd/.worktrees/user-profile && claude -p 'Implement user profile management with create, read, update operations. Include data validation, error handling, and proper API integration.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    description="Launch task agent for user profile feature",
     run_in_background=true
 )
 # Returns bash_id (e.g., "bash_6")
 
-# Launch QA Agent 3: widget enhancement
+# Launch Task Agent 3: password reset feature
 Bash(
-    command="cd /Users/[USER]/Projects/jcvd/.worktrees/widget-one && claude -p 'Create failing tests for an additional widget-two feature. The feature should have a createSecondWidget() function that returns \"Second widget from widget-one!\" and a getSecondWidgetInfo() function that returns an object with name: \"widget-two\" and version properties. Write comprehensive tests using Vitest that cover both functions and edge cases. All tests should initially FAIL since no implementation exists yet.' --append-system-prompt \"$(cat .claude/prompts/qa-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
-    description="Launch QA agent for widget enhancement (RED phase)",
+    command="cd /Users/[USER]/Projects/jcvd/.worktrees/password-reset && claude -p 'Implement secure password reset functionality with email verification, token generation, and secure reset process following security best practices.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    description="Launch task agent for password reset feature",
     run_in_background=true
 )
 # Returns bash_id (e.g., "bash_7")
 ```
 
-### Step 5: Monitor QA Agent Progress
+### Step 5: Monitor Agent Progress
 
 ```python
-# Check status of all QA agents
-BashOutput(bash_id="bash_5")  # red-thingy
-BashOutput(bash_id="bash_6")  # broken-fix  
-BashOutput(bash_id="bash_7")  # widget-one
+# Check status of all task agents
+BashOutput(bash_id="bash_5")  # authentication
+BashOutput(bash_id="bash_6")  # user-profile  
+BashOutput(bash_id="bash_7")  # password-reset
 
 # Filter for important events (faster monitoring)
-BashOutput(bash_id="bash_5", filter="test:run|Tests|Test Files|commit|feat:")
-BashOutput(bash_id="bash_6", filter="test:run|Tests|Test Files|commit|feat:")
-BashOutput(bash_id="bash_7", filter="test:run|Tests|Test Files|commit|feat:")
+BashOutput(bash_id="bash_5", filter="commit|feat:|fix:|completed|ERROR")
+BashOutput(bash_id="bash_6", filter="commit|feat:|fix:|completed|ERROR")
+BashOutput(bash_id="bash_7", filter="commit|feat:|fix:|completed|ERROR")
 ```
 
 **Wait for ALL agents to show:**
 - `"status": "completed"`
 - `"exit_code": 0`
 
-**Wait for all QA agents to complete before proceeding to GREEN phase.**
+**Wait for all agents to complete before proceeding to next phase (if applicable).**
 
-### Step 6: Launch Parallel Developer Agents (GREEN Phase)
+### Step 6: Launch Follow-up Agents (Optional)
 
-**ONLY after ALL QA agents complete successfully:**
+**Example: Add validation testing after direct implementation**
 
 ```python
-# Launch Developer Agent 1: red-thingy implementation
+# Launch Test Agent 1: authentication validation
 Bash(
-    command="cd /Users/[USER]/Projects/jcvd/.worktrees/red-thingy && claude -p 'Implement the minimal code needed to make the failing red-thingy tests pass. Create the implementation for createRedThing() and getRedThingInfo() functions based on the test requirements. Follow TDD GREEN phase principles - write only enough code to pass the tests.' --append-system-prompt \"$(cat .claude/prompts/developer-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
-    description="Launch Developer agent for red-thingy feature (GREEN phase)",
+    command="cd /Users/[USER]/Projects/jcvd/.worktrees/authentication && claude -p 'Add comprehensive validation tests for the authentication system. Focus on security testing, edge cases, error conditions, and integration scenarios.' --append-system-prompt \"$(cat .claude/prompts/test-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    description="Launch test agent for authentication validation",
     run_in_background=true
 )
 
-# Launch Developer Agent 2: broken-fix implementation
+# Launch Test Agent 2: user profile validation
 Bash(
-    command="cd /Users/[USER]/Projects/jcvd/.worktrees/broken-fix && claude -p 'Implement the minimal code needed to make the failing bug-fix tests pass. Create the implementation for fixBrokenThing() and getBugFixInfo() functions based on the test requirements. Follow TDD GREEN phase principles - write only enough code to pass the tests.' --append-system-prompt \"$(cat .claude/prompts/developer-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
-    description="Launch Developer agent for broken-fix feature (GREEN phase)",
+    command="cd /Users/[USER]/Projects/jcvd/.worktrees/user-profile && claude -p 'Add comprehensive validation tests for user profile functionality. Test CRUD operations, validation logic, and error handling.' --append-system-prompt \"$(cat .claude/prompts/test-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    description="Launch test agent for user profile validation",
     run_in_background=true
 )
 
-# Launch Developer Agent 3: widget enhancement implementation
+# Launch Test Agent 3: password reset validation
 Bash(
-    command="cd /Users/[USER]/Projects/jcvd/.worktrees/widget-one && claude -p 'Implement the minimal code needed to make the failing widget-two tests pass. Create the implementation for createSecondWidget() and getSecondWidgetInfo() functions based on the test requirements. Follow TDD GREEN phase principles - write only enough code to pass the tests.' --append-system-prompt \"$(cat .claude/prompts/developer-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
-    description="Launch Developer agent for widget enhancement (GREEN phase)",
+    command="cd /Users/[USER]/Projects/jcvd/.worktrees/password-reset && claude -p 'Add comprehensive security tests for password reset functionality. Focus on security vulnerabilities, token handling, and edge cases.' --append-system-prompt \"$(cat .claude/prompts/test-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    description="Launch test agent for password reset validation",
     run_in_background=true
 )
 ```
 
-**Wait for all Developer agents to complete before proceeding to REFACTOR phase.**
+**Note**: Follow-up phases depend on chosen workflow. See workflow documentation for specific agent sequences.
 
 ### Step 7: Verify Results
 
@@ -833,19 +846,19 @@ done
 ```
 
 **Expected Results**:
-- All tests passing in all worktrees
-- Git commits for both RED and GREEN phases  
-- Implementation files created (src/red-thingy.ts, src/bug-fix-feature.ts, src/widgets/widget-two.ts)
-- Test files created with comprehensive coverage
+- All implementations working correctly in all worktrees
+- Git commits for each development phase
+- Implementation files created (src/auth.ts, src/user-profile.ts, src/password-reset.ts)
+- Appropriate test coverage based on chosen workflow
 
-### Step 8: Optional Code Review Phase (REFACTOR)
+### Step 8: Final Quality Review
 
 ```python
-# Launch Code Review agents for final optimization
-for worktree in ["red-thingy", "broken-fix", "widget-one"]:
+# Launch Review agents for final quality assurance
+for worktree in ["authentication", "user-profile", "password-reset"]:
     Bash(
-        command=f"cd /Users/[USER]/Projects/jcvd/.worktrees/{worktree} && claude -p 'Review and refactor the {worktree} implementation while maintaining all test coverage. Analyze the code for quality, performance, and adherence to project standards. Make improvements without changing behavior and ensure all tests continue to pass.' --append-system-prompt \"$(cat .claude/prompts/reviewer-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
-        description=f"Launch Code Review agent for {worktree} (REFACTOR phase)",
+        command=f"cd /Users/[USER]/Projects/jcvd/.worktrees/{worktree} && claude -p 'Perform comprehensive code review of {worktree} implementation. Check code quality, security, performance, and adherence to project standards. Suggest any necessary improvements.' --append-system-prompt \"$(cat .claude/prompts/review-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+        description=f"Launch review agent for {worktree} quality check",
         run_in_background=true
     )
 ```
@@ -854,17 +867,17 @@ for worktree in ["red-thingy", "broken-fix", "widget-one"]:
 
 ```bash
 # Create PRs for each feature from their respective worktrees
-cd .worktrees/red-thingy
-git push -u origin feat/spi-XXX-red-thingy
-gh pr create --title "feat: implement red-thingy feature" --body "Complete TDD implementation with parallel agent development"
+cd .worktrees/authentication
+git push -u origin feat/spi-XXX-user-authentication
+gh pr create --title "feat: implement user authentication system" --body "Complete implementation with parallel agent development"
 
-cd ../broken-fix  
-git push -u origin fix/spi-XXX-broken-fix
-gh pr create --title "fix: implement broken-fix solution" --body "Complete TDD implementation with parallel agent development"
+cd ../user-profile  
+git push -u origin feat/spi-XXX-user-profile
+gh pr create --title "feat: implement user profile management" --body "Complete implementation with parallel agent development"
 
-cd ../widget-one
-git push -u origin feat/spi-XXX-widget-enhancement  
-gh pr create --title "feat: enhance widget functionality" --body "Complete TDD implementation with parallel agent development"
+cd ../password-reset
+git push -u origin feat/spi-XXX-password-reset  
+gh pr create --title "feat: implement password reset functionality" --body "Complete implementation with parallel agent development"
 ```
 
 ### Quality Verification
@@ -906,9 +919,9 @@ git worktree remove .worktrees/broken-fix
 git worktree remove .worktrees/widget-one
 
 # Clean up local branches (if desired)
-git branch -d feat/spi-XXX-red-thingy
-git branch -d fix/spi-XXX-broken-fix
-git branch -d feat/spi-XXX-widget-enhancement
+git branch -d feat/spi-XXX-user-authentication
+git branch -d feat/spi-XXX-user-profile
+git branch -d feat/spi-XXX-password-reset
 ```
 
 **This Quick Start enables reproducible parallel development with measurable success criteria and comprehensive error handling.**

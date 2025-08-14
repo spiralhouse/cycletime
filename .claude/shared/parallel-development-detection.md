@@ -38,11 +38,17 @@ I notice this story has [N] independent subtasks that could be developed in para
 - [Subtask 3]: [Z] points - [brief description]
 
 Using parallel development with specialized agents (@docs/PARALLEL_DEVELOPMENT.md), we could:
-- Complete all subtasks simultaneously vs sequentially  
+- Complete all subtasks simultaneously vs sequentially
 - Maintain isolation between features (separate worktrees)
-- Follow TDD methodology (RED → GREEN → REFACTOR) for each
+- Choose the most appropriate workflow for each feature
 
-Would you like me to set up parallel development for these subtasks?
+Which development workflow would you prefer?
+□ **TDD Workflow** - Test-first development (RED → GREEN → REFACTOR)
+□ **Direct Implementation** - Build features directly from specifications  
+□ **Bug Fix Workflow** - Systematic reproduce → fix → verify process
+□ **Mixed Workflows** - Different workflow per feature based on requirements
+
+Would you like me to set up parallel development with your chosen workflow?
 ```
 
 ## Detection Patterns
