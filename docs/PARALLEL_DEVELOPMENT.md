@@ -60,7 +60,14 @@ Outside of parallel development workflows:
 
 ## Claude CLI Agent Execution
 
-**CRITICAL**: This section documents the EXACT commands and patterns that enable real parallel agent work. These patterns were proven in production testing with 3 parallel agents completing TDD cycles in under 3 minutes.
+**CRITICAL**: This section documents the EXACT commands and patterns that enable real parallel agent work. These patterns use Claude CLI directly, NOT Task tool delegation.
+
+**IMPORTANT DISTINCTION**:
+- ✅ **CORRECT**: Use `claude` CLI commands with prompt files (documented below)
+- ❌ **WRONG**: Do NOT use Task tool with `@agent-*` patterns (e.g., `@agent-developer`)
+- ❌ **WRONG**: Do NOT use Task tool delegation - agents work in isolated environments
+
+**Why Claude CLI?** Only Claude CLI agents can make real filesystem changes and commits. Task tool agents work in isolated environments and cannot modify actual worktree files.
 
 ### MANDATORY Prerequisites
 
@@ -74,21 +81,16 @@ which claude
 # If empty/error: Agents will fail with "command not found" (exit code 127)
 ```
 
-#### 2. Agent Prompt File Distribution
+#### 2. Agent Prompt File Availability
 ```bash
-# CRITICAL: Copy prompt files to ALL worktrees BEFORE launching agents
-# Missing files cause: "cat: .claude/prompts/[agent].txt: No such file or directory"
+# VERIFY prompt files exist in main repository (should be committed beforehand)
+ls -la .claude/prompts/
+# Should show: qa-agent.txt, developer-agent.txt, reviewer-agent.txt
 
-# From main repository root:
-for worktree in .worktrees/*/; do
-    mkdir -p "$worktree/.claude/prompts"
-    cp .claude/prompts/*.txt "$worktree/.claude/prompts/"
-    echo "✓ Copied prompts to $worktree"
-done
-
-# VERIFY all files exist:
+# If prompt files are committed to main branch, they will automatically be 
+# available in all worktrees created from that branch
+# VERIFY all files exist in worktrees:
 find .worktrees -name "*.txt" -path "*/.claude/prompts/*"
-# Should show: qa-agent.txt, developer-agent.txt, reviewer-agent.txt in each worktree
 ```
 
 #### 3. Worktree Dependency Installation
@@ -132,13 +134,9 @@ claude -p "[TASK_DESCRIPTION]" \
 
 **CRITICAL**: This section documents how to launch and monitor multiple Claude CLI agents simultaneously using proven patterns.
 
-### Performance Metrics (Production Testing)
+### Monitoring Agent Progress
 
-Our testing with 3 parallel worktrees achieved:
-- **QA Phase (RED)**: 3 agents completed in ~2 minutes
-- **Developer Phase (GREEN)**: 3 agents completed in ~1 minute  
-- **Total TDD Cycle**: ~3 minutes for 3 complete features
-- **Success Rate**: 100% (3/3 agents completed successfully)
+When running parallel agents, monitor completion using BashOutput. Completion times vary based on feature complexity and system performance.
 
 ### Launching Multiple Agents Simultaneously
 
@@ -235,26 +233,27 @@ Bash(
 
 **Symptom**: Agent fails during startup
 **Error Message**: `cat: .claude/prompts/qa-agent.txt: No such file or directory`
-**Root Cause**: Prompt files only exist in main worktree, not copied to feature worktrees
+**Root Cause**: Prompt files not committed to main branch before creating worktrees
 
 **Solution**:
 ```bash
-# MUST run BEFORE launching any agents:
-for worktree in .worktrees/*/; do
-    mkdir -p "$worktree/.claude/prompts"
-    cp .claude/prompts/*.txt "$worktree/.claude/prompts/"
-done
+# Commit prompt files to main branch FIRST:
+git add .claude/prompts/*.txt
+git commit -m "feat: add agent prompt files for parallel development"
 
-# VERIFY all files copied:
-find .worktrees -name "*.txt" -path "*/.claude/prompts/*" | wc -l
-# Should equal: (number of worktrees) × 3
+# Then create worktrees - files will be automatically available
+git worktree add .worktrees/feature-name -b feat/feature-name
+
+# VERIFY files exist:
+ls .worktrees/feature-name/.claude/prompts/
 ```
 
-### Failure 3: Agents report success but no changes exist
+### Failure 3: Using Task tool instead of Claude CLI
 
-**Symptom**: Task tool reports completion but no files modified, no commits made
+**Symptom**: Task tool reports agent completion but no files modified, no commits made
 **Root Cause**: Task tool agents work in isolated environments, not real worktrees
-**Solution**: Use Claude CLI directly with `--permission-mode bypassPermissions` (NOT Task tool)
+**CRITICAL**: Task tool `@agent-*` patterns do NOT work for parallel development
+**Solution**: ALWAYS use Claude CLI directly with `--permission-mode bypassPermissions`
 
 ### Failure 4: Tests fail due to import errors
 
@@ -327,7 +326,7 @@ You are a QA Agent specializing in Test-Driven Development (TDD). Your role is t
 - Report test results and implementation requirements
 - Explain any complex test scenarios briefly
 
-You are part of a TDD workflow and will hand off to a Developer Agent after completing the RED phase.
+You work independently as part of a TDD workflow orchestrated by Claude.
 ```
 
 #### developer-agent.txt (GREEN Phase Specialist)
@@ -365,7 +364,7 @@ You are a Developer Agent specializing in implementing features to pass existing
 - Report test results and implementation status
 - Explain any architectural decisions briefly
 
-You are part of a TDD workflow receiving failing tests from a QA Agent and will hand off to a Code Review Agent after completing the GREEN phase.
+You work independently as part of a TDD workflow orchestrated by Claude, implementing code to pass existing tests.
 ```
 
 #### reviewer-agent.txt (REFACTOR Phase Specialist)
@@ -410,18 +409,16 @@ You are a Code Review Agent specializing in quality assurance and code refinemen
 - Explain the reasoning behind refactoring decisions
 - Report final approval status and any remaining concerns
 
-You are the final stage in a TDD workflow, ensuring code quality before the feature is considered complete.
+You work independently as the code review specialist in a TDD workflow orchestrated by Claude.
 ```
 
 ### Prompt File Management
 
-**Distribution Command**:
+**Preparation Command**:
 ```bash
-# Copy prompts to all worktrees (run from main repo root)
-for worktree in .worktrees/*/; do
-    mkdir -p "$worktree/.claude/prompts"
-    cp .claude/prompts/*.txt "$worktree/.claude/prompts/"
-done
+# Commit prompt files to main branch before creating worktrees
+git add .claude/prompts/*.txt
+git commit -m "feat: add agent prompt files for parallel development"
 ```
 
 **Verification**:
@@ -509,15 +506,15 @@ jcvd/                          # Main worktree (main branch)
 ├── src/                       # Main development area
 ├── .worktrees/                # Parallel development area
 │   ├── widget-one/            # Feature: Widget implementation
-│   │   ├── .agent-handoff     # Handoff tracking file
+│   │   ├── .claude/prompts/   # Agent prompt files
 │   │   ├── src/               # Feature implementation
 │   │   └── tests/             # Feature tests
 │   ├── red-thingy/            # Feature: Red component
-│   │   ├── .agent-handoff     # Handoff tracking file
+│   │   ├── .claude/prompts/   # Agent prompt files
 │   │   ├── src/               # Feature implementation
 │   │   └── tests/             # Feature tests
 │   └── broken-fix/            # Bug fix: Specific issue
-│       ├── .agent-handoff     # Handoff tracking file
+│       ├── .claude/prompts/   # Agent prompt files
 │       ├── src/               # Bug fix implementation
 │       └── tests/             # Regression tests
 └── docs/                      # Shared documentation
@@ -644,12 +641,10 @@ gh pr create --title "feat: implement feature-name" --body "$(cat <<'EOF'
 ## Summary
 Brief description of the feature and its purpose
 
-## Agent Handoff History  
-- ✅ QA: Test specification (RED phase)
-- ✅ Code Reviewer: Test validation
-- ✅ Developer: Implementation (GREEN phase)
-- ✅ Developer: Refactoring (REFACTOR phase)
-- ✅ Code Reviewer: Final review
+## TDD Phase Completion
+- ✅ RED Phase: Comprehensive failing tests created
+- ✅ GREEN Phase: Implementation completed, all tests pass
+- ✅ REFACTOR Phase: Code reviewed and optimized
 
 ## Changes Made
 - List of key changes
@@ -692,9 +687,9 @@ gh pr checks feat/feature-name
 ### Communication Patterns
 
 - **Status Updates**: Use Linear issue status updates for progress
-- **Blocking Issues**: Document in `.agent-handoff` blocking_issues array
+- **Blocking Issues**: Create Linear issue comments or update issue status to blocked
 - **Questions**: Create comments on Linear issues for clarification
-- **Architecture Decisions**: Involve Software Architect for guidance
+- **Architecture Decisions**: Coordinate through Claude or involve Software Architect for guidance
 
 ### Quality Gates
 
@@ -718,12 +713,10 @@ cd .worktrees/widget-one
 git add .
 git commit -m "feat: implement widget-one functionality
 
-Complete TDD cycle with agent handoffs:
-- QA: Written comprehensive tests
-- Code Reviewer: Validated test quality  
-- Developer: Implemented functionality
-- Developer: Refactored for clarity
-- Code Reviewer: Final approval
+Complete TDD cycle with Claude orchestration:
+- RED Phase: Comprehensive failing tests written
+- GREEN Phase: Implementation completed, all tests pass  
+- REFACTOR Phase: Code reviewed and optimized
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -739,12 +732,10 @@ gh pr create --title "feat: implement widget-one functionality" --body "$(cat <<
 - All tests passing with comprehensive coverage
 - Agent handoffs completed successfully
 
-## Agent Handoff History
-- ✅ QA: Test specification and RED phase
-- ✅ Code Reviewer: RED validation
-- ✅ Developer: GREEN implementation
-- ✅ Developer: REFACTOR optimization
-- ✅ Code Reviewer: Final review
+## TDD Phase Completion
+- ✅ RED Phase: Failing tests created and validated
+- ✅ GREEN Phase: Implementation completed, all tests pass
+- ✅ REFACTOR Phase: Code reviewed and optimized
 
 ## Test Plan
 - [ ] Verify all existing tests continue to pass
@@ -781,7 +772,6 @@ git worktree remove --force .worktrees/abandoned-feature
 # Force delete branch
 git branch -D feat/abandoned-feature
 ```
-/exi
 ## Quick Start: Complete Parallel TDD Workflow
 
 **ORCHESTRATION MODE**: This workflow assumes Claude is orchestrating. Users can follow these steps manually, but Claude should execute them automatically when parallel development is requested.
@@ -824,19 +814,17 @@ git worktree list
 # Should show 4 entries: main + 3 feature worktrees
 ```
 
-### Step 2: Distribute Agent Prompt Files
+### Step 2: Verify Agent Prompt Files
 
 ```bash
-# CRITICAL: Copy prompt files to ALL worktrees BEFORE launching agents
-for worktree in .worktrees/*/; do
-    mkdir -p "$worktree/.claude/prompts"
-    cp .claude/prompts/*.txt "$worktree/.claude/prompts/"
-    echo "✓ Copied prompts to $worktree"
-done
-
-# VERIFY all files copied correctly
+# VERIFY prompt files exist in worktrees (inherited from main branch)
 find .worktrees -name "*.txt" -path "*/.claude/prompts/*" | wc -l
 # Should return: 9 (3 worktrees × 3 prompt files)
+
+# If missing, prompt files need to be committed to main branch first:
+# git add .claude/prompts/*.txt
+# git commit -m "feat: add agent prompt files for parallel development"
+# Then recreate worktrees from updated main branch
 ```
 
 ### Step 3: Install Dependencies in All Worktrees
@@ -906,7 +894,7 @@ BashOutput(bash_id="bash_7", filter="test:run|Tests|Test Files|commit|feat:")
 - `"status": "completed"`
 - `"exit_code": 0`
 
-**Expected Timeline**: ~2 minutes for all 3 QA agents
+**Wait for all QA agents to complete before proceeding to GREEN phase.**
 
 ### Step 6: Launch Parallel Developer Agents (GREEN Phase)
 
@@ -935,7 +923,7 @@ Bash(
 )
 ```
 
-**Expected Timeline**: ~1 minute for all 3 Developer agents
+**Wait for all Developer agents to complete before proceeding to REFACTOR phase.**
 
 ### Step 7: Verify Results
 
@@ -988,20 +976,14 @@ git push -u origin feat/spi-XXX-widget-enhancement
 gh pr create --title "feat: enhance widget functionality" --body "Complete TDD implementation with parallel agent development"
 ```
 
-### Success Metrics
-
-**Performance Targets**:
-- **Total Time**: < 5 minutes for 3 complete features
-- **QA Phase**: < 2 minutes for all failing tests
-- **GREEN Phase**: < 1 minute for all implementations
-- **Success Rate**: 100% completion (all tests passing)
+### Quality Verification
 
 **Quality Indicators**:
 - All tests passing in each worktree
 - Clean git commit history for each feature  
 - TypeScript compilation with no errors
 - ESLint passing with no warnings
-- Proper test coverage (>90% for new code)
+- Proper test coverage for new functionality
 
 ### Troubleshooting Commands
 
