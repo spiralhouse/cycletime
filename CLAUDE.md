@@ -33,6 +33,10 @@ work directly unless otherwise instructed to.
 6. **Tech Lead Agent** (@agent-tech-lead) Task coordination, dependency
    management
 
+## Parallel Development Opportunities
+
+@.claude/shared/parallel-development-detection.md
+
 ## Git Branch Naming Conventions
 
 @.claude/shared/git-conventions.md

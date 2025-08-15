@@ -144,7 +144,7 @@ done
 
 ## Output Format:
 
-````
+~~~
 🧹 Worktree Cleanup Analysis
 ============================
 
@@ -167,11 +167,12 @@ done
 📋 Recommended Actions:
 
 ✅ Safe to Clean (1):
+
 ```bash
 # Clean merged developer worktree
 git worktree remove .jcvd/worktrees/developer-auth-123
 git branch -d feature/developer/auth-implementation
-````
+```
 
 ⚠️ Review Needed (1):
 
@@ -182,10 +183,13 @@ git worktree remove --force .jcvd/worktrees/qa-auth-123
 # Branch feature/qa/auth-testing will be preserved
 ```
 
-📊 Summary: ├── Total worktrees: 3 ├── Safe to clean: 1  
-├── Requires review: 1 ├── Keep active: 1 └── Estimated space to free: 45.2 MB
-
-```
+📊 Summary: 
+├── Total worktrees: 3 
+├── Safe to clean: 1  
+├── Requires review: 1 
+├── Keep active: 1 
+└── Estimated space to free: 45.2 MB
+~~~
 
 ## Safety Features:
 

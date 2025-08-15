@@ -6,8 +6,8 @@ This directory contains configuration files for Claude Code integration with the
 
 ```
 .claude/
-├── agents/           # Agent definition files
-├── commands/         # Slash command definitions
+├── prompts/          # Agent prompt files for Claude CLI execution
+├── workflows/        # Development workflow templates
 ├── shared/           # Shared content for imports
 └── settings.local.json  # Local Claude Code settings
 ```
@@ -22,6 +22,7 @@ The `shared/` directory contains reusable content that can be imported into CLAU
 - `testing-standards.md` - Testing architecture and best practices
 - `git-conventions.md` - Git branch naming conventions
 - `development-commands.md` - npm script reference
+- `parallel-development-detection.md` - Proactive parallelization detection patterns
 
 ### How Imports Work
 
@@ -31,42 +32,74 @@ The `shared/` directory contains reusable content that can be imported into CLAU
 @.claude/shared/linear-reference.md
 ```
 
-**In Agent Files (❌ Not Supported):**
-Agent definition files (`.claude/agents/*.md`) do NOT support the `@` import syntax. Content must be duplicated in agent files when needed.
+**In Agent Prompt Files (❌ Not Supported):**
+Agent prompt files (`.claude/prompts/*.txt`) do NOT support the `@` import syntax. Content must be duplicated in prompt files when needed.
 
 ## Maintenance Requirements
 
 ### When Linear IDs Change
 
-Update in TWO places:
+Update in ONE place:
 1. `.claude/shared/linear-reference.md` (imported by CLAUDE.md)
-2. Individual agent files that need Linear IDs:
-   - `agents/product-manager.md`
-   - `agents/developer.md`
-   - `agents/tech-lead.md`
-   - `agents/qa.md`
-   - `agents/code-reviewer.md`
+
+Agent prompt files currently don't use Linear IDs directly - they delegate Linear operations to Claude orchestration.
 
 ### Why This Pattern?
 
 - **CLAUDE.md benefits**: Uses imports to avoid duplication for the orchestrator
-- **Agent limitations**: Agent files don't support imports (Claude Code limitation)
-- **Future-ready**: If Claude Code adds import support for agents, we can easily refactor
+- **Agent limitations**: Prompt files don't support imports (Claude CLI limitation)
+- **Separation of concerns**: Workflows are orthogonal to parallel development capabilities
 
-## Agent Files
+## Agent Prompt Files
 
-Each agent has a specific role and personality:
+Generic agents that adapt to different workflows:
 
-- **product-manager.md** - Empathetic, user-focused, questions solutions
-- **developer.md** - Humble, asks clarifying questions
-- **code-reviewer.md** - Skeptical but encouraging
-- **qa.md** - Skeptical, direct but constructive
-- **software-architect.md** - Confident with self-deprecating humor
-- **tech-lead.md** - Confident leader with realistic estimation humor
+- **task-agent.txt** - General purpose development agent for features, bugs, refactoring
+- **test-agent.txt** - Testing specialist with multiple modes (TDD, validation, bug fix, integration)
+- **implementation-agent.txt** - Code implementation specialist adaptable to any workflow
+- **review-agent.txt** - Code review and quality assurance for any development approach
+
+### Legacy TDD-Specific Agents (Backward Compatibility)
+
+- **qa-agent.txt** - TDD RED phase specialist
+- **developer-agent.txt** - TDD GREEN phase specialist  
+- **reviewer-agent.txt** - TDD REFACTOR phase specialist
+
+## Workflow Templates
+
+Development workflow guides in `.claude/workflows/`:
+
+- **tdd-workflow.md** - Complete TDD methodology (RED → GREEN → REFACTOR)
+- **direct-workflow.md** - Direct implementation approach
+- **bugfix-workflow.md** - Systematic bug resolution process
+
+## Usage Patterns
+
+### Parallel Development with Workflow Choice
+
+When Claude detects parallel development opportunities, it offers workflow choices:
+
+1. **TDD Workflow** - For complex business logic requiring test-first development
+2. **Direct Implementation** - For well-understood features or rapid prototyping  
+3. **Bug Fix Workflow** - For systematic bug resolution with reproduce → fix → verify
+4. **Mixed Workflows** - Different workflows per feature based on requirements
+
+### Claude CLI Integration
+
+Agent prompt files are designed for Claude CLI execution with specific command patterns:
+
+```bash
+claude -p "[task]" \
+  --append-system-prompt "$(cat .claude/prompts/[agent].txt)" \
+  --permission-mode bypassPermissions \
+  --output-format stream-json \
+  --verbose
+```
 
 ## Best Practices
 
 1. **Keep shared files focused**: Each file should contain one logical section
-2. **Document updates**: When updating shared content, check if agents need updates too
+2. **Workflow independence**: Parallel development and workflows are orthogonal capabilities
 3. **Test imports**: After changing shared files, verify CLAUDE.md still works correctly
 4. **Version control**: Commit shared files and CLAUDE.md changes together
+5. **Agent specialization**: Use appropriate agents based on task requirements, not rigid role assignments
