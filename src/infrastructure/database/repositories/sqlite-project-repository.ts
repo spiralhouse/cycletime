@@ -178,16 +178,14 @@ export class SqliteProjectRepository implements ProjectRepository {
     }
   }
 
-  async delete(id: ProjectId): Promise<boolean> {
+  async delete(id: ProjectId): Promise<void> {
     try {
       this.ensureStatementsReady();
       if (!this.deleteProjectStmt) {
         throw new Error('Unable to prepare database statements');
       }
 
-      const result = this.deleteProjectStmt.run(id.value);
-
-      return result.changes > 0;
+      this.deleteProjectStmt.run(id.value);
     } catch (error) {
       throw new RepositoryError('delete project', error as Error);
     }
