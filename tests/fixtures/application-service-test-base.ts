@@ -1,14 +1,11 @@
-import { ApplicationServiceMockFactory } from './mock-application-service-infrastructure.js';
-import { Project } from '../../src/domain/entities/project.js';
+import { expect } from 'vitest';
+
 import { Issue } from '../../src/domain/entities/issue.js';
+import { Project } from '../../src/domain/entities/project.js';
 import { Workflow } from '../../src/domain/entities/workflow.js';
 import { ProjectId } from '../../src/domain/value-objects/project-id.js';
-import { IssueId } from '../../src/domain/value-objects/issue-id.js';
-import { WorkflowId } from '../../src/domain/value-objects/workflow-id.js';
-import { ProjectStatus } from '../../src/domain/value-objects/project-status.js';
-import { IssueType } from '../../src/domain/value-objects/issue-type.js';
-import { IssueStatus } from '../../src/domain/value-objects/issue-status.js';
-import { WorkflowStage } from '../../src/domain/value-objects/workflow-stage.js';
+
+import { ApplicationServiceMockFactory } from './mock-application-service-infrastructure.js';
 
 /**
  * Base class for application service tests providing common setup and utilities
@@ -72,7 +69,7 @@ export abstract class ApplicationServiceTestBase {
     stages?: string[];
   } = {}): Workflow {
     const name = options.name || 'Test Workflow';
-    const projectId = options.projectId || new ProjectId('test-project-1');
+    const projectId = options.projectId || ProjectId.generate();
     const stages = options.stages;
 
     if (stages) {
@@ -161,6 +158,7 @@ export abstract class ApplicationServiceTestBase {
     
     if (predicate && expectedCallCount > 0) {
       const matchingCalls = calls.filter(predicate);
+
       expect(matchingCalls).toHaveLength(expectedCallCount);
     }
   }
@@ -181,6 +179,7 @@ export abstract class ApplicationServiceTestBase {
   protected assertTimeProviderUsed(): void {
     // This can be verified by checking that created entities have the expected timestamp
     const expectedTime = this.mocks.timeProvider.now();
+
     expect(expectedTime).toEqual(new Date('2024-01-01T00:00:00Z'));
   }
 
@@ -189,6 +188,7 @@ export abstract class ApplicationServiceTestBase {
    */
   protected advanceTimeAndVerify(milliseconds: number): Date {
     this.mocks.timeProvider.advance(milliseconds);
+
     return this.mocks.timeProvider.now();
   }
 }

@@ -1,16 +1,18 @@
-import type { ProjectRepository } from '../../src/domain/repositories/project-repository.js';
-import type { IssueRepository } from '../../src/domain/repositories/issue-repository.js';
-import type { WorkflowRepository } from '../../src/domain/repositories/workflow-repository.js';
-import type { UnitOfWork } from '../../src/domain/repositories/session-repository.js';
-import type { TimeProvider } from '../../src/domain/interfaces/time-provider.js';
 
-import { Project } from '../../src/domain/entities/project.js';
-import { Issue } from '../../src/domain/entities/issue.js';
-import { Workflow } from '../../src/domain/entities/workflow.js';
-import { ProjectId } from '../../src/domain/value-objects/project-id.js';
-import { IssueId } from '../../src/domain/value-objects/issue-id.js';
-import { WorkflowId } from '../../src/domain/value-objects/workflow-id.js';
+
+import type { ProjectId } from '../../src/domain/value-objects/project-id.js';
+
+
 import { MockTimeProvider } from './mock-time-provider.js';
+import type { Issue } from '../../src/domain/entities/issue.js';
+import type { Project } from '../../src/domain/entities/project.js';
+import type { Workflow } from '../../src/domain/entities/workflow.js';
+import type { IssueRepository } from '../../src/domain/repositories/issue-repository.js';
+import type { ProjectRepository } from '../../src/domain/repositories/project-repository.js';
+import type { UnitOfWork } from '../../src/domain/repositories/session-repository.js';
+import type { WorkflowRepository } from '../../src/domain/repositories/workflow-repository.js';
+import type { IssueId } from '../../src/domain/value-objects/issue-id.js';
+import type { WorkflowId } from '../../src/domain/value-objects/workflow-id.js';
 
 /**
  * Mock ProjectRepository for unit testing application services
@@ -121,6 +123,7 @@ export class MockProjectRepository implements ProjectRepository {
 
   async findAll(): Promise<Project[]> {
     this.findAllCalls++;
+
     return Array.from(this.projects.values());
   }
 }
@@ -228,6 +231,7 @@ export class MockIssueRepository implements IssueRepository {
 
   async findByProjectId(projectId: ProjectId): Promise<Issue[]> {
     this.findByProjectIdCalls.push(projectId.value);
+
     return this.projectIssues.get(projectId.value) || [];
   }
 
@@ -257,6 +261,7 @@ export class MockIssueRepository implements IssueRepository {
     
     // Also add to project issues list
     const existingIssues = this.projectIssues.get(projectId.value) || [];
+
     if (!existingIssues.find(existing => existing.id.value === issue.id.value)) {
       existingIssues.push(issue);
       this.projectIssues.set(projectId.value, existingIssues);
@@ -368,7 +373,8 @@ export class MockWorkflowRepository implements WorkflowRepository {
   async findByProjectId(projectId: ProjectId): Promise<Workflow | null> {
     this.findByProjectIdCalls.push(projectId.value);
     const workflows = this.projectWorkflows.get(projectId.value) || [];
-    return workflows.length > 0 ? workflows[0] : null;
+
+    return workflows.length > 0 ? (workflows[0] || null) : null;
   }
 
   async save(workflow: Workflow): Promise<void> {
@@ -392,7 +398,7 @@ export class MockWorkflowRepository implements WorkflowRepository {
  */
 export class MockUnitOfWork implements UnitOfWork {
   private executeThrowsError: Error | null = null;
-  private executeCalls: Array<() => Promise<any>> = [];
+  private executeCalls: (() => Promise<any>)[] = [];
 
   /**
    * Make execute() throw an error
@@ -404,7 +410,7 @@ export class MockUnitOfWork implements UnitOfWork {
   /**
    * Get all execute calls made to this mock
    */
-  getExecuteCalls(): Array<() => Promise<any>> {
+  getExecuteCalls(): (() => Promise<any>)[] {
     return [...this.executeCalls];
   }
 
