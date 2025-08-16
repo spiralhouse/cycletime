@@ -216,63 +216,12 @@ export class SqliteIssueRepository implements IssueRepository {
   }
 
   async save(issue: Issue): Promise<void> {
-    try {
-      this.ensureStatementsReady();
-      if (!this.updateIssueStmt || !this.insertIssueStmt) {
-        throw new Error('Unable to prepare database statements');
-      }
-
-      const exists = await this.exists(issue.id);
-      const snapshot = issue.toSnapshot();
-
-      // Use transaction for consistency
-      const saveIssue = this.db.transaction(() => {
-        if (exists) {
-          this.updateIssueStmt!.run(
-            snapshot.title,
-            snapshot.description,
-            snapshot.type,
-            snapshot.status,
-            snapshot.parentId || null,
-            snapshot.estimate || null,
-            Math.floor(snapshot.updatedAt.getTime() / 1000),
-            snapshot.id
-          );
-        } else {
-          this.insertIssueStmt!.run(
-            snapshot.id,
-            projectId.value,
-            snapshot.title,
-            snapshot.description,
-            snapshot.type,
-            snapshot.status,
-            snapshot.parentId || null,
-            snapshot.estimate || null,
-            Math.floor(snapshot.createdAt.getTime() / 1000),
-            Math.floor(snapshot.updatedAt.getTime() / 1000)
-          );
-        }
-
-        // Update children relationships
-        // First, clear existing parent relationships for this issue
-        this.deleteChildrenStmt!.run(snapshot.id);
-        
-        // Then set parent for all children
-        for (const childId of snapshot.childIds) {
-          this.insertChildStmt!.run(snapshot.id, childId);
-        }
-
-        // Update dependency relationships
-        this.deleteDependenciesStmt!.run(snapshot.id);
-        for (const depId of snapshot.dependencies) {
-          this.insertDependencyStmt!.run(snapshot.id, depId);
-        }
-      });
-
-      saveIssue();
-    } catch (error) {
-      throw new RepositoryError('save issue', error as Error);
+    // All issues must belong to a project, so delegate to saveToProject
+    if (!issue.projectId) {
+      throw new RepositoryError('save issue', new Error('Issue must have a projectId to be saved'));
     }
+    
+    return this.saveToProject(issue, issue.projectId);
   }
 
   async exists(id: IssueId): Promise<boolean> {

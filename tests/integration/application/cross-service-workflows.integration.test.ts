@@ -64,9 +64,6 @@ describe('Cross-Service Workflows Integration', () => {
         50
       );
 
-      if (!epicResult.success) {
-        console.log('Epic creation failed:', epicResult.error);
-      }
       expect(epicResult.success).toBe(true);
       const epic = epicResult.data!;
 
