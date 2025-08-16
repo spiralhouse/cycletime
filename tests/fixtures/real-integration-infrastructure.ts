@@ -9,7 +9,6 @@ import { SqliteWorkflowRepository } from '../../src/infrastructure/database/repo
 import { SqliteUnitOfWork } from '../../src/infrastructure/database/sqlite-unit-of-work.js';
 import { MockTimeProvider } from './mock-time-provider.js';
 
-import type { TimeProvider } from '../../src/domain/interfaces/time-provider.js';
 import type { IssueRepository } from '../../src/domain/repositories/issue-repository.js';
 import type { ProjectRepository } from '../../src/domain/repositories/project-repository.js';
 import type { UnitOfWork } from '../../src/domain/repositories/session-repository.js';
@@ -25,7 +24,7 @@ import type { CreateWorkflowRequest } from '../../src/application/dtos/workflow-
 export class RealIntegrationInfrastructure {
   private db: Database.Database;
   private unitOfWork: UnitOfWork;
-  private timeProvider: TimeProvider;
+  private timeProvider: MockTimeProvider;
   private projectRepository: ProjectRepository;
   private issueRepository: IssueRepository;
   private workflowRepository: WorkflowRepository;
@@ -85,7 +84,7 @@ export class RealIntegrationInfrastructure {
   /**
    * Get time provider for test control
    */
-  getTimeProvider(): TimeProvider {
+  getTimeProvider(): MockTimeProvider {
     return this.timeProvider;
   }
 
@@ -351,7 +350,7 @@ export class DatabaseVerification {
    * Verify referential integrity constraints
    */
   verifyForeignKeyConstraints(): void {
-    const result = this.db.pragma('foreign_key_check');
+    const result = this.db.pragma('foreign_key_check') as unknown[];
     if (result.length > 0) {
       throw new Error(`Foreign key constraint violations: ${JSON.stringify(result)}`);
     }
