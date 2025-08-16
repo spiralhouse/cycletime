@@ -78,8 +78,8 @@ export class SqliteIssueRepository implements IssueRepository {
       `);
 
       this.insertIssueStmt = this.db.prepare(`
-        INSERT INTO issues (id, title, description, type, status, parent_id, estimate, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO issues (id, project_id, title, description, type, status, parent_id, estimate, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       this.updateIssueStmt = this.db.prepare(`
@@ -241,6 +241,7 @@ export class SqliteIssueRepository implements IssueRepository {
         } else {
           this.insertIssueStmt!.run(
             snapshot.id,
+            projectId.value,
             snapshot.title,
             snapshot.description,
             snapshot.type,
@@ -317,6 +318,7 @@ export class SqliteIssueRepository implements IssueRepository {
         } else {
           this.insertIssueStmt!.run(
             snapshot.id,
+            projectId.value,
             snapshot.title,
             snapshot.description,
             snapshot.type,
