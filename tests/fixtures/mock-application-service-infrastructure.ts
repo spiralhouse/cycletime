@@ -441,6 +441,14 @@ export class MockUnitOfWork implements UnitOfWork {
 }
 
 /**
+ * Reset all mocks to clean state for test isolation
+ */
+export function resetAllMocks(): void {
+  // This will be implemented by individual test suites as needed
+  // Each test suite should create fresh mocks in beforeEach
+}
+
+/**
  * Factory to create a complete set of mocks for application service testing
  */
 export class ApplicationServiceMockFactory {
