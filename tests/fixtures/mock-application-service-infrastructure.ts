@@ -1,9 +1,9 @@
 
 
-import type { ProjectId } from '../../src/domain/value-objects/project-id.js';
 
 
 import { MockTimeProvider } from './mock-time-provider.js';
+
 import type { Issue } from '../../src/domain/entities/issue.js';
 import type { Project } from '../../src/domain/entities/project.js';
 import type { Workflow } from '../../src/domain/entities/workflow.js';
@@ -12,6 +12,7 @@ import type { ProjectRepository } from '../../src/domain/repositories/project-re
 import type { UnitOfWork } from '../../src/domain/repositories/session-repository.js';
 import type { WorkflowRepository } from '../../src/domain/repositories/workflow-repository.js';
 import type { IssueId } from '../../src/domain/value-objects/issue-id.js';
+import type { ProjectId } from '../../src/domain/value-objects/project-id.js';
 import type { WorkflowId } from '../../src/domain/value-objects/workflow-id.js';
 
 /**
@@ -262,7 +263,7 @@ export class MockIssueRepository implements IssueRepository {
     // Also add to project issues list
     const existingIssues = this.projectIssues.get(projectId.value) || [];
 
-    if (!existingIssues.find(existing => existing.id.value === issue.id.value)) {
+    if (!existingIssues.some(existing => existing.id.value === issue.id.value)) {
       existingIssues.push(issue);
       this.projectIssues.set(projectId.value, existingIssues);
     }
