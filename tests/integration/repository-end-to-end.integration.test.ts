@@ -104,8 +104,8 @@ describe.sequential('Repository End-to-End Integration Tests', () => {
       reqIssue2.updateStatus('Todo');
       reqIssue2.updateStatus('InProgress');
       reqIssue2.updateStatus('Done');
-      await issueRepository.save(reqIssue1);
-      await issueRepository.save(reqIssue2);
+      await issueRepository.saveToProject(reqIssue1, project.id);
+      await issueRepository.saveToProject(reqIssue2, project.id);
       
       workflow.transitionTo('design');
       await workflowRepository.save(workflow);
@@ -119,7 +119,7 @@ describe.sequential('Repository End-to-End Integration Tests', () => {
       designIssue.updateStatus('Todo');
       designIssue.updateStatus('InProgress');
       designIssue.updateStatus('Done');
-      await issueRepository.save(designIssue);
+      await issueRepository.saveToProject(designIssue, project.id);
       workflow.transitionTo('implementation');
       await workflowRepository.save(workflow);
       
@@ -249,7 +249,7 @@ describe.sequential('Repository End-to-End Integration Tests', () => {
           issue.updateStatus('Todo');
           issue.updateStatus('InProgress');
           issue.updateStatus('Done');
-          await issueRepository.save(issue);
+          await issueRepository.saveToProject(issue, project.id);
         }
         
         // Transition workflow
@@ -293,7 +293,7 @@ describe.sequential('Repository End-to-End Integration Tests', () => {
       }
       
       // Save epic with children relationships
-      await issueRepository.save(epicIssue);
+      await issueRepository.saveToProject(epicIssue, project.id);
       
       for (const child of childIssues) {
         // child.updateLabels(['feature']); // Method not implemented
@@ -307,8 +307,8 @@ describe.sequential('Repository End-to-End Integration Tests', () => {
       childIssues[1]!.updateStatus('Todo');
       childIssues[1]!.updateStatus('InProgress');
       childIssues[1]!.updateStatus('Done');
-      await issueRepository.save(childIssues[0]!);
-      await issueRepository.save(childIssues[1]!);
+      await issueRepository.saveToProject(childIssues[0]!, project.id);
+      await issueRepository.saveToProject(childIssues[1]!, project.id);
       
       // Query relationships
       const allProjectIssues = await issueRepository.findByProjectId(project.id);
