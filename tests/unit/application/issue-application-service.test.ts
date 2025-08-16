@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 
 import { IssueApplicationService } from '../../../src/application/services/issue-application-service.js';
-import { ApplicationServiceMockFactory } from '../../fixtures/mock-application-service-infrastructure.js';
 import { Issue } from '../../../src/domain/entities/issue.js';
 import { Project } from '../../../src/domain/entities/project.js';
 import { IssueId } from '../../../src/domain/value-objects/issue-id.js';
-import { ProjectId } from '../../../src/domain/value-objects/project-id.js';
-import { IssueType } from '../../../src/domain/value-objects/issue-type.js';
 import { IssueStatus } from '../../../src/domain/value-objects/issue-status.js';
+import { IssueType } from '../../../src/domain/value-objects/issue-type.js';
+import { ProjectId } from '../../../src/domain/value-objects/project-id.js';
+import { ApplicationServiceMockFactory } from '../../fixtures/mock-application-service-infrastructure.js';
 
 import type { CreateIssueCommand, UpdateIssueCommand } from '../../../src/application/dtos/issue-dto.js';
 
@@ -29,6 +29,7 @@ describe('IssueApplicationService', () => {
     it('should create an epic successfully', async () => {
       const projectId = ProjectId.generate();
       const project = Project.create('Test Project', 'Description', mocks.timeProvider);
+
       mocks.projectRepository.mockProject(projectId.value, project);
 
       const command: CreateIssueCommand = {
@@ -527,6 +528,7 @@ describe('IssueApplicationService', () => {
       await service.createIssue(command);
 
       const executeCalls = mocks.unitOfWork.getExecuteCalls();
+
       expect(executeCalls.length).toBeGreaterThan(0);
     });
 

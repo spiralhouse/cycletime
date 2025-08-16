@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 
 import { WorkflowApplicationService } from '../../../src/application/services/workflow-application-service.js';
-import { ApplicationServiceMockFactory } from '../../fixtures/mock-application-service-infrastructure.js';
-import { Workflow } from '../../../src/domain/entities/workflow.js';
 import { Project } from '../../../src/domain/entities/project.js';
-import { WorkflowId } from '../../../src/domain/value-objects/workflow-id.js';
+import { Workflow } from '../../../src/domain/entities/workflow.js';
 import { ProjectId } from '../../../src/domain/value-objects/project-id.js';
+import { WorkflowId } from '../../../src/domain/value-objects/workflow-id.js';
 import { WorkflowStage } from '../../../src/domain/value-objects/workflow-stage.js';
+import { ApplicationServiceMockFactory } from '../../fixtures/mock-application-service-infrastructure.js';
 
 import type { 
   CreateWorkflowRequest, 
@@ -33,6 +33,7 @@ describe('WorkflowApplicationService', () => {
     it('should create workflow with default stages successfully', async () => {
       const projectId = ProjectId.generate();
       const project = Project.create('Test Project', 'Description', mocks.timeProvider);
+
       mocks.projectRepository.mockProject(projectId.value, project);
 
       const request: CreateWorkflowRequest = {
@@ -53,6 +54,7 @@ describe('WorkflowApplicationService', () => {
     it('should create workflow with custom stages successfully', async () => {
       const projectId = ProjectId.generate();
       const project = Project.create('Test Project', 'Description', mocks.timeProvider);
+
       mocks.projectRepository.mockProject(projectId.value, project);
 
       const customStages = [
@@ -109,6 +111,7 @@ describe('WorkflowApplicationService', () => {
     it('should fail when workflow name is empty', async () => {
       const projectId = ProjectId.generate();
       const project = Project.create('Test Project', 'Description', mocks.timeProvider);
+
       mocks.projectRepository.mockProject(projectId.value, project);
 
       const request: CreateWorkflowRequest = {
@@ -126,6 +129,7 @@ describe('WorkflowApplicationService', () => {
     it('should fail when custom stages have circular dependencies', async () => {
       const projectId = ProjectId.generate();
       const project = Project.create('Test Project', 'Description', mocks.timeProvider);
+
       mocks.projectRepository.mockProject(projectId.value, project);
 
       const circularStages = [
@@ -164,6 +168,7 @@ describe('WorkflowApplicationService', () => {
     it('should execute workflow stage successfully', async () => {
       const projectId = ProjectId.generate();
       const workflow = Workflow.create('Test Workflow', projectId, mocks.timeProvider);
+
       mocks.workflowRepository.mockWorkflow(workflow.id.value, workflow);
 
       const request: ExecuteStageRequest = {
@@ -182,6 +187,7 @@ describe('WorkflowApplicationService', () => {
     it('should complete workflow stage successfully', async () => {
       const projectId = ProjectId.generate();
       const workflow = Workflow.create('Test Workflow', projectId, mocks.timeProvider);
+
       workflow.transitionTo(WorkflowStage.REQUIREMENTS);
       mocks.workflowRepository.mockWorkflow(workflow.id.value, workflow);
 
@@ -202,6 +208,7 @@ describe('WorkflowApplicationService', () => {
     it('should transition to next stage after completion', async () => {
       const projectId = ProjectId.generate();
       const workflow = Workflow.create('Test Workflow', projectId, mocks.timeProvider);
+
       workflow.transitionTo(WorkflowStage.REQUIREMENTS);
       mocks.workflowRepository.mockWorkflow(workflow.id.value, workflow);
 
@@ -222,6 +229,7 @@ describe('WorkflowApplicationService', () => {
     it('should fail to execute non-existent stage', async () => {
       const projectId = ProjectId.generate();
       const workflow = Workflow.create('Test Workflow', projectId, mocks.timeProvider);
+
       mocks.workflowRepository.mockWorkflow(workflow.id.value, workflow);
 
       const request: ExecuteStageRequest = {
@@ -239,6 +247,7 @@ describe('WorkflowApplicationService', () => {
     it('should fail to execute stage with unmet dependencies', async () => {
       const projectId = ProjectId.generate();
       const workflow = Workflow.create('Test Workflow', projectId, mocks.timeProvider);
+
       mocks.workflowRepository.mockWorkflow(workflow.id.value, workflow);
 
       // Try to execute IMPLEMENTATION without completing REQUIREMENTS first
@@ -289,6 +298,7 @@ describe('WorkflowApplicationService', () => {
     it('should list available next stages', async () => {
       const projectId = ProjectId.generate();
       const workflow = Workflow.create('Test Workflow', projectId, mocks.timeProvider);
+
       workflow.transitionTo(WorkflowStage.REQUIREMENTS);
       mocks.workflowRepository.mockWorkflow(workflow.id.value, workflow);
 
@@ -303,6 +313,7 @@ describe('WorkflowApplicationService', () => {
     it('should update workflow name successfully', async () => {
       const projectId = ProjectId.generate();
       const workflow = Workflow.create('Original Name', projectId, mocks.timeProvider);
+
       mocks.workflowRepository.mockWorkflow(workflow.id.value, workflow);
 
       const request: UpdateWorkflowRequest = {
@@ -318,6 +329,7 @@ describe('WorkflowApplicationService', () => {
     it('should update workflow status successfully', async () => {
       const projectId = ProjectId.generate();
       const workflow = Workflow.create('Test Workflow', projectId, mocks.timeProvider);
+
       mocks.workflowRepository.mockWorkflow(workflow.id.value, workflow);
 
       const request: UpdateWorkflowRequest = {
@@ -348,6 +360,7 @@ describe('WorkflowApplicationService', () => {
     it('should get workflow by id successfully', async () => {
       const projectId = ProjectId.generate();
       const workflow = Workflow.create('Test Workflow', projectId, mocks.timeProvider);
+
       mocks.workflowRepository.mockWorkflow(workflow.id.value, workflow);
 
       const result = await service.getWorkflow(workflow.id.value);
@@ -368,6 +381,7 @@ describe('WorkflowApplicationService', () => {
     it('should get workflow by project id successfully', async () => {
       const projectId = ProjectId.generate();
       const workflow = Workflow.create('Project Workflow', projectId, mocks.timeProvider);
+
       mocks.workflowRepository.mockProjectWorkflows(projectId.value, [workflow]);
 
       const result = await service.getWorkflowByProject(projectId.value);
@@ -463,6 +477,7 @@ describe('WorkflowApplicationService', () => {
       await service.createWorkflow(request);
 
       const executeCalls = mocks.unitOfWork.getExecuteCalls();
+
       expect(executeCalls.length).toBeGreaterThan(0);
     });
 
