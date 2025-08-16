@@ -1,10 +1,9 @@
-import type { ProjectRepository } from '../../domain/repositories/project-repository.js';
-import type { IssueRepository } from '../../domain/repositories/issue-repository.js';
-import type { UnitOfWork } from '../../domain/repositories/session-repository.js';
-import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
 import { Project } from '../../domain/entities/project.js';
 import { ProjectId } from '../../domain/value-objects/project-id.js';
 import { ProjectDtoMapper, type CreateProjectCommand, type ProjectDto } from '../dtos/project-dto.js';
+
+import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
+import type { ProjectRepository } from '../../domain/repositories/project-repository.js';
 
 /**
  * Application service for Project-related operations
@@ -13,8 +12,6 @@ import { ProjectDtoMapper, type CreateProjectCommand, type ProjectDto } from '..
 export class ProjectApplicationService {
   constructor(
     private readonly projectRepository: ProjectRepository,
-    private readonly issueRepository: IssueRepository,
-    private readonly unitOfWork: UnitOfWork,
     private readonly timeProvider: TimeProvider
   ) {}
 
@@ -60,6 +57,7 @@ export class ProjectApplicationService {
    */
   async listActiveProjects(): Promise<ProjectDto[]> {
     const projects = await this.projectRepository.findAll();
+
     return projects.map(project => ProjectDtoMapper.toDto(project));
   }
 }

@@ -1,15 +1,15 @@
-import type { IssueRepository } from '../../domain/repositories/issue-repository.js';
-import type { ProjectRepository } from '../../domain/repositories/project-repository.js';
-import type { UnitOfWork } from '../../domain/repositories/session-repository.js';
-import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
 
 import { Issue } from '../../domain/entities/issue.js';
 import { IssueId } from '../../domain/value-objects/issue-id.js';
-import { ProjectId } from '../../domain/value-objects/project-id.js';
-import { IssueType } from '../../domain/value-objects/issue-type.js';
 import { IssueStatus } from '../../domain/value-objects/issue-status.js';
+import { IssueType } from '../../domain/value-objects/issue-type.js';
+import { ProjectId } from '../../domain/value-objects/project-id.js';
 import { IssueDtoMapper } from '../dtos/issue-dto.js';
 
+import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
+import type { IssueRepository } from '../../domain/repositories/issue-repository.js';
+import type { ProjectRepository } from '../../domain/repositories/project-repository.js';
+import type { UnitOfWork } from '../../domain/repositories/session-repository.js';
 import type { 
   CreateIssueCommand, 
   UpdateIssueCommand, 
@@ -36,6 +36,7 @@ export class IssueApplicationService {
     try {
       return await this.unitOfWork.execute(async () => {
         const validation = await this.validateCreateIssueCommand(command);
+
         if (!validation.isValid) {
           return this.createErrorResult(validation.error!);
         }
@@ -63,16 +64,19 @@ export class IssueApplicationService {
     try {
       return await this.unitOfWork.execute(async () => {
         const issue = await this.findIssueById(command.id);
+
         if (!issue) {
           return this.createErrorResult('Issue not found');
         }
 
         const updateResult = this.applyIssueUpdates(issue, command);
+
         if (!updateResult.isValid) {
           return this.createErrorResult(updateResult.error!);
         }
 
         await this.issueRepository.save(issue);
+
         return this.createSuccessResult(issue);
       });
     } catch (error) {
@@ -93,7 +97,7 @@ export class IssueApplicationService {
       const issue = await this.issueRepository.findById(id);
       
       return issue ? IssueDtoMapper.toDto(issue) : null;
-    } catch (error) {
+    } catch {
       // Handle repository errors gracefully
       return null;
     }
@@ -112,7 +116,7 @@ export class IssueApplicationService {
       const issues = await this.issueRepository.findByProjectId(id);
       
       return issues.map(issue => IssueDtoMapper.toDto(issue));
-    } catch (error) {
+    } catch {
       // Handle repository errors gracefully
       return [];
     }
@@ -191,6 +195,7 @@ export class IssueApplicationService {
     // If estimate is provided, validate it's a valid Fibonacci number
     if (estimate !== undefined) {
       const fibonacciSequence = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89];
+
       if (!fibonacciSequence.includes(estimate)) {
         return {
           isValid: false,
@@ -220,24 +225,32 @@ export class IssueApplicationService {
     // Validate project exists
     const projectId = ProjectId.from(command.projectId);
     const project = await this.projectRepository.findById(projectId);
+
     if (!project) {
       return { isValid: false, error: 'Project not found' };
     }
 
     // Validate hierarchy rules
     const hierarchyValidation = await this.validateIssueHierarchy(command.type, command.parentId);
+
     if (!hierarchyValidation.isValid) {
-      return { isValid: false, error: hierarchyValidation.error };
+      return { isValid: false, error: hierarchyValidation.error || 'Hierarchy validation failed' };
     }
 
     // Validate estimation rules
     const estimationValidation = this.validateEstimationRules(command.type, command.estimate);
+
     if (!estimationValidation.isValid) {
-      return { isValid: false, error: estimationValidation.error };
+      return { isValid: false, error: estimationValidation.error || 'Estimation validation failed' };
     }
 
-    const parentId = command.parentId ? IssueId.from(command.parentId) : undefined;
-    return { isValid: true, projectId, parentId };
+    const result: { isValid: boolean; error?: string; projectId?: ProjectId; parentId?: IssueId } = { isValid: true, projectId };
+    
+    if (command.parentId) {
+      result.parentId = IssueId.from(command.parentId);
+    }
+    
+    return result;
   }
 
   /**
@@ -267,6 +280,7 @@ export class IssueApplicationService {
     
     // Update parent's children list
     const parent = await this.issueRepository.findById(parentId);
+
     if (parent) {
       parent.addChild(issue.id);
       await this.issueRepository.save(parent);
@@ -285,6 +299,7 @@ export class IssueApplicationService {
    */
   private async findIssueById(issueId: string): Promise<Issue | null> {
     const id = IssueId.from(issueId);
+
     return await this.issueRepository.findById(id);
   }
 
@@ -322,8 +337,9 @@ export class IssueApplicationService {
     // Update estimate if provided
     if (command.estimate !== undefined) {
       const estimationValidation = this.validateEstimationRules(issue.type, command.estimate);
+
       if (!estimationValidation.isValid) {
-        return { isValid: false, error: estimationValidation.error };
+        return { isValid: false, error: estimationValidation.error || 'Estimation validation failed' };
       }
       issue.setEstimate(command.estimate);
     }

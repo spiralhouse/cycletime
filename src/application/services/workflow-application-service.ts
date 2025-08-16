@@ -1,13 +1,13 @@
-import type { WorkflowRepository } from '../../domain/repositories/workflow-repository.js';
-import type { ProjectRepository } from '../../domain/repositories/project-repository.js';
-import type { UnitOfWork } from '../../domain/repositories/session-repository.js';
-import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
 
 import { Workflow } from '../../domain/entities/workflow.js';
-import { WorkflowId } from '../../domain/value-objects/workflow-id.js';
 import { ProjectId } from '../../domain/value-objects/project-id.js';
+import { WorkflowId } from '../../domain/value-objects/workflow-id.js';
 import { WorkflowStage } from '../../domain/value-objects/workflow-stage.js';
 
+import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
+import type { ProjectRepository } from '../../domain/repositories/project-repository.js';
+import type { UnitOfWork } from '../../domain/repositories/session-repository.js';
+import type { WorkflowRepository } from '../../domain/repositories/workflow-repository.js';
 import type {
   CreateWorkflowRequest,
   UpdateWorkflowRequest,
@@ -40,11 +40,13 @@ export class WorkflowApplicationService {
     try {
       return await this.unitOfWork.execute(async () => {
         const validation = await this.validateCreateWorkflowRequest(request);
+
         if (!validation.isValid) {
           return this.createErrorResult(validation.error!);
         }
 
         const workflow = await this.createWorkflowEntity(request, validation.projectId!);
+
         await this.workflowRepository.save(workflow);
 
         return this.createSuccessResult(workflow);
@@ -61,6 +63,7 @@ export class WorkflowApplicationService {
     try {
       return await this.unitOfWork.execute(async () => {
         const workflow = await this.findWorkflowById(workflowId);
+
         if (!workflow) {
           return this.createErrorResult('Workflow not found');
         }
@@ -88,8 +91,11 @@ export class WorkflowApplicationService {
             } else if (workflow.stages.length > 1) {
               // If at first stage, move to second then back to first
               const secondStage = workflow.stages[1];
-              workflow.transitionTo(secondStage);
-              workflow.transitionTo(firstStage);
+
+              if (secondStage && firstStage) {
+                workflow.transitionTo(secondStage);
+                workflow.transitionTo(firstStage);
+              }
             }
           }
         }
@@ -110,6 +116,7 @@ export class WorkflowApplicationService {
   async executeStage(request: ExecuteStageRequest): Promise<StageExecutionResult> {
     try {
       const workflow = await this.findWorkflowById(request.workflowId);
+
       if (!workflow) {
         return {
           success: false,
@@ -192,6 +199,7 @@ export class WorkflowApplicationService {
   async completeStage(request: CompleteStageRequest): Promise<StageCompletionResult> {
     try {
       const workflow = await this.findWorkflowById(request.workflowId);
+
       if (!workflow) {
         return {
           success: false,
@@ -215,7 +223,7 @@ export class WorkflowApplicationService {
         };
       }
 
-      let resultStatus = request.success ? 'completed' : 'failed';
+      const resultStatus = request.success ? 'completed' : 'failed';
       let workflowStatus = workflow.isComplete ? 'completed' : 'active';
 
       // Auto-advance if requested and successful
@@ -225,6 +233,7 @@ export class WorkflowApplicationService {
         
         if (nextStageIndex < workflow.stages.length) {
           const nextStage = workflow.stages[nextStageIndex];
+
           if (nextStage && workflow.canTransitionTo(nextStage)) {
             workflow.transitionTo(nextStage);
             workflowStatus = 'in_progress';
@@ -259,6 +268,7 @@ export class WorkflowApplicationService {
    */
   async getWorkflowProgress(workflowId: string): Promise<WorkflowProgressDto> {
     const workflow = await this.findWorkflowById(workflowId);
+
     if (!workflow) {
       throw new Error('Workflow not found');
     }
@@ -284,6 +294,7 @@ export class WorkflowApplicationService {
     try {
       return await this.unitOfWork.execute(async () => {
         const workflow = await this.findWorkflowById(workflowId);
+
         if (!workflow) {
           return this.createErrorResult('Workflow not found');
         }
@@ -308,8 +319,9 @@ export class WorkflowApplicationService {
       }
 
       const workflow = await this.findWorkflowById(workflowId);
+
       return workflow ? this.toDto(workflow) : null;
-    } catch (error) {
+    } catch {
       // Handle repository errors gracefully
       return null;
     }
@@ -328,7 +340,7 @@ export class WorkflowApplicationService {
       const workflow = await this.workflowRepository.findByProjectId(id);
       
       return workflow ? this.toDto(workflow) : null;
-    } catch (error) {
+    } catch {
       // Handle repository errors gracefully
       return null;
     }
@@ -339,6 +351,7 @@ export class WorkflowApplicationService {
    */
   private async findWorkflowById(workflowId: string): Promise<Workflow | null> {
     const id = WorkflowId.from(workflowId);
+
     return await this.workflowRepository.findById(id);
   }
 
@@ -360,7 +373,7 @@ export class WorkflowApplicationService {
   /**
    * Detect circular dependencies in stages
    */
-  private detectCircularDependencies(stages: Array<{id: string; dependencies: string[]}>): boolean {
+  private detectCircularDependencies(stages: {id: string; dependencies: string[]}[]): boolean {
     const visited = new Set<string>();
     const recursionStack = new Set<string>();
 
@@ -376,6 +389,7 @@ export class WorkflowApplicationService {
       recursionStack.add(stageId);
 
       const stage = stages.find(s => s.id === stageId);
+
       if (stage) {
         for (const dep of stage.dependencies) {
           if (hasCycle(dep)) {
@@ -385,6 +399,7 @@ export class WorkflowApplicationService {
       }
 
       recursionStack.delete(stageId);
+
       return false;
     };
 
@@ -403,20 +418,33 @@ export class WorkflowApplicationService {
    * Convert domain entity to DTO
    */
   private toDto(workflow: Workflow): WorkflowDto {
-    const stagesDto: WorkflowStageDto[] = workflow.stages.map((stageId, index) => ({
-      id: stageId,
-      name: this.getStageDisplayName(stageId),
-      description: `Stage ${index + 1}: ${this.getStageDisplayName(stageId)}`,
-      dependencies: index > 0 ? [workflow.stages[index - 1]] : [],
-      required: true,
-      parallel: false,
-      config: {},
-      status: this.getStageStatus(workflow, stageId),
-      startedAt: workflow.hasVisited(stageId) ? workflow.createdAt : undefined,
-      completedAt: this.getStageCompletionDate(workflow, stageId)
-    }));
+    const stagesDto: WorkflowStageDto[] = workflow.stages.map((stageId, index) => {
+      const prevStage = index > 0 ? workflow.stages[index - 1] : undefined;
+      const stage: WorkflowStageDto = {
+        id: stageId,
+        name: this.getStageDisplayName(stageId),
+        description: `Stage ${index + 1}: ${this.getStageDisplayName(stageId)}`,
+        dependencies: prevStage ? [prevStage] : [],
+        required: true,
+        parallel: false,
+        config: {},
+        status: this.getStageStatus(workflow, stageId)
+      };
+      
+      if (workflow.hasVisited(stageId)) {
+        stage.startedAt = workflow.createdAt;
+      }
+      
+      const completedAt = this.getStageCompletionDate(workflow, stageId);
 
-    return {
+      if (completedAt) {
+        stage.completedAt = completedAt;
+      }
+      
+      return stage;
+    });
+
+    const dto: WorkflowDto = {
       id: workflow.id.value,
       projectId: workflow.projectId.value,
       name: workflow.name,
@@ -425,9 +453,14 @@ export class WorkflowApplicationService {
       stages: stagesDto,
       context: {},
       createdAt: workflow.createdAt,
-      updatedAt: workflow.updatedAt,
-      completedAt: workflow.isComplete ? workflow.updatedAt : undefined
+      updatedAt: workflow.updatedAt
     };
+    
+    if (workflow.isComplete) {
+      dto.completedAt = workflow.updatedAt;
+    }
+    
+    return dto;
   }
 
   /**
@@ -443,6 +476,7 @@ export class WorkflowApplicationService {
       'planning': 'Planning',
       'execution': 'Execution'
     };
+
     return stageNames[stageId] || stageId.charAt(0).toUpperCase() + stageId.slice(1);
   }
 
@@ -468,6 +502,7 @@ export class WorkflowApplicationService {
   private getStageCompletionDate(workflow: Workflow, stageId: string): Date | undefined {
     const transitions = workflow.getTransitionHistory();
     const completion = transitions.find(t => t.from === stageId);
+
     return completion?.occurredAt;
   }
 
@@ -481,6 +516,7 @@ export class WorkflowApplicationService {
     
     // Check if workflow has transitions (has been actively used)
     const transitions = workflow.getTransitionHistory();
+
     if (transitions.length > 0) {
       return 'active';
     }
@@ -521,6 +557,7 @@ export class WorkflowApplicationService {
     // Validate project exists
     const projectId = ProjectId.from(request.projectId);
     const project = await this.projectRepository.findById(projectId);
+
     if (!project) {
       return { isValid: false, error: 'Project not found' };
     }
@@ -528,6 +565,7 @@ export class WorkflowApplicationService {
     // Validate custom stages if provided
     if (request.stages && request.stages.length > 0) {
       const hasCircularDependency = this.detectCircularDependencies(request.stages);
+
       if (hasCircularDependency) {
         return { isValid: false, error: 'Workflow stages contain circular dependency' };
       }
@@ -542,6 +580,7 @@ export class WorkflowApplicationService {
   private async createWorkflowEntity(request: CreateWorkflowRequest, projectId: ProjectId): Promise<Workflow> {
     if (request.stages && request.stages.length > 0) {
       const stageNames = request.stages.map(s => s.id);
+
       return Workflow.createCustom(
         request.name.trim(),
         projectId,

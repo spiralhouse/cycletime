@@ -1,5 +1,4 @@
 import type { Project } from '../../domain/entities/project.js';
-import type { ProjectStatus } from '../../domain/value-objects/project-status.js';
 
 /**
  * Data Transfer Object for Project entities
@@ -88,22 +87,36 @@ export class ProjectDtoMapper {
       throw new Error('Project name is required');
     }
 
-    return {
+    const command: CreateProjectCommand = {
       name: data.name,
       description: data.description || '',
-      status: data.status,
     };
+    
+    if (data.status !== undefined) {
+      command.status = data.status;
+    }
+    
+    return command;
   }
 
   /**
    * Create an update command from a partial project DTO
    */
   static toUpdateCommand(id: string, data: Partial<ProjectDto>): UpdateProjectCommand {
-    return {
-      id,
-      name: data.name,
-      description: data.description,
-      status: data.status,
-    };
+    const command: UpdateProjectCommand = { id };
+    
+    if (data.name !== undefined) {
+      command.name = data.name;
+    }
+    
+    if (data.description !== undefined) {
+      command.description = data.description;
+    }
+    
+    if (data.status !== undefined) {
+      command.status = data.status;
+    }
+    
+    return command;
   }
 }
