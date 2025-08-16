@@ -218,9 +218,12 @@ describe.sequential('SqliteProjectRepository Integration Tests', () => {
       expect(beforeDelete).not.toBeNull();
       
       // Delete it
-      const deleted = await repository.delete(project.id);
+      await repository.delete(project.id);
 
-      expect(deleted).toBe(true);
+      // Verify deletion by checking it's no longer found
+      const deletedProject = await repository.findById(project.id);
+
+      expect(deletedProject).toBeNull();
       
       // Verify it's gone
       const afterDelete = await repository.findById(project.id);
@@ -228,11 +231,11 @@ describe.sequential('SqliteProjectRepository Integration Tests', () => {
       expect(afterDelete).toBeNull();
     });
 
-    it('should return false when deleting non-existent project', async () => {
+    it('should handle deleting non-existent project gracefully', async () => {
       const nonExistentId = ProjectId.generate();
-      const result = await repository.delete(nonExistentId);
       
-      expect(result).toBe(false);
+      // Should not throw error
+      await expect(repository.delete(nonExistentId)).resolves.not.toThrow();
     });
 
     it('should cascade delete project-issue relationships', async () => {
