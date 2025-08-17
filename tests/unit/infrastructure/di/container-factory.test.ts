@@ -32,6 +32,7 @@ describe('ContainerFactory', () => {
       });
       
       const timeProvider = container.resolve<any>('TimeProvider');
+
       expect(timeProvider).toHaveProperty('setTime'); // Mock has setTime
     });
 
@@ -57,10 +58,12 @@ describe('ContainerFactory', () => {
       
       // Should use in-memory database
       const db = container.resolve<Database.Database>('Database');
+
       expect(db.open).toBe(true);
       
       // Should use mock time provider
       const timeProvider = container.resolve<any>('TimeProvider');
+
       expect(timeProvider).toHaveProperty('setTime');
     });
 
@@ -104,6 +107,7 @@ describe('ContainerFactory', () => {
       
       // Should use real time provider
       const timeProvider = container.resolve<TimeProvider>('TimeProvider');
+
       expect(timeProvider).not.toHaveProperty('setTime');
     });
 
@@ -200,16 +204,16 @@ describe('ContainerFactory', () => {
     });
 
     it('should validate configuration', () => {
-      expect(() => ContainerFactory.validateConfig({}))
+      expect(() => { ContainerFactory.validateConfig({}); })
         .not.toThrow();
       
-      expect(() => ContainerFactory.validateConfig({ databasePath: '' }))
+      expect(() => { ContainerFactory.validateConfig({ databasePath: '' }); })
         .toThrow('Invalid configuration: databasePath cannot be empty');
       
-      expect(() => ContainerFactory.validateConfig({ 
+      expect(() => { ContainerFactory.validateConfig({ 
         useMockTime: true,
         initialTime: 'invalid-date' 
-      }))
+      }); })
         .toThrow('Invalid configuration: initialTime must be a valid date');
     });
   });
@@ -219,12 +223,15 @@ describe('ContainerFactory', () => {
       const container = ContainerFactory.createTestContainer();
       
       const projectService = ContainerFactory.resolveProjectService(container);
+
       expect(projectService).toHaveProperty('createProject');
       
       const issueService = ContainerFactory.resolveIssueService(container);
+
       expect(issueService).toHaveProperty('createIssue');
       
       const workflowService = ContainerFactory.resolveWorkflowService(container);
+
       expect(workflowService).toHaveProperty('createWorkflow');
     });
 
@@ -232,12 +239,15 @@ describe('ContainerFactory', () => {
       const container = ContainerFactory.createTestContainer();
       
       const projectRepo = ContainerFactory.resolveProjectRepository(container);
+
       expect(projectRepo).toHaveProperty('save');
       
       const issueRepo = ContainerFactory.resolveIssueRepository(container);
+
       expect(issueRepo).toHaveProperty('findById');
       
       const workflowRepo = ContainerFactory.resolveWorkflowRepository(container);
+
       expect(workflowRepo).toHaveProperty('findByProjectId');
     });
   });
@@ -250,7 +260,7 @@ describe('ContainerFactory', () => {
       container.resolve('Database');
       
       // Dispose should work without errors
-      expect(() => ContainerFactory.disposeContainer(container)).not.toThrow();
+      expect(() => { ContainerFactory.disposeContainer(container); }).not.toThrow();
     });
 
     it('should support container reset for tests', () => {

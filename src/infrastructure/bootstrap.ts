@@ -3,17 +3,17 @@
  * Main entry point for initializing and managing the application
  */
 
-import Database from 'better-sqlite3';
+
 
 import { ContainerFactory } from './di/container-factory.js';
-import { DIContainer } from './di/container.js';
 import { SERVICE_TOKENS } from './di/service-registry.js';
-import { ProjectApplicationService } from '../application/services/project-application-service.js';
-import { IssueApplicationService } from '../application/services/issue-application-service.js';
-import { WorkflowApplicationService } from '../application/services/workflow-application-service.js';
 
 import type { ContainerFactoryConfig } from './di/container-factory.js';
 import type { IServiceContainer } from './di/types.js';
+import type { IssueApplicationService } from '../application/services/issue-application-service.js';
+import type { ProjectApplicationService } from '../application/services/project-application-service.js';
+import type { WorkflowApplicationService } from '../application/services/workflow-application-service.js';
+import type Database from 'better-sqlite3';
 
 /**
  * Application configuration
@@ -28,6 +28,11 @@ export interface ApplicationConfig extends ContainerFactoryConfig {
    * Application version
    */
   version?: string;
+  
+  /**
+   * Environment (test, development, production)
+   */
+  environment?: string;
   
   /**
    * Maximum retry attempts for initialization
@@ -65,7 +70,7 @@ export class Application {
 
   constructor(config: ApplicationConfig = {}) {
     this.config = this.mergeWithDefaults(config);
-    this.environment = process.env.NODE_ENV || 'development';
+    this.environment = config.environment || process.env.NODE_ENV || 'development';
   }
 
   /**
@@ -103,6 +108,7 @@ export class Application {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         await this.initialize();
+
         return;
       } catch (error) {
         lastError = error as Error;
@@ -130,8 +136,8 @@ export class Application {
       }
     } finally {
       this.initialized = false;
-      this.container = undefined;
-      this.startTime = undefined;
+      delete this.container;
+      delete this.startTime;
     }
   }
 
@@ -155,6 +161,7 @@ export class Application {
    */
   getContainer(): IServiceContainer {
     this.ensureInitialized();
+
     return this.container!;
   }
 
@@ -163,6 +170,7 @@ export class Application {
    */
   getDatabase(): Database.Database {
     this.ensureInitialized();
+
     return this.container!.resolve<Database.Database>(SERVICE_TOKENS.DATABASE);
   }
 
@@ -171,6 +179,7 @@ export class Application {
    */
   getProjectService(): ProjectApplicationService {
     this.ensureInitialized();
+
     return this.container!.resolve<ProjectApplicationService>(SERVICE_TOKENS.PROJECT_SERVICE);
   }
 
@@ -179,6 +188,7 @@ export class Application {
    */
   getIssueService(): IssueApplicationService {
     this.ensureInitialized();
+
     return this.container!.resolve<IssueApplicationService>(SERVICE_TOKENS.ISSUE_SERVICE);
   }
 
@@ -187,6 +197,7 @@ export class Application {
    */
   getWorkflowService(): WorkflowApplicationService {
     this.ensureInitialized();
+
     return this.container!.resolve<WorkflowApplicationService>(SERVICE_TOKENS.WORKFLOW_SERVICE);
   }
 
@@ -244,6 +255,7 @@ export class Application {
     try {
       // Check database connection
       const db = this.getDatabase();
+
       if (db && db.open) {
         status.database = 'connected';
       }
@@ -283,6 +295,7 @@ export class Application {
     this.ensureInitialized();
     
     const db = this.getDatabase();
+
     await db.backup(backupPath);
   }
 

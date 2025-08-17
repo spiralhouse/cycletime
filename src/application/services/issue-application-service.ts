@@ -329,8 +329,9 @@ export class IssueApplicationService {
       
       // Validate type change with parent relationship
       const validation = await this.validateIssueTypeWithParent(type, command.parentId || issue.parentId?.value);
+
       if (!validation.isValid) {
-        return { isValid: false, error: validation.error };
+        return { isValid: false, error: validation.error || 'Type validation failed' };
       }
       
       issue.updateType(type);
@@ -348,8 +349,9 @@ export class IssueApplicationService {
       // Validate parent relationship with current or new type
       const type = command.type as IssueType || issue.type;
       const validation = await this.validateIssueTypeWithParent(type, command.parentId);
+
       if (!validation.isValid) {
-        return { isValid: false, error: validation.error };
+        return { isValid: false, error: validation.error || 'Type validation failed' };
       }
       
       issue.setParent(parentId);
@@ -368,7 +370,7 @@ export class IssueApplicationService {
 
     // Update estimate if provided
     if (command.estimate !== undefined) {
-      const estimationValidation = this.validateEstimationRules(issue.type, command.estimate);
+      const estimationValidation = this.validateEstimationRules(issue.type as string, command.estimate);
 
       if (!estimationValidation.isValid) {
         return { isValid: false, error: estimationValidation.error || 'Estimation validation failed' };
@@ -391,5 +393,31 @@ export class IssueApplicationService {
    */
   private createSuccessResult(issue: Issue): IssueOperationResult {
     return { success: true, data: IssueDtoMapper.toDto(issue) };
+  }
+
+  /**
+   * Validate issue type with parent relationship
+   */
+  private async validateIssueTypeWithParent(type: IssueType, parentId?: string): Promise<{ isValid: boolean; error?: string }> {
+    if (!parentId) {
+      return { isValid: true };
+    }
+
+    const parent = await this.issueRepository.findById(IssueId.from(parentId));
+
+    if (!parent) {
+      return { isValid: false, error: 'Parent issue does not exist' };
+    }
+
+    // Validate parent-child type relationship
+    if (parent.type === 'task' && type !== 'subtask') {
+      return { isValid: false, error: 'A task can only have subtasks as children' };
+    }
+
+    if (parent.type === 'subtask') {
+      return { isValid: false, error: 'A subtask cannot have children' };
+    }
+
+    return { isValid: true };
   }
 }

@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import { ServiceRegistry } from '../../../../src/infrastructure/di/service-registry.js';
 import { DIContainer } from '../../../../src/infrastructure/di/container.js';
+import { ServiceRegistry } from '../../../../src/infrastructure/di/service-registry.js';
 
 describe('ServiceRegistry', () => {
   let registry: ServiceRegistry;
@@ -69,9 +69,11 @@ describe('ServiceRegistry', () => {
       const freshContainer = new DIContainer();
       const config = { databasePath: ':memory:' };
       const freshRegistry = new ServiceRegistry(freshContainer, config);
+
       freshRegistry.registerInfrastructure();
       
       const db = freshContainer.resolve('Database');
+
       expect(db).toBeDefined();
       expect(db).toHaveProperty('open', true);
     });
@@ -80,6 +82,7 @@ describe('ServiceRegistry', () => {
       registry.registerAll();
       
       const projectRepo = container.resolve('ProjectRepository');
+
       expect(projectRepo).toBeDefined();
       expect(projectRepo).toHaveProperty('save');
       expect(projectRepo).toHaveProperty('findById');
@@ -89,6 +92,7 @@ describe('ServiceRegistry', () => {
       registry.registerAll();
       
       const projectService = container.resolve('ProjectApplicationService');
+
       expect(projectService).toBeDefined();
       expect(projectService).toHaveProperty('createProject');
       expect(projectService).toHaveProperty('updateProject');
@@ -104,9 +108,11 @@ describe('ServiceRegistry', () => {
       };
       
       const freshRegistry = new ServiceRegistry(freshContainer, testConfig);
+
       freshRegistry.registerAll();
       
       const timeProvider = freshContainer.resolve<any>('TimeProvider');
+
       expect(timeProvider).toHaveProperty('setTime'); // Mock time provider has setTime
     });
 
@@ -118,9 +124,11 @@ describe('ServiceRegistry', () => {
       };
       
       const freshRegistry = new ServiceRegistry(freshContainer, prodConfig);
+
       freshRegistry.registerAll();
       
       const timeProvider = freshContainer.resolve<any>('TimeProvider');
+
       expect(timeProvider).not.toHaveProperty('setTime'); // Real time provider doesn't have setTime
     });
 
@@ -129,6 +137,7 @@ describe('ServiceRegistry', () => {
       
       expect(container.has('CustomService')).toBe(true);
       const service = container.resolve<{ custom: boolean }>('CustomService');
+
       expect(service.custom).toBe(true);
     });
   });
@@ -157,16 +166,18 @@ describe('ServiceRegistry', () => {
   describe('Error Handling', () => {
     it('should throw when registering repositories without infrastructure', () => {
       const freshRegistry = new ServiceRegistry(new DIContainer());
-      expect(() => freshRegistry.registerRepositories())
+
+      expect(() => { freshRegistry.registerRepositories(); })
         .toThrow('Infrastructure services must be registered before repositories');
     });
 
     it('should throw when registering application services without repositories', () => {
       const freshContainer = new DIContainer();
       const freshRegistry = new ServiceRegistry(freshContainer);
+
       freshRegistry.registerInfrastructure();
       
-      expect(() => freshRegistry.registerApplicationServices())
+      expect(() => { freshRegistry.registerApplicationServices(); })
         .toThrow('Repository services must be registered before application services');
     });
 

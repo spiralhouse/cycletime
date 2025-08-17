@@ -50,6 +50,7 @@ describe.sequential('Application Service Performance Integration', () => {
 
       // All should succeed
       const successCount = results.filter(r => r.success).length;
+
       expect(successCount).toBe(projectCount);
 
       // Performance assertion: 100 projects in < 2 seconds
@@ -57,6 +58,7 @@ describe.sequential('Application Service Performance Integration', () => {
       
       // Verify data integrity
       const counts = dbVerification.getRecordCounts();
+
       expect(counts.projects).toBe(projectCount);
       
       console.log(`✅ Created ${projectCount} projects in ${duration}ms (${(duration/projectCount).toFixed(2)}ms per project)`);
@@ -82,6 +84,7 @@ describe.sequential('Application Service Performance Integration', () => {
       const issuePromises = projects.flatMap(project =>
         Array.from({ length: issuesPerProject }, async (_, i) => {
           const issueType = i % 3 === 0 ? 'Epic' : i % 3 === 1 ? 'Story' : 'Story';
+
           return services.issueService.createIssue(TestDataBuilder.issue(project.id, {
             title: `Issue ${i + 1} for ${project.name}`,
             type: issueType
@@ -94,6 +97,7 @@ describe.sequential('Application Service Performance Integration', () => {
 
       // All should succeed
       const successCount = results.filter(r => r.success).length;
+
       expect(successCount).toBe(projectCount * issuesPerProject);
 
       // Performance assertion: 500 issues in < 5 seconds
@@ -101,6 +105,7 @@ describe.sequential('Application Service Performance Integration', () => {
       
       // Verify data integrity
       const counts = dbVerification.getRecordCounts();
+
       expect(counts.projects).toBe(projectCount);
       expect(counts.issues).toBe(projectCount * issuesPerProject);
       
@@ -123,8 +128,10 @@ describe.sequential('Application Service Performance Integration', () => {
           const projectResult = await services.projectService.createProject(
             TestDataBuilder.project({ name: 'Quick Project with Issues' })
           );
+
           if (projectResult.success) {
             const project = projectResult.data!;
+
             await Promise.all([
               services.issueService.createIssue(TestDataBuilder.issue(project.id, {
                 title: 'Quick Issue 1',
@@ -136,6 +143,7 @@ describe.sequential('Application Service Performance Integration', () => {
               }))
             ]);
           }
+
           return projectResult;
         })(),
         // Create workflows for projects
@@ -143,6 +151,7 @@ describe.sequential('Application Service Performance Integration', () => {
           const projectResult = await services.projectService.createProject(
             TestDataBuilder.project({ name: 'Project with Workflow' })
           );
+
           if (projectResult.success) {
             await services.workflowService.createWorkflow(
               TestDataBuilder.workflow(projectResult.data!.id, {
@@ -150,6 +159,7 @@ describe.sequential('Application Service Performance Integration', () => {
               })
             );
           }
+
           return projectResult;
         })()
       ];
@@ -286,7 +296,7 @@ describe.sequential('Application Service Performance Integration', () => {
       expect(subtaskCount).toBeGreaterThanOrEqual(400); // Some subtasks might fail due to constraints
       
       // Performance assertion: Create deep hierarchy in < 10 seconds
-      expect(duration).toBeLessThan(10000);
+      expect(duration).toBeLessThan(10_000);
       
       console.log(`✅ Created deep hierarchy with ${allIssues.length} issues (${epicCount} epics, ${storyCount} stories, ${subtaskCount} subtasks) in ${duration}ms`);
     });
@@ -317,10 +327,12 @@ describe.sequential('Application Service Performance Integration', () => {
       
       // All updates should succeed (last write wins is acceptable)
       const successCount = results.filter(r => r.success).length;
+
       expect(successCount).toBe(50);
       
       // Verify final state is consistent
       const finalProject = await services.projectService.getProject(project.id);
+
       expect(finalProject).not.toBeNull();
       expect(finalProject!.name).toBe('Race Condition Test Project');
       
@@ -357,6 +369,7 @@ describe.sequential('Application Service Performance Integration', () => {
       
       // Some may fail due to invalid transitions, but system should remain stable
       const finalIssue = await services.issueService.getIssue(issue.id);
+
       expect(finalIssue).not.toBeNull();
       
       // Status should be one of the valid values
@@ -372,6 +385,7 @@ describe.sequential('Application Service Performance Integration', () => {
         
         if (projectResult.success) {
           const project = projectResult.data!;
+
           await services.issueService.createIssue(
             TestDataBuilder.issue(project.id, {
               title: `Issue for ${project.name}`,
@@ -387,6 +401,7 @@ describe.sequential('Application Service Performance Integration', () => {
       
       // Verify setup
       const initialCounts = dbVerification.getRecordCounts();
+
       expect(initialCounts.projects).toBe(10);
       expect(initialCounts.issues).toBe(10);
       
@@ -430,6 +445,7 @@ describe.sequential('Application Service Performance Integration', () => {
       
       // Verify operations completed successfully
       const finalCounts = dbVerification.getRecordCounts();
+
       expect(finalCounts.projects).toBe(iterations);
       expect(finalCounts.issues).toBe(iterations * 100);
     });
@@ -459,6 +475,7 @@ describe.sequential('Application Service Performance Integration', () => {
       
       // Some should succeed, some should fail
       const successCount = results.filter(r => r.success).length;
+
       expect(successCount).toBeGreaterThan(0);
       expect(successCount).toBeLessThan(concurrentTransactions);
       
@@ -467,6 +484,7 @@ describe.sequential('Application Service Performance Integration', () => {
       
       // Successful transactions should have committed
       const counts = dbVerification.getRecordCounts();
+
       expect(counts.projects).toBeGreaterThan(0);
     });
   });

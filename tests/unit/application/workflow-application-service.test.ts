@@ -424,6 +424,7 @@ describe('WorkflowApplicationService', () => {
       
       // Verify the workflow was saved after reset
       const saveCalls = mocks.workflowRepository.getSaveCalls();
+
       expect(saveCalls.length).toBeGreaterThan(0);
     });
 

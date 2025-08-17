@@ -2,23 +2,25 @@
  * Container Factory for creating pre-configured DI containers
  */
 
+
+
+
 import { DIContainer } from './container.js';
 import { 
   DatabaseProvider, 
   TimeProvider, 
   RepositoryProvider,
-  ApplicationServiceProvider,
-  CompositeProvider
+  ApplicationServiceProvider
 } from './providers.js';
 import { SERVICE_TOKENS } from './service-registry.js';
-import { ProjectApplicationService } from '../../application/services/project-application-service.js';
-import { IssueApplicationService } from '../../application/services/issue-application-service.js';
-import { WorkflowApplicationService } from '../../application/services/workflow-application-service.js';
-import { SqliteProjectRepository } from '../database/repositories/sqlite-project-repository.js';
-import { SqliteIssueRepository } from '../database/repositories/sqlite-issue-repository.js';
-import { SqliteWorkflowRepository } from '../database/repositories/sqlite-workflow-repository.js';
 
 import type { IServiceContainer } from './types.js';
+import type { IssueApplicationService } from '../../application/services/issue-application-service.js';
+import type { ProjectApplicationService } from '../../application/services/project-application-service.js';
+import type { WorkflowApplicationService } from '../../application/services/workflow-application-service.js';
+import type { SqliteIssueRepository } from '../database/repositories/sqlite-issue-repository.js';
+import type { SqliteProjectRepository } from '../database/repositories/sqlite-project-repository.js';
+import type { SqliteWorkflowRepository } from '../database/repositories/sqlite-workflow-repository.js';
 
 /**
  * Container factory configuration
@@ -124,9 +126,9 @@ export class ContainerFactory {
     container.register(
       SERVICE_TOKENS.UNIT_OF_WORK,
       (c) => {
-        const Database = require('better-sqlite3');
         const { SqliteUnitOfWork } = require('../database/sqlite-unit-of-work.js');
         const db = c.resolve(SERVICE_TOKENS.DATABASE);
+
         return new SqliteUnitOfWork(db);
       },
       'singleton'
@@ -163,7 +165,7 @@ export class ContainerFactory {
       useMockTime: false,
       initialTime: new Date(),
       enableLogging: false,
-      logger: (message: string) => console.log(message)
+      logger: (message: string) => { console.log(message); }
     };
   }
 
@@ -176,7 +178,7 @@ export class ContainerFactory {
       useMockTime: true,
       initialTime: '2024-01-01T00:00:00Z',
       enableLogging: false,
-      logger: (message: string) => console.log(message)
+      logger: (message: string) => { console.log(message); }
     };
   }
 
@@ -189,7 +191,7 @@ export class ContainerFactory {
       useMockTime: false,
       initialTime: new Date(),
       enableLogging: false,
-      logger: (message: string) => console.log(message)
+      logger: (message: string) => { console.log(message); }
     };
   }
 

@@ -1,6 +1,7 @@
+import { existsSync, unlinkSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { existsSync, unlinkSync } from 'fs';
-import { resolve } from 'path';
 
 import { Application } from '../../../src/infrastructure/bootstrap.js';
 import { ContainerFactory } from '../../../src/infrastructure/di/container-factory.js';
@@ -15,7 +16,7 @@ describe.sequential('Application Bootstrap Integration', () => {
     if (app) {
       try {
         await app.shutdown();
-      } catch (error) {
+      } catch {
         // Ignore errors during cleanup
       }
       app = undefined;
@@ -127,6 +128,7 @@ describe.sequential('Application Bootstrap Integration', () => {
       await app.initialize();
       
       const container = app.getContainer();
+
       expect(container).toBeDefined();
       
       await app.shutdown();
@@ -213,6 +215,7 @@ describe.sequential('Application Bootstrap Integration', () => {
       
       // Create some data
       const projectService = app.getProjectService();
+
       await projectService.createProject({
         name: 'Test Project',
         description: 'Test Description'
@@ -220,6 +223,7 @@ describe.sequential('Application Bootstrap Integration', () => {
       
       // Backup database
       const backupPath = resolve('./test-backup.db');
+
       await app.backupDatabase(backupPath);
       
       expect(existsSync(backupPath)).toBe(true);
@@ -311,6 +315,7 @@ describe.sequential('Application Bootstrap Integration', () => {
           if (attemptCount === 1) {
             throw new Error('Temporary failure');
           }
+
           return super.initialize();
         }
       }

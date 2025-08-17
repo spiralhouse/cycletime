@@ -5,18 +5,18 @@
 
 import Database from 'better-sqlite3';
 
-import { DIContainer } from './container.js';
-import { SERVICE_TOKENS } from './service-registry.js';
-import { ProjectApplicationService } from '../../application/services/project-application-service.js';
 import { IssueApplicationService } from '../../application/services/issue-application-service.js';
+import { ProjectApplicationService } from '../../application/services/project-application-service.js';
 import { WorkflowApplicationService } from '../../application/services/workflow-application-service.js';
-import { SqliteProjectRepository } from '../database/repositories/sqlite-project-repository.js';
+import { RealTimeProvider, MockTimeProvider } from '../../domain/interfaces/time-provider.js';
 import { SqliteIssueRepository } from '../database/repositories/sqlite-issue-repository.js';
+import { SqliteProjectRepository } from '../database/repositories/sqlite-project-repository.js';
 import { SqliteWorkflowRepository } from '../database/repositories/sqlite-workflow-repository.js';
 import { SqliteUnitOfWork } from '../database/sqlite-unit-of-work.js';
-import { RealTimeProvider, MockTimeProvider } from '../../domain/interfaces/time-provider.js';
 
-import type { IServiceContainer, ServiceLifecycle } from './types.js';
+import { SERVICE_TOKENS } from './service-registry.js';
+
+import type { IServiceContainer } from './types.js';
 import type { TimeProvider as ITimeProvider } from '../../domain/interfaces/time-provider.js';
 
 /**
@@ -26,7 +26,7 @@ export interface IServiceProvider {
   /**
    * Register services with the container
    */
-  register(container: IServiceContainer): void;
+  register: (container: IServiceContainer) => void;
 }
 
 /**
@@ -55,7 +55,9 @@ export class DatabaseProvider implements IServiceProvider {
       this.token,
       () => {
         const db = new Database(this.databasePath, this.config);
+
         this.setupDatabase(db);
+
         return db;
       },
       'singleton'
@@ -161,13 +163,14 @@ export class TimeProvider implements IServiceProvider {
       () => {
         if (this.config.useMock) {
           const mockProvider = new MockTimeProvider();
+
           if (this.config.initialTime) {
             mockProvider.setTime(this.config.initialTime);
-          } else {
-            mockProvider.setTime('2024-01-01T00:00:00Z');
           }
+
           return mockProvider;
         }
+
         return new RealTimeProvider();
       },
       'singleton'
@@ -194,6 +197,7 @@ export class RepositoryProvider implements IServiceProvider {
       SERVICE_TOKENS.UNIT_OF_WORK,
       (c) => {
         const db = c.resolve<Database.Database>(SERVICE_TOKENS.DATABASE);
+
         return new SqliteUnitOfWork(db);
       },
       'singleton'
@@ -205,6 +209,7 @@ export class RepositoryProvider implements IServiceProvider {
       (c) => {
         const db = c.resolve<Database.Database>(SERVICE_TOKENS.DATABASE);
         const timeProvider = c.resolve<ITimeProvider>(SERVICE_TOKENS.TIME_PROVIDER);
+
         return new SqliteProjectRepository(db, timeProvider);
       },
       'singleton'
@@ -216,6 +221,7 @@ export class RepositoryProvider implements IServiceProvider {
       (c) => {
         const db = c.resolve<Database.Database>(SERVICE_TOKENS.DATABASE);
         const timeProvider = c.resolve<ITimeProvider>(SERVICE_TOKENS.TIME_PROVIDER);
+
         return new SqliteIssueRepository(db, timeProvider);
       },
       'singleton'
@@ -227,6 +233,7 @@ export class RepositoryProvider implements IServiceProvider {
       (c) => {
         const db = c.resolve<Database.Database>(SERVICE_TOKENS.DATABASE);
         const timeProvider = c.resolve<ITimeProvider>(SERVICE_TOKENS.TIME_PROVIDER);
+
         return new SqliteWorkflowRepository(db, timeProvider);
       },
       'singleton'
@@ -254,6 +261,7 @@ export class ApplicationServiceProvider implements IServiceProvider {
         const projectRepository = c.resolve<SqliteProjectRepository>(SERVICE_TOKENS.PROJECT_REPOSITORY);
         const unitOfWork = c.resolve<SqliteUnitOfWork>(SERVICE_TOKENS.UNIT_OF_WORK);
         const timeProvider = c.resolve<ITimeProvider>(SERVICE_TOKENS.TIME_PROVIDER);
+
         return new ProjectApplicationService(projectRepository, unitOfWork, timeProvider);
       },
       'singleton'
@@ -267,6 +275,7 @@ export class ApplicationServiceProvider implements IServiceProvider {
         const projectRepository = c.resolve<SqliteProjectRepository>(SERVICE_TOKENS.PROJECT_REPOSITORY);
         const unitOfWork = c.resolve<SqliteUnitOfWork>(SERVICE_TOKENS.UNIT_OF_WORK);
         const timeProvider = c.resolve<ITimeProvider>(SERVICE_TOKENS.TIME_PROVIDER);
+
         return new IssueApplicationService(issueRepository, projectRepository, unitOfWork, timeProvider);
       },
       'singleton'
@@ -280,6 +289,7 @@ export class ApplicationServiceProvider implements IServiceProvider {
         const projectRepository = c.resolve<SqliteProjectRepository>(SERVICE_TOKENS.PROJECT_REPOSITORY);
         const unitOfWork = c.resolve<SqliteUnitOfWork>(SERVICE_TOKENS.UNIT_OF_WORK);
         const timeProvider = c.resolve<ITimeProvider>(SERVICE_TOKENS.TIME_PROVIDER);
+
         return new WorkflowApplicationService(workflowRepository, projectRepository, unitOfWork, timeProvider);
       },
       'singleton'

@@ -2,18 +2,17 @@
  * Dependency Injection Container Implementation
  */
 
+import { isDisposable } from './types.js';
+
 import type {
   ServiceLifecycle,
   ServiceFactory,
   ServiceDescriptor,
   ServiceRegistrationOptions,
   IServiceContainer,
-  IDisposable,
-  ContainerConfiguration,
-  ResolutionContext
+  ContainerConfiguration
 } from './types.js';
 
-import { isDisposable } from './types.js';
 
 /**
  * Dependency Injection Container
@@ -29,7 +28,9 @@ export class DIContainer implements IServiceContainer {
 
   constructor(config: ContainerConfiguration = {}, parentContainer?: DIContainer) {
     this.config = config;
-    this.parentContainer = parentContainer;
+    if (parentContainer) {
+      this.parentContainer = parentContainer;
+    }
   }
 
   /**
@@ -61,11 +62,13 @@ export class DIContainer implements IServiceContainer {
     // Check for circular dependencies
     if (this.resolutionStack.includes(token)) {
       const cycle = [...this.resolutionStack, token].join(' -> ');
+
       throw new Error(`Circular dependency detected: ${cycle}`);
     }
 
     // Get service descriptor
     const descriptor = this.getDescriptorFromHierarchy(token);
+
     if (!descriptor) {
       throw new Error(`Service ${token} is not registered`);
     }
@@ -90,11 +93,13 @@ export class DIContainer implements IServiceContainer {
     // Check for circular dependencies
     if (this.resolutionStack.includes(token)) {
       const cycle = [...this.resolutionStack, token].join(' -> ');
+
       throw new Error(`Circular dependency detected: ${cycle}`);
     }
 
     // Get service descriptor
     const descriptor = this.getDescriptorFromHierarchy(token);
+
     if (!descriptor) {
       throw new Error(`Service ${token} is not registered`);
     }
@@ -102,6 +107,7 @@ export class DIContainer implements IServiceContainer {
     this.resolutionStack.push(token);
     try {
       const instance = await this.createInstanceAsync<T>(token, descriptor);
+
       return instance;
     } catch (error) {
       if (error instanceof Error && !error.message.includes('Circular dependency')) {
@@ -174,7 +180,7 @@ export class DIContainer implements IServiceContainer {
         return this.getOrCreateSingleton(token, descriptor);
       
       case 'transient':
-        return descriptor.factory(this);
+        return descriptor.factory(this) as T;
       
       case 'scoped':
         return this.getOrCreateScoped(token, descriptor);
@@ -212,6 +218,7 @@ export class DIContainer implements IServiceContainer {
     
     if (!rootContainer.singletonInstances.has(token)) {
       const instance = descriptor.factory(this);
+
       rootContainer.singletonInstances.set(token, instance);
     }
 
@@ -227,6 +234,7 @@ export class DIContainer implements IServiceContainer {
     
     if (!rootContainer.singletonInstances.has(token)) {
       const instance = await descriptor.factory(this);
+
       rootContainer.singletonInstances.set(token, instance);
     }
 
@@ -239,6 +247,7 @@ export class DIContainer implements IServiceContainer {
   private getOrCreateScoped<T>(token: string, descriptor: ServiceDescriptor<T>): T {
     if (!this.scopedInstances.has(token)) {
       const instance = descriptor.factory(this);
+
       this.scopedInstances.set(token, instance);
     }
 
@@ -251,6 +260,7 @@ export class DIContainer implements IServiceContainer {
   private async getOrCreateScopedAsync<T>(token: string, descriptor: ServiceDescriptor<T>): Promise<T> {
     if (!this.scopedInstances.has(token)) {
       const instance = await descriptor.factory(this);
+
       this.scopedInstances.set(token, instance);
     }
 

@@ -5,16 +5,16 @@
 
 import Database from 'better-sqlite3';
 
-import { DIContainer } from './container.js';
-import { ProjectApplicationService } from '../../application/services/project-application-service.js';
 import { IssueApplicationService } from '../../application/services/issue-application-service.js';
+import { ProjectApplicationService } from '../../application/services/project-application-service.js';
 import { WorkflowApplicationService } from '../../application/services/workflow-application-service.js';
-import { SqliteProjectRepository } from '../database/repositories/sqlite-project-repository.js';
+import { RealTimeProvider, MockTimeProvider } from '../../domain/interfaces/time-provider.js';
 import { SqliteIssueRepository } from '../database/repositories/sqlite-issue-repository.js';
+import { SqliteProjectRepository } from '../database/repositories/sqlite-project-repository.js';
 import { SqliteWorkflowRepository } from '../database/repositories/sqlite-workflow-repository.js';
 import { SqliteUnitOfWork } from '../database/sqlite-unit-of-work.js';
-import { RealTimeProvider, MockTimeProvider } from '../../domain/interfaces/time-provider.js';
 
+import type { DIContainer } from './container.js';
 import type { ServiceFactory, ServiceLifecycle } from './types.js';
 import type { TimeProvider } from '../../domain/interfaces/time-provider.js';
 
@@ -101,7 +101,9 @@ export class ServiceRegistry {
       SERVICE_TOKENS.DATABASE,
       () => {
         const db = new Database(this.config.databasePath);
+
         this.setupDatabase(db);
+
         return db;
       },
       'singleton'
@@ -113,9 +115,12 @@ export class ServiceRegistry {
       () => {
         if (this.config.useTestTimeProvider) {
           const mockProvider = new MockTimeProvider();
+
           mockProvider.setTime('2024-01-01T00:00:00Z');
+
           return mockProvider;
         }
+
         return new RealTimeProvider();
       },
       'singleton'
@@ -126,6 +131,7 @@ export class ServiceRegistry {
       SERVICE_TOKENS.UNIT_OF_WORK,
       (c) => {
         const db = c.resolve<Database.Database>(SERVICE_TOKENS.DATABASE);
+
         return new SqliteUnitOfWork(db);
       },
       'singleton'
@@ -152,6 +158,7 @@ export class ServiceRegistry {
       (c) => {
         const db = c.resolve<Database.Database>(SERVICE_TOKENS.DATABASE);
         const timeProvider = c.resolve<TimeProvider>(SERVICE_TOKENS.TIME_PROVIDER);
+
         return new SqliteProjectRepository(db, timeProvider);
       },
       'singleton'
@@ -163,6 +170,7 @@ export class ServiceRegistry {
       (c) => {
         const db = c.resolve<Database.Database>(SERVICE_TOKENS.DATABASE);
         const timeProvider = c.resolve<TimeProvider>(SERVICE_TOKENS.TIME_PROVIDER);
+
         return new SqliteIssueRepository(db, timeProvider);
       },
       'singleton'
@@ -174,6 +182,7 @@ export class ServiceRegistry {
       (c) => {
         const db = c.resolve<Database.Database>(SERVICE_TOKENS.DATABASE);
         const timeProvider = c.resolve<TimeProvider>(SERVICE_TOKENS.TIME_PROVIDER);
+
         return new SqliteWorkflowRepository(db, timeProvider);
       },
       'singleton'
@@ -201,6 +210,7 @@ export class ServiceRegistry {
         const projectRepository = c.resolve<SqliteProjectRepository>(SERVICE_TOKENS.PROJECT_REPOSITORY);
         const unitOfWork = c.resolve<SqliteUnitOfWork>(SERVICE_TOKENS.UNIT_OF_WORK);
         const timeProvider = c.resolve<TimeProvider>(SERVICE_TOKENS.TIME_PROVIDER);
+
         return new ProjectApplicationService(projectRepository, unitOfWork, timeProvider);
       },
       'singleton'
@@ -214,6 +224,7 @@ export class ServiceRegistry {
         const projectRepository = c.resolve<SqliteProjectRepository>(SERVICE_TOKENS.PROJECT_REPOSITORY);
         const unitOfWork = c.resolve<SqliteUnitOfWork>(SERVICE_TOKENS.UNIT_OF_WORK);
         const timeProvider = c.resolve<TimeProvider>(SERVICE_TOKENS.TIME_PROVIDER);
+
         return new IssueApplicationService(issueRepository, projectRepository, unitOfWork, timeProvider);
       },
       'singleton'
@@ -227,6 +238,7 @@ export class ServiceRegistry {
         const projectRepository = c.resolve<SqliteProjectRepository>(SERVICE_TOKENS.PROJECT_REPOSITORY);
         const unitOfWork = c.resolve<SqliteUnitOfWork>(SERVICE_TOKENS.UNIT_OF_WORK);
         const timeProvider = c.resolve<TimeProvider>(SERVICE_TOKENS.TIME_PROVIDER);
+
         return new WorkflowApplicationService(workflowRepository, projectRepository, unitOfWork, timeProvider);
       },
       'singleton'

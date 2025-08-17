@@ -25,7 +25,7 @@ describe('DIContainer', () => {
       
       container.register('DuplicateTest', factory, 'singleton');
       
-      expect(() => container.register('DuplicateTest', factory, 'singleton'))
+      expect(() => { container.register('DuplicateTest', factory, 'singleton'); })
         .toThrow('Service DuplicateTest is already registered');
     });
 
@@ -37,6 +37,7 @@ describe('DIContainer', () => {
       container.register('OverrideTest', factory2, 'singleton', { override: true });
       
       const instance = container.resolve<{ value: number }>('OverrideTest');
+
       expect(instance.value).toBe(2);
     });
   });
@@ -46,6 +47,7 @@ describe('DIContainer', () => {
       let callCount = 0;
       const factory = () => {
         callCount++;
+
         return { id: callCount };
       };
       
@@ -62,6 +64,7 @@ describe('DIContainer', () => {
       let created = false;
       const factory = () => {
         created = true;
+
         return { value: 'singleton' };
       };
       
@@ -80,6 +83,7 @@ describe('DIContainer', () => {
       let callCount = 0;
       const factory = () => {
         callCount++;
+
         return { id: callCount };
       };
       
@@ -100,6 +104,7 @@ describe('DIContainer', () => {
       let callCount = 0;
       const factory = () => {
         callCount++;
+
         return { id: callCount };
       };
       
@@ -117,6 +122,7 @@ describe('DIContainer', () => {
       let callCount = 0;
       const factory = () => {
         callCount++;
+
         return { id: callCount };
       };
       
@@ -137,6 +143,7 @@ describe('DIContainer', () => {
       let callCount = 0;
       const factory = () => {
         callCount++;
+
         return { id: callCount };
       };
       
@@ -160,6 +167,7 @@ describe('DIContainer', () => {
       container.register('ConfigService', () => ({ apiUrl: 'http://api.test' }), 'singleton');
       container.register('ApiService', (c) => {
         const config = c.resolve<{ apiUrl: string }>('ConfigService');
+
         return { url: config.apiUrl };
       }, 'singleton');
       
@@ -172,10 +180,12 @@ describe('DIContainer', () => {
       container.register('Logger', () => ({ log: (msg: string) => msg }), 'singleton');
       container.register('Database', (c) => {
         const logger = c.resolve('Logger');
+
         return { logger, connected: true };
       }, 'singleton');
       container.register('UserService', (c) => {
         const db = c.resolve<{ connected: boolean }>('Database');
+
         return { hasDb: db.connected };
       }, 'singleton');
       
@@ -196,11 +206,13 @@ describe('DIContainer', () => {
     it('should detect circular dependencies', () => {
       container.register('CircularA', (c) => {
         c.resolve('CircularB');
+
         return { name: 'A' };
       }, 'singleton');
       
       container.register('CircularB', (c) => {
         c.resolve('CircularA');
+
         return { name: 'B' };
       }, 'singleton');
       
@@ -211,16 +223,19 @@ describe('DIContainer', () => {
     it('should handle complex circular dependency chains', () => {
       container.register('ChainA', (c) => {
         c.resolve('ChainB');
+
         return { name: 'A' };
       }, 'singleton');
       
       container.register('ChainB', (c) => {
         c.resolve('ChainC');
+
         return { name: 'B' };
       }, 'singleton');
       
       container.register('ChainC', (c) => {
         c.resolve('ChainA');
+
         return { name: 'C' };
       }, 'singleton');
       
@@ -240,6 +255,7 @@ describe('DIContainer', () => {
 
     it('should get service descriptor', () => {
       const factory = () => ({ value: 42 });
+
       container.register('DescriptorTest', factory, 'singleton');
       
       const descriptor = container.getDescriptor('DescriptorTest');
@@ -251,6 +267,7 @@ describe('DIContainer', () => {
 
     it('should list all registered services', () => {
       const freshContainer = new DIContainer();
+
       freshContainer.register('Service1', () => ({}), 'singleton');
       freshContainer.register('Service2', () => ({}), 'transient');
       freshContainer.register('Service3', () => ({}), 'scoped');
@@ -302,15 +319,18 @@ describe('DIContainer', () => {
       
       container.register('Service', () => {
         callCount++;
+
         return { id: callCount };
       }, 'singleton');
       
       const instance1 = container.resolve<{ id: number }>('Service');
+
       expect(instance1.id).toBe(1);
       
       container.dispose();
       
       const instance2 = container.resolve<{ id: number }>('Service');
+
       expect(instance2.id).toBe(2);
       expect(callCount).toBe(2);
     });
@@ -319,7 +339,7 @@ describe('DIContainer', () => {
   describe('Type Safety', () => {
     it('should maintain type safety with generic resolution', () => {
       interface ITestService {
-        getValue(): number;
+        getValue: () => number;
       }
       
       container.register<ITestService>('TestService', () => ({

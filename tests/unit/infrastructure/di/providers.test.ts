@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 
 import { DIContainer } from '../../../../src/infrastructure/di/container.js';
-import { ServiceRegistry } from '../../../../src/infrastructure/di/service-registry.js';
 import { 
   DatabaseProvider, 
   TimeProvider, 
   RepositoryProvider,
   ApplicationServiceProvider 
 } from '../../../../src/infrastructure/di/providers.js';
+import { ServiceRegistry } from '../../../../src/infrastructure/di/service-registry.js';
 
 import type { TimeProvider as ITimeProvider } from '../../../../src/domain/interfaces/time-provider.js';
 import type Database from 'better-sqlite3';
@@ -18,9 +18,11 @@ describe('DI Providers', () => {
     it('should provide database connection', () => {
       const container = new DIContainer();
       const provider = new DatabaseProvider(':memory:');
+
       provider.register(container);
       
       const db = container.resolve<Database.Database>('Database');
+
       expect(db).toBeDefined();
       expect(db.open).toBe(true);
     });
@@ -28,6 +30,7 @@ describe('DI Providers', () => {
     it('should provide singleton database', () => {
       const container = new DIContainer();
       const provider = new DatabaseProvider(':memory:');
+
       provider.register(container);
       
       const db1 = container.resolve('Database');
@@ -39,6 +42,7 @@ describe('DI Providers', () => {
     it('should configure database with pragmas', () => {
       const container = new DIContainer();
       const provider = new DatabaseProvider(':memory:');
+
       provider.register(container);
       
       const db = container.resolve<Database.Database>('Database');
@@ -55,9 +59,11 @@ describe('DI Providers', () => {
         timeout: 5000,
         verbose: undefined
       });
+
       provider.register(container);
       
       const db = container.resolve<Database.Database>('Database');
+
       expect(db.readonly).toBe(false);
     });
   });
@@ -66,9 +72,11 @@ describe('DI Providers', () => {
     it('should provide real time provider by default', () => {
       const container = new DIContainer();
       const provider = new TimeProvider();
+
       provider.register(container);
       
       const timeProvider = container.resolve<ITimeProvider>('TimeProvider');
+
       expect(timeProvider).toBeDefined();
       expect(timeProvider).not.toHaveProperty('setTime'); // Real provider doesn't have setTime
     });
@@ -76,9 +84,11 @@ describe('DI Providers', () => {
     it('should provide mock time provider for testing', () => {
       const container = new DIContainer();
       const provider = new TimeProvider({ useMock: true });
+
       provider.register(container);
       
       const timeProvider = container.resolve<any>('TimeProvider');
+
       expect(timeProvider).toBeDefined();
       expect(timeProvider).toHaveProperty('setTime'); // Mock provider has setTime
     });
@@ -90,6 +100,7 @@ describe('DI Providers', () => {
         useMock: true, 
         initialTime 
       });
+
       provider.register(container);
       
       const timeProvider = container.resolve<any>('TimeProvider');
@@ -101,6 +112,7 @@ describe('DI Providers', () => {
     it('should provide singleton time provider', () => {
       const container = new DIContainer();
       const provider = new TimeProvider();
+
       provider.register(container);
       
       const tp1 = container.resolve('TimeProvider');
@@ -113,11 +125,13 @@ describe('DI Providers', () => {
   describe('RepositoryProvider', () => {
     it('should register all repository services', () => {
       const container = new DIContainer();
+
       // Register required dependencies
       new DatabaseProvider(':memory:').register(container);
       new TimeProvider().register(container);
       
       const provider = new RepositoryProvider();
+
       provider.register(container);
       
       expect(container.has('ProjectRepository')).toBe(true);
@@ -128,14 +142,17 @@ describe('DI Providers', () => {
 
     it('should provide working repositories', () => {
       const container = new DIContainer();
+
       // Register required dependencies
       new DatabaseProvider(':memory:').register(container);
       new TimeProvider().register(container);
       
       const provider = new RepositoryProvider();
+
       provider.register(container);
       
       const projectRepo = container.resolve<any>('ProjectRepository');
+
       expect(projectRepo).toHaveProperty('save');
       expect(projectRepo).toHaveProperty('findById');
       expect(projectRepo).toHaveProperty('findAll');
@@ -144,11 +161,13 @@ describe('DI Providers', () => {
 
     it('should provide singleton repositories', () => {
       const container = new DIContainer();
+
       // Register required dependencies
       new DatabaseProvider(':memory:').register(container);
       new TimeProvider().register(container);
       
       const provider = new RepositoryProvider();
+
       provider.register(container);
       
       const repo1 = container.resolve('ProjectRepository');
@@ -159,21 +178,23 @@ describe('DI Providers', () => {
 
     it('should throw if database not registered', () => {
       const freshContainer = new DIContainer();
+
       new TimeProvider().register(freshContainer);
       
       const provider = new RepositoryProvider();
       
-      expect(() => provider.register(freshContainer))
+      expect(() => { provider.register(freshContainer); })
         .toThrow('Database must be registered before repositories');
     });
 
     it('should throw if time provider not registered', () => {
       const freshContainer = new DIContainer();
+
       new DatabaseProvider(':memory:').register(freshContainer);
       
       const provider = new RepositoryProvider();
       
-      expect(() => provider.register(freshContainer))
+      expect(() => { provider.register(freshContainer); })
         .toThrow('TimeProvider must be registered before repositories');
     });
   });
@@ -181,12 +202,14 @@ describe('DI Providers', () => {
   describe('ApplicationServiceProvider', () => {
     it('should register all application services', () => {
       const container = new DIContainer();
+
       // Register all required dependencies
       new DatabaseProvider(':memory:').register(container);
       new TimeProvider().register(container);
       new RepositoryProvider().register(container);
       
       const provider = new ApplicationServiceProvider();
+
       provider.register(container);
       
       expect(container.has('ProjectApplicationService')).toBe(true);
@@ -196,15 +219,18 @@ describe('DI Providers', () => {
 
     it('should provide working application services', () => {
       const container = new DIContainer();
+
       // Register all required dependencies
       new DatabaseProvider(':memory:').register(container);
       new TimeProvider().register(container);
       new RepositoryProvider().register(container);
       
       const provider = new ApplicationServiceProvider();
+
       provider.register(container);
       
       const projectService = container.resolve<any>('ProjectApplicationService');
+
       expect(projectService).toHaveProperty('createProject');
       expect(projectService).toHaveProperty('updateProject');
       expect(projectService).toHaveProperty('getProject');
@@ -212,12 +238,14 @@ describe('DI Providers', () => {
 
     it('should provide singleton application services', () => {
       const container = new DIContainer();
+
       // Register all required dependencies
       new DatabaseProvider(':memory:').register(container);
       new TimeProvider().register(container);
       new RepositoryProvider().register(container);
       
       const provider = new ApplicationServiceProvider();
+
       provider.register(container);
       
       const service1 = container.resolve('ProjectApplicationService');
@@ -228,12 +256,13 @@ describe('DI Providers', () => {
 
     it('should throw if repositories not registered', () => {
       const freshContainer = new DIContainer();
+
       new DatabaseProvider(':memory:').register(freshContainer);
       new TimeProvider().register(freshContainer);
       
       const provider = new ApplicationServiceProvider();
       
-      expect(() => provider.register(freshContainer))
+      expect(() => { provider.register(freshContainer); })
         .toThrow('Repositories must be registered before application services');
     });
   });
@@ -261,6 +290,7 @@ describe('DI Providers', () => {
 
     it('should maintain proper dependency chain', async () => {
       const container = new DIContainer();
+
       new DatabaseProvider(':memory:').register(container);
       new TimeProvider().register(container);
       new RepositoryProvider().register(container);
@@ -268,6 +298,7 @@ describe('DI Providers', () => {
       
       // Resolve top-level service should work with all dependencies
       const projectService = container.resolve<any>('ProjectApplicationService');
+
       expect(projectService).toBeDefined();
       
       // Service should be functional
@@ -286,6 +317,7 @@ describe('DI Providers', () => {
     it('should support custom tokens', () => {
       const container = new DIContainer();
       const provider = new DatabaseProvider(':memory:', {}, 'CustomDatabase');
+
       provider.register(container);
       
       expect(container.has('CustomDatabase')).toBe(true);
@@ -297,9 +329,11 @@ describe('DI Providers', () => {
       // Note: This test would verify if providers support lifecycle customization
       // For now, all our providers use singleton by default
       const provider = new DatabaseProvider(':memory:');
+
       provider.register(container);
       
       const descriptor = container.getDescriptor('Database');
+
       expect(descriptor?.lifecycle).toBe('singleton');
     });
   });

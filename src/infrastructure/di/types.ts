@@ -49,54 +49,54 @@ export interface IServiceContainer {
   /**
    * Register a service in the container
    */
-  register<T = any>(
+  register: <T = any>(
     token: string,
     factory: ServiceFactory<T>,
     lifecycle: ServiceLifecycle,
     options?: ServiceRegistrationOptions
-  ): void;
+  ) => void;
   
   /**
    * Resolve a service from the container
    */
-  resolve<T = any>(token: string): T;
+  resolve: <T = any>(token: string) => T;
   
   /**
    * Resolve a service asynchronously
    */
-  resolveAsync<T = any>(token: string): Promise<T>;
+  resolveAsync: <T = any>(token: string) => Promise<T>;
   
   /**
    * Check if a service is registered
    */
-  has(token: string): boolean;
+  has: (token: string) => boolean;
   
   /**
    * Get service descriptor
    */
-  getDescriptor<T = any>(token: string): ServiceDescriptor<T> | undefined;
+  getDescriptor: <T = any>(token: string) => ServiceDescriptor<T> | undefined;
   
   /**
    * Get all registered service tokens
    */
-  getRegisteredServices(): string[];
+  getRegisteredServices: () => string[];
   
   /**
    * Create a scoped container
    */
-  createScope(): IServiceContainer;
+  createScope: () => IServiceContainer;
   
   /**
    * Dispose the container and all singleton instances
    */
-  dispose(): void;
+  dispose: () => void;
 }
 
 /**
  * Disposable interface for services that need cleanup
  */
 export interface IDisposable {
-  dispose(): void | Promise<void>;
+  dispose: () => void | Promise<void>;
 }
 
 /**
