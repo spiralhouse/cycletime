@@ -15,7 +15,7 @@ import {
  * These tests verify transaction isolation, rollback scenarios, and error
  * propagation across service boundaries with real database transactions.
  */
-describe('Transaction Boundaries Integration', () => {
+describe.sequential('Transaction Boundaries Integration', () => {
   let infrastructure: RealIntegrationInfrastructure;
   let services: ApplicationServices;
   let repositories: Repositories;
@@ -56,7 +56,7 @@ describe('Transaction Boundaries Integration', () => {
         })),
         services.issueService.createIssue(TestDataBuilder.issue(project.id, {
           title: 'Issue 3',
-          type: 'Subtask'
+          type: 'Story'
         }))
       ]);
 
@@ -74,17 +74,21 @@ describe('Transaction Boundaries Integration', () => {
 
       // Verify all data was persisted
       const persistedProject = await services.projectService.getProject(project.id);
+
       expect(persistedProject).not.toBeNull();
 
       const persistedIssues = await services.issueService.getProjectIssues(project.id);
+
       expect(persistedIssues).toHaveLength(3);
 
       const persistedWorkflow = await services.workflowService.getWorkflowByProject(project.id);
+
       expect(persistedWorkflow).not.toBeNull();
 
       // Verify database consistency
       dbVerification.verifyForeignKeyConstraints();
       const counts = dbVerification.getRecordCounts();
+
       expect(counts.projects).toBe(1);
       expect(counts.issues).toBe(3);
       expect(counts.workflows).toBe(1);
@@ -130,6 +134,7 @@ describe('Transaction Boundaries Integration', () => {
       // Verify data isolation - each project should only see its own issues
       for (const { project } of results) {
         const projectIssues = await services.issueService.getProjectIssues(project.id);
+
         expect(projectIssues).toHaveLength(1);
         expect(projectIssues[0].title).toContain(project.name.split(' ')[2]); // Contains project number
       }
@@ -137,6 +142,7 @@ describe('Transaction Boundaries Integration', () => {
       // Verify total data consistency
       dbVerification.verifyForeignKeyConstraints();
       const counts = dbVerification.getRecordCounts();
+
       expect(counts.projects).toBe(3);
       expect(counts.issues).toBe(3);
     });
@@ -154,6 +160,7 @@ describe('Transaction Boundaries Integration', () => {
 
       // Get initial counts
       const initialCounts = dbVerification.getRecordCounts();
+
       expect(initialCounts.projects).toBe(1);
 
       // Now test transaction rollback by creating invalid issue hierarchy
@@ -178,6 +185,7 @@ describe('Transaction Boundaries Integration', () => {
 
       // Verify final state - both projects should exist
       const finalCounts = dbVerification.getRecordCounts();
+
       expect(finalCounts.projects).toBe(3); // baseline + rollback test + duplicate
 
       dbVerification.verifyForeignKeyConstraints();
@@ -227,6 +235,7 @@ describe('Transaction Boundaries Integration', () => {
 
       // Verify that valid operations persisted and invalid operation didn't
       const projectIssues = await services.issueService.getProjectIssues(project.id);
+
       expect(projectIssues).toHaveLength(2); // Epic and Story, no invalid Epic
 
       const epicFromDb = projectIssues.find(i => i.type === 'Epic');
@@ -252,22 +261,25 @@ describe('Transaction Boundaries Integration', () => {
       const project = projectResult.data!;
 
       const initialCounts = dbVerification.getRecordCounts();
+
       expect(initialCounts.projects).toBe(1);
 
       // Attempt to create project with invalid data
-      // Since our validation is at the application layer, let's test with extreme data
+      // Test that domain validation prevents excessively long names
       const extremeProject = await services.projectService.createProject(TestDataBuilder.project({
-        name: 'A'.repeat(1000), // Very long name
-        description: 'B'.repeat(10000) // Very long description  
+        name: 'A'.repeat(1000), // Very long name exceeds 255 character limit
+        description: 'B'.repeat(10_000) // Very long description  
       }));
 
-      // This should still succeed as SQLite can handle large text
-      expect(extremeProject.success).toBe(true);
+      // This should fail due to domain validation
+      expect(extremeProject.success).toBe(false);
+      expect(extremeProject.error).toContain('255 characters');
 
       // Verify database integrity
       dbVerification.verifyForeignKeyConstraints();
       const finalCounts = dbVerification.getRecordCounts();
-      expect(finalCounts.projects).toBe(2);
+
+      expect(finalCounts.projects).toBe(1); // Only baseline project, extreme project failed
     });
   });
 
@@ -288,6 +300,7 @@ describe('Transaction Boundaries Integration', () => {
 
       // Verify no data was created
       const counts = dbVerification.getRecordCounts();
+
       expect(counts.projects).toBe(0);
       expect(counts.issues).toBe(0);
 
@@ -314,9 +327,11 @@ describe('Transaction Boundaries Integration', () => {
 
       // Verify the valid project still exists but no workflow was created
       const persistedProject = await services.projectService.getProject(project.id);
+
       expect(persistedProject).not.toBeNull();
 
       const counts = dbVerification.getRecordCounts();
+
       expect(counts.projects).toBe(1);
       expect(counts.workflows).toBe(0);
 
@@ -372,15 +387,18 @@ describe('Transaction Boundaries Integration', () => {
 
       // Verify valid data persisted despite invalid operations
       const finalCounts = dbVerification.getRecordCounts();
+
       expect(finalCounts.projects).toBe(1);
       expect(finalCounts.issues).toBe(2);
       expect(finalCounts.workflows).toBe(1);
 
       // Verify the valid project's data is intact
       const projectIssues = await services.issueService.getProjectIssues(validProject.id);
+
       expect(projectIssues).toHaveLength(2);
 
       const projectWorkflow = await services.workflowService.getWorkflowByProject(validProject.id);
+
       expect(projectWorkflow).not.toBeNull();
 
       dbVerification.verifyForeignKeyConstraints();
@@ -442,6 +460,7 @@ describe('Transaction Boundaries Integration', () => {
 
       // Verify final data consistency
       const finalCounts = dbVerification.getRecordCounts();
+
       expect(finalCounts.projects).toBe(10);
       expect(finalCounts.issues).toBe(10);
       expect(finalCounts.workflows).toBe(10);

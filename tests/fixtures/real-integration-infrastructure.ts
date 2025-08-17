@@ -7,15 +7,16 @@ import { SqliteIssueRepository } from '../../src/infrastructure/database/reposit
 import { SqliteProjectRepository } from '../../src/infrastructure/database/repositories/sqlite-project-repository.js';
 import { SqliteWorkflowRepository } from '../../src/infrastructure/database/repositories/sqlite-workflow-repository.js';
 import { SqliteUnitOfWork } from '../../src/infrastructure/database/sqlite-unit-of-work.js';
+
 import { MockTimeProvider } from './mock-time-provider.js';
 
+import type { CreateIssueCommand } from '../../src/application/dtos/issue-dto.js';
+import type { CreateProjectCommand } from '../../src/application/dtos/project-dto.js';
+import type { CreateWorkflowRequest } from '../../src/application/dtos/workflow-dto.js';
 import type { IssueRepository } from '../../src/domain/repositories/issue-repository.js';
 import type { ProjectRepository } from '../../src/domain/repositories/project-repository.js';
 import type { UnitOfWork } from '../../src/domain/repositories/session-repository.js';
 import type { WorkflowRepository } from '../../src/domain/repositories/workflow-repository.js';
-import type { CreateIssueCommand } from '../../src/application/dtos/issue-dto.js';
-import type { CreateProjectCommand } from '../../src/application/dtos/project-dto.js';
-import type { CreateWorkflowRequest } from '../../src/application/dtos/workflow-dto.js';
 
 /**
  * Real infrastructure setup for integration tests
@@ -311,9 +312,9 @@ export class PerformanceMonitor {
     operation: () => Promise<T>,
     warningThreshold = 100
   ): Promise<{ result: T; duration: number }> {
-    const start = performance.now();
+    const start = Date.now();
     const result = await operation();
-    const duration = performance.now() - start;
+    const duration = Date.now() - start;
     
     if (duration > warningThreshold) {
       console.warn(`⚠️  Slow operation detected: ${name} took ${duration.toFixed(2)}ms (threshold: ${warningThreshold}ms)`);
@@ -351,6 +352,7 @@ export class DatabaseVerification {
    */
   verifyForeignKeyConstraints(): void {
     const result = this.db.pragma('foreign_key_check') as unknown[];
+
     if (result.length > 0) {
       throw new Error(`Foreign key constraint violations: ${JSON.stringify(result)}`);
     }

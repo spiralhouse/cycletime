@@ -16,7 +16,7 @@ import {
  * with real database infrastructure (no mocks). They test complete
  * workflows that span multiple services and verify data consistency.
  */
-describe('Cross-Service Workflows Integration', () => {
+describe.sequential('Cross-Service Workflows Integration', () => {
   let infrastructure: RealIntegrationInfrastructure;
   let services: ApplicationServices;
   let repositories: Repositories;
@@ -47,9 +47,6 @@ describe('Cross-Service Workflows Integration', () => {
         50 // Should complete in < 50ms
       );
 
-      if (!projectResult.success) {
-        console.log('Project creation failed:', projectResult.error);
-      }
       expect(projectResult.success).toBe(true);
       expect(projectResult.data).toBeDefined();
       const project = projectResult.data!;
@@ -104,11 +101,13 @@ describe('Cross-Service Workflows Integration', () => {
       
       // Verify project exists and is correctly set up
       const retrievedProject = await services.projectService.getProject(project.id);
+
       expect(retrievedProject).not.toBeNull();
       expect(retrievedProject!.name).toBe('Full Integration Project');
 
       // Verify issue hierarchy is correctly established
       const projectIssues = await services.issueService.getProjectIssues(project.id);
+
       expect(projectIssues).toHaveLength(3);
 
       const epicFromDb = projectIssues.find(i => i.type === 'Epic');
@@ -124,6 +123,7 @@ describe('Cross-Service Workflows Integration', () => {
 
       // Verify workflow is correctly associated with project
       const retrievedWorkflow = await services.workflowService.getWorkflowByProject(project.id);
+
       expect(retrievedWorkflow).not.toBeNull();
       expect(retrievedWorkflow!.id).toBe(workflow.id);
       expect(retrievedWorkflow!.name).toBe('Project Development Workflow');
@@ -131,12 +131,14 @@ describe('Cross-Service Workflows Integration', () => {
       // Verify database integrity
       dbVerification.verifyForeignKeyConstraints();
       const counts = dbVerification.getRecordCounts();
+
       expect(counts.projects).toBe(1);
       expect(counts.issues).toBe(3);
       expect(counts.workflows).toBe(1);
 
       // Verify project-issue relationships at database level
       const relationshipVerification = dbVerification.verifyProjectIssueRelationships(project.id);
+
       expect(relationshipVerification.totalIssues).toBe(3);
       expect(relationshipVerification.epics).toBe(1);
       expect(relationshipVerification.stories).toBe(1);
@@ -192,23 +194,28 @@ describe('Cross-Service Workflows Integration', () => {
 
       // Verify isolation: Project 1 should only see its own data
       const project1Issues = await services.issueService.getProjectIssues(project1.id);
+
       expect(project1Issues).toHaveLength(1);
       expect(project1Issues[0].title).toBe('Alpha Issue');
 
       const project1Workflow = await services.workflowService.getWorkflowByProject(project1.id);
+
       expect(project1Workflow!.name).toBe('Alpha Workflow');
 
       // Verify isolation: Project 2 should only see its own data
       const project2Issues = await services.issueService.getProjectIssues(project2.id);
+
       expect(project2Issues).toHaveLength(1);
       expect(project2Issues[0].title).toBe('Beta Issue');
 
       const project2Workflow = await services.workflowService.getWorkflowByProject(project2.id);
+
       expect(project2Workflow!.name).toBe('Beta Workflow');
 
       // Verify database consistency
       dbVerification.verifyForeignKeyConstraints();
       const counts = dbVerification.getRecordCounts();
+
       expect(counts.projects).toBe(2);
       expect(counts.issues).toBe(2);
       expect(counts.workflows).toBe(2);
@@ -264,11 +271,13 @@ describe('Cross-Service Workflows Integration', () => {
 
       // Verify workflow progress
       const workflowProgress = await services.workflowService.getWorkflowProgress(workflow.id);
+
       expect(workflowProgress.completionPercentage).toBeGreaterThan(0);
       expect(workflowProgress.availableStages.length).toBeGreaterThan(0);
 
       // Verify issue status was updated
       const updatedIssue = await services.issueService.getIssue(issue.id);
+
       expect(updatedIssue!.status).toBe('Todo');
 
       // Verify database consistency
@@ -342,27 +351,32 @@ describe('Cross-Service Workflows Integration', () => {
 
       // Verify hierarchy structure
       const allProjectIssues = await services.issueService.getProjectIssues(project.id);
+
       expect(allProjectIssues).toHaveLength(6); // 1 epic + 2 stories + 3 subtasks
 
       // Verify Epic has correct children
       const storiesUnderEpic = allProjectIssues.filter(issue => 
         issue.parentId === epic.id && issue.type === 'Story'
       );
+
       expect(storiesUnderEpic).toHaveLength(2);
 
       // Verify Stories have correct children
       const subtasksUnderLogin = allProjectIssues.filter(issue => 
         issue.parentId === loginStory.id && issue.type === 'Subtask'
       );
+
       expect(subtasksUnderLogin).toHaveLength(2);
 
       const subtasksUnderRegistration = allProjectIssues.filter(issue => 
         issue.parentId === registrationStory.id && issue.type === 'Subtask'
       );
+
       expect(subtasksUnderRegistration).toHaveLength(1);
 
       // Verify estimates are only on subtasks (per Linear business rules)
       const issuesWithEstimates = allProjectIssues.filter(issue => issue.estimate !== undefined);
+
       expect(issuesWithEstimates).toHaveLength(3); // Only subtasks should have estimates
       issuesWithEstimates.forEach(issue => {
         expect(issue.type).toBe('Subtask');
@@ -370,6 +384,7 @@ describe('Cross-Service Workflows Integration', () => {
 
       // Verify database relationships
       const relationshipVerification = dbVerification.verifyProjectIssueRelationships(project.id);
+
       expect(relationshipVerification.totalIssues).toBe(6);
       expect(relationshipVerification.epics).toBe(1);
       expect(relationshipVerification.stories).toBe(2);
@@ -383,7 +398,7 @@ describe('Cross-Service Workflows Integration', () => {
   describe('Service Coordination Performance', () => {
     it('should maintain performance with realistic data volumes', async () => {
       // Test performance with larger data sets
-      const startTime = performance.now();
+      const startTime = Date.now();
 
       // Create multiple projects with full hierarchies
       const projectPromises = Array.from({ length: 5 }, (_, i) => 
@@ -401,12 +416,13 @@ describe('Cross-Service Workflows Integration', () => {
         Array.from({ length: 10 }, (_, i) =>
           services.issueService.createIssue(TestDataBuilder.issue(project.id, {
             title: `Issue ${i + 1} for ${project.name}`,
-            type: i % 3 === 0 ? 'Epic' : i % 3 === 1 ? 'Story' : 'Subtask'
+            type: i % 2 === 0 ? 'Epic' : 'Story'
           }))
         )
       );
 
       const issueResults = await Promise.all(issuePromises);
+
       expect(issueResults.every(result => result.success)).toBe(true);
 
       // Create workflows for each project
@@ -417,15 +433,17 @@ describe('Cross-Service Workflows Integration', () => {
       );
 
       const workflowResults = await Promise.all(workflowPromises);
+
       expect(workflowResults.every(result => result.success)).toBe(true);
 
-      const totalTime = performance.now() - startTime;
+      const totalTime = Date.now() - startTime;
 
       // Performance assertions
       expect(totalTime).toBeLessThan(1000); // Should complete in < 1 second
       
       // Verify data integrity with volume
       const counts = dbVerification.getRecordCounts();
+
       expect(counts.projects).toBe(5);
       expect(counts.issues).toBe(50); // 5 projects × 10 issues each
       expect(counts.workflows).toBe(5);

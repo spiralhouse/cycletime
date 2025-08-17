@@ -413,6 +413,7 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       // Create a project in the test database
       const testProject = Project.create('Test Project', 'Test Description');
       const testProjectRepo = new SqliteProjectRepository(testDb);
+
       await testProjectRepo.save(testProject);
       
       const issue = Issue.create('Issue', 'Description', 'Story', undefined, testProject.id);
