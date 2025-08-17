@@ -316,6 +316,28 @@ export class Issue {
     this.touch();
   }
 
+  updateType(type: IssueType): void {
+    if (this._type === type) {
+      return;
+    }
+    
+    // Validate type change rules
+    if (this._type === IssueType.Epic && this._parentId) {
+      throw new Error('Cannot change Epic with parent to another type');
+    }
+    
+    if (type === IssueType.Epic && this._parentId) {
+      throw new Error('Cannot change to Epic when issue has a parent');
+    }
+    
+    if (type === IssueType.Subtask && !this._parentId) {
+      throw new Error('Cannot change to Subtask without a parent');
+    }
+    
+    this._type = type;
+    this.touch();
+  }
+
   isValidHierarchy(): boolean {
     if (this._type === IssueType.Epic) {
       return this._parentId === undefined;

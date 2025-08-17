@@ -125,7 +125,7 @@ describe('IssueApplicationService', () => {
       const result = await service.createIssue(command);
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Project not found');
+      expect(result.error).toContain('Project does not exist');
     });
   });
 

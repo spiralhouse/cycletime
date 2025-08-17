@@ -69,13 +69,13 @@ export class IssueApplicationService {
           return this.createErrorResult('Issue not found');
         }
 
-        const updateResult = this.applyIssueUpdates(issue, command);
+        const updateResult = await this.applyIssueUpdates(issue, command);
 
         if (!updateResult.isValid) {
           return this.createErrorResult(updateResult.error!);
         }
 
-        await this.issueRepository.save(issue);
+        await this.issueRepository.saveToProject(issue, issue.projectId!);
 
         return this.createSuccessResult(issue);
       });
@@ -227,7 +227,7 @@ export class IssueApplicationService {
     const project = await this.projectRepository.findById(projectId);
 
     if (!project) {
-      return { isValid: false, error: 'Project not found' };
+      return { isValid: false, error: 'Project does not exist' };
     }
 
     // Validate hierarchy rules
@@ -283,7 +283,7 @@ export class IssueApplicationService {
 
     if (parent) {
       parent.addChild(issue.id);
-      await this.issueRepository.save(parent);
+      await this.issueRepository.saveToProject(parent, parent.projectId!);
     }
   }
 
@@ -306,10 +306,10 @@ export class IssueApplicationService {
   /**
    * Apply updates to an issue with validation
    */
-  private applyIssueUpdates(
+  private async applyIssueUpdates(
     issue: Issue, 
     command: UpdateIssueCommand
-  ): { isValid: boolean; error?: string } {
+  ): Promise<{ isValid: boolean; error?: string }> {
     // Update title if provided
     if (command.title !== undefined) {
       if (!command.title.trim()) {
@@ -321,6 +321,38 @@ export class IssueApplicationService {
     // Update description if provided
     if (command.description !== undefined) {
       issue.updateDescription(command.description);
+    }
+
+    // Update type if provided
+    if (command.type !== undefined) {
+      const type = command.type as IssueType;
+      
+      // Validate type change with parent relationship
+      const validation = await this.validateIssueTypeWithParent(type, command.parentId || issue.parentId?.value);
+      if (!validation.isValid) {
+        return { isValid: false, error: validation.error };
+      }
+      
+      issue.updateType(type);
+    }
+
+    // Update parent if provided
+    if (command.parentId !== undefined) {
+      const parentId = IssueId.from(command.parentId);
+      const parent = await this.issueRepository.findById(parentId);
+      
+      if (!parent) {
+        return { isValid: false, error: 'Parent issue does not exist' };
+      }
+      
+      // Validate parent relationship with current or new type
+      const type = command.type as IssueType || issue.type;
+      const validation = await this.validateIssueTypeWithParent(type, command.parentId);
+      if (!validation.isValid) {
+        return { isValid: false, error: validation.error };
+      }
+      
+      issue.setParent(parentId);
     }
 
     // Update status if provided
