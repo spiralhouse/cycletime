@@ -47,7 +47,8 @@ class ExposedSessionRepository : SessionRepository {
             .map { it.toSession() }
     }
     
-    override suspend fun save(session: Session) = dbQuery {
+    override suspend fun save(session: Session) {
+        dbQuery {
         val contextJson = json.encodeToString(session.currentContext)
         
         val exists = SessionStatesTable
@@ -73,11 +74,13 @@ class ExposedSessionRepository : SessionRepository {
                 it[updatedAt] = session.updatedAt
             }
         }
+        }
     }
     
-    override suspend fun delete(sessionKey: SessionKey) = dbQuery {
-        SessionStatesTable.deleteWhere { SessionStatesTable.sessionKey eq sessionKey.value }
-        Unit
+    override suspend fun delete(sessionKey: SessionKey) {
+        dbQuery {
+            SessionStatesTable.deleteWhere { SessionStatesTable.sessionKey eq sessionKey.value }
+        }
     }
     
     override suspend fun deleteExpiredSessions(before: Instant): Int = dbQuery {

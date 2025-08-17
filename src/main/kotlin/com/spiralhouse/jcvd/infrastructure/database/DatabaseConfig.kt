@@ -51,7 +51,7 @@ class DatabaseConfig(
             )
             
             // Enable foreign keys for SQLite
-            exec("PRAGMA foreign_keys = ON")
+            connection.prepareStatement("PRAGMA foreign_keys = ON", false).executeUpdate()
         }
         
         logger.info("Database connected and initialized successfully")

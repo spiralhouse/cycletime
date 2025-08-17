@@ -1,0 +1,26 @@
+[
+  {
+    "name": "com.spiralhouse.jcvd.domain.valueobjects.ProjectId"
+  },
+  {
+    "name": "com.spiralhouse.jcvd.domain.valueobjects.IssueId"
+  },
+  {
+    "name": "com.spiralhouse.jcvd.domain.valueobjects.SessionKey"
+  },
+  {
+    "name": "com.spiralhouse.jcvd.domain.valueobjects.ProjectStatus"
+  },
+  {
+    "name": "com.spiralhouse.jcvd.domain.valueobjects.IssueStatus"
+  },
+  {
+    "name": "com.spiralhouse.jcvd.domain.valueobjects.IssueType"
+  },
+  {
+    "name": "com.spiralhouse.jcvd.domain.entities.SessionContext"
+  },
+  {
+    "name": "kotlin.Unit"
+  }
+]

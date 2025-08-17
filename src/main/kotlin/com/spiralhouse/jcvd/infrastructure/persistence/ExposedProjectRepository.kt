@@ -35,7 +35,8 @@ class ExposedProjectRepository : ProjectRepository {
             .map { it.toProject() }
     }
     
-    override suspend fun save(project: Project) = dbQuery {
+    override suspend fun save(project: Project) {
+        dbQuery {
         val exists = ProjectsTable
             .selectAll()
             .where { ProjectsTable.id eq project.id.value }
@@ -58,11 +59,13 @@ class ExposedProjectRepository : ProjectRepository {
                 it[updatedAt] = project.updatedAt
             }
         }
+        }
     }
     
-    override suspend fun delete(id: ProjectId) = dbQuery {
-        ProjectsTable.deleteWhere { ProjectsTable.id eq id.value }
-        Unit
+    override suspend fun delete(id: ProjectId) {
+        dbQuery {
+            ProjectsTable.deleteWhere { ProjectsTable.id eq id.value }
+        }
     }
     
     override suspend fun exists(id: ProjectId): Boolean = dbQuery {
@@ -73,11 +76,13 @@ class ExposedProjectRepository : ProjectRepository {
     }
     
     private fun ResultRow.toProject(): Project {
+        // Project class constructor signature from entity definition
         return Project(
             id = ProjectId(this[ProjectsTable.id].value),
             _name = this[ProjectsTable.name],
             _description = this[ProjectsTable.description],
             _status = ProjectStatus.fromString(this[ProjectsTable.status]),
+            _issues = mutableListOf(), // Load issues separately if needed
             createdAt = this[ProjectsTable.createdAt],
             updatedAt = this[ProjectsTable.updatedAt]
         )

@@ -7,6 +7,7 @@ kotlinx-coroutines = "1.9.0"
 kotlinx-serialization = "1.7.3"
 logback = "1.5.12"
 sqlite-jdbc = "3.47.1.0"
+hikaricp = "6.2.1"
 graalvm = "0.10.3"
 mcp-sdk = "0.1.0"
 kotest = "5.9.1"
@@ -29,6 +30,7 @@ exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datet
 
 # Database
 sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite-jdbc" }
+hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
 
 # Dependency Injection
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }

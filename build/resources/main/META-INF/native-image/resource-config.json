@@ -1,0 +1,25 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "application\\.conf"
+      },
+      {
+        "pattern": "logback\\.xml"
+      },
+      {
+        "pattern": "META-INF/services/.*"
+      },
+      {
+        "pattern": "META-INF/native-image/.*"
+      },
+      {
+        "pattern": "org/sqlite/.*\\.properties"
+      },
+      {
+        "pattern": "org/sqlite/native/.*"
+      }
+    ]
+  },
+  "bundles": []
+}

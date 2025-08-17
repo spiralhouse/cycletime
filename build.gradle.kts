@@ -36,6 +36,7 @@ dependencies {
     
     // Database
     implementation(libs.sqlite.jdbc)
+    implementation(libs.hikaricp)
     
     // Dependency Injection
     implementation(libs.koin.core)

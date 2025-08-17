@@ -102,7 +102,8 @@ class ExposedIssueRepository : IssueRepository {
         issues.forEach { save(it) }
     }
     
-    override suspend fun delete(id: IssueId) = dbQuery {
+    override suspend fun delete(id: IssueId) {
+        dbQuery {
         // Delete dependencies first
         IssueDependenciesTable.deleteWhere { 
             (IssueDependenciesTable.blockerId eq id.value) or 
@@ -114,7 +115,7 @@ class ExposedIssueRepository : IssueRepository {
         
         // Delete issue
         IssuesTable.deleteWhere { IssuesTable.id eq id.value }
-        Unit
+        }
     }
     
     override suspend fun exists(id: IssueId): Boolean = dbQuery {
@@ -197,17 +198,17 @@ class ExposedIssueRepository : IssueRepository {
         Issue(
             id = issueId,
             projectId = ProjectId(this@toIssue[IssuesTable.projectId]),
-            _title = this@toIssue[IssuesTable.title],
-            _description = this@toIssue[IssuesTable.description],
+            title = this@toIssue[IssuesTable.title],
+            description = this@toIssue[IssuesTable.description],
             type = IssueType.fromString(this@toIssue[IssuesTable.type]),
             parentId = this@toIssue[IssuesTable.parentId]?.let { IssueId(it) },
-            _status = IssueStatus.fromString(this@toIssue[IssuesTable.status]),
-            _priority = this@toIssue[IssuesTable.priority],
-            _estimate = this@toIssue[IssuesTable.estimate],
-            _assigneeId = this@toIssue[IssuesTable.assigneeId],
-            _blockedBy = blockedBy,
-            _blocks = blocks,
-            _labels = labels,
+            status = IssueStatus.fromString(this@toIssue[IssuesTable.status]),
+            priority = this@toIssue[IssuesTable.priority],
+            estimate = this@toIssue[IssuesTable.estimate],
+            assigneeId = this@toIssue[IssuesTable.assigneeId],
+            blockedBy = blockedBy,
+            blocks = blocks,
+            labels = labels,
             createdAt = this@toIssue[IssuesTable.createdAt],
             updatedAt = this@toIssue[IssuesTable.updatedAt]
         )

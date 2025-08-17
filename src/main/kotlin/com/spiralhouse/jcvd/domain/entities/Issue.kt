@@ -5,23 +5,33 @@ import com.spiralhouse.jcvd.domain.valueobjects.*
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
-data class Issue(
+class Issue(
     val id: IssueId,
     val projectId: ProjectId,
-    private var _title: String,
-    private var _description: String? = null,
+    title: String,
+    description: String? = null,
     val type: IssueType,
     val parentId: IssueId? = null,
-    private var _status: IssueStatus = IssueStatus.Todo,
-    private var _priority: Int = 0, // 0 = No priority, 1 = Urgent, 2 = High, 3 = Normal, 4 = Low
-    private var _estimate: Int? = null, // Story points
-    private var _assigneeId: String? = null,
-    private val _blockedBy: MutableSet<IssueId> = mutableSetOf(),
-    private val _blocks: MutableSet<IssueId> = mutableSetOf(),
-    private val _labels: MutableSet<String> = mutableSetOf(),
+    status: IssueStatus = IssueStatus.Todo,
+    priority: Int = 0, // 0 = No priority, 1 = Urgent, 2 = High, 3 = Normal, 4 = Low
+    estimate: Int? = null, // Story points
+    assigneeId: String? = null,
+    blockedBy: MutableSet<IssueId> = mutableSetOf(),
+    blocks: MutableSet<IssueId> = mutableSetOf(),
+    labels: MutableSet<String> = mutableSetOf(),
     val createdAt: Instant = Clock.System.now(),
     var updatedAt: Instant = Clock.System.now()
 ) {
+    private var _title: String = title
+    private var _description: String? = description
+    private var _status: IssueStatus = status
+    private var _priority: Int = priority
+    private var _estimate: Int? = estimate
+    private var _assigneeId: String? = assigneeId
+    private val _blockedBy: MutableSet<IssueId> = blockedBy
+    private val _blocks: MutableSet<IssueId> = blocks
+    private val _labels: MutableSet<String> = labels
+    
     val title: String get() = _title
     val description: String? get() = _description
     val status: IssueStatus get() = _status

@@ -72,7 +72,7 @@ object IssueLabelsTable : Table("issue_labels") {
 
 object SessionStatesTable : IdTable<String>("session_states") {
     override val id: Column<EntityID<String>> = varchar("id", 100).entityId()
-    val sessionKey = varchar("session_key", 100).uniqueIndex()
+    val sessionKey = varchar("session_key", 100)
     val projectId = varchar("project_id", 100).references(ProjectsTable.id).nullable()
     val currentContext = text("current_context").nullable()
     val lastActivity = timestamp("last_activity")
@@ -82,7 +82,7 @@ object SessionStatesTable : IdTable<String>("session_states") {
     override val primaryKey = PrimaryKey(id)
     
     init {
-        index(false, sessionKey)
+        uniqueIndex(sessionKey)
         index(false, lastActivity)
         index(false, projectId)
     }
