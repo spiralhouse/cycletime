@@ -2,22 +2,22 @@
   "resources": {
     "includes": [
       {
-        "pattern": "application\\.conf"
+        "pattern": ".*\\.properties$"
       },
       {
-        "pattern": "logback\\.xml"
+        "pattern": ".*\\.xml$"
+      },
+      {
+        "pattern": ".*\\.conf$"
       },
       {
         "pattern": "META-INF/services/.*"
       },
       {
-        "pattern": "META-INF/native-image/.*"
+        "pattern": "logback\\.xml"
       },
       {
-        "pattern": "org/sqlite/.*\\.properties"
-      },
-      {
-        "pattern": "org/sqlite/native/.*"
+        "pattern": "application\\.conf"
       }
     ]
   },

@@ -1,60 +1,53 @@
 [
   {
-    "name": "kotlin.reflect.jvm.internal.ReflectionFactoryImpl",
-    "allDeclaredConstructors": true
+    "name": "kotlin.reflect.jvm.internal.KClassImpl",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
   },
   {
-    "name": "com.spiralhouse.jcvd.domain.entities.Project",
-    "allDeclaredFields": true,
+    "name": "io.ktor.server.application.Application",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
     "allDeclaredMethods": true,
-    "allDeclaredConstructors": true
+    "allPublicMethods": true
   },
   {
-    "name": "com.spiralhouse.jcvd.domain.entities.Issue",
-    "allDeclaredFields": true,
+    "name": "io.ktor.server.netty.NettyApplicationEngine",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
     "allDeclaredMethods": true,
-    "allDeclaredConstructors": true
-  },
-  {
-    "name": "com.spiralhouse.jcvd.domain.entities.Session",
-    "allDeclaredFields": true,
-    "allDeclaredMethods": true,
-    "allDeclaredConstructors": true
-  },
-  {
-    "name": "com.spiralhouse.jcvd.domain.entities.SessionContext",
-    "allDeclaredFields": true,
-    "allDeclaredMethods": true,
-    "allDeclaredConstructors": true
+    "allPublicMethods": true
   },
   {
     "name": "org.sqlite.JDBC",
     "allDeclaredConstructors": true,
-    "allDeclaredMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
   },
   {
-    "name": "org.sqlite.SQLiteConnection",
+    "name": "com.zaxxer.hikari.HikariDataSource",
     "allDeclaredConstructors": true,
-    "allDeclaredMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
   },
   {
-    "name": "ch.qos.logback.classic.Logger",
+    "name": "com.zaxxer.hikari.HikariConfig",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
     "allDeclaredFields": true,
-    "allDeclaredMethods": true
+    "allPublicFields": true
   },
   {
-    "name": "ch.qos.logback.classic.LoggerContext",
-    "allDeclaredFields": true,
-    "allDeclaredMethods": true
-  },
-  {
-    "name": "ch.qos.logback.core.ConsoleAppender",
-    "allDeclaredFields": true,
-    "allDeclaredMethods": true
-  },
-  {
-    "name": "ch.qos.logback.classic.encoder.PatternLayoutEncoder",
-    "allDeclaredFields": true,
-    "allDeclaredMethods": true
+    "name": "org.jetbrains.exposed.sql.Database",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
   }
 ]

@@ -88,13 +88,13 @@ graalvmNative {
             buildArgs.add("--enable-http")
             buildArgs.add("--enable-https")
             buildArgs.add("-H:+ReportExceptionStackTraces")
-            buildArgs.add("-H:ReflectionConfigurationFiles=src/main/resources/META-INF/native-image/reflect-config.json")
-            buildArgs.add("-H:ResourceConfigurationFiles=src/main/resources/META-INF/native-image/resource-config.json")
-            buildArgs.add("-H:SerializationConfigurationFiles=src/main/resources/META-INF/native-image/serialization-config.json")
             
-            // Optimize for size
-            buildArgs.add("-Os")
-            buildArgs.add("-march=native")
+            // Fix Kotlin UUID SecureRandom issue
+            buildArgs.add("--initialize-at-run-time=kotlin.uuid.SecureRandomHolder")
+            
+            // Optimize for balanced size/speed
+            buildArgs.add("-Ob")
+            buildArgs.add("-march=compatibility")
         }
     }
     

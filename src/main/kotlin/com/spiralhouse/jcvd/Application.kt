@@ -17,12 +17,13 @@ import org.koin.ktor.plugin.Koin
 import org.slf4j.LoggerFactory
 
 fun main() {
-    val config = ApplicationConfig("application.conf")
+    val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
+    val host = System.getenv("HOST") ?: "0.0.0.0"
     
     embeddedServer(
         CIO,
-        port = config.property("ktor.deployment.port").getString().toInt(),
-        host = config.property("ktor.deployment.host").getString(),
+        port = port,
+        host = host,
         module = Application::module
     ).start(wait = true)
 }
@@ -31,10 +32,8 @@ fun Application.module() {
     val logger = LoggerFactory.getLogger("Application")
     
     // Initialize database
-    val jdbcUrl = environment.config.propertyOrNull("database.url")?.getString() 
-        ?: "jdbc:sqlite:jcvd.db"
-    val enableLogging = environment.config.propertyOrNull("database.logging")?.getString()?.toBoolean() 
-        ?: false
+    val jdbcUrl = System.getenv("DATABASE_URL") ?: "jdbc:sqlite:jcvd.db"
+    val enableLogging = System.getenv("DATABASE_LOGGING")?.toBoolean() ?: false
     
     logger.info("Initializing database with URL: $jdbcUrl")
     DatabaseFactory.init(jdbcUrl = jdbcUrl, enableLogging = enableLogging)
