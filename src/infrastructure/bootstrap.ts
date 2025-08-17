@@ -80,17 +80,8 @@ export class Application {
       // Validate configuration
       this.validateConfiguration();
 
-      // Create container based on environment
-      if (this.isTestEnvironment()) {
-        this.container = ContainerFactory.createTestContainer(this.config);
-      } else if (this.isProductionEnvironment()) {
-        this.container = ContainerFactory.createProductionContainer(
-          this.config.databasePath!,
-          this.config
-        );
-      } else {
-        this.container = ContainerFactory.createContainer(this.config);
-      }
+      // Create container
+      this.container = ContainerFactory.createContainer(this.config);
 
       // Run database migrations
       await this.runMigrations();
