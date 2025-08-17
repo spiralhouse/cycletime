@@ -135,7 +135,7 @@ describe('ProjectApplicationService', () => {
       const result = await service.updateProject(command);
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Project not found');
+      expect(result.error).toContain('Project does not exist');
     });
 
     it('should fail to update with empty name', async () => {
@@ -228,7 +228,7 @@ describe('ProjectApplicationService', () => {
       const result = await service.deleteProject(nonExistentId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Project not found');
+      expect(result.error).toContain('Project does not exist');
     });
   });
 

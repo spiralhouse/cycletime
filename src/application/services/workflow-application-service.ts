@@ -559,7 +559,7 @@ export class WorkflowApplicationService {
     const project = await this.projectRepository.findById(projectId);
 
     if (!project) {
-      return { isValid: false, error: 'Project not found' };
+      return { isValid: false, error: 'Project does not exist' };
     }
 
     // Validate custom stages if provided

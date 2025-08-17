@@ -54,7 +54,7 @@ export class ProjectApplicationService {
         const project = await this.findProjectById(command.id);
         
         if (!project) {
-          return this.createErrorResult('Project not found');
+          return this.createErrorResult('Project does not exist');
         }
 
         const validation = await this.validateUpdateProjectCommand(command);
@@ -82,7 +82,7 @@ export class ProjectApplicationService {
         const project = await this.findProjectById(projectId);
         
         if (!project) {
-          return this.createErrorResult('Project not found');
+          return this.createErrorResult('Project does not exist');
         }
 
         const id = ProjectId.from(projectId);
