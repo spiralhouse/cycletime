@@ -256,7 +256,7 @@ export class Application {
       // Check database connection
       const db = this.getDatabase();
 
-      if (db && db.open) {
+      if (db?.open) {
         status.database = 'connected';
       }
 

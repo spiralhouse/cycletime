@@ -208,7 +208,7 @@ export class ContainerFactory {
         ? new Date(config.initialTime)
         : config.initialTime;
       
-      if (isNaN(date.getTime())) {
+      if (Number.isNaN(date.getTime())) {
         throw new Error('Invalid configuration: initialTime must be a valid date');
       }
     }
