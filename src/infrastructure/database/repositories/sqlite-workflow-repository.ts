@@ -5,10 +5,12 @@ import type { WorkflowSnapshot, WorkflowTransition } from '../../../domain/entit
 import type { TimeProvider } from '../../../domain/interfaces/time-provider.js';
 import type { WorkflowRepository } from '../../../domain/repositories/workflow-repository.js';
 import type { ProjectId } from '../../../domain/value-objects/project-id.js';
+import type { WorkflowId } from '../../../domain/value-objects/workflow-id.js';
 import type Database from 'better-sqlite3';
 
 export class SqliteWorkflowRepository implements WorkflowRepository {
   private findByProjectStmt?: Database.Statement;
+  private findByIdStmt?: Database.Statement;
   private insertWorkflowStmt?: Database.Statement;
   private updateWorkflowStmt?: Database.Statement;
 
@@ -32,6 +34,13 @@ export class SqliteWorkflowRepository implements WorkflowRepository {
         LIMIT 1
       `);
 
+      this.findByIdStmt = this.db.prepare(`
+        SELECT id, project_id, name, current_stage, stages, transitions, is_complete, created_at, updated_at
+        FROM workflows
+        WHERE id = ?
+        LIMIT 1
+      `);
+
       this.insertWorkflowStmt = this.db.prepare(`
         INSERT INTO workflows (id, project_id, name, current_stage, stages, transitions, is_complete, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -48,8 +57,27 @@ export class SqliteWorkflowRepository implements WorkflowRepository {
   }
 
   private ensureStatementsReady(): void {
-    if (!this.findByProjectStmt || !this.db.open) {
+    if (!this.findByProjectStmt || !this.findByIdStmt || !this.db.open) {
       this.initializeStatements();
+    }
+  }
+
+  async findById(workflowId: WorkflowId): Promise<Workflow | null> {
+    try {
+      this.ensureStatementsReady();
+      if (!this.findByIdStmt) {
+        throw new Error('Unable to prepare database statements');
+      }
+
+      const workflowRow = this.findByIdStmt.get(workflowId.value) as any;
+
+      if (!workflowRow) {
+        return null;
+      }
+
+      return this.rowToWorkflow(workflowRow);
+    } catch (error) {
+      throw new RepositoryError('find workflow by id', error as Error);
     }
   }
 

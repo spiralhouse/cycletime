@@ -3,16 +3,21 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 import { migrations } from '../../src/database/migrations.js';
 import { Issue } from '../../src/domain/entities/issue.js';
+import { Project } from '../../src/domain/entities/project.js';
 import { RepositoryError } from '../../src/domain/errors/repository-errors.js';
 import { IssueId } from '../../src/domain/value-objects/issue-id.js';
 import { ProjectId } from '../../src/domain/value-objects/project-id.js';
 import { SqliteIssueRepository } from '../../src/infrastructure/database/repositories/sqlite-issue-repository.js';
+import { SqliteProjectRepository } from '../../src/infrastructure/database/repositories/sqlite-project-repository.js';
 
 describe.sequential('SqliteIssueRepository Integration Tests', () => {
   let db: Database.Database;
   let repository: SqliteIssueRepository;
+  let projectRepository: SqliteProjectRepository;
+  let testProject: Project;
+  let testProjectId: ProjectId;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Create in-memory database for each test
     db = new Database(':memory:');
     
@@ -25,6 +30,12 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
     }
     
     repository = new SqliteIssueRepository(db);
+    projectRepository = new SqliteProjectRepository(db);
+    
+    // Create a test project that all issues will belong to
+    testProject = Project.create('Test Project', 'Project for repository tests');
+    testProjectId = testProject.id;
+    await projectRepository.save(testProject);
   });
 
   afterEach(() => {
@@ -35,9 +46,9 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
 
   describe('save and findById', () => {
     it('should save and retrieve an issue', async () => {
-      const issue = Issue.create('Test Issue', 'A test issue description', 'Story');
+      const issue = Issue.create('Test Issue', 'A test issue description', 'Story', undefined, testProjectId);
       
-      await repository.save(issue);
+      await repository.saveToProject(issue, testProjectId);
       const retrieved = await repository.findById(issue.id);
       
       expect(retrieved).not.toBeNull();
@@ -49,11 +60,11 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
     });
 
     it('should save and retrieve an issue with estimate', async () => {
-      const issue = Issue.create('Story with Estimate', 'Description', 'Story');
+      const issue = Issue.create('Story with Estimate', 'Description', 'Story', undefined, testProjectId);
 
       issue.setEstimate(5);
       
-      await repository.save(issue);
+      await repository.saveToProject(issue, testProjectId);
       const retrieved = await repository.findById(issue.id);
       
       expect(retrieved).not.toBeNull();
@@ -61,9 +72,9 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
     });
 
     it('should update an existing issue', async () => {
-      const issue = Issue.create('Original Title', 'Original description', 'Story');
+      const issue = Issue.create('Original Title', 'Original description', 'Story', undefined, testProjectId);
 
-      await repository.save(issue);
+      await repository.saveToProject(issue, testProjectId);
       
       // Modify the issue
       issue.updateTitle('Updated Title');
@@ -71,7 +82,7 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       issue.updateStatus('Todo');  // Valid transition from Backlog to Todo
       issue.setEstimate(8);
       
-      await repository.save(issue);
+      await repository.saveToProject(issue, testProjectId);
       
       const retrieved = await repository.findById(issue.id);
 
@@ -91,14 +102,14 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
 
   describe('Hierarchy Management', () => {
     it('should save and retrieve parent-child relationships', async () => {
-      const parent = Issue.create('Epic', 'Epic description', 'Epic');
-      const child1 = Issue.create('Story 1', 'Story 1 description', 'Story');
-      const child2 = Issue.create('Story 2', 'Story 2 description', 'Story');
+      const parent = Issue.create('Epic', 'Epic description', 'Epic', undefined, testProjectId);
+      const child1 = Issue.create('Story 1', 'Story 1 description', 'Story', undefined, testProjectId);
+      const child2 = Issue.create('Story 2', 'Story 2 description', 'Story', undefined, testProjectId);
       
       // Save all issues first
-      await repository.save(parent);
-      await repository.save(child1);
-      await repository.save(child2);
+      await repository.saveToProject(parent, testProjectId);
+      await repository.saveToProject(child1, testProjectId);
+      await repository.saveToProject(child2, testProjectId);
       
       // Set up relationships
       parent.addChild(child1.id);
@@ -107,9 +118,9 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       child2.setParent(parent.id);
       
       // Save relationships
-      await repository.save(parent);
-      await repository.save(child1);
-      await repository.save(child2);
+      await repository.saveToProject(parent, testProjectId);
+      await repository.saveToProject(child1, testProjectId);
+      await repository.saveToProject(child2, testProjectId);
       
       // Retrieve and verify
       const retrievedParent = await repository.findById(parent.id);
@@ -126,16 +137,16 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
     });
 
     it('should handle three-level hierarchy (Epic -> Story -> Subtask)', async () => {
-      const epic = Issue.create('Epic', 'Epic description', 'Epic');
-      const story = Issue.create('Story', 'Story description', 'Story');
-      const subtask1 = Issue.create('Subtask 1', 'Subtask 1 description', 'Subtask');
-      const subtask2 = Issue.create('Subtask 2', 'Subtask 2 description', 'Subtask');
+      const epic = Issue.create('Epic', 'Epic description', 'Epic', undefined, testProjectId);
+      const story = Issue.create('Story', 'Story description', 'Story', undefined, testProjectId);
+      const subtask1 = Issue.create('Subtask 1', 'Subtask 1 description', 'Subtask', undefined, testProjectId);
+      const subtask2 = Issue.create('Subtask 2', 'Subtask 2 description', 'Subtask', undefined, testProjectId);
       
       // Save all issues
-      await repository.save(epic);
-      await repository.save(story);
-      await repository.save(subtask1);
-      await repository.save(subtask2);
+      await repository.saveToProject(epic, testProjectId);
+      await repository.saveToProject(story, testProjectId);
+      await repository.saveToProject(subtask1, testProjectId);
+      await repository.saveToProject(subtask2, testProjectId);
       
       // Set up hierarchy
       epic.addChild(story.id);
@@ -146,10 +157,10 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       subtask2.setParent(story.id);
       
       // Save relationships
-      await repository.save(epic);
-      await repository.save(story);
-      await repository.save(subtask1);
-      await repository.save(subtask2);
+      await repository.saveToProject(epic, testProjectId);
+      await repository.saveToProject(story, testProjectId);
+      await repository.saveToProject(subtask1, testProjectId);
+      await repository.saveToProject(subtask2, testProjectId);
       
       // Verify hierarchy
       const retrievedEpic = await repository.findById(epic.id);
@@ -169,28 +180,28 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
     });
 
     it('should update parent-child relationships', async () => {
-      const parent1 = Issue.create('Parent 1', 'Description', 'Story');
-      const parent2 = Issue.create('Parent 2', 'Description', 'Story');
-      const child = Issue.create('Child', 'Description', 'Subtask');
+      const parent1 = Issue.create('Parent 1', 'Description', 'Story', undefined, testProjectId);
+      const parent2 = Issue.create('Parent 2', 'Description', 'Story', undefined, testProjectId);
+      const child = Issue.create('Child', 'Description', 'Subtask', undefined, testProjectId);
       
       // Initial setup
-      await repository.save(parent1);
-      await repository.save(parent2);
-      await repository.save(child);
+      await repository.saveToProject(parent1, testProjectId);
+      await repository.saveToProject(parent2, testProjectId);
+      await repository.saveToProject(child, testProjectId);
       
       // Set initial parent
       parent1.addChild(child.id);
       child.setParent(parent1.id);
-      await repository.save(parent1);
-      await repository.save(child);
+      await repository.saveToProject(parent1, testProjectId);
+      await repository.saveToProject(child, testProjectId);
       
       // Change parent
       parent1.removeChild(child.id);
       parent2.addChild(child.id);
       child.setParent(parent2.id);
-      await repository.save(parent1);
-      await repository.save(parent2);
-      await repository.save(child);
+      await repository.saveToProject(parent1, testProjectId);
+      await repository.saveToProject(parent2, testProjectId);
+      await repository.saveToProject(child, testProjectId);
       
       // Verify the change
       const retrievedParent1 = await repository.findById(parent1.id);
@@ -205,19 +216,19 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
 
   describe('Dependency Management', () => {
     it('should save and retrieve issue dependencies', async () => {
-      const issue1 = Issue.create('Issue 1', 'Description', 'Story');
-      const issue2 = Issue.create('Issue 2', 'Description', 'Story');
-      const issue3 = Issue.create('Issue 3', 'Description', 'Story');
+      const issue1 = Issue.create('Issue 1', 'Description', 'Story', undefined, testProjectId);
+      const issue2 = Issue.create('Issue 2', 'Description', 'Story', undefined, testProjectId);
+      const issue3 = Issue.create('Issue 3', 'Description', 'Story', undefined, testProjectId);
       
       // Save all issues
-      await repository.save(issue1);
-      await repository.save(issue2);
-      await repository.save(issue3);
+      await repository.saveToProject(issue1, testProjectId);
+      await repository.saveToProject(issue2, testProjectId);
+      await repository.saveToProject(issue3, testProjectId);
       
       // Set up dependencies: issue1 depends on issue2 and issue3
       issue1.addDependency(issue2.id);
       issue1.addDependency(issue3.id);
-      await repository.save(issue1);
+      await repository.saveToProject(issue1, testProjectId);
       
       // Retrieve and verify
       const retrieved = await repository.findById(issue1.id);
@@ -230,26 +241,26 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
     });
 
     it('should update dependencies', async () => {
-      const issue = Issue.create('Main Issue', 'Description', 'Story');
-      const dep1 = Issue.create('Dependency 1', 'Description', 'Story');
-      const dep2 = Issue.create('Dependency 2', 'Description', 'Story');
-      const dep3 = Issue.create('Dependency 3', 'Description', 'Story');
+      const issue = Issue.create('Main Issue', 'Description', 'Story', undefined, testProjectId);
+      const dep1 = Issue.create('Dependency 1', 'Description', 'Story', undefined, testProjectId);
+      const dep2 = Issue.create('Dependency 2', 'Description', 'Story', undefined, testProjectId);
+      const dep3 = Issue.create('Dependency 3', 'Description', 'Story', undefined, testProjectId);
       
       // Save all issues
-      await repository.save(issue);
-      await repository.save(dep1);
-      await repository.save(dep2);
-      await repository.save(dep3);
+      await repository.saveToProject(issue, testProjectId);
+      await repository.saveToProject(dep1, testProjectId);
+      await repository.saveToProject(dep2, testProjectId);
+      await repository.saveToProject(dep3, testProjectId);
       
       // Initial dependencies
       issue.addDependency(dep1.id);
       issue.addDependency(dep2.id);
-      await repository.save(issue);
+      await repository.saveToProject(issue, testProjectId);
       
       // Update: remove dep1, add dep3
       issue.removeDependency(dep1.id);
       issue.addDependency(dep3.id);
-      await repository.save(issue);
+      await repository.saveToProject(issue, testProjectId);
       
       // Verify
       const retrieved = await repository.findById(issue.id);
@@ -261,23 +272,23 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
     });
 
     it('should handle clearing all dependencies', async () => {
-      const issue = Issue.create('Issue', 'Description', 'Story');
-      const dep1 = Issue.create('Dep 1', 'Description', 'Story');
-      const dep2 = Issue.create('Dep 2', 'Description', 'Story');
+      const issue = Issue.create('Issue', 'Description', 'Story', undefined, testProjectId);
+      const dep1 = Issue.create('Dep 1', 'Description', 'Story', undefined, testProjectId);
+      const dep2 = Issue.create('Dep 2', 'Description', 'Story', undefined, testProjectId);
       
-      await repository.save(issue);
-      await repository.save(dep1);
-      await repository.save(dep2);
+      await repository.saveToProject(issue, testProjectId);
+      await repository.saveToProject(dep1, testProjectId);
+      await repository.saveToProject(dep2, testProjectId);
       
       // Add dependencies
       issue.addDependency(dep1.id);
       issue.addDependency(dep2.id);
-      await repository.save(issue);
+      await repository.saveToProject(issue, testProjectId);
       
       // Clear all dependencies
       issue.removeDependency(dep1.id);
       issue.removeDependency(dep2.id);
-      await repository.save(issue);
+      await repository.saveToProject(issue, testProjectId);
       
       const retrieved = await repository.findById(issue.id);
 
@@ -295,32 +306,16 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
     });
 
     it('should return all issues for a project', async () => {
-      const projectId = ProjectId.generate();
+      // Create issues directly for the test project
+      const issue1 = Issue.create('Issue 1', 'Description 1', 'Story', undefined, testProjectId);
+      const issue2 = Issue.create('Issue 2', 'Description 2', 'Story', undefined, testProjectId);
+      const issue3 = Issue.create('Issue 3', 'Description 3', 'Story', undefined, testProjectId);
       
-      // Create a project first
-      db.prepare(`
-        INSERT INTO projects (id, name, description, status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).run(projectId.value, 'Test Project', 'Description', 'Planning', Date.now(), Date.now());
+      await repository.saveToProject(issue1, testProjectId);
+      await repository.saveToProject(issue2, testProjectId);
+      await repository.saveToProject(issue3, testProjectId);
       
-      // Create issues
-      const issue1 = Issue.create('Issue 1', 'Description 1', 'Story');
-      const issue2 = Issue.create('Issue 2', 'Description 2', 'Story');
-      const issue3 = Issue.create('Issue 3', 'Description 3', 'Story');
-      
-      await repository.save(issue1);
-      await repository.save(issue2);
-      await repository.save(issue3);
-      
-      // Link issues to project
-      db.prepare('INSERT INTO project_issues (project_id, issue_id) VALUES (?, ?)')
-        .run(projectId.value, issue1.id.value);
-      db.prepare('INSERT INTO project_issues (project_id, issue_id) VALUES (?, ?)')
-        .run(projectId.value, issue2.id.value);
-      db.prepare('INSERT INTO project_issues (project_id, issue_id) VALUES (?, ?)')
-        .run(projectId.value, issue3.id.value);
-      
-      const result = await repository.findByProjectId(projectId);
+      const result = await repository.findByProjectId(testProjectId);
       
       expect(result).toHaveLength(3);
       const titles = result.map(i => i.title).sort();
@@ -329,40 +324,24 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
     });
 
     it('should include hierarchy and dependencies for project issues', async () => {
-      const projectId = ProjectId.generate();
+      // Create issues with hierarchy directly for test project
+      const epic = Issue.create('Epic', 'Epic desc', 'Epic', undefined, testProjectId);
+      const story = Issue.create('Story', 'Story desc', 'Story', undefined, testProjectId);
+      const dependency = Issue.create('Dependency', 'Dep desc', 'Story', undefined, testProjectId);
       
-      // Create project
-      db.prepare(`
-        INSERT INTO projects (id, name, description, status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).run(projectId.value, 'Test Project', 'Description', 'Planning', Date.now(), Date.now());
-      
-      // Create issues with hierarchy
-      const epic = Issue.create('Epic', 'Epic desc', 'Epic');
-      const story = Issue.create('Story', 'Story desc', 'Story');
-      const dependency = Issue.create('Dependency', 'Dep desc', 'Story');
-      
-      await repository.save(epic);
-      await repository.save(story);
-      await repository.save(dependency);
+      await repository.saveToProject(epic, testProjectId);
+      await repository.saveToProject(story, testProjectId);
+      await repository.saveToProject(dependency, testProjectId);
       
       // Set up relationships
       epic.addChild(story.id);
       story.setParent(epic.id);
       story.addDependency(dependency.id);
       
-      await repository.save(epic);
-      await repository.save(story);
+      await repository.saveToProject(epic, testProjectId);
+      await repository.saveToProject(story, testProjectId);
       
-      // Link to project
-      db.prepare('INSERT INTO project_issues (project_id, issue_id) VALUES (?, ?)')
-        .run(projectId.value, epic.id.value);
-      db.prepare('INSERT INTO project_issues (project_id, issue_id) VALUES (?, ?)')
-        .run(projectId.value, story.id.value);
-      db.prepare('INSERT INTO project_issues (project_id, issue_id) VALUES (?, ?)')
-        .run(projectId.value, dependency.id.value);
-      
-      const result = await repository.findByProjectId(projectId);
+      const result = await repository.findByProjectId(testProjectId);
       
       expect(result).toHaveLength(3);
       
@@ -377,9 +356,9 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
 
   describe('exists', () => {
     it('should return true for existing issue', async () => {
-      const issue = Issue.create('Existing', 'Description', 'Story');
+      const issue = Issue.create('Existing', 'Description', 'Story', undefined, testProjectId);
 
-      await repository.save(issue);
+      await repository.saveToProject(issue, testProjectId);
       
       const exists = await repository.exists(issue.id);
 
@@ -396,14 +375,14 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
 
   describe('Transaction behavior', () => {
     it('should maintain consistency when saving issue with relationships', async () => {
-      const parent = Issue.create('Parent', 'Description', 'Epic');
-      const child = Issue.create('Child', 'Description', 'Story');
-      const dependency = Issue.create('Dependency', 'Description', 'Story');
+      const parent = Issue.create('Parent', 'Description', 'Epic', undefined, testProjectId);
+      const child = Issue.create('Child', 'Description', 'Story', undefined, testProjectId);
+      const dependency = Issue.create('Dependency', 'Description', 'Story', undefined, testProjectId);
       
       // Save all issues first
-      await repository.save(parent);
-      await repository.save(child);
-      await repository.save(dependency);
+      await repository.saveToProject(parent, testProjectId);
+      await repository.saveToProject(child, testProjectId);
+      await repository.saveToProject(dependency, testProjectId);
       
       // Set up complex relationships
       parent.addChild(child.id);
@@ -411,8 +390,8 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       child.addDependency(dependency.id);
       
       // Save all in proper order
-      await repository.save(parent);
-      await repository.save(child);
+      await repository.saveToProject(parent, testProjectId);
+      await repository.saveToProject(child, testProjectId);
       
       // Verify all relationships are preserved
       const retrievedChild = await repository.findById(child.id);
@@ -431,25 +410,31 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       }
       const testRepo = new SqliteIssueRepository(testDb);
       
-      const issue = Issue.create('Issue', 'Description', 'Story');
+      // Create a project in the test database
+      const testProject = Project.create('Test Project', 'Test Description');
+      const testProjectRepo = new SqliteProjectRepository(testDb);
 
-      await testRepo.save(issue);
+      await testProjectRepo.save(testProject);
+      
+      const issue = Issue.create('Issue', 'Description', 'Story', undefined, testProject.id);
+
+      await testRepo.saveToProject(issue, testProject.id);
       
       // Close database to cause error
       testDb.close();
       
       // Try to save, which should fail
-      const anotherIssue = Issue.create('Another', 'Description', 'Story');
+      const anotherIssue = Issue.create('Another', 'Description', 'Story', undefined, testProject.id);
 
-      await expect(testRepo.save(anotherIssue)).rejects.toThrow(RepositoryError);
+      await expect(testRepo.saveToProject(anotherIssue, testProject.id)).rejects.toThrow(RepositoryError);
     });
   });
 
   describe('Edge cases', () => {
     it('should handle issues with no description', async () => {
-      const issue = Issue.create('No Description', '', 'Story');
+      const issue = Issue.create('No Description', '', 'Story', undefined, testProjectId);
 
-      await repository.save(issue);
+      await repository.saveToProject(issue, testProjectId);
       
       const retrieved = await repository.findById(issue.id);
 
@@ -458,9 +443,9 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
 
     it('should handle issues with special characters in title', async () => {
       const specialTitle = "Issue's \"Special\" Title & More <tags>";
-      const issue = Issue.create(specialTitle, 'Description', 'Story');
+      const issue = Issue.create(specialTitle, 'Description', 'Story', undefined, testProjectId);
 
-      await repository.save(issue);
+      await repository.saveToProject(issue, testProjectId);
       
       const retrieved = await repository.findById(issue.id);
 
@@ -468,11 +453,11 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
     });
 
     it('should preserve exact timestamps', async () => {
-      const issue = Issue.create('Timestamp Test', 'Description', 'Story');
+      const issue = Issue.create('Timestamp Test', 'Description', 'Story', undefined, testProjectId);
       const originalCreatedAt = issue.createdAt;
       const originalUpdatedAt = issue.updatedAt;
       
-      await repository.save(issue);
+      await repository.saveToProject(issue, testProjectId);
       const retrieved = await repository.findById(issue.id);
       
       // Timestamps should be preserved (within second precision due to Unix timestamp conversion)
@@ -481,14 +466,14 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
     });
 
     it('should handle rapid updates to the same issue', async () => {
-      const issue = Issue.create('Rapid Updates', 'Initial', 'Story');
+      const issue = Issue.create('Rapid Updates', 'Initial', 'Story', undefined, testProjectId);
 
-      await repository.save(issue);
+      await repository.saveToProject(issue, testProjectId);
       
       // Perform rapid updates
       for (let i = 0; i < 10; i++) {
         issue.updateDescription(`Update ${i}`);
-        await repository.save(issue);
+        await repository.saveToProject(issue, testProjectId);
       }
       
       const final = await repository.findById(issue.id);
@@ -499,31 +484,23 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
 
   describe('Complex scenarios', () => {
     it('should handle a complete project hierarchy', async () => {
-      const projectId = ProjectId.generate();
-      
-      // Create project
-      db.prepare(`
-        INSERT INTO projects (id, name, description, status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).run(projectId.value, 'Complex Project', 'Description', 'Active', Date.now(), Date.now());
-      
-      // Create a complex hierarchy
-      const epic1 = Issue.create('Epic 1', 'First epic', 'Epic');
-      const epic2 = Issue.create('Epic 2', 'Second epic', 'Epic');
-      const story1 = Issue.create('Story 1', 'Under epic 1', 'Story');
-      const story2 = Issue.create('Story 2', 'Under epic 1', 'Story');
-      const story3 = Issue.create('Story 3', 'Under epic 2', 'Story');
-      const subtask1 = Issue.create('Subtask 1', 'Under story 1', 'Subtask');
-      const subtask2 = Issue.create('Subtask 2', 'Under story 1', 'Subtask');
+      // Create a complex hierarchy using test project
+      const epic1 = Issue.create('Epic 1', 'First epic', 'Epic', undefined, testProjectId);
+      const epic2 = Issue.create('Epic 2', 'Second epic', 'Epic', undefined, testProjectId);
+      const story1 = Issue.create('Story 1', 'Under epic 1', 'Story', undefined, testProjectId);
+      const story2 = Issue.create('Story 2', 'Under epic 1', 'Story', undefined, testProjectId);
+      const story3 = Issue.create('Story 3', 'Under epic 2', 'Story', undefined, testProjectId);
+      const subtask1 = Issue.create('Subtask 1', 'Under story 1', 'Subtask', undefined, testProjectId);
+      const subtask2 = Issue.create('Subtask 2', 'Under story 1', 'Subtask', undefined, testProjectId);
       
       // Save all issues
-      await repository.save(epic1);
-      await repository.save(epic2);
-      await repository.save(story1);
-      await repository.save(story2);
-      await repository.save(story3);
-      await repository.save(subtask1);
-      await repository.save(subtask2);
+      await repository.saveToProject(epic1, testProjectId);
+      await repository.saveToProject(epic2, testProjectId);
+      await repository.saveToProject(story1, testProjectId);
+      await repository.saveToProject(story2, testProjectId);
+      await repository.saveToProject(story3, testProjectId);
+      await repository.saveToProject(subtask1, testProjectId);
+      await repository.saveToProject(subtask2, testProjectId);
       
       // Set up hierarchy
       epic1.addChild(story1.id);
@@ -542,24 +519,16 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       story3.addDependency(story2.id);
       
       // Save all relationships
-      await repository.save(epic1);
-      await repository.save(epic2);
-      await repository.save(story1);
-      await repository.save(story2);
-      await repository.save(story3);
-      await repository.save(subtask1);
-      await repository.save(subtask2);
-      
-      // Link all to project
-      const issues = [epic1, epic2, story1, story2, story3, subtask1, subtask2];
-
-      for (const issue of issues) {
-        db.prepare('INSERT INTO project_issues (project_id, issue_id) VALUES (?, ?)')
-          .run(projectId.value, issue.id.value);
-      }
+      await repository.saveToProject(epic1, testProjectId);
+      await repository.saveToProject(epic2, testProjectId);
+      await repository.saveToProject(story1, testProjectId);
+      await repository.saveToProject(story2, testProjectId);
+      await repository.saveToProject(story3, testProjectId);
+      await repository.saveToProject(subtask1, testProjectId);
+      await repository.saveToProject(subtask2, testProjectId);
       
       // Retrieve all project issues
-      const projectIssues = await repository.findByProjectId(projectId);
+      const projectIssues = await repository.findByProjectId(testProjectId);
       
       expect(projectIssues).toHaveLength(7);
       
@@ -591,7 +560,7 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
         Date.now()
       );
       
-      const issue = Issue.create('New Issue', 'Created with project association', 'Story');
+      const issue = Issue.create('New Issue', 'Created with project association', 'Story', undefined, projectId);
       
       await repository.saveToProject(issue, projectId);
       
@@ -624,10 +593,10 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
         Date.now()
       );
       
-      // Create and save issue first without project association
-      const issue = Issue.create('Existing Issue', 'Will be associated', 'Story');
+      // Create issue with testProject first, then associate with the new project
+      const issue = Issue.create('Existing Issue', 'Will be associated', 'Story', undefined, testProjectId);
 
-      await repository.save(issue);
+      await repository.saveToProject(issue, testProjectId);
       
       // Update and associate with project
       issue.updateTitle('Updated Issue');
@@ -660,9 +629,9 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
         Date.now()
       );
       
-      const issue1 = Issue.create('Issue 1', 'First issue', 'Story');
-      const issue2 = Issue.create('Issue 2', 'Second issue', 'Story');
-      const issue3 = Issue.create('Issue 3', 'Third issue', 'Story');
+      const issue1 = Issue.create('Issue 1', 'First issue', 'Story', undefined, projectId);
+      const issue2 = Issue.create('Issue 2', 'Second issue', 'Story', undefined, projectId);
+      const issue3 = Issue.create('Issue 3', 'Third issue', 'Story', undefined, projectId);
       
       await repository.saveToProject(issue1, projectId);
       await repository.saveToProject(issue2, projectId);
@@ -785,7 +754,7 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       const issues: Issue[] = [];
 
       for (let i = 0; i < 100; i++) {
-        const issue = Issue.create(`Issue ${i}`, `Description ${i}`, i % 10 === 0 ? 'Epic' : 'Story');
+        const issue = Issue.create(`Issue ${i}`, `Description ${i}`, i % 10 === 0 ? 'Epic' : 'Story', undefined, projectId);
 
         issues.push(issue);
         await repository.saveToProject(issue, projectId);
@@ -795,8 +764,8 @@ describe.sequential('SqliteIssueRepository Integration Tests', () => {
       for (let i = 1; i < 10; i++) {
         issues[0]!.addChild(issues[i]!.id);
         issues[i]!.setParent(issues[0]!.id);
-        await repository.save(issues[0]!);
-        await repository.save(issues[i]!);
+        await repository.saveToProject(issues[0]!, projectId);
+        await repository.saveToProject(issues[i]!, projectId);
       }
       
       // Measure performance of findByProjectId

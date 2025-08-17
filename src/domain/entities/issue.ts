@@ -24,7 +24,7 @@ export class Issue {
   private _id: IssueId;
   private _title: string;
   private _description: string;
-  private _type: string;
+  private _type: IssueType;
   private _status: string;
   private _projectId?: ProjectId;
   private _parentId?: IssueId;
@@ -84,7 +84,7 @@ export class Issue {
     return this._description;
   }
 
-  get type(): string {
+  get type(): IssueType {
     return this._type;
   }
 
@@ -179,7 +179,7 @@ export class Issue {
       id: this._id.toString(),
       title: this._title,
       description: this._description,
-      type: this._type,
+      type: this._type as string,
       status: this._status,
       childIds: this._childIds.map(child => child.toString()),
       dependencies: this._dependencies.map(dep => dep.toString()),
@@ -313,6 +313,28 @@ export class Issue {
 
   updateDescription(description: string): void {
     this._description = description;
+    this.touch();
+  }
+
+  updateType(type: IssueType): void {
+    if (this._type === type) {
+      return;
+    }
+    
+    // Validate type change rules
+    if (this._type === IssueType.Epic && this._parentId) {
+      throw new Error('Cannot change Epic with parent to another type');
+    }
+    
+    if (type === IssueType.Epic && this._parentId) {
+      throw new Error('Cannot change to Epic when issue has a parent');
+    }
+    
+    if (type === IssueType.Subtask && !this._parentId) {
+      throw new Error('Cannot change to Subtask without a parent');
+    }
+    
+    this._type = type;
     this.touch();
   }
 

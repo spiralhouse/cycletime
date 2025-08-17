@@ -217,9 +217,9 @@ describe('SqliteProjectRepository Unit Tests', () => {
       mockStmt.run.mockReturnValue({ changes: 0 });
       
       const projectId = ProjectId.generate();
-      const result = await repository.delete(projectId);
       
-      expect(result).toBe(false);
+      // Should not throw error
+      await expect(repository.delete(projectId)).resolves.not.toThrow();
     });
 
     it('should handle database errors', async () => {

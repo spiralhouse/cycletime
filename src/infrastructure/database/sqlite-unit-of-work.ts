@@ -13,13 +13,35 @@ export class SqliteUnitOfWork implements UnitOfWork {
    * Execute operations within a transaction
    *
    * Better-sqlite3 handles transactions synchronously, but our operations are async.
-   * For now, we'll execute operations directly since individual prepared statements
-   * are atomic and auto-committed.
+   * We manually manage BEGIN/COMMIT/ROLLBACK for async operations with proper error handling.
    */
   async execute<T>(operation: () => Promise<T>): Promise<T> {
-    // Execute the operation directly - each prepared statement is atomic
-    // Better-sqlite3 auto-commits individual statements
-    return await operation();
+    // Check if database is still open
+    if (!this.db.open) {
+      throw new Error('The database connection is not open');
+    }
+    
+    // Check if already in transaction to avoid nested transactions
+    const wasInTransaction = this.db.inTransaction;
+    
+    if (!wasInTransaction) {
+      this.db.exec('BEGIN IMMEDIATE');
+    }
+    
+    try {
+      const result = await operation();
+      
+      if (!wasInTransaction) {
+        this.db.exec('COMMIT');
+      }
+      
+      return result;
+    } catch (error) {
+      if (!wasInTransaction && this.db.open) {
+        this.db.exec('ROLLBACK');
+      }
+      throw error;
+    }
   }
 
   /**
