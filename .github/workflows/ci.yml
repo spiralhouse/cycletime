@@ -253,7 +253,7 @@ jobs:
     name: Final Validation
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [test, quality, build, docker, security]
+    needs: [test, quality, build, docker, security, integration]
 
     steps:
       - name: Download test results
@@ -280,7 +280,7 @@ jobs:
   notify-failure:
     name: Notify Failure
     runs-on: ubuntu-latest
-    needs: [test, quality, build, docker, security, validate]
+    needs: [test, quality, build, docker, security, integration, validate]
     if: failure()
 
     steps:
