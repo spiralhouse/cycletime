@@ -42,7 +42,7 @@ jobs:
         run: ./gradlew test --no-daemon
 
       - name: Generate coverage report
-        run: ./gradlew koverReport --no-daemon
+        run: ./gradlew koverXmlReport --no-daemon
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
