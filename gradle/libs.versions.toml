@@ -12,6 +12,9 @@ graalvm = "0.10.3"
 mcp-sdk = "0.1.0"
 kotest = "5.9.1"
 mockk = "1.13.13"
+detekt = "1.23.7"
+kover = "0.8.3"
+dependency-check = "10.0.4"
 
 [libraries]
 # Ktor
@@ -59,3 +62,6 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ktor = { id = "io.ktor.plugin", version = "3.2.0" }
 graalvm = { id = "org.graalvm.buildtools.native", version.ref = "graalvm" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+dependency-check = { id = "org.owasp.dependencycheck", version.ref = "dependency-check" }

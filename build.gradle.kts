@@ -6,6 +6,9 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ktor)
     alias(libs.plugins.graalvm)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
+    alias(libs.plugins.dependency.check)
     application
 }
 
@@ -109,5 +112,64 @@ graalvmNative {
             inputTaskNames.add("test")
             outputDirectories.add("src/main/resources/META-INF/native-image")
         }
+    }
+}
+
+// Detekt configuration
+detekt {
+    toolVersion = libs.versions.detekt.get()
+    config.setFrom("$projectDir/config/detekt/detekt.yml")
+    buildUponDefaultConfig = true
+    
+    source.setFrom(
+        "src/main/kotlin",
+        "src/test/kotlin"
+    )
+}
+
+// Kover configuration
+kover {
+    reports {
+        filters {
+            excludes {
+                // Exclude generated code and infrastructure
+                classes("*.di.*", "*.infrastructure.*")
+                packages("com.spiralhouse.jcvd.infrastructure.di")
+            }
+        }
+        
+        total {
+            xml {
+                onCheck.set(false)
+            }
+            html {
+                onCheck.set(false)
+            }
+        }
+        
+        verify {
+            rule {
+                disabled.set(true)  // Disable verification for POC cleanup
+                bound {
+                    minValue = 85
+                    coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.LINE
+                    aggregationForGroup = kotlinx.kover.gradle.plugin.dsl.AggregationType.COVERED_PERCENTAGE
+                }
+            }
+        }
+    }
+}
+
+// Dependency Check configuration
+dependencyCheck {
+    format = org.owasp.dependencycheck.reporting.ReportGenerator.Format.ALL.name
+    suppressionFile = "$projectDir/config/dependency-check/suppressions.xml"
+    failBuildOnCVSS = 7.0f
+    
+    analyzers {
+        // Enable analyzers
+        assemblyEnabled = false
+        nuspecEnabled = false
+        nugetconfEnabled = false
     }
 }
