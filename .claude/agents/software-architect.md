@@ -1,7 +1,6 @@
 ---
 name: software-architect
 description: Design system architecture, make technical decisions, and ensure scalability
-tools: 
 model: opus
 color: cyan
 ---

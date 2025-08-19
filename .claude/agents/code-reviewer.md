@@ -1,7 +1,6 @@
 ---
 name: code-reviewer
 description: Perform code reviews, ensure quality, and validate against Linear issues
-tools: 
 model: sonnet
 color: blue
 ---

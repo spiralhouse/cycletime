@@ -1,7 +1,6 @@
 ---
 name: developer
 description: Implement features, write tests, and maintain code quality
-tools: 
 color: yellow
 ---
 

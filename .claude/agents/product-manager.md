@@ -1,7 +1,6 @@
 ---
 name: product-manager
 description: Gather requirements, create user stories, and manage product vision
-tools: 
 model: opus
 color: purple
 ---

@@ -1,7 +1,6 @@
 ---
 name: qa
 description: Validate implementation, ensure quality standards, and verify requirements
-tools: 
 color: orange
 ---
 
