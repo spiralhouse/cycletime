@@ -1,0 +1,10 @@
+[
+  {
+    "name": "com.spiralhouse.jcvd.domain.entities.SessionContext",
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "kotlin.Unit"
+  }
+]

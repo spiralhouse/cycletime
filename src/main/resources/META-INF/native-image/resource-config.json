@@ -1,0 +1,25 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": ".*\\.properties$"
+      },
+      {
+        "pattern": ".*\\.xml$"
+      },
+      {
+        "pattern": ".*\\.conf$"
+      },
+      {
+        "pattern": "META-INF/services/.*"
+      },
+      {
+        "pattern": "logback\\.xml"
+      },
+      {
+        "pattern": "application\\.conf"
+      }
+    ]
+  },
+  "bundles": []
+}

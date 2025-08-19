@@ -37,6 +37,37 @@ bower_components
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
 
+# Gradle/Kotlin build artifacts
+build/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+*.jar
+!gradle-wrapper.jar
+
+# Kotlin specific
+*.class
+*.kotlin_module
+
+# IntelliJ IDEA
+*.iml
+*.ipr
+*.iws
+.idea/
+out/
+
+# Native compilation artifacts
+*.exe
+*.app
+*.dmg
+*.pkg
+*.rpm
+*.deb
+
+# GraalVM native image artifacts
+*.h
+native-image/
+
 # Dependency directories
 node_modules/
 jspm_packages/
