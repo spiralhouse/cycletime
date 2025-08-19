@@ -1,4 +1,4 @@
-rootProject.name = "jcvd-kotlin"
+rootProject.name = "jcvd"
 
 dependencyResolutionManagement {
     repositories {
