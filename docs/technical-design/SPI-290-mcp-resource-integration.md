@@ -32,7 +32,7 @@ graph TD
     D --> G[Database Layer]
     E --> G
     F --> G
-    G --> H[SQLite Database]
+    G --> H[H2 Database]
 
     B --> I[Tool Registry]
     I --> J[CRUD Tools]

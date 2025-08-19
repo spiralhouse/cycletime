@@ -12,12 +12,12 @@ The repository pattern provides a clean abstraction between the domain model and
 
 The `IssueRepository` manages persistence and retrieval of Issues.
 
-```typescript
+```kotlin
 interface IssueRepository {
-  findById(id: IssueId): Promise<Issue | null>;
-  findByProjectId(projectId: ProjectId): Promise<Issue[]>;
-  save(issue: Issue): Promise<void>;
-  saveToProject(issue: Issue, projectId: ProjectId): Promise<void>;
+    suspend fun findById(id: IssueId): Issue?
+    suspend fun findByProjectId(projectId: ProjectId): List<Issue>
+    suspend fun save(issue: Issue): Unit
+    suspend fun saveToProject(issue: Issue, projectId: ProjectId): Unit
 }
 ```
 
@@ -32,37 +32,37 @@ interface IssueRepository {
 
 Create a new issue and associate with project
 
-```typescript
-const issue = Issue.create('User authentication', 'Implement JWT auth', 'Story');
-await issueRepository.saveToProject(issue, projectId);
+```kotlin
+val issue = Issue.create("User authentication", "Implement JWT auth", IssueType.Story)
+issueRepository.saveToProject(issue, projectId)
 ```
 
 Update an existing issue
 
-```typescript
-const existingIssue = await issueRepository.findById(issueId);
-existingIssue.updateStatus('Todo');
-existingIssue.updateStatus('InProgress');
-await issueRepository.save(existingIssue);
+```kotlin
+val existingIssue = issueRepository.findById(issueId)
+existingIssue?.updateStatus(IssueStatus.Todo)
+existingIssue?.updateStatus(IssueStatus.InProgress)
+existingIssue?.let { issueRepository.save(it) }
 ```
 
 Find all project issues
 
-```typescript
-const projectIssues = await issueRepository.findByProjectId(projectId);
+```kotlin
+val projectIssues = issueRepository.findByProjectId(projectId)
 ```
 
 ### ProjectRepository
 
 The `ProjectRepository` manages Project entities.
 
-```typescript
+```kotlin
 interface ProjectRepository {
-  findById(id: ProjectId): Promise<Project | null>;
-  findAll(): Promise<Project[]>;
-  save(project: Project): Promise<void>;
-  delete(id: ProjectId): Promise<void>;
-  exists(id: ProjectId): Promise<boolean>;
+    suspend fun findById(id: ProjectId): Project?
+    suspend fun findAll(): List<Project>
+    suspend fun save(project: Project): Unit
+    suspend fun delete(id: ProjectId): Boolean
+    suspend fun exists(id: ProjectId): Boolean
 }
 ```
 
@@ -70,31 +70,31 @@ interface ProjectRepository {
 
 Create and save a new project
 
-```typescript
-const project = Project.create('E-commerce Platform', 'Online marketplace');
-await projectRepository.save(project);
+```kotlin
+val project = Project.create("E-commerce Platform", "Online marketplace")
+projectRepository.save(project)
 ```
 
 Update project status
 
-```typescript
-const project = await projectRepository.findById(projectId);
-project.updateStatus('Active');
-project.updateName('E-commerce Platform v2');
-await projectRepository.save(project);
+```kotlin
+val project = projectRepository.findById(projectId)
+project?.updateStatus(ProjectStatus.Active)
+project?.updateName("E-commerce Platform v2")
+project?.let { projectRepository.save(it) }
 ```
 
 Delete project (cascades to issues via foreign key)
 
-```typescript
-await projectRepository.delete(projectId);
+```kotlin
+projectRepository.delete(projectId)
 ```
 
 ### WorkflowRepository
 
 The `WorkflowRepository` manages workflow state for projects.
 
-```typescript
+```kotlin
 interface WorkflowRepository {
   findById(id: WorkflowId): Promise<Workflow | null>;
   findByProjectId(projectId: ProjectId): Promise<Workflow | null>;
@@ -107,14 +107,14 @@ interface WorkflowRepository {
 
 Create standard workflow
 
-```typescript
+```kotlin
 const workflow = Workflow.create('Development Workflow', projectId);
 await workflowRepository.save(workflow);
 ```
 
 Create custom workflow
 
-```typescript
+```kotlin
 const customStages = ['planning', 'development', 'testing', 'deployment'];
 const workflow = Workflow.createCustom('Sprint Workflow', projectId, customStages);
 await workflowRepository.save(workflow);
@@ -122,7 +122,7 @@ await workflowRepository.save(workflow);
 
 Progress through stages
 
-```typescript
+```kotlin
 workflow.transitionTo('design');
 workflow.transitionTo('implementation');
 await workflowRepository.save(workflow);
@@ -130,7 +130,7 @@ await workflowRepository.save(workflow);
 
 Reset workflow
 
-```typescript
+```kotlin
 workflow.reset();
 await workflowRepository.save(workflow);
 ```
@@ -139,7 +139,7 @@ await workflowRepository.save(workflow);
 
 All repository operations use database transactions to ensure consistency:
 
-```typescript
+```kotlin
 // Example: Atomic save with relationships
 async saveToProject(issue: Issue, projectId: ProjectId): Promise<void> {
   const transaction = this.db.transaction(() => {
@@ -156,7 +156,7 @@ async saveToProject(issue: Issue, projectId: ProjectId): Promise<void> {
 
 Issues support parent-child relationships:
 
-```typescript
+```kotlin
 // Create hierarchy
 const epic = Issue.create('User Management', 'Complete user system', 'Epic');
 const story1 = Issue.create('Login', 'User authentication', 'Story');
@@ -178,7 +178,7 @@ await issueRepository.saveToProject(story2, projectId);
 
 Issues can have dependencies on other issues:
 
-```typescript
+```kotlin
 // Create dependency
 const backend = Issue.create('API endpoint', 'Create REST API', 'Story');
 const frontend = Issue.create('UI component', 'Build React component', 'Story');
@@ -199,7 +199,7 @@ if (frontend.isBlocked()) {
 
 Issues follow a defined status workflow:
 
-```typescript
+```kotlin
 // Valid transitions from Backlog
 issue.updateStatus('Todo');        // ✓ Valid
 issue.updateStatus('InProgress');  // ✗ Invalid - must go through Todo
@@ -224,7 +224,7 @@ Valid status values:
 
 For multiple related operations, batch them when possible:
 
-```typescript
+```kotlin
 // Good: Single transaction for multiple saves
 const updates = issues.map(issue => 
   issueRepository.saveToProject(issue, projectId)
@@ -236,7 +236,7 @@ await Promise.all(updates);
 
 The repositories use prepared statements for performance:
 
-```typescript
+```kotlin
 // Prepared statements are cached and reused
 private findByIdStmt = db.prepare(`
   SELECT * FROM issues WHERE id = ?
@@ -247,7 +247,7 @@ private findByIdStmt = db.prepare(`
 
 The repositories handle large datasets efficiently:
 
-```typescript
+```kotlin
 // Handles 100+ issues efficiently
 const issues = await issueRepository.findByProjectId(projectId);
 
@@ -262,7 +262,7 @@ const issues = await issueRepository.findByProjectId(
 
 All repository methods throw `RepositoryError` on failure:
 
-```typescript
+```kotlin
 try {
   await issueRepository.save(issue);
 } catch (error) {
@@ -278,7 +278,7 @@ try {
 
 Repositories can be tested with in-memory databases:
 
-```typescript
+```kotlin
 // Test setup
 const db = new Database(':memory:');
 db.exec('PRAGMA foreign_keys = ON');
@@ -308,7 +308,7 @@ expect(retrieved).not.toBeNull();
 
 The repository pattern makes it easy to migrate between storage backends:
 
-```typescript
+```kotlin
 // Current: SQLite
 const repository = new SqliteIssueRepository(sqliteDb);
 

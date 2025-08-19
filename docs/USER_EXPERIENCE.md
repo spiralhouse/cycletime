@@ -71,12 +71,12 @@ option you choose.
 
 You have three setup options:
 
-A) **Local Database (Embedded SQLite)** ⭐ **RECOMMENDED**
+A) **Local Database (Embedded H2)** ⭐ **RECOMMENDED**
    ✅ Works completely offline with full feature parity
    ✅ No external accounts or internet connection required
    ✅ Complete dependency tracking and intelligent task selection
    ✅ Full cross-session continuity and project state management
-   ✅ High performance with embedded SQLite database
+   ✅ High performance with embedded H2 database
    ✅ Easy migration to cloud providers when ready
 
 B) **Existing Linear Workspace**
@@ -96,12 +96,12 @@ getting started - it provides the complete JCVD experience with no setup frictio
 and you can migrate to Linear or other providers anytime."
 ```
 
-### Option A: Local Database (Embedded SQLite)
+### Option A: Local Database (Embedded H2)
 
 ```
 User: "I'll use Local Mode for now"
 
-Claude: "Excellent choice! Local Mode provides full JCVD functionality using an embedded SQLite database - no compromises on features:
+Claude: "Excellent choice! Local Mode provides full JCVD functionality using an embedded H2 database - no compromises on features:
 
 **What you get in Local Mode:**
 ✅ Complete project orchestration with full dependency tracking
@@ -114,13 +114,13 @@ Claude: "Excellent choice! Local Mode provides full JCVD functionality using an 
 ✅ Linear-inspired schema optimized for easy data migration when ready
 
 **How it works:**
-- Embedded SQLite database stores all project data locally
+- Embedded H2 database stores all project data locally
 - Linear-inspired data model optimized for seamless future migration
 - All JCVD features work identically to cloud providers
 - Data stored securely in your project directory
 
 I'll create a `.jcvd/` directory in your project to store:
-- `database.sqlite` - Local project database (encrypted)
+- `database.mv.db` - Local H2 project database (encrypted)
 - `config.json` - JCVD configuration and preferences
 - `backups/` - Automated database backups
 - `exports/` - Data export files for migration
@@ -134,7 +134,7 @@ User: "Yes"
 Claude: "Local Mode activated! Initializing embedded database and project structure...
 
 📁 Created .jcvd/
-├── database.sqlite       # Encrypted SQLite database with full schema
+├── database.mv.db        # Encrypted H2 database with full schema
 ├── config.json          # JCVD configuration
 ├── backups/              # Automated daily backups
 │   └── 2025-07-30.db.backup

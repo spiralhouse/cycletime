@@ -45,14 +45,14 @@ development experience.
 **Supporting Benefits:**
 
 - **Structured Project Data**: Epic → Story → Subtask hierarchy with dependency
-  tracking persisted in embedded SQLite database
+  tracking persisted in embedded H2 database
 - **Cross-Session Continuity**: Project state persists across Claude Code
   sessions via MCP Resources, solving context loss for solo developers
 - **Context-Aware Development**: Claude Code agents receive project context
   through MCP integration for better task recommendations
 - **Professional Project Structure**: Standardized documentation and issue
   tracking without complex automation overhead
-- **Developer Control**: Local data storage with embedded SQLite, optional cloud
+- **Developer Control**: Local data storage with embedded H2, optional cloud
   provider integration when needed
 - **Solo Developer Support**: Reduces cognitive load by maintaining project
   context that Claude Code can access and analyze
@@ -118,7 +118,7 @@ JCVD provides a **data and context provider** for Claude Code that:
 1. **Project Bootstrap Management**: Basic requirements gathering and systematic
    project setup with templates
 2. **Structured Project Data**: Epic → Story → Subtasks hierarchy with
-   dependency tracking in embedded SQLite database
+   dependency tracking in embedded H2 database
 3. **MCP Resource Integration**: Exposes project state and context to Claude
    Code agents through MCP Resources
 4. **Context-Aware Task Identification**: Simple dependency graph traversal to
@@ -127,13 +127,13 @@ JCVD provides a **data and context provider** for Claude Code that:
    across Claude Code sessions
 6. **Professional Documentation Templates**: Standardized `docs/` directory
    structure and project organization patterns
-7. **Developer-Controlled Data**: Local SQLite storage with optional cloud
+7. **Developer-Controlled Data**: Local H2 storage with optional cloud
    provider integration
 8. **Context Provision for Agent Enhancement**: Provides project-specific
    information to Claude Code's existing agent framework
 9. **Open Source Transparency**: Full source code visibility enabling custom
    extensions and community contributions
-10. **Provider Flexibility**: Start with embedded SQLite, migrate to
+10. **Provider Flexibility**: Start with embedded H2, migrate to
     Linear/GitHub/Jira when needed
 
 ## Target Users
@@ -351,8 +351,8 @@ Audience)_
 ## System Architecture
 
 JCVD uses a provider-agnostic architecture that supports multiple issue tracking
-backends (SQLite, Linear, GitHub Issues, Jira) through a unified interface. This
-enables complete offline operation with embedded SQLite while providing seamless
+backends (H2, Linear, GitHub Issues, Jira) through a unified interface. This
+enables complete offline operation with embedded H2 while providing seamless
 migration to cloud providers when ready.
 
 **Core Design Principles:**
@@ -496,7 +496,7 @@ Successfully delivered the foundational session management system with comprehen
 - `SessionManager` for MCP integration layer
 - `SessionValidator` for data integrity assurance
 - `SessionCleanupService` for automated maintenance
-- `SqliteSessionRepository` with optimized prepared statements
+- `H2SessionRepository` with optimized Exposed ORM integration
 
 **Key Metrics:**
 - Session operations: < 1ms average latency
@@ -564,8 +564,8 @@ Successfully delivered the foundational session management system with comprehen
 
 ### Phase 1 (Month 1): Core MCP Server
 
-- **Core Focus**: Basic SQLite database with MCP Resources for Claude Code
-- Embedded SQLite provider with simple schema
+- **Core Focus**: Basic H2 database with MCP Resources for Claude Code
+- Embedded H2 provider with optimized schema
 - Basic issue CRUD operations (create, read, update, delete)
 - Simple Epic → Story → Subtask hierarchy with validation
 - Basic MCP Resources for exposing project context to Claude Code
@@ -573,7 +573,7 @@ Successfully delivered the foundational session management system with comprehen
 
 **Success Criteria:**
 
-- Create project with basic issue hierarchy in SQLite database
+- Create project with basic issue hierarchy in H2 database
 - MCP Resources provide project context to Claude Code agents
 - Basic dependency tracking and unblocked task identification
 - Cross-session project state recovery through MCP integration
@@ -606,7 +606,7 @@ Successfully delivered the foundational session management system with comprehen
 **Success Criteria:**
 
 - Linear provider integration with core CRUD operations
-- Data migration from SQLite to Linear preserves essential relationships
+- Data migration from H2 to Linear preserves essential relationships
 - Provider switching through simple export/import process
 - Enhanced MCP Resources for provider-specific features
 

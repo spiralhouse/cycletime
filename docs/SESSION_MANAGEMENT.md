@@ -20,7 +20,7 @@ The JCVD Session Management system provides robust cross-session state persisten
 1. **Domain-Driven Design**: Rich domain model encapsulating business logic
 2. **Dependency Injection**: TimeProvider pattern for testable time operations
 3. **Data Integrity First**: Automatic validation and repair of corrupted data
-4. **Performance Optimized**: Sub-millisecond operations with SQLite
+4. **Performance Optimized**: Sub-millisecond operations with H2
 5. **Test-Driven Development**: 96.91% domain layer coverage with zero flaky tests
 
 ### Layer Architecture
@@ -40,10 +40,10 @@ The JCVD Session Management system provides robust cross-session state persisten
 │    (Session, SessionKey)            │
 ├─────────────────────────────────────┤
 │      Infrastructure Layer           │
-│   (SqliteSessionRepository)         │
+│   (H2SessionRepository)             │
 ├─────────────────────────────────────┤
 │         Database Layer              │
-│      (SQLite with Indexes)          │
+│      (H2 with Indexes)              │
 └─────────────────────────────────────┘
 ```
 
@@ -195,12 +195,12 @@ export class SessionCleanupService {
 
 ### Infrastructure Layer
 
-#### SqliteSessionRepository
+#### H2SessionRepository
 
 Repository implementation with prepared statements:
 
 ```typescript
-export class SqliteSessionRepository implements SessionRepository {
+class H2SessionRepository : SessionRepository {
   private statements: Map<string, Statement> = new Map();
   
   constructor(
@@ -652,8 +652,8 @@ interface SessionProvider {
   delete(key: string): Promise<void>;
 }
 
-// SQLite (current)
-class SqliteSessionProvider implements SessionProvider;
+// H2 (current)
+class H2SessionProvider : SessionProvider
 
 // Future providers
 class RedisSessionProvider implements SessionProvider;
@@ -764,7 +764,7 @@ const sessionManager = new SessionManager(
 
 ```typescript
 // Check indexes
-const indexes = db.prepare("SELECT name FROM sqlite_master WHERE type='index'").all();
+// H2 schema introspection for indexes
 
 // Aggressive cleanup
 const cleanupResult = await sessionManager.cleanupSessions();
