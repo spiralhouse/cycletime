@@ -1,8 +1,8 @@
-# SPI-400: Repository Pattern Implementation - Technical Design
+# Repository Pattern Implementation - Technical Design
 
 ## Overview
 
-This document outlines the technical design for implementing H2 repository implementations for domain entities (Project, Issue, Workflow), following the repository pattern established in SPI-346 (SessionRepository). The implementation provides a clean abstraction between domain and infrastructure layers while maintaining simplicity and testability, leveraging Kotlin's type safety and Exposed ORM for optimal H2 integration.
+This document outlines the technical design for implementing H2 repository implementations for domain entities (Project, Issue, Workflow), following Domain-Driven Design (DDD) principles with Test-Driven Development (TDD) methodology. The implementation provides a clean abstraction between domain and infrastructure layers while maintaining simplicity and testability, leveraging Kotlin's type safety and Exposed ORM for optimal H2 integration.
 
 ## Design Principles
 
@@ -15,12 +15,32 @@ This document outlines the technical design for implementing H2 repository imple
 
 ### 2. Test-Driven Development Approach
 
+**Critical TDD Workflow:**
+1. **Red**: Write failing tests that specify repository behavior
+2. **Green**: Implement minimal code to make tests pass
+3. **Refactor**: Improve implementation while keeping tests green
+
+**Test Strategy:**
 - Write **unit tests** first with mocked database to drive implementation
 - Mock H2 Database and Exposed DSL objects for testing
 - Test repository logic, mapping, and error handling in isolation
 - Integration tests come **after** implementation to verify actual H2 database operations
+- Test repository interfaces, not implementations (DDD principle)
 
-### 3. Maintain Simplicity
+### 3. Domain-Driven Design Principles
+
+**Repository as Domain Contract:**
+- Repository interfaces belong to the domain layer
+- Implementations are infrastructure concerns
+- Domain layer defines what it needs, infrastructure provides it
+- No database leakage into domain entities
+
+**Aggregate Boundaries:**
+- Each repository manages one aggregate root
+- No cross-aggregate transactions within repositories
+- Use Application Services for multi-aggregate operations
+
+### 4. Maintain Simplicity
 
 - Exposed DSL for type-safe, efficient queries
 - Simple mapping between domain and database using Kotlin data classes

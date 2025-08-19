@@ -1,8 +1,8 @@
-# SPI-399: Domain Entities Foundation - Design Document
+# Domain Entities Foundation - Design Document
 
 ## Overview
 
-This document outlines the design for implementing core domain entities following Domain-Driven Design patterns established in SPI-346 (Session Management). The goal is to create a solid foundation for the JCVD domain model while maintaining simplicity per SPI-387 principles.
+This document outlines the design for implementing core domain entities following Domain-Driven Design (DDD) patterns with Test-Driven Development (TDD) methodology. The goal is to create a solid foundation for the JCVD domain model using Kotlin's type safety and Exposed ORM integration while maintaining clean architecture principles.
 
 ## Pattern Mapping to Session Implementation
 
@@ -26,17 +26,19 @@ This document outlines the design for implementing core domain entities followin
 
 ### Repository Interfaces
 
-Following the pattern from `SessionRepository`:
-- Async/await for all operations
+Following DDD principles with Kotlin coroutines:
+- Suspend functions for all async operations
 - Return `null` for not found (not throwing)
 - Clean separation from infrastructure
+- Repository interfaces in domain layer, implementations in infrastructure
 
 ### Error Handling
 
-Reuse error patterns from `session-errors.ts`:
-- `DomainError` base class
+Kotlin-specific error patterns:
+- `DomainException` sealed class hierarchy
 - Specific error types for validation failures
-- Consistent error messages
+- Result type for error handling without exceptions
+- Consistent error messages with context
 
 ## Key Design Decisions
 
@@ -115,28 +117,60 @@ class Workflow {
 **Decision**: Implement both patterns consistently across entities.
 
 **Factory Pattern** (for new entities):
-```typescript
-static create(name: string, description: string): Project {
-  return new Project(
-    ProjectId.generate(),
-    name,
-    description,
-    ProjectStatus.ACTIVE,
-    []
-  );
+```kotlin
+class Project private constructor(
+    val id: ProjectId,
+    private var _name: String,
+    private var _description: String,
+    private var _status: ProjectStatus,
+    private val _issues: MutableList<IssueId> = mutableListOf(),
+    private val timeProvider: TimeProvider
+) {
+    companion object {
+        fun create(
+            name: String, 
+            description: String, 
+            timeProvider: TimeProvider
+        ): Project {
+            return Project(
+                ProjectId.generate(),
+                name,
+                description,
+                ProjectStatus.ACTIVE,
+                mutableListOf(),
+                timeProvider
+            )
+        }
+    }
 }
 ```
 
 **Snapshot Pattern** (for reconstitution):
-```typescript
-static fromSnapshot(data: ProjectSnapshot): Project {
-  return new Project(
-    ProjectId.from(data.id),
-    data.name,
-    data.description,
-    data.status as ProjectStatus,
-    data.issues.map(Issue.fromSnapshot)
-  );
+```kotlin
+data class ProjectSnapshot(
+    val id: String,
+    val name: String,
+    val description: String,
+    val status: String,
+    val issueIds: List<String>,
+    val createdAt: Instant,
+    val updatedAt: Instant
+)
+
+companion object {
+    fun fromSnapshot(
+        snapshot: ProjectSnapshot, 
+        timeProvider: TimeProvider
+    ): Project {
+        return Project(
+            ProjectId(snapshot.id),
+            snapshot.name,
+            snapshot.description,
+            ProjectStatus.valueOf(snapshot.status),
+            snapshot.issueIds.map { IssueId(it) }.toMutableList(),
+            timeProvider
+        )
+    }
 }
 ```
 
@@ -210,44 +244,56 @@ static fromSnapshot(data: ProjectSnapshot): Project {
 
 Following SPI-346 test patterns:
 
-1. **Time-Independent Tests**:
-```typescript
-describe('Issue', () => {
-  it('should validate hierarchy correctly', () => {
-    const story = Issue.create('Story', '', IssueType.STORY);
-    expect(story.validateParent(IssueType.EPIC)).toBe(true);
-    expect(story.validateParent(IssueType.STORY)).toBe(false);
-  });
-});
+1. **Time-Independent Tests** (Kotlin/Kotest):
+```kotlin
+class IssueTest : DescribeSpec({
+    describe("Issue hierarchy validation") {
+        it("should validate parent types correctly") {
+            val story = Issue.create(
+                title = "Story", 
+                description = "", 
+                type = IssueType.STORY
+            )
+            
+            story.validateParent(IssueType.EPIC) shouldBe true
+            story.validateParent(IssueType.STORY) shouldBe false
+        }
+    }
+})
 ```
 
-2. **Time-Dependent Tests**:
-```typescript
-describe('Project', () => {
-  let mockTimeProvider: MockTimeProvider;
-  
-  beforeEach(() => {
-    mockTimeProvider = new MockTimeProvider();
-  });
-  
-  it('should track update time', () => {
-    mockTimeProvider.setTime('2024-01-01T00:00:00Z');
-    const project = new Project(..., mockTimeProvider);
-    
-    mockTimeProvider.advance(1000);
-    project.updateStatus(ProjectStatus.COMPLETED);
-    
-    expect(project.updatedAt).toEqual(new Date('2024-01-01T00:00:01Z'));
-  });
-});
+2. **Time-Dependent Tests** (TDD with MockTimeProvider):
+```kotlin
+class ProjectTest : DescribeSpec({
+    describe("Project time tracking") {
+        val mockTimeProvider = MockTimeProvider()
+        
+        beforeEach {
+            mockTimeProvider.setTime(Instant.parse("2024-01-01T00:00:00Z"))
+        }
+        
+        it("should track update time when status changes") {
+            val project = Project.create(
+                name = "Test Project",
+                description = "Test",
+                timeProvider = mockTimeProvider
+            )
+            
+            mockTimeProvider.advance(Duration.ofSeconds(1))
+            project.updateStatus(ProjectStatus.COMPLETED)
+            
+            project.updatedAt shouldBe Instant.parse("2024-01-01T00:00:01Z")
+        }
+    }
+})
 ```
 
 ## Dependencies and Constraints
 
-### Reusable Components from SPI-346
-- `TimeProvider` interface and implementations
-- Error handling patterns from `session-errors.ts`
-- Repository interface patterns
+### Reusable Components from Session Management
+- `TimeProvider` interface and implementations (Kotlin)
+- Error handling patterns with sealed classes
+- Repository interface patterns with suspend functions
 
 ### New Components Required
 - Domain-specific value objects
@@ -255,7 +301,67 @@ describe('Project', () => {
 - Workflow state machine
 
 ### External Dependencies
-- None required for domain layer (pure TypeScript)
+- None required for domain layer (pure Kotlin with standard library)
+- Kotlin coroutines for async patterns (kotlinx-coroutines-core)
+- Time handling with java.time.*
+
+## Infrastructure Mapping (Exposed ORM)
+
+The domain entities map to database tables through the infrastructure layer using Exposed DSL:
+
+### Table Definitions
+
+```kotlin
+// Infrastructure Layer - Exposed Table Definitions
+object Projects : Table("projects") {
+    val id = varchar("id", 36)
+    val name = varchar("name", 255)
+    val description = text("description")
+    val status = enumeration("status", ProjectStatus::class)
+    val createdAt = timestamp("created_at")
+    val updatedAt = timestamp("updated_at")
+    
+    override val primaryKey = PrimaryKey(id)
+}
+
+object Issues : Table("issues") {
+    val id = varchar("id", 36)
+    val projectId = varchar("project_id", 36) references Projects.id
+    val parentId = varchar("parent_id", 36).nullable() references id
+    val title = varchar("title", 255)
+    val description = text("description").nullable()
+    val type = enumeration("type", IssueType::class)
+    val status = enumeration("status", IssueStatus::class)
+    val priority = enumeration("priority", IssuePriority::class)
+    val estimate = integer("estimate").nullable()
+    val createdAt = timestamp("created_at")
+    val updatedAt = timestamp("updated_at")
+    
+    override val primaryKey = PrimaryKey(id)
+}
+
+object Workflows : Table("workflows") {
+    val id = varchar("id", 36)
+    val name = varchar("name", 255)
+    val stages = text("stages") // JSON serialization
+    val transitions = text("transitions") // JSON serialization
+    val currentStage = varchar("current_stage", 100)
+    val isComplete = bool("is_complete").default(false)
+    val createdAt = timestamp("created_at")
+    val updatedAt = timestamp("updated_at")
+    
+    override val primaryKey = PrimaryKey(id)
+}
+```
+
+### Domain-Infrastructure Separation
+
+**Key Principles:**
+- Domain entities know nothing about Exposed or database concerns
+- Repository implementations handle translation between domain and data models
+- Value objects enforce type safety at domain boundaries
+- Factory methods ensure valid entity construction
+- Snapshot pattern enables clean persistence/reconstitution
 
 ## Risk Mitigation
 
