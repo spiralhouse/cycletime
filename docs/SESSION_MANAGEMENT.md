@@ -55,22 +55,25 @@ The JCVD Session Management system provides robust cross-session state persisten
 
 The core domain entity managing session state with business logic:
 
-```typescript
-export class Session {
-  private _sessionKey: SessionKey;
-  private _projectId?: string;
-  private _currentContext: SessionContext;
-  private _lastActivity: Date;
-  private readonly _createdAt: Date;
-  private _updatedAt: Date;
-  private readonly timeProvider?: TimeProvider;
-
-  // Key Methods
-  updateContext(updates: Partial<SessionContext>): void;
-  touch(): void; // Updates lastActivity
-  isExpired(maxAge: number): boolean;
-  toPlainObject(): SessionStateDto;
-  static fromPlainObject(obj: any, timeProvider?: TimeProvider): Session;
+```kotlin
+class Session(
+    private val sessionKey: SessionKey,
+    private var projectId: String?,
+    private var currentContext: SessionContext,
+    private var lastActivity: LocalDateTime,
+    private val createdAt: LocalDateTime,
+    private var updatedAt: LocalDateTime,
+    private val timeProvider: TimeProvider?
+) {
+    // Key Methods
+    fun updateContext(updates: Map<String, Any>): Unit
+    fun touch(): Unit // Updates lastActivity
+    fun isExpired(maxAge: Duration): Boolean
+    fun toSnapshot(): SessionSnapshot
+    
+    companion object {
+        fun fromSnapshot(snapshot: SessionSnapshot, timeProvider: TimeProvider?): Session
+    }
 }
 ```
 
@@ -78,22 +81,25 @@ export class Session {
 
 Type-safe session identifier with validation:
 
-```typescript
-export class SessionKey {
-  constructor(public readonly value: string) {
-    if (!this.isValidFormat(value)) {
-      throw new InvalidSessionKeyError(value);
+```kotlin
+data class SessionKey(val value: String) {
+    init {
+        if (!isValidFormat(value)) {
+            throw InvalidSessionKeyException(value)
+        }
     }
-  }
 
-  static generate(): SessionKey {
-    return new SessionKey(crypto.randomUUID());
-  }
+    companion object {
+        fun generate(): SessionKey {
+            return SessionKey(UUID.randomUUID().toString())
+        }
+    }
 
-  private isValidFormat(value: string): boolean {
-    // UUID v4 format validation
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-  }
+    private fun isValidFormat(value: String): Boolean {
+        // UUID v4 format validation
+        val uuidPattern = "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$".toRegex(RegexOption.IGNORE_CASE)
+        return uuidPattern.matches(value)
+    }
 }
 ```
 
@@ -101,13 +107,13 @@ export class SessionKey {
 
 Structured data maintained across sessions:
 
-```typescript
-export interface SessionContext {
-  activeIssues?: string[];      // Currently active issue IDs
-  workflowStage?: string;        // Current workflow stage
-  lastAction?: string;           // Description of last action
-  contextData?: Record<string, unknown>; // Custom context data
-}
+```kotlin
+data class SessionContext(
+    val activeIssues: List<String>? = null,      // Currently active issue IDs
+    val workflowStage: String? = null,           // Current workflow stage
+    val lastAction: String? = null,              // Description of last action
+    val contextData: Map<String, Any>? = null    // Custom context data
+)
 ```
 
 ### Application Layer
@@ -116,19 +122,17 @@ export interface SessionContext {
 
 Orchestrates session operations with Unit of Work pattern:
 
-```typescript
-export class SessionApplicationService {
-  constructor(
-    private sessionRepository: SessionRepository,
-    private unitOfWork: UnitOfWork
-  ) {}
-
-  async createSession(command: CreateSessionCommand): Promise<CreateSessionResult>;
-  async getSession(sessionKey: string): Promise<SessionStateDto | null>;
-  async updateSession(sessionKey: string, updates: UpdateSessionCommand): Promise<UpdateResult>;
-  async deleteSession(sessionKey: string): Promise<void>;
-  async findActiveSessions(projectId?: string): Promise<SessionStateDto[]>;
-  async cleanupExpiredSessions(maxAge: number): Promise<CleanupResult>;
+```kotlin
+class SessionApplicationService(
+    private val sessionRepository: SessionRepository,
+    private val unitOfWork: UnitOfWork
+) {
+    suspend fun createSession(command: CreateSessionCommand): CreateSessionResult
+    suspend fun getSession(sessionKey: String): SessionStateDto?
+    suspend fun updateSession(sessionKey: String, updates: UpdateSessionCommand): UpdateResult
+    suspend fun deleteSession(sessionKey: String): Unit
+    suspend fun findActiveSessions(projectId: String? = null): List<SessionStateDto>
+    suspend fun cleanupExpiredSessions(maxAge: Duration): CleanupResult
 }
 ```
 
@@ -138,22 +142,22 @@ export class SessionApplicationService {
 
 Validates and repairs session data integrity:
 
-```typescript
-export class SessionValidator {
-  constructor(rules?: Partial<ValidationRules>);
-  
-  validateSessionState(session: SessionStateDto): ValidationResult;
-  repairSession(session: SessionStateDto): RepairResult;
-  detectSessionConflicts(sessions: SessionStateDto[]): ConflictResult;
-  
-  // Validation Rules
-  interface ValidationRules {
-    maxContextSize: number;        // Default: 1MB
-    maxActiveIssues: number;        // Default: 100
-    maxStringLength: number;        // Default: 1000
-    allowedWorkflowStages?: string[];
-    requireProjectId: boolean;      // Default: false
-  }
+```kotlin
+class SessionValidator(
+    private val rules: ValidationRules = ValidationRules()
+) {
+    fun validateSessionState(session: SessionStateDto): ValidationResult
+    fun repairSession(session: SessionStateDto): RepairResult
+    fun detectSessionConflicts(sessions: List<SessionStateDto>): ConflictResult
+    
+    // Validation Rules
+    data class ValidationRules(
+        val maxContextSize: Int = 1024 * 1024,        // Default: 1MB
+        val maxActiveIssues: Int = 100,                // Default: 100
+        val maxStringLength: Int = 1000,               // Default: 1000
+        val allowedWorkflowStages: List<String>? = null,
+        val requireProjectId: Boolean = false          // Default: false
+    )
 }
 ```
 
@@ -174,22 +178,23 @@ export class SessionValidator {
 
 Manages session lifecycle and cleanup:
 
-```typescript
-export class SessionCleanupService {
-  constructor(timeProvider: TimeProvider, config?: Partial<CleanupConfig>);
-  
-  performCleanup(sessions: SessionStateDto[]): Promise<CleanupResult>;
-  identifyExpiredSessions(sessions: SessionStateDto[], maxAge: number): string[];
-  identifyOrphanedSessions(sessions: SessionStateDto[]): string[];
-  identifyCorruptedSessions(sessions: SessionStateDto[]): string[];
-  
-  // Cleanup Configuration
-  interface CleanupConfig {
-    maxAge: number;                // Default: 7 days
-    orphanedThreshold: number;     // Default: 30 days
-    batchSize: number;              // Default: 100
-    enableAutoRepair: boolean;      // Default: true
-  }
+```kotlin
+class SessionCleanupService(
+    private val timeProvider: TimeProvider,
+    private val config: CleanupConfig = CleanupConfig()
+) {
+    suspend fun performCleanup(sessions: List<SessionStateDto>): CleanupResult
+    fun identifyExpiredSessions(sessions: List<SessionStateDto>, maxAge: Duration): List<String>
+    fun identifyOrphanedSessions(sessions: List<SessionStateDto>): List<String>
+    fun identifyCorruptedSessions(sessions: List<SessionStateDto>): List<String>
+    
+    // Cleanup Configuration
+    data class CleanupConfig(
+        val maxAge: Duration = Duration.ofDays(7),        // Default: 7 days
+        val orphanedThreshold: Duration = Duration.ofDays(30), // Default: 30 days
+        val batchSize: Int = 100,                         // Default: 100
+        val enableAutoRepair: Boolean = true              // Default: true
+    )
 }
 ```
 
@@ -199,27 +204,20 @@ export class SessionCleanupService {
 
 Repository implementation with prepared statements:
 
-```typescript
-class H2SessionRepository : SessionRepository {
-  private statements: Map<string, Statement> = new Map();
-  
-  constructor(
-    private db: Database.Database,
-    private timeProvider: TimeProvider
-  ) {
-    this.initializeStatements();
-  }
-  
-  // Core Operations
-  async findByKey(sessionKey: SessionKey): Promise<Session | null>;
-  async findByProject(projectId: string): Promise<Session[]>;
-  async save(session: Session): Promise<void>;
-  async delete(sessionKey: SessionKey): Promise<void>;
-  async findAll(): Promise<Session[]>;
-  
-  // Lifecycle Management
-  recreateStatements(): void;  // For test isolation
-  close(): void;               // Cleanup statements
+```kotlin
+class H2SessionRepository(
+    private val timeProvider: TimeProvider
+) : SessionRepository {
+    
+    // Core Operations
+    override suspend fun findByKey(sessionKey: SessionKey): Session?
+    override suspend fun findByProject(projectId: String): List<Session>
+    override suspend fun save(session: Session): Unit
+    override suspend fun delete(sessionKey: SessionKey): Unit
+    override suspend fun findAll(): List<Session>
+    
+    // Lifecycle Management
+    fun close(): Unit  // Cleanup connections
 }
 ```
 
@@ -236,31 +234,30 @@ class H2SessionRepository : SessionRepository {
 
 High-level interface for Claude Code integration:
 
-```typescript
-export class SessionManager implements SessionManagerInterface {
-  constructor(
-    sessionService: SessionApplicationService,
-    timeProvider: TimeProvider,
-    config?: SessionConfig,
-    validationRules?: Partial<ValidationRules>,
-    cleanupConfig?: Partial<CleanupConfig>
-  );
-  
-  // Session Operations
-  async createSession(projectId?: string, initialContext?: SessionContext): Promise<string>;
-  async getSession(sessionKey: string): Promise<SessionState | null>;
-  async updateSession(sessionKey: string, updates: Partial<SessionContext>): Promise<void>;
-  async deleteSession(sessionKey: string): Promise<void>;
-  
-  // Session Information
-  async getSessionInfo(sessionKey: string): Promise<SessionInfo | null>;
-  async listActiveSessions(projectId?: string): Promise<SessionInfo[]>;
-  async detectSessionConflicts(projectId: string): Promise<SessionConflict[]>;
-  
-  // Lifecycle Management
-  async expireSessions(): Promise<number>;
-  async cleanupSessions(): Promise<CleanupResult>;
-  shutdown(): void;
+```kotlin
+class SessionManager(
+    private val sessionService: SessionApplicationService,
+    private val timeProvider: TimeProvider,
+    private val config: SessionConfig = SessionConfig(),
+    private val validationRules: ValidationRules = ValidationRules(),
+    private val cleanupConfig: CleanupConfig = CleanupConfig()
+) : SessionManagerInterface {
+    
+    // Session Operations
+    suspend fun createSession(projectId: String? = null, initialContext: SessionContext? = null): String
+    suspend fun getSession(sessionKey: String): SessionState?
+    suspend fun updateSession(sessionKey: String, updates: Map<String, Any>): Unit
+    suspend fun deleteSession(sessionKey: String): Unit
+    
+    // Session Information
+    suspend fun getSessionInfo(sessionKey: String): SessionInfo?
+    suspend fun listActiveSessions(projectId: String? = null): List<SessionInfo>
+    suspend fun detectSessionConflicts(projectId: String): List<SessionConflict>
+    
+    // Lifecycle Management
+    suspend fun expireSessions(): Int
+    suspend fun cleanupSessions(): CleanupResult
+    fun shutdown(): Unit
   
   // Configuration
   interface SessionConfig {

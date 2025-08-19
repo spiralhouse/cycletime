@@ -50,24 +50,24 @@ API designed for AI consumption.
 MCP Resources provide **URI-based access** to structured data that Claude Code
 agents can read and understand:
 
-```typescript
+```kotlin
 // Claude Code can access resources like this:
-const projectData = await mcp.readResource('project://abc-123');
-const issueData = await mcp.readResource('issue://def-456');
+val projectData = mcp.readResource("project://abc-123")
+val issueData = mcp.readResource("issue://def-456")
 
 // Resources return structured data:
-{
-  uri: 'project://abc-123',
-  mimeType: 'application/json',
-  text: JSON.stringify({
-    id: 'abc-123',
-    name: 'My Project',
-    status: 'active',
-    issueCount: 15,
-    dependencies: ['issue://def-456'],
-    // ... more project data
-  })
-}
+ResourceContent(
+    uri = "project://abc-123",
+    mimeType = "application/json",
+    text = Json.encodeToString(ProjectResourceData(
+        id = "abc-123",
+        name = "My Project",
+        status = "active",
+        issueCount = 15,
+        dependencies = listOf("issue://def-456")
+        // ... more project data
+    ))
+)
 ```
 
 #### Resource Types

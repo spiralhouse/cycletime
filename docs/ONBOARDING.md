@@ -202,20 +202,23 @@ improvement opportunities:
 
 ### Health Check Process
 
-```typescript
-interface SimpleHealthCheck {
-  projectSize: 'SMALL' | 'MEDIUM' | 'LARGE';
-
-  // Only performed for SMALL projects
-  basicMetrics?: {
-    totalIssues: number;
-    orphanedStories: number; // Stories without parent Epic
-    directEpicSubtasks: number; // Subtasks directly under Epic
-    issuesWithoutEstimates: number; // Stories lacking estimates
-    documentationFound: string[]; // List of found docs
-  };
-
-  recommendations: string[]; // Simple, actionable recommendations
+```kotlin
+data class SimpleHealthCheck(
+    val projectSize: ProjectSize,
+    
+    // Only performed for SMALL projects
+    val basicMetrics: BasicMetrics? = null,
+    val recommendations: List<String> // Simple, actionable recommendations
+) {
+    enum class ProjectSize { SMALL, MEDIUM, LARGE }
+    
+    data class BasicMetrics(
+        val totalIssues: Int,
+        val orphanedStories: Int, // Stories without parent Epic
+        val directEpicSubtasks: Int, // Subtasks directly under Epic
+        val issuesWithoutEstimates: Int, // Stories lacking estimates
+        val documentationFound: List<String> // List of found docs
+    )
 }
 ```
 

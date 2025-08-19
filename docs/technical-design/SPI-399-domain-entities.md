@@ -50,16 +50,16 @@ Reuse error patterns from `session-errors.ts`:
 - Simple three-level hierarchy doesn't warrant a service
 
 **Implementation**:
-```typescript
+```kotlin
 class Issue {
-  validateParent(parentType: IssueType): boolean {
-    const validHierarchy = {
-      [IssueType.EPIC]: null,
-      [IssueType.STORY]: IssueType.EPIC,
-      [IssueType.SUBTASK]: IssueType.STORY
-    };
-    return validHierarchy[this.type] === parentType;
-  }
+    fun validateParent(parentType: IssueType?): Boolean {
+        val validHierarchy = mapOf(
+            IssueType.EPIC to null,
+            IssueType.STORY to IssueType.EPIC,
+            IssueType.SUBTASK to IssueType.STORY
+        )
+        return validHierarchy[this.type] == parentType
+    }
 }
 ```
 
@@ -73,14 +73,14 @@ class Issue {
 - Avoids anemic domain model
 
 **Implementation**:
-```typescript
+```kotlin
 class Workflow {
-  private transitions = new Map<WorkflowStage, WorkflowStage[]>();
-  
-  canTransitionTo(stage: WorkflowStage): boolean {
-    const allowed = this.transitions.get(this.currentStage) ?? [];
-    return allowed.includes(stage);
-  }
+    private val transitions = mutableMapOf<WorkflowStage, List<WorkflowStage>>()
+    
+    fun canTransitionTo(stage: WorkflowStage): Boolean {
+        val allowed = transitions[currentStage] ?: emptyList()
+        return stage in allowed
+    }
 }
 ```
 
