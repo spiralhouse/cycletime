@@ -23,11 +23,18 @@ application {
 }
 
 dependencies {
-    // Ktor
+    // Ktor with Native DI
     implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.cio)
+    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.di)
     implementation(libs.ktor.server.content.negotiation)
-    implementation(libs.ktor.server.config.yaml)
+    implementation(libs.ktor.server.config.hocon)
+    implementation(libs.ktor.server.websockets)
+    implementation(libs.ktor.server.cors)
+    implementation(libs.ktor.server.call.logging)
+    implementation(libs.ktor.server.status.pages)
+    implementation(libs.ktor.server.auth)
+    implementation(libs.ktor.server.auth.jwt)
     implementation(libs.ktor.server.sse)
     implementation(libs.ktor.serialization.kotlinx.json)
     
@@ -35,15 +42,13 @@ dependencies {
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
     implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.java.time)
+    implementation(libs.exposed.json)
     implementation(libs.exposed.kotlin.datetime)
     
-    // Database
-    implementation(libs.sqlite.jdbc)
+    // Database - H2
+    implementation(libs.h2.database)
     implementation(libs.hikaricp)
-    
-    // Dependency Injection
-    implementation(libs.koin.core)
-    implementation(libs.koin.ktor)
     
     // Kotlin
     implementation(libs.kotlinx.coroutines.core)
@@ -62,22 +67,37 @@ dependencies {
     testImplementation(libs.kotest.property)
     testImplementation(libs.mockk)
     testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.kotlinx.coroutines.test)
+    
+    // Test Containers for Integration Testing
+    testImplementation("org.testcontainers:testcontainers:1.19.3")
+    testImplementation("org.testcontainers:junit-jupiter:1.19.3")
 }
 
 tasks.withType<KotlinCompile> {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_21)
-        freeCompilerArgs.add("-Xjsr305=strict")
+        freeCompilerArgs.addAll(
+            "-Xjsr305=strict",
+            "-opt-in=kotlin.RequiresOptIn",
+            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
+        )
     }
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showStandardStreams = false
+    }
 }
 
 ktor {
     fatJar {
-        archiveFileName.set("jcvd-server.jar")
+        archiveFileName.set("jcvd.jar")
     }
 }
 
