@@ -25,13 +25,14 @@ open class Estimate constructor(val value: Int?, private val validateFibonacci: 
                     // This is a test design issue that cannot be resolved without fixing the test data.
                     
                     // We prioritize semantically correct behavior:
-                    // Check if it's a Fibonacci number that's just too large
-                    if (value > MAX_ESTIMATE) {
-                        // Value exceeds the maximum allowed estimate
+                    // First check if it's a valid Fibonacci number at all
+                    val allFibonacci = listOf(0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144)
+                    if (value in allFibonacci && value > MAX_ESTIMATE) {
+                        // It's a Fibonacci number but too large for our range
                         require(false) { "Estimate cannot exceed maximum estimate of $MAX_ESTIMATE" }
                     } else {
-                        // Value is not a valid Fibonacci number in our accepted range
-                        require(false) { "Estimate must be a valid Fibonacci number" }
+                        // It's not a valid Fibonacci number
+                        require(false) { "Estimate must be a valid Fibonacci number: 1, 2, 3, 5, 8, 13" }
                     }
                 }
             }
