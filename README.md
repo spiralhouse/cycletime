@@ -401,7 +401,7 @@ graalvmNative {
     binaries {
         named("main") {
             imageName.set("jcvd-server")
-            mainClass.set("com.spiralhouse.jcvd.ApplicationKt")
+            mainClass.set("io.spiralhouse.jcvd.ApplicationKt")
             buildArgs.add("--no-fallback")
             buildArgs.add("--enable-http")
             buildArgs.add("--enable-https")

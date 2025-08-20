@@ -61,8 +61,8 @@ dependencies {
 // src/main/kotlin/com/spiralhouse/jcvd/infrastructure/di/KoinModules.kt
 
 import org.koin.dsl.module
-import com.spiralhouse.jcvd.domain.services.TimeProvider
-import com.spiralhouse.jcvd.infrastructure.services.RealTimeProvider
+import io.spiralhouse.jcvd.domain.services.TimeProvider
+import io.spiralhouse.jcvd.infrastructure.services.RealTimeProvider
 
 val appModule = module {
     // Time provider
@@ -80,7 +80,7 @@ val appModule = module {
 // src/main/kotlin/com/spiralhouse/jcvd/Application.kt
 
 import org.koin.ktor.plugin.Koin
-import com.spiralhouse.jcvd.infrastructure.di.appModule
+import io.spiralhouse.jcvd.infrastructure.di.appModule
 
 fun Application.module() {
     // Install Koin
@@ -101,11 +101,11 @@ fun Application.module() {
 
 import io.ktor.server.application.*
 import io.ktor.server.di.*
-import com.spiralhouse.jcvd.domain.repositories.*
-import com.spiralhouse.jcvd.domain.services.*
-import com.spiralhouse.jcvd.application.services.*
-import com.spiralhouse.jcvd.infrastructure.persistence.*
-import com.spiralhouse.jcvd.infrastructure.database.*
+import io.spiralhouse.jcvd.domain.repositories.*
+import io.spiralhouse.jcvd.domain.services.*
+import io.spiralhouse.jcvd.application.services.*
+import io.spiralhouse.jcvd.infrastructure.persistence.*
+import io.spiralhouse.jcvd.infrastructure.database.*
 import org.jetbrains.exposed.sql.Database
 
 /**
@@ -278,9 +278,9 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.di.*
-import com.spiralhouse.jcvd.infrastructure.di.configureDependencies
-import com.spiralhouse.jcvd.infrastructure.routing.configureRouting
-import com.spiralhouse.jcvd.infrastructure.mcp.configureMCP
+import io.spiralhouse.jcvd.infrastructure.di.configureDependencies
+import io.spiralhouse.jcvd.infrastructure.routing.configureRouting
+import io.spiralhouse.jcvd.infrastructure.mcp.configureMCP
 
 fun main() {
     embeddedServer(Netty, port = 8080) {
@@ -314,9 +314,9 @@ val Application.dependencies: DI
 
 import io.ktor.server.testing.*
 import io.ktor.server.di.*
-import com.spiralhouse.jcvd.domain.repositories.*
-import com.spiralhouse.jcvd.domain.services.*
-import com.spiralhouse.jcvd.testing.mocks.*
+import io.spiralhouse.jcvd.domain.repositories.*
+import io.spiralhouse.jcvd.domain.services.*
+import io.spiralhouse.jcvd.testing.mocks.*
 
 /**
  * Test DI module with mock implementations
@@ -377,8 +377,8 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.ktor.server.testing.*
-import com.spiralhouse.jcvd.testing.mocks.*
-import com.spiralhouse.jcvd.testing.configureDIForTest
+import io.spiralhouse.jcvd.testing.mocks.*
+import io.spiralhouse.jcvd.testing.configureDIForTest
 import java.time.Instant
 
 class ProjectApplicationServiceTest : DescribeSpec({
@@ -459,7 +459,7 @@ import io.ktor.server.testing.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import com.spiralhouse.jcvd.testing.configureDIForTest
+import io.spiralhouse.jcvd.testing.configureDIForTest
 import kotlinx.serialization.json.Json
 
 class ProjectIntegrationTest : DescribeSpec({

@@ -52,9 +52,9 @@ ktor {
     
     application {
         modules = [ 
-            com.spiralhouse.jcvd.ApplicationKt.module,
-            com.spiralhouse.jcvd.infrastructure.di.DIConfigurationKt.configureDependencies,
-            com.spiralhouse.jcvd.infrastructure.mcp.MCPConfigurationKt.configureMCP
+            io.spiralhouse.jcvd.ApplicationKt.module,
+            io.spiralhouse.jcvd.infrastructure.di.DIConfigurationKt.configureDependencies,
+            io.spiralhouse.jcvd.infrastructure.mcp.MCPConfigurationKt.configureMCP
         ]
     }
     
@@ -146,7 +146,7 @@ jcvd {
         level = ${?LOG_LEVEL}
         
         loggers {
-            "com.spiralhouse.jcvd" = DEBUG
+            "io.spiralhouse.jcvd" = DEBUG
             "org.jetbrains.exposed" = WARN
             "io.ktor" = INFO
             "com.zaxxer.hikari" = WARN
@@ -241,7 +241,7 @@ jcvd {
         level = DEBUG
         
         loggers {
-            "com.spiralhouse.jcvd" = TRACE
+            "io.spiralhouse.jcvd" = TRACE
             "org.jetbrains.exposed.sql" = DEBUG
         }
         
@@ -313,7 +313,7 @@ jcvd {
         level = WARN
         
         loggers {
-            "com.spiralhouse.jcvd.test" = DEBUG
+            "io.spiralhouse.jcvd.test" = DEBUG
         }
         
         output {
@@ -375,7 +375,7 @@ jcvd {
         level = WARN
         
         loggers {
-            "com.spiralhouse.jcvd" = INFO
+            "io.spiralhouse.jcvd" = INFO
             "org.jetbrains.exposed" = ERROR
         }
         
