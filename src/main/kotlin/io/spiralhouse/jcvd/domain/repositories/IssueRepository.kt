@@ -1,10 +1,10 @@
-package com.spiralhouse.jcvd.domain.repositories
+package io.spiralhouse.jcvd.domain.repositories
 
-import com.spiralhouse.jcvd.domain.entities.Issue
-import com.spiralhouse.jcvd.domain.valueobjects.IssueId
-import com.spiralhouse.jcvd.domain.valueobjects.IssueStatus
-import com.spiralhouse.jcvd.domain.valueobjects.IssueType
-import com.spiralhouse.jcvd.domain.valueobjects.ProjectId
+import io.spiralhouse.jcvd.domain.entities.Issue
+import io.spiralhouse.jcvd.domain.valueobjects.IssueId
+import io.spiralhouse.jcvd.domain.valueobjects.IssueStatus
+import io.spiralhouse.jcvd.domain.valueobjects.IssueType
+import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
 
 interface IssueRepository {
     suspend fun findById(id: IssueId): Issue?

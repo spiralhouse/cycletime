@@ -1,4 +1,4 @@
-package com.spiralhouse.jcvd.infrastructure.database
+package io.spiralhouse.jcvd.infrastructure.database
 
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
@@ -13,7 +13,7 @@ object ProjectsTable : IdTable<String>("projects") {
     val status = varchar("status", 50).default("active")
     val createdAt = timestamp("created_at")
     val updatedAt = timestamp("updated_at")
-    
+
     override val primaryKey = PrimaryKey(id)
 }
 
@@ -30,9 +30,9 @@ object IssuesTable : IdTable<String>("issues") {
     val assigneeId = varchar("assignee_id", 100).nullable()
     val createdAt = timestamp("created_at")
     val updatedAt = timestamp("updated_at")
-    
+
     override val primaryKey = PrimaryKey(id)
-    
+
     init {
         index(false, projectId)
         index(false, parentId)
@@ -48,9 +48,9 @@ object IssueDependenciesTable : Table("issue_dependencies") {
     val blockedId = varchar("blocked_id", 100).references(IssuesTable.id)
     val dependencyType = varchar("dependency_type", 20).default("blocks")
     val createdAt = timestamp("created_at")
-    
+
     override val primaryKey = PrimaryKey(id)
-    
+
     init {
         uniqueIndex(blockerId, blockedId)
         index(false, blockerId)
@@ -61,9 +61,9 @@ object IssueDependenciesTable : Table("issue_dependencies") {
 object IssueLabelsTable : Table("issue_labels") {
     val issueId = varchar("issue_id", 100).references(IssuesTable.id)
     val label = varchar("label", 100)
-    
+
     override val primaryKey = PrimaryKey(issueId, label)
-    
+
     init {
         index(false, issueId)
         index(false, label)
@@ -78,9 +78,9 @@ object SessionStatesTable : IdTable<String>("session_states") {
     val lastActivity = timestamp("last_activity")
     val createdAt = timestamp("created_at")
     val updatedAt = timestamp("updated_at")
-    
+
     override val primaryKey = PrimaryKey(id)
-    
+
     init {
         uniqueIndex(sessionKey)
         index(false, lastActivity)

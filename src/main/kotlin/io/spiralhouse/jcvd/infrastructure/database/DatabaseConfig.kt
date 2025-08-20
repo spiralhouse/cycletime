@@ -1,4 +1,4 @@
-package com.spiralhouse.jcvd.infrastructure.database
+package io.spiralhouse.jcvd.infrastructure.database
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -19,10 +19,10 @@ class DatabaseConfig(
 ) {
     private val logger = LoggerFactory.getLogger(DatabaseConfig::class.java)
     private lateinit var dataSource: HikariDataSource
-    
+
     fun connect(): Database {
         logger.info("Connecting to database: $jdbcUrl")
-        
+
         val hikariConfig = HikariConfig().apply {
             jdbcUrl = this@DatabaseConfig.jdbcUrl
             driverClassName = driver
@@ -31,17 +31,17 @@ class DatabaseConfig(
             transactionIsolation = "TRANSACTION_SERIALIZABLE"
             validate()
         }
-        
+
         dataSource = HikariDataSource(hikariConfig)
-        
+
         val database = Database.connect(dataSource)
-        
+
         // Create tables if they don't exist
         transaction(database) {
             if (enableLogging) {
                 addLogger(StdOutSqlLogger)
             }
-            
+
             SchemaUtils.create(
                 ProjectsTable,
                 IssuesTable,
@@ -49,22 +49,22 @@ class DatabaseConfig(
                 IssueLabelsTable,
                 SessionStatesTable
             )
-            
+
             // Enable foreign keys for SQLite
             connection.prepareStatement("PRAGMA foreign_keys = ON", false).executeUpdate()
         }
-        
+
         logger.info("Database connected and initialized successfully")
         return database
     }
-    
+
     fun close() {
         if (::dataSource.isInitialized && !dataSource.isClosed) {
             dataSource.close()
             logger.info("Database connection closed")
         }
     }
-    
+
     suspend fun <T> dbQuery(block: suspend () -> T): T =
         newSuspendedTransaction(Dispatchers.IO) { block() }
 }
@@ -73,7 +73,7 @@ class DatabaseConfig(
 object DatabaseFactory {
     private var database: Database? = null
     private var config: DatabaseConfig? = null
-    
+
     fun init(
         jdbcUrl: String = "jdbc:sqlite:jcvd.db",
         driver: String = "org.sqlite.JDBC",
@@ -85,11 +85,11 @@ object DatabaseFactory {
             database = config!!.connect()
         }
     }
-    
+
     fun getInstance(): Database {
         return database ?: throw IllegalStateException("Database not initialized. Call DatabaseFactory.init() first.")
     }
-    
+
     fun close() {
         config?.close()
         database = null

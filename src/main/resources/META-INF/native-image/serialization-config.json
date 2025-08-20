@@ -1,6 +1,6 @@
 [
   {
-    "name": "com.spiralhouse.jcvd.domain.entities.SessionContext",
+    "name": "io.spiralhouse.jcvd.domain.entities.SessionContext",
     "allDeclaredFields": true,
     "allDeclaredConstructors": true
   },

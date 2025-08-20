@@ -1,4 +1,4 @@
-package com.spiralhouse.jcvd.domain.repositories
+package io.spiralhouse.jcvd.domain.repositories
 
 interface UnitOfWork {
     suspend fun <T> execute(block: suspend () -> T): T

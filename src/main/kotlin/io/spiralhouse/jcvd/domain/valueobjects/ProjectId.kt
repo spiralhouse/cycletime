@@ -1,4 +1,4 @@
-package com.spiralhouse.jcvd.domain.valueobjects
+package io.spiralhouse.jcvd.domain.valueobjects
 
 import kotlinx.serialization.Serializable
 import java.util.UUID
@@ -10,12 +10,12 @@ value class ProjectId(val value: String) {
         require(value.isNotBlank()) { "ProjectId cannot be empty" }
         require(value.length <= 100) { "ProjectId cannot exceed 100 characters" }
     }
-    
+
     companion object {
         fun generate(): ProjectId = ProjectId(UUID.randomUUID().toString())
-        
+
         fun fromString(value: String): ProjectId = ProjectId(value)
     }
-    
+
     override fun toString(): String = value
 }

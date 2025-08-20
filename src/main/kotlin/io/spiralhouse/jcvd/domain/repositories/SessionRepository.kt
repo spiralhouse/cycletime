@@ -1,8 +1,8 @@
-package com.spiralhouse.jcvd.domain.repositories
+package io.spiralhouse.jcvd.domain.repositories
 
-import com.spiralhouse.jcvd.domain.entities.Session
-import com.spiralhouse.jcvd.domain.valueobjects.ProjectId
-import com.spiralhouse.jcvd.domain.valueobjects.SessionKey
+import io.spiralhouse.jcvd.domain.entities.Session
+import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
+import io.spiralhouse.jcvd.domain.valueobjects.SessionKey
 import kotlinx.datetime.Instant
 
 interface SessionRepository {

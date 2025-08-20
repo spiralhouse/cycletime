@@ -1,4 +1,4 @@
-package com.spiralhouse.jcvd.mcp
+package io.spiralhouse.jcvd.mcp
 
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -32,18 +32,18 @@ fun Routing.configureMCP() {
             capabilities = MCPCapabilities()
         ))
     }
-    
+
     // SSE endpoint for MCP communication
     sse("/mcp/events") {
         send("data: {\"type\":\"connected\",\"message\":\"Connected to JCVD Kotlin MCP Server\"}\n\n")
-        
+
         // Keep connection alive with heartbeat
         while (true) {
             kotlinx.coroutines.delay(30000) // 30 seconds
             send("data: {\"type\":\"heartbeat\"}\n\n")
         }
     }
-    
+
     // MCP Resources endpoint
     get("/mcp/resources") {
         call.respond(mapOf(
@@ -66,7 +66,7 @@ fun Routing.configureMCP() {
             )
         ))
     }
-    
+
     // MCP Tools endpoint
     get("/mcp/tools") {
         call.respond(mapOf(

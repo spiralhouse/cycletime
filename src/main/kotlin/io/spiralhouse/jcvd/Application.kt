@@ -1,8 +1,8 @@
-package com.spiralhouse.jcvd
+package io.spiralhouse.jcvd
 
-import com.spiralhouse.jcvd.infrastructure.database.DatabaseFactory
-import com.spiralhouse.jcvd.infrastructure.di.appModule
-import com.spiralhouse.jcvd.mcp.configureMCP
+import io.spiralhouse.jcvd.infrastructure.database.DatabaseFactory
+import io.spiralhouse.jcvd.infrastructure.di.appModule
+import io.spiralhouse.jcvd.mcp.configureMCP
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory
 fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
     val host = System.getenv("HOST") ?: "0.0.0.0"
-    
+
     embeddedServer(
         CIO,
         port = port,
@@ -30,14 +30,14 @@ fun main() {
 
 fun Application.module() {
     val logger = LoggerFactory.getLogger("Application")
-    
+
     // Initialize database
     val jdbcUrl = System.getenv("DATABASE_URL") ?: "jdbc:sqlite:jcvd.db"
     val enableLogging = System.getenv("DATABASE_LOGGING")?.toBoolean() ?: false
-    
+
     logger.info("Initializing database with URL: $jdbcUrl")
     DatabaseFactory.init(jdbcUrl = jdbcUrl, enableLogging = enableLogging)
-    
+
     // Install features
     install(ContentNegotiation) {
         json(Json {
@@ -46,13 +46,13 @@ fun Application.module() {
             ignoreUnknownKeys = true
         })
     }
-    
+
     install(SSE)
-    
+
     install(Koin) {
         modules(appModule)
     }
-    
+
     // Configure routing
     routing {
         // Health check endpoint
@@ -63,16 +63,16 @@ fun Application.module() {
                 "version" to "0.1.0"
             ))
         }
-        
+
         // MCP Server endpoints
         configureMCP()
     }
-    
+
     // Shutdown hook
     environment.monitor.subscribe(ApplicationStopped) {
         logger.info("Application stopping, closing database connection")
         DatabaseFactory.close()
     }
-    
+
     logger.info("JCVD Kotlin server started successfully")
 }
