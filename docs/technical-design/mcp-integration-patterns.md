@@ -425,8 +425,8 @@ data class ResourceContent(
 ```kotlin
 // src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/resources/ProjectResource.kt
 
-import com.spiralhouse.jcvd.application.services.ProjectApplicationService
-import com.spiralhouse.jcvd.domain.valueobjects.ProjectId
+import io.spiralhouse.jcvd.application.services.ProjectApplicationService
+import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 

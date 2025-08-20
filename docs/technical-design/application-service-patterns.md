@@ -87,7 +87,7 @@ interface Validatable {
 ```kotlin
 // src/main/kotlin/com/spiralhouse/jcvd/application/commands/ProjectCommands.kt
 
-import com.spiralhouse.jcvd.domain.valueobjects.ProjectId
+import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
 import kotlinx.serialization.Serializable
 
 /**
@@ -151,19 +151,19 @@ data class ProjectSearchQuery(
 ```kotlin
 // src/main/kotlin/com/spiralhouse/jcvd/application/services/ProjectApplicationService.kt
 
-import com.spiralhouse.jcvd.domain.entities.Project
-import com.spiralhouse.jcvd.domain.repositories.ProjectRepository
-import com.spiralhouse.jcvd.domain.repositories.IssueRepository
-import com.spiralhouse.jcvd.domain.services.ProjectDomainService
-import com.spiralhouse.jcvd.domain.services.TimeProvider
-import com.spiralhouse.jcvd.domain.services.UnitOfWork
-import com.spiralhouse.jcvd.domain.valueobjects.ProjectId
-import com.spiralhouse.jcvd.domain.valueobjects.ProjectStatus
-import com.spiralhouse.jcvd.domain.exceptions.NotFoundException
-import com.spiralhouse.jcvd.domain.exceptions.DomainException
-import com.spiralhouse.jcvd.application.commands.*
-import com.spiralhouse.jcvd.application.queries.*
-import com.spiralhouse.jcvd.application.dto.*
+import io.spiralhouse.jcvd.domain.entities.Project
+import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
+import io.spiralhouse.jcvd.domain.repositories.IssueRepository
+import io.spiralhouse.jcvd.domain.services.ProjectDomainService
+import io.spiralhouse.jcvd.domain.services.TimeProvider
+import io.spiralhouse.jcvd.domain.services.UnitOfWork
+import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
+import io.spiralhouse.jcvd.domain.valueobjects.ProjectStatus
+import io.spiralhouse.jcvd.domain.exceptions.NotFoundException
+import io.spiralhouse.jcvd.domain.exceptions.DomainException
+import io.spiralhouse.jcvd.application.commands.*
+import io.spiralhouse.jcvd.application.queries.*
+import io.spiralhouse.jcvd.application.dto.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -349,13 +349,13 @@ private fun Project.toDto(): ProjectDto = ProjectDto(
 ```kotlin
 // src/main/kotlin/com/spiralhouse/jcvd/application/services/IssueApplicationService.kt
 
-import com.spiralhouse.jcvd.domain.entities.Issue
-import com.spiralhouse.jcvd.domain.repositories.IssueRepository
-import com.spiralhouse.jcvd.domain.repositories.ProjectRepository
-import com.spiralhouse.jcvd.domain.services.IssueDomainService
-import com.spiralhouse.jcvd.domain.services.TimeProvider
-import com.spiralhouse.jcvd.domain.services.UnitOfWork
-import com.spiralhouse.jcvd.domain.valueobjects.*
+import io.spiralhouse.jcvd.domain.entities.Issue
+import io.spiralhouse.jcvd.domain.repositories.IssueRepository
+import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
+import io.spiralhouse.jcvd.domain.services.IssueDomainService
+import io.spiralhouse.jcvd.domain.services.TimeProvider
+import io.spiralhouse.jcvd.domain.services.UnitOfWork
+import io.spiralhouse.jcvd.domain.valueobjects.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
@@ -571,12 +571,12 @@ private fun Issue.toDto(): IssueDto = IssueDto(
 ```kotlin
 // src/main/kotlin/com/spiralhouse/jcvd/application/services/WorkflowApplicationService.kt
 
-import com.spiralhouse.jcvd.domain.entities.Workflow
-import com.spiralhouse.jcvd.domain.repositories.WorkflowRepository
-import com.spiralhouse.jcvd.domain.repositories.ProjectRepository
-import com.spiralhouse.jcvd.domain.services.TimeProvider
-import com.spiralhouse.jcvd.domain.services.UnitOfWork
-import com.spiralhouse.jcvd.domain.valueobjects.*
+import io.spiralhouse.jcvd.domain.entities.Workflow
+import io.spiralhouse.jcvd.domain.repositories.WorkflowRepository
+import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
+import io.spiralhouse.jcvd.domain.services.TimeProvider
+import io.spiralhouse.jcvd.domain.services.UnitOfWork
+import io.spiralhouse.jcvd.domain.valueobjects.*
 
 /**
  * Application service for workflow management
@@ -679,11 +679,11 @@ private fun Workflow.toDto(): WorkflowDto = WorkflowDto(
 ```kotlin
 // src/main/kotlin/com/spiralhouse/jcvd/application/services/SessionApplicationService.kt
 
-import com.spiralhouse.jcvd.domain.entities.Session
-import com.spiralhouse.jcvd.domain.repositories.SessionRepository
-import com.spiralhouse.jcvd.domain.services.TimeProvider
-import com.spiralhouse.jcvd.domain.services.UnitOfWork
-import com.spiralhouse.jcvd.domain.valueobjects.SessionKey
+import io.spiralhouse.jcvd.domain.entities.Session
+import io.spiralhouse.jcvd.domain.repositories.SessionRepository
+import io.spiralhouse.jcvd.domain.services.TimeProvider
+import io.spiralhouse.jcvd.domain.services.UnitOfWork
+import io.spiralhouse.jcvd.domain.valueobjects.SessionKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.time.Duration

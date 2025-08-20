@@ -5,7 +5,7 @@
 This document defines the repository structure for JCVD, a **simplified data and
 context provider** for Claude Code project management. The system provides
 structured project data, dependency tracking, and cross-session continuity
-through embedded SQLite database and MCP Resource integration.
+through embedded database (currently SQLite, migrating to H2) and MCP Resource integration.
 
 ## Root Directory Structure
 
@@ -17,16 +17,28 @@ jcvd/                                    # Root project directory
 ├── PROJECT_STRUCTURE.md                 # This document
 ├── DEVELOPMENT_GUIDE.md                 # Development setup and workflow guide
 ├── SESSION_SUMMARY.md                   # Development session notes
-├── package.json                         # Project dependencies and scripts
-├── package-lock.json                    # Dependency lock file
-├── tsconfig.json                        # TypeScript configuration
-├── tsconfig.build.json                  # Production build configuration
-├── tsconfig.eslint.json                 # ESLint TypeScript configuration
-├── eslint.config.js                     # ESLint flat configuration
-├── vitest.config.ts                     # Vitest test configuration
+├── TEST_PLAN_PARALLEL_TDD.md           # Test planning documentation
+├── build.gradle.kts                     # Gradle build configuration
+├── settings.gradle.kts                  # Gradle project settings
+├── gradle.properties                    # Gradle properties
+├── gradlew                              # Gradle wrapper script (Unix)
+├── gradlew.bat                          # Gradle wrapper script (Windows)
+├── Dockerfile                           # Docker container definition
+├── jcvd.db                             # SQLite database file (auto-created)
 ├── .gitignore                           # Git ignore patterns
-├── .nvmrc                               # Node version specification
 ├── .editorconfig                        # Editor configuration
+│
+├── gradle/                              # Gradle wrapper and dependencies
+│   ├── libs.versions.toml              # Centralized dependency versions
+│   └── wrapper/                        # Gradle wrapper JAR and properties
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
+│
+├── config/                              # Configuration files
+│   ├── detekt/                         # Static code analysis
+│   │   └── detekt.yml
+│   └── dependency-check/               # Security vulnerability checking
+│       └── suppressions.xml
 │
 ├── docs/                                # Documentation
 │   ├── ARCHITECTURE.md                  # System architecture and principles
@@ -35,209 +47,308 @@ jcvd/                                    # Root project directory
 │   ├── ONBOARDING.md                   # Project integration patterns
 │   ├── LIMITATIONS.md                  # Scope boundaries and restrictions
 │   ├── MCP_RESOURCES.md                # MCP Resources specification
+│   ├── SESSION_MANAGEMENT.md           # Session management documentation
+│   ├── REPOSITORY_USAGE.md             # Repository pattern usage
+│   ├── TDD_WORKFLOW.md                 # Test-driven development guide
+│   ├── PARALLEL_DEVELOPMENT.md         # Parallel development workflows
 │   └── technical-design/               # Technical design documents
-│       └── SPI-290-mcp-resource-integration.md  # Example technical design
+│       ├── application-service-patterns.md
+│       ├── configuration-management.md
+│       ├── dependency-injection-patterns.md
+│       ├── domain-entities.md
+│       ├── mcp-integration-patterns.md
+│       ├── repository-pattern.md
+│       └── testing-architecture-tdd.md
 │
 ├── src/                                 # Source code
-│   ├── index.ts                        # Main entry point
-│   ├── cli.ts                          # CLI interface
-│   ├── mcp-server.ts                   # MCP server implementation
-│   ├── sqlite-store.ts                 # SQLite database layer
-│   ├── jcvd-simple.ts                  # Core JCVD functionality
-│   ├── types.ts                        # Main type definitions
-│   ├── types/                          # TypeScript type definitions
-│   │   └── index.ts                    # Consolidated type exports
-│   └── utils/                          # Utility functions
-│       ├── index.ts                    # Utility exports
-│       └── logger.ts                   # Logging utilities
-│
-├── tests/                              # Test suites
-│   ├── setup.ts                        # Test setup and globals
-│   ├── fixtures/                       # Test fixtures and data
-│   └── integration/                    # Integration tests
-│       └── jcvd-simple.test.ts        # Core functionality tests
+│   ├── main/                          # Main source code
+│   │   ├── kotlin/io/spiralhouse/jcvd/ # Kotlin source files
+│   │   │   ├── Application.kt         # Main entry point and Ktor server
+│   │   │   ├── domain/                # Domain layer (pure business logic)
+│   │   │   │   ├── entities/         # Domain entities
+│   │   │   │   │   ├── Issue.kt
+│   │   │   │   │   ├── Project.kt
+│   │   │   │   │   └── Session.kt
+│   │   │   │   ├── exceptions/       # Domain exceptions
+│   │   │   │   │   └── DomainException.kt
+│   │   │   │   ├── repositories/     # Repository interfaces
+│   │   │   │   │   ├── IssueRepository.kt
+│   │   │   │   │   ├── ProjectRepository.kt
+│   │   │   │   │   ├── SessionRepository.kt
+│   │   │   │   │   └── UnitOfWork.kt
+│   │   │   │   ├── services/         # Domain services
+│   │   │   │   │   └── TimeProvider.kt
+│   │   │   │   └── valueobjects/     # Value objects
+│   │   │   │       ├── IssueId.kt
+│   │   │   │       ├── IssueStatus.kt
+│   │   │   │       ├── IssueType.kt
+│   │   │   │       ├── ProjectId.kt
+│   │   │   │       ├── ProjectStatus.kt
+│   │   │   │       └── SessionKey.kt
+│   │   │   ├── infrastructure/        # Infrastructure layer
+│   │   │   │   ├── database/         # Database configuration
+│   │   │   │   │   ├── DatabaseConfig.kt
+│   │   │   │   │   └── Tables.kt     # Exposed ORM table definitions
+│   │   │   │   ├── di/               # Dependency injection
+│   │   │   │   │   └── KoinModules.kt
+│   │   │   │   └── persistence/      # Repository implementations
+│   │   │   │       ├── ExposedIssueRepository.kt
+│   │   │   │       ├── ExposedProjectRepository.kt
+│   │   │   │       └── ExposedSessionRepository.kt
+│   │   │   └── mcp/                   # MCP server integration
+│   │   │       └── MCPServer.kt      # MCP protocol implementation
+│   │   └── resources/                 # Resources
+│   │       ├── application.conf       # Ktor configuration
+│   │       └── META-INF/              # Metadata
+│   │           └── native-image/      # GraalVM native image configs
+│   │               ├── native-image.properties
+│   │               ├── reflect-config.json
+│   │               ├── resource-config.json
+│   │               └── serialization-config.json
+│   └── test/                          # Test source code
+│       ├── kotlin/io/spiralhouse/jcvd/ # Test files
+│       └── resources/                 # Test resources
 │
 ├── examples/                           # Example configurations
-│   ├── README.md                       # Examples overview
 │   └── quick-start/                    # Getting started examples
 │       └── basic-workflow.json         # Basic workflow example
 │
-└── dist/                               # Build output (gitignored)
-    └── [compiled output]               # TypeScript compilation results
+├── build/                              # Build output (gitignored)
+│   ├── classes/                       # Compiled classes
+│   ├── libs/                          # Built JAR files
+│   └── reports/                       # Test and analysis reports
+│
+└── .claude/                            # Claude Code specific configuration
+    └── shared/                         # Shared configuration files
+        ├── development-commands.md
+        ├── git-conventions.md
+        ├── linear-reference.md
+        ├── parallel-development-detection.md
+        └── testing-standards.md
 ```
 
 ## Architecture Principles
 
-### Simplicity First
+### Domain-Driven Design
 
-- **Data and context provider**, not orchestration manager
-- **Claude Code integration** through MCP Resources and Tools
-- **Simple CRUD operations** and basic dependency tracking
-- **SQLite-first approach** with embedded database
+- **Rich domain models** with business logic encapsulation
+- **Layered architecture** with clear separation of concerns
+- **Repository pattern** for data access abstraction
+- **Value objects** for type safety and validation
+
+### Technology Stack
+
+- **Kotlin/JVM 21** as primary language
+- **Ktor 3.2.0** for asynchronous web framework
+- **Exposed ORM** for type-safe database operations
+- **SQLite** (current) / **H2** (future) embedded database
+- **Koin 4.0** for dependency injection (migrating to Ktor native DI)
+- **GraalVM** for native image compilation
 
 ### Core Components
 
-1. **MCP Server** (`src/mcp-server.ts`) - Integration with Claude Code via Model
-   Context Protocol
-2. **SQLite Store** (`src/sqlite-store.ts`) - Embedded database for project data
-   persistence
-3. **JCVD Core** (`src/jcvd-simple.ts`) - Main functionality and context
-   provision
-4. **CLI Interface** (`src/cli.ts`) - Command-line interface for direct usage
-5. **Type System** (`src/types/`) - TypeScript definitions for data models
+1. **Domain Layer** (`domain/`) - Pure business logic with no external dependencies
+2. **Infrastructure Layer** (`infrastructure/`) - Technical implementations
+3. **MCP Server** (`mcp/`) - Integration with Claude Code via Model Context Protocol
+4. **Application Layer** (future) - Use case orchestration when needed
 
-## File Naming Conventions
+## Package and File Naming Conventions
 
-### TypeScript Files
+### Kotlin Files
 
-- **kebab-case** for modules: `mcp-server.ts`, `sqlite-store.ts`,
-  `jcvd-simple.ts`
-- **camelCase** for utilities: `logger.ts`
-- **PascalCase** for classes within files
+- **PascalCase** for classes and interfaces: `Project.kt`, `IssueRepository.kt`
+- **PascalCase** for value objects: `ProjectId.kt`, `IssueStatus.kt`
+- **Package names** in lowercase: `io.spiralhouse.jcvd.domain.entities`
 
 ### Configuration Files
 
-- **kebab-case** for config files: `eslint.config.js`, `vitest.config.ts`
-- **dot notation** for TypeScript configs: `tsconfig.json`,
-  `tsconfig.build.json`
+- **kebab-case** for YAML/TOML: `detekt.yml`, `libs.versions.toml`
+- **dot notation** for properties: `gradle.properties`, `application.conf`
 
 ### Test Files
 
-- **Same as source + .test.ts**: `jcvd-simple.test.ts`
+- **Same as source + Test suffix**: `ProjectTest.kt`, `SessionManagerIntegrationTest.kt`
+- **Package mirrors source**: `io.spiralhouse.jcvd.domain.entities` in test folder
 
 ### Documentation Files
 
 - **SCREAMING_SNAKE_CASE** for root docs: `README.md`, `ARCHITECTURE.md`
-- **[LINEAR-ID]-[short-name].md** for technical designs:
-  `SPI-290-mcp-resource-integration.md`
+- **kebab-case** for technical designs: `repository-pattern.md`, `mcp-integration-patterns.md`
 
 ## Module Organization Principles
 
-### 1. Flat Structure
+### 1. Domain-Driven Structure
 
-- **Simple hierarchy** with minimal nesting to reduce complexity
-- **Related functionality** grouped in logical modules
+- **Domain layer** contains all business logic and rules
+- **Infrastructure layer** provides technical implementations
+- **Clear boundaries** between layers with dependency inversion
 
-### 2. Clear Separation of Concerns
+### 2. Package Structure
 
-- **MCP Integration**: Protocol-specific code for Claude Code integration
-- **Database Layer**: SQLite operations and data persistence
-- **Core Logic**: Business logic and context provision
-- **CLI Interface**: Command-line interaction
-- **Types**: TypeScript definitions and interfaces
-
-### 3. Context Provision Focus
-
-- **MCP Resources**: Expose project data to Claude Code
-- **CRUD Operations**: Basic create, read, update, delete functionality
-- **Session State**: Cross-session continuity and state management
-
-## Import Path Strategy
-
-### Direct Imports
-
-Simple relative imports for the flat structure:
-
-```typescript
-// Within src/ directory
-import { JCVDSimple } from './jcvd-simple';
-import { SQLiteStore } from './sqlite-store';
-import { logger } from './utils/logger';
+```
+io.spiralhouse.jcvd/
+├── domain/           # Core business logic (no external dependencies)
+│   ├── entities/     # Aggregate roots and entities
+│   ├── valueobjects/ # Immutable value objects
+│   ├── repositories/ # Repository interfaces
+│   ├── services/     # Domain services
+│   └── exceptions/   # Domain-specific exceptions
+├── application/      # Application services (future)
+│   ├── commands/     # Command DTOs
+│   └── services/     # Use case orchestration
+├── infrastructure/   # Technical implementations
+│   ├── database/     # Database configuration
+│   ├── persistence/  # Repository implementations
+│   └── di/          # Dependency injection
+└── mcp/             # MCP server integration
+    ├── resources/    # MCP Resources
+    └── tools/       # MCP Tools
 ```
 
-### Type Imports
+### 3. Dependency Rules
 
-Explicit type-only imports for better tree-shaking:
+- **Domain layer** has no dependencies on other layers
+- **Infrastructure layer** depends on domain layer
+- **MCP layer** depends on domain and infrastructure layers
+- **Dependency injection** wires everything together
 
-```typescript
-import type { ProjectData, IssueData } from './types';
+## Import Strategy
+
+### Standard Imports
+
+```kotlin
+// Domain imports
+import io.spiralhouse.jcvd.domain.entities.Project
+import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
+import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
+
+// Infrastructure imports
+import io.spiralhouse.jcvd.infrastructure.persistence.ExposedProjectRepository
+import io.spiralhouse.jcvd.infrastructure.database.Tables
+
+// Kotlin/Java imports
+import kotlinx.coroutines.runBlocking
+import java.time.Instant
+```
+
+### Dependency Injection
+
+```kotlin
+// Using Koin (current)
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.module
+
+// Future Ktor native DI
+import io.ktor.server.application.*
+import io.ktor.server.di.*
 ```
 
 ## Development Workflow Integration
 
-### Technical Design Process
+### Build and Run
 
-- **Epic-level features** require technical design documents in
-  `docs/technical-design/`
-- **Naming convention**: `[LINEAR-ID]-[short-name].md`
-- **Architecture alignment** with existing documentation required
+```bash
+# Build the project
+./gradlew build
 
-### Branch Strategy
+# Run the application
+./gradlew run
 
-- **Feature branches**: `feat/[linear-id]-[short-name]`
-- **Technical design PRs** before implementation
-- **Linear issue tracking** for progress management
+# Build fat JAR
+./gradlew buildFatJar
 
-## Configuration Management
+# Build native image
+./gradlew nativeCompile
+```
 
-### Environment Configuration
+### Testing
 
-- **.env files** in project root (not committed)
-- **Configuration loading** through environment variables
-- **Default values** in source code
+```bash
+# Run all tests
+./gradlew test
 
-### Build Configuration
+# Run with coverage
+./gradlew koverHtmlReport
 
-- **Development**: In-memory compilation via `tsx`
-- **Production**: Compiled to `dist/` directory
-- **Testing**: Vitest configuration for unit and integration tests
+# Static analysis
+./gradlew detekt
+```
+
+### Docker Deployment
+
+```bash
+# Build Docker image
+docker build -t jcvd-kotlin .
+
+# Run container
+docker run -p 8080:8080 jcvd-kotlin
+```
 
 ## Database Architecture
 
-### SQLite-First Approach
+### Current: SQLite with Exposed ORM
 
-- **Embedded database** for offline operation
-- **Linear-inspired schema** for easy cloud provider migration
-- **Migration support** for schema evolution
-- **Performance optimization** with indexes
+- **Embedded database** for zero-dependency operation
+- **Exposed DSL** for type-safe queries
+- **HikariCP** connection pooling
+- **File-based persistence** at `jcvd.db`
+
+### Future: H2 Database (SPI-439)
+
+- **Better JVM integration** with native JDBC
+- **Improved performance** for complex queries
+- **In-memory option** for testing
+- **PostgreSQL compatibility mode** for cloud migration
 
 ### Data Models
 
 - **Projects**: Basic project metadata and configuration
-- **Issues**: Epic → Story → Subtask hierarchy
+- **Issues**: Epic → Story → Subtask hierarchy  
+- **Sessions**: Cross-session state management
 - **Dependencies**: Simple blocking relationships
 - **Workflow States**: Status tracking for issues
 
 ## Key Design Decisions
 
-### 1. Simplified Architecture
+### 1. Kotlin/JVM Migration
 
-The current structure reflects a **dramatic simplification** from earlier
-complex designs:
+The migration from TypeScript to Kotlin provides:
 
-- **Removed**: Multi-agent orchestration, complex workflow engines
-- **Kept**: Data provision, context management, MCP integration
-- **Focus**: Simple CRUD operations and cross-session state
+- **Better type safety** with null safety and sealed classes
+- **Native JVM performance** and ecosystem integration
+- **Coroutines** for efficient async operations
+- **Domain-Driven Design** patterns natural in Kotlin
 
-### 2. MCP Integration
+### 2. Exposed ORM Choice
 
-- **Claude Code native integration** through Model Context Protocol
-- **Resource exposure** for project context
-- **Tool provision** for basic operations
-- **No agent coordination** - leverages Claude Code's existing capabilities
+- **Type-safe DSL** prevents SQL injection and runtime errors
+- **Kotlin-first design** with excellent IDE support
+- **Lightweight** compared to Hibernate/JPA
+- **Good fit** for domain-driven design patterns
 
-### 3. SQLite Embedded Database
+### 3. Embedded Database Strategy
 
 - **Zero external dependencies** for core functionality
 - **High performance** for typical project sizes
 - **Complete offline operation**
-- **Easy migration path** to cloud providers when needed
+- **Easy migration path** to cloud databases when needed
 
-### 4. Context Provision Over Automation
+### 4. MCP Integration Approach
 
-- **Expose structured data** for Claude Code analysis
-- **Manual workflows** with context support
-- **Human-driven decisions** supported by data access
-- **No complex automation** or intelligent analysis
+- **Native integration** with Claude Code ecosystem
+- **Resource exposure** for project context
+- **Tool provision** for basic operations
+- **No complex orchestration** - leverages Claude Code's capabilities
 
 ## Scope Boundaries
 
 ### ✅ What JCVD Does
 
-- **Data Storage**: SQLite database for project data
+- **Data Storage**: Embedded database for project data
 - **Context Provision**: MCP Resources exposing project information
-- **Basic Operations**: CRUD operations for issues and projects
+- **Domain Logic**: Rich business rules and invariants
 - **State Persistence**: Cross-session continuity
+- **Type Safety**: Strong typing throughout the application
 
 ### ❌ What JCVD Does NOT Do
 
@@ -250,31 +361,52 @@ complex designs:
 
 ### Test Organization
 
-- **Unit tests** for individual modules
-- **Integration tests** for end-to-end workflows
-- **Fixtures** for consistent test data
-- **Setup utilities** for test environment
+```
+src/test/kotlin/io/spiralhouse/jcvd/
+├── unit/           # Fast, isolated unit tests
+├── integration/    # Integration tests with real components
+├── system/         # End-to-end system tests
+├── fixtures/       # Test data and utilities
+└── utils/          # Test helpers and mocks
+```
+
+### Testing Frameworks
+
+- **Kotest** for BDD-style testing
+- **MockK** for mocking
+- **Ktor Test Host** for HTTP testing
+- **Kotlinx Coroutines Test** for async testing
 
 ### Coverage Goals
 
-- **>80% test coverage** for core functionality
+- **>85% test coverage** for domain layer
+- **Integration tests** for all repository implementations
 - **Error scenario testing** for robust error handling
-- **MCP integration testing** for Claude Code compatibility
+- **MCP protocol testing** for Claude Code compatibility
 
 ## Future Growth Patterns
 
 ### Provider Expansion
 
-- **Additional providers** (Linear, GitHub Issues) as separate modules
+- **H2 Database** (SPI-439) for better JVM integration
+- **Linear Provider** for team collaboration
+- **GitHub Issues** for OSS projects
 - **Provider interface** for consistent API
-- **Data migration tools** for switching between providers
+
+### Architecture Evolution
+
+- **Application Services** layer when use cases grow complex
+- **CQRS pattern** if read/write patterns diverge
+- **Event sourcing** for audit trails if needed
+- **Hexagonal architecture** fully realized as complexity grows
 
 ### MCP Resources Expansion
 
 - **New resource types** as demand requires
 - **Enhanced context provision** without complex analysis
 - **Performance optimizations** for larger projects
+- **Streaming updates** via Server-Sent Events
 
 This structure supports JCVD's vision as a **focused, reliable data and context
-provider** that enhances Claude Code's capabilities without competing with them
-or introducing unnecessary complexity.
+provider** built with Domain-Driven Design principles, providing a solid foundation
+for future growth while maintaining simplicity and type safety through Kotlin/JVM.

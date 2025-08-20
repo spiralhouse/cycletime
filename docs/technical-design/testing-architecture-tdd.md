@@ -83,7 +83,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.assertions.throwables.shouldThrow
-import com.spiralhouse.jcvd.testing.mocks.MockTimeProvider
+import io.spiralhouse.jcvd.testing.mocks.MockTimeProvider
 import java.time.Instant
 
 class ProjectTest : DescribeSpec({
@@ -280,7 +280,7 @@ import io.ktor.server.testing.*
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.serialization.json.Json
-import com.spiralhouse.jcvd.testing.fixtures.TestFixtures
+import io.spiralhouse.jcvd.testing.fixtures.TestFixtures
 
 class ProjectApiTest : DescribeSpec({
     
@@ -551,10 +551,10 @@ class H2ProjectRepositoryTest : DescribeSpec({
 ```kotlin
 // src/test/kotlin/com/spiralhouse/jcvd/testing/builders/ProjectBuilder.kt
 
-import com.spiralhouse.jcvd.domain.entities.Project
-import com.spiralhouse.jcvd.domain.valueobjects.ProjectId
-import com.spiralhouse.jcvd.domain.valueobjects.ProjectStatus
-import com.spiralhouse.jcvd.testing.mocks.MockTimeProvider
+import io.spiralhouse.jcvd.domain.entities.Project
+import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
+import io.spiralhouse.jcvd.domain.valueobjects.ProjectStatus
+import io.spiralhouse.jcvd.testing.mocks.MockTimeProvider
 import java.time.Instant
 
 /**
@@ -606,7 +606,7 @@ val testProject = ProjectBuilder()
 // src/test/kotlin/com/spiralhouse/jcvd/testing/fixtures/TestFixtures.kt
 
 import io.ktor.server.testing.*
-import com.spiralhouse.jcvd.testing.mocks.*
+import io.spiralhouse.jcvd.testing.mocks.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -725,7 +725,7 @@ class IssueHierarchyTest : DescribeSpec({
 ```kotlin
 // src/test/kotlin/com/spiralhouse/jcvd/testing/mocks/MockTimeProvider.kt
 
-import com.spiralhouse.jcvd.domain.services.TimeProvider
+import io.spiralhouse.jcvd.domain.services.TimeProvider
 import java.time.Duration
 import java.time.Instant
 
@@ -764,9 +764,9 @@ class MockTimeProvider(
 ```kotlin
 // src/test/kotlin/com/spiralhouse/jcvd/testing/mocks/MockProjectRepository.kt
 
-import com.spiralhouse.jcvd.domain.entities.Project
-import com.spiralhouse.jcvd.domain.repositories.ProjectRepository
-import com.spiralhouse.jcvd.domain.valueobjects.ProjectId
+import io.spiralhouse.jcvd.domain.entities.Project
+import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
+import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
 
 class MockProjectRepository : ProjectRepository {
     private val storage = mutableMapOf<ProjectId, Project>()
@@ -856,7 +856,7 @@ object ProjectConfig : AbstractProjectConfig() {
 
     <logger name="org.jetbrains.exposed" level="WARN"/>
     <logger name="io.ktor" level="INFO"/>
-    <logger name="com.spiralhouse.jcvd" level="DEBUG"/>
+    <logger name="io.spiralhouse.jcvd" level="DEBUG"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
@@ -943,7 +943,7 @@ tasks.jacocoTestCoverageVerification {
         
         rule {
             element = "CLASS"
-            includes = listOf("com.spiralhouse.jcvd.domain.*")
+            includes = listOf("io.spiralhouse.jcvd.domain.*")
             limit {
                 minimum = "0.95".toBigDecimal() // 95% for domain
             }

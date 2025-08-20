@@ -542,7 +542,7 @@ external system integrations.
 ```kotlin
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import com.spiralhouse.jcvd.infrastructure.database.Projects
+import io.spiralhouse.jcvd.infrastructure.database.Projects
 
 class SqliteProjectRepository(  // TODO: Migrate to H2ProjectRepository in SPI-439
     private val database: Database,
