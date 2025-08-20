@@ -2,6 +2,7 @@ package io.spiralhouse.jcvd.infrastructure.persistence
 
 import io.spiralhouse.jcvd.domain.entities.Session
 import io.spiralhouse.jcvd.domain.entities.SessionContext
+import io.spiralhouse.jcvd.domain.entities.SessionSnapshot
 import io.spiralhouse.jcvd.domain.repositories.SessionRepository
 import io.spiralhouse.jcvd.domain.services.SystemTimeProvider
 import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
@@ -102,15 +103,16 @@ class ExposedSessionRepository : SessionRepository {
             json.decodeFromString<SessionContext>(contextJson)
         }
 
-        return Session(
+        val snapshot = SessionSnapshot(
             sessionKey = SessionKey(this[SessionStatesTable.sessionKey]),
-            _projectId = this[SessionStatesTable.projectId]?.let { ProjectId(it) },
-            _currentContext = context,
-            _lastActivity = this[SessionStatesTable.lastActivity],
+            projectId = this[SessionStatesTable.projectId]?.let { ProjectId(it) },
+            currentContext = context,
+            lastActivity = this[SessionStatesTable.lastActivity],
             createdAt = this[SessionStatesTable.createdAt],
-            updatedAt = this[SessionStatesTable.updatedAt],
-            timeProvider = SystemTimeProvider()
+            updatedAt = this[SessionStatesTable.updatedAt]
         )
+        
+        return Session.fromSnapshot(snapshot, SystemTimeProvider())
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
