@@ -49,9 +49,9 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-core:5.8.0")
     testImplementation("io.kotest:kotest-property:5.8.0")
     
-    // Ktor testing
-    testImplementation("io.ktor:ktor-server-test-host:3.2.0")
-    testImplementation("io.ktor:ktor-client-content-negotiation:3.2.0")
+    // Ktor testing (requires 3.2.3+ for ktor-server-di)
+    testImplementation("io.ktor:ktor-server-test-host:3.2.3")
+    testImplementation("io.ktor:ktor-client-content-negotiation:3.2.3")
     
     // Mocking
     testImplementation("io.mockk:mockk:1.13.9")
@@ -268,6 +268,64 @@ class ProjectIdTest : DescribeSpec({
 
 ## Integration Testing with Ktor testApplication
 
+### Testing with Ktor Native DI
+
+```kotlin
+// src/test/kotlin/com/spiralhouse/jcvd/infrastructure/di/DIIntegrationTest.kt
+
+import io.ktor.server.testing.*
+import io.ktor.server.plugins.di.*
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
+
+class DIIntegrationTest : DescribeSpec({
+    
+    describe("Ktor Native DI") {
+        
+        it("should resolve dependencies using property delegation") {
+            testApplication {
+                application {
+                    configureDependencies() // Setup Ktor DI
+                }
+                
+                // Use property delegation (recommended)
+                val timeProvider: TimeProvider by application.dependencies
+                val projectRepo: ProjectRepository by application.dependencies
+                
+                timeProvider.shouldBeInstanceOf<SystemTimeProvider>()
+                projectRepo.shouldBeInstanceOf<ExposedProjectRepository>()
+            }
+        }
+        
+        it("should resolve dependencies using instance() method") {
+            testApplication {
+                application {
+                    configureDependencies()
+                }
+                
+                // Direct resolution when needed
+                val timeProvider = application.dependencies.instance<TimeProvider>()
+                timeProvider.shouldBeInstanceOf<SystemTimeProvider>()
+            }
+        }
+        
+        it("should maintain singleton instances") {
+            testApplication {
+                application {
+                    configureDependencies()
+                }
+                
+                val repo1: ProjectRepository by application.dependencies
+                val repo2: ProjectRepository by application.dependencies
+                
+                repo1 shouldBe repo2 // Same instance
+            }
+        }
+    }
+})
+```
+
 ### API Endpoint Testing
 
 ```kotlin
@@ -277,6 +335,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import io.ktor.server.plugins.di.*
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.serialization.json.Json
@@ -289,9 +348,9 @@ class ProjectApiTest : DescribeSpec({
         describe("POST /api/projects") {
             it("should create project with valid data") {
                 testApplication {
-                    // Configure DI with test overrides
+                    // Configure DI with Ktor native DI
                     application {
-                        configureDependencies()
+                        configureDependencies() // Setup Ktor's native DI
                         configureRouting()
                     }
                     
@@ -614,25 +673,26 @@ import org.jetbrains.exposed.sql.transactions.transaction
 object TestFixtures {
     
     /**
-     * Setup test application with in-memory database
+     * Setup test application with in-memory database using Ktor native DI
      */
     fun testApplication(
         mockTimeProvider: TimeProvider? = null,
         block: suspend ApplicationTestBuilder.() -> Unit
     ) = testApplication {
         application {
-            // Configure with test DI
+            // Configure with Ktor native DI
             configureDependencies()
             
-            // Override with mocks if provided
+            // Override with mocks if provided (Ktor DI pattern)
             mockTimeProvider?.let {
-                dependencies.import(DIModule("test") {
-                    single<TimeProvider>(override = true) { it }
-                })
+                // Re-configure dependencies with override
+                dependencies {
+                    provide<TimeProvider> { mockTimeProvider }
+                }
             }
             
-            // Initialize test database
-            val db = dependencies.get<Database>()
+            // Initialize test database using Ktor DI
+            val db: Database by application.dependencies
             transaction(db) {
                 SchemaUtils.create(Projects, Issues, Workflows, Sessions)
             }
@@ -651,7 +711,8 @@ object TestFixtures {
         name: String = "Test Project",
         block: suspend ApplicationTestBuilder.(projectId: String) -> Unit
     ) {
-        val projectService = application.dependencies.get<ProjectApplicationService>()
+        // Use Ktor DI property delegation
+        val projectService: ProjectApplicationService by application.dependencies
         
         val project = projectService.createProject(
             CreateProjectCommand(name, "Test Description")
