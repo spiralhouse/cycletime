@@ -18,35 +18,35 @@ Retrofitting testability is expensive and error-prone.
 
 **Required for all services:**
 
-```typescript
+```kotlin
 // ✅ GOOD - Testable design
 interface TimeProvider {
-  now(): Date;
+    fun now(): Instant
 }
 
 interface DatabaseProvider {
-  getConnection(): Database;
+    fun getConnection(): Database
 }
 
-class SessionManager {
-  constructor(
-    private sessionService: SessionApplicationService,
-    private timeProvider: TimeProvider,
-    private dbProvider: DatabaseProvider,
-    config?: SessionConfig
-  ) {}
+class SessionManager(
+    private val sessionService: SessionApplicationService,
+    private val timeProvider: TimeProvider,
+    private val dbProvider: DatabaseProvider,
+    private val config: SessionConfig = SessionConfig()
+) {
+    // Business logic with injected dependencies
 }
 ```
 
 **Never do:**
 
-```typescript
+```kotlin
 // ❌ BAD - Untestable design
 class SessionManager {
-  private isExpired(session: Session): boolean {
-    const age = Date.now() - session.lastActivity.getTime(); // Hard-coded time dependency
-    return age > this.maxAge;
-  }
+    private fun isExpired(session: Session): Boolean {
+        val age = Instant.now().toEpochMilli() - session.lastActivity.toEpochMilli() // Hard-coded time dependency
+        return age > maxAge
+    }
 }
 ```
 
@@ -69,54 +69,62 @@ class SessionManager {
 
 ### Unit Tests - Business Logic Only
 
-```typescript
+```kotlin
 // ✅ Fast, isolated, no real time or database
-describe('SessionManager Unit Tests', () => {
-  let mockTimeProvider: MockTimeProvider;
-  let mockSessionService: MockSessionApplicationService;
+class SessionManagerTest : StringSpec({
+    lateinit var mockTimeProvider: MockTimeProvider
+    lateinit var mockSessionService: MockSessionApplicationService
+    lateinit var mockDbProvider: MockDatabaseProvider
 
-  beforeEach(() => {
-    mockTimeProvider = new MockTimeProvider();
-    mockSessionService = new MockSessionApplicationService();
-  });
+    beforeEach {
+        mockTimeProvider = MockTimeProvider()
+        mockSessionService = MockSessionApplicationService()
+        mockDbProvider = MockDatabaseProvider()
+    }
 
-  it('should expire sessions when maxAge exceeded', () => {
-    const sessionManager = new SessionManager(
-      mockSessionService,
-      mockTimeProvider,
-      mockDbProvider,
-      { maxAge: 1000 }
-    );
+    "should expire sessions when maxAge exceeded" {
+        val sessionManager = SessionManager(
+            mockSessionService,
+            mockTimeProvider,
+            mockDbProvider,
+            SessionConfig(maxAge = Duration.ofSeconds(1))
+        )
 
-    mockTimeProvider.setTime('2024-01-01T00:00:00Z');
-    const session = sessionManager.createSession();
+        mockTimeProvider.setTime(Instant.parse("2024-01-01T00:00:00Z"))
+        val session = sessionManager.createSession()
 
-    mockTimeProvider.advance(1001); // No setTimeout needed
+        mockTimeProvider.advance(Duration.ofMillis(1001)) // No delay needed
 
-    expect(sessionManager.getSession(session)).toBeNull();
-  });
-});
+        sessionManager.getSession(session.id) shouldBe null
+    }
+})
 ```
 
 ### Integration Tests - Real Infrastructure
 
-```typescript
+```kotlin
 // ✅ Real database, controlled environment
-describe('SessionManager Integration Tests', () => {
-  let db: Database;
-  let sessionManager: SessionManager;
+class SessionManagerIntegrationTest : StringSpec({
+    lateinit var database: Database
+    lateinit var sessionManager: SessionManager
 
-  beforeEach(() => {
-    db = new Database(':memory:'); // Fresh DB per test
-    runMigrations(db);
-    sessionManager = createSessionManager(db, testConfig);
-  });
+    beforeEach {
+        database = Database.connect("jdbc:sqlite::memory:") // Fresh DB per test
+        transaction(database) {
+            SchemaUtils.create(SessionStates, Projects, Issues)
+        }
+        sessionManager = createSessionManager(database, testConfig)
+    }
 
-  afterEach(() => {
-    sessionManager.shutdown();
-    db.close();
-  });
-});
+    afterEach {
+        sessionManager.shutdown()
+        TransactionManager.closeAndUnregister(database)
+    }
+
+    "should persist and retrieve sessions" {
+        // Test with real database operations
+    }
+})
 ```
 
 ### System Tests - Production Scenarios
@@ -138,97 +146,99 @@ describe('SessionManager System Tests', () => {
 
 ### ❌ Time-Dependent Tests
 
-```typescript
+```kotlin
 // ❌ BAD - Flaky, slow, unreliable
-it('should expire session after timeout', async () => {
-  const session = await sessionManager.createSession();
-  await new Promise(resolve => setTimeout(resolve, 1100)); // Flaky!
-  expect(await sessionManager.getSession(session)).toBeNull();
-});
+"should expire session after timeout" {
+    val session = runBlocking { sessionManager.createSession() }
+    delay(1100) // Flaky! Depends on real time
+    runBlocking { sessionManager.getSession(session.id) } shouldBe null
+}
 ```
 
 ### ❌ Mixed Concerns
 
-```typescript
+```kotlin
 // ❌ BAD - Testing everything at once
-it('should create session and handle expiration and database cleanup', async () => {
-  // Testing business logic + database + timing + cleanup all together
-});
+"should create session and handle expiration and database cleanup" {
+    // Testing business logic + database + timing + cleanup all together
+    // This violates single responsibility principle for tests
+}
 ```
 
 ### ❌ Shared Mutable State
 
-```typescript
+```kotlin
 // ❌ BAD - Tests affect each other
-describe('SessionManager', () => {
-  const sharedManager = new SessionManager(); // Tests will interfere!
+class SessionManagerTest : StringSpec({
+    val sharedManager = SessionManager() // Tests will interfere!
 
-  it('test 1', () => {
-    /* modifies sharedManager */
-  });
-  it('test 2', () => {
-    /* affected by test 1 */
-  });
-});
+    "test 1" {
+        /* modifies sharedManager */
+    }
+    
+    "test 2" {
+        /* affected by test 1 */
+    }
+})
 ```
 
 ### ❌ Resource Leaks
 
-```typescript
+```kotlin
 // ❌ BAD - No cleanup, connections leak
-afterEach(() => {
-  // Missing: sessionManager.shutdown(), db.close()
-});
+afterEach {
+    // Missing: sessionManager.shutdown(), TransactionManager.closeAndUnregister(database)
+}
 ```
 
 ## Code Quality Requirements
 
 ### Testable Time Handling
 
-```typescript
+```kotlin
 // ✅ REQUIRED pattern for all time-dependent code
 interface TimeProvider {
-  now(): Date;
+    fun now(): Instant
 }
 
-class RealTimeProvider implements TimeProvider {
-  now(): Date {
-    return new Date();
-  }
+class RealTimeProvider : TimeProvider {
+    override fun now(): Instant = Instant.now()
 }
 
-class MockTimeProvider implements TimeProvider {
-  private currentTime: Date = new Date();
+class MockTimeProvider : TimeProvider {
+    private var currentTime: Instant = Instant.now()
 
-  now(): Date {
-    return this.currentTime;
-  }
+    override fun now(): Instant = currentTime
 
-  setTime(time: string | Date) {
-    this.currentTime = typeof time === 'string' ? new Date(time) : time;
-  }
+    fun setTime(time: Instant) {
+        currentTime = time
+    }
 
-  advance(milliseconds: number) {
-    this.currentTime = new Date(this.currentTime.getTime() + milliseconds);
-  }
+    fun setTime(time: String) {
+        currentTime = Instant.parse(time)
+    }
+
+    fun advance(duration: Duration) {
+        currentTime = currentTime.plus(duration)
+    }
 }
 ```
 
 ### Database Abstraction
 
-```typescript
+```kotlin
 // ✅ REQUIRED - Database operations must be mockable
 interface DatabaseProvider {
-  getConnection(): Database;
-  executeInTransaction<T>(operation: () => Promise<T>): Promise<T>;
+    fun getConnection(): Database
+    suspend fun <T> executeInTransaction(operation: suspend () -> T): T
 }
 
 // ✅ Services accept abstractions, not concrete implementations
-class SessionApplicationService {
-  constructor(
-    private sessionRepository: SessionRepository, // Interface, not SqliteSessionRepository
-    private unitOfWork: UnitOfWork // Interface, not SqliteUnitOfWork
-  ) {}
+class SessionApplicationService(
+    private val sessionRepository: SessionRepository, // Interface, not ExposedSessionRepository
+    private val unitOfWork: UnitOfWork // Interface, not SqliteUnitOfWork
+) {
+    // Service implementation using interfaces
 }
 ```
 
@@ -237,20 +247,20 @@ class SessionApplicationService {
 ### File Structure
 
 ```
-tests/
+src/test/kotlin/io/spiralhouse/jcvd/
 ├── unit/           # Fast, isolated, no external dependencies
 ├── integration/    # Real components, controlled environment
 ├── system/         # End-to-end, production-like scenarios
 ├── fixtures/       # Test data and utilities
-└── setup/          # Test configuration and helpers
+└── utils/          # Test configuration and helpers
 ```
 
 ### Naming Conventions
 
-- Unit tests: `*.unit.test.ts`
-- Integration tests: `*.integration.test.ts`
-- System tests: `*.system.test.ts`
-- Test utilities: `*.test-utils.ts`
+- Unit tests: `*Test.kt` in `unit` package
+- Integration tests: `*IntegrationTest.kt` in `integration` package
+- System tests: `*SystemTest.kt` in `system` package
+- Test utilities: `*TestUtils.kt` in `utils` package
 
 ### Performance Requirements
 
@@ -269,7 +279,7 @@ tests/
 
 Before any code review:
 
-1. **✅ All time dependencies are injected** (no `Date.now()`, `setTimeout` in
+1. **✅ All time dependencies are injected** (no `Instant.now()`, `delay()` in
    business logic)
 2. **✅ All database operations are testable** (interfaces, not concrete
    classes)
@@ -277,6 +287,7 @@ Before any code review:
 4. **✅ Tests are categorized correctly** (unit/integration/system)
 5. **✅ No flaky time-dependent tests** (use time mocking instead)
 6. **✅ Test isolation verified** (tests pass in any order)
+7. **✅ Coroutines properly tested** (use `runTest` and `TestScope`)
 
 ## When Tests Fail
 
