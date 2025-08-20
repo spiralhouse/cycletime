@@ -15,8 +15,8 @@
 JCVD (Project Orchestration Framework) implements a **simplified data and
 context provider architecture** for Claude Code project management. The system
 enhances Claude Code's existing capabilities by providing structured project
-data, dependency tracking, and cross-session continuity through embedded H2
-database and MCP Resource integration.
+data, dependency tracking, and cross-session continuity through embedded
+database (currently SQLite, migrating to H2 in SPI-439) and MCP Resource integration.
 
 ### Architectural Principles
 
@@ -28,9 +28,9 @@ database and MCP Resource integration.
 
 **Embedded-First Architecture**
 
-- H2 embedded database as default provider for offline and concurrent operation
+- Embedded database as default provider for offline and concurrent operation (currently SQLite, H2 planned)
 - No external dependencies required for core functionality
-- Superior performance with JVM-optimized query execution and native Exposed integration
+- Optimized for JVM integration with Exposed ORM and connection pooling
 
 **MCP Server Integration**
 
@@ -80,11 +80,12 @@ class ProjectApplicationService(
 }
 
 // Infrastructure Layer - Technical implementations
-class H2ProjectRepository(
+class SqliteProjectRepository(  // Current implementation
     private val database: Database,
     private val timeProvider: TimeProvider
 ) : ProjectRepository {
-    // H2-specific implementation with Exposed ORM
+    // SQLite implementation with Exposed ORM
+    // TODO: Migrate to H2ProjectRepository in SPI-439
 }
 
 // MCP Layer - Claude Code integration
@@ -261,7 +262,8 @@ enum class IssueType {
 
 | Provider            | Status   | Features                                                     | Primary Use Case                                     |
 | ------------------- | -------- | ------------------------------------------------------------ | ---------------------------------------------------- |
-| **H2 (Embedded)**   | ✅ MVP   | High-performance CRUD, advanced queries, concurrent access  | Personal projects, solo development, getting started |
+| **SQLite (Current)** | ✅ MVP   | Embedded database, basic CRUD operations                    | Current implementation, stable and proven |
+| **H2 (Planned)**    | 🚧 SPI-439 | High-performance CRUD, advanced queries, concurrent access  | Future migration target for better JVM integration |
 | **Linear**          | 🔄 V2.0  | Linear API integration, team collaboration                   | Professional development, team coordination          |
 | **GitHub Issues**   | 🔄 V3.0+ | Repository integration, basic workflows                      | OSS projects, GitHub-centric development             |
 | **Jira**            | 🔄 V3.0+ | Enterprise workflows, custom fields                         | Enterprise development, complex organizations        |
@@ -269,7 +271,7 @@ enum class IssueType {
 ### H2 Database Advantages for Kotlin/JVM
 
 **Performance Benefits:**
-- **3-5x faster analytical queries** compared to SQLite for complex JOINs and aggregations
+- **Potential performance improvements** for complex JOINs and aggregations (to be validated with benchmarks)
 - **Superior concurrent access** with built-in connection pooling and thread safety
 - **JVM-optimized memory management** with efficient caching and buffer management
 - **Advanced query optimizer** with cost-based optimization for complex dependency graphs
@@ -288,9 +290,9 @@ enum class IssueType {
 
 ## Data Models and Database Design
 
-### H2 Embedded Database Schema
+### Database Schema (SQLite Current, H2 Future)
 
-The embedded provider uses an optimized H2 database schema designed for superior
+The embedded provider uses a database schema designed for optimal
 JVM performance, native Exposed ORM integration, and easy migration to cloud providers:
 
 ```sql
@@ -529,9 +531,9 @@ external system integrations.
 
 **Key Components:**
 
-- **Repository Implementations**: `H2ProjectRepository`,
-  `H2IssueRepository` with native Exposed ORM integration
-- **Unit of Work Implementation**: `H2UnitOfWork` for transaction management
+- **Repository Implementations**: `SqliteProjectRepository`,
+  `SqliteIssueRepository` with Exposed ORM integration (migrating to H2 in SPI-439)
+- **Unit of Work Implementation**: `SqliteUnitOfWork` for transaction management
 - **Database Migrations**: `MigrationRunner` for schema evolution
 - **External Integrations**: Linear API, GitHub API adapters
 
@@ -542,7 +544,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import com.spiralhouse.jcvd.infrastructure.database.Projects
 
-class H2ProjectRepository(
+class SqliteProjectRepository(  // TODO: Migrate to H2ProjectRepository in SPI-439
     private val database: Database,
     private val timeProvider: TimeProvider
 ) : ProjectRepository {
@@ -713,7 +715,7 @@ suspend fun addDependency(blockerId: String, blockedId: String)
 
 ### 5. Provider Storage Layer
 
-**Purpose**: Simple storage abstraction starting with SQLite, expanding
+**Purpose**: Simple storage abstraction currently using SQLite, expanding
 incrementally.
 
 **Key Responsibilities:**
@@ -721,7 +723,7 @@ incrementally.
 - Basic CRUD operations for issues and projects
 - Simple data export/import for provider switching
 - No complex abstraction until multiple providers exist
-- Focus on H2 optimization first
+- Focus on SQLite stability, then H2 migration in SPI-439
 
 **Provider Factory Pattern:**
 
@@ -729,7 +731,8 @@ incrementally.
 object ProviderFactory {
     suspend fun createProvider(config: ProviderConfig): IssueProvider {
         return when (config.type) {
-            "h2" -> H2Provider(config.h2Config)
+            "sqlite" -> SqliteProvider(config.sqliteConfig)  // Current default
+            "h2" -> H2Provider(config.h2Config)  // Future option in SPI-439
             "linear" -> LinearProvider(config.linearConfig)
             "github" -> GitHubProvider(config.githubConfig)
             "jira" -> JiraProvider(config.jiraConfig)
@@ -747,7 +750,7 @@ object ProviderFactory {
 - **Domain-Driven Design**: Rich domain model with business logic encapsulation
 - **Dependency Injection**: TimeProvider pattern for testable time-dependent operations
 - **Data Integrity**: Automatic validation and repair of session state
-- **Performance**: Sub-millisecond operations with H2 optimization
+- **Performance**: Fast operations with embedded database optimization
 
 #### Domain Model
 
@@ -919,48 +922,41 @@ export class SessionValidator {
 
 **Repository Implementation:**
 
-```typescript
-export class H2SessionRepository implements SessionRepository {
-  private statements: Map<string, Statement> = new Map();
-
-  constructor(
-    private db: Database.Database,
-    private timeProvider: TimeProvider
-  ) {
-    this.initializeStatements();
-  }
-
-  async findByKey(sessionKey: SessionKey): Promise<Session | null> {
-    const stmt = this.getStatement('findByKey');
-    const row = stmt.get(sessionKey.value);
+```kotlin
+class SqliteSessionRepository(  // Current implementation
+    private val database: Database,
+    private val timeProvider: TimeProvider
+) : SessionRepository {
     
-    if (!row) return null;
-    
-    return this.rowToSession(row);
-  }
+    override suspend fun findByKey(sessionKey: SessionKey): Session? = transaction {
+        val row = SessionStates.select { SessionStates.sessionKey eq sessionKey.value }
+            .singleOrNull() ?: return@transaction null
+        
+        rowToSession(row)
+    }
 
-  async save(session: Session): Promise<void> {
-    const stmt = this.getStatement('upsert');
-    stmt.run({
-      sessionKey: session.sessionKey.value,
-      projectId: session.projectId,
-      currentContext: JSON.stringify(session.currentContext),
-      lastActivity: session.lastActivity.getTime(),
-      createdAt: session.createdAt.getTime(),
-      updatedAt: session.updatedAt.getTime()
-    });
-  }
+    override suspend fun save(session: Session): Unit = transaction {
+        SessionStates.upsert {
+            it[sessionKey] = session.sessionKey.value
+            it[projectId] = session.projectId
+            it[currentContext] = Json.encodeToString(session.currentContext)
+            it[lastActivity] = session.lastActivity
+            it[createdAt] = session.createdAt
+            it[updatedAt] = session.updatedAt
+        }
+    }
 
-  private rowToSession(row: any): Session {
-    return Session.fromPlainObject({
-      sessionKey: row.session_key,
-      projectId: row.project_id,
-      currentContext: JSON.parse(row.current_context || '{}'),
-      lastActivity: new Date(row.last_activity),
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at)
-    }, this.timeProvider);
-  }
+    private fun rowToSession(row: ResultRow): Session {
+        return Session.fromSnapshot(
+            sessionKey = SessionKey(row[SessionStates.sessionKey]),
+            projectId = row[SessionStates.projectId],
+            currentContext = Json.decodeFromString(row[SessionStates.currentContext]),
+            lastActivity = row[SessionStates.lastActivity],
+            createdAt = row[SessionStates.createdAt],
+            updatedAt = row[SessionStates.updatedAt],
+            timeProvider = timeProvider
+        )
+    }
 }
 ```
 
@@ -1139,15 +1135,16 @@ provider integration.
 - Potential performance overhead for provider-specific optimizations
 - Requires ongoing maintenance as provider APIs evolve
 
-### H2 as Default Provider
+### Embedded Database Strategy
 
-**Decision**: Use embedded H2 database as the default issue tracking
+**Current**: Use embedded SQLite database as the default issue tracking
+**Future**: Migrate to H2 database (SPI-439) for enhanced JVM integration
 provider for the Kotlin/JVM implementation.
 
 **Rationale**:
 
 - Zero external dependencies for immediate productivity
-- Superior performance: 3-5x faster than SQLite for analytical queries
+- Better JVM integration and potential performance improvements over SQLite
 - Native Exposed ORM integration for type-safe database operations
 - Excellent concurrent access support with connection pooling
 - Complete offline operation capability
@@ -1231,7 +1228,7 @@ terminology.
 
 ### Data Encryption
 
-**At Rest**: H2 database files encrypted using system keychain integration
+**At Rest**: Database files encrypted using system keychain integration
 **In Transit**: All provider API communications use TLS 1.3 minimum **API
 Keys**: Secure storage using platform-appropriate credential management
 

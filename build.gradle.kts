@@ -23,37 +23,40 @@ application {
 }
 
 dependencies {
-    // Ktor with Native DI
+    // Ktor - Current implementation uses CIO server engine
     implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.netty)
-    implementation(libs.ktor.server.di)
+    implementation(libs.ktor.server.cio)  // Currently used in Application.kt
     implementation(libs.ktor.server.content.negotiation)
-    implementation(libs.ktor.server.config.hocon)
-    implementation(libs.ktor.server.websockets)
-    implementation(libs.ktor.server.cors)
-    implementation(libs.ktor.server.call.logging)
-    implementation(libs.ktor.server.status.pages)
-    implementation(libs.ktor.server.auth)
-    implementation(libs.ktor.server.auth.jwt)
     implementation(libs.ktor.server.sse)
     implementation(libs.ktor.serialization.kotlinx.json)
     
-    // Exposed ORM
+    // TODO: Future Ktor components for SPI-442 (Ktor Native DI migration)
+    // implementation(libs.ktor.server.netty)  // Future migration target
+    // implementation(libs.ktor.server.di)    // Future DI replacement
+    
+    // Exposed ORM - Currently used for SQLite database access
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
     implementation(libs.exposed.jdbc)
     implementation(libs.exposed.java.time)
-    implementation(libs.exposed.json)
     implementation(libs.exposed.kotlin.datetime)
     
-    // Database - H2
-    implementation(libs.h2.database)
+    // Database - Current implementation uses SQLite with HikariCP
+    implementation("org.xerial:sqlite-jdbc:3.46.1.3")  // SQLite JDBC driver
     implementation(libs.hikaricp)
+    
+    // TODO: Future H2 migration in SPI-439
+    // implementation(libs.h2.database)
     
     // Kotlin
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.datetime)
+    
+    // Dependency Injection - Currently using Koin
+    implementation("io.insert-koin:koin-ktor:4.0.0")
+    implementation("io.insert-koin:koin-core:4.0.0")
+    // TODO: Migrate to Ktor Native DI in SPI-442
     
     // MCP SDK (when available)
     // implementation(libs.mcp.kotlin.sdk)
@@ -69,9 +72,9 @@ dependencies {
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlinx.coroutines.test)
     
-    // Test Containers for Integration Testing
-    testImplementation("org.testcontainers:testcontainers:1.19.3")
-    testImplementation("org.testcontainers:junit-jupiter:1.19.3")
+    // TODO: TestContainers for SPI-439 Integration Testing (when H2 repositories are implemented)
+    // testImplementation("org.testcontainers:testcontainers:1.19.3")
+    // testImplementation("org.testcontainers:junit-jupiter:1.19.3")
 }
 
 tasks.withType<KotlinCompile> {

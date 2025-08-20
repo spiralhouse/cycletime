@@ -2,39 +2,99 @@
 
 ## Overview
 
-This document outlines the dependency injection (DI) patterns for JCVD using **Ktor 3.2.0+ native DI** capabilities. The design enables testable, maintainable code following Domain-Driven Design (DDD) principles while leveraging Kotlin's type safety and Ktor's built-in dependency injection features.
+This document outlines the dependency injection (DI) patterns for JCVD, transitioning from **Koin 4.0** (current implementation) to **Ktor 3.2.0+ native DI** (planned in SPI-442). The design enables testable, maintainable code following Domain-Driven Design (DDD) principles while leveraging Kotlin's type safety.
 
-**Key Decision**: Use Ktor's native DI (`ktor-server-di`) instead of third-party frameworks (Koin/Kodein) for seamless integration with Ktor's testing framework and reduced external dependencies.
+**Current State**: Using Koin 4.0 for dependency injection
+**Future Plan**: Migrate to Ktor's native DI (`ktor-server-di`) in SPI-442 for seamless integration with Ktor's testing framework and reduced external dependencies.
 
 ## Technology Stack
 
-### Core Dependencies
+### Current Dependencies (Koin Implementation)
 
 ```kotlin
-// build.gradle.kts
+// build.gradle.kts - Current implementation
 dependencies {
-    // Ktor 3.2.0+ with native DI
+    // Ktor with CIO server engine
     implementation("io.ktor:ktor-server-core:3.2.0")
-    implementation("io.ktor:ktor-server-di:3.2.0")
-    implementation("io.ktor:ktor-server-netty:3.2.0")
+    implementation("io.ktor:ktor-server-cio:3.2.0")
+    implementation("io.ktor:ktor-server-content-negotiation:3.2.0")
     
-    // Database and ORM
+    // Current DI framework
+    implementation("io.insert-koin:koin-ktor:4.0.0")
+    implementation("io.insert-koin:koin-core:4.0.0")
+    
+    // Database - Current SQLite implementation
+    implementation("org.xerial:sqlite-jdbc:3.46.1.3")
+    implementation("com.zaxxer:HikariCP:6.2.1")
     implementation("org.jetbrains.exposed:exposed-core:0.58.0")
     implementation("org.jetbrains.exposed:exposed-dao:0.58.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.58.0")
     implementation("org.jetbrains.exposed:exposed-java-time:0.58.0")
-    implementation("com.h2database:h2:2.2.224")
-    
-    // Testing with DI overrides
-    testImplementation("io.ktor:ktor-server-test-host:3.2.0")
-    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
-    testImplementation("io.mockk:mockk:1.13.9")
 }
 ```
 
-## Ktor Native DI Architecture
+### Future Dependencies (Ktor Native DI - SPI-442)
 
-### Core DI Configuration
+```kotlin
+// build.gradle.kts - Future implementation
+dependencies {
+    // Ktor with Netty server engine
+    implementation("io.ktor:ktor-server-core:3.2.0")
+    implementation("io.ktor:ktor-server-netty:3.2.0")  // Migration target
+    implementation("io.ktor:ktor-server-di:3.2.0")     // DI replacement
+    
+    // Database - Future H2 implementation (SPI-439)
+    implementation("com.h2database:h2:2.2.224")
+    implementation("com.zaxxer:HikariCP:6.2.1")
+    implementation("org.jetbrains.exposed:exposed-core:0.58.0")
+    implementation("org.jetbrains.exposed:exposed-dao:0.58.0")
+    implementation("org.jetbrains.exposed:exposed-jdbc:0.58.0")
+    implementation("org.jetbrains.exposed:exposed-java-time:0.58.0")
+}
+```
+
+## Current Architecture (Koin 4.0)
+
+### Current Koin Configuration
+
+```kotlin
+// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/di/KoinModules.kt
+
+import org.koin.dsl.module
+import com.spiralhouse.jcvd.domain.services.TimeProvider
+import com.spiralhouse.jcvd.infrastructure.services.RealTimeProvider
+
+val appModule = module {
+    // Time provider
+    single<TimeProvider> { RealTimeProvider() }
+    
+    // TODO: Add repositories and services when implemented
+    // single<ProjectRepository> { H2ProjectRepository(get()) }
+    // single<ProjectApplicationService> { ProjectApplicationService(get(), get()) }
+}
+```
+
+### Current Application Setup
+
+```kotlin
+// src/main/kotlin/com/spiralhouse/jcvd/Application.kt
+
+import org.koin.ktor.plugin.Koin
+import com.spiralhouse.jcvd.infrastructure.di.appModule
+
+fun Application.module() {
+    // Install Koin
+    install(Koin) {
+        modules(appModule)
+    }
+    
+    // Other configuration...
+}
+```
+
+## Future Architecture (Ktor Native DI - SPI-442)
+
+### Future Ktor DI Configuration
 
 ```kotlin
 // src/main/kotlin/com/spiralhouse/jcvd/infrastructure/di/DIConfiguration.kt

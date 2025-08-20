@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the Application Service layer implementation patterns for JCVD, integrating Domain-Driven Design (DDD) principles with Ktor's native dependency injection. The Application Services orchestrate use cases, coordinate between domain and infrastructure layers, and maintain transaction boundaries while leveraging Kotlin coroutines for async operations.
+This document outlines the Application Service layer implementation patterns for JCVD, integrating Domain-Driven Design (DDD) principles with dependency injection (currently Koin 4.0, migrating to Ktor native DI in SPI-442). The Application Services orchestrate use cases, coordinate between domain and infrastructure layers, and maintain transaction boundaries while leveraging Kotlin coroutines for async operations.
 
 ## Core Principles
 

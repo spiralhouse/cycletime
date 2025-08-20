@@ -157,14 +157,12 @@ class H2ProjectRepository(
                 .map { it[ProjectIssues.issueId] }
                 .map { IssueId(it) }
 
-            Project.fromSnapshot(
-                id = ProjectId(projectRow[Projects.id].value),
+            // TODO: Implementation pending in SPI-437 (Domain Entities)
+            // This will use Project.fromSnapshot() when domain entities are implemented
+            Project.create(
                 name = projectRow[Projects.name],
                 description = projectRow[Projects.description] ?: "",
-                status = ProjectStatus.valueOf(projectRow[Projects.status]),
-                issueIds = issueIds,
-                createdAt = projectRow[Projects.createdAt],
-                updatedAt = projectRow[Projects.updatedAt],
+                // Additional properties will be set when value objects are available
                 timeProvider = timeProvider
             )
         } catch (e: Exception) {
@@ -182,14 +180,10 @@ class H2ProjectRepository(
                 val issueIds = ProjectIssues.select { ProjectIssues.projectId eq projectId.value }
                     .map { IssueId(it[ProjectIssues.issueId]) }
 
-                Project.fromSnapshot(
-                    id = projectId,
+                // TODO: Implementation pending in SPI-437 (Domain Entities)
+                Project.create(
                     name = projectRow[Projects.name],
                     description = projectRow[Projects.description] ?: "",
-                    status = ProjectStatus.valueOf(projectRow[Projects.status]),
-                    issueIds = issueIds,
-                    createdAt = projectRow[Projects.createdAt],
-                    updatedAt = projectRow[Projects.updatedAt],
                     timeProvider = timeProvider
                 )
             }
@@ -286,18 +280,12 @@ class H2IssueRepository(
                 .orderBy(IssueDependencies.createdAt to SortOrder.ASC)
                 .map { IssueId(it[IssueDependencies.dependencyId]) }
 
-            Issue.fromSnapshot(
-                id = IssueId(issueRow[Issues.id].value),
+            // TODO: Implementation pending in SPI-438 (Domain Entities)
+            // This will use Issue.fromSnapshot() when domain entities are implemented
+            Issue.create(
                 title = issueRow[Issues.title],
                 description = issueRow[Issues.description] ?: "",
-                type = issueRow[Issues.type],
-                status = issueRow[Issues.status],
-                parentId = issueRow[Issues.parentId]?.let { IssueId(it) },
-                childIds = childIds,
-                dependencies = dependencies,
-                estimate = issueRow[Issues.estimate],
-                createdAt = issueRow[Issues.createdAt],
-                updatedAt = issueRow[Issues.updatedAt],
+                // type, status, and other properties will be set when value objects are available
                 timeProvider = timeProvider
             )
         } catch (e: Exception) {
@@ -392,16 +380,11 @@ class H2WorkflowRepository(
             val row = Workflows.select { Workflows.id eq id.value }
                 .singleOrNull() ?: return@transaction null
 
-            Workflow.fromSnapshot(
-                id = WorkflowId(row[Workflows.id].value),
+            // TODO: Implementation pending in SPI-440 (Workflow Domain Entities)
+            // This will use Workflow.fromSnapshot() when domain entities are implemented
+            Workflow.create(
                 name = row[Workflows.name],
-                projectId = ProjectId(row[Workflows.projectId]),
-                currentStage = row[Workflows.currentStage],
-                stages = Json.decodeFromString(row[Workflows.stages]),
-                transitions = Json.decodeFromString(row[Workflows.transitions]),
-                isComplete = row[Workflows.isComplete],
-                createdAt = row[Workflows.createdAt],
-                updatedAt = row[Workflows.updatedAt],
+                // projectId, stages, and other properties will be set when value objects are available
                 timeProvider = timeProvider
             )
         } catch (e: Exception) {
@@ -413,16 +396,9 @@ class H2WorkflowRepository(
         try {
             Workflows.select { Workflows.projectId eq projectId.value }
                 .map { row ->
-                    Workflow.fromSnapshot(
-                        id = WorkflowId(row[Workflows.id].value),
+                    // TODO: Implementation pending in SPI-440 (Workflow Domain Entities)
+                    Workflow.create(
                         name = row[Workflows.name],
-                        projectId = ProjectId(row[Workflows.projectId]),
-                        currentStage = row[Workflows.currentStage],
-                        stages = Json.decodeFromString(row[Workflows.stages]),
-                        transitions = Json.decodeFromString(row[Workflows.transitions]),
-                        isComplete = row[Workflows.isComplete],
-                        createdAt = row[Workflows.createdAt],
-                        updatedAt = row[Workflows.updatedAt],
                         timeProvider = timeProvider
                     )
                 }
@@ -522,13 +498,16 @@ class H2ProjectRepositoryTest : DescribeSpec({
 
         describe("findById") {
             it("should return null when project not found") {
-                // Test with mocked database that returns null
-                val result = repository.findById(ProjectId.generate())
+                // TODO: Test implementation pending in SPI-439
+                // Will test with mocked database that returns null
+                val result = repository.findById(ProjectId("non-existent"))
                 result shouldBe null
             }
 
             it("should reconstitute project from database row") {
-                val projectId = ProjectId.generate()
+                // TODO: Test implementation pending in SPI-439
+                // Will test with Project.create() and proper reconstitution
+                val projectId = ProjectId("test-id")
                 val project = Project.create("Test Project", "Description", mockTimeProvider)
                 
                 // Mock successful retrieval
@@ -542,21 +521,23 @@ class H2ProjectRepositoryTest : DescribeSpec({
 
         describe("save") {
             it("should insert new project") {
+                // TODO: Test implementation pending in SPI-439
                 val project = Project.create("New Project", "Description", mockTimeProvider)
                 
                 // Test insertion logic
                 repository.save(project)
                 
-                // Verify project was saved
+                // Verify project was saved (implementation pending)
             }
 
             it("should update existing project") {
+                // TODO: Test implementation pending in SPI-439
                 val project = Project.create("Existing Project", "Description", mockTimeProvider)
                 
                 // Test update logic
                 repository.save(project)
                 
-                // Verify project was updated
+                // Verify project was updated (implementation pending)
             }
         }
     }
@@ -658,7 +639,7 @@ class H2ProjectRepositoryIntegrationTest : DescribeSpec({
             }
 
             it("should return false when deleting non-existent project") {
-                val deleted = repository.delete(ProjectId.generate())
+                val deleted = repository.delete(ProjectId("non-existent"))
                 deleted shouldBe false
             }
         }
@@ -692,17 +673,19 @@ class H2ProjectRepositoryIntegrationTest : DescribeSpec({
 
 ## Performance Considerations
 
-1. **Exposed DSL Optimization**: All queries use Exposed's type-safe DSL for optimal H2 performance
-2. **H2 Indexing**: Strategic indexes on foreign keys and commonly queried fields, automatically managed by Exposed
-3. **Transaction Management**: H2's superior transaction handling for multi-operation consistency
-4. **Connection Pooling**: H2's built-in connection pooling for concurrent access
+1. **Exposed DSL Optimization**: All queries use Exposed's type-safe DSL for optimal database performance
+2. **Strategic Indexing**: Indexes on foreign keys and commonly queried fields, automatically managed by Exposed
+3. **Transaction Management**: Robust transaction handling for multi-operation consistency
+4. **Connection Pooling**: Efficient connection pooling for concurrent access
 
-## H2-Specific Advantages
+## H2-Specific Advantages (Future Migration - SPI-439)
 
-1. **Performance**: 3-5x faster analytical queries compared to SQLite
-2. **Concurrency**: Superior concurrent access with built-in thread safety
-3. **JVM Integration**: Optimized memory management and query execution
-4. **Exposed Compatibility**: Native support eliminates JDBC overhead
+1. **JVM Integration**: Better memory management and query execution within JVM ecosystem
+2. **Concurrency**: Enhanced concurrent access patterns compared to embedded SQLite
+3. **Development Experience**: Familiar SQL compatibility and better tooling integration
+4. **Exposed Compatibility**: Native support reduces JDBC overhead
+
+**Note**: Performance claims will be validated with benchmarks during SPI-439 implementation.
 
 ## Security Considerations
 
@@ -712,7 +695,7 @@ class H2ProjectRepositoryIntegrationTest : DescribeSpec({
 
 ## Dependencies
 
-- **Domain Layer**: Entities, Value Objects, Repository Interfaces (SPI-399)
+- **Domain Layer**: Entities, Value Objects, Repository Interfaces (SPI-437, SPI-438)
 - **Infrastructure**: H2 database, Exposed ORM, connection pooling
 - **Testing**: Kotest, H2 in-memory database
 
