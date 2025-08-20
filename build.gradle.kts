@@ -23,16 +23,13 @@ application {
 }
 
 dependencies {
-    // Ktor - Current implementation uses CIO server engine
+    // Ktor - Using native DI system
     implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.cio)  // Currently used in Application.kt
+    implementation(libs.ktor.server.cio)
+    implementation(libs.ktor.server.di)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.server.sse)
     implementation(libs.ktor.serialization.kotlinx.json)
-
-    // TODO: Future Ktor components for SPI-442 (Ktor Native DI migration)
-    // implementation(libs.ktor.server.netty)  // Future migration target
-    // implementation(libs.ktor.server.di)    // Future DI replacement
 
     // Exposed ORM - Currently used for SQLite database access
     implementation(libs.exposed.core)
@@ -53,10 +50,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.datetime)
 
-    // Dependency Injection - Currently using Koin
-    implementation("io.insert-koin:koin-ktor:4.0.0")
-    implementation("io.insert-koin:koin-core:4.0.0")
-    // TODO: Migrate to Ktor Native DI in SPI-442
+    // Dependency Injection - Using Ktor native DI (requires Ktor 3.2.3+)
 
     // MCP SDK (when available)
     // implementation(libs.mcp.kotlin.sdk)

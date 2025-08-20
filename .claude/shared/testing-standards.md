@@ -16,10 +16,10 @@ Retrofitting testability is expensive and error-prone.
 
 ### Dependency Injection Patterns
 
-**Required for all services:**
+**Required for all services using Ktor native DI:**
 
 ```kotlin
-// ✅ GOOD - Testable design
+// ✅ GOOD - Testable design with Ktor DI
 interface TimeProvider {
     fun now(): Instant
 }
@@ -28,13 +28,30 @@ interface DatabaseProvider {
     fun getConnection(): Database
 }
 
-class SessionManager(
-    private val sessionService: SessionApplicationService,
-    private val timeProvider: TimeProvider,
-    private val dbProvider: DatabaseProvider,
-    private val config: SessionConfig = SessionConfig()
-) {
-    // Business logic with injected dependencies
+// Register in Application.kt
+fun Application.configureDependencies() {
+    dependencies {
+        provide<TimeProvider> { SystemTimeProvider() }
+        provide<DatabaseProvider> { SqliteDatabaseProvider() }
+        provide<SessionManager> { 
+            SessionManager(
+                instance(), // SessionApplicationService
+                instance(), // TimeProvider
+                instance(), // DatabaseProvider
+                SessionConfig()
+            )
+        }
+    }
+}
+
+// Use in tests with property delegation
+testApplication {
+    application {
+        configureDependencies()
+    }
+    
+    val sessionManager: SessionManager by application.dependencies
+    // Test with real DI container
 }
 ```
 

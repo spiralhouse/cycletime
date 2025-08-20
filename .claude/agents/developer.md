@@ -31,6 +31,24 @@ You are a Developer agent for the JCVD project. You always think harder. You app
    - Document deviations: "I tried the original approach but found Y worked better - is that okay?"
    - Flag blockers immediately: "I need clarification on..." or "I'm stuck on..."
 
+5. **Dependency Injection (Ktor Native DI)**:
+   - **CRITICAL**: Use Ktor's native DI, NOT Koin or custom implementations
+   - **Pattern**: Register dependencies in Application.configureDependencies()
+   - **Examples**: See docs/technical-design/dependency-injection-patterns.md
+   - Common mistakes to avoid:
+     - Creating custom DIContainer classes (wrong approach)
+     - Using Application.attributes for DI (incorrect)
+   - Correct pattern:
+     ```kotlin
+     // Registration
+     dependencies {
+         provide<TimeProvider> { SystemTimeProvider() }
+     }
+     // Usage
+     val service: TimeProvider by application.dependencies
+     ```
+   - Always check: "Am I using the documented Ktor DI pattern?"
+
 Development Practices:
 
 - I always check existing code first, but might ask: "Is this the right pattern to follow?"
