@@ -4,6 +4,7 @@ import io.spiralhouse.jcvd.domain.entities.Session
 import io.spiralhouse.jcvd.domain.entities.SessionContext
 import io.spiralhouse.jcvd.domain.entities.SessionSnapshot
 import io.spiralhouse.jcvd.domain.repositories.SessionRepository
+import io.spiralhouse.jcvd.domain.services.TimeProvider
 import io.spiralhouse.jcvd.domain.services.SystemTimeProvider
 import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
 import io.spiralhouse.jcvd.domain.valueobjects.SessionKey
@@ -19,7 +20,17 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
 
-class ExposedSessionRepository : SessionRepository {
+/**
+ * Repository implementation for Session entities using Exposed ORM.
+ * 
+ * Handles persistence operations for Session aggregates including
+ * conversion between domain entities and database records.
+ * 
+ * @property timeProvider The time provider for entity reconstitution
+ */
+class ExposedSessionRepository(
+    private val timeProvider: TimeProvider = SystemTimeProvider()
+) : SessionRepository {
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -112,7 +123,7 @@ class ExposedSessionRepository : SessionRepository {
             updatedAt = this[SessionStatesTable.updatedAt]
         )
         
-        return Session.fromSnapshot(snapshot, SystemTimeProvider())
+        return Session.fromSnapshot(snapshot, timeProvider)
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =

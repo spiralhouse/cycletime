@@ -3,10 +3,13 @@ package io.spiralhouse.jcvd.infrastructure.persistence
 import io.spiralhouse.jcvd.domain.entities.Project
 import io.spiralhouse.jcvd.domain.entities.ProjectSnapshot
 import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
+import io.spiralhouse.jcvd.domain.services.TimeProvider
 import io.spiralhouse.jcvd.domain.services.SystemTimeProvider
 import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
 import io.spiralhouse.jcvd.domain.valueobjects.ProjectStatus
+import io.spiralhouse.jcvd.domain.valueobjects.IssueId
 import io.spiralhouse.jcvd.infrastructure.database.ProjectsTable
+import io.spiralhouse.jcvd.infrastructure.database.IssuesTable
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.*
@@ -19,9 +22,19 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
  * Provides persistence operations for Project aggregates, handling
  * the conversion between domain entities and database records.
  * Uses the snapshot pattern for reconstitution.
+ * 
+ * @property timeProvider The time provider for entity reconstitution
  */
-class ExposedProjectRepository : ProjectRepository {
+class ExposedProjectRepository(
+    private val timeProvider: TimeProvider = SystemTimeProvider()
+) : ProjectRepository {
 
+    /**
+     * Finds a project by its unique identifier.
+     * 
+     * @param id The project ID to search for
+     * @return The project if found, null otherwise
+     */
     override suspend fun findById(id: ProjectId): Project? = dbQuery {
         ProjectsTable
             .selectAll()
@@ -30,6 +43,12 @@ class ExposedProjectRepository : ProjectRepository {
             ?.toProject()
     }
 
+    /**
+     * Finds all projects with the specified status.
+     * 
+     * @param status The project status to filter by
+     * @return List of projects matching the status
+     */
     override suspend fun findByStatus(status: ProjectStatus): List<Project> = dbQuery {
         ProjectsTable
             .selectAll()
@@ -37,19 +56,28 @@ class ExposedProjectRepository : ProjectRepository {
             .map { it.toProject() }
     }
 
+    /**
+     * Retrieves all projects from the repository.
+     * 
+     * @return List of all projects
+     */
     override suspend fun findAll(): List<Project> = dbQuery {
         ProjectsTable
             .selectAll()
             .map { it.toProject() }
     }
 
+    /**
+     * Persists a project to the repository.
+     * Updates existing projects or inserts new ones based on ID existence.
+     * 
+     * @param project The project to save
+     * @throws Exception if database operation fails
+     */
     override suspend fun save(project: Project) {
         dbQuery {
-            val exists = ProjectsTable
-                .selectAll()
-                .where { ProjectsTable.id eq project.id.value }
-                .count() > 0
-
+            val exists = checkProjectExists(project.id)
+            
             if (exists) {
                 updateProject(project)
             } else {
@@ -58,6 +86,11 @@ class ExposedProjectRepository : ProjectRepository {
         }
     }
     
+    /**
+     * Updates an existing project in the database.
+     * 
+     * @param project The project to update
+     */
     private fun updateProject(project: Project) {
         ProjectsTable.update({ ProjectsTable.id eq project.id.value }) {
             it[name] = project.name
@@ -65,8 +98,16 @@ class ExposedProjectRepository : ProjectRepository {
             it[status] = project.status.value
             it[updatedAt] = project.updatedAt
         }
+        
+        // Update associated issues
+        persistProjectIssues(project)
     }
     
+    /**
+     * Inserts a new project into the database.
+     * 
+     * @param project The project to insert
+     */
     private fun insertProject(project: Project) {
         ProjectsTable.insert {
             it[id] = EntityID(project.id.value, ProjectsTable)
@@ -76,19 +117,33 @@ class ExposedProjectRepository : ProjectRepository {
             it[createdAt] = project.createdAt
             it[updatedAt] = project.updatedAt
         }
+        
+        // Save associated issues
+        persistProjectIssues(project)
     }
 
+    /**
+     * Deletes a project from the repository.
+     * 
+     * @param id The ID of the project to delete
+     */
     override suspend fun delete(id: ProjectId) {
         dbQuery {
+            // Delete associated issues first (foreign key constraint)
+            deleteProjectIssues(id)
+            // Then delete the project
             ProjectsTable.deleteWhere { ProjectsTable.id eq id.value }
         }
     }
 
+    /**
+     * Checks if a project exists in the repository.
+     * 
+     * @param id The project ID to check
+     * @return true if the project exists, false otherwise
+     */
     override suspend fun exists(id: ProjectId): Boolean = dbQuery {
-        ProjectsTable
-            .selectAll()
-            .where { ProjectsTable.id eq id.value }
-            .count() > 0
+        checkProjectExists(id)
     }
 
     /**
@@ -103,11 +158,88 @@ class ExposedProjectRepository : ProjectRepository {
             name = this[ProjectsTable.name],
             description = this[ProjectsTable.description],
             status = ProjectStatus.fromString(this[ProjectsTable.status]),
-            issues = emptyList(), // TODO: Load issues from separate table when implemented
+            issues = loadProjectIssueIds(this[ProjectsTable.id].value),
             createdAt = this[ProjectsTable.createdAt],
             updatedAt = this[ProjectsTable.updatedAt]
         )
-        return Project.fromSnapshot(snapshot, SystemTimeProvider())
+        return Project.fromSnapshot(snapshot, timeProvider)
+    }
+
+    /**
+     * Loads all issue IDs associated with a project.
+     * 
+     * @param projectId The project ID to load issues for
+     * @return List of issue IDs associated with the project
+     */
+    private fun loadProjectIssueIds(projectId: String): List<IssueId> {
+        return IssuesTable
+            .selectAll()
+            .where { IssuesTable.projectId eq projectId }
+            .map { row -> IssueId.fromString(row[IssuesTable.id].value) }
+    }
+    
+    /**
+     * Persists issue associations for a project.
+     * 
+     * This implementation manages the project-issue relationship.
+     * Full issue data should be managed by a dedicated IssueRepository.
+     * Creates minimal issue records to maintain referential integrity.
+     * 
+     * @param project The project whose issues should be persisted
+     */
+    private fun persistProjectIssues(project: Project) {
+        // Clear existing associations
+        deleteProjectIssues(project.id)
+        
+        // Insert minimal issue records for each issue ID
+        project.issues.forEach { issueId ->
+            insertMinimalIssue(issueId, project)
+        }
+    }
+    
+    /**
+     * Inserts a minimal issue record for maintaining project-issue association.
+     * 
+     * @param issueId The issue ID to insert
+     * @param project The parent project
+     */
+    private fun insertMinimalIssue(issueId: IssueId, project: Project) {
+        IssuesTable.insert {
+            it[id] = EntityID(issueId.value, IssuesTable)
+            it[projectId] = project.id.value
+            it[parentId] = null // Managed by IssueRepository
+            it[title] = "Issue ${issueId.value}" // Placeholder
+            it[description] = null // Managed by IssueRepository
+            it[type] = "SUBTASK" // Default type
+            it[status] = "TODO" // Default status
+            it[priority] = 0 // Default priority
+            it[estimate] = null // Managed by IssueRepository
+            it[assigneeId] = null // Managed by IssueRepository
+            it[createdAt] = project.createdAt // Use project timestamp
+            it[updatedAt] = project.updatedAt // Use project timestamp
+        }
+    }
+    
+    /**
+     * Deletes all issues associated with a project.
+     * 
+     * @param projectId The project ID whose issues should be deleted
+     */
+    private fun deleteProjectIssues(projectId: ProjectId) {
+        IssuesTable.deleteWhere { IssuesTable.projectId eq projectId.value }
+    }
+    
+    /**
+     * Checks if a project exists in the database.
+     * 
+     * @param id The project ID to check
+     * @return true if the project exists, false otherwise
+     */
+    private fun checkProjectExists(id: ProjectId): Boolean {
+        return ProjectsTable
+            .selectAll()
+            .where { ProjectsTable.id eq id.value }
+            .count() > 0
     }
 
     /**
