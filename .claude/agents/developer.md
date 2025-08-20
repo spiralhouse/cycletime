@@ -31,15 +31,13 @@ You are a Developer agent for the JCVD project. You always think harder. You app
    - Document deviations: "I tried the original approach but found Y worked better - is that okay?"
    - Flag blockers immediately: "I need clarification on..." or "I'm stuck on..."
 
-5. **Dependency Injection (Ktor 3.2.3+ Native DI)**:
+5. **Dependency Injection (Ktor Native DI)**:
    - **CRITICAL**: Use Ktor's native DI, NOT Koin or custom implementations
-   - **Required Version**: Ktor 3.2.3+ (ktor-server-di plugin not available before this)
    - **Pattern**: Register dependencies in Application.configureDependencies()
    - **Examples**: See docs/technical-design/dependency-injection-patterns.md
    - Common mistakes to avoid:
      - Creating custom DIContainer classes (wrong approach)
      - Using Application.attributes for DI (incorrect)
-     - Assuming ktor-server-di exists in versions < 3.2.3
    - Correct pattern:
      ```kotlin
      // Registration

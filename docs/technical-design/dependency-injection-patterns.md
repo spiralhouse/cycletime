@@ -2,7 +2,7 @@
 
 ## Quick Start for Developers
 
-**We use Ktor's native DI plugin (`ktor-server-di`) - requires Ktor 3.2.3+**
+**We use Ktor's native DI plugin (`ktor-server-di`)**
 
 ### Adding a New Dependency
 ```kotlin
@@ -25,11 +25,10 @@ val service = application.dependencies.instance<YourInterface>()
 - ✅ All dependencies are singletons by default
 - ✅ Use interfaces for testability
 - ✅ Constructor injection for repositories and services
-- ⚠️ Ktor 3.2.3+ required (not available in 3.2.0)
 
 ## Overview
 
-This document outlines the dependency injection (DI) patterns for JCVD using **Ktor 3.2.3+ native DI** (implemented in SPI-458). The design enables testable, maintainable code following Domain-Driven Design (DDD) principles while leveraging Kotlin's type safety.
+This document outlines the dependency injection (DI) patterns for JCVD using **Ktor native DI** (implemented in SPI-458). The design enables testable, maintainable code following Domain-Driven Design (DDD) principles while leveraging Kotlin's type safety.
 
 **Current State**: Using Ktor's native DI (`ktor-server-di`) - completed migration from Koin 4.0
 **Implementation**: Ktor 3.2.3 with native DI plugin for seamless integration with Ktor's testing framework
@@ -47,7 +46,7 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:3.2.3")
     implementation("io.ktor:ktor-server-sse:3.2.3")
     
-    // Native DI framework (requires Ktor 3.2.3+)
+    // Native DI framework
     implementation("io.ktor:ktor-server-di:3.2.3")
     
     // Database - SQLite implementation (H2 migration planned in SPI-439)
@@ -61,9 +60,6 @@ dependencies {
 }
 ```
 
-### Important Note on Ktor DI Availability
-
-**Critical Discovery (SPI-458)**: The `ktor-server-di` plugin is **not available in Ktor 3.2.0** despite being announced. It was properly released starting with **Ktor 3.2.3**. Always use Ktor 3.2.3 or later for native DI support.
 
 ## Current Architecture (Ktor Native DI)
 
@@ -79,7 +75,7 @@ import io.spiralhouse.jcvd.domain.repositories.*
 import io.spiralhouse.jcvd.infrastructure.persistence.*
 
 fun Application.configureDependencies() {
-    // Using Ktor's native DI plugin (requires 3.2.3+)
+    // Using Ktor's native DI plugin
     dependencies {
         // Domain Services
         provide<TimeProvider> { SystemTimeProvider() }
@@ -1171,15 +1167,6 @@ class DIContainer {
 dependencies {
     provide<Service> { ServiceImpl() }
 }
-```
-
-### ❌ DON'T Use Wrong Ktor Version
-```kotlin
-// WRONG - ktor-server-di doesn't exist in 3.2.0
-implementation("io.ktor:ktor-server-di:3.2.0") // Will fail!
-
-// RIGHT - Use 3.2.3 or later
-implementation("io.ktor:ktor-server-di:3.2.3") // Works!
 ```
 
 ### ❌ DON'T Use Service Locator Pattern

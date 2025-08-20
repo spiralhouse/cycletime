@@ -16,7 +16,7 @@ Retrofitting testability is expensive and error-prone.
 
 ### Dependency Injection Patterns
 
-**Required for all services (using Ktor 3.2.3+ native DI):**
+**Required for all services using Ktor native DI:**
 
 ```kotlin
 // ✅ GOOD - Testable design with Ktor DI
