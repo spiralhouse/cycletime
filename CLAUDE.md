@@ -7,14 +7,30 @@ code in this repository.
 
 JCVD is a project orchestration framework that extends Claude Code to manage
 complete software development lifecycles with minimal configuration overhead.
-The system handles requirements gathering, project structure creation, task
-sequencing, and documentation maintenance across development sessions through
-simple, natural language interactions. Rather than focusing on individual coding
-tasks, JCVD coordinates all artifacts needed for systematic project execution
-while maintaining the intuitive experience developers expect from Claude Code.
+The system provides structured project data, dependency tracking, and 
+cross-session continuity through embedded database and MCP Resource integration.
+Rather than focusing on individual coding tasks, JCVD serves as a data and 
+context provider for Claude Code to make intelligent project management decisions.
 
-**Status**: Pre-implementation phase - comprehensive documentation complete,
-ready for implementation
+**Status**: Kotlin/JVM implementation with Domain-Driven Design architecture.
+Currently using SQLite with Exposed ORM, migrating to H2 database in SPI-439.
+
+## Technology Stack
+
+### Core Technologies
+- **Kotlin/JVM 21**: Primary implementation language
+- **Ktor 3.2.0**: Asynchronous web framework for MCP server
+- **Exposed ORM**: Type-safe SQL DSL for database operations
+- **SQLite**: Current embedded database (H2 migration planned)
+- **Koin 4.0**: Dependency injection framework (migrating to Ktor native DI in SPI-442)
+- **GraalVM**: Native image compilation support
+
+### Architecture
+- **Domain-Driven Design**: Rich domain models with business logic encapsulation
+- **Layered Architecture**: Clean separation between domain, application, infrastructure, and MCP layers
+- **Repository Pattern**: Abstracted data access with interface-based design
+- **Dependency Injection**: TimeProvider pattern for testable time-dependent operations
+- **Package Structure**: `io.spiralhouse.jcvd` namespace
 
 ## Agents
 
