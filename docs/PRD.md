@@ -348,6 +348,32 @@ Audience)_
 - Issue tracking API integration for complete issue lifecycle management
 - Repository and documentation management through standard file operations
 
+### FR6: MCP Server Dashboard
+
+**FR6.1: Real-Time System Observability**
+
+- Web-based dashboard accessible at `http://localhost:3000/dashboard` providing immediate visibility into JCVD operations
+- Real-time display of active sessions, their states, and last activity timestamps
+- Project overview showing issue counts by status (backlog, in-progress, completed) and hierarchy levels
+- MCP resource access logs showing which resources Claude Code agents are accessing and when
+- System health indicators including database connection status, memory usage, and operation latency metrics
+
+**FR6.2: Project State Visualization**
+
+- Interactive issue hierarchy browser showing Epic → Story → Subtask relationships with dependency indicators
+- Session timeline view displaying session creation, updates, and expiration events
+- Context provision flow visualization showing how project data flows to Claude Code agents
+- Dependency graph visualization (Phase 2) showing blocked/blocking relationships between issues
+- Provider sync status (Phase 3) displaying synchronization state with external providers (Linear, GitHub, etc.)
+
+**FR6.3: Developer Control Features**
+
+- Read-only access by default with clear data transparency (no hidden operations or data collection)
+- Export capabilities for all project data in standard formats (JSON, CSV) supporting data portability
+- Session management controls to manually expire or extend sessions when needed
+- Configuration viewer showing current system settings without requiring file access
+- Debug mode toggle for verbose logging when troubleshooting integration issues
+
 ## System Architecture
 
 JCVD uses a provider-agnostic architecture that supports multiple issue tracking
@@ -549,6 +575,13 @@ Successfully delivered the foundational session management system with comprehen
 - **Seamless Experience**: <2% of users report friction or confusion with agent
   delegation and recommendations within Claude Code
 
+### Dashboard & Observability Success
+
+- **System Transparency**: >95% of users report understanding what JCVD is doing with their project data
+- **Debugging Efficiency**: >70% reduction in time spent troubleshooting integration issues
+- **First-Time Experience**: >90% of new users successfully verify system operation through dashboard within first session
+- **Trust Metrics**: >85% of users report increased confidence in system reliability due to dashboard visibility
+
 ### Overall System Success
 
 - **Project Completion Rate**: >80% of projects started reach their defined
@@ -562,14 +595,15 @@ Successfully delivered the foundational session management system with comprehen
 
 ## Implementation Roadmap
 
-### Phase 1 (Month 1): Core MCP Server
+### Phase 1 (Month 1): Core MCP Server with Dashboard
 
-- **Core Focus**: Basic H2 database with MCP Resources for Claude Code
+- **Core Focus**: Basic H2 database with MCP Resources and observability dashboard
 - Embedded H2 provider with optimized schema
 - Basic issue CRUD operations (create, read, update, delete)
 - Simple Epic → Story → Subtask hierarchy with validation
 - Basic MCP Resources for exposing project context to Claude Code
 - Simple project bootstrap with documentation templates
+- **MCP Server Dashboard (MVP)**: Read-only web interface showing active sessions, issue counts, and system health
 
 **Success Criteria:**
 
@@ -577,6 +611,7 @@ Successfully delivered the foundational session management system with comprehen
 - MCP Resources provide project context to Claude Code agents
 - Basic dependency tracking and unblocked task identification
 - Cross-session project state recovery through MCP integration
+- **Dashboard provides real-time visibility into system operations and project state**
 
 ### Phase 2 (Month 2): Essential Context Provision
 
@@ -586,6 +621,7 @@ Successfully delivered the foundational session management system with comprehen
 - Basic project templates and scaffolding
 - Manual issue status updates with basic validation
 - Cross-session continuity through structured data persistence
+- **Dashboard Enhancement**: Interactive dependency graph visualization and context flow monitoring
 
 **Success Criteria:**
 
@@ -593,6 +629,7 @@ Successfully delivered the foundational session management system with comprehen
 - Simple dependency graph traversal identifies unblocked work
 - Project state persists and recovers across Claude Code sessions
 - Basic project structure generation with template support
+- **Dashboard displays dependency relationships and context provision flow**
 
 ### Phase 3 (Month 3): Provider Expansion
 
@@ -602,6 +639,7 @@ Successfully delivered the foundational session management system with comprehen
 - Simple data export/import for provider switching
 - Enhanced project templates based on usage patterns
 - Basic project health checks and validation
+- **Dashboard Analytics**: Provider sync status, migration tools, and performance metrics
 
 **Success Criteria:**
 
@@ -609,6 +647,7 @@ Successfully delivered the foundational session management system with comprehen
 - Data migration from H2 to Linear preserves essential relationships
 - Provider switching through simple export/import process
 - Enhanced MCP Resources for provider-specific features
+- **Dashboard shows provider synchronization status and migration progress**
 
 ### Future Phases (Month 4+): Incremental Expansion
 
