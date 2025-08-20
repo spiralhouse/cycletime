@@ -1,106 +1,134 @@
 # Dependency Injection Patterns - Technical Design
 
+## Quick Start for Developers
+
+**We use Ktor's native DI plugin (`ktor-server-di`) - requires Ktor 3.2.3+**
+
+### Adding a New Dependency
+```kotlin
+// In Application.kt configureDependencies()
+dependencies {
+    provide<YourInterface> { YourImplementation() }
+}
+```
+
+### Using Dependencies
+```kotlin
+// Property delegation (recommended)
+val service: YourInterface by application.dependencies
+
+// Direct resolution
+val service = application.dependencies.instance<YourInterface>()
+```
+
+### Key Points
+- ✅ All dependencies are singletons by default
+- ✅ Use interfaces for testability
+- ✅ Constructor injection for repositories and services
+- ⚠️ Ktor 3.2.3+ required (not available in 3.2.0)
+
 ## Overview
 
-This document outlines the dependency injection (DI) patterns for JCVD, transitioning from **Koin 4.0** (current implementation) to **Ktor 3.2.0+ native DI** (planned in SPI-442). The design enables testable, maintainable code following Domain-Driven Design (DDD) principles while leveraging Kotlin's type safety.
+This document outlines the dependency injection (DI) patterns for JCVD using **Ktor 3.2.3+ native DI** (implemented in SPI-458). The design enables testable, maintainable code following Domain-Driven Design (DDD) principles while leveraging Kotlin's type safety.
 
-**Current State**: Using Koin 4.0 for dependency injection
-**Future Plan**: Migrate to Ktor's native DI (`ktor-server-di`) in SPI-442 for seamless integration with Ktor's testing framework and reduced external dependencies.
+**Current State**: Using Ktor's native DI (`ktor-server-di`) - completed migration from Koin 4.0
+**Implementation**: Ktor 3.2.3 with native DI plugin for seamless integration with Ktor's testing framework
 
 ## Technology Stack
 
-### Current Dependencies (Koin Implementation)
+### Current Dependencies (Ktor Native DI Implementation)
 
 ```kotlin
-// build.gradle.kts - Current implementation
+// build.gradle.kts - Current implementation (as of SPI-458)
 dependencies {
     // Ktor with CIO server engine
-    implementation("io.ktor:ktor-server-core:3.2.0")
-    implementation("io.ktor:ktor-server-cio:3.2.0")
-    implementation("io.ktor:ktor-server-content-negotiation:3.2.0")
+    implementation("io.ktor:ktor-server-core:3.2.3")
+    implementation("io.ktor:ktor-server-cio:3.2.3")
+    implementation("io.ktor:ktor-server-content-negotiation:3.2.3")
+    implementation("io.ktor:ktor-server-sse:3.2.3")
     
-    // Current DI framework
-    implementation("io.insert-koin:koin-ktor:4.0.0")
-    implementation("io.insert-koin:koin-core:4.0.0")
+    // Native DI framework (requires Ktor 3.2.3+)
+    implementation("io.ktor:ktor-server-di:3.2.3")
     
-    // Database - Current SQLite implementation
+    // Database - SQLite implementation (H2 migration planned in SPI-439)
     implementation("org.xerial:sqlite-jdbc:3.46.1.3")
     implementation("com.zaxxer:HikariCP:6.2.1")
     implementation("org.jetbrains.exposed:exposed-core:0.58.0")
     implementation("org.jetbrains.exposed:exposed-dao:0.58.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.58.0")
     implementation("org.jetbrains.exposed:exposed-java-time:0.58.0")
+    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.58.0")
 }
 ```
 
-### Future Dependencies (Ktor Native DI - SPI-442)
+### Important Note on Ktor DI Availability
+
+**Critical Discovery (SPI-458)**: The `ktor-server-di` plugin is **not available in Ktor 3.2.0** despite being announced. It was properly released starting with **Ktor 3.2.3**. Always use Ktor 3.2.3 or later for native DI support.
+
+## Current Architecture (Ktor Native DI)
+
+### Current DI Configuration (Implemented in SPI-458)
 
 ```kotlin
-// build.gradle.kts - Future implementation
-dependencies {
-    // Ktor with Netty server engine
-    implementation("io.ktor:ktor-server-core:3.2.0")
-    implementation("io.ktor:ktor-server-netty:3.2.0")  // Migration target
-    implementation("io.ktor:ktor-server-di:3.2.0")     // DI replacement
-    
-    // Database - Future H2 implementation (SPI-439)
-    implementation("com.h2database:h2:2.2.224")
-    implementation("com.zaxxer:HikariCP:6.2.1")
-    implementation("org.jetbrains.exposed:exposed-core:0.58.0")
-    implementation("org.jetbrains.exposed:exposed-dao:0.58.0")
-    implementation("org.jetbrains.exposed:exposed-jdbc:0.58.0")
-    implementation("org.jetbrains.exposed:exposed-java-time:0.58.0")
+// src/main/kotlin/io/spiralhouse/jcvd/Application.kt
+
+import io.ktor.server.application.*
+import io.ktor.server.plugins.di.*
+import io.spiralhouse.jcvd.domain.services.*
+import io.spiralhouse.jcvd.domain.repositories.*
+import io.spiralhouse.jcvd.infrastructure.persistence.*
+
+fun Application.configureDependencies() {
+    // Using Ktor's native DI plugin (requires 3.2.3+)
+    dependencies {
+        // Domain Services
+        provide<TimeProvider> { SystemTimeProvider() }
+        
+        // Repositories
+        provide<ProjectRepository> { ExposedProjectRepository() }
+        provide<IssueRepository> { ExposedIssueRepository() }
+        provide<SessionRepository> { ExposedSessionRepository() }
+    }
 }
-```
-
-## Current Architecture (Koin 4.0)
-
-### Current Koin Configuration
-
-```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/di/KoinModules.kt
-
-import org.koin.dsl.module
-import io.spiralhouse.jcvd.domain.services.TimeProvider
-import io.spiralhouse.jcvd.infrastructure.services.RealTimeProvider
-
-val appModule = module {
-    // Time provider
-    single<TimeProvider> { RealTimeProvider() }
-    
-    // TODO: Add repositories and services when implemented
-    // single<ProjectRepository> { H2ProjectRepository(get()) }
-    // single<ProjectApplicationService> { ProjectApplicationService(get(), get()) }
-}
-```
-
-### Current Application Setup
-
-```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/Application.kt
-
-import org.koin.ktor.plugin.Koin
-import io.spiralhouse.jcvd.infrastructure.di.appModule
 
 fun Application.module() {
-    // Install Koin
-    install(Koin) {
-        modules(appModule)
-    }
+    // Configure dependencies first
+    configureDependencies()
+    
+    // Initialize database
+    DatabaseFactory.init(
+        jdbcUrl = System.getenv("DATABASE_URL") ?: "jdbc:sqlite:jcvd.db",
+        enableLogging = System.getenv("DATABASE_LOGGING")?.toBoolean() ?: false
+    )
     
     // Other configuration...
 }
 ```
 
-## Future Architecture (Ktor Native DI - SPI-442)
-
-### Future Ktor DI Configuration
+### Accessing Dependencies
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/di/DIConfiguration.kt
+// Using property delegation (recommended)
+class SomeService(application: Application) {
+    private val timeProvider: TimeProvider by application.dependencies
+    private val projectRepository: ProjectRepository by application.dependencies
+}
+
+// Direct resolution (when needed)
+fun Application.someFunction() {
+    val timeProvider = dependencies.instance<TimeProvider>()
+}
+```
+
+## Planned Architecture Enhancements (Post SPI-460)
+
+### Enhanced DI Configuration with Application Services
+
+```kotlin
+// src/main/kotlin/io/spiralhouse/jcvd/Application.kt
 
 import io.ktor.server.application.*
-import io.ktor.server.di.*
+import io.ktor.server.plugins.di.*
 import io.spiralhouse.jcvd.domain.repositories.*
 import io.spiralhouse.jcvd.domain.services.*
 import io.spiralhouse.jcvd.application.services.*
@@ -109,16 +137,52 @@ import io.spiralhouse.jcvd.infrastructure.database.*
 import org.jetbrains.exposed.sql.Database
 
 /**
- * Configure dependency injection using Ktor 3.2.0+ native DI
+ * Enhanced dependency configuration after TDD rebuild (SPI-460)
  */
 fun Application.configureDependencies() {
-    install(DI) {
-        // Import modular DI configurations
-        importOnce(databaseModule)
-        importOnce(domainModule)
-        importOnce(repositoryModule)
-        importOnce(applicationServiceModule)
-        importOnce(mcpModule)
+    dependencies {
+        // Domain Services
+        provide<TimeProvider> { SystemTimeProvider() }
+        provide<IdGenerator> { UUIDGenerator() }
+        
+        // Database
+        provide<Database> {
+            DatabaseFactory.createDatabase(
+                jdbcUrl = environment.config.property("database.url").getString()
+            )
+        }
+        
+        // Repositories (with proper constructor injection)
+        provide<ProjectRepository> { 
+            ExposedProjectRepository(instance(), instance<TimeProvider>())
+        }
+        provide<IssueRepository> { 
+            ExposedIssueRepository(instance(), instance<TimeProvider>())
+        }
+        provide<SessionRepository> { 
+            ExposedSessionRepository(instance(), instance<TimeProvider>())
+        }
+        provide<UnitOfWork> { 
+            ExposedUnitOfWork(instance())
+        }
+        
+        // Application Services (to be added in SPI-460)
+        provide<ProjectApplicationService> {
+            ProjectApplicationService(
+                projectRepository = instance(),
+                issueRepository = instance(),
+                unitOfWork = instance(),
+                timeProvider = instance()
+            )
+        }
+        provide<IssueApplicationService> {
+            IssueApplicationService(
+                issueRepository = instance(),
+                projectRepository = instance(),
+                unitOfWork = instance(),
+                timeProvider = instance()
+            )
+        }
     }
 }
 
@@ -305,46 +369,54 @@ val Application.dependencies: DI
     get() = plugin(DI)
 ```
 
-## Testing with DI Overrides
+## Testing with DI (Current Implementation)
 
-### Test Configuration with Mock Dependencies
+### Integration Test Configuration
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/testing/TestDI.kt
+// src/test/kotlin/io/spiralhouse/jcvd/integration/DependencyInjectionIntegrationTest.kt
 
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.server.testing.*
-import io.ktor.server.di.*
-import io.spiralhouse.jcvd.domain.repositories.*
+import io.ktor.server.plugins.di.*
 import io.spiralhouse.jcvd.domain.services.*
-import io.spiralhouse.jcvd.testing.mocks.*
+import io.spiralhouse.jcvd.domain.repositories.*
 
-/**
- * Test DI module with mock implementations
- */
-fun testDIModule(
-    mockTimeProvider: TimeProvider? = null,
-    mockProjectRepository: ProjectRepository? = null,
-    mockIssueRepository: IssueRepository? = null
-) = DIModule("test") {
-    // Override time provider for deterministic tests
-    single<TimeProvider>(override = true) {
-        mockTimeProvider ?: MockTimeProvider()
+class DependencyInjectionIntegrationTest : StringSpec({
+    
+    "should resolve TimeProvider as SystemTimeProvider singleton" {
+        testApplication {
+            application {
+                configureDependencies()
+            }
+            
+            // Using property delegation
+            val timeProvider1: TimeProvider by application.dependencies
+            val timeProvider2: TimeProvider by application.dependencies
+            
+            timeProvider1.shouldBeInstanceOf<SystemTimeProvider>()
+            timeProvider1 shouldBe timeProvider2 // Verify singleton
+        }
     }
     
-    // Override repositories with mocks
-    mockProjectRepository?.let {
-        single<ProjectRepository>(override = true) { it }
+    "should resolve all repository dependencies" {
+        testApplication {
+            application {
+                configureDependencies()
+            }
+            
+            val projectRepo: ProjectRepository by application.dependencies
+            val issueRepo: IssueRepository by application.dependencies
+            val sessionRepo: SessionRepository by application.dependencies
+            
+            projectRepo.shouldBeInstanceOf<ExposedProjectRepository>()
+            issueRepo.shouldBeInstanceOf<ExposedIssueRepository>()
+            sessionRepo.shouldBeInstanceOf<ExposedSessionRepository>()
+        }
     }
-    
-    mockIssueRepository?.let {
-        single<IssueRepository>(override = true) { it }
-    }
-    
-    // Use in-memory H2 for integration tests
-    single<Database>(override = true) {
-        Database.connect("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
-    }
-}
+})
 
 /**
  * Extension function for test setup with DI
@@ -1061,33 +1133,69 @@ beforeEach {
 9. **Document Dependencies**: Clear documentation of what each service needs
 10. **Fail Fast**: Validate DI configuration at startup
 
-## Migration Path from Other DI Frameworks
+## Migration Reference (Completed in SPI-458)
 
 ### From Koin to Ktor DI
 
 ```kotlin
-// Koin pattern
+// OLD: Koin pattern (removed)
 val appModule = module {
-    single { ProjectRepository(get()) }
+    single<TimeProvider> { SystemTimeProvider() }
+    single<ProjectRepository> { ExposedProjectRepository() }
 }
 
-// Equivalent in Ktor DI
-val appModule = DIModule("app") {
-    single<ProjectRepository> { H2ProjectRepository(get()) }
+// NEW: Ktor DI pattern (current)
+dependencies {
+    provide<TimeProvider> { SystemTimeProvider() }
+    provide<ProjectRepository> { ExposedProjectRepository() }
 }
 ```
 
-### From Kodein to Ktor DI
+### Key Migration Changes
+- Removed all Koin dependencies from build.gradle.kts
+- Deleted KoinModules.kt
+- Updated to Ktor 3.2.3 (required for ktor-server-di)
+- Changed from `single { }` to `provide<T> { }`
+- Property delegation: `by inject()` → `by application.dependencies`
 
+## Common Pitfalls to Avoid
+
+### ❌ DON'T Create Custom DI Containers
 ```kotlin
-// Kodein pattern
-val kodein = DI {
-    bind<ProjectRepository>() with singleton { H2ProjectRepository() }
+// WRONG - Don't create custom service locators
+class DIContainer {
+    fun <T> resolve(type: KClass<T>): T { ... }
 }
 
-// Equivalent in Ktor DI
-install(DI) {
-    single<ProjectRepository> { H2ProjectRepository() }
+// RIGHT - Use Ktor's native DI
+dependencies {
+    provide<Service> { ServiceImpl() }
+}
+```
+
+### ❌ DON'T Use Wrong Ktor Version
+```kotlin
+// WRONG - ktor-server-di doesn't exist in 3.2.0
+implementation("io.ktor:ktor-server-di:3.2.0") // Will fail!
+
+// RIGHT - Use 3.2.3 or later
+implementation("io.ktor:ktor-server-di:3.2.3") // Works!
+```
+
+### ❌ DON'T Use Service Locator Pattern
+```kotlin
+// WRONG - Service locator anti-pattern
+class MyService {
+    fun doSomething(app: Application) {
+        val repo = app.dependencies.instance<Repository>() // Fetching deps
+    }
+}
+
+// RIGHT - Constructor injection
+class MyService(
+    private val repository: Repository // Injected via constructor
+) {
+    fun doSomething() { ... }
 }
 ```
 
@@ -1098,12 +1206,12 @@ install(DI) {
 3. **Minimal Overhead**: Native Ktor DI has minimal runtime overhead
 4. **Type Safety**: Compile-time type checking prevents runtime errors
 
-## Next Steps
+## Next Steps (SPI-460)
 
-After implementing this DI pattern:
+After the TDD rebuild in SPI-460:
 
-1. Update all services to use constructor injection
-2. Create test modules for each domain area
-3. Implement integration tests with DI overrides
-4. Document service dependencies in code
-5. Set up environment-specific configurations
+1. Add Application Services with constructor injection
+2. Implement proper Unit of Work pattern
+3. Create test doubles for all interfaces
+4. Add integration tests with real H2 database
+5. Document all service dependencies

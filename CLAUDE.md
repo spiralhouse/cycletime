@@ -19,17 +19,17 @@ Currently using SQLite with Exposed ORM, migrating to H2 database in SPI-439.
 
 ### Core Technologies
 - **Kotlin/JVM 21**: Primary implementation language
-- **Ktor 3.2.0**: Asynchronous web framework for MCP server
-- **Exposed ORM**: Type-safe SQL DSL for database operations
-- **SQLite**: Current embedded database (H2 migration planned)
-- **Koin 4.0**: Dependency injection framework (migrating to Ktor native DI in SPI-442)
+- **Ktor 3.2.3**: Asynchronous web framework for MCP server with native DI
+- **Exposed ORM 0.58.0**: Type-safe SQL DSL for database operations
+- **SQLite**: Current embedded database (H2 migration planned in SPI-439)
+- **Ktor Native DI**: Dependency injection using `ktor-server-di` plugin (completed in SPI-458)
 - **GraalVM**: Native image compilation support
 
 ### Architecture
 - **Domain-Driven Design**: Rich domain models with business logic encapsulation
 - **Layered Architecture**: Clean separation between domain, application, infrastructure, and MCP layers
 - **Repository Pattern**: Abstracted data access with interface-based design
-- **Dependency Injection**: TimeProvider pattern for testable time-dependent operations
+- **Dependency Injection**: Ktor native DI with constructor injection and interface-based design
 - **Package Structure**: `io.spiralhouse.jcvd` namespace
 
 ## Agents
