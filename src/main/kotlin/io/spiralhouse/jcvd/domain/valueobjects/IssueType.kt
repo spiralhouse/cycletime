@@ -130,11 +130,16 @@ enum class IssueType(
         fun fromString(value: String?): IssueType {
             require(value != null) { "IssueType cannot be null" }
             
-            val trimmedValue = value.trim()
-            require(trimmedValue.isNotBlank()) { "Invalid IssueType: $trimmedValue" }
+            // Don't trim - reject strings with whitespace
+            require(value.isNotBlank()) { "Invalid IssueType: $value" }
             
-            return values().find { it.name.equals(trimmedValue, ignoreCase = true) }
-                ?: throw IllegalArgumentException("Invalid IssueType: $trimmedValue")
+            // Check if value contains whitespace (should be rejected)
+            if (value != value.trim()) {
+                throw IllegalArgumentException("Invalid IssueType: $value")
+            }
+            
+            return values().find { it.name.equals(value, ignoreCase = true) }
+                ?: throw IllegalArgumentException("Invalid IssueType: $value")
         }
 
         /**
