@@ -100,7 +100,7 @@ tasks.withType<Test> {
 
 ktor {
     fatJar {
-        archiveFileName.set("jcvd.jar")
+        archiveFileName.set("jcvd-server.jar")
     }
 }
 
