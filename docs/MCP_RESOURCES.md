@@ -21,7 +21,7 @@ Resources and Tools.
 
 JCVD follows the **Context Provider Pattern** for Claude Code integration:
 
-1. **Data Storage**: Embedded SQLite database stores project data locally
+1. **Data Storage**: Embedded H2 database stores project data locally
 2. **Context Provision**: MCP Resources expose structured project context
 3. **Basic Operations**: MCP Tools provide CRUD operations for Claude Code
 4. **Agent Enhancement**: Claude Code's existing agents receive project-specific

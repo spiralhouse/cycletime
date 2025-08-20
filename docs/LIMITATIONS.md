@@ -28,7 +28,7 @@ them.**
 
 **Data Storage and Persistence**
 
-- SQLite embedded database for project data
+- H2 embedded database for project data
 - Epic → Story → Subtask hierarchy storage
 - Basic dependency tracking (blocks/blocked relationships)
 - Cross-session project state persistence
@@ -299,7 +299,7 @@ other providers."
 JCVD's value comes from **doing a few things extremely well** rather than
 attempting to be a comprehensive solution:
 
-1. **Structured Data Storage**: Reliable, fast SQLite-based storage
+1. **Structured Data Storage**: Reliable, fast H2-based storage
 2. **Context Provision**: Rich, structured project context for Claude Code
 3. **Cross-Session Continuity**: Seamless project state recovery
 4. **Simple Operations**: Basic CRUD with validation and dependency tracking

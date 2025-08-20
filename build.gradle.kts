@@ -23,32 +23,40 @@ application {
 }
 
 dependencies {
-    // Ktor
+    // Ktor - Current implementation uses CIO server engine
     implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.cio)
+    implementation(libs.ktor.server.cio)  // Currently used in Application.kt
     implementation(libs.ktor.server.content.negotiation)
-    implementation(libs.ktor.server.config.yaml)
     implementation(libs.ktor.server.sse)
     implementation(libs.ktor.serialization.kotlinx.json)
     
-    // Exposed ORM
+    // TODO: Future Ktor components for SPI-442 (Ktor Native DI migration)
+    // implementation(libs.ktor.server.netty)  // Future migration target
+    // implementation(libs.ktor.server.di)    // Future DI replacement
+    
+    // Exposed ORM - Currently used for SQLite database access
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
     implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.java.time)
     implementation(libs.exposed.kotlin.datetime)
     
-    // Database
-    implementation(libs.sqlite.jdbc)
+    // Database - Current implementation uses SQLite with HikariCP
+    implementation("org.xerial:sqlite-jdbc:3.46.1.3")  // SQLite JDBC driver
     implementation(libs.hikaricp)
     
-    // Dependency Injection
-    implementation(libs.koin.core)
-    implementation(libs.koin.ktor)
+    // TODO: Future H2 migration in SPI-439
+    // implementation(libs.h2.database)
     
     // Kotlin
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.datetime)
+    
+    // Dependency Injection - Currently using Koin
+    implementation("io.insert-koin:koin-ktor:4.0.0")
+    implementation("io.insert-koin:koin-core:4.0.0")
+    // TODO: Migrate to Ktor Native DI in SPI-442
     
     // MCP SDK (when available)
     // implementation(libs.mcp.kotlin.sdk)
@@ -62,17 +70,32 @@ dependencies {
     testImplementation(libs.kotest.property)
     testImplementation(libs.mockk)
     testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.kotlinx.coroutines.test)
+    
+    // TODO: TestContainers for SPI-439 Integration Testing (when H2 repositories are implemented)
+    // testImplementation("org.testcontainers:testcontainers:1.19.3")
+    // testImplementation("org.testcontainers:junit-jupiter:1.19.3")
 }
 
 tasks.withType<KotlinCompile> {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_21)
-        freeCompilerArgs.add("-Xjsr305=strict")
+        freeCompilerArgs.addAll(
+            "-Xjsr305=strict",
+            "-opt-in=kotlin.RequiresOptIn",
+            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
+        )
     }
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showStandardStreams = false
+    }
 }
 
 ktor {

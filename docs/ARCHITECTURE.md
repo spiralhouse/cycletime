@@ -15,8 +15,8 @@
 JCVD (Project Orchestration Framework) implements a **simplified data and
 context provider architecture** for Claude Code project management. The system
 enhances Claude Code's existing capabilities by providing structured project
-data, dependency tracking, and cross-session continuity through embedded SQLite
-database and MCP Resource integration.
+data, dependency tracking, and cross-session continuity through embedded
+database (currently SQLite, migrating to H2 in SPI-439) and MCP Resource integration.
 
 ### Architectural Principles
 
@@ -28,9 +28,9 @@ database and MCP Resource integration.
 
 **Embedded-First Architecture**
 
-- SQLite embedded database as default provider for offline operation
+- Embedded database as default provider for offline and concurrent operation (currently SQLite, H2 planned)
 - No external dependencies required for core functionality
-- High performance with optimized schemas and indexing strategies
+- Optimized for JVM integration with Exposed ORM and connection pooling
 
 **MCP Server Integration**
 
@@ -51,46 +51,48 @@ database and MCP Resource integration.
 JCVD follows **Domain-Driven Design** and **Hexagonal Architecture** principles
 with clear separation of concerns:
 
-```typescript
+```kotlin
 // Domain Layer - Core business logic (no external dependencies)
-export interface ProjectRepository {
-  findById(id: ProjectId): Promise<Project | null>;
-  findByStatus(status: ProjectStatus): Promise<Project[]>;
-  save(project: Project): Promise<void>;
-  delete(id: ProjectId): Promise<void>;
+interface ProjectRepository {
+    suspend fun findById(id: ProjectId): Project?
+    suspend fun findByStatus(status: ProjectStatus): List<Project>
+    suspend fun save(project: Project)
+    suspend fun delete(id: ProjectId): Boolean
 }
 
-export interface IssueRepository {
-  findById(id: IssueId): Promise<Issue | null>;
-  findByProject(projectId: ProjectId): Promise<Issue[]>;
-  save(issue: Issue): Promise<void>;
-  delete(id: IssueId): Promise<void>;
+interface IssueRepository {
+    suspend fun findById(id: IssueId): Issue?
+    suspend fun findByProject(projectId: ProjectId): List<Issue>
+    suspend fun save(issue: Issue)
+    suspend fun delete(id: IssueId): Boolean
 }
 
 // Application Layer - Use case orchestration
-export class ProjectApplicationService {
-  constructor(
-    private projectRepo: ProjectRepository,
-    private issueRepo: IssueRepository,
-    private unitOfWork: UnitOfWork,
-    private domainService: ProjectDomainService
-  ) {}
-
-  async createProject(command: CreateProjectCommand): Promise<Project>;
-  async archiveProject(projectId: ProjectId): Promise<void>;
-  async createIssue(command: CreateIssueCommand): Promise<Issue>;
+class ProjectApplicationService(
+    private val projectRepo: ProjectRepository,
+    private val issueRepo: IssueRepository,
+    private val unitOfWork: UnitOfWork,
+    private val domainService: ProjectDomainService
+) {
+    suspend fun createProject(command: CreateProjectCommand): Project
+    suspend fun archiveProject(projectId: ProjectId)
+    suspend fun createIssue(command: CreateIssueCommand): Issue
 }
 
 // Infrastructure Layer - Technical implementations
-export class SqliteProjectRepository implements ProjectRepository {
-  constructor(private db: Database.Database) {}
-  // SQLite-specific implementation
+class SqliteProjectRepository(  // Current implementation
+    private val database: Database,
+    private val timeProvider: TimeProvider
+) : ProjectRepository {
+    // SQLite implementation with Exposed ORM
+    // TODO: Migrate to H2ProjectRepository in SPI-439
 }
 
 // MCP Layer - Claude Code integration
-export class ProjectResource extends BaseResource {
-  constructor(private projectService: ProjectApplicationService) {}
-  // MCP Resource implementation
+class ProjectResource(
+    private val projectService: ProjectApplicationService
+) : MCPResource {
+    // MCP Resource implementation
 }
 ```
 
@@ -99,166 +101,199 @@ export class ProjectResource extends BaseResource {
 JCVD implements rich domain entities with business logic and value objects for
 type safety:
 
-```typescript
+```kotlin
 // Domain Entities - Rich business logic
-export class Project {
-  constructor(
-    public readonly id: ProjectId,
-    private _name: string,
-    private _status: ProjectStatus,
-    private _issues: Issue[] = []
-  ) {}
-
-  get name(): string {
-    return this._name;
-  }
-  get status(): ProjectStatus {
-    return this._status;
-  }
-
-  addIssue(title: string, description: string): Issue {
-    // Business rule enforcement
-    if (this._status === ProjectStatus.ARCHIVED) {
-      throw new DomainError('Cannot add issues to archived project');
+class Project private constructor(
+    val id: ProjectId,
+    private var _name: String,
+    private var _status: ProjectStatus,
+    private val _issues: MutableList<IssueId> = mutableListOf(),
+    private val timeProvider: TimeProvider
+) {
+    val name: String get() = _name
+    val status: ProjectStatus get() = _status
+    val issues: List<IssueId> get() = _issues.toList()
+    
+    companion object {
+        fun create(
+            name: String,
+            description: String,
+            timeProvider: TimeProvider
+        ): Project {
+            return Project(
+                id = ProjectId.generate(),
+                _name = name,
+                _status = ProjectStatus.ACTIVE,
+                timeProvider = timeProvider
+            )
+        }
     }
 
-    const issue = new Issue(
-      IssueId.generate(),
-      this.id,
-      new IssueTitle(title),
-      description
-    );
-
-    this._issues.push(issue);
-    return issue;
-  }
-
-  archive(): void {
-    if (this._issues.some(issue => !issue.isCompleted)) {
-      throw new DomainError('Cannot archive project with incomplete issues');
+    fun addIssue(issueId: IssueId) {
+        // Business rule enforcement
+        if (_status == ProjectStatus.ARCHIVED) {
+            throw DomainException("Cannot add issues to archived project")
+        }
+        _issues.add(issueId)
     }
-    this._status = ProjectStatus.ARCHIVED;
-  }
+
+    fun archive() {
+        // Business rule: can only archive if all issues are completed
+        if (_issues.any { !isCompleted(it) }) {
+            throw DomainException("Cannot archive project with incomplete issues")
+        }
+        _status = ProjectStatus.ARCHIVED
+    }
+    
+    private fun isCompleted(issueId: IssueId): Boolean {
+        // Check completion status (would be checked via repository)
+        return true // Simplified for example
+    }
 }
 
-export class Issue {
-  constructor(
-    public readonly id: IssueId,
-    public readonly projectId: ProjectId,
-    private _title: IssueTitle,
-    private _description: string,
-    private _status: IssueStatus = IssueStatus.TODO,
-    private _priority: IssuePriority = IssuePriority.MEDIUM,
-    private _estimate?: EstimatePoints
-  ) {}
-
-  get title(): IssueTitle {
-    return this._title;
-  }
-  get status(): IssueStatus {
-    return this._status;
-  }
-  get isCompleted(): boolean {
-    return this._status.isCompleted;
-  }
-
-  updateStatus(newStatus: IssueStatus): void {
-    // Business logic for status transitions
-    if (!this._status.canTransitionTo(newStatus)) {
-      throw new DomainError(
-        `Cannot transition from ${this._status} to ${newStatus}`
-      );
+class Issue private constructor(
+    val id: IssueId,
+    val projectId: ProjectId,
+    private var _title: String,
+    private var _description: String,
+    private var _status: IssueStatus = IssueStatus.TODO,
+    private var _priority: IssuePriority = IssuePriority.MEDIUM,
+    private var _estimate: Int? = null,
+    private val timeProvider: TimeProvider
+) {
+    val title: String get() = _title
+    val status: IssueStatus get() = _status
+    val isCompleted: Boolean get() = _status == IssueStatus.DONE
+    
+    companion object {
+        fun create(
+            title: String,
+            description: String,
+            projectId: ProjectId,
+            type: IssueType,
+            timeProvider: TimeProvider
+        ): Issue {
+            return Issue(
+                id = IssueId.generate(),
+                projectId = projectId,
+                _title = title,
+                _description = description,
+                timeProvider = timeProvider
+            )
+        }
     }
-    this._status = newStatus;
-  }
+
+    fun updateStatus(newStatus: IssueStatus) {
+        // Business logic for status transitions
+        if (!_status.canTransitionTo(newStatus)) {
+            throw DomainException(
+                "Cannot transition from $_status to $newStatus"
+            )
+        }
+        _status = newStatus
+    }
 }
 
 // Value Objects - Type safety and validation
-export class ProjectId {
-  constructor(public readonly value: string) {
-    if (!value || value.length < 1) {
-      throw new Error('ProjectId cannot be empty');
+@JvmInline
+value class ProjectId(val value: String) {
+    init {
+        require(value.isNotBlank()) { "ProjectId cannot be empty" }
     }
-  }
+    
+    companion object {
+        fun generate(): ProjectId = ProjectId(UUID.randomUUID().toString())
+    }
 }
 
-export class IssueTitle {
-  constructor(public readonly value: string) {
-    if (!value || value.trim().length < 1) {
-      throw new Error('Issue title cannot be empty');
+@JvmInline
+value class IssueTitle(val value: String) {
+    init {
+        require(value.trim().isNotBlank()) { "Issue title cannot be empty" }
+        require(value.length <= 255) { "Issue title too long" }
     }
-    if (value.length > 255) {
-      throw new Error('Issue title too long');
-    }
-  }
 }
 
-export class ProjectStatus {
-  private constructor(private readonly status: string) {}
-
-  static readonly ACTIVE = new ProjectStatus('active');
-  static readonly ARCHIVED = new ProjectStatus('archived');
-  static readonly COMPLETED = new ProjectStatus('completed');
-
-  static fromString(status: string): ProjectStatus {
-    switch (status) {
-      case 'active':
-        return ProjectStatus.ACTIVE;
-      case 'archived':
-        return ProjectStatus.ARCHIVED;
-      case 'completed':
-        return ProjectStatus.COMPLETED;
-      default:
-        throw new Error(`Unknown project status: ${status}`);
+enum class ProjectStatus {
+    ACTIVE,
+    ARCHIVED,
+    COMPLETED;
+    
+    companion object {
+        fun fromString(status: String): ProjectStatus {
+            return valueOf(status.uppercase())
+        }
     }
-  }
-
-  toString(): string {
-    return this.status;
-  }
 }
 
 // Data Transfer Objects - Infrastructure layer
-export interface ProjectData {
-  id: string;
-  name: string;
-  description: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
+data class ProjectData(
+    val id: String,
+    val name: String,
+    val description: String,
+    val status: String,
+    val createdAt: Instant,
+    val updatedAt: Instant
+)
 
-export interface IssueData {
-  id: string;
-  project_id: string;
-  parent_id?: string;
-  title: string;
-  description?: string;
-  status: string;
-  priority: string;
-  estimate?: number;
-  issue_type: 'epic' | 'story' | 'subtask';
-  assignee_id?: string;
-  created_at: string;
-  updated_at: string;
+data class IssueData(
+    val id: String,
+    val projectId: String,
+    val parentId: String? = null,
+    val title: String,
+    val description: String? = null,
+    val status: String,
+    val priority: String,
+    val estimate: Int? = null,
+    val issueType: IssueType,
+    val assigneeId: String? = null,
+    val createdAt: Instant,
+    val updatedAt: Instant
+)
+
+enum class IssueType {
+    EPIC,
+    STORY,
+    SUBTASK
 }
 ```
 
 ### Provider Implementation Status
 
-| Provider              | Status   | Features                                           | Primary Use Case                                     |
-| --------------------- | -------- | -------------------------------------------------- | ---------------------------------------------------- |
-| **SQLite (Embedded)** | ✅ MVP   | Basic CRUD, dependency tracking, offline operation | Personal projects, solo development, getting started |
-| **Linear**            | 🔄 V2.0  | Linear API integration, team collaboration         | Professional development, team coordination          |
-| **GitHub Issues**     | 🔄 V3.0+ | Repository integration, basic workflows            | OSS projects, GitHub-centric development             |
-| **Jira**              | 🔄 V3.0+ | Enterprise workflows, custom fields                | Enterprise development, complex organizations        |
+| Provider            | Status   | Features                                                     | Primary Use Case                                     |
+| ------------------- | -------- | ------------------------------------------------------------ | ---------------------------------------------------- |
+| **SQLite (Current)** | ✅ MVP   | Embedded database, basic CRUD operations                    | Current implementation, stable and proven |
+| **H2 (Planned)**    | 🚧 SPI-439 | High-performance CRUD, advanced queries, concurrent access  | Future migration target for better JVM integration |
+| **Linear**          | 🔄 V2.0  | Linear API integration, team collaboration                   | Professional development, team coordination          |
+| **GitHub Issues**   | 🔄 V3.0+ | Repository integration, basic workflows                      | OSS projects, GitHub-centric development             |
+| **Jira**            | 🔄 V3.0+ | Enterprise workflows, custom fields                         | Enterprise development, complex organizations        |
+
+### H2 Database Advantages for Kotlin/JVM
+
+**Performance Benefits:**
+- **Potential performance improvements** for complex JOINs and aggregations (to be validated with benchmarks)
+- **Superior concurrent access** with built-in connection pooling and thread safety
+- **JVM-optimized memory management** with efficient caching and buffer management
+- **Advanced query optimizer** with cost-based optimization for complex dependency graphs
+
+**Exposed ORM Integration:**
+- **Native H2 support** eliminates JDBC driver overhead and type mapping issues
+- **Compile-time schema validation** through Exposed DSL prevents runtime database errors
+- **Type-safe query construction** with Kotlin's null safety and type system
+- **Simplified repository implementations** with less boilerplate and better maintainability
+
+**Development Experience:**
+- **Better debugging and profiling tools** for JVM-based database operations
+- **In-memory testing modes** for fast, isolated unit and integration tests
+- **SQL compatibility modes** (PostgreSQL/MySQL) for future cloud migration paths
+- **Team familiarity** aligns with Spring Boot ecosystem experience
 
 ## Data Models and Database Design
 
-### SQLite Embedded Database Schema
+### Database Schema (SQLite Current, H2 Future)
 
-The embedded provider uses an optimized SQLite schema designed for high
-performance and easy migration to cloud providers:
+The embedded provider uses a database schema designed for optimal
+JVM performance, native Exposed ORM integration, and easy migration to cloud providers:
 
 ```sql
 -- Project management with Linear-inspired structure
@@ -366,27 +401,29 @@ CREATE INDEX idx_issues_parent_type ON issues(parent_id, issue_type);
 For seamless provider switching, JCVD implements a standardized export/import
 format:
 
-```typescript
-interface ExportData {
-  version: string;
-  exportedAt: Date;
-  sourceProvider: string;
+```kotlin
+data class ExportData(
+    val version: String,
+    val exportedAt: Instant,
+    val sourceProvider: String,
+    
+    val projects: List<Project>,
+    val issues: List<Issue>,
+    val dependencies: List<Dependency>,
+    val workflowStates: List<WorkflowState>,
+    val labels: List<Label>,
+    val comments: List<Comment>,
+    
+    // Metadata for validation and migration tracking
+    val metadata: ExportMetadata
+)
 
-  projects: Project[];
-  issues: Issue[];
-  dependencies: Dependency[];
-  workflowStates: WorkflowState[];
-  labels: Label[];
-  comments: Comment[];
-
-  // Metadata for validation and migration tracking
-  metadata: {
-    totalIssues: number;
-    issueHierarchyValid: boolean;
-    dependencyGraphValid: boolean;
-    checksums: Record<string, string>;
-  };
-}
+data class ExportMetadata(
+    val totalIssues: Int,
+    val issueHierarchyValid: Boolean,
+    val dependencyGraphValid: Boolean,
+    val checksums: Map<String, String>
+)
 ```
 
 ## Layered Architecture Components
@@ -405,35 +442,26 @@ external dependencies.
 
 **Domain Entity Example:**
 
-```typescript
-export class Project {
-  constructor(
-    public readonly id: ProjectId,
-    private _name: string,
-    private _status: ProjectStatus,
-    private _issues: Issue[] = []
-  ) {}
-
-  addIssue(title: string, description: string): Issue {
-    // Business rule enforcement at domain level
-    if (this._status === ProjectStatus.ARCHIVED) {
-      throw new DomainError('Cannot add issues to archived project');
+```kotlin
+class Project private constructor(
+    val id: ProjectId,
+    private var _name: String,
+    private var _status: ProjectStatus,
+    private val _issues: MutableList<IssueId> = mutableListOf()
+) {
+    fun addIssue(issueId: IssueId) {
+        // Business rule enforcement at domain level
+        if (_status == ProjectStatus.ARCHIVED) {
+            throw DomainException("Cannot add issues to archived project")
+        }
+        _issues.add(issueId)
     }
 
-    const issue = new Issue(
-      IssueId.generate(),
-      this.id,
-      new IssueTitle(title),
-      description
-    );
-
-    this._issues.push(issue);
-    return issue;
-  }
-
-  getUnblockedIssues(): Issue[] {
-    return this._issues.filter(issue => issue.hasNoBlockingDependencies());
-  }
+    fun getUnblockedIssues(allIssues: List<Issue>): List<Issue> {
+        return allIssues.filter { issue -> 
+            _issues.contains(issue.id) && issue.hasNoBlockingDependencies()
+        }
+    }
 }
 ```
 
@@ -451,43 +479,48 @@ infrastructure layers.
 
 **Application Service Example:**
 
-```typescript
-export class ProjectApplicationService {
-  constructor(
-    private projectRepo: ProjectRepository,
-    private issueRepo: IssueRepository,
-    private unitOfWork: UnitOfWork,
-    private domainService: ProjectDomainService
-  ) {}
-
-  async createIssue(command: CreateIssueCommand): Promise<Issue> {
-    return this.unitOfWork.execute(async () => {
-      // Load aggregate
-      const project = await this.projectRepo.findById(command.projectId);
+```kotlin
+class ProjectApplicationService(
+    private val projectRepo: ProjectRepository,
+    private val issueRepo: IssueRepository,
+    private val unitOfWork: UnitOfWork,
+    private val domainService: ProjectDomainService
+) {
+    suspend fun createIssue(command: CreateIssueCommand): Issue {
+        return unitOfWork.execute {
+            // Load aggregate
+            val project = projectRepo.findById(command.projectId)
       if (!project) {
         throw new NotFoundError(`Project ${command.projectId.value} not found`);
       }
 
-      // Domain logic through aggregate
-      const issue = project.addIssue(command.title.value, command.description);
+                ?: throw NotFoundException("Project not found")
+            
+            // Domain logic through aggregate
+            val issue = Issue.create(
+                title = command.title,
+                description = command.description,
+                projectId = command.projectId,
+                type = command.type,
+                timeProvider = timeProvider
+            )
+            project.addIssue(issue.id)
 
-      // Persist changes
-      await this.projectRepo.save(project);
-      await this.issueRepo.save(issue);
+            // Persist changes
+            projectRepo.save(project)
+            issueRepo.save(issue)
 
-      return issue;
-    });
-  }
+            issue
+        }
+    }
 
-  async getProjectContext(projectId: ProjectId): Promise<ProjectContext> {
-    const project = await this.projectRepo.findById(projectId);
-    if (!project) return null;
-
-    const issues = await this.issueRepo.findByProject(projectId);
-    const unblockedIssues = project.getUnblockedIssues();
-
-    return new ProjectContext(project, issues, unblockedIssues);
-  }
+    suspend fun getProjectContext(projectId: ProjectId): ProjectContext? {
+        val project = projectRepo.findById(projectId) ?: return null
+        val issues = issueRepo.findByProject(projectId)
+        val unblockedIssues = project.getUnblockedIssues(issues)
+        
+        return ProjectContext(project, issues, unblockedIssues)
+    }
 }
 ```
 
@@ -499,57 +532,60 @@ external system integrations.
 **Key Components:**
 
 - **Repository Implementations**: `SqliteProjectRepository`,
-  `SqliteIssueRepository`
+  `SqliteIssueRepository` with Exposed ORM integration (migrating to H2 in SPI-439)
 - **Unit of Work Implementation**: `SqliteUnitOfWork` for transaction management
 - **Database Migrations**: `MigrationRunner` for schema evolution
 - **External Integrations**: Linear API, GitHub API adapters
 
 **Repository Implementation Example:**
 
-```typescript
-export class SqliteProjectRepository implements ProjectRepository {
-  constructor(private db: Database.Database) {}
+```kotlin
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.transaction
+import com.spiralhouse.jcvd.infrastructure.database.Projects
 
-  async findById(id: ProjectId): Promise<Project | null> {
-    const stmt = this.db.prepare('SELECT * FROM projects WHERE id = ?');
-    const row = stmt.get(id.value) as ProjectData | undefined;
+class SqliteProjectRepository(  // TODO: Migrate to H2ProjectRepository in SPI-439
+    private val database: Database,
+    private val timeProvider: TimeProvider
+) : ProjectRepository {
+    
+    override suspend fun findById(id: ProjectId): Project? = transaction(database) {
+        Projects.select { Projects.id eq id.value }
+            .singleOrNull()
+            ?.let { toDomainEntity(it) }
+    }
 
-    return row ? this.toDomainEntity(row) : null;
-  }
+    override suspend fun save(project: Project) = transaction(database) {
+        val exists = Projects.select { Projects.id eq project.id.value }.count() > 0
+        
+        if (exists) {
+            Projects.update({ Projects.id eq project.id.value }) {
+                it[name] = project.name
+                it[description] = project.description
+                it[status] = project.status.name
+                it[updatedAt] = timeProvider.now()
+            }
+        } else {
+            Projects.insert {
+                it[id] = project.id.value
+                it[name] = project.name
+                it[description] = project.description
+                it[status] = project.status.name
+                it[createdAt] = timeProvider.now()
+                it[updatedAt] = timeProvider.now()
+            }
+        }
+    }
 
-  async save(project: Project): Promise<void> {
-    const data = this.toDataModel(project);
-    const stmt = this.db.prepare(`
-      INSERT OR REPLACE INTO projects (id, name, description, status, updated_at)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-    stmt.run(
-      data.id,
-      data.name,
-      data.description,
-      data.status,
-      data.updated_at
-    );
-  }
-
-  private toDomainEntity(data: ProjectData): Project {
-    return new Project(
-      new ProjectId(data.id),
-      data.name,
-      data.description,
-      ProjectStatus.fromString(data.status)
-    );
-  }
-
-  private toDataModel(project: Project): ProjectData {
-    return {
-      id: project.id.value,
-      name: project.name,
-      description: project.description,
-      status: project.status.toString(),
-      updated_at: new Date().toISOString(),
-    };
-  }
+    private fun toDomainEntity(row: ResultRow): Project {
+        return Project.fromSnapshot(
+            id = ProjectId(row[Projects.id]),
+            name = row[Projects.name],
+            description = row[Projects.description],
+            status = ProjectStatus.fromString(row[Projects.status]),
+            timeProvider = timeProvider
+        )
+    }
 }
 ```
 
@@ -569,46 +605,50 @@ Protocol.
 
 **MCP Resource Implementation:**
 
-```typescript
-export class ProjectResource extends BaseResource {
-  constructor(private projectService: ProjectApplicationService) {}
-
-  async read(uri: string): Promise<ResourceContent> {
-    const projectIdString = this.parseProjectUri(uri);
-    const projectId = new ProjectId(projectIdString);
-
-    // Use Application Service - no direct repository access
-    const project = await this.projectService.getProjectDetails(projectId);
-
-    if (!project) {
-      throw new ResourceNotFoundError(`Project ${projectId.value} not found`);
+```kotlin
+class ProjectResource(
+    private val projectService: ProjectApplicationService
+) : MCPResource {
+    
+    override fun canHandle(uri: String): Boolean {
+        return uri.startsWith("jcvd://project/")
     }
 
-    return {
-      uri,
-      mimeType: 'application/json',
-      text: JSON.stringify({
-        id: project.id.value,
-        name: project.name,
-        status: project.status.toString(),
-        issueCount: project.getActiveIssueCount(),
-        unblockedTasks: project.getUnblockedIssues().length,
-      }),
-    };
-  }
+    override suspend fun read(uri: String): ResourceContent {
+        val projectIdString = parseProjectUri(uri)
+        val projectId = ProjectId(projectIdString)
 
-  async list(): Promise<ResourceListResult> {
-    const projects = await this.projectService.listActiveProjects();
+        // Use Application Service - no direct repository access
+        val project = projectService.getProjectDetails(projectId)
+            ?: throw ResourceNotFoundException("Project ${projectId.value} not found")
 
-    return {
-      resources: projects.map(project => ({
-        uri: `project://${project.id.value}`,
-        name: project.name,
-        description: project.description || '',
-        mimeType: 'application/json',
-      })),
-    };
-  }
+        return ResourceContent(
+            uri = uri,
+            mimeType = "application/json",
+            text = Json.encodeToString(
+                mapOf(
+                    "id" to project.id.value,
+                    "name" to project.name,
+                    "status" to project.status.toString(),
+                    "issueCount" to project.getActiveIssueCount(),
+                    "unblockedTasks" to project.getUnblockedIssues().size
+                )
+            )
+        )
+    }
+
+    override suspend fun list(): List<ResourceDescriptor> {
+        val projects = projectService.listActiveProjects()
+
+        return projects.map { project ->
+            ResourceDescriptor(
+                uri = "jcvd://project/${project.id.value}",
+                name = project.name,
+                description = project.description,
+                mimeType = "application/json"
+            )
+        }
+    }
 }
 ```
 
@@ -645,37 +685,37 @@ provide project context.
 
 **MCP Resources Provided:**
 
-```typescript
+```kotlin
 // Project context for Claude Code analysis
-@resource("jcvd://project/{projectId}/context")
-async getProjectContext(projectId: string): Promise<ProjectContext>
+@MCPResource("jcvd://project/{projectId}/context")
+suspend fun getProjectContext(projectId: String): ProjectContext
 
 // Unblocked tasks for task identification
-@resource("jcvd://project/{projectId}/unblocked-tasks")
-async getUnblockedTasks(projectId: string): Promise<Issue[]>
+@MCPResource("jcvd://project/{projectId}/unblocked-tasks")
+suspend fun getUnblockedTasks(projectId: String): List<Issue>
 
 // Dependency graph for relationship understanding
-@resource("jcvd://project/{projectId}/dependencies")
-async getDependencyGraph(projectId: string): Promise<DependencyGraph>
+@MCPResource("jcvd://project/{projectId}/dependencies")
+suspend fun getDependencyGraph(projectId: String): DependencyGraph
 ```
 
 **MCP Tools Provided:**
 
-```typescript
+```kotlin
 // Basic issue operations
-@tool("jcvd_create_issue")
-async createIssue(config: IssueConfig): Promise<Issue>
+@MCPTool("jcvd_create_issue")
+suspend fun createIssue(config: IssueConfig): Issue
 
-@tool("jcvd_update_issue_status")
-async updateIssueStatus(issueId: string, status: string): Promise<Issue>
+@MCPTool("jcvd_update_issue_status")
+suspend fun updateIssueStatus(issueId: String, status: String): Issue
 
-@tool("jcvd_add_dependency")
-async addDependency(blockerId: string, blockedId: string): Promise<void>
+@MCPTool("jcvd_add_dependency")
+suspend fun addDependency(blockerId: String, blockedId: String)
 ```
 
 ### 5. Provider Storage Layer
 
-**Purpose**: Simple storage abstraction starting with SQLite, expanding
+**Purpose**: Simple storage abstraction currently using SQLite, expanding
 incrementally.
 
 **Key Responsibilities:**
@@ -683,26 +723,22 @@ incrementally.
 - Basic CRUD operations for issues and projects
 - Simple data export/import for provider switching
 - No complex abstraction until multiple providers exist
-- Focus on SQLite optimization first
+- Focus on SQLite stability, then H2 migration in SPI-439
 
 **Provider Factory Pattern:**
 
-```typescript
-class ProviderFactory {
-  static async createProvider(config: ProviderConfig): Promise<IssueProvider> {
-    switch (config.type) {
-      case 'sqlite':
-        return new SQLiteProvider(config.sqliteConfig);
-      case 'linear':
-        return new LinearProvider(config.linearConfig);
-      case 'github':
-        return new GitHubProvider(config.githubConfig);
-      case 'jira':
-        return new JiraProvider(config.jiraConfig);
-      default:
-        throw new Error(`Unsupported provider type: ${config.type}`);
+```kotlin
+object ProviderFactory {
+    suspend fun createProvider(config: ProviderConfig): IssueProvider {
+        return when (config.type) {
+            "sqlite" -> SqliteProvider(config.sqliteConfig)  // Current default
+            "h2" -> H2Provider(config.h2Config)  // Future option in SPI-439
+            "linear" -> LinearProvider(config.linearConfig)
+            "github" -> GitHubProvider(config.githubConfig)
+            "jira" -> JiraProvider(config.jiraConfig)
+            else -> throw IllegalArgumentException("Unsupported provider type: ${config.type}")
+        }
     }
-  }
 }
 ```
 
@@ -714,31 +750,29 @@ class ProviderFactory {
 - **Domain-Driven Design**: Rich domain model with business logic encapsulation
 - **Dependency Injection**: TimeProvider pattern for testable time-dependent operations
 - **Data Integrity**: Automatic validation and repair of session state
-- **Performance**: Sub-millisecond operations with SQLite optimization
+- **Performance**: Fast operations with embedded database optimization
 
 #### Domain Model
 
 **Core Entities and Value Objects:**
 
-```typescript
+```kotlin
 // Session Entity - Core domain model with time provider injection
-export class Session {
-  constructor(
-    private _sessionKey: SessionKey,
-    private _projectId?: string,
-    private _currentContext: SessionContext,
-    private _lastActivity: Date,
-    private readonly timeProvider?: TimeProvider
-  ) {}
+class Session(
+    private val _sessionKey: SessionKey,
+    private var _projectId: String? = null,
+    private var _currentContext: SessionContext,
+    private var _lastActivity: Instant,
+    private val timeProvider: TimeProvider
+) {
+    fun updateContext(updates: Map<String, Any?>) {
+        _currentContext = _currentContext.copy(contextData = updates)
+        touch() // Updates lastActivity using timeProvider
+    }
 
-  updateContext(updates: Partial<SessionContext>): void {
-    this._currentContext = { ...this._currentContext, ...updates };
-    this.touch(); // Updates lastActivity using timeProvider
-  }
-
-  isExpired(maxAge: number): boolean {
-    const now = this.timeProvider?.now() ?? new Date();
-    return now.getTime() - this._lastActivity.getTime() >= maxAge;
+    fun isExpired(maxAge: Duration): Boolean {
+        val now = timeProvider.now()
+        return Duration.between(_lastActivity, now) >= maxAge
   }
 }
 
@@ -888,48 +922,41 @@ export class SessionValidator {
 
 **Repository Implementation:**
 
-```typescript
-export class SqliteSessionRepository implements SessionRepository {
-  private statements: Map<string, Statement> = new Map();
-
-  constructor(
-    private db: Database.Database,
-    private timeProvider: TimeProvider
-  ) {
-    this.initializeStatements();
-  }
-
-  async findByKey(sessionKey: SessionKey): Promise<Session | null> {
-    const stmt = this.getStatement('findByKey');
-    const row = stmt.get(sessionKey.value);
+```kotlin
+class SqliteSessionRepository(  // Current implementation
+    private val database: Database,
+    private val timeProvider: TimeProvider
+) : SessionRepository {
     
-    if (!row) return null;
-    
-    return this.rowToSession(row);
-  }
+    override suspend fun findByKey(sessionKey: SessionKey): Session? = transaction {
+        val row = SessionStates.select { SessionStates.sessionKey eq sessionKey.value }
+            .singleOrNull() ?: return@transaction null
+        
+        rowToSession(row)
+    }
 
-  async save(session: Session): Promise<void> {
-    const stmt = this.getStatement('upsert');
-    stmt.run({
-      sessionKey: session.sessionKey.value,
-      projectId: session.projectId,
-      currentContext: JSON.stringify(session.currentContext),
-      lastActivity: session.lastActivity.getTime(),
-      createdAt: session.createdAt.getTime(),
-      updatedAt: session.updatedAt.getTime()
-    });
-  }
+    override suspend fun save(session: Session): Unit = transaction {
+        SessionStates.upsert {
+            it[sessionKey] = session.sessionKey.value
+            it[projectId] = session.projectId
+            it[currentContext] = Json.encodeToString(session.currentContext)
+            it[lastActivity] = session.lastActivity
+            it[createdAt] = session.createdAt
+            it[updatedAt] = session.updatedAt
+        }
+    }
 
-  private rowToSession(row: any): Session {
-    return Session.fromPlainObject({
-      sessionKey: row.session_key,
-      projectId: row.project_id,
-      currentContext: JSON.parse(row.current_context || '{}'),
-      lastActivity: new Date(row.last_activity),
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at)
-    }, this.timeProvider);
-  }
+    private fun rowToSession(row: ResultRow): Session {
+        return Session.fromSnapshot(
+            sessionKey = SessionKey(row[SessionStates.sessionKey]),
+            projectId = row[SessionStates.projectId],
+            currentContext = Json.decodeFromString(row[SessionStates.currentContext]),
+            lastActivity = row[SessionStates.lastActivity],
+            createdAt = row[SessionStates.createdAt],
+            updatedAt = row[SessionStates.updatedAt],
+            timeProvider = timeProvider
+        )
+    }
 }
 ```
 
@@ -985,18 +1012,22 @@ automation.
 **TDD Integration Pattern:**
 
 ```typescript
-interface TDDWorkflowState {
-  currentPhase: 'red' | 'green' | 'refactor' | 'complete';
-  testsCoverage: number;
-  qualityGates: QualityGate[];
-  nextAction: string;
+data class TDDWorkflowState(
+    val currentPhase: TDDPhase,
+    val testsCoverage: Double,
+    val qualityGates: List<QualityGate>,
+    val nextAction: String
+)
+
+enum class TDDPhase {
+    RED, GREEN, REFACTOR, COMPLETE
 }
 
 class TDDOrchestrator {
-  async validateTestFirst(issueId: string): Promise<boolean>;
-  async validateImplementation(issueId: string): Promise<ValidationResult>;
-  async validateRefactoring(issueId: string): Promise<RefactorResult>;
-  async completeStory(issueId: string): Promise<CompletionResult>;
+    suspend fun validateTestFirst(issueId: String): Boolean
+    suspend fun validateImplementation(issueId: String): ValidationResult
+    suspend fun validateRefactoring(issueId: String): RefactorResult
+    suspend fun completeStory(issueId: String): CompletionResult
 }
 ```
 
@@ -1007,27 +1038,30 @@ class TDDOrchestrator {
 JCVD integrates with Claude Code through the Model Context Protocol (MCP) server
 framework:
 
-```typescript
-class JCVDMCPServer extends MCPServer {
-  // Project orchestration tools
-  @tool("jcvd_create_project")
-  async createProject(requirements: ProjectRequirements): Promise<Project>
+```kotlin
+class JCVDMCPServer(
+    private val resources: List<MCPResource>,
+    private val tools: List<MCPTool>
+) {
+    // Project orchestration tools
+    @MCPTool("jcvd_create_project")
+    suspend fun createProject(requirements: ProjectRequirements): Project
 
-  @tool("jcvd_get_next_task")
-  async getNextTask(projectId: string): Promise<TaskRecommendation>
+    @MCPTool("jcvd_get_next_task")
+    suspend fun getNextTask(projectId: String): TaskRecommendation
 
-  @tool("jcvd_update_issue")
-  async updateIssue(issueId: string, updates: IssueUpdate): Promise<Issue>
+    @MCPTool("jcvd_update_issue")
+    suspend fun updateIssue(issueId: String, updates: IssueUpdate): Issue
 
-  @tool("jcvd_analyze_dependencies")
-  async analyzeDependencies(projectId: string): Promise<DependencyAnalysis>
+    @MCPTool("jcvd_analyze_dependencies")
+    suspend fun analyzeDependencies(projectId: String): DependencyAnalysis
 
-  // Documentation management
-  @tool("jcvd_generate_docs")
-  async generateDocumentation(projectId: string, docType: DocumentType): Promise<Document>
+    // Documentation management
+    @MCPTool("jcvd_generate_docs")
+    suspend fun generateDocumentation(projectId: String, docType: DocumentType): Document
 
-  @tool("jcvd_sync_docs")
-  async syncDocumentation(projectId: string): Promise<SyncResult>
+    @MCPTool("jcvd_sync_docs")
+    suspend fun syncDocumentation(projectId: String): SyncResult
 }
 ```
 
@@ -1055,26 +1089,29 @@ JCVD implements multi-layer state management for comprehensive project tracking:
 
 **State Synchronization Strategy:**
 
-```typescript
-class StateManager {
-  async syncState(projectId: string): Promise<SyncResult> {
-    // Pull latest from provider
-    const providerState = await this.provider.getProject(projectId);
+```kotlin
+class StateManager(
+    private val provider: IssueProvider,
+    private val cache: StateCache
+) {
+    suspend fun syncState(projectId: String): SyncResult {
+        // Pull latest from provider
+        val providerState = provider.getProject(projectId)
 
-    // Validate documentation currency
-    const docsState = await this.validateDocumentation(projectId);
+        // Validate documentation currency
+        val docsState = validateDocumentation(projectId)
 
-    // Reconcile any conflicts
-    const conflicts = this.detectConflicts(providerState, docsState);
-    if (conflicts.length > 0) {
-      return this.resolveConflicts(conflicts);
+        // Reconcile any conflicts
+        val conflicts = detectConflicts(providerState, docsState)
+        if (conflicts.isNotEmpty()) {
+            return resolveConflicts(conflicts)
+        }
+
+        // Update in-memory cache
+        cache.update(projectId, providerState)
+
+        return SyncResult(status = "success", conflicts = emptyList())
     }
-
-    // Update in-memory cache
-    this.updateCache(projectId, providerState);
-
-    return { status: 'success', conflicts: [] };
-  }
 }
 ```
 
@@ -1098,22 +1135,26 @@ provider integration.
 - Potential performance overhead for provider-specific optimizations
 - Requires ongoing maintenance as provider APIs evolve
 
-### SQLite as Default Provider
+### Embedded Database Strategy
 
-**Decision**: Use embedded SQLite database as the default issue tracking
-provider.
+**Current**: Use embedded SQLite database as the default issue tracking
+**Future**: Migrate to H2 database (SPI-439) for enhanced JVM integration
+provider for the Kotlin/JVM implementation.
 
 **Rationale**:
 
 - Zero external dependencies for immediate productivity
-- High performance for typical project sizes (1000+ issues)
+- Better JVM integration and potential performance improvements over SQLite
+- Native Exposed ORM integration for type-safe database operations
+- Excellent concurrent access support with connection pooling
 - Complete offline operation capability
+- JVM-optimized memory management and query execution
 - Linear-inspired schema enables easy migration to cloud providers
 - No account setup or authentication friction
 
 **Trade-offs**:
 
-- No built-in team collaboration features
+- No built-in team collaboration features (resolved with provider switching)
 - Requires manual backup and synchronization for distributed teams
 - Limited advanced reporting compared to enterprise solutions
 
@@ -1187,7 +1228,7 @@ terminology.
 
 ### Data Encryption
 
-**At Rest**: SQLite database files encrypted using system keychain integration
+**At Rest**: Database files encrypted using system keychain integration
 **In Transit**: All provider API communications use TLS 1.3 minimum **API
 Keys**: Secure storage using platform-appropriate credential management
 
