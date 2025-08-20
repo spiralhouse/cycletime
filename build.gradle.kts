@@ -29,7 +29,6 @@ dependencies {
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.server.sse)
     implementation(libs.ktor.serialization.kotlinx.json)
-    // Note: Ktor 3.2.0 DI plugin not available as separate dependency
 
     // Exposed ORM - Currently used for SQLite database access
     implementation(libs.exposed.core)
@@ -50,7 +49,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.datetime)
 
-    // Dependency Injection - Using Ktor native DI (migrated from Koin in SPI-458)
+    // Dependency Injection - Using manual DI pattern (migrated from Koin in SPI-458)
 
     // MCP SDK (when available)
     // implementation(libs.mcp.kotlin.sdk)

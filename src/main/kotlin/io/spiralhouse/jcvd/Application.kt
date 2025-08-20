@@ -1,24 +1,11 @@
 package io.spiralhouse.jcvd
 
-import io.spiralhouse.jcvd.domain.repositories.IssueRepository
-import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
-import io.spiralhouse.jcvd.domain.repositories.SessionRepository
-import io.spiralhouse.jcvd.domain.services.SystemTimeProvider
-import io.spiralhouse.jcvd.domain.services.TimeProvider
 import io.spiralhouse.jcvd.infrastructure.database.DatabaseFactory
-import io.spiralhouse.jcvd.infrastructure.di.DIContainer
-import io.spiralhouse.jcvd.infrastructure.di.singleton
-import io.ktor.util.AttributeKey
-import io.spiralhouse.jcvd.infrastructure.persistence.ExposedIssueRepository
-import io.spiralhouse.jcvd.infrastructure.persistence.ExposedProjectRepository
-import io.spiralhouse.jcvd.infrastructure.persistence.ExposedSessionRepository
+import io.spiralhouse.jcvd.infrastructure.di.ApplicationDI
 import io.spiralhouse.jcvd.mcp.configureMCP
-import io.ktor.server.application.ApplicationEnvironment
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
-// Ktor native DI is not available as a separate plugin in 3.2.0
-// Using manual dependency management instead
 import io.ktor.server.engine.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
@@ -26,13 +13,6 @@ import io.ktor.server.routing.*
 import io.ktor.server.sse.*
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
-
-// Application attribute key for the DI container
-val DIContainerKey = AttributeKey<DIContainer>("DIContainer")
-
-// Extension to get DI container from application
-val Application.di: DIContainer
-    get() = attributes[DIContainerKey]
 
 fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
@@ -67,19 +47,8 @@ fun Application.module() {
 
     install(SSE)
 
-    // Configure DI container (replaces Koin)
-    val di = DIContainer()
-    
-    // Register domain services
-    di.singleton<TimeProvider> { SystemTimeProvider() }
-    
-    // Register infrastructure repositories  
-    di.singleton<ProjectRepository> { ExposedProjectRepository() }
-    di.singleton<IssueRepository> { ExposedIssueRepository() }
-    di.singleton<SessionRepository> { ExposedSessionRepository() }
-    
-    // Store DI container in application attributes for access in routes
-    attributes.put(DIContainerKey, di)
+    // Configure manual DI (replaces Koin)
+    ApplicationDI.configureDependencies(this)
 
     // Configure routing
     routing {
