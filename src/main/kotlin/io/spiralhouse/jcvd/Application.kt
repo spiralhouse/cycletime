@@ -1,13 +1,21 @@
 package io.spiralhouse.jcvd
 
+import io.spiralhouse.jcvd.domain.repositories.IssueRepository
+import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
+import io.spiralhouse.jcvd.domain.repositories.SessionRepository
+import io.spiralhouse.jcvd.domain.services.SystemTimeProvider
+import io.spiralhouse.jcvd.domain.services.TimeProvider
 import io.spiralhouse.jcvd.infrastructure.database.DatabaseFactory
-import io.spiralhouse.jcvd.infrastructure.di.ApplicationDI
+import io.spiralhouse.jcvd.infrastructure.persistence.ExposedIssueRepository
+import io.spiralhouse.jcvd.infrastructure.persistence.ExposedProjectRepository
+import io.spiralhouse.jcvd.infrastructure.persistence.ExposedSessionRepository
 import io.spiralhouse.jcvd.mcp.configureMCP
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.di.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
@@ -47,8 +55,8 @@ fun Application.module() {
 
     install(SSE)
 
-    // Configure manual DI (replaces Koin)
-    ApplicationDI.configureDependencies(this)
+    // Configure Ktor native DI
+    configureDependencies()
 
     // Configure routing
     routing {
@@ -66,10 +74,22 @@ fun Application.module() {
     }
 
     // Shutdown hook
-    environment.monitor.subscribe(ApplicationStopped) {
+    monitor.subscribe(ApplicationStopped) {
         logger.info("Application stopping, closing database connection")
         DatabaseFactory.close()
     }
 
     logger.info("JCVD Kotlin server started successfully")
+}
+
+/**
+ * Configure dependency injection using Ktor native DI plugin
+ */
+fun Application.configureDependencies() {
+    dependencies {
+        provide<TimeProvider> { SystemTimeProvider() }
+        provide<ProjectRepository> { ExposedProjectRepository() }
+        provide<IssueRepository> { ExposedIssueRepository() }
+        provide<SessionRepository> { ExposedSessionRepository() }
+    }
 }

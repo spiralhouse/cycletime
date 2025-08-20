@@ -26,6 +26,7 @@ dependencies {
     // Ktor - Using native DI system
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cio)
+    implementation(libs.ktor.server.di)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.server.sse)
     implementation(libs.ktor.serialization.kotlinx.json)
@@ -49,7 +50,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.datetime)
 
-    // Dependency Injection - Using manual DI pattern (migrated from Koin in SPI-458)
+    // Dependency Injection - Using Ktor native DI (requires Ktor 3.2.3+)
 
     // MCP SDK (when available)
     // implementation(libs.mcp.kotlin.sdk)

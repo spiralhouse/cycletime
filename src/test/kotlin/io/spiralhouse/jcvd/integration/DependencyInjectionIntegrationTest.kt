@@ -16,20 +16,20 @@ import io.spiralhouse.jcvd.domain.services.TimeProvider
 import io.spiralhouse.jcvd.infrastructure.persistence.ExposedIssueRepository
 import io.spiralhouse.jcvd.infrastructure.persistence.ExposedProjectRepository
 import io.spiralhouse.jcvd.infrastructure.persistence.ExposedSessionRepository
-import io.spiralhouse.jcvd.infrastructure.di.resolve
+import io.ktor.server.plugins.di.*
 import io.spiralhouse.jcvd.module
 
 /**
- * Integration tests for the dependency injection migration from Koin to manual DI.
+ * Integration tests for the dependency injection migration from Koin to Ktor native DI.
  * 
  * These tests verify that:
- * 1. The manual DI system initializes correctly
+ * 1. The Ktor native DI system initializes correctly
  * 2. All dependencies are resolved properly
  * 3. The application starts successfully with the new DI system
  */
 class DependencyInjectionIntegrationTest : StringSpec({
 
-    "should initialize manual DI successfully" {
+    "should initialize Ktor native DI successfully" {
         testApplication {
             application {
                 module()
@@ -48,8 +48,8 @@ class DependencyInjectionIntegrationTest : StringSpec({
             
             client.get("/health")  // Trigger application initialization
             
-            val timeProvider1 = application.resolve<TimeProvider>()
-            val timeProvider2 = application.resolve<TimeProvider>()
+            val timeProvider1: TimeProvider by application.dependencies
+            val timeProvider2: TimeProvider by application.dependencies
             
             // Verify correct implementation type
             timeProvider1.shouldBeInstanceOf<SystemTimeProvider>()
@@ -67,9 +67,9 @@ class DependencyInjectionIntegrationTest : StringSpec({
             
             client.get("/health")  // Trigger application initialization
             
-            val projectRepository = application.resolve<ProjectRepository>()
-            val issueRepository = application.resolve<IssueRepository>()
-            val sessionRepository = application.resolve<SessionRepository>()
+            val projectRepository: ProjectRepository by application.dependencies
+            val issueRepository: IssueRepository by application.dependencies
+            val sessionRepository: SessionRepository by application.dependencies
             
             // Verify correct implementation types
             projectRepository.shouldBeInstanceOf<ExposedProjectRepository>()
@@ -92,16 +92,16 @@ class DependencyInjectionIntegrationTest : StringSpec({
             client.get("/health")  // Trigger application initialization
             
             // Verify singleton behavior for each repository
-            val projectRepository1 = application.resolve<ProjectRepository>()
-            val projectRepository2 = application.resolve<ProjectRepository>()
+            val projectRepository1: ProjectRepository by application.dependencies
+            val projectRepository2: ProjectRepository by application.dependencies
             projectRepository1 shouldBe projectRepository2
             
-            val issueRepository1 = application.resolve<IssueRepository>()
-            val issueRepository2 = application.resolve<IssueRepository>()
+            val issueRepository1: IssueRepository by application.dependencies
+            val issueRepository2: IssueRepository by application.dependencies
             issueRepository1 shouldBe issueRepository2
             
-            val sessionRepository1 = application.resolve<SessionRepository>()
-            val sessionRepository2 = application.resolve<SessionRepository>()
+            val sessionRepository1: SessionRepository by application.dependencies
+            val sessionRepository2: SessionRepository by application.dependencies
             sessionRepository1 shouldBe sessionRepository2
         }
     }
