@@ -1,14 +1,20 @@
 package io.spiralhouse.jcvd
 
+import io.spiralhouse.jcvd.application.services.IssueApplicationService
+import io.spiralhouse.jcvd.application.services.ProjectApplicationService
+import io.spiralhouse.jcvd.application.services.SessionApplicationService
 import io.spiralhouse.jcvd.domain.repositories.IssueRepository
 import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
 import io.spiralhouse.jcvd.domain.repositories.SessionRepository
+import io.spiralhouse.jcvd.domain.repositories.UnitOfWork
 import io.spiralhouse.jcvd.domain.services.SystemTimeProvider
 import io.spiralhouse.jcvd.domain.services.TimeProvider
 import io.spiralhouse.jcvd.infrastructure.database.DatabaseFactory
 import io.spiralhouse.jcvd.infrastructure.persistence.ExposedIssueRepository
 import io.spiralhouse.jcvd.infrastructure.persistence.ExposedProjectRepository
 import io.spiralhouse.jcvd.infrastructure.persistence.ExposedSessionRepository
+import io.spiralhouse.jcvd.infrastructure.persistence.ExposedUnitOfWork
+import org.jetbrains.exposed.sql.Database
 import io.spiralhouse.jcvd.mcp.configureMCP
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -62,11 +68,42 @@ fun Application.module() {
     routing {
         // Health check endpoint
         get("/health") {
-            call.respond(mapOf(
-                "status" to "healthy",
-                "service" to "jcvd-kotlin",
-                "version" to "0.1.0"
-            ))
+            try {
+                val projectService: ProjectApplicationService by application.dependencies
+                val issueService: IssueApplicationService by application.dependencies
+                val sessionService: SessionApplicationService by application.dependencies
+                val database: Database by application.dependencies
+                
+                // Verify services are initialized
+                val projectCount = projectService.listProjects().projects.size
+                val sessionCount = sessionService.getSessionCount()
+                
+                call.respond(mapOf(
+                    "status" to "healthy",
+                    "service" to "jcvd-kotlin",
+                    "version" to "0.1.0",
+                    "dependencies" to mapOf(
+                        "database" to "connected",
+                        "projectService" to "initialized",
+                        "issueService" to "initialized", 
+                        "sessionService" to "initialized"
+                    ),
+                    "metrics" to mapOf(
+                        "projects" to projectCount,
+                        "sessions" to sessionCount
+                    ),
+                    "timestamp" to System.currentTimeMillis()
+                ))
+            } catch (e: Exception) {
+                logger.error("Health check failed", e)
+                call.respond(mapOf(
+                    "status" to "unhealthy",
+                    "service" to "jcvd-kotlin",
+                    "version" to "0.1.0",
+                    "error" to e.message,
+                    "timestamp" to System.currentTimeMillis()
+                ))
+            }
         }
 
         // MCP Server endpoints
@@ -87,9 +124,46 @@ fun Application.module() {
  */
 fun Application.configureDependencies() {
     dependencies {
+        // Domain Services
         provide<TimeProvider> { SystemTimeProvider() }
+        
+        // Database
+        provide<Database> { DatabaseFactory.getInstance() }
+        
+        // Unit of Work
+        provide<UnitOfWork> { ExposedUnitOfWork(resolve()) }
+        
+        // Repositories
         provide<ProjectRepository> { ExposedProjectRepository() }
         provide<IssueRepository> { ExposedIssueRepository() }
         provide<SessionRepository> { ExposedSessionRepository() }
+        
+        // Application Services
+        provide<ProjectApplicationService> {
+            ProjectApplicationService(
+                projectRepository = resolve(),
+                issueRepository = resolve(),
+                unitOfWork = resolve(),
+                timeProvider = resolve()
+            )
+        }
+        
+        provide<IssueApplicationService> {
+            IssueApplicationService(
+                issueRepository = resolve(),
+                projectRepository = resolve(),
+                unitOfWork = resolve(),
+                timeProvider = resolve()
+            )
+        }
+        
+        provide<SessionApplicationService> {
+            SessionApplicationService(
+                sessionRepository = resolve(),
+                projectRepository = resolve(),
+                unitOfWork = resolve(),
+                timeProvider = resolve()
+            )
+        }
     }
 }
