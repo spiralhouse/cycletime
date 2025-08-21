@@ -25,8 +25,29 @@ import io.ktor.server.plugins.di.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
+import io.ktor.http.*
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
+
+@Serializable
+data class HealthResponse(
+    val status: String,
+    val service: String,
+    val version: String,
+    val dependencies: Map<String, String>,
+    val metrics: Map<String, String>,
+    val timestamp: String
+)
+
+@Serializable
+data class ErrorResponse(
+    val status: String,
+    val service: String,
+    val version: String,
+    val error: String,
+    val timestamp: String
+)
 
 fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
@@ -78,30 +99,30 @@ fun Application.module() {
                 val projectCount = projectService.listProjects().projects.size
                 val sessionCount = sessionService.getSessionCount()
                 
-                call.respond(mapOf(
-                    "status" to "healthy",
-                    "service" to "jcvd-kotlin",
-                    "version" to "0.1.0",
-                    "dependencies" to mapOf(
+                call.respond(HttpStatusCode.OK, HealthResponse(
+                    status = "healthy",
+                    service = "jcvd-kotlin",
+                    version = "0.1.0",
+                    dependencies = mapOf(
                         "database" to "connected",
                         "projectService" to "initialized",
                         "issueService" to "initialized", 
                         "sessionService" to "initialized"
                     ),
-                    "metrics" to mapOf(
-                        "projects" to projectCount,
-                        "sessions" to sessionCount
+                    metrics = mapOf(
+                        "projects" to projectCount.toString(),
+                        "sessions" to sessionCount.toString()
                     ),
-                    "timestamp" to System.currentTimeMillis()
+                    timestamp = System.currentTimeMillis().toString()
                 ))
             } catch (e: Exception) {
-                logger.error("Health check failed", e)
-                call.respond(mapOf(
-                    "status" to "unhealthy",
-                    "service" to "jcvd-kotlin",
-                    "version" to "0.1.0",
-                    "error" to e.message,
-                    "timestamp" to System.currentTimeMillis()
+                logger.error("Health check failed: ${e::class.simpleName} - ${e.message}", e)
+                call.respond(HttpStatusCode.InternalServerError, ErrorResponse(
+                    status = "unhealthy",
+                    service = "jcvd-kotlin",
+                    version = "0.1.0",
+                    error = "${e::class.simpleName}: ${e.message}",
+                    timestamp = System.currentTimeMillis().toString()
                 ))
             }
         }
@@ -134,9 +155,9 @@ fun Application.configureDependencies() {
         provide<UnitOfWork> { ExposedUnitOfWork(resolve()) }
         
         // Repositories
-        provide<ProjectRepository> { ExposedProjectRepository() }
-        provide<IssueRepository> { ExposedIssueRepository() }
-        provide<SessionRepository> { ExposedSessionRepository() }
+        provide<ProjectRepository> { ExposedProjectRepository(SystemTimeProvider(), resolve()) }
+        provide<IssueRepository> { ExposedIssueRepository(SystemTimeProvider(), resolve()) }
+        provide<SessionRepository> { ExposedSessionRepository(SystemTimeProvider(), resolve()) }
         
         // Application Services
         provide<ProjectApplicationService> {

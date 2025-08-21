@@ -16,6 +16,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
@@ -56,7 +57,8 @@ import java.util.UUID
  * @property timeProvider The time provider for entity reconstitution, defaults to SystemTimeProvider
  */
 class ExposedSessionRepository(
-    private val timeProvider: TimeProvider = SystemTimeProvider()
+    private val timeProvider: TimeProvider = SystemTimeProvider(),
+    private val database: Database? = null
 ) : SessionRepository {
 
     /**
@@ -395,7 +397,11 @@ class ExposedSessionRepository(
      * @return The query result
      */
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
-        newSuspendedTransaction(Dispatchers.IO) { block() }
+        if (database != null) {
+            newSuspendedTransaction(Dispatchers.IO, database) { block() }
+        } else {
+            newSuspendedTransaction(Dispatchers.IO) { block() }
+        }
 }
 
 /**

@@ -13,6 +13,7 @@ import io.spiralhouse.jcvd.infrastructure.database.IssuesTable
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
@@ -26,7 +27,8 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
  * @property timeProvider The time provider for entity reconstitution
  */
 class ExposedProjectRepository(
-    private val timeProvider: TimeProvider = SystemTimeProvider()
+    private val timeProvider: TimeProvider = SystemTimeProvider(),
+    private val database: Database? = null
 ) : ProjectRepository {
 
     /**
@@ -249,5 +251,9 @@ class ExposedProjectRepository(
      * @return The query result
      */
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
-        newSuspendedTransaction(Dispatchers.IO) { block() }
+        if (database != null) {
+            newSuspendedTransaction(Dispatchers.IO, database) { block() }
+        } else {
+            newSuspendedTransaction(Dispatchers.IO) { block() }
+        }
 }
