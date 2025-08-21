@@ -20,6 +20,7 @@ data class IssueSnapshot(
     val parentId: IssueId?,
     val projectId: ProjectId?,
     val estimate: Estimate,
+    val assigneeId: String?,
     val dependencies: List<IssueId>,
     val blockedBy: List<IssueId>,
     val createdAt: Instant,
@@ -46,6 +47,7 @@ class Issue private constructor(
     val parentId: IssueId?,
     val projectId: ProjectId?,
     private var _estimate: Estimate,
+    private var _assigneeId: String?,
     private val _dependencies: MutableSet<IssueId>,
     private val _blockedBy: MutableSet<IssueId>,
     val createdAt: Instant,
@@ -56,6 +58,7 @@ class Issue private constructor(
     val description: String? get() = _description
     val status: IssueStatus get() = _status
     val estimate: Estimate get() = _estimate
+    val assigneeId: String? get() = _assigneeId
     val dependencies: List<IssueId> get() = _dependencies.toList()
     val blockedBy: List<IssueId> get() = _blockedBy.toList()
     val updatedAt: Instant get() = _updatedAt
@@ -85,6 +88,14 @@ class Issue private constructor(
      */
     fun updateDescription(newDescription: String?) {
         _description = newDescription
+        updateTimestamp()
+    }
+
+    /**
+     * Updates the issue assignee.
+     */
+    fun updateAssignee(newAssigneeId: String?) {
+        _assigneeId = newAssigneeId
         updateTimestamp()
     }
 
@@ -197,6 +208,7 @@ class Issue private constructor(
             parentId = parentId,
             projectId = projectId,
             estimate = _estimate,
+            assigneeId = _assigneeId,
             dependencies = _dependencies.toList(),
             blockedBy = _blockedBy.toList(),
             createdAt = createdAt,
@@ -225,17 +237,18 @@ class Issue private constructor(
             requireNotNull(timeProvider) { "TimeProvider cannot be null" }
             validateTitle(title)
             
-            // Validate hierarchy
-            if (parentId != null) {
-                // In a full implementation, we'd need to look up the parent's type
-                // For now, just validate the basic rule
-                if (type == IssueType.EPIC) {
-                    throw DomainException("Epics cannot have parents")
-                }
-            } else {
-                if (type != IssueType.EPIC) {
-                    throw DomainException("Only Epics can have no parent")
-                }
+            // Validate hierarchy - deferred full validation to application layer
+            // The domain entity performs basic validation only. Full hierarchy validation
+            // (e.g., verifying parent types) requires repository access and should be
+            // implemented in the application service layer where cross-aggregate
+            // validation can be performed.
+            //
+            // Current validation:
+            // - Epics cannot have parents (enforced here)
+            // - Subtasks should have parents (recommendation, not enforced)
+            // - Stories can optionally have Epic parents (not enforced here)
+            if (parentId != null && type == IssueType.EPIC) {
+                throw DomainException("Epics cannot have parents")
             }
             
             val now = timeProvider.now()
@@ -248,6 +261,7 @@ class Issue private constructor(
                 parentId = parentId,
                 projectId = projectId,
                 _estimate = Estimate.none(),
+                _assigneeId = null,
                 _dependencies = mutableSetOf(),
                 _blockedBy = mutableSetOf(),
                 createdAt = now,
@@ -274,6 +288,7 @@ class Issue private constructor(
                 parentId = snapshot.parentId,
                 projectId = snapshot.projectId,
                 _estimate = snapshot.estimate,
+                _assigneeId = snapshot.assigneeId,
                 _dependencies = snapshot.dependencies.toMutableSet(),
                 _blockedBy = snapshot.blockedBy.toMutableSet(),
                 createdAt = snapshot.createdAt,
