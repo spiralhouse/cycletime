@@ -249,7 +249,7 @@ class ExposedIssueRepository(
     private fun insertIssue(issue: Issue) {
         IssuesTable.insert {
             it[id] = EntityID(issue.id.value, IssuesTable)
-            it[projectId] = issue.projectId?.value ?: "" // Empty string for issues without projects
+            it[projectId] = issue.projectId?.value
             it[parentId] = issue.parentId?.value
             it[title] = issue.title
             it[description] = issue.description
@@ -413,7 +413,7 @@ class ExposedIssueRepository(
             type = IssueType.fromString(this[IssuesTable.type]),
             status = IssueStatus.fromString(this[IssuesTable.status]),
             parentId = this[IssuesTable.parentId]?.let { IssueId.fromString(it) },
-            projectId = this[IssuesTable.projectId]?.takeIf { it.isNotEmpty() }?.let { ProjectId.fromString(it) },
+            projectId = this[IssuesTable.projectId]?.let { ProjectId.fromString(it) },
             estimate = this[IssuesTable.estimate]?.let { Estimate.of(it) } ?: Estimate.none(),
             assigneeId = this[IssuesTable.assigneeId],
             dependencies = relationships.dependencies,
