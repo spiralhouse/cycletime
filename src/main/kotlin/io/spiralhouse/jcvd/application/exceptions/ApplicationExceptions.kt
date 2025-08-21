@@ -4,6 +4,7 @@ import io.spiralhouse.jcvd.domain.valueobjects.IssueId
 import io.spiralhouse.jcvd.domain.valueobjects.IssueStatus
 import io.spiralhouse.jcvd.domain.valueobjects.IssueType
 import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
+import io.spiralhouse.jcvd.domain.valueobjects.SessionKey
 
 /**
  * Base exception for application-layer errors.
@@ -19,6 +20,11 @@ class ProjectNotFoundException(id: ProjectId) : ApplicationException("Project wi
  * Exception thrown when an issue is not found.
  */
 class IssueNotFoundException(id: IssueId) : ApplicationException("Issue with ID ${id.value} not found")
+
+/**
+ * Exception thrown when a session is not found.
+ */
+class SessionNotFoundException(sessionKey: SessionKey) : ApplicationException("Session with key ${sessionKey.value} not found")
 
 /**
  * Exception thrown when validation fails at the application layer.

@@ -17,6 +17,7 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
@@ -153,6 +154,34 @@ class ExposedSessionRepository(
         SessionStatesTable.deleteWhere { 
             SessionStatesTable.lastActivity less before 
         }
+    }
+
+    /**
+     * Finds all sessions in the repository.
+     * 
+     * @return List of all sessions ordered by creation date
+     */
+    override suspend fun findAll(): List<Session> = dbQuery {
+        findSessionsByCondition { Op.TRUE }
+    }
+
+    /**
+     * Finds sessions that have been updated since a specific time.
+     * 
+     * @param since The cutoff instant - sessions updated after this time are returned
+     * @return List of recent sessions
+     */
+    override suspend fun findRecentSessions(since: Instant): List<Session> = dbQuery {
+        findSessionsByCondition { SessionStatesTable.updatedAt greater since }
+    }
+
+    /**
+     * Counts the total number of sessions in the repository.
+     * 
+     * @return The total count of sessions
+     */
+    override suspend fun count(): Int = dbQuery {
+        SessionStatesTable.selectAll().count().toInt()
     }
 
     /**
