@@ -48,6 +48,8 @@ work directly unless otherwise instructed to.
    architecture decisions
 6. **Tech Lead Agent** (@agent-tech-lead) Task coordination, dependency
    management
+7. **DevOps Engineer Agent** (@agent-devops-engineer) Build optimization,
+   CI/CD pipelines, developer productivity
 
 ## Parallel Development Opportunities
 
