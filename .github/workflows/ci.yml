@@ -983,38 +983,98 @@ jobs:
     if: always()
 
     steps:
-      - name: Download aggregated test results
+      # Download individual test results if they exist
+      - name: Download unit test results
         uses: actions/download-artifact@v4
+        if: always()
+        continue-on-error: true
         with:
-          name: aggregated-test-results
+          name: unit-test-results
+          path: test-results/unit
+
+      - name: Download integration test results
+        uses: actions/download-artifact@v4
+        if: always()
+        continue-on-error: true
+        with:
+          name: integration-test-results
+          path: test-results/integration
+
+      - name: Download system test results
+        uses: actions/download-artifact@v4
+        if: always()
+        continue-on-error: true
+        with:
+          name: system-test-results
+          path: test-results/system
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
+        if: always()
+        continue-on-error: true
         with:
           name: build-artifacts
+          path: build-artifacts
 
       - name: Validate build completion
         run: |
-          echo "\n📊 CI Pipeline Results Summary:"
-          echo "==========================================\n"
+          echo ""
+          echo "📊 CI Pipeline Results Summary:"
+          echo "=========================================="
+          echo ""
           
-          # SPI-480: Check what ran vs what was skipped with matrix awareness
-          if [ "${{ contains(toJSON(needs.unit-tests.outputs), 'true') }}" == "true" ]; then
-            echo "✅ Unit tests: RAN (matrix: 3 combinations - ubuntu+macOS, JDK 21+22)"
-            echo "✅ Integration tests: RAN"
-            echo "✅ System tests: RAN"
-            echo "✅ Test coverage: GENERATED"
-            echo "✅ Application: BUILT"
-            echo "✅ Docker image: CREATED"
-            echo "✅ Container smoke tests: PASSED"
-          else
+          # Check what test results were downloaded
+          if [ -d "test-results" ]; then
+            echo "📋 Test Results Available:"
+            ls -la test-results/ 2>/dev/null || echo "  No test results found"
+          fi
+          
+          if [ -d "build-artifacts" ]; then
+            echo ""
+            echo "📦 Build Artifacts Available:"
+            ls -la build-artifacts/ 2>/dev/null || echo "  No build artifacts found"
+          fi
+          
+          echo ""
+          # Check what ran vs what was skipped
+          if [ "${{ contains(toJSON(needs.unit-tests.result), 'success') }}" == "true" ]; then
+            echo "✅ Unit tests: PASSED"
+          elif [ "${{ contains(toJSON(needs.unit-tests.result), 'skipped') }}" == "true" ]; then
             echo "⏭️ Unit tests: SKIPPED (no code changes)"
+          else
+            echo "❌ Unit tests: FAILED or not run"
+          fi
+          
+          if [ "${{ contains(toJSON(needs.integration-tests.result), 'success') }}" == "true" ]; then
+            echo "✅ Integration tests: PASSED"
+          elif [ "${{ contains(toJSON(needs.integration-tests.result), 'skipped') }}" == "true" ]; then
             echo "⏭️ Integration tests: SKIPPED"
+          else
+            echo "❌ Integration tests: FAILED or not run"
+          fi
+          
+          if [ "${{ contains(toJSON(needs.system-tests.result), 'success') }}" == "true" ]; then
+            echo "✅ System tests: PASSED"
+          elif [ "${{ contains(toJSON(needs.system-tests.result), 'skipped') }}" == "true" ]; then
             echo "⏭️ System tests: SKIPPED"
-            echo "⏭️ Test coverage: SKIPPED"
-            echo "⏭️ Application build: SKIPPED"
-            echo "⏭️ Docker image: SKIPPED"
+          else
+            echo "❌ System tests: FAILED or not run"
+          fi
+          
+          if [ "${{ contains(toJSON(needs.build.result), 'success') }}" == "true" ]; then
+            echo "✅ Application: BUILT"
+          elif [ "${{ contains(toJSON(needs.build.result), 'skipped') }}" == "true" ]; then
+            echo "⏭️ Application: SKIPPED (no code changes)"
+          else
+            echo "❌ Application: BUILD FAILED or not run"
+          fi
+          
+          if [ "${{ contains(toJSON(needs.container-smoke-tests.result), 'success') }}" == "true" ]; then
+            echo "✅ Container smoke tests: PASSED"
+          elif [ "${{ contains(toJSON(needs.container-smoke-tests.result), 'skipped') }}" == "true" ]; then
             echo "⏭️ Container smoke tests: SKIPPED"
+          else
+            echo "❌ Container smoke tests: FAILED or not run"
           fi
           
           echo "✅ Code quality checks: COMPLETED (always run)"
