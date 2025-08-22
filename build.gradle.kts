@@ -65,6 +65,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.h2.database)  // H2 for integration testing
 
     // TODO: TestContainers for SPI-439 Integration Testing (when H2 repositories are implemented)
     // testImplementation("org.testcontainers:testcontainers:1.19.3")

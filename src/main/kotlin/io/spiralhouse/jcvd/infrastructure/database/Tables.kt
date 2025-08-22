@@ -19,7 +19,7 @@ object ProjectsTable : IdTable<String>("projects") {
 
 object IssuesTable : IdTable<String>("issues") {
     override val id: Column<EntityID<String>> = varchar("id", 100).entityId()
-    val projectId = varchar("project_id", 100).references(ProjectsTable.id)
+    val projectId = varchar("project_id", 100).references(ProjectsTable.id).nullable()
     val parentId = varchar("parent_id", 100).references(IssuesTable.id).nullable()
     val title = varchar("title", 255)
     val description = text("description").nullable()

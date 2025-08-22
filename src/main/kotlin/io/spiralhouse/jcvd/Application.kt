@@ -1,14 +1,20 @@
 package io.spiralhouse.jcvd
 
+import io.spiralhouse.jcvd.application.services.IssueApplicationService
+import io.spiralhouse.jcvd.application.services.ProjectApplicationService
+import io.spiralhouse.jcvd.application.services.SessionApplicationService
 import io.spiralhouse.jcvd.domain.repositories.IssueRepository
 import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
 import io.spiralhouse.jcvd.domain.repositories.SessionRepository
+import io.spiralhouse.jcvd.domain.repositories.UnitOfWork
 import io.spiralhouse.jcvd.domain.services.SystemTimeProvider
 import io.spiralhouse.jcvd.domain.services.TimeProvider
 import io.spiralhouse.jcvd.infrastructure.database.DatabaseFactory
 import io.spiralhouse.jcvd.infrastructure.persistence.ExposedIssueRepository
 import io.spiralhouse.jcvd.infrastructure.persistence.ExposedProjectRepository
 import io.spiralhouse.jcvd.infrastructure.persistence.ExposedSessionRepository
+import io.spiralhouse.jcvd.infrastructure.persistence.ExposedUnitOfWork
+import org.jetbrains.exposed.sql.Database
 import io.spiralhouse.jcvd.mcp.configureMCP
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -19,8 +25,29 @@ import io.ktor.server.plugins.di.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
+import io.ktor.http.*
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
+
+@Serializable
+data class HealthResponse(
+    val status: String,
+    val service: String,
+    val version: String,
+    val dependencies: Map<String, String>,
+    val metrics: Map<String, String>,
+    val timestamp: String
+)
+
+@Serializable
+data class ErrorResponse(
+    val status: String,
+    val service: String,
+    val version: String,
+    val error: String,
+    val timestamp: String
+)
 
 fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
@@ -62,11 +89,42 @@ fun Application.module() {
     routing {
         // Health check endpoint
         get("/health") {
-            call.respond(mapOf(
-                "status" to "healthy",
-                "service" to "jcvd-kotlin",
-                "version" to "0.1.0"
-            ))
+            try {
+                val projectService: ProjectApplicationService by application.dependencies
+                val issueService: IssueApplicationService by application.dependencies
+                val sessionService: SessionApplicationService by application.dependencies
+                val database: Database by application.dependencies
+                
+                // Verify services are initialized
+                val projectCount = projectService.listProjects().projects.size
+                val sessionCount = sessionService.getSessionCount()
+                
+                call.respond(HttpStatusCode.OK, HealthResponse(
+                    status = "healthy",
+                    service = "jcvd-kotlin",
+                    version = "0.1.0",
+                    dependencies = mapOf(
+                        "database" to "connected",
+                        "projectService" to "initialized",
+                        "issueService" to "initialized", 
+                        "sessionService" to "initialized"
+                    ),
+                    metrics = mapOf(
+                        "projects" to projectCount.toString(),
+                        "sessions" to sessionCount.toString()
+                    ),
+                    timestamp = System.currentTimeMillis().toString()
+                ))
+            } catch (e: Exception) {
+                logger.error("Health check failed: ${e::class.simpleName} - ${e.message}", e)
+                call.respond(HttpStatusCode.InternalServerError, ErrorResponse(
+                    status = "unhealthy",
+                    service = "jcvd-kotlin",
+                    version = "0.1.0",
+                    error = "${e::class.simpleName}: ${e.message}",
+                    timestamp = System.currentTimeMillis().toString()
+                ))
+            }
         }
 
         // MCP Server endpoints
@@ -87,9 +145,46 @@ fun Application.module() {
  */
 fun Application.configureDependencies() {
     dependencies {
+        // Domain Services
         provide<TimeProvider> { SystemTimeProvider() }
-        provide<ProjectRepository> { ExposedProjectRepository() }
-        provide<IssueRepository> { ExposedIssueRepository() }
-        provide<SessionRepository> { ExposedSessionRepository() }
+        
+        // Database
+        provide<Database> { DatabaseFactory.getInstance() }
+        
+        // Unit of Work
+        provide<UnitOfWork> { ExposedUnitOfWork(resolve()) }
+        
+        // Repositories
+        provide<ProjectRepository> { ExposedProjectRepository(SystemTimeProvider(), resolve()) }
+        provide<IssueRepository> { ExposedIssueRepository(SystemTimeProvider(), resolve()) }
+        provide<SessionRepository> { ExposedSessionRepository(SystemTimeProvider(), resolve()) }
+        
+        // Application Services
+        provide<ProjectApplicationService> {
+            ProjectApplicationService(
+                projectRepository = resolve(),
+                issueRepository = resolve(),
+                unitOfWork = resolve(),
+                timeProvider = resolve()
+            )
+        }
+        
+        provide<IssueApplicationService> {
+            IssueApplicationService(
+                issueRepository = resolve(),
+                projectRepository = resolve(),
+                unitOfWork = resolve(),
+                timeProvider = resolve()
+            )
+        }
+        
+        provide<SessionApplicationService> {
+            SessionApplicationService(
+                sessionRepository = resolve(),
+                projectRepository = resolve(),
+                unitOfWork = resolve(),
+                timeProvider = resolve()
+            )
+        }
     }
 }
