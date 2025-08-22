@@ -1,0 +1,43 @@
+name: Local Act Test
+on:
+  push:
+    branches: [ main, develop, feat/* ]
+  workflow_dispatch:
+
+jobs:
+  quick-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: false
+
+      - name: Run quick tests
+        run: |
+          echo "Running quick unit tests..."
+          ./gradlew quickTest --no-daemon --stacktrace
+        env:
+          GRADLE_OPTS: -Xmx2g -XX:+UseG1GC
+
+      - name: Build application
+        run: |
+          echo "Building application..."
+          ./gradlew buildFatJar --no-daemon --stacktrace
+        env:
+          GRADLE_OPTS: -Xmx2g -XX:+UseG1GC
+
+      - name: Check build status
+        run: |
+          echo "Checking build status..."
+          ./gradlew buildStatus --no-daemon
+          ls -la build/libs/
