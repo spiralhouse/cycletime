@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  jcvd-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: jcvd-dev
+    ports:
+      - "8080:8080"
+    environment:
+      # Development mode settings
+      - KTOR_DEVELOPMENT=true
+      - KTOR_AUTORELOAD=true
+      - DATABASE_URL=jdbc:sqlite:/app/data/jcvd.db
+      - DATABASE_LOGGING=true
+      - PORT=8080
+      - HOST=0.0.0.0
+      
+      # Development watch paths
+      - KTOR_DEV_WATCH_PATHS=build/classes/kotlin/main,src/main/kotlin,src/main/resources
+      
+      # JVM development optimizations
+      - JAVA_OPTS=-Xmx1024m -XX:+UseG1GC -XX:+UseStringDeduplication -Dfile.encoding=UTF-8
+      
+      # Gradle daemon settings for container
+      - GRADLE_OPTS=-Dorg.gradle.daemon=false -Dorg.gradle.caching=true
+    
+    volumes:
+      # Source code hot-reload mounts
+      - ./src:/app/src:ro
+      - ./build.gradle.kts:/app/build.gradle.kts:ro
+      - ./settings.gradle.kts:/app/settings.gradle.kts:ro
+      - ./gradle.properties:/app/gradle.properties:ro
+      - ./gradle:/app/gradle:ro
+      
+      # Build outputs for hot-reload (read-write for compilation)
+      - ./build:/app/build
+      
+      # Database persistence
+      - jcvd-dev-data:/app/data
+      
+      # Gradle cache for faster builds
+      - jcvd-gradle-cache:/root/.gradle
+      
+      # Configuration files
+      - ./config:/app/config:ro
+    
+    working_dir: /app
+    
+    # Development command with continuous build
+    command: >
+      bash -c "
+        # Ensure gradlew is executable
+        chmod +x ./gradlew &&
+        
+        # Start continuous build in background
+        ./gradlew --continuous build --exclude-task test --build-cache --configuration-cache &
+        
+        # Wait a moment for initial build
+        sleep 10 &&
+        
+        # Start the application with development mode
+        ./gradlew run -Pdevelopment=true --build-cache
+      "
+    
+    # Health check for development
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # Development-friendly restart policy
+    restart: unless-stopped
+    
+    networks:
+      - jcvd-dev-network
+
+  # Optional: Database administration tool for SQLite
+  sqlite-browser:
+    image: coleifer/sqlite-web
+    container_name: jcvd-sqlite-browser
+    ports:
+      - "8081:8080"
+    environment:
+      - SQLITE_DATABASE=/data/jcvd.db
+    volumes:
+      - jcvd-dev-data:/data:ro
+    depends_on:
+      - jcvd-dev
+    networks:
+      - jcvd-dev-network
+    profiles:
+      - tools
+
+volumes:
+  # Persistent development data
+  jcvd-dev-data:
+    driver: local
+  
+  # Gradle cache for faster builds
+  jcvd-gradle-cache:
+    driver: local
+
+networks:
+  jcvd-dev-network:
+    driver: bridge
