@@ -30,14 +30,14 @@ Our CI pipeline uses several advanced GitHub Actions features that have limited 
 #### 1. Basic Build and Test
 
 ```bash
-# Run unit tests only (fastest)
-act -j unit-tests -P ubuntu-latest=catthehacker/ubuntu:act-latest --container-architecture linux/amd64
+# Use the local test workflow (optimized for act)
+act -W .local/workflows/act-test.yml
 
-# Run code quality checks
-act -j quality -P ubuntu-latest=catthehacker/ubuntu:act-latest --container-architecture linux/amd64
+# Run specific job from local workflow
+act -j quick-test -W .local/workflows/act-test.yml -P ubuntu-latest=catthehacker/ubuntu:act-latest
 
 # Dry run to validate syntax
-act --dryrun
+act --dryrun -W .local/workflows/act-test.yml
 ```
 
 #### 2. Direct Gradle Testing (Recommended)
