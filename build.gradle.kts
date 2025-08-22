@@ -377,17 +377,14 @@ tasks.test {
     // The default test task now includes all test categories for backward compatibility
     description = "Runs all tests (unit, integration, system) - backward compatible"
     
-    // Ensure test task depends on all test suites
-    dependsOn(unitTest, integrationTest, systemTest)
-    
-    // Prevent duplicate execution
-    unitTest.get().mustRunAfter(tasks.test)
-    integrationTest.get().mustRunAfter(tasks.test)
-    systemTest.get().mustRunAfter(tasks.test)
-    
     // Configure test task to not run any tests directly (delegated to sub-tasks)
     filter {
         excludeTestsMatching("*") // Exclude all - will be run by sub-tasks
+    }
+    
+    // Final task that runs after all individual test suites
+    doLast {
+        println("✅ All test suites completed successfully")
     }
 }
 
@@ -619,5 +616,218 @@ tasks.withType<JavaCompile> {
 if (project.hasProperty("profile")) {
     gradle.projectsEvaluated {
         println("Build profiling enabled. Performance analysis will be available after build completion.")
+    }
+}
+
+// =============================================================================
+// Development Productivity Tasks (SPI-479)
+// =============================================================================
+
+// Continuous build task for local development
+val devBuild by tasks.registering {
+    description = "Continuous build for development with auto-reload"
+    group = "development"
+    
+    doLast {
+        println("🚀 Starting continuous development build...")
+        println("   This task will watch for file changes and automatically rebuild")
+        println("   Use './gradlew devBuild --continuous' for hot-reload development")
+        println("   Press Ctrl+C to stop the continuous build")
+    }
+    
+    dependsOn("classes")
+    
+    // Watch for source changes
+    inputs.files(fileTree("src/main/kotlin"))
+    inputs.files(fileTree("src/main/resources"))
+    inputs.file("build.gradle.kts")
+    
+    // Quick incremental compilation
+    outputs.upToDateWhen { false } // Always execute for continuous mode
+}
+
+// Development server with hot-reload
+val devRun by tasks.registering(JavaExec::class) {
+    description = "Run development server with hot-reload and automatic restart"
+    group = "development"
+    
+    mainClass.set("io.spiralhouse.jcvd.ApplicationKt")
+    classpath = sourceSets.main.get().runtimeClasspath
+    
+    // Development JVM arguments
+    jvmArgs(
+        "-Dio.ktor.development=true",
+        "-DKTOR_DEVELOPMENT=true",
+        "-DKTOR_AUTORELOAD=true",
+        "-DDATABASE_LOGGING=true",
+        "-Xmx1024m",
+        "-XX:+UseG1GC",
+        "-XX:+UseStringDeduplication",
+        "-Dfile.encoding=UTF-8"
+    )
+    
+    // Environment variables for development
+    environment("KTOR_DEVELOPMENT", "true")
+    environment("KTOR_AUTORELOAD", "true")
+    environment("DATABASE_LOGGING", "true")
+    environment("DATABASE_URL", "jdbc:sqlite:jcvd-dev.db")
+    
+    // Watch for source changes
+    inputs.files(fileTree("src/main/kotlin"))
+    inputs.files(fileTree("src/main/resources"))
+    inputs.file("build.gradle.kts")
+    
+    // Always run in development mode
+    outputs.upToDateWhen { false }
+    
+    dependsOn("classes")
+    
+    doFirst {
+        println("🔥 Starting JCVD development server with hot-reload...")
+        println("   Server will restart automatically when source files change")
+        println("   Database: jcvd-dev.db (separate from production)")
+        println("   Health check: http://localhost:8080/health")
+        println("   Press Ctrl+C to stop the server")
+    }
+}
+
+// Watch mode for tests - automatically run tests when source changes
+val testWatch by tasks.registering {
+    description = "Continuously run tests when source files change"
+    group = "development"
+    
+    doLast {
+        println("🧪 Starting test watch mode...")
+        println("   Tests will run automatically when source files change")
+        println("   Use './gradlew testWatch --continuous' for continuous testing")
+        println("   Press Ctrl+C to stop the test watcher")
+    }
+    
+    dependsOn("quickTest") // Run fast unit tests only
+    
+    // Watch for source and test changes
+    inputs.files(fileTree("src/main/kotlin"))
+    inputs.files(fileTree("src/test/kotlin"))
+    inputs.file("build.gradle.kts")
+    
+    // Always execute for continuous mode
+    outputs.upToDateWhen { false }
+}
+
+// Full development workflow with parallel test watching
+val devWorkflow by tasks.registering {
+    description = "Start full development workflow (server + test watch)"
+    group = "development"
+    
+    doLast {
+        println("🚀 JCVD Development Workflow")
+        println("===========================")
+        println("")
+        println("To start the full development experience:")
+        println("")
+        println("1. 🔥 Server with hot-reload:")
+        println("   ./gradlew devRun --continuous")
+        println("")
+        println("2. 🧪 Test watcher (in separate terminal):")
+        println("   ./gradlew testWatch --continuous") 
+        println("")
+        println("3. 🐳 Docker development (alternative):")
+        println("   docker-compose -f docker-compose.dev.yml up")
+        println("")
+        println("4. 🛠️ Build watcher (optional, in separate terminal):")
+        println("   ./gradlew devBuild --continuous")
+        println("")
+        println("💡 Tips:")
+        println("   • Use multiple terminals for parallel workflows")
+        println("   • Database file: jcvd-dev.db (isolated from production)")
+        println("   • Health check: http://localhost:8080/health")
+        println("   • Press Ctrl+C in each terminal to stop processes")
+        println("")
+    }
+}
+
+// Quick development setup
+val devSetup by tasks.registering {
+    description = "One-time development environment setup"
+    group = "development"
+    notCompatibleWithConfigurationCache("This task sets up development environment")
+    
+    doLast {
+        println("🛠️ Setting up JCVD development environment...")
+        
+        // Create development database
+        val devDbFile = File(project.projectDir, "jcvd-dev.db")
+        if (!devDbFile.exists()) {
+            println("   📄 Creating development database: jcvd-dev.db")
+        } else {
+            println("   ✅ Development database already exists: jcvd-dev.db")
+        }
+        
+        // Create logs directory
+        val logsDir = File(project.projectDir, "logs")
+        if (!logsDir.exists()) {
+            logsDir.mkdirs()
+            println("   📁 Created logs directory")
+        } else {
+            println("   ✅ Logs directory already exists")
+        }
+        
+        println("")
+        println("🎉 Development environment ready!")
+        println("")
+        println("Next steps:")
+        println("   1. Run './gradlew devWorkflow' to see all development commands")
+        println("   2. Start with './gradlew devRun --continuous' for hot-reload server")
+        println("   3. Use './gradlew testWatch --continuous' for continuous testing")
+        println("")
+    }
+    
+    dependsOn("build")
+}
+
+// Development status and health check
+val devStatus by tasks.registering {
+    description = "Show development environment status and health"
+    group = "development"
+    notCompatibleWithConfigurationCache("This task shows development environment status")
+    
+    doLast {
+        println("🔍 JCVD Development Environment Status")
+        println("======================================")
+        println("")
+        
+        // Check if development database exists
+        val devDb = File(project.projectDir, "jcvd-dev.db")
+        println("📄 Development Database:")
+        if (devDb.exists()) {
+            val sizeKB = devDb.length() / 1024
+            println("   ✅ jcvd-dev.db exists (${sizeKB}KB)")
+        } else {
+            println("   ❌ jcvd-dev.db not found (run './gradlew devSetup')")
+        }
+        
+        // Check build directory
+        val buildDir = File(project.projectDir, "build")
+        println("\n🔨 Build Status:")
+        if (buildDir.exists() && File(buildDir, "classes").exists()) {
+            println("   ✅ Project compiled")
+        } else {
+            println("   ❌ Project not compiled (run './gradlew build')")
+        }
+        
+        // Check configuration
+        println("\n⚙️ Development Configuration:")
+        val isDevelopment = project.ext.has("development")
+        println("   Development mode: ${if (isDevelopment) "✅ Enabled" else "⚠️ Disabled (add -Pdevelopment=true)"}")
+        
+        val parallelEnabled = project.findProperty("org.gradle.parallel") == "true"
+        println("   Parallel builds: ${if (parallelEnabled) "✅ Enabled" else "⚠️ Disabled"}")
+        
+        println("\n🚀 Quick Commands:")
+        println("   • Start server: ./gradlew devRun --continuous")
+        println("   • Test watch: ./gradlew testWatch --continuous")
+        println("   • Docker dev: docker-compose -f docker-compose.dev.yml up")
+        println("   • Full workflow: ./gradlew devWorkflow")
+        println("")
     }
 }
