@@ -146,15 +146,15 @@ jobs:
             echo "run_tests=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Run unit tests
+      - name: Run unit tests with coverage
         if: steps.changes.outputs.run_tests == 'true' || github.event_name == 'workflow_dispatch'
         run: |
-          echo "🚀 Running unit tests (code changes detected)"
+          echo "🚀 Running unit tests with coverage (code changes detected)"
           echo "📊 Cache status before build:"
           echo "  Gradle cache: $([ -d ~/.gradle/caches ] && echo 'HIT' || echo 'MISS')"
           echo "  Kotlin cache: $([ -d build/kotlin ] && echo 'HIT' || echo 'MISS')"
           echo "  Test cache: $([ -d build/test-results/unitTest ] && echo 'HIT' || echo 'MISS')"
-          ./gradlew unitTest --build-cache --configuration-cache --no-daemon
+          ./gradlew unitTest koverXmlReport --build-cache --configuration-cache --no-daemon
 
       - name: Skip unit tests
         if: steps.changes.outputs.run_tests == 'false' && github.event_name != 'workflow_dispatch'
@@ -171,6 +171,15 @@ jobs:
             build/reports/tests/unitTest/
             build/test-results/unitTest/
           retention-days: 7
+
+      - name: Upload coverage to Codecov
+        if: steps.changes.outputs.run_tests == 'true' && success()
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./build/reports/kover/report.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
 
   # Integration Tests - Database and service interactions
   integration-tests:
@@ -324,94 +333,6 @@ jobs:
             build/test-results/systemTest/
           retention-days: 7
 
-  # Test coverage and reports
-  test-coverage:
-    name: Test Coverage
-    runs-on: ubuntu-latest
-    timeout-minutes: 15  # SPI-480: Increased timeout for coverage generation
-    needs: [unit-tests, integration-tests, system-tests]
-    # SPI-480: Only run if tests ran (indicating code changes)
-    if: always() && (contains(toJSON(needs.unit-tests.outputs), 'true') || github.event_name == 'workflow_dispatch')
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: "21"
-          distribution: 'temurin'
-
-      # Comprehensive caching for coverage analysis
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.gradle/daemon
-            .gradle/
-          key: gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
-          restore-keys: |
-            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-
-
-      # Coverage report caching
-      - name: Cache coverage reports
-        uses: actions/cache@v4
-        with:
-          path: |
-            build/reports/kover
-            build/reports/jacoco
-          key: coverage-reports-${{ env.TEST_CACHE_VERSION }}-${{ runner.os }}-${{ hashFiles('src/**/*.kt') }}
-          restore-keys: |
-            coverage-reports-${{ env.TEST_CACHE_VERSION }}-${{ runner.os }}-
-
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-home-cache-cleanup: true
-          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
-          arguments: --build-cache --configuration-cache
-
-      - name: Make gradlew executable
-        run: chmod +x gradlew
-
-      # Use CI-optimized Gradle properties
-      - name: Copy CI Gradle properties
-        run: cp .github/gradle-ci.properties gradle.properties
-
-      - name: Run all tests for coverage
-        run: |
-          echo "📊 Running all tests for coverage analysis"
-          ./gradlew testAll --build-cache --configuration-cache --no-daemon
-
-      - name: Generate coverage report
-        run: |
-          echo "📊 Generating coverage report"
-          ./gradlew koverXmlReport --build-cache --configuration-cache --no-daemon
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./build/reports/kover/report.xml
-          flags: unittests
-          name: kotlin-coverage
-          fail_ci_if_error: false
-
-      - name: Upload aggregated test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: aggregated-test-results
-          path: |
-            build/reports/tests/
-            build/test-results/
-            build/reports/kover/
-          retention-days: 7
 
   # Code quality checks
   quality:
@@ -487,7 +408,7 @@ jobs:
     name: Build Application
     runs-on: ubuntu-latest
     timeout-minutes: 20  # SPI-480: Increased timeout for build operations
-    needs: [test-coverage, quality, unit-tests]
+    needs: [unit-tests, integration-tests, system-tests, quality]
     # SPI-480: Build only when code changes detected or manual trigger
     if: always() && (contains(toJSON(needs.unit-tests.outputs), 'true') || github.event_name == 'workflow_dispatch')
     strategy:
@@ -850,7 +771,7 @@ jobs:
     name: Deploy Application
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [container-smoke-tests, build, test-coverage, quality]
+    needs: [container-smoke-tests, build, quality]
     # SPI-480: Deploy only on main branch with successful builds
     if: github.ref == 'refs/heads/main' && contains(toJSON(needs.*.result), 'success') && !contains(toJSON(needs.*.result), 'failure')
     environment: production
@@ -966,7 +887,7 @@ jobs:
     name: Final Validation
     runs-on: ubuntu-latest
     timeout-minutes: 10  # SPI-480: Increased timeout for comprehensive validation
-    needs: [unit-tests, integration-tests, system-tests, test-coverage, quality, build, container-smoke-tests, security, deploy]
+    needs: [unit-tests, integration-tests, system-tests, quality, build, container-smoke-tests, security, deploy]
     # SPI-480: Always run to provide final status, regardless of skipped jobs
     if: always()
 
@@ -1090,7 +1011,7 @@ jobs:
     name: Notify Failure
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [unit-tests, integration-tests, system-tests, test-coverage, quality, build, container-smoke-tests, security, deploy, validate]
+    needs: [unit-tests, integration-tests, system-tests, quality, build, container-smoke-tests, security, deploy, validate]
     if: failure()
 
     steps:
