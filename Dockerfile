@@ -1,40 +1,6 @@
-# Multi-stage build for optimal size and caching (SPI-475)
-# Stage 1: Build with JDK
-FROM eclipse-temurin:21-jdk AS builder
-
-WORKDIR /app
-
-# Install required tools for better caching
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy gradle wrapper and properties first (changes least frequently)
-COPY gradlew gradlew
-COPY gradle.properties gradle.properties
-COPY gradle/ gradle/
-
-# Make gradlew executable
-RUN chmod +x gradlew
-
-# Copy only dependency-related files first for better layer caching
-COPY settings.gradle.kts settings.gradle.kts
-COPY gradle/libs.versions.toml gradle/libs.versions.toml
-COPY build.gradle.kts build.gradle.kts
-
-# Download and cache dependencies (this layer will be cached unless dependencies change)
-RUN ./gradlew dependencies --no-daemon --build-cache
-
-# Copy CI-optimized properties for build
-COPY .github/gradle-ci.properties gradle.properties
-
-# Copy source code (changes most frequently, so placed last)
-COPY src/ src/
-
-# Build fat JAR with comprehensive caching
-RUN ./gradlew buildFatJar --no-daemon --build-cache --configuration-cache
-
-# Stage 2: Runtime image with JRE
+# Multi-stage build optimized for artifact caching (SPI-474)
+# This Dockerfile is designed to work with pre-built JAR artifacts from CI
+# Stage 1: Runtime image with JRE
 FROM eclipse-temurin:21-jre-alpine
 
 # Install required libraries
@@ -47,8 +13,9 @@ RUN addgroup -g 1000 jcvd && \
 
 WORKDIR /app
 
-# Copy the JAR file
-COPY --from=builder --chown=jcvd:jcvd /app/build/libs/jcvd-server.jar /app/jcvd-server.jar
+# Copy the pre-built JAR file from CI build artifacts (SPI-474)
+# This JAR is downloaded as an artifact from the previous build stage
+COPY --chown=jcvd:jcvd build/libs/jcvd-server.jar /app/jcvd-server.jar
 
 # Create directory for SQLite database
 RUN mkdir -p /app/data && chown -R jcvd:jcvd /app/data
