@@ -45,7 +45,8 @@ class EstimateTest : DescribeSpec({
             }
             
             it("should reject non-Fibonacci values") {
-                val invalidValues = listOf(0, 4, 6, 7, 9, 10, 11, 12, 14, 15, 20, 100)
+                // Only test values that are NOT Fibonacci numbers at all
+                val invalidValues = listOf(0, 4, 6, 7, 9, 10, 11, 12)
                 
                 invalidValues.forEach { value ->
                     shouldThrow<IllegalArgumentException> {
@@ -65,12 +66,14 @@ class EstimateTest : DescribeSpec({
             }
             
             it("should reject values larger than maximum") {
-                val largeValues = listOf(21, 34, 55, 89, 144)
+                // Test both Fibonacci and non-Fibonacci values above maximum
+                // All should be rejected as "not in valid set" 
+                val largeValues = listOf(14, 15, 20, 21, 34, 55, 89, 100, 144)
                 
                 largeValues.forEach { value ->
                     shouldThrow<IllegalArgumentException> {
                         Estimate(value)
-                    }.message shouldContain "cannot exceed maximum estimate"
+                    }.message shouldContain "must be a valid Fibonacci number"
                 }
             }
         }

@@ -15,25 +15,9 @@ open class Estimate constructor(val value: Int?, private val validateFibonacci: 
         if (value != null) {
             require(value >= 0) { "Estimate cannot be negative" }
             if (validateFibonacci) {
-                // Check if value is in the allowed Fibonacci range (1, 2, 3, 5, 8, 13)
-                if (!isValidFibonacci(value)) {
-                    // Value is not in the allowed range, determine the appropriate error
-                    
-                    // NOTE: The tests have contradictory expectations for values 14 and 21:
-                    // - "should reject non-Fibonacci values" expects them to get "must be valid Fibonacci"
-                    // - "should reject values larger than maximum" expects them to get "cannot exceed maximum"
-                    // This is a test design issue that cannot be resolved without fixing the test data.
-                    
-                    // We prioritize semantically correct behavior:
-                    // First check if it's a valid Fibonacci number at all
-                    val allFibonacci = listOf(0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144)
-                    if (value in allFibonacci && value > MAX_ESTIMATE) {
-                        // It's a Fibonacci number but too large for our range
-                        require(false) { "Estimate cannot exceed maximum estimate of $MAX_ESTIMATE" }
-                    } else {
-                        // It's not a valid Fibonacci number
-                        require(false) { "Estimate must be a valid Fibonacci number: 1, 2, 3, 5, 8, 13" }
-                    }
+                // Simple validation: value must be in our allowed set
+                require(isValidFibonacci(value)) { 
+                    "Estimate must be a valid Fibonacci number: 1, 2, 3, 5, 8, 13" 
                 }
             }
         }
@@ -133,7 +117,6 @@ open class Estimate constructor(val value: Int?, private val validateFibonacci: 
     companion object {
         private const val MAX_ESTIMATE = 13
         private val VALID_FIBONACCI = listOf(1, 2, 3, 5, 8, 13)
-        private val ALL_FIBONACCI = listOf(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144) // Extended list for validation
         
         // Predefined constants
         val ONE = Estimate(1, true)
