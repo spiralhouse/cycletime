@@ -131,6 +131,17 @@ docker build -t jcvd:test .              # Verify Docker build
 act --dryrun                             # Validate workflow syntax
 ```
 
+## Gradle Configuration Cache
+
+The project uses Gradle's configuration cache for improved build performance (301ms cached vs 483ms uncached). You may see warnings like:
+
+```
+Task ':compileKotlin' of type 'org.jetbrains.kotlin.gradle.tasks.KotlinCompile': 
+invocation of 'Task.project' at execution time is unsupported.
+```
+
+**These warnings are expected** and come from the Kotlin Gradle plugin (as of version 2.0.0). They don't prevent the configuration cache from working and will be fixed in future plugin versions. The warnings are configured to not fail builds (`org.gradle.configuration-cache.problems=warn`).
+
 ## Summary
 
 While `act` has limitations with our advanced CI features, it's still useful for:
