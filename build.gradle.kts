@@ -553,6 +553,12 @@ dependencyCheck {
     suppressionFile = "$projectDir/config/dependency-check/suppressions.xml"
     failBuildOnCVSS = 7.0f
 
+    // Configure NVD API key if available (speeds up vulnerability scanning)
+    nvd {
+        apiKey = System.getProperty("nvd.api.key") ?: System.getenv("NVD_API_KEY") ?: ""
+        delay = 2000 // Delay between NVD API calls in milliseconds (with API key)
+    }
+
     analyzers {
         // Enable analyzers
         assemblyEnabled = false

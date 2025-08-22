@@ -947,8 +947,14 @@ jobs:
 
       - name: Run dependency vulnerability scan
         run: |
-          echo "🔒 Running security vulnerability scan"
-          ./gradlew dependencyCheckAnalyze --build-cache --configuration-cache --no-daemon
+          echo "🔒 Running security vulnerability scan with NVD API"
+          ./gradlew dependencyCheckAnalyze \
+            --build-cache \
+            --configuration-cache \
+            --no-daemon \
+            -Dnvd.api.key="${{ secrets.NVD_API_KEY }}"
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         continue-on-error: true
 
       - name: Upload security scan results
