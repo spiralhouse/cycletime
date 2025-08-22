@@ -581,14 +581,14 @@ jobs:
             LICENSE
           retention-days: 7
 
-  # SPI-480: Docker build with conditional deployment
-  docker:
-    name: Docker Build
+  # Containerization job - builds Docker image once for reuse
+  containerization:
+    name: Containerization
     runs-on: ubuntu-latest
-    timeout-minutes: 25  # SPI-480: Increased timeout for Docker operations
-    needs: [build, unit-tests]
-    # SPI-480: Build Docker image only when code changes detected
-    if: contains(toJSON(needs.unit-tests.outputs), 'true') || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 25
+    needs: [build]
+    # Build container when build job succeeded (which already checks for code changes)
+    if: needs.build.result == 'success'
     strategy:
       fail-fast: true  # Fail fast on Docker build errors
 
@@ -660,6 +660,15 @@ jobs:
             BUILDKIT_INLINE_CACHE=1
           # Enable BuildKit features for better performance
           outputs: type=docker,dest=/tmp/jcvd-image.tar
+
+      # Upload container image as artifact for reuse
+      - name: Upload container image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-image
+          path: /tmp/jcvd-image.tar
+          retention-days: 7
+          if-no-files-found: error
 
       # Load the image back for testing (faster than rebuilding)
       - name: Load Docker image
@@ -740,9 +749,9 @@ jobs:
     name: Container Smoke Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [docker, unit-tests]
-    # Run smoke tests when code changes detected or manual trigger
-    if: contains(toJSON(needs.unit-tests.outputs), 'true') || github.event_name == 'workflow_dispatch'
+    needs: [containerization]
+    # Run smoke tests when containerization succeeded
+    if: needs.containerization.result == 'success'
     strategy:
       fail-fast: true
 
@@ -750,38 +759,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          platforms: linux/amd64
-
-      # Download pre-built JAR artifact
-      - name: Download JAR artifact
+      # Download pre-built container image from containerization job
+      - name: Download container image artifact
         uses: actions/download-artifact@v4
         with:
-          name: jcvd-jar
-          path: build/libs/
+          name: container-image
+          path: /tmp/
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifacts
-          path: ./
-
-      - name: Verify JAR artifact for smoke tests
+      - name: Load container image
         run: |
-          echo "📦 Verifying JAR artifact for smoke tests"
-          ls -la build/libs/
-          test -f build/libs/jcvd-server.jar
-          echo "JAR size: $(du -h build/libs/jcvd-server.jar)"
-          echo "✅ JAR artifact ready for smoke testing"
-
-      # Build Docker image for smoke testing
-      - name: Build Docker image for smoke tests
-        run: |
-          echo "🔨 Building Docker image for smoke tests..."
-          docker build -t jcvd:smoke-test .
-          echo "✅ Docker image built successfully"
+          echo "📦 Loading pre-built container image..."
+          docker load --input /tmp/jcvd-image.tar
+          echo "✅ Container image loaded successfully"
+          docker images jcvd:test
+          
+          # Tag for smoke testing
+          docker tag jcvd:test jcvd:smoke-test
+          echo "✅ Container image ready for smoke testing"
 
       # Run comprehensive smoke tests
       - name: Run container smoke tests
@@ -978,7 +972,7 @@ jobs:
     name: Final Validation
     runs-on: ubuntu-latest
     timeout-minutes: 10  # SPI-480: Increased timeout for comprehensive validation
-    needs: [unit-tests, integration-tests, system-tests, quality, build, container-smoke-tests, security, deploy]
+    needs: [unit-tests, integration-tests, system-tests, quality, build, containerization, container-smoke-tests, security, deploy]
     # SPI-480: Always run to provide final status, regardless of skipped jobs
     if: always()
 
@@ -1157,12 +1151,105 @@ jobs:
           echo "  • Conditional deployment: Production safety with automated validation"
           echo "  • Combined with existing optimizations: < 5 minute CI for most changes"
 
+  # Publish container to GitHub Container Registry after all validations pass
+  publish-container:
+    name: Publish Container
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [validate]
+    # Only publish when all validations pass and it's main branch or a release
+    if: |
+      needs.validate.result == 'success' && 
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Download the validated container image
+      - name: Download container image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: container-image
+          path: /tmp/
+
+      - name: Load container image
+        run: |
+          echo "📦 Loading validated container image..."
+          docker load --input /tmp/jcvd-image.tar
+          echo "✅ Container image loaded"
+          docker images jcvd:test
+
+      # Login to GitHub Container Registry
+      - name: Login to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Tag and push the image
+      - name: Tag and push container image
+        run: |
+          # Determine tags based on the trigger
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            # Main branch - tag as latest and with commit SHA
+            docker tag jcvd:test ghcr.io/spiralhouse/jcvd:latest
+            docker tag jcvd:test ghcr.io/spiralhouse/jcvd:${{ github.sha }}
+            
+            echo "🏷️ Tagged as:"
+            echo "  - ghcr.io/spiralhouse/jcvd:latest"
+            echo "  - ghcr.io/spiralhouse/jcvd:${{ github.sha }}"
+            
+            docker push ghcr.io/spiralhouse/jcvd:latest
+            docker push ghcr.io/spiralhouse/jcvd:${{ github.sha }}
+            
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            # Release tag - tag with version
+            VERSION=${GITHUB_REF#refs/tags/}
+            docker tag jcvd:test ghcr.io/spiralhouse/jcvd:${VERSION}
+            docker tag jcvd:test ghcr.io/spiralhouse/jcvd:latest
+            
+            echo "🏷️ Tagged as:"
+            echo "  - ghcr.io/spiralhouse/jcvd:${VERSION}"
+            echo "  - ghcr.io/spiralhouse/jcvd:latest"
+            
+            docker push ghcr.io/spiralhouse/jcvd:${VERSION}
+            docker push ghcr.io/spiralhouse/jcvd:latest
+          fi
+          
+          echo "✅ Container image published to GitHub Container Registry"
+
+      - name: Output registry details
+        run: |
+          echo "📦 Container Image Published!"
+          echo "============================"
+          echo ""
+          echo "Registry: ghcr.io/spiralhouse/jcvd"
+          echo ""
+          echo "Pull commands:"
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "  docker pull ghcr.io/spiralhouse/jcvd:latest"
+            echo "  docker pull ghcr.io/spiralhouse/jcvd:${{ github.sha }}"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            echo "  docker pull ghcr.io/spiralhouse/jcvd:${VERSION}"
+            echo "  docker pull ghcr.io/spiralhouse/jcvd:latest"
+          fi
+          echo ""
+          echo "Run command:"
+          echo "  docker run -p 8080:8080 ghcr.io/spiralhouse/jcvd:latest"
+
   # SPI-480: Notify on failure with comprehensive job coverage
   notify-failure:
     name: Notify Failure
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [unit-tests, integration-tests, system-tests, quality, build, container-smoke-tests, security, deploy, validate]
+    needs: [unit-tests, integration-tests, system-tests, quality, build, containerization, container-smoke-tests, security, deploy, validate, publish-container]
     if: failure()
 
     steps:
