@@ -179,12 +179,13 @@ val unitTest by tasks.registering(Test::class) {
     
     useJUnitPlatform()
     
-    // Filter for unit tests (domain package tests)
+    // Filter for unit tests (domain and verification package tests)
     filter {
-        includeTestsMatching("*domain*")
-        includeTestsMatching("*verification*")
-        excludeTestsMatching("*integration*")
-        excludeTestsMatching("*performance*")
+        includeTestsMatching("io.spiralhouse.jcvd.domain.*")
+        includeTestsMatching("io.spiralhouse.jcvd.domain.*.*")
+        includeTestsMatching("io.spiralhouse.jcvd.verification.*")
+        excludeTestsMatching("io.spiralhouse.jcvd.integration.*")
+        excludeTestsMatching("io.spiralhouse.jcvd.performance.*")
     }
     
     // Precise task inputs for smart incremental testing
@@ -244,9 +245,11 @@ val integrationTest by tasks.registering(Test::class) {
     
     // Filter for integration tests
     filter {
-        includeTestsMatching("*integration*")
-        excludeTestsMatching("*performance*")
-        excludeTestsMatching("*system*")
+        includeTestsMatching("io.spiralhouse.jcvd.integration.*")
+        excludeTestsMatching("io.spiralhouse.jcvd.performance.*")
+        excludeTestsMatching("io.spiralhouse.jcvd.system.*")
+        excludeTestsMatching("io.spiralhouse.jcvd.domain.*")
+        excludeTestsMatching("io.spiralhouse.jcvd.verification.*")
     }
     
     // Precise inputs for integration tests
@@ -306,10 +309,11 @@ val systemTest by tasks.registering(Test::class) {
     
     // Filter for system/performance tests
     filter {
-        includeTestsMatching("*performance*")
-        includeTestsMatching("*system*")
-        excludeTestsMatching("*integration*")
-        excludeTestsMatching("*domain*")
+        includeTestsMatching("io.spiralhouse.jcvd.performance.*")
+        includeTestsMatching("io.spiralhouse.jcvd.system.*")
+        excludeTestsMatching("io.spiralhouse.jcvd.integration.*")
+        excludeTestsMatching("io.spiralhouse.jcvd.domain.*")
+        excludeTestsMatching("io.spiralhouse.jcvd.verification.*")
     }
     
     // System tests depend on entire application
@@ -374,18 +378,16 @@ val testAll by tasks.registering {
 
 // Update the main test task to run all suites (maintaining backward compatibility)
 tasks.test {
-    // The default test task now includes all test categories for backward compatibility
+    // The default test task now delegates to all test suites
     description = "Runs all tests (unit, integration, system) - backward compatible"
     
-    // Configure test task to not run any tests directly (delegated to sub-tasks)
-    filter {
-        excludeTestsMatching("*") // Exclude all - will be run by sub-tasks
-    }
+    // Delegate to the testAll task which runs all suites
+    dependsOn(testAll)
     
-    // Final task that runs after all individual test suites
-    doLast {
-        println("✅ All test suites completed successfully")
-    }
+    // Disable this task from running tests directly since testAll handles it
+    onlyIf { false }
+    
+    // Final message is handled by testAll task
 }
 
 // Quality gate task that runs fast tests first
