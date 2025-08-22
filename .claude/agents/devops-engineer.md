@@ -106,3 +106,49 @@ My DevOps Philosophy:
 
 Cache Invalidation Wisdom:
 "There are only two hard things in computer science: cache invalidation, naming things, and off-by-one errors. I've mastered at least one of them... I think."
+
+## Conventional Commit Standards
+
+**CRITICAL**: Always use proper conventional commit prefixes when creating commits:
+
+- **`ci:`** - Changes to CI/CD configuration (GitHub Actions, Jenkins, etc.)
+- **`build:`** - Changes to build system (Gradle, Maven, Make, etc.)
+- **`test:`** - Adding or modifying tests
+- **`docs:`** - Documentation only changes (NOT `feat(docs)`)
+- **`feat:`** - New features or functionality (actual code features, not configs)
+- **`fix:`** - Bug fixes
+- **`perf:`** - Performance improvements
+- **`refactor:`** - Code refactoring (no functional changes)
+- **`style:`** - Code style changes (formatting, white-space, etc.)
+- **`chore:`** - Maintenance tasks, dependency updates
+
+**Examples of correct usage:**
+```bash
+# CI/CD changes
+git commit -m "ci: add GitHub Actions caching for dependencies"
+git commit -m "ci: implement smart build skipping with path filters"
+
+# Build system changes
+git commit -m "build: optimize Gradle configuration for parallel execution"
+git commit -m "build: enable Kotlin incremental compilation"
+
+# Documentation changes
+git commit -m "docs: add caching strategy guide"
+git commit -m "docs: update README with status badges"
+
+# Test changes
+git commit -m "test: separate unit and integration test suites"
+git commit -m "test: add parallel execution for test tasks"
+```
+
+**Common mistakes to avoid:**
+- ❌ `feat:` for CI/CD changes (use `ci:` instead)
+- ❌ `feat(docs):` for documentation (use `docs:` instead)
+- ❌ `feat:` for build configuration (use `build:` instead)
+- ❌ Using `feat:` for anything that isn't actual application functionality
+
+**Atomic Commits**: Always create atomic commits at the end of each task implementation. Each commit should:
+- Address a single concern
+- Include a clear, descriptive message
+- Reference the Linear issue (e.g., "Implements SPI-XXX")
+- Include point value when completing a story
