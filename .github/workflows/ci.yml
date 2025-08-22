@@ -540,10 +540,18 @@ jobs:
       - name: Copy CI Gradle properties
         run: cp .github/gradle-ci.properties gradle.properties
 
-      - name: Build application
+      # Download pre-compiled artifacts from compile job
+      - name: Download compiled artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-artifacts
+          path: build/
+
+      - name: Build application JAR
         run: |
-          echo "🔨 Building application (code changes detected)"
-          ./gradlew build --build-cache --configuration-cache --no-daemon
+          echo "🔨 Building application JAR using pre-compiled artifacts"
+          echo "📊 Using compiled classes from compile job"
+          ./gradlew buildFatJar -x compileKotlin -x compileTestKotlin -x test --build-cache --configuration-cache --no-daemon
 
       - name: Verify JAR exists
         run: |
