@@ -54,20 +54,11 @@ env:
   BUILDKIT_PROGRESS: plain
 
 jobs:
-  # SPI-480: Matrix strategy for parallel OS/JVM testing with fail-fast
+  # Simplified CI: JDK 21 on Ubuntu only for reliability and speed
   unit-tests:
-    name: Unit Tests (${{ matrix.os }}, JDK ${{ matrix.java }})
-    runs-on: ${{ matrix.os }}
+    name: Unit Tests
+    runs-on: ubuntu-latest
     timeout-minutes: 10
-    strategy:
-      fail-fast: true  # Stop all jobs on first failure to save resources
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        java: ["21", "22"]
-        exclude:
-          # Optimize by running fewer combinations - exclude macOS with JDK 22 for faster feedback
-          - os: macos-latest
-            java: "22"
     outputs:
       run_tests: ${{ steps.changes.outputs.run_tests }}
 
@@ -77,13 +68,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup JDK ${{ matrix.java }}
+      - name: Setup JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ matrix.java }}
+          java-version: '21'
           distribution: 'temurin'
 
-      # SPI-480: Matrix-aware comprehensive dependency caching (SPI-475)
+      # Comprehensive dependency caching (SPI-475)
       - name: Cache Gradle dependencies
         uses: actions/cache@v4
         with:
@@ -92,10 +83,10 @@ jobs:
             ~/.gradle/wrapper
             ~/.gradle/daemon
             .gradle/
-          key: gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ matrix.os }}-jdk${{ matrix.java }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          key: gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-ubuntu-jdk21-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
           restore-keys: |
-            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ matrix.os }}-jdk${{ matrix.java }}-
-            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ matrix.os }}-
+            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-ubuntu-jdk21-
+            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-ubuntu-
 
       # Kotlin compilation cache
       - name: Cache Kotlin compilation
@@ -104,10 +95,10 @@ jobs:
           path: |
             build/kotlin
             build/tmp/kotlin-classes
-          key: kotlin-compile-${{ env.BUILD_CACHE_VERSION }}-${{ matrix.os }}-jdk${{ matrix.java }}-${{ hashFiles('src/**/*.kt', 'build.gradle.kts') }}
+          key: kotlin-compile-${{ env.BUILD_CACHE_VERSION }}-ubuntu-jdk21-${{ hashFiles('src/**/*.kt', 'build.gradle.kts') }}
           restore-keys: |
-            kotlin-compile-${{ env.BUILD_CACHE_VERSION }}-${{ matrix.os }}-jdk${{ matrix.java }}-
-            kotlin-compile-${{ env.BUILD_CACHE_VERSION }}-${{ matrix.os }}-
+            kotlin-compile-${{ env.BUILD_CACHE_VERSION }}-ubuntu-jdk21-
+            kotlin-compile-${{ env.BUILD_CACHE_VERSION }}-ubuntu-
 
       # Test results cache for unit tests
       - name: Cache test results
@@ -116,10 +107,10 @@ jobs:
           path: |
             build/test-results/unitTest
             build/reports/tests/unitTest
-          key: unit-test-results-${{ env.TEST_CACHE_VERSION }}-${{ matrix.os }}-jdk${{ matrix.java }}-${{ hashFiles('src/test/**/*.kt', 'src/main/**/*.kt') }}
+          key: unit-test-results-${{ env.TEST_CACHE_VERSION }}-ubuntu-jdk21-${{ hashFiles('src/test/**/*.kt', 'src/main/**/*.kt') }}
           restore-keys: |
-            unit-test-results-${{ env.TEST_CACHE_VERSION }}-${{ matrix.os }}-jdk${{ matrix.java }}-
-            unit-test-results-${{ env.TEST_CACHE_VERSION }}-${{ matrix.os }}-
+            unit-test-results-${{ env.TEST_CACHE_VERSION }}-ubuntu-jdk21-
+            unit-test-results-${{ env.TEST_CACHE_VERSION }}-ubuntu-
 
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
@@ -175,7 +166,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: unit-test-results-${{ matrix.os }}-jdk${{ matrix.java }}
+          name: unit-test-results
           path: |
             build/reports/tests/unitTest/
             build/test-results/unitTest/
