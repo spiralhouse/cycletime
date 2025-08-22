@@ -54,9 +54,9 @@ env:
   BUILDKIT_PROGRESS: plain
 
 jobs:
-  # Simplified CI: JDK 21 on Ubuntu only for reliability and speed
-  unit-tests:
-    name: Unit Tests
+  # Compile job that runs first to build all code and test classes
+  compile:
+    name: Compile Code
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -100,6 +100,99 @@ jobs:
             kotlin-compile-${{ env.BUILD_CACHE_VERSION }}-ubuntu-jdk21-
             kotlin-compile-${{ env.BUILD_CACHE_VERSION }}-ubuntu-
 
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-home-cache-cleanup: true
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+          arguments: --build-cache --configuration-cache
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      # Use CI-optimized Gradle properties
+      - name: Copy CI Gradle properties
+        run: cp .github/gradle-ci.properties gradle.properties
+
+      - name: Check for code changes
+        id: changes
+        run: |
+          echo "🔍 Checking for relevant changes..."
+          if git diff --name-only HEAD~1 HEAD | grep -E '\.(kt|kts|java|gradle)$|src/|build\.gradle|settings\.gradle|gradle\.properties'; then
+            echo "✅ Code changes detected - will compile and test"
+            echo "run_tests=true" >> $GITHUB_OUTPUT
+          else
+            echo "⏭️ No code changes detected - will skip compilation and tests"
+            echo "run_tests=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Compile all code and tests
+        if: steps.changes.outputs.run_tests == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          echo "🔨 Compiling all code and test classes"
+          echo "📊 Cache status:"
+          echo "  Gradle cache: $([ -d ~/.gradle/caches ] && echo 'HIT' || echo 'MISS')"
+          echo "  Kotlin cache: $([ -d build/kotlin ] && echo 'HIT' || echo 'MISS')"
+          ./gradlew compileKotlin compileTestKotlin --build-cache --configuration-cache --no-daemon
+
+      - name: Upload compiled artifacts
+        if: steps.changes.outputs.run_tests == 'true' || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-artifacts
+          path: |
+            build/classes/
+            build/kotlin/
+            build/tmp/kotlin-classes/
+            build/resources/
+          retention-days: 1
+
+      - name: Skip compilation
+        if: steps.changes.outputs.run_tests == 'false' && github.event_name != 'workflow_dispatch'
+        run: |
+          echo "⏭️ Skipping compilation - no code changes detected"
+
+  # Unit tests - uses compiled artifacts
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: compile
+    if: needs.compile.outputs.run_tests == 'true' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # Restore Gradle dependencies (needed for test execution)
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/daemon
+            .gradle/
+          key: gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-ubuntu-jdk21-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-ubuntu-jdk21-
+            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-ubuntu-
+
+      # Download compiled artifacts from compile job
+      - name: Download compiled artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-artifacts
+          path: build/
+
       # Test results cache for unit tests
       - name: Cache test results
         uses: actions/cache@v4
@@ -116,51 +209,21 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           gradle-home-cache-cleanup: true
-          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
-          # Copy CI-optimized properties
-          gradle-home-cache-includes: |
-            caches
-            notifications
-          gradle-home-cache-excludes: |
-            caches/jars-*
-            caches/transforms-*
-          # Enable build cache
+          cache-read-only: true
           arguments: --build-cache --configuration-cache
 
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      # Use CI-optimized Gradle properties (SPI-475)
+      # Use CI-optimized Gradle properties
       - name: Copy CI Gradle properties
         run: cp .github/gradle-ci.properties gradle.properties
 
-      - name: Check for code changes
-        id: changes
-        run: |
-          echo "🔍 Checking for relevant changes..."
-          if git diff --name-only HEAD~1 HEAD | grep -E '\.(kt|kts|java|gradle)$|src/|build\.gradle|settings\.gradle|gradle\.properties'; then
-            echo "✅ Code changes detected - running tests"
-            echo "run_tests=true" >> $GITHUB_OUTPUT
-          else
-            echo "⏭️ No code changes detected - skipping tests"
-            echo "run_tests=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Run unit tests with coverage
-        if: steps.changes.outputs.run_tests == 'true' || github.event_name == 'workflow_dispatch'
         run: |
-          echo "🚀 Running unit tests with coverage (code changes detected)"
-          echo "📊 Cache status before build:"
-          echo "  Gradle cache: $([ -d ~/.gradle/caches ] && echo 'HIT' || echo 'MISS')"
-          echo "  Kotlin cache: $([ -d build/kotlin ] && echo 'HIT' || echo 'MISS')"
-          echo "  Test cache: $([ -d build/test-results/unitTest ] && echo 'HIT' || echo 'MISS')"
-          ./gradlew unitTest koverXmlReport --build-cache --configuration-cache --no-daemon
-
-      - name: Skip unit tests
-        if: steps.changes.outputs.run_tests == 'false' && github.event_name != 'workflow_dispatch'
-        run: |
-          echo "⏭️ Skipping unit tests - no code changes detected"
-          echo "Only documentation or configuration files were modified"
+          echo "🚀 Running unit tests with coverage using pre-compiled artifacts"
+          echo "📊 Using compiled artifacts from compile job"
+          ./gradlew unitTest koverXmlReport -x compileKotlin -x compileTestKotlin --build-cache --configuration-cache --no-daemon
 
       - name: Upload unit test results
         uses: actions/upload-artifact@v4
@@ -186,9 +249,9 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15  # SPI-480: Increased timeout for database operations
-    needs: unit-tests
-    # SPI-480: Run if ANY unit test matrix job indicates code changes
-    if: contains(needs.unit-tests.result, 'success') && (contains(toJSON(needs.unit-tests.outputs), 'true') || github.event_name == 'workflow_dispatch')
+    needs: compile
+    # Run if compilation detected code changes
+    if: needs.compile.outputs.run_tests == 'true' || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: true  # SPI-480: Fail fast for faster feedback
 
@@ -217,6 +280,13 @@ jobs:
           restore-keys: |
             gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-
 
+      # Download compiled artifacts from compile job
+      - name: Download compiled artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-artifacts
+          path: build/
+
       # Integration test specific caches
       - name: Cache integration test results
         uses: actions/cache@v4
@@ -232,7 +302,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           gradle-home-cache-cleanup: true
-          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+          cache-read-only: true
           arguments: --build-cache --configuration-cache
 
       - name: Make gradlew executable
@@ -244,8 +314,8 @@ jobs:
 
       - name: Run integration tests
         run: |
-          echo "🔗 Running integration tests (code changes detected)"
-          ./gradlew integrationTest --build-cache --configuration-cache --no-daemon
+          echo "🔗 Running integration tests using pre-compiled artifacts"
+          ./gradlew integrationTest -x compileKotlin -x compileTestKotlin --build-cache --configuration-cache --no-daemon
 
       - name: Upload integration test results
         uses: actions/upload-artifact@v4
@@ -262,9 +332,9 @@ jobs:
     name: System Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20  # SPI-480: Increased timeout for performance tests
-    needs: unit-tests
-    # SPI-480: Run if ANY unit test matrix job indicates code changes
-    if: contains(needs.unit-tests.result, 'success') && (contains(toJSON(needs.unit-tests.outputs), 'true') || github.event_name == 'workflow_dispatch')
+    needs: compile
+    # Run if compilation detected code changes
+    if: needs.compile.outputs.run_tests == 'true' || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false  # Don't fail fast for system tests - we want complete performance data
 
@@ -293,6 +363,13 @@ jobs:
           restore-keys: |
             gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-
 
+      # Download compiled artifacts from compile job
+      - name: Download compiled artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-artifacts
+          path: build/
+
       # System test specific caches (conservative caching due to performance sensitivity)
       - name: Cache system test results
         uses: actions/cache@v4
@@ -308,7 +385,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           gradle-home-cache-cleanup: true
-          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+          cache-read-only: true
           arguments: --build-cache --configuration-cache
 
       - name: Make gradlew executable
@@ -320,8 +397,8 @@ jobs:
 
       - name: Run system tests
         run: |
-          echo "🎩 Running system tests (code changes detected)"
-          ./gradlew systemTest --build-cache --configuration-cache --no-daemon
+          echo "🎩 Running system tests using pre-compiled artifacts"
+          ./gradlew systemTest -x compileKotlin -x compileTestKotlin --build-cache --configuration-cache --no-daemon
 
       - name: Upload system test results
         uses: actions/upload-artifact@v4
@@ -408,9 +485,9 @@ jobs:
     name: Build Application
     runs-on: ubuntu-latest
     timeout-minutes: 20  # SPI-480: Increased timeout for build operations
-    needs: [unit-tests, integration-tests, system-tests, quality]
-    # SPI-480: Build only when code changes detected or manual trigger
-    if: always() && (contains(toJSON(needs.unit-tests.outputs), 'true') || github.event_name == 'workflow_dispatch')
+    needs: [compile, unit-tests, integration-tests, system-tests, quality]
+    # Build only when all tests pass and code changes were detected
+    if: always() && (needs.compile.outputs.run_tests == 'true' || github.event_name == 'workflow_dispatch')
     strategy:
       fail-fast: true  # Fail fast on build errors
 
