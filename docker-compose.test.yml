@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # Main JCVD application for smoke testing
+  jcvd-smoke:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jcvd-smoke-test
+    ports:
+      - "8080:8080"
+    environment:
+      # Test environment configuration
+      - DATABASE_URL=jdbc:sqlite:/app/data/jcvd.db
+      - PORT=8080
+      - HOST=0.0.0.0
+      - KTOR_DEVELOPMENT=false
+      - JAVA_OPTS=-Xmx512m -XX:+UseG1GC -XX:MaxRAMPercentage=75.0
+    volumes:
+      # Persistent test database
+      - jcvd-smoke-data:/app/data
+    networks:
+      - jcvd-smoke-network
+    
+    # Resource limits for smoke testing
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+    
+    # Health check configuration
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    
+    # Restart policy for testing
+    restart: "no"
+
+  # Smoke test runner service
+  smoke-test-runner:
+    image: curlimages/curl:8.4.0
+    container_name: jcvd-smoke-test-runner
+    depends_on:
+      jcvd-smoke:
+        condition: service_healthy
+    networks:
+      - jcvd-smoke-network
+    volumes:
+      - ./scripts/smoke-test.sh:/smoke-test.sh:ro
+    command: >
+      sh -c "
+        echo 'Starting smoke tests...' &&
+        chmod +x /smoke-test.sh &&
+        /smoke-test.sh jcvd-smoke 8080
+      "
+    restart: "no"
+
+  # WebSocket test service
+  websocket-test:
+    image: node:18-alpine
+    container_name: jcvd-websocket-test
+    depends_on:
+      jcvd-smoke:
+        condition: service_healthy
+    networks:
+      - jcvd-smoke-network
+    volumes:
+      - ./scripts/websocket-test.js:/websocket-test.js:ro
+    working_dir: /
+    command: >
+      sh -c "
+        npm install -g ws &&
+        node /websocket-test.js ws://jcvd-smoke:8080/ws
+      "
+    restart: "no"
+
+volumes:
+  jcvd-smoke-data:
+    driver: local
+
+networks:
+  jcvd-smoke-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
