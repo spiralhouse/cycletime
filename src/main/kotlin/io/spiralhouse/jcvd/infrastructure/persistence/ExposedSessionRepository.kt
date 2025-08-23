@@ -9,6 +9,7 @@ import io.spiralhouse.jcvd.domain.services.SystemTimeProvider
 import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
 import io.spiralhouse.jcvd.domain.valueobjects.SessionKey
 import io.spiralhouse.jcvd.infrastructure.database.SessionStatesTable
+import io.spiralhouse.jcvd.infrastructure.logging.ExceptionLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.datetime.Instant
 import kotlinx.serialization.SerializationException
@@ -21,6 +22,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.slf4j.LoggerFactory
 import java.util.UUID
 
 /**
@@ -60,6 +62,8 @@ class ExposedSessionRepository(
     private val timeProvider: TimeProvider = SystemTimeProvider(),
     private val database: Database? = null
 ) : SessionRepository {
+    
+    private val logger = LoggerFactory.getLogger(ExposedSessionRepository::class.java)
 
     /**
      * JSON serializer for SessionContext with lenient configuration.
@@ -281,6 +285,17 @@ class ExposedSessionRepository(
         return try {
             json.encodeToString(context)
         } catch (e: Exception) {
+            ExceptionLogger.logException(
+                logger,
+                e,
+                "Failed to serialize SessionContext",
+                mapOf(
+                    "contextType" to context::class.simpleName,
+                    "activeIssuesCount" to context.activeIssues.size,
+                    "hasWorkflowStage" to (context.workflowStage != null),
+                    "contextDataSize" to context.contextData.size
+                )
+            )
             throw SerializationException("Failed to serialize SessionContext", e)
         }
     }
@@ -303,6 +318,17 @@ class ExposedSessionRepository(
             json.decodeFromString<SessionContext>(contextJson)
         } catch (e: Exception) {
             // Log warning about corrupt data but don't fail
+            ExceptionLogger.logException(
+                logger,
+                e,
+                "Failed to deserialize SessionContext - returning empty context",
+                mapOf(
+                    "jsonLength" to contextJson.length,
+                    "jsonPreview" to contextJson.take(100),
+                    "errorType" to e::class.simpleName,
+                    "recovery" to "Using empty SessionContext"
+                )
+            )
             // Return empty context to maintain system stability
             SessionContext()
         }

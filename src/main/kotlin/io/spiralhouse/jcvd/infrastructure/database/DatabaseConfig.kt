@@ -2,6 +2,7 @@ package io.spiralhouse.jcvd.infrastructure.database
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import io.spiralhouse.jcvd.infrastructure.logging.ExceptionLogger
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -23,39 +24,69 @@ class DatabaseConfig(
     fun connect(): Database {
         logger.info("Connecting to database: $jdbcUrl")
 
-        val hikariConfig = HikariConfig().apply {
-            jdbcUrl = this@DatabaseConfig.jdbcUrl
-            driverClassName = driver
-            maximumPoolSize = maxPoolSize
-            isAutoCommit = false
-            transactionIsolation = "TRANSACTION_SERIALIZABLE"
-            validate()
-        }
-
-        dataSource = HikariDataSource(hikariConfig)
-
-        val database = Database.connect(dataSource)
-
-        // Create tables if they don't exist
-        transaction(database) {
-            if (enableLogging) {
-                addLogger(StdOutSqlLogger)
+        try {
+            val hikariConfig = HikariConfig().apply {
+                jdbcUrl = this@DatabaseConfig.jdbcUrl
+                driverClassName = driver
+                maximumPoolSize = maxPoolSize
+                isAutoCommit = false
+                transactionIsolation = "TRANSACTION_SERIALIZABLE"
+                validate()
             }
 
-            SchemaUtils.create(
-                ProjectsTable,
-                IssuesTable,
-                IssueDependenciesTable,
-                IssueLabelsTable,
-                SessionStatesTable
+            dataSource = HikariDataSource(hikariConfig)
+
+            val database = Database.connect(dataSource)
+
+            // Create tables if they don't exist
+            transaction(database) {
+                if (enableLogging) {
+                    addLogger(StdOutSqlLogger)
+                }
+
+                try {
+                    SchemaUtils.create(
+                        ProjectsTable,
+                        IssuesTable,
+                        IssueDependenciesTable,
+                        IssueLabelsTable,
+                        SessionStatesTable
+                    )
+
+                    // Enable foreign keys for SQLite
+                    connection.prepareStatement("PRAGMA foreign_keys = ON", false).executeUpdate()
+                } catch (e: Exception) {
+                    ExceptionLogger.logException(
+                        logger,
+                        e,
+                        "Failed to create database schema",
+                        mapOf(
+                            "tables" to listOf(
+                                "ProjectsTable", "IssuesTable", "IssueDependenciesTable",
+                                "IssueLabelsTable", "SessionStatesTable"
+                            ),
+                            "jdbcUrl" to jdbcUrl
+                        )
+                    )
+                    throw e // Re-throw to ensure proper error handling
+                }
+            }
+
+            logger.info("Database connected and initialized successfully")
+            return database
+        } catch (e: Exception) {
+            ExceptionLogger.logException(
+                logger,
+                e,
+                "Database connection failed",
+                mapOf(
+                    "jdbcUrl" to jdbcUrl,
+                    "driver" to driver,
+                    "maxPoolSize" to maxPoolSize
+                )
             )
-
-            // Enable foreign keys for SQLite
-            connection.prepareStatement("PRAGMA foreign_keys = ON", false).executeUpdate()
+            throw e // Re-throw for upstream handling
         }
-
-        logger.info("Database connected and initialized successfully")
-        return database
     }
 
     fun close() {
