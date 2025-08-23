@@ -21,8 +21,8 @@ jobs:
         id: release
         uses: googleapis/release-please-action@v4
         with:
-          # Configure for Gradle/Kotlin project
-          release-type: gradle
+          # Configure for Gradle/Kotlin project (using java type)
+          release-type: java
           package-name: jcvd
           
           # Configure version file - gradle.properties is primary version source (SPI-486)
