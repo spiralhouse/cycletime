@@ -618,7 +618,7 @@ jobs:
         with:
           name: build-artifacts-${{ needs.version.outputs.version }}
           path: |
-            build/libs/
+            build/libs/*.jar
             build/distributions/
           retention-days: 30
 
@@ -646,13 +646,22 @@ jobs:
       - name: Verify JAR exists before container build
         run: |
           echo "🔍 Verifying JAR exists before Docker build..."
-          if [[ ! -f "build/libs/jcvd-server.jar" ]]; then
-            echo "❌ JAR file not found: build/libs/jcvd-server.jar"
-            echo "Available files in build/libs/:"
-            ls -la build/libs/ || echo "build/libs/ directory does not exist"
+          
+          # Check for JAR in expected location
+          if [[ -f "build/libs/jcvd-server.jar" ]]; then
+            echo "✅ JAR file verified: $(du -h build/libs/jcvd-server.jar)"
+          # Check if artifact download created nested structure (legacy fix)
+          elif [[ -f "build/libs/libs/jcvd-server.jar" ]]; then
+            echo "⚠️ Found JAR in nested structure, moving to correct location..."
+            mv build/libs/libs/*.jar build/libs/
+            rmdir build/libs/libs
+            echo "✅ JAR file moved and verified: $(du -h build/libs/jcvd-server.jar)"
+          else
+            echo "❌ JAR file not found!"
+            echo "Contents of build/libs/:"
+            ls -la build/libs/ 2>/dev/null || echo "build/libs/ directory does not exist"
             exit 1
           fi
-          echo "✅ JAR file verified: $(du -h build/libs/jcvd-server.jar)"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
