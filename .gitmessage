@@ -5,16 +5,17 @@
 # <footer>
 
 # Type must be one of:
-#   feat:     New features
-#   fix:      Bug fixes
-#   docs:     Documentation changes
-#   style:    Code style changes (formatting, etc)
-#   refactor: Code refactoring
-#   perf:     Performance improvements
-#   test:     Test additions or changes
-#   build:    Build system changes
-#   ci:       CI configuration changes
-#   chore:    Other changes (dependencies, etc)
+#   feat:     New features                    → MINOR release (0.X.0)
+#   fix:      Bug fixes                       → PATCH release (0.0.X)
+#   perf:     Performance improvements        → MINOR release (0.X.0)
+#   docs:     Documentation changes           → No release
+#   style:    Code style changes              → No release  
+#   refactor: Code refactoring                → No release
+#   test:     Test additions or changes       → No release
+#   build:    Build system changes            → No release
+#   ci:       CI configuration changes        → No release
+#   chore:    Other changes (dependencies)    → No release
+#   revert:   Reverting previous commits      → Depends on reverted commit
 
 # Scope is optional but recommended:
 #   Examples: ui, api, auth, db, ci, docs
@@ -31,12 +32,20 @@
 #   - Leave blank line between subject and body
 
 # Footer (optional):
-#   - Include breaking changes: "BREAKING CHANGE: <description>"
+#   - Include breaking changes: "BREAKING CHANGE: <description>" → MAJOR release (X.0.0)
 #   - Reference issues: "Closes #123", "Fixes #456"
+#   - Security fixes: "SECURITY: Fixes CVE-YYYY-XXXX"
 
 # Examples:
-#   feat(auth): add OAuth2 integration
-#   fix(api): handle null response in user endpoint
-#   docs: update README with installation steps
-#   build: upgrade gradle to version 8.5
-#   feat!: drop support for Node.js 16
+#   feat(auth): add OAuth2 integration                → MINOR release
+#   fix(api): handle null response in user endpoint   → PATCH release
+#   fix(security): patch authentication bypass        → PATCH release (urgent)
+#   perf(db): optimize query performance by 60%       → MINOR release  
+#   docs: update README with installation steps       → No release
+#   build: upgrade gradle to version 8.5              → No release
+#   feat!: drop support for Node.js 16                → MAJOR release
+#   
+#   Breaking change alternative syntax:
+#   feat(api): redesign session management
+#   
+#   BREAKING CHANGE: Session token format changed     → MAJOR release

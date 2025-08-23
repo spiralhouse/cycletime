@@ -96,7 +96,7 @@ The scope provides additional context about the affected area:
 
 ### Examples
 
-#### Simple feature
+#### Simple feature (triggers MINOR release)
 ```
 feat(auth): add OAuth2 integration
 
@@ -105,8 +105,9 @@ This replaces the previous basic auth system.
 
 Closes #123
 ```
+*This will trigger a minor version release (0.1.0 → 0.2.0)*
 
-#### Bug fix
+#### Bug fix (triggers PATCH release)
 ```
 fix(api): handle null response in user endpoint
 
@@ -116,8 +117,9 @@ Now returns 404 with proper error message.
 
 Fixes #456
 ```
+*This will trigger a patch version release (0.1.0 → 0.1.1)*
 
-#### Breaking change
+#### Breaking change (triggers MAJOR release)
 ```
 feat!: drop support for Node.js 16
 
@@ -126,22 +128,89 @@ from Node.js 18+ for improved performance.
 
 BREAKING CHANGE: Node.js 18 or higher is now required
 ```
+*This will trigger a major version release (0.1.0 → 1.0.0)*
 
-#### Documentation
+#### Alternative breaking change syntax
+```
+feat(api): redesign session management
+
+Implement new session architecture with improved security
+and better performance characteristics.
+
+BREAKING CHANGE: Session token format has changed. Existing
+sessions will be invalidated and users must re-authenticate.
+
+Closes #789
+```
+*This also triggers a major version release*
+
+#### Documentation (no release)
 ```
 docs: update installation instructions
 
 Add missing step for database migration and clarify
 JDK version requirements.
 ```
+*This will not trigger a release*
 
-#### Build system
+#### Build system (no release)
 ```
 build: upgrade gradle to version 8.5
 
 Improves build performance and adds support for
 new Kotlin compiler features.
 ```
+*This will not trigger a release*
+
+#### Security fix (triggers PATCH release)
+```
+fix(security): patch authentication bypass vulnerability
+
+Address critical security issue where malformed JWT tokens
+could bypass authentication checks.
+
+SECURITY: Fixes CVE-2024-XXXX authentication bypass
+Closes #SECURITY-123
+```
+*This will trigger an immediate patch release for security*
+
+#### Performance improvement (triggers MINOR release)
+```
+perf(db): optimize query performance for large datasets
+
+Implement connection pooling and query result caching
+to improve response times by 60% for data-heavy operations.
+
+Closes #456
+```
+*This will trigger a minor version release*
+
+### Version Impact
+
+Understanding how your commits affect releases:
+
+| Commit Type | Version Bump | Release Impact | Example |
+|-------------|--------------|----------------|---------|
+| `fix:` | PATCH (0.0.X) | Bug fix release | `fix(api): handle null user data` |
+| `feat:` | MINOR (0.X.0) | Feature release | `feat(auth): add OAuth2 support` |
+| `BREAKING CHANGE:` | MAJOR (X.0.0) | Breaking change | `feat!: redesign API endpoints` |
+| `docs:`, `style:`, `test:` | None | No release | Documentation/test updates |
+
+### How Releases Work
+
+**Automatic Release Process:**
+1. **Commit Analysis**: Release Please scans all commits since the last release
+2. **Version Calculation**: Determines next version based on commit types above
+3. **Release PR**: Creates PR with updated version and generated changelog
+4. **Manual Review**: Team reviews and approves release PR
+5. **Automated Release**: Merging release PR triggers full release pipeline
+
+**What Gets Released:**
+- 📦 JAR archive with all dependencies
+- 🐳 Container image (ghcr.io/spiralhouse/jcvd:version)
+- 🚀 Native image (experimental)
+- 📝 Generated changelog with all changes
+- 🔒 SHA256 checksums for security verification
 
 ### Validation
 
@@ -151,6 +220,7 @@ All commit messages are automatically validated in CI using [commitlint](https:/
 - Checks every commit in the PR
 - Must pass before merging
 - Provides helpful error messages
+- Prevents releases from broken commit messages
 
 ### Local Setup
 
@@ -269,18 +339,73 @@ docker build -t jcvd:dev .
 
 ## Release Process
 
-JCVD uses automated releases via Release Please:
+JCVD uses a fully automated release process via [Release Please](https://github.com/googleapis/release-please) with comprehensive quality gates and multi-format artifact distribution.
 
-1. **Conventional commits** drive version bumping
-2. **Changelog** generated from commit messages
-3. **Releases** created automatically on main branch
-4. **Container images** published to GitHub Container Registry
+### Complete Release Pipeline
 
-### Version Bumping
+1. **Development**: Feature branches with conventional commits
+2. **Pull Request**: Automated validation (tests, linting, security scans)
+3. **Merge to Main**: Triggers Release Please analysis
+4. **Release PR Generation**: Automated version bump and changelog
+5. **Release Review**: Manual approval of generated release PR
+6. **Release Execution**: Full automated pipeline on release PR merge
 
-- `fix:` commits trigger patch releases (0.0.X)
-- `feat:` commits trigger minor releases (0.X.0)
-- `BREAKING CHANGE:` triggers major releases (X.0.0)
+### What Happens During a Release
+
+**Automated Pipeline Execution:**
+- 🔨 **Artifact Building**: JAR, native image, container image
+- 🧪 **Quality Validation**: Full test suite, security scans, performance checks
+- 🐳 **Container Publishing**: Multi-tag strategy to GitHub Container Registry
+- 📦 **GitHub Release**: Automatic creation with downloadable assets
+- 🔐 **Security**: SHA256 checksums and artifact attestation
+- ⚡ **Performance**: Optimized builds with comprehensive caching
+
+**Release Artifacts Generated:**
+- `jcvd-X.Y.Z.jar` - Executable JAR with all dependencies (~50-80MB)
+- `jcvd-X.Y.Z-native` - GraalVM native binary (~30-50MB, experimental)
+- `ghcr.io/spiralhouse/jcvd:X.Y.Z` - Production container image (~200MB)
+- `checksums-X.Y.Z.txt` - SHA256 checksums for verification
+
+### Version Bumping Rules
+
+| Commit Type | Version Bump | When to Use | Example Scenario |
+|-------------|--------------|-------------|------------------|
+| `fix:` | **PATCH** (0.0.X) | Bug fixes, security patches | API returns 500 instead of 404 |
+| `feat:` | **MINOR** (0.X.0) | New features, enhancements | Add new API endpoint |
+| `perf:` | **MINOR** (0.X.0) | Performance improvements | Database query optimization |
+| `BREAKING CHANGE:` | **MAJOR** (X.0.0) | API changes, removed features | Change API response format |
+
+### Container Image Tags
+
+Each release creates multiple container tags for different use cases:
+
+```bash
+# Immutable version-specific tag (recommended for production)
+ghcr.io/spiralhouse/jcvd:1.2.3
+
+# Minor version tag (gets patch updates automatically)
+ghcr.io/spiralhouse/jcvd:1.2
+
+# Major version tag (gets minor/patch updates)
+ghcr.io/spiralhouse/jcvd:1
+
+# Latest stable release (updated with each release)
+ghcr.io/spiralhouse/jcvd:latest
+```
+
+### Pre-release and Hotfix Support
+
+**Pre-releases:**
+- Release candidates: `v1.2.0-rc.1`
+- Beta versions: `v1.2.0-beta.1`
+- Alpha versions: `v1.2.0-alpha.1`
+
+**Emergency Hotfixes:**
+- Critical security patches follow expedited process
+- Can bypass normal review cycle for severity 1 issues
+- Immediate container publication for urgent fixes
+
+For detailed release procedures, rollback strategies, and emergency protocols, see [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
 
 ## Getting Help
 

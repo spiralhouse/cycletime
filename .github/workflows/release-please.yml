@@ -22,11 +22,10 @@ jobs:
         uses: googleapis/release-please-action@v4
         with:
           # Configure for Gradle/Kotlin project
-          release-type: simple
+          release-type: gradle
           package-name: jcvd
           
-          # Configure version file - using gradle.properties for version management
-          # Note: Will be migrated from build.gradle.kts in SPI-486
+          # Configure version file - gradle.properties is primary version source (SPI-486)
           version-file: gradle.properties
           
           # Changelog configuration

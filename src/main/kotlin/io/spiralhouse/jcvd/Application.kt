@@ -9,6 +9,7 @@ import io.spiralhouse.jcvd.domain.repositories.SessionRepository
 import io.spiralhouse.jcvd.domain.repositories.UnitOfWork
 import io.spiralhouse.jcvd.domain.services.SystemTimeProvider
 import io.spiralhouse.jcvd.domain.services.TimeProvider
+import io.spiralhouse.jcvd.domain.services.BuildInfo
 import io.spiralhouse.jcvd.infrastructure.database.DatabaseFactory
 import io.spiralhouse.jcvd.infrastructure.persistence.ExposedIssueRepository
 import io.spiralhouse.jcvd.infrastructure.persistence.ExposedProjectRepository
@@ -101,8 +102,8 @@ fun Application.module() {
                 
                 call.respond(HttpStatusCode.OK, HealthResponse(
                     status = "healthy",
-                    service = "jcvd-kotlin",
-                    version = "0.1.0",
+                    service = BuildInfo.serviceName,
+                    version = BuildInfo.version,
                     dependencies = mapOf(
                         "database" to "connected",
                         "projectService" to "initialized",
@@ -119,8 +120,8 @@ fun Application.module() {
                 logger.error("Health check failed: ${e::class.simpleName} - ${e.message}", e)
                 call.respond(HttpStatusCode.InternalServerError, ErrorResponse(
                     status = "unhealthy",
-                    service = "jcvd-kotlin",
-                    version = "0.1.0",
+                    service = BuildInfo.serviceName,
+                    version = BuildInfo.version,
                     error = "${e::class.simpleName}: ${e.message}",
                     timestamp = System.currentTimeMillis().toString()
                 ))

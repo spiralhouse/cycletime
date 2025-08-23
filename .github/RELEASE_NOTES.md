@@ -1,80 +1,55 @@
 # Release Process Documentation
 
-## Automated Release with Release Please
+> **📋 Complete Documentation**: For comprehensive release process documentation, see [docs/RELEASE_PROCESS.md](../docs/RELEASE_PROCESS.md)
 
-The JCVD project uses [Release Please](https://github.com/googleapis/release-please) to automate version management and changelog generation based on conventional commits.
+This document provides a quick reference for the JCVD automated release process.
 
-### How It Works
+## Quick Reference
 
-1. **Conventional Commits**: All commits to the main branch should follow the [Conventional Commits](https://conventionalcommits.org/) specification
-2. **Automatic PRs**: Release Please monitors commits and automatically creates release PRs with version bumps and changelog updates
-3. **Release Creation**: When release PRs are merged, GitHub releases are created with built container images
+### Commit Types & Release Impact
 
-### Supported Commit Types
+| Type | Release | Example |
+|------|---------|---------|
+| `feat:` | **MINOR** (0.X.0) | `feat(auth): add OAuth2 support` |
+| `fix:` | **PATCH** (0.0.X) | `fix(api): handle null responses` |
+| `perf:` | **MINOR** (0.X.0) | `perf(db): optimize queries by 60%` |
+| `BREAKING CHANGE:` | **MAJOR** (X.0.0) | `feat!: redesign API endpoints` |
+| `docs:`, `test:`, `style:` | **None** | Documentation and test updates |
 
-- `feat`: New features (triggers minor version bump)
-- `fix`: Bug fixes (triggers patch version bump)  
-- `perf`: Performance improvements (triggers patch version bump)
-- `refactor`: Code refactoring (triggers patch version bump)
-- `docs`: Documentation updates (triggers patch version bump)
-- `test`: Test additions/updates (triggers patch version bump)
-- `build`: Build system changes (triggers patch version bump)
-- `ci`: CI/CD pipeline changes (triggers patch version bump)
-- `chore`: Maintenance tasks (triggers patch version bump)
-- `style`: Code style changes (hidden from changelog)
+### Release Pipeline Overview
 
-### Breaking Changes
+1. **Conventional Commit** → **Release Please Analysis** → **Release PR Creation**
+2. **Manual Review** → **Release PR Merge** → **Automated Pipeline**
+3. **Artifact Building** → **Container Publishing** → **GitHub Release**
 
-- Add `BREAKING CHANGE:` in commit footer to trigger major version bump
-- Use `!` after type to indicate breaking change: `feat!: major API change`
+### What Gets Released
 
-### Example Commits
+- 📦 **JAR Archive**: `jcvd-X.Y.Z.jar` (~50-80MB)
+- 🚀 **Native Image**: `jcvd-X.Y.Z-native` (~30-50MB, experimental)  
+- 🐳 **Container Image**: `ghcr.io/spiralhouse/jcvd:X.Y.Z` (~200MB)
+- 🔒 **Security**: SHA256 checksums and integrity verification
 
-```bash
-# Feature addition (minor version bump)
-git commit -m "feat: add automated release workflow with Release Please"
+### Emergency Procedures
 
-# Bug fix (patch version bump)  
-git commit -m "fix: resolve version parsing issue in build.gradle.kts"
+- **Security Patches**: Expedited release process for CVE fixes
+- **Hotfixes**: Fast-track critical production issues
+- **Rollbacks**: Immutable container tags enable instant rollbacks
 
-# Breaking change (major version bump)
-git commit -m "feat!: redesign project configuration API
+## Key Resources
 
-BREAKING CHANGE: Project.create() method signature has changed"
+- **📋 [Complete Release Documentation](../docs/RELEASE_PROCESS.md)** - Comprehensive procedures
+- **👥 [Contributing Guidelines](../CONTRIBUTING.md)** - Commit message examples  
+- **🏗️ [CI/CD Architecture](../docs/CI_ARCHITECTURE.md)** - Build pipeline details
+- **📊 [Performance Monitoring](https://github.com/spiralhouse/jcvd/actions)** - Release metrics
 
-# Documentation (patch version bump)
-git commit -m "docs: update release process documentation"
+## Configuration Files
 
-# Chore (patch version bump, hidden from changelog)
-git commit -m "chore: update dependency versions"
-```
-
-### Version Management
-
-- **Current**: Versions managed in both `gradle.properties` and `build.gradle.kts`
-- **Future (SPI-486)**: Will migrate fully to `gradle.properties`
-- **Format**: Semantic versioning (MAJOR.MINOR.PATCH)
-- **Snapshots**: Development versions use `-SNAPSHOT` suffix
-
-### Manual Release Process (if needed)
-
-1. Create a conventional commit for the changes
-2. Push to main branch
-3. Wait for Release Please to create a PR
-4. Review and merge the release PR
-5. Release Please will create the GitHub release and tag
-6. CI will build and publish container images automatically
-
-### Container Publishing
-
-When releases are created:
-- Container images are built and published to `ghcr.io/spiralhouse/jcvd`
-- Tags include version number, latest, and commit SHA
-- Images are available for production deployment
-
-### Configuration Files
-
-- `.github/workflows/release-please.yml` - Release Please workflow
+- `.github/workflows/release-please.yml` - Release Please automation
+- `.github/workflows/release.yml` - Complete release pipeline  
 - `release-please-config.json` - Release Please configuration
-- `.release-please-manifest.json` - Current version tracking
-- `gradle.properties` - Version property managed by Release Please
+- `gradle.properties` - Primary version source (managed by Release Please)
+- `.gitmessage` - Commit message template with release impact examples
+
+---
+
+*For detailed procedures, emergency protocols, and troubleshooting, see [docs/RELEASE_PROCESS.md](../docs/RELEASE_PROCESS.md)*

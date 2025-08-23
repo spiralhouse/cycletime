@@ -13,15 +13,24 @@ plugins {
 }
 
 group = "io.spiralhouse.jcvd"
-// Version now managed by Release Please in gradle.properties (SPI-482)
-// Post SPI-486: This will be fully migrated to gradle.properties
-version = project.findProperty("version") ?: "0.1.0-SNAPSHOT"
+
+// =============================================================================
+// Version Management - Fully Migrated to gradle.properties (SPI-486)
+// =============================================================================
+// Version is now managed exclusively in gradle.properties for easier automation.
+// Release Please GitHub Action automatically updates gradle.properties during releases.
+// Development versions use -SNAPSHOT suffix, releases remove it automatically.
+// Format: X.Y.Z-SNAPSHOT (dev) → X.Y.Z (release) → X.Y.Z+1-SNAPSHOT (next dev)
+version = project.property("version") as String
 
 application {
     mainClass.set("io.spiralhouse.jcvd.ApplicationKt")
 
     val isDevelopment: Boolean = project.ext.has("development")
-    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
+    applicationDefaultJvmArgs = listOf(
+        "-Dio.ktor.development=$isDevelopment",
+        "-Djcvd.version=${version}" // Pass version to runtime
+    )
 }
 
 dependencies {
@@ -670,6 +679,7 @@ val devRun by tasks.registering(JavaExec::class) {
         "-DKTOR_DEVELOPMENT=true",
         "-DKTOR_AUTORELOAD=true",
         "-DDATABASE_LOGGING=true",
+        "-Djcvd.version=${version}", // Pass version for runtime
         "-Xmx1024m",
         "-XX:+UseG1GC",
         "-XX:+UseStringDeduplication",
