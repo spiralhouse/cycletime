@@ -1,26 +1,6 @@
-# Multi-stage build for optimal size
-# Stage 1: Build with JDK
-FROM eclipse-temurin:21-jdk AS builder
-
-WORKDIR /app
-
-# Copy gradle files
-COPY gradle gradle
-COPY gradlew gradlew
-COPY gradle.properties gradle.properties
-COPY settings.gradle.kts settings.gradle.kts
-COPY build.gradle.kts build.gradle.kts
-
-# Download dependencies
-RUN ./gradlew dependencies --no-daemon
-
-# Copy source code
-COPY src src
-
-# Build fat JAR
-RUN ./gradlew buildFatJar --no-daemon
-
-# Stage 2: Runtime image with JRE
+# Multi-stage build optimized for artifact caching (SPI-474)
+# This Dockerfile is designed to work with pre-built JAR artifacts from CI
+# Stage 1: Runtime image with JRE
 FROM eclipse-temurin:21-jre-alpine
 
 # Install required libraries
@@ -33,8 +13,9 @@ RUN addgroup -g 1000 jcvd && \
 
 WORKDIR /app
 
-# Copy the JAR file
-COPY --from=builder --chown=jcvd:jcvd /app/build/libs/jcvd-server.jar /app/jcvd-server.jar
+# Copy the pre-built JAR file from CI build artifacts (SPI-474)
+# This JAR is downloaded as an artifact from the previous build stage
+COPY --chown=jcvd:jcvd build/libs/jcvd-server.jar /app/jcvd-server.jar
 
 # Create directory for SQLite database
 RUN mkdir -p /app/data && chown -R jcvd:jcvd /app/data

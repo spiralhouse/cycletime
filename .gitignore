@@ -222,3 +222,6 @@ auto-generated/
 jcvd.db*
 workflows/*.local.yml
 providers/*/secrets.*
+# Local testing artifacts (but not workflows)
+.local/*
+!.local/workflows/

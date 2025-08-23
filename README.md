@@ -1,5 +1,14 @@
 # JCVD Kotlin/GraalVM Proof of Concept
 
+<!-- Status Badges -->
+[![Build Status](https://github.com/spiralhouse/jcvd/actions/workflows/ci.yml/badge.svg)](https://github.com/spiralhouse/jcvd/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/spiralhouse/jcvd/branch/main/graph/badge.svg)](https://codecov.io/gh/spiralhouse/jcvd)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.0.21-7F52FF.svg?logo=kotlin)](https://kotlinlang.org/)
+[![Ktor](https://img.shields.io/badge/ktor-3.2.3-FF6B35.svg)](https://ktor.io/)
+[![JDK](https://img.shields.io/badge/JDK-21-ED8B00.svg?logo=openjdk)](https://openjdk.java.net/)
+[![Docker](https://img.shields.io/badge/docker-ready-2496ED.svg?logo=docker)](https://hub.docker.com/)
+
 A complete reimplementation of JCVD in Kotlin with GraalVM native image support and Docker containerization. This POC demonstrates the feasibility of migrating JCVD from TypeScript to Kotlin while maintaining clean architecture and improving performance.
 
 ## 🚀 Executive Summary
@@ -169,9 +178,12 @@ chmod +x gradlew
 ### Local Development
 
 ```bash
-# Clone and enter the Kotlin POC branch
-git worktree add -b poc/kotlin-graalvm-migration ../jcvd-kotlin
-cd ../jcvd-kotlin
+# Clone and enter the project
+git clone <repo-url>
+cd jcvd
+
+# One-time development environment setup
+./gradlew devSetup
 
 # Build the project
 ./gradlew build
@@ -195,6 +207,274 @@ java -jar build/libs/jcvd-server.jar
 
 # Run with continuous build (auto-rebuild on changes)
 ./gradlew build --continuous
+```
+
+## 🔥 Enhanced Development Experience (SPI-479)
+
+### Quick Development Workflow
+
+Get the full development workflow in seconds:
+
+```bash
+# See all development commands
+./gradlew devWorkflow
+
+# Start development server with hot-reload
+./gradlew devRun --continuous
+
+# Start test watcher (in separate terminal)
+./gradlew testWatch --continuous
+
+# Check development environment status
+./gradlew devStatus
+```
+
+### Development Modes
+
+#### 1. 🔥 Hot-Reload Development Server
+
+The fastest way to develop with instant feedback:
+
+```bash
+# Start server with automatic restart on code changes
+./gradlew devRun --continuous
+
+# Features:
+# ✅ Automatic server restart on source changes
+# ✅ Separate development database (jcvd-dev.db) 
+# ✅ Enhanced logging and debugging
+# ✅ Development-optimized JVM settings
+# ✅ Health check at http://localhost:8080/health
+```
+
+#### 2. 🧪 Continuous Testing
+
+Automatically run tests when code changes:
+
+```bash
+# Watch for changes and run unit tests automatically
+./gradlew testWatch --continuous
+
+# Features:
+# ✅ Fast unit tests only (< 5 seconds)
+# ✅ Instant feedback on test failures
+# ✅ Automatic re-run on source or test changes
+# ✅ Color-coded test results
+```
+
+#### 3. 🛠️ Build Watcher
+
+Keep your build artifacts up-to-date:
+
+```bash
+# Continuous compilation without running tests
+./gradlew devBuild --continuous
+
+# Features:
+# ✅ Incremental compilation
+# ✅ Build cache optimization
+# ✅ Error reporting without running the server
+```
+
+#### 4. 🐳 Docker Development Environment
+
+Full containerized development with hot-reload:
+
+```bash
+# Start development environment in Docker
+docker-compose -f docker-compose.dev.yml up
+
+# Features:
+# ✅ Volume mounts for hot-reload
+# ✅ Isolated development environment
+# ✅ Database browser at http://localhost:8081
+# ✅ Persistent development data
+# ✅ Gradle cache optimization
+```
+
+### Advanced Development Features
+
+#### File Watching Scripts
+
+For advanced file watching capabilities:
+
+```bash
+# File watcher for automatic test execution
+./scripts/dev-watch.sh tests
+
+# File watcher for automatic builds
+./scripts/dev-watch.sh build
+
+# File watcher with server restart (experimental)
+./scripts/dev-watch.sh server
+
+# Help and options
+./scripts/dev-watch.sh help
+```
+
+#### Environment Configuration
+
+Development-specific configuration in `.env.development`:
+
+```bash
+# Load development environment variables
+source .env.development
+
+# Run with development configuration
+./gradlew devRun --continuous
+```
+
+#### Multiple Development Workflows
+
+**Terminal 1: Server with hot-reload**
+```bash
+./gradlew devRun --continuous
+```
+
+**Terminal 2: Continuous testing**
+```bash
+./gradlew testWatch --continuous  
+```
+
+**Terminal 3: Build monitoring**
+```bash
+./gradlew devBuild --continuous
+```
+
+### Development Tasks Reference
+
+| Task | Description | Best For |
+|------|-------------|----------|
+| `devRun --continuous` | Hot-reload server | Primary development |
+| `testWatch --continuous` | Automatic testing | TDD workflow |
+| `devBuild --continuous` | Build watching | Build monitoring |
+| `devWorkflow` | Show all commands | Getting started |
+| `devSetup` | Setup environment | First-time setup |
+| `devStatus` | Environment health | Troubleshooting |
+| `quickTest` | Fast unit tests | Quick verification |
+
+### Docker Development Setup
+
+#### Production-like Development
+
+```bash
+# Start full development stack
+docker-compose -f docker-compose.dev.yml up
+
+# Services available:
+# • JCVD Server: http://localhost:8080
+# • Health Check: http://localhost:8080/health  
+# • SQLite Browser: http://localhost:8081 (optional)
+```
+
+#### Development Container Features
+
+- **Volume Mounts**: Source code changes reflected instantly
+- **Build Cache**: Gradle cache persisted between container restarts
+- **Database Browser**: Optional SQLite web interface
+- **Development Database**: Isolated from production data
+- **Hot-Reload**: Automatic server restart on file changes
+
+#### Starting Services Individually
+
+```bash
+# Just the development server
+docker-compose -f docker-compose.dev.yml up jcvd-dev
+
+# Include database browser for debugging
+docker-compose -f docker-compose.dev.yml --profile tools up
+```
+
+### Performance Tips
+
+#### Development Build Optimization
+
+The project includes comprehensive build optimization (SPI-478):
+
+- **Incremental Compilation**: Only changed files recompiled
+- **Build Cache**: Task outputs cached locally and in CI
+- **Parallel Execution**: Multi-core build utilization
+- **Configuration Cache**: Faster startup times
+- **File System Watching**: Efficient change detection
+
+#### Memory Settings
+
+Development JVM is optimized for quick startup:
+
+```bash
+# Automatic optimization in devRun task
+JAVA_OPTS="-Xmx1024m -XX:+UseG1GC -XX:+UseStringDeduplication"
+```
+
+#### Database Performance
+
+- **Development Database**: Separate `jcvd-dev.db` file
+- **SQL Logging**: Enabled in development mode
+- **Connection Pooling**: Optimized for single-user development
+
+### Troubleshooting Development Issues
+
+#### Port Conflicts
+
+```bash
+# Check if port 8080 is in use
+lsof -i :8080
+
+# Kill conflicting process
+kill -9 <PID>
+
+# Use different port
+PORT=3000 ./gradlew devRun --continuous
+```
+
+#### Hot-Reload Not Working
+
+```bash
+# Check development status
+./gradlew devStatus
+
+# Ensure proper file permissions
+chmod +x gradlew
+chmod +x scripts/dev-watch.sh
+
+# Clear build cache if needed
+./gradlew clean devRun --continuous
+```
+
+#### Docker Development Issues
+
+```bash
+# Reset Docker development environment
+docker-compose -f docker-compose.dev.yml down -v
+docker-compose -f docker-compose.dev.yml up --build
+
+# Check container logs
+docker-compose -f docker-compose.dev.yml logs jcvd-dev
+```
+
+### IDE Integration
+
+#### IntelliJ IDEA Setup
+
+1. Import as Gradle project
+2. Enable continuous build: View → Tool Windows → Gradle → 🔄 button
+3. Set run configuration:
+   - Main class: `io.spiralhouse.jcvd.ApplicationKt`
+   - VM options: `-Dio.ktor.development=true`
+   - Environment variables: `KTOR_DEVELOPMENT=true`
+
+#### VS Code Setup
+
+1. Install Kotlin extension
+2. Use tasks.json for development:
+```json
+{
+  "label": "Dev Server",
+  "type": "shell", 
+  "command": "./gradlew devRun --continuous",
+  "group": "build",
+  "isBackground": true
+}
 ```
 
 ### GraalVM Native Image Build
