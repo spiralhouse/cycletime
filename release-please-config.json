@@ -73,7 +73,8 @@
       "pull-request-title-pattern": "chore${scope}: release${component} ${version}",
       "pull-request-header": "## Summary\n\nThis pull request includes the following changes for the upcoming release:\n\n",
       "draft": false,
-      "prerelease": false
+      "prerelease": false,
+      "skip-labeling": true
     }
   }
 }
