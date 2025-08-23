@@ -919,14 +919,41 @@ jobs:
           echo "  Production deployment confidence increased"
           echo "  Runtime issues caught early in CI"
 
+  # Deployment dry-run for feature branches
+  deploy-dry-run:
+    name: Deploy (Dry Run)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [container-smoke-tests, build, quality]
+    # Run on feature branches to validate deployment readiness
+    if: github.ref != 'refs/heads/main' && needs.container-smoke-tests.result == 'success'
+    
+    steps:
+      - name: Deployment dry-run
+        run: |
+          echo "🔍 Deployment Dry Run"
+          echo "====================="
+          echo ""
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+          echo ""
+          echo "✅ Container smoke tests passed"
+          echo "✅ Build artifacts created"
+          echo "✅ Quality checks passed"
+          echo ""
+          echo "⚠️ This is a DRY RUN - no actual deployment"
+          echo "📝 Deployment will occur when merged to main"
+          echo ""
+          echo "Ready for deployment: YES ✅"
+
   # SPI-480: Conditional deployment (only on main branch)
   deploy:
     name: Deploy Application
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [container-smoke-tests, build, quality]
-    # SPI-480: Deploy only on main branch with successful builds
-    if: github.ref == 'refs/heads/main' && contains(toJSON(needs.*.result), 'success') && !contains(toJSON(needs.*.result), 'failure')
+    # Deploy only on main branch with successful builds (skip on feature branches)
+    if: github.ref == 'refs/heads/main' && needs.container-smoke-tests.result == 'success' && needs.build.result == 'success' && needs.quality.result == 'success'
     environment: production
     strategy:
       fail-fast: true
@@ -934,7 +961,17 @@ jobs:
     steps:
       - name: Deployment readiness check
         run: |
-          echo "🚀 Deployment Readiness Check"
+          echo "🚀 Deployment to Production"
+          echo "============================"
+          echo ""
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+          echo ""
+          echo "✅ All validations passed"
+          echo "✅ Container smoke tests successful"
+          echo "✅ Quality checks passed"
+          echo ""
+          echo "🚀 Deploying to production environment..."
           echo "============================="
           echo ""
           echo "✅ Branch: main (production deployment enabled)"
@@ -1046,7 +1083,7 @@ jobs:
     name: Final Validation
     runs-on: ubuntu-latest
     timeout-minutes: 10  # SPI-480: Increased timeout for comprehensive validation
-    needs: [unit-tests, integration-tests, system-tests, quality, build, containerization, container-smoke-tests, security, deploy]
+    needs: [unit-tests, integration-tests, system-tests, quality, build, containerization, container-smoke-tests, security, deploy, deploy-dry-run]
     # SPI-480: Always run to provide final status, regardless of skipped jobs
     if: always()
 
@@ -1225,6 +1262,41 @@ jobs:
           echo "  • Conditional deployment: Production safety with automated validation"
           echo "  • Combined with existing optimizations: < 5 minute CI for most changes"
 
+  # Container publishing dry-run for feature branches
+  publish-container-dry-run:
+    name: Publish Container (Dry Run)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [validate]
+    # Run on feature branches to show what would be published
+    if: |
+      needs.validate.result == 'success' && 
+      github.ref != 'refs/heads/main' && 
+      !startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+      - name: Container publishing dry-run
+        run: |
+          echo "🔍 Container Publishing Dry Run"
+          echo "================================"
+          echo ""
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+          echo ""
+          echo "✅ All validations passed"
+          echo "✅ Container image tested successfully"
+          echo ""
+          echo "📦 Would publish to: ghcr.io/spiralhouse/jcvd"
+          echo ""
+          echo "When merged to main, will publish:"
+          echo "  • ghcr.io/spiralhouse/jcvd:latest"
+          echo "  • ghcr.io/spiralhouse/jcvd:${{ github.sha }}"
+          echo ""
+          echo "⚠️ This is a DRY RUN - no actual publishing"
+          echo "📝 Container will be published when merged to main"
+          echo ""
+          echo "Ready for publishing: YES ✅"
+
   # Publish container to GitHub Container Registry after all validations pass
   publish-container:
     name: Publish Container
@@ -1323,7 +1395,7 @@ jobs:
     name: Notify Failure
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [unit-tests, integration-tests, system-tests, quality, build, containerization, container-smoke-tests, security, deploy, validate, publish-container]
+    needs: [unit-tests, integration-tests, system-tests, quality, build, containerization, container-smoke-tests, security, deploy, deploy-dry-run, validate, publish-container, publish-container-dry-run]
     if: failure()
 
     steps:

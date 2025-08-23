@@ -26,12 +26,14 @@ graph TD
     B --> F
     C --> F
     D --> F
-    F --> G[docker]
+    F --> G[containerization]
     B --> G
     G --> H[container-smoke-tests]
     B --> H
     I[security] --> J[deploy]
     H --> J
+    H --> M[publish-container]
+    J --> M
     F --> J
     E --> J
     B --> K[validate]
@@ -52,6 +54,7 @@ graph TD
     style F fill:#16a34a,stroke:#4ade80,stroke-width:2px,color:#f3f4f6
     style G fill:#0891b2,stroke:#06b6d4,stroke-width:2px,color:#f3f4f6
     style H fill:#0891b2,stroke:#06b6d4,stroke-width:2px,color:#f3f4f6
+    style M fill:#059669,stroke:#10b981,stroke-width:2px,color:#f3f4f6
     style I fill:#dc2626,stroke:#f87171,stroke-width:2px,color:#f3f4f6
     style J fill:#65a30d,stroke:#a3e635,stroke-width:2px,color:#f3f4f6
     style K fill:#374151,stroke:#6b7280,stroke-width:2px,color:#f3f4f6
@@ -99,10 +102,11 @@ graph LR
     end
     
     subgraph "Container Stage"
-        O --> Q[Docker Build]
+        O --> Q[Containerization]
         P --> Q
-        Q --> R[Docker Image]
+        Q --> R[Container Artifact]
         R --> S[Container Tests]
+        S --> U[Container Publishing]
     end
     
     subgraph "Deployment Stage"
@@ -111,6 +115,7 @@ graph LR
         L --> T
         M --> T
         S --> T
+        U --> T
     end
     
     style A fill:#1f2937,stroke:#4b5563,color:#f3f4f6
@@ -133,6 +138,7 @@ graph LR
     style R fill:#1e40af,stroke:#3b82f6,color:#f3f4f6
     style S fill:#0891b2,stroke:#06b6d4,color:#f3f4f6
     style T fill:#65a30d,stroke:#a3e635,color:#f3f4f6
+    style U fill:#059669,stroke:#10b981,color:#f3f4f6
 ```
 
 ## Job Architecture Details
@@ -206,15 +212,23 @@ kotlin-compile-v2-ubuntu-jdk21-{hash}
 - `jcvd-jar`: Production-ready application JAR
 - `build-artifacts`: Supporting files for deployment
 
-### 5. Docker Job (Containerization)
+### 5. Containerization Job (Build Once, Use Everywhere)
 
-**Purpose**: Create and test containerized application
+**Purpose**: Build container image once and save as artifact for reuse across jobs
 
-**Optimizations**:
-- **Artifact-Based Build**: Uses pre-built JAR (no source compilation in Docker)
+**Key Features**:
+- **Artifact-Based Build**: Uses pre-built JAR from build stage (no source compilation in Docker)
 - **BuildKit Cache**: Advanced Docker layer caching with GitHub Actions backend
 - **Multi-Scope Caching**: Branch-specific + main branch cache inheritance
-- **No-Build Testing**: Tests container without rebuilding
+- **Container Image Artifact**: Saves built image as tar file for downstream jobs
+- **Image Validation**: Performs basic functionality tests on built image
+
+**Workflow**:
+1. Downloads pre-built JAR artifact from build stage
+2. Builds container image using BuildKit with advanced caching
+3. Saves image as tar artifact (`container-image`) for reuse
+4. Performs initial container validation tests
+5. Uploads image artifact with 7-day retention
 
 **BuildKit Configuration**:
 ```yaml
@@ -222,21 +236,84 @@ cache-from: |
   type=gha,scope=docker-main
   type=gha,scope=docker-${{ github.ref_name }}
 cache-to: type=gha,mode=max,scope=docker-${{ github.ref_name }}
+outputs: type=docker,dest=/tmp/jcvd-image.tar
 ```
 
-### 6. Container Smoke Tests (Quality Gate)
+**Outputs**:
+- `container-image`: Docker image saved as tar artifact for downstream reuse
 
-**Purpose**: Production-readiness validation
+### 6. Container Smoke Tests (Comprehensive Quality Gate)
+
+**Purpose**: Production-readiness validation using pre-built container image
+
+**Workflow**:
+1. Downloads `container-image` artifact from containerization job
+2. Loads Docker image from tar file (no rebuild required)
+3. Runs comprehensive smoke tests without docker-compose
+4. Uses direct docker commands for faster execution
 
 **Test Coverage**:
-- Health endpoint validation (`/health`)
-- MCP server endpoints (`/mcp`, `/mcp/tools`, `/mcp/resources`)
-- WebSocket connectivity (`ws://localhost:8080/ws`)
-- Container startup performance (< 10 seconds)
-- Resource usage validation (< 512MB memory)
-- Port accessibility verification
+- **Health Endpoint**: Validates `/health` endpoint response
+- **MCP Endpoints**: Tests `/mcp`, `/mcp/tools`, `/mcp/resources` accessibility
+- **WebSocket Connectivity**: Verifies WebSocket endpoint at `/ws`
+- **Container Startup Time**: Ensures startup within 30 seconds
+- **Resource Usage**: Validates memory usage under 512MB
+- **Port Accessibility**: Confirms host-to-container port mapping
+- **Container Logs**: Analyzes startup logs for errors
 
-### 7. Security Job (Continuous)
+**Performance Validation**:
+```bash
+# Resource constraints applied during testing
+docker run --memory="512m" --cpus="1.0" jcvd:smoke-test
+```
+
+**Key Benefits**:
+- No container rebuild (uses validated artifact)
+- Faster test execution (pre-built image)
+- Same image tested and later published
+- Comprehensive production-readiness validation
+
+### 7. Container Publishing (Registry Distribution)
+
+**Purpose**: Publish validated container images to GitHub Container Registry
+
+**Conditions**:
+- Only runs after all validations pass (`validate` job succeeds)
+- Limited to `main` branch and release tags (`refs/tags/v*`)
+- Requires `packages: write` permission
+
+**Workflow**:
+1. Downloads validated `container-image` artifact
+2. Loads pre-built and tested Docker image
+3. Tags image according to branch/release strategy
+4. Pushes to GitHub Container Registry (`ghcr.io`)
+
+**Tagging Strategy**:
+- **Main Branch**: 
+  - `:latest` (rolling latest)
+  - `:sha-{commit}` (specific commit)
+- **Release Tags**: 
+  - `:v{version}` (semantic version)
+  - `:latest` (updated to latest release)
+
+**Registry Details**:
+- **Registry**: `ghcr.io/spiralhouse/jcvd`
+- **Authentication**: GitHub token with packages scope
+- **Visibility**: Public registry for container distribution
+
+**Pull Commands**:
+```bash
+# Latest from main branch
+docker pull ghcr.io/spiralhouse/jcvd:latest
+
+# Specific commit
+docker pull ghcr.io/spiralhouse/jcvd:sha-abc1234
+
+# Release version
+docker pull ghcr.io/spiralhouse/jcvd:v1.0.0
+```
+
+### 8. Security Job (Continuous)
 
 **Purpose**: Vulnerability scanning and security validation
 
@@ -247,7 +324,7 @@ cache-to: type=gha,mode=max,scope=docker-${{ github.ref_name }}
 - **Cache Strategy**: Caches vulnerability database for performance
 - **Threshold**: Fails on CVSS >= 7.0
 
-### 8. Deploy Job (Conditional)
+### 9. Deploy Job (Conditional)
 
 **Purpose**: Production deployment (main branch only)
 
@@ -261,7 +338,7 @@ cache-to: type=gha,mode=max,scope=docker-${{ github.ref_name }}
 - Artifact validation
 - Environment preparation
 
-### 9. Validate Job (Reporting)
+### 10. Validate Job (Reporting)
 
 **Purpose**: Comprehensive pipeline status reporting
 
@@ -271,6 +348,128 @@ cache-to: type=gha,mode=max,scope=docker-${{ github.ref_name }}
 - Provides detailed success/failure analysis
 - Reports caching performance metrics
 - Summarizes optimization benefits
+
+## Container Image Lifecycle
+
+### Build Once, Test Everywhere Philosophy
+
+JCVD implements a sophisticated container image lifecycle that follows the "build once, test everywhere" principle to ensure consistency, performance, and reliability across all pipeline stages.
+
+#### Image Build and Artifact Flow
+
+```mermaid
+%%{init: {'theme':'dark', 'themeVariables': { 'primaryColor':'#1f2937', 'primaryTextColor':'#f3f4f6', 'primaryBorderColor':'#4b5563', 'lineColor':'#6b7280', 'secondaryColor':'#374151', 'tertiaryColor':'#1f2937', 'background':'#111827', 'mainBkg':'#1f2937', 'secondBkg':'#374151', 'tertiaryBkg':'#4b5563', 'textColor':'#f3f4f6', 'labelTextColor':'#f3f4f6', 'nodeTextColor':'#f3f4f6', 'edgeLabelBackground':'#1f2937'}}}%%
+flowchart TD
+    A[Build Job] --> B[JAR Artifact]
+    B --> C[Containerization Job]
+    C --> D[Docker Build + BuildKit Cache]
+    D --> E[Container Image TAR]
+    E --> F[GitHub Actions Artifact]
+    
+    F --> G[Container Smoke Tests]
+    F --> H[Container Publishing]
+    
+    G --> I[Load Image from TAR]
+    G --> J[Comprehensive Testing]
+    
+    H --> K[Load Image from TAR]  
+    H --> L[Tag & Push to Registry]
+    
+    style A fill:#16a34a,stroke:#4ade80,color:#f3f4f6
+    style B fill:#065f46,stroke:#10b981,color:#f3f4f6
+    style C fill:#0891b2,stroke:#06b6d4,color:#f3f4f6
+    style D fill:#1e40af,stroke:#3b82f6,color:#f3f4f6
+    style E fill:#7c3aed,stroke:#a78bfa,color:#f3f4f6
+    style F fill:#4b5563,stroke:#9ca3af,color:#f3f4f6
+    style G fill:#ca8a04,stroke:#facc15,color:#f3f4f6
+    style H fill:#059669,stroke:#10b981,color:#f3f4f6
+    style I fill:#374151,stroke:#6b7280,color:#f3f4f6
+    style J fill:#374151,stroke:#6b7280,color:#f3f4f6
+    style K fill:#374151,stroke:#6b7280,color:#f3f4f6
+    style L fill:#374151,stroke:#6b7280,color:#f3f4f6
+```
+
+#### Artifact-Based Distribution Between Jobs
+
+**Container Image Artifact Strategy**:
+1. **Single Build**: Container image built once in `containerization` job
+2. **TAR Packaging**: Image saved as compressed tar file (`/tmp/jcvd-image.tar`)
+3. **Artifact Upload**: TAR uploaded to GitHub Actions with 7-day retention
+4. **Multi-Job Reuse**: Same artifact downloaded and reused in downstream jobs
+5. **Consistent Testing**: Identical image used for smoke tests and publishing
+
+**Key Benefits**:
+- **Consistency**: Same image tested and published (no rebuilds)
+- **Performance**: Faster job execution (no Docker build overhead)
+- **Reliability**: Eliminates build environment differences between jobs
+- **Cost Efficiency**: Reduced compute time and resource usage
+
+#### Validation Gates Before Publishing
+
+The container publishing process implements multiple validation gates to ensure only production-ready images reach the registry:
+
+**Gate 1: Build Validation** (Containerization Job)
+- JAR artifact verification
+- Docker build success
+- Basic container startup test
+- Image artifact upload confirmation
+
+**Gate 2: Smoke Test Validation** (Container Smoke Tests Job)
+- Health endpoint response validation
+- MCP server endpoint accessibility
+- WebSocket connectivity verification
+- Resource usage validation (< 512MB memory)
+- Container startup time verification (< 30 seconds)
+- Port accessibility from host system
+
+**Gate 3: Pipeline Validation** (Validate Job)
+- All jobs must complete successfully
+- No test failures across any test suite
+- Security scan must pass (CVSS < 7.0)
+- Quality checks must pass
+
+**Gate 4: Publishing Conditions**
+- Only `main` branch or release tags (`refs/tags/v*`)
+- All validation gates must pass
+- GitHub Actions permissions verified
+
+#### Pull Commands for Published Images
+
+**Production Images** (Published to `ghcr.io/spiralhouse/jcvd`):
+
+```bash
+# Latest stable version (main branch)
+docker pull ghcr.io/spiralhouse/jcvd:latest
+
+# Specific commit (immutable reference)
+docker pull ghcr.io/spiralhouse/jcvd:sha-abc1234
+
+# Release version (semantic versioning)
+docker pull ghcr.io/spiralhouse/jcvd:v1.0.0
+
+# Running the container
+docker run -p 8080:8080 -e DATABASE_URL=jdbc:sqlite:/app/data/jcvd.db ghcr.io/spiralhouse/jcvd:latest
+```
+
+**Development Usage**:
+
+```bash
+# Quick local testing
+docker run -p 8080:8080 --rm ghcr.io/spiralhouse/jcvd:latest
+
+# With persistent data
+docker run -p 8080:8080 -v $(pwd)/data:/app/data ghcr.io/spiralhouse/jcvd:latest
+
+# Resource-constrained testing (matches CI smoke tests)
+docker run -p 8080:8080 --memory="512m" --cpus="1.0" ghcr.io/spiralhouse/jcvd:latest
+```
+
+**Registry Information**:
+- **Registry**: GitHub Container Registry (`ghcr.io`)
+- **Namespace**: `spiralhouse/jcvd`
+- **Visibility**: Public (open source project)
+- **Authentication**: Not required for pulling
+- **Architecture**: `linux/amd64`
 
 ## Caching Architecture
 
