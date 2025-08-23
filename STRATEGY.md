@@ -42,7 +42,7 @@ CycleTime enables solo developers and teams to orchestrate entire software proje
 
 ## Key Strategic Decisions
 
-### Decision 1: Product Consolidation (2025-01-21)
+### Decision 1: Product Consolidation (2025-08-21)
 
 **Context**: Maintaining two separate products (JCVD for solo devs, CycleTime for enterprises) creates unnecessary complexity and splits development effort.
 
@@ -55,7 +55,7 @@ CycleTime enables solo developers and teams to orchestrate entire software proje
 - Dog-fooding: Build EE using CE ensures CE remains powerful
 - Successful precedent: GitLab, Elastic, Grafana model
 
-### Decision 2: Monolithic Architecture for CE (2025-01-21)
+### Decision 2: Monolithic Architecture for CE (2025-08-21)
 
 **Context**: Considered decoupling embedded H2 database as separate "CycleTime Issues" service.
 
@@ -74,7 +74,7 @@ CycleTime CE: Monolithic with embedded H2
 CycleTime EE: Same core + provider interface for external integrations
 ```
 
-### Decision 3: Migration Strategy (2025-01-21)
+### Decision 3: Migration Strategy (2025-08-21)
 
 **Context**: JCVD has working code and momentum, CycleTime repo is empty shell.
 
@@ -92,7 +92,7 @@ CycleTime EE: Same core + provider interface for external integrations
 - Linear supports project renaming without breaking issues
 - Repository rename can wait for natural breakpoint
 
-### Decision 4: Licensing Strategy (2025-01-21)
+### Decision 4: Licensing Strategy (2025-08-21)
 
 **Decision**: AGPL v3 for both CE and EE initially.
 
@@ -141,14 +141,14 @@ class GitHubProvider : IssueProvider      // Requires API keys
 
 ## Development Roadmap
 
-### Current Sprint (January 2025)
+### Current Sprint (August 2025)
 - [x] Complete SPI-346: Cross-session state persistence
 - [ ] Rebrand JCVD documentation to CycleTime CE
 - [ ] Consolidate Linear projects (rename JCVD → CycleTime CE)
 - [ ] Continue Phase 1 MVP development
 - [ ] Create STRATEGY.md to capture decisions
 
-### Phase 1: Core MCP Server with Dashboard (February 2025)
+### Phase 1: Core MCP Server with Dashboard (September 2025)
 **Goal**: Basic functionality with observability
 
 **Deliverables**:
@@ -165,7 +165,7 @@ class GitHubProvider : IssueProvider      // Requires API keys
 - Cross-session continuity works
 - Dashboard provides system visibility
 
-### Phase 2: Essential Context Provision (March 2025)
+### Phase 2: Essential Context Provision (October 2025)
 **Goal**: Enhanced intelligence and context awareness
 
 **Deliverables**:
@@ -179,7 +179,7 @@ class GitHubProvider : IssueProvider      // Requires API keys
 - Dependencies guide task recommendations
 - Templates accelerate project setup
 
-### Phase 3: Provider Expansion (April 2025)
+### Phase 3: Provider Expansion (November 2025)
 **Goal**: First external integration (Linear)
 
 **Deliverables**:
@@ -192,7 +192,7 @@ class GitHubProvider : IssueProvider      // Requires API keys
 - Data migration preserves relationships
 - CE users can upgrade to EE features
 
-### Future Phases (May+ 2025)
+### Future Phases (December 2025+)
 - GitHub Issues integration
 - Jira integration (if demand exists)
 - Enterprise features based on CE user feedback
@@ -259,17 +259,17 @@ cycletime/               # Renamed from jcvd
 
 ### Go-to-Market Strategy
 
-1. **Build community with CE** (Q1-Q2 2025)
+1. **Build community with CE** (Q3-Q4 2025)
    - Launch on Product Hunt, Hacker News
    - Create Discord/GitHub Discussions community
    - Content marketing (blog posts, tutorials)
 
-2. **Identify enterprise needs** (Q2-Q3 2025)
+2. **Identify enterprise needs** (Q4 2025 - Q1 2026)
    - Survey CE users about team needs
    - Track feature requests for EE roadmap
    - Build relationships with potential customers
 
-3. **Launch EE** (Q3-Q4 2025)
+3. **Launch EE** (Q1-Q2 2026)
    - Beta with 5-10 enterprise customers
    - Refine based on feedback
    - GA launch with clear CE→EE upgrade path
@@ -313,13 +313,13 @@ cycletime/               # Renamed from jcvd
 
 ## Decision Log
 
-- **2025-01-21**: Consolidated JCVD and CycleTime into CE/EE model
-- **2025-01-21**: Chose monolithic architecture with embedded H2 for CE
-- **2025-01-21**: Decided on gradual migration preserving momentum
-- **2025-01-21**: Selected AGPL v3 licensing for both editions
-- **2025-01-21**: Created STRATEGY.md as living strategy document
+- **2025-08-21**: Consolidated JCVD and CycleTime into CE/EE model
+- **2025-08-21**: Chose monolithic architecture with embedded H2 for CE
+- **2025-08-21**: Decided on gradual migration preserving momentum
+- **2025-08-21**: Selected AGPL v3 licensing for both editions
+- **2025-08-21**: Created STRATEGY.md as living strategy document
 
 ---
 
-*Last Updated: 2025-01-21*
-*Next Review: 2025-02-01*
+*Last Updated: 2025-08-21*
+*Next Review: 2025-09-01*
