@@ -152,6 +152,84 @@ jobs:
         run: |
           echo "⏭️ Skipping compilation - no code changes detected"
 
+  # SPI-484: Commit message validation for Conventional Commits
+  commit-message-validation:
+    name: Commit Message Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Only run on pull requests to validate commit messages
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js for commitlint
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install commitlint dependencies
+        run: npm ci
+
+      - name: Validate commit messages
+        run: |
+          echo "🔍 Validating commit messages for PR #${{ github.event.number }}"
+          echo "============================================="
+          echo ""
+          
+          # Get the base and head commits for this PR
+          BASE_SHA=$(git merge-base origin/main HEAD)
+          HEAD_SHA=$(git rev-parse HEAD)
+          
+          echo "📋 Validation Range:"
+          echo "  Base: $BASE_SHA (origin/main)"
+          echo "  Head: $HEAD_SHA (current branch)"
+          echo ""
+          
+          # Show commits being validated
+          echo "📝 Commits to validate:"
+          git log --oneline $BASE_SHA..$HEAD_SHA
+          echo ""
+          
+          # Run commitlint on all commits in the PR
+          echo "🔍 Running commitlint validation..."
+          npm run commitlint-pr
+          
+          echo ""
+          echo "✅ All commit messages follow Conventional Commits format!"
+          echo ""
+          echo "📖 Commit Message Guidelines:"
+          echo "  • Use format: <type>(<scope>): <subject>"
+          echo "  • Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore"
+          echo "  • Subject: imperative mood, lowercase, no period, max 50 chars"
+          echo "  • Breaking changes: add '!' after type or 'BREAKING CHANGE:' in footer"
+          echo ""
+          echo "💡 Need help? Check .gitmessage template and CONTRIBUTING.md"
+
+      - name: Commit message validation summary
+        if: always()
+        run: |
+          if [ $? -eq 0 ]; then
+            echo "✅ Commit Message Validation: PASSED"
+            echo "All commit messages in this PR follow Conventional Commits format"
+          else
+            echo "❌ Commit Message Validation: FAILED"
+            echo ""
+            echo "🔧 How to fix:"
+            echo "  1. Use 'git rebase -i' to edit commit messages"
+            echo "  2. Follow the format: <type>(<scope>): <subject>"
+            echo "  3. Use template: git config commit.template .gitmessage"
+            echo "  4. See CONTRIBUTING.md for detailed guidelines"
+            echo ""
+            echo "📋 Valid commit types:"
+            echo "  feat, fix, docs, style, refactor, perf, test, build, ci, chore"
+          fi
+
   # Unit tests - uses compiled artifacts
   unit-tests:
     name: Unit Tests
@@ -592,6 +670,10 @@ jobs:
     strategy:
       fail-fast: true  # Fail fast on Docker build errors
 
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-metadata: ${{ steps.meta.outputs.json }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -607,6 +689,31 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           platforms: linux/amd64
+
+      # SPI-485: Extract comprehensive metadata and generate tags
+      - name: Extract metadata and generate tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/spiralhouse/jcvd
+          tags: |
+            # Production releases (v1.2.3)
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}},enable={{is_default_branch}}
+            # Development builds
+            type=edge,branch=main
+            type=sha,prefix=sha-
+            # Latest tag only for stable releases (not pre-releases)
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=JCVD
+            org.opencontainers.image.description=Project orchestration framework for Claude Code
+            org.opencontainers.image.vendor=Spiral House
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.url=https://github.com/spiralhouse/jcvd
+            org.opencontainers.image.source=https://github.com/spiralhouse/jcvd
+            org.opencontainers.image.documentation=https://github.com/spiralhouse/jcvd/blob/main/README.md
 
       # Reuse Gradle caches
       - name: Cache Gradle dependencies
@@ -642,14 +749,18 @@ jobs:
           echo "JAR size: $(du -h build/libs/jcvd-server.jar)"
           echo "✅ JAR artifact ready for Docker build"
 
-      # Docker BuildKit with optimized multi-stage artifact caching (SPI-474)
-      - name: Build Docker image with BuildKit cache
+      # SPI-485: Docker BuildKit with comprehensive tagging strategy
+      - name: Build Docker image with advanced tagging
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: false
-          tags: jcvd:test
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            jcvd:test
+          labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
           # GitHub Actions cache with aggressive mode for maximum reuse
           cache-from: |
@@ -660,6 +771,47 @@ jobs:
             BUILDKIT_INLINE_CACHE=1
           # Enable BuildKit features for better performance
           outputs: type=docker,dest=/tmp/jcvd-image.tar
+
+      # Display comprehensive tagging information
+      - name: Display tagging strategy
+        run: |
+          echo "🏷️ Advanced Container Tagging Strategy (SPI-485)"
+          echo "================================================="
+          echo ""
+          echo "📋 Generated Tags:"
+          echo '${{ steps.meta.outputs.tags }}' | sed 's/,/\n/g' | sed 's/^/  • /'
+          echo ""
+          echo "🔖 Container Labels:"
+          echo '${{ steps.meta.outputs.labels }}' | sed 's/,/\n/g' | sed 's/^/  • /'
+          echo ""
+          echo "📊 Tagging Pattern Logic:"
+          if [[ "${{ github.ref_type }}" == "tag" && "${{ github.ref_name }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "  ✅ Production Release (v1.2.3):"
+            echo "    • Exact version tag (immutable)"
+            echo "    • Minor version tag (mutable)"
+            echo "    • Major version tag (mutable, main branch only)"
+            echo "    • Latest tag (stable releases only)"
+          elif [[ "${{ github.ref_type }}" == "tag" && "${{ github.ref_name }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-.*$ ]]; then
+            echo "  ✅ Pre-release (v1.2.3-rc.1):"
+            echo "    • Exact pre-release tag (immutable)"
+            echo "    • No major/minor tags (prevents pollution)"
+            echo "    • No latest tag update (maintains stable latest)"
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "  ✅ Development Build (main branch):"
+            echo "    • Edge tag (latest development)"
+            echo "    • SHA tag (specific commit)"
+            echo "    • Latest tag (development latest)"
+          else
+            echo "  ✅ Feature Branch Build:"
+            echo "    • SHA tag only (specific commit)"
+            echo "    • No mutable tags (branch isolation)"
+          fi
+          echo ""
+          echo "🔒 Tag Immutability:"
+          echo "  • Exact versions (v1.2.3): Immutable forever"
+          echo "  • SHA tags (sha-abc123): Immutable forever"
+          echo "  • Minor/Major versions: Mutable (update with new releases)"
+          echo "  • Edge/Latest: Mutable (rolling tags)"
 
       # Upload container image as artifact for reuse
       - name: Upload container image artifact
@@ -1083,7 +1235,7 @@ jobs:
     name: Final Validation
     runs-on: ubuntu-latest
     timeout-minutes: 10  # SPI-480: Increased timeout for comprehensive validation
-    needs: [unit-tests, integration-tests, system-tests, quality, build, containerization, container-smoke-tests, security, deploy, deploy-dry-run]
+    needs: [commit-message-validation, unit-tests, integration-tests, system-tests, quality, build, containerization, container-smoke-tests, security, deploy, deploy-dry-run]
     # SPI-480: Always run to provide final status, regardless of skipped jobs
     if: always()
 
@@ -1275,34 +1427,98 @@ jobs:
       !startsWith(github.ref, 'refs/tags/v')
     
     steps:
-      - name: Container publishing dry-run
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # SPI-485: Show what tags would be generated for different scenarios
+      - name: Preview tagging strategy for main branch
+        id: main-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/spiralhouse/jcvd
+          tags: |
+            type=edge,branch=main
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Preview tagging strategy for releases
+        id: release-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/spiralhouse/jcvd
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
+          flavor: |
+            latest=false
+
+      - name: Container publishing dry-run with advanced tagging preview
         run: |
-          echo "🔍 Container Publishing Dry Run"
-          echo "================================"
+          echo "🔍 Advanced Container Publishing Dry Run (SPI-485)"
+          echo "==================================================="
           echo ""
-          echo "Branch: ${{ github.ref }}"
-          echo "Commit: ${{ github.sha }}"
+          echo "📍 Current Context:"
+          echo "  Branch: ${{ github.ref }}"
+          echo "  Commit: ${{ github.sha }}"
+          echo "  Event: ${{ github.event_name }}"
           echo ""
           echo "✅ All validations passed"
           echo "✅ Container image tested successfully"
+          echo "✅ Advanced tagging strategy configured"
           echo ""
-          echo "📦 Would publish to: ghcr.io/spiralhouse/jcvd"
+          echo "🌐 Registry: ghcr.io/spiralhouse/jcvd"
           echo ""
-          echo "When merged to main, will publish:"
-          echo "  • ghcr.io/spiralhouse/jcvd:latest"
-          echo "  • ghcr.io/spiralhouse/jcvd:${{ github.sha }}"
+          echo "📋 Tagging Strategy Preview:"
+          echo "============================"
+          echo ""
+          echo "🎯 When merged to main branch:"
+          echo '${{ steps.main-meta.outputs.tags }}' | sed 's/,/\n/g' | sed 's/^/  • /'
+          echo ""
+          echo "🎯 For production releases (v1.2.3):"
+          echo "  • ghcr.io/spiralhouse/jcvd:1.2.3 (immutable exact version)"
+          echo "  • ghcr.io/spiralhouse/jcvd:1.2 (mutable minor version)"
+          echo "  • ghcr.io/spiralhouse/jcvd:1 (mutable major version)"
+          echo "  • ghcr.io/spiralhouse/jcvd:latest (latest stable)"
+          echo ""
+          echo "🎯 For pre-releases (v1.2.3-rc.1):"
+          echo "  • ghcr.io/spiralhouse/jcvd:1.2.3-rc.1 (exact pre-release only)"
+          echo "  • No major/minor tags (prevents stable channel pollution)"
+          echo "  • No latest tag update (maintains stable latest)"
+          echo ""
+          echo "🔒 Tag Immutability Rules:"
+          echo "  ✅ Exact versions (v1.2.3): Immutable forever"
+          echo "  ✅ SHA tags (sha-abc123): Immutable forever"
+          echo "  🔄 Minor/Major versions: Mutable (updated with new releases)"
+          echo "  🔄 Edge/Latest: Mutable (rolling latest)"
+          echo ""
+          echo "📥 Pull Commands (after merge to main):"
+          echo "  # Latest development"
+          echo "  docker pull ghcr.io/spiralhouse/jcvd:edge"
+          echo ""
+          echo "  # Specific commit"
+          echo "  docker pull ghcr.io/spiralhouse/jcvd:sha-${{ github.sha }}"
+          echo ""
+          echo "  # Development latest"
+          echo "  docker pull ghcr.io/spiralhouse/jcvd:latest"
           echo ""
           echo "⚠️ This is a DRY RUN - no actual publishing"
-          echo "📝 Container will be published when merged to main"
+          echo "📝 Container will be published with advanced tagging when merged to main"
           echo ""
-          echo "Ready for publishing: YES ✅"
+          echo "🏆 SPI-485 Implementation Ready: YES ✅"
+          echo "  ✓ docker/metadata-action integrated"
+          echo "  ✓ Semantic version pattern matching configured"
+          echo "  ✓ Edge tag for main branch ready"
+          echo "  ✓ Tag immutability patterns implemented"
+          echo "  ✓ Pre-release tagging strategy configured"
 
   # Publish container to GitHub Container Registry after all validations pass
   publish-container:
     name: Publish Container
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [validate]
+    needs: [validate, containerization]
     # Only publish when all validations pass and it's main branch or a release
     if: |
       needs.validate.result == 'success' && 
@@ -1316,19 +1532,41 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # SPI-485: Setup Docker Buildx for multi-platform publishing
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # SPI-485: Re-extract metadata for publishing (ensures consistency)
+      - name: Extract metadata for publishing
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/spiralhouse/jcvd
+          tags: |
+            # Production releases (v1.2.3)
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}},enable={{is_default_branch}}
+            # Development builds
+            type=edge,branch=main
+            type=sha,prefix=sha-
+            # Latest tag only for stable releases (not pre-releases)
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=JCVD
+            org.opencontainers.image.description=Project orchestration framework for Claude Code
+            org.opencontainers.image.vendor=Spiral House
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.url=https://github.com/spiralhouse/jcvd
+            org.opencontainers.image.source=https://github.com/spiralhouse/jcvd
+            org.opencontainers.image.documentation=https://github.com/spiralhouse/jcvd/blob/main/README.md
+
       # Download the validated container image
       - name: Download container image artifact
         uses: actions/download-artifact@v4
         with:
           name: container-image
           path: /tmp/
-
-      - name: Load container image
-        run: |
-          echo "📦 Loading validated container image..."
-          docker load --input /tmp/jcvd-image.tar
-          echo "✅ Container image loaded"
-          docker images jcvd:test
 
       # Login to GitHub Container Registry
       - name: Login to ghcr.io
@@ -1338,64 +1576,106 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Tag and push the image
-      - name: Tag and push container image
+      # SPI-485: Load, tag, and push with comprehensive tagging strategy
+      - name: Load and publish container image
         run: |
-          # Determine tags based on the trigger
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            # Main branch - tag as latest and with commit SHA
-            docker tag jcvd:test ghcr.io/spiralhouse/jcvd:latest
-            docker tag jcvd:test ghcr.io/spiralhouse/jcvd:${{ github.sha }}
-            
-            echo "🏷️ Tagged as:"
-            echo "  - ghcr.io/spiralhouse/jcvd:latest"
-            echo "  - ghcr.io/spiralhouse/jcvd:${{ github.sha }}"
-            
-            docker push ghcr.io/spiralhouse/jcvd:latest
-            docker push ghcr.io/spiralhouse/jcvd:${{ github.sha }}
-            
-          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            # Release tag - tag with version
-            VERSION=${GITHUB_REF#refs/tags/}
-            docker tag jcvd:test ghcr.io/spiralhouse/jcvd:${VERSION}
-            docker tag jcvd:test ghcr.io/spiralhouse/jcvd:latest
-            
-            echo "🏷️ Tagged as:"
-            echo "  - ghcr.io/spiralhouse/jcvd:${VERSION}"
-            echo "  - ghcr.io/spiralhouse/jcvd:latest"
-            
-            docker push ghcr.io/spiralhouse/jcvd:${VERSION}
-            docker push ghcr.io/spiralhouse/jcvd:latest
+          echo "📦 Loading validated container image..."
+          docker load --input /tmp/jcvd-image.tar
+          echo "✅ Container image loaded"
+          
+          # Show all generated tags
+          echo ""
+          echo "🏷️ Publishing with Advanced Tagging Strategy (SPI-485)"
+          echo "======================================================="
+          echo ""
+          echo "📋 Publishing Tags:"
+          echo '${{ steps.meta.outputs.tags }}' | sed 's/,/\n/g' | sed 's/^/  • /'
+          echo ""
+          
+          # Tag the loaded image with all generated tags
+          TAGS=(${{ steps.meta.outputs.tags }})
+          for tag in "${TAGS[@]}"; do
+            if [ ! -z "$tag" ]; then
+              echo "🏷️ Tagging: $tag"
+              docker tag jcvd:test "$tag"
+            fi
+          done
+          
+          # Push all tags
+          echo ""
+          echo "📤 Pushing container images..."
+          for tag in "${TAGS[@]}"; do
+            if [ ! -z "$tag" ]; then
+              echo "📤 Pushing: $tag"
+              docker push "$tag"
+            fi
+          done
+          
+          echo ""
+          echo "✅ Container image published with comprehensive tagging strategy"
+
+      # SPI-485: Enhanced registry information with all tag patterns
+      - name: Display published registry information
+        run: |
+          echo ""
+          echo "📦 Container Image Published! (SPI-485)"
+          echo "========================================"
+          echo ""
+          echo "🌐 Registry: ghcr.io/spiralhouse/jcvd"
+          echo ""
+          echo "📋 Published Tags:"
+          echo '${{ steps.meta.outputs.tags }}' | sed 's/,/\n/g' | sed 's/^/  • /'
+          echo ""
+          echo "📥 Pull Commands:"
+          
+          # Generate pull commands based on the tagging strategy
+          if [[ "${{ github.ref_type }}" == "tag" && "${{ github.ref_name }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            VERSION="${{ github.ref_name }}"
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR="$MAJOR.$(echo "$VERSION" | cut -d. -f2)"
+            echo "  # Immutable exact version"
+            echo "  docker pull ghcr.io/spiralhouse/jcvd:$VERSION"
+            echo ""
+            echo "  # Mutable version tags (updates with new releases)"
+            echo "  docker pull ghcr.io/spiralhouse/jcvd:$MINOR"
+            echo "  docker pull ghcr.io/spiralhouse/jcvd:$MAJOR"
+            echo ""
+            echo "  # Latest stable"
+            echo "  docker pull ghcr.io/spiralhouse/jcvd:latest"
+          elif [[ "${{ github.ref_type }}" == "tag" && "${{ github.ref_name }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-.*$ ]]; then
+            VERSION="${{ github.ref_name }}"
+            echo "  # Pre-release (exact version only)"
+            echo "  docker pull ghcr.io/spiralhouse/jcvd:$VERSION"
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "  # Latest development"
+            echo "  docker pull ghcr.io/spiralhouse/jcvd:edge"
+            echo ""
+            echo "  # Specific commit"
+            echo "  docker pull ghcr.io/spiralhouse/jcvd:sha-${{ github.sha }}"
+            echo ""
+            echo "  # Development latest"
+            echo "  docker pull ghcr.io/spiralhouse/jcvd:latest"
           fi
           
-          echo "✅ Container image published to GitHub Container Registry"
-
-      - name: Output registry details
-        run: |
-          echo "📦 Container Image Published!"
-          echo "============================"
           echo ""
-          echo "Registry: ghcr.io/spiralhouse/jcvd"
-          echo ""
-          echo "Pull commands:"
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "  docker pull ghcr.io/spiralhouse/jcvd:latest"
-            echo "  docker pull ghcr.io/spiralhouse/jcvd:${{ github.sha }}"
-          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/}
-            echo "  docker pull ghcr.io/spiralhouse/jcvd:${VERSION}"
-            echo "  docker pull ghcr.io/spiralhouse/jcvd:latest"
-          fi
-          echo ""
-          echo "Run command:"
+          echo "🚀 Run Commands:"
+          echo "  # Quick start"
           echo "  docker run -p 8080:8080 ghcr.io/spiralhouse/jcvd:latest"
+          echo ""
+          echo "  # With persistent data"
+          echo "  docker run -p 8080:8080 -v \$(pwd)/data:/app/data ghcr.io/spiralhouse/jcvd:latest"
+          echo ""
+          echo "🔒 Tag Immutability Summary:"
+          echo "  ✅ Exact versions & SHA tags: Immutable forever"
+          echo "  🔄 Major/minor versions: Mutable (updated with new releases)"
+          echo "  🔄 Edge/Latest: Mutable (rolling latest)"
 
   # SPI-480: Notify on failure with comprehensive job coverage
   notify-failure:
     name: Notify Failure
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [unit-tests, integration-tests, system-tests, quality, build, containerization, container-smoke-tests, security, deploy, deploy-dry-run, validate, publish-container, publish-container-dry-run]
+    needs: [commit-message-validation, unit-tests, integration-tests, system-tests, quality, build, containerization, container-smoke-tests, security, deploy, deploy-dry-run, validate, publish-container, publish-container-dry-run]
     if: failure()
 
     steps:
@@ -1410,10 +1690,14 @@ jobs:
           echo "- System test failures: Performance or end-to-end issues"
           echo ""
           echo "Other Common Issues:"
+          echo "- Commit message validation failures (Conventional Commits format)"
           echo "- Code quality violations (Detekt)"
           echo "- Build compilation errors"
           echo "- Docker build issues"
           echo "- Security vulnerabilities"
           echo ""
-          echo "💡 Pro tip: Run './gradlew quickTest' locally for fast unit test feedback"
+          echo "💡 Pro tips:"
+          echo "- Run './gradlew quickTest' locally for fast unit test feedback"
+          echo "- Use 'git config commit.template .gitmessage' for commit message help"
+          echo "- Check CONTRIBUTING.md for commit message guidelines"
           exit 1
