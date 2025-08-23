@@ -3,6 +3,9 @@
 # Stage 1: Runtime image with JRE
 FROM eclipse-temurin:21-jre-alpine
 
+# Accept version as build argument for labeling and metadata
+ARG VERSION=unknown
+
 # Install required libraries
 RUN apk add --no-cache \
     ca-certificates
@@ -23,10 +26,18 @@ RUN mkdir -p /app/data && chown -R jcvd:jcvd /app/data
 # Switch to non-root user
 USER jcvd
 
+# Labels for metadata and versioning
+LABEL org.opencontainers.image.title="JCVD Server"
+LABEL org.opencontainers.image.description="JCVD project orchestration framework MCP server"
+LABEL org.opencontainers.image.version="$VERSION"
+LABEL org.opencontainers.image.vendor="Spiral House"
+LABEL org.opencontainers.image.source="https://github.com/spiralhouse/jcvd"
+
 # Environment variables
 ENV DATABASE_URL="jdbc:sqlite:/app/data/jcvd.db"
 ENV PORT=8080
 ENV HOST=0.0.0.0
+ENV JCVD_VERSION="$VERSION"
 
 # Expose MCP server port
 EXPOSE 8080
