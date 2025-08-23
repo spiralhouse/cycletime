@@ -1,14 +1,14 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "release-type": "gradle",
+  "release-type": "java",
   "packages": {
     ".": {
       "package-name": "jcvd",
-      "release-type": "gradle",
+      "release-type": "java",
       "version-file": "gradle.properties",
       "extra-files": [
         {
-          "type": "gradle",
+          "type": "java",
           "path": "build.gradle.kts",
           "version-key": "version"
         }
