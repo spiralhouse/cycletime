@@ -133,6 +133,13 @@ jobs:
             echo "is_release=true" >> $GITHUB_OUTPUT
           fi
           
+          # Validate version format (semantic versioning)
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
+            echo "❌ Invalid version format: $version"
+            echo "Expected semantic version format: MAJOR.MINOR.PATCH[-PRERELEASE][+BUILDMETADATA]"
+            exit 1
+          fi
+          
           echo "📦 Version: $version"
           echo "🚀 Is Release: $([ "$version" == *"-SNAPSHOT"* ] || [ "$version" == *"+"* ] && echo "No" || echo "Yes")"
 
@@ -183,7 +190,7 @@ jobs:
             kotlin-compile-${{ env.BUILD_CACHE_VERSION }}-ubuntu-
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           gradle-home-cache-cleanup: true
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
@@ -257,7 +264,7 @@ jobs:
           path: build/
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           gradle-home-cache-cleanup: true
           cache-read-only: true
@@ -332,7 +339,7 @@ jobs:
           path: build/
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           gradle-home-cache-cleanup: true
           cache-read-only: true
@@ -398,7 +405,7 @@ jobs:
           path: build/
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           gradle-home-cache-cleanup: true
           cache-read-only: true
@@ -454,7 +461,7 @@ jobs:
             gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
           arguments: --build-cache --configuration-cache
@@ -508,7 +515,7 @@ jobs:
             gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
           arguments: --build-cache --configuration-cache
@@ -577,7 +584,7 @@ jobs:
             gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
           arguments: --build-cache --configuration-cache
@@ -634,6 +641,17 @@ jobs:
           name: build-artifacts-${{ needs.version.outputs.version }}
           path: build/libs/
 
+      - name: Verify JAR exists before container build
+        run: |
+          echo "🔍 Verifying JAR exists before Docker build..."
+          if [[ ! -f "build/libs/jcvd-server.jar" ]]; then
+            echo "❌ JAR file not found: build/libs/jcvd-server.jar"
+            echo "Available files in build/libs/:"
+            ls -la build/libs/ || echo "build/libs/ directory does not exist"
+            exit 1
+          fi
+          echo "✅ JAR file verified: $(du -h build/libs/jcvd-server.jar)"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -650,9 +668,8 @@ jobs:
         with:
           images: ghcr.io/spiralhouse/jcvd
           tags: |
-            # Version tags (only for releases)
-            type=raw,value=${{ needs.version.outputs.version }},enable=${{ needs.version.outputs.is_release == 'true' }}
-            type=raw,value=${{ needs.version.outputs.version }},enable=${{ needs.version.outputs.is_release == 'false' }},suffix=-snapshot
+            # Version tags (for all builds)
+            type=raw,value=${{ needs.version.outputs.version }}
             # Latest tag (only for releases)
             type=raw,value=latest,enable=${{ needs.version.outputs.is_release == 'true' }}
             # Dev environment tag (for main branch builds)
