@@ -110,18 +110,31 @@ jobs:
         id: version
         run: |
           # Extract version using printSemVersion with forced execution
-          version=$(./gradlew printSemVersion --console=plain --no-configuration-cache --rerun-tasks 2>&1 | grep -E '^[0-9]' | head -1)
+          version=$(./gradlew printSemVersion --quiet --no-configuration-cache --rerun-tasks)
           
           # Fallback - use printVersion if printSemVersion fails
           if [[ -z "$version" ]]; then
             echo "⚠️ printSemVersion failed, trying printVersion..."
-            version=$(./gradlew printVersion --console=plain --no-configuration-cache --rerun-tasks 2>&1 | grep -E '^[0-9]' | head -1)
+            version=$(./gradlew printVersion --quiet --no-configuration-cache --rerun-tasks | grep "^version:" | cut -d' ' -f2)
           fi
           
           # Final fallback - use git describe if gradle fails completely
           if [[ -z "$version" ]]; then
             echo "⚠️ Gradle version extraction failed, using git describe fallback"
-            version=$(git describe --tags --always --dirty || echo "0.1.0-SNAPSHOT")
+            # Try to get the latest tag
+            latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            if [[ -n "$latest_tag" && "$latest_tag" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+              # Valid semantic version tag found
+              version=$(git describe --tags --always --dirty)
+              # Clean up version format (remove 'v' prefix if present)
+              version="${version#v}"
+            else
+              # No valid tags, create version from commit count
+              commit_count=$(git rev-list --count HEAD 2>/dev/null || echo "1")
+              short_sha=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+              version="0.1.0-dev.${commit_count}+sha.${short_sha}"
+              echo "No semantic version tags found, using: $version"
+            fi
           fi
           
           echo "version=$version" >> $GITHUB_OUTPUT
