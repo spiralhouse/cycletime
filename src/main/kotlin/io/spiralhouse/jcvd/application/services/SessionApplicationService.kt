@@ -14,6 +14,7 @@ import io.spiralhouse.jcvd.domain.services.TimeProvider
 import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
 import io.spiralhouse.jcvd.domain.valueobjects.SessionKey
 import kotlinx.datetime.Instant
+import org.slf4j.LoggerFactory
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 
@@ -68,6 +69,8 @@ class SessionApplicationService(
     private val unitOfWork: UnitOfWork,
     private val timeProvider: TimeProvider
 ) : ApplicationServiceBase() {
+    
+    private val logger = LoggerFactory.getLogger(SessionApplicationService::class.java)
 
     // ================================================================================
     // Session Creation and Basic Operations
@@ -104,6 +107,8 @@ class SessionApplicationService(
                 projectId = command.projectId,
                 timeProvider = timeProvider
             )
+            
+            logger.debug("Created new session with key: ${session.sessionKey.value}")
             
             sessionRepository.save(session)
             SessionDto.fromSession(session)
