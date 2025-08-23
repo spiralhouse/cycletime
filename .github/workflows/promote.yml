@@ -39,6 +39,11 @@ on:
         required: false
         type: string
 
+# Concurrency control to prevent simultaneous promotions
+concurrency:
+  group: promote-${{ github.event.inputs.target_env }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
   packages: write
