@@ -15,6 +15,7 @@ import io.spiralhouse.jcvd.infrastructure.persistence.ExposedIssueRepository
 import io.spiralhouse.jcvd.infrastructure.persistence.ExposedProjectRepository
 import io.spiralhouse.jcvd.infrastructure.persistence.ExposedSessionRepository
 import io.spiralhouse.jcvd.infrastructure.persistence.ExposedUnitOfWork
+import io.spiralhouse.jcvd.infrastructure.logging.ExceptionLogger
 import org.jetbrains.exposed.sql.Database
 import io.spiralhouse.jcvd.mcp.configureMCP
 import io.ktor.serialization.kotlinx.json.*
@@ -117,12 +118,25 @@ fun Application.module() {
                     timestamp = System.currentTimeMillis().toString()
                 ))
             } catch (e: Exception) {
-                logger.error("Health check failed: ${e::class.simpleName} - ${e.message}", e)
+                // Log full exception details internally while keeping user response generic
+                ExceptionLogger.logException(
+                    logger,
+                    e,
+                    "Health check failed",
+                    mapOf(
+                        "endpoint" to "/health",
+                        "method" to "GET",
+                        "service" to BuildInfo.serviceName,
+                        "version" to BuildInfo.version
+                    )
+                )
+                
+                // Return sanitized error to client
                 call.respond(HttpStatusCode.InternalServerError, ErrorResponse(
                     status = "unhealthy",
                     service = BuildInfo.serviceName,
                     version = BuildInfo.version,
-                    error = "${e::class.simpleName}: ${e.message}",
+                    error = "Internal service error", // Generic message for security
                     timestamp = System.currentTimeMillis().toString()
                 ))
             }
