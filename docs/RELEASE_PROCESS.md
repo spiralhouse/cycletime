@@ -4,6 +4,17 @@
 
 JCVD uses a fully automated release process powered by [Release Please](https://github.com/googleapis/release-please) and conventional commits. This approach ensures consistent, reliable releases with minimal manual intervention while maintaining high quality through automated testing and validation.
 
+## Prerequisites
+
+For full automation to work:
+
+1. **Conventional Commits**: All commits must follow the specification
+2. **Release Token**: Configure `RELEASE_PLEASE_TOKEN` secret with PAT (see [Token Setup Guide](./RELEASE_TOKEN_SETUP.md))
+   - Without this token, release workflow won't trigger automatically
+   - Default `GITHUB_TOKEN` has limitations that prevent full automation
+3. **GitHub Actions**: Workflows must be enabled in repository settings
+4. **Container Registry**: Write access to `ghcr.io/spiralhouse/jcvd`
+
 ## Release Strategy
 
 ### Automated Release Philosophy

@@ -57,7 +57,10 @@ jobs:
           skip-labeling: true  # Skip label creation to avoid permission issues
           
           # Token configuration
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # Use RELEASE_PLEASE_TOKEN if available (PAT with repo/workflow scopes)
+          # Falls back to GITHUB_TOKEN if not configured
+          # Note: GITHUB_TOKEN won't trigger the release workflow on PR merge
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
   # Build and tag container on successful release
   publish-release-container:
