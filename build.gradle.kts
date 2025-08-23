@@ -9,11 +9,33 @@ plugins {
     alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
     alias(libs.plugins.dependency.check)
+    id("com.github.jmongard.git-semver-plugin") version "0.16.1"
     application
 }
 
 group = "io.spiralhouse.jcvd"
-version = "0.1.0-SNAPSHOT"
+version = semver.version
+
+// Git SemVersioning configuration
+semver {
+    // Use SNAPSHOT for pre-release (aligns with current development pattern)
+    defaultPreRelease = "SNAPSHOT"
+    
+    // Pattern for release commits (optional, rarely used)
+    releasePattern = "\\Arelease(?:\\([^()]+\\))?:"
+    
+    // BREAKING CHANGE detection (major version bump)
+    majorPattern = "\\A\\w+(?:\\([^()]+\\))?!:|^BREAKING[ -]CHANGE:"
+    
+    // Feature commits (minor version bump)
+    minorPattern = "\\Afeat(?:\\([^()]+\\))?:"
+    
+    // Fix commits (patch version bump)
+    patchPattern = "\\Afix(?:\\([^()]+\\))?:"
+    
+    // Group multiple commits into single increment
+    groupVersionIncrements = true
+}
 
 application {
     mainClass.set("io.spiralhouse.jcvd.ApplicationKt")
