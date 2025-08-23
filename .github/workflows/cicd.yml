@@ -94,6 +94,11 @@ jobs:
         with:
           gradle-home-cache-cleanup: true
 
+      - name: Pre-download Gradle
+        run: |
+          # Run a simple gradle command to ensure Gradle is downloaded before version calculation
+          ./gradlew --version > /dev/null 2>&1 || true
+
       - name: Check for code changes
         id: changes
         run: |
@@ -110,7 +115,9 @@ jobs:
         id: version
         run: |
           # Extract version using printSemVersion with forced execution
-          version=$(./gradlew printSemVersion --quiet --no-configuration-cache --rerun-tasks)
+          # Note: Even with --quiet, Gradle may output download progress on first run
+          # We need to filter for the actual version line (semantic version format)
+          version=$(./gradlew printSemVersion --quiet --no-configuration-cache --rerun-tasks | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' | tail -1)
           
           # Fallback - use printVersion if printSemVersion fails
           if [[ -z "$version" ]]; then
