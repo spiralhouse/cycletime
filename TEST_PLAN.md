@@ -203,9 +203,133 @@ chmod +x test-pipeline.sh
 # Expected: All steps complete successfully
 ```
 
-### 6. Rollback Testing
+### 6. Critical Infrastructure Tests
 
-#### Test 6.1: Simulate Rollback Scenario
+#### Test 6.1: Version Extraction Reliability
+```bash
+# Test version extraction edge cases
+echo "=== Testing Version Extraction Reliability ==="
+
+# Test with clean repository
+git status --porcelain | wc -l # Should be 0
+
+# Test version extraction multiple times for consistency
+for i in {1..5}; do
+  version=$(./gradlew printSemVersion --console=plain --no-configuration-cache --rerun-tasks 2>&1 | grep -E '^[0-9]' | head -1)
+  echo "Run $i: $version"
+done
+
+# All should return the same version
+echo "Expected: All versions identical"
+```
+
+#### Test 6.2: Container Build Without Pre-built JAR
+```bash
+# Test container build failure when JAR is missing
+echo "=== Testing Container Build Dependencies ==="
+
+# Clean build directory
+rm -rf build/libs/
+
+# Attempt container build (should fail gracefully)
+if docker build -t jcvd:test-no-jar --build-arg VERSION=test . 2>&1; then
+  echo "❌ Container build should have failed without JAR"
+  exit 1
+else
+  echo "✅ Container build correctly failed without JAR"
+fi
+
+# Build JAR first
+./gradlew buildFatJar
+
+# Verify container build now works
+docker build -t jcvd:test-with-jar --build-arg VERSION=test .
+echo "✅ Container build succeeds with JAR present"
+```
+
+#### Test 6.3: Artifact Dependency Validation
+```bash
+# Test artifact upload/download chain
+echo "=== Testing Artifact Dependencies ==="
+
+# Build and verify artifacts
+./gradlew build buildFatJar
+test -f build/libs/jcvd-server.jar || { echo "❌ JAR not found after build"; exit 1; }
+
+# Simulate artifact upload structure
+mkdir -p test-artifacts
+cp -r build/libs/ test-artifacts/
+cp -r build/distributions/ test-artifacts/ 2>/dev/null || echo "No distributions"
+
+# Verify artifact structure matches workflow expectations
+ls -la test-artifacts/libs/ | grep jcvd-server.jar || { echo "❌ JAR missing from artifacts"; exit 1; }
+
+# Clean up
+rm -rf test-artifacts/
+echo "✅ Artifact structure validated"
+```
+
+#### Test 6.4: CI Configuration Consistency
+```bash
+# Check CI properties consistency
+echo "=== Testing CI Configuration ==="
+
+if [[ -f .github/gradle-ci.properties ]]; then
+  echo "✅ CI properties file exists"
+  
+  # Check key CI optimizations are present
+  grep -q "org.gradle.caching=true" .github/gradle-ci.properties || echo "⚠️ Build caching not enabled"
+  grep -q "org.gradle.parallel=true" .github/gradle-ci.properties || echo "⚠️ Parallel builds not enabled"
+  grep -q "org.gradle.configuration-cache=true" .github/gradle-ci.properties || echo "⚠️ Configuration cache not enabled"
+  
+  # Verify memory settings are appropriate for CI
+  if grep -q "Xmx3072m" .github/gradle-ci.properties; then
+    echo "✅ CI memory settings configured"
+  else
+    echo "⚠️ CI memory settings may need adjustment"
+  fi
+else
+  echo "❌ CI properties file missing"
+  exit 1
+fi
+
+# Test CI properties can be copied
+cp .github/gradle-ci.properties gradle.properties.backup
+echo "✅ CI properties can be applied"
+mv gradle.properties.backup gradle.properties
+```
+
+#### Test 6.5: Registry Authentication Scenarios
+```bash
+# Test registry authentication edge cases
+echo "=== Testing Registry Authentication ==="
+
+# Test GHCR authentication (dry run)
+echo "Simulating GHCR authentication..."
+
+# Check if github token would be available
+if [[ -n "$GITHUB_TOKEN" ]]; then
+  echo "✅ GitHub token available"
+  # Simulate docker login (don't actually login in test)
+  echo "Would authenticate to ghcr.io with token"
+else
+  echo "⚠️ No GitHub token - would use workflow GITHUB_TOKEN"
+fi
+
+# Test image name format
+image_name="ghcr.io/spiralhouse/jcvd"
+if [[ "$image_name" =~ ^ghcr\.io/[a-z0-9.-]+/[a-z0-9.-]+$ ]]; then
+  echo "✅ Image name format valid"
+else
+  echo "❌ Invalid image name format"
+fi
+
+echo "✅ Registry authentication scenarios tested"
+```
+
+### 7. Rollback Testing
+
+#### Test 7.1: Simulate Rollback Scenario
 ```bash
 # Test rollback logic
 cat > test-rollback.sh << 'EOF'
@@ -238,27 +362,27 @@ chmod +x test-rollback.sh
 
 ## Post-PR Creation Testing
 
-### 7. GitHub Actions Testing
+### 8. GitHub Actions Testing
 
 After creating the PR, these will run automatically:
 
-#### Test 7.1: CI Pipeline on PR
+#### Test 8.1: CI Pipeline on PR
 - All CI stages should run (compile, test, quality)
 - CD stages should NOT run (only on main)
 - All checks should pass
 
-#### Test 7.2: Workflow Permissions
+#### Test 8.2: Workflow Permissions
 - Verify workflows have correct permissions
 - Check that GITHUB_TOKEN is sufficient for CI
 - Note any permission errors for fixing
 
 ## Post-Merge Testing
 
-### 8. Main Branch Integration
+### 9. Main Branch Integration
 
 After merging to main:
 
-#### Test 8.1: Version Calculation
+#### Test 9.1: Version Calculation
 ```bash
 git checkout main
 git pull
@@ -266,13 +390,13 @@ git pull
 # Should show new version based on all commits
 ```
 
-#### Test 8.2: CD Pipeline Activation
+#### Test 9.2: CD Pipeline Activation
 - Check GitHub Actions for CD pipeline run
 - Verify container is built and pushed to GHCR
 - Check that dev tag is applied
 - Verify external CD system would detect changes
 
-#### Test 8.3: Promotion Testing
+#### Test 9.3: Promotion Testing
 - Test manual promotion workflow trigger
 - Verify approval gates work
 - Test rollback workflow
