@@ -1,0 +1,42 @@
+# <type>(<scope>): <subject>
+#
+# <body>
+#
+# <footer>
+
+# Type must be one of:
+#   feat:     New features
+#   fix:      Bug fixes
+#   docs:     Documentation changes
+#   style:    Code style changes (formatting, etc)
+#   refactor: Code refactoring
+#   perf:     Performance improvements
+#   test:     Test additions or changes
+#   build:    Build system changes
+#   ci:       CI configuration changes
+#   chore:    Other changes (dependencies, etc)
+
+# Scope is optional but recommended:
+#   Examples: ui, api, auth, db, ci, docs
+
+# Subject line:
+#   - Use imperative mood ("add" not "added")
+#   - Keep under 50 characters
+#   - Don't end with period
+#   - Start with lowercase letter
+
+# Body (optional):
+#   - Explain what and why vs. how
+#   - Wrap at 72 characters
+#   - Leave blank line between subject and body
+
+# Footer (optional):
+#   - Include breaking changes: "BREAKING CHANGE: <description>"
+#   - Reference issues: "Closes #123", "Fixes #456"
+
+# Examples:
+#   feat(auth): add OAuth2 integration
+#   fix(api): handle null response in user endpoint
+#   docs: update README with installation steps
+#   build: upgrade gradle to version 8.5
+#   feat!: drop support for Node.js 16

@@ -28,6 +28,13 @@
 - Database file location: `jcvd.db` (SQLite, auto-created on first run)
 - Future H2 migration: Will use in-memory or file-based H2 database
 
+## Commit Message Validation
+
+- `./scripts/setup-commit-hooks.sh` - Setup local commit validation
+- `npm run commitlint-ci` - Validate last commit message
+- `npm run commitlint-pr` - Validate all commits in current branch
+- `git config commit.template .gitmessage` - Enable commit message template
+
 ## Development Utilities
 
 - `./gradlew dependencies` - Show project dependencies

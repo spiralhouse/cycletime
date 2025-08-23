@@ -13,7 +13,9 @@ plugins {
 }
 
 group = "io.spiralhouse.jcvd"
-version = "0.1.0-SNAPSHOT"
+// Version now managed by Release Please in gradle.properties (SPI-482)
+// Post SPI-486: This will be fully migrated to gradle.properties
+version = project.findProperty("version") ?: "0.1.0-SNAPSHOT"
 
 application {
     mainClass.set("io.spiralhouse.jcvd.ApplicationKt")
