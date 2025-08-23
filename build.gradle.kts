@@ -9,19 +9,33 @@ plugins {
     alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
     alias(libs.plugins.dependency.check)
+    id("com.github.jmongard.git-semver-plugin") version "0.16.1"
     application
 }
 
 group = "io.spiralhouse.jcvd"
+version = semver.version
 
-// =============================================================================
-// Version Management - Fully Migrated to gradle.properties (SPI-486)
-// =============================================================================
-// Version is now managed exclusively in gradle.properties for easier automation.
-// Release Please GitHub Action automatically updates gradle.properties during releases.
-// Development versions use -SNAPSHOT suffix, releases remove it automatically.
-// Format: X.Y.Z-SNAPSHOT (dev) → X.Y.Z (release) → X.Y.Z+1-SNAPSHOT (next dev)
-version = project.property("version") as String
+// Git SemVersioning configuration
+semver {
+    // Use SNAPSHOT for pre-release (aligns with current development pattern)
+    defaultPreRelease = "SNAPSHOT"
+    
+    // Pattern for release commits (optional, rarely used)
+    releasePattern = "\\Arelease(?:\\([^()]+\\))?:"
+    
+    // BREAKING CHANGE detection (major version bump)
+    majorPattern = "\\A\\w+(?:\\([^()]+\\))?!:|^BREAKING[ -]CHANGE:"
+    
+    // Feature commits (minor version bump)
+    minorPattern = "\\Afeat(?:\\([^()]+\\))?:"
+    
+    // Fix commits (patch version bump)
+    patchPattern = "\\Afix(?:\\([^()]+\\))?:"
+    
+    // Group multiple commits into single increment
+    groupVersionIncrements = true
+}
 
 application {
     mainClass.set("io.spiralhouse.jcvd.ApplicationKt")

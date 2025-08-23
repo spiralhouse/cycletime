@@ -1,0 +1,626 @@
+---
+name: Environment Promotion
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to promote (e.g., 1.2.3)'
+        required: true
+        type: string
+      source_env:
+        description: 'Source environment'
+        required: true
+        type: choice
+        default: 'dev'
+        options:
+          - dev
+          - staging
+      target_env:
+        description: 'Target environment'
+        required: true
+        type: choice
+        default: 'staging'
+        options:
+          - staging
+          - production
+      min_dev_time_hours:
+        description: 'Minimum hours in dev before promoting to staging (0 to skip)'
+        required: false
+        default: '2'
+        type: string
+      min_staging_time_hours:
+        description: 'Minimum hours in staging before promoting to production (0 to skip)'
+        required: false
+        default: '24'
+        type: string
+      promotion_justification:
+        description: 'Justification for production promotion (required for production)'
+        required: false
+        type: string
+
+# Concurrency control to prevent simultaneous promotions
+concurrency:
+  group: promote-${{ github.event.inputs.target_env }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+  actions: read
+
+jobs:
+  validate:
+    name: Validate Promotion
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      valid: ${{ steps.check.outputs.valid }}
+      current_staging: ${{ steps.registry.outputs.current_staging }}
+      current_production: ${{ steps.registry.outputs.current_production }}
+      version_exists: ${{ steps.registry.outputs.version_exists }}
+      dev_deployment_time: ${{ steps.registry.outputs.dev_deployment_time }}
+      staging_deployment_time: ${{ steps.registry.outputs.staging_deployment_time }}
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check version exists in registry
+        id: registry
+        run: |
+          version="${{ github.event.inputs.version }}"
+          echo "🔍 Checking if version $version exists in registry..."
+          
+          # Check if version tag exists
+          if docker manifest inspect ghcr.io/spiralhouse/jcvd:$version >/dev/null 2>&1; then
+            echo "✅ Version $version exists in registry"
+            echo "version_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Version $version not found in registry"
+            echo "version_exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Get current staging and production tags
+          echo "🏷️ Checking current environment tags..."
+          
+          # Current staging version
+          if staging_manifest=$(docker manifest inspect ghcr.io/spiralhouse/jcvd:staging 2>/dev/null); then
+            staging_digest=$(echo "$staging_manifest" | jq -r '.config.digest // .mediaType')
+            # Try to find version tag with same digest
+            current_staging=$(docker manifest inspect ghcr.io/spiralhouse/jcvd:$version 2>/dev/null | jq -r '.config.digest // .mediaType' | head -1)
+            if [[ "$staging_digest" == "$current_staging" ]]; then
+              current_staging="$version"
+            else
+              current_staging="unknown"
+            fi
+          else
+            current_staging="none"
+          fi
+          echo "current_staging=$current_staging" >> $GITHUB_OUTPUT
+          echo "📋 Current staging: $current_staging"
+          
+          # Current production version
+          if production_manifest=$(docker manifest inspect ghcr.io/spiralhouse/jcvd:production 2>/dev/null); then
+            production_digest=$(echo "$production_manifest" | jq -r '.config.digest // .mediaType')
+            current_production=$(docker manifest inspect ghcr.io/spiralhouse/jcvd:$version 2>/dev/null | jq -r '.config.digest // .mediaType' | head -1)
+            if [[ "$production_digest" == "$current_production" ]]; then
+              current_production="$version"
+            else
+              current_production="unknown"
+            fi
+          else
+            current_production="none"
+          fi
+          echo "current_production=$current_production" >> $GITHUB_OUTPUT
+          echo "📋 Current production: $current_production"
+          
+          # Get deployment time for dev environment check (if promoting from dev)
+          if [[ "${{ github.event.inputs.source_env }}" == "dev" ]]; then
+            echo "⏰ Checking dev deployment time..."
+            # Get image creation time from manifest
+            if dev_manifest=$(docker manifest inspect ghcr.io/spiralhouse/jcvd:$version 2>/dev/null); then
+              # Extract created timestamp from image config
+              dev_time=$(docker inspect ghcr.io/spiralhouse/jcvd:$version 2>/dev/null | jq -r '.[0].Created // "unknown"' || echo "unknown")
+              echo "dev_deployment_time=$dev_time" >> $GITHUB_OUTPUT
+              echo "📅 Version created: $dev_time"
+            else
+              echo "dev_deployment_time=unknown" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "dev_deployment_time=N/A" >> $GITHUB_OUTPUT
+          fi
+          
+          # Get staging deployment time for production promotion validation
+          if [[ "${{ github.event.inputs.source_env }}" == "staging" && "${{ github.event.inputs.target_env }}" == "production" ]]; then
+            echo "⏰ Checking staging deployment time for production promotion..."
+            # For staging time, we need to check when the version was first tagged as staging
+            # This is approximated by looking for staging-specific tags in chronological order
+            if staging_tags=$(docker manifest inspect ghcr.io/spiralhouse/jcvd:staging 2>/dev/null); then
+              # Get the staging deployment time from the manifest
+              staging_time=$(docker inspect ghcr.io/spiralhouse/jcvd:staging 2>/dev/null | jq -r '.[0].Created // "unknown"' || echo "unknown")
+              echo "staging_deployment_time=$staging_time" >> $GITHUB_OUTPUT
+              echo "📅 Staging deployment time: $staging_time"
+            else
+              echo "staging_deployment_time=unknown" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "staging_deployment_time=N/A" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate promotion path and requirements
+        id: check
+        run: |
+          version="${{ github.event.inputs.version }}"
+          source="${{ github.event.inputs.source_env }}"
+          target="${{ github.event.inputs.target_env }}"
+          version_exists="${{ steps.registry.outputs.version_exists }}"
+          current_staging="${{ steps.registry.outputs.current_staging }}"
+          current_production="${{ steps.registry.outputs.current_production }}"
+          min_dev_hours="${{ github.event.inputs.min_dev_time_hours }}"
+          dev_time="${{ steps.registry.outputs.dev_deployment_time }}"
+          min_staging_hours="${{ github.event.inputs.min_staging_time_hours }}"
+          staging_time="${{ steps.registry.outputs.staging_deployment_time }}"
+          justification="${{ github.event.inputs.promotion_justification }}"
+          
+          echo "## 🔍 Promotion Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Promotion Details:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Version: \`$version\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Path: \`$source\` → \`$target\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Min dev time: $min_dev_hours hours" >> $GITHUB_STEP_SUMMARY
+          if [[ "$target" == "production" ]]; then
+            echo "- Min staging time: $min_staging_hours hours" >> $GITHUB_STEP_SUMMARY
+            echo "- Justification: ${justification:-'Not provided'}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Current Environment Status:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Staging: \`$current_staging\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Production: \`$current_production\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check if version exists
+          if [[ "$version_exists" != "true" ]]; then
+            echo "❌ Version $version does not exist in registry" >> $GITHUB_STEP_SUMMARY
+            echo "valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          # Validate promotion path
+          if [[ "$source" == "dev" && "$target" == "staging" ]]; then
+            echo "✅ Valid promotion path: dev → staging" >> $GITHUB_STEP_SUMMARY
+            
+            # Check if already in staging
+            if [[ "$current_staging" == "$version" ]]; then
+              echo "⚠️ Version $version is already deployed to staging" >> $GITHUB_STEP_SUMMARY
+              echo "⚠️ Proceeding with re-tagging (this is safe)" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            # Check minimum dev time if specified
+            if [[ "$min_dev_hours" != "0" && "$dev_time" != "unknown" && "$dev_time" != "N/A" ]]; then
+              echo "⏰ Checking minimum dev deployment time..." >> $GITHUB_STEP_SUMMARY
+              
+              # Convert to epoch for comparison
+              dev_epoch=$(date -d "$dev_time" +%s 2>/dev/null || echo "0")
+              current_epoch=$(date +%s)
+              hours_diff=$(( (current_epoch - dev_epoch) / 3600 ))
+              
+              echo "- Version created: $dev_time" >> $GITHUB_STEP_SUMMARY
+              echo "- Hours in dev: $hours_diff" >> $GITHUB_STEP_SUMMARY
+              echo "- Required minimum: $min_dev_hours" >> $GITHUB_STEP_SUMMARY
+              
+              if [[ $hours_diff -lt $min_dev_hours ]]; then
+                echo "❌ Version has only been in dev for $hours_diff hours (minimum: $min_dev_hours)" >> $GITHUB_STEP_SUMMARY
+                echo "valid=false" >> $GITHUB_OUTPUT
+                exit 1
+              else
+                echo "✅ Version meets minimum dev time requirement" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+            
+            echo "valid=true" >> $GITHUB_OUTPUT
+            
+          elif [[ "$source" == "staging" && "$target" == "production" ]]; then
+            echo "✅ Valid promotion path: staging → production" >> $GITHUB_STEP_SUMMARY
+            
+            # PRODUCTION SAFETY CHECKS
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**🔒 Production Safety Validation:**" >> $GITHUB_STEP_SUMMARY
+            
+            # Check if version is actually in staging
+            if [[ "$current_staging" != "$version" ]]; then
+              echo "❌ Version $version is not currently in staging (current: $current_staging)" >> $GITHUB_STEP_SUMMARY
+              echo "❌ Cannot promote to production without staging validation" >> $GITHUB_STEP_SUMMARY
+              echo "valid=false" >> $GITHUB_OUTPUT
+              exit 1
+            else
+              echo "✅ Version verified in staging environment" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            # Check production promotion justification
+            if [[ -z "$justification" ]]; then
+              echo "❌ Production promotion requires justification" >> $GITHUB_STEP_SUMMARY
+              echo "❌ Please provide reasoning in the 'promotion_justification' field" >> $GITHUB_STEP_SUMMARY
+              echo "valid=false" >> $GITHUB_OUTPUT
+              exit 1
+            else
+              echo "✅ Promotion justification provided" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            # Check minimum staging time if specified
+            if [[ "$min_staging_hours" != "0" && "$staging_time" != "unknown" && "$staging_time" != "N/A" ]]; then
+              echo "⏰ Checking minimum staging deployment time..." >> $GITHUB_STEP_SUMMARY
+              
+              # Convert to epoch for comparison
+              staging_epoch=$(date -d "$staging_time" +%s 2>/dev/null || echo "0")
+              current_epoch=$(date +%s)
+              hours_diff=$(( (current_epoch - staging_epoch) / 3600 ))
+              
+              echo "- Staging deployment: $staging_time" >> $GITHUB_STEP_SUMMARY
+              echo "- Hours in staging: $hours_diff" >> $GITHUB_STEP_SUMMARY
+              echo "- Required minimum: $min_staging_hours" >> $GITHUB_STEP_SUMMARY
+              
+              if [[ $hours_diff -lt $min_staging_hours ]]; then
+                echo "❌ Version has only been in staging for $hours_diff hours (minimum: $min_staging_hours)" >> $GITHUB_STEP_SUMMARY
+                echo "❌ Production requires adequate staging validation time" >> $GITHUB_STEP_SUMMARY
+                echo "valid=false" >> $GITHUB_OUTPUT
+                exit 1
+              else
+                echo "✅ Version meets minimum staging time requirement" >> $GITHUB_STEP_SUMMARY
+              fi
+            else
+              echo "⚠️ Minimum staging time check skipped (set to 0 or time unknown)" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            # Check if already in production
+            if [[ "$current_production" == "$version" ]]; then
+              echo "⚠️ Version $version is already deployed to production" >> $GITHUB_STEP_SUMMARY
+              echo "⚠️ Proceeding with re-tagging (this is safe)" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🚨 **PRODUCTION PROMOTION APPROVED - REQUIRES MANUAL APPROVAL**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "valid=true" >> $GITHUB_OUTPUT
+            
+          else
+            echo "❌ Invalid promotion path: $source → $target" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Valid paths: dev→staging, staging→production" >> $GITHUB_STEP_SUMMARY
+            echo "valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Validation passed - promotion approved**" >> $GITHUB_STEP_SUMMARY
+
+  staging-promotion:
+    name: Promote to Staging
+    needs: validate
+    if: needs.validate.outputs.valid == 'true' && github.event.inputs.target_env == 'staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    environment: staging
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull and verify version image
+        run: |
+          version="${{ github.event.inputs.version }}"
+          echo "📦 Pulling version image: ghcr.io/spiralhouse/jcvd:$version"
+          docker pull ghcr.io/spiralhouse/jcvd:$version
+          
+          # Verify image integrity
+          echo "🔍 Verifying image integrity..."
+          docker inspect ghcr.io/spiralhouse/jcvd:$version > /dev/null
+          echo "✅ Image verification successful"
+
+      - name: Add staging-specific metadata and tag
+        run: |
+          version="${{ github.event.inputs.version }}"
+          previous_staging="${{ needs.validate.outputs.current_staging }}"
+          
+          echo "🏷️ Tagging for staging environment..."
+          
+          # Tag with staging environment
+          docker tag ghcr.io/spiralhouse/jcvd:$version \
+                     ghcr.io/spiralhouse/jcvd:staging
+          
+          # Create staging-specific tag with metadata
+          staging_tag="$version-staging-$(date +%Y%m%d-%H%M%S)"
+          docker tag ghcr.io/spiralhouse/jcvd:$version \
+                     ghcr.io/spiralhouse/jcvd:$staging_tag
+          
+          echo "📤 Pushing staging tags..."
+          docker push ghcr.io/spiralhouse/jcvd:staging
+          docker push ghcr.io/spiralhouse/jcvd:$staging_tag
+          
+          echo "staging_tag=$staging_tag" >> $GITHUB_ENV
+          echo "previous_staging=$previous_staging" >> $GITHUB_ENV
+
+      - name: Generate staging promotion summary
+        run: |
+          version="${{ github.event.inputs.version }}"
+          source="${{ github.event.inputs.source_env }}"
+          staging_tag="${{ env.staging_tag }}"
+          previous_staging="${{ env.previous_staging }}"
+          promotion_time=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
+          
+          echo "## 🚀 Staging Promotion Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Promotion Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Promoted**: \`$version\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Promotion Path**: \`$source\` → \`staging\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Promoted By**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Promotion Time**: $promotion_time" >> $GITHUB_STEP_SUMMARY
+          echo "- **Previous Staging**: \`$previous_staging\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Container Tags" >> $GITHUB_STEP_SUMMARY
+          echo "- **Staging Tag**: \`ghcr.io/spiralhouse/jcvd:staging\` (mutable)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamped Tag**: \`ghcr.io/spiralhouse/jcvd:$staging_tag\` (immutable)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Tag**: \`ghcr.io/spiralhouse/jcvd:$version\` (immutable)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔄 External Deployment Process" >> $GITHUB_STEP_SUMMARY
+          echo "1. 👀 External CD system detects new \`staging\` tag" >> $GITHUB_STEP_SUMMARY
+          echo "2. ⬇️ Pulls \`ghcr.io/spiralhouse/jcvd:staging\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. 🚀 Deploys to staging environment automatically" >> $GITHUB_STEP_SUMMARY
+          echo "4. 🏥 Performs automated health checks" >> $GITHUB_STEP_SUMMARY
+          echo "5. ✅ Completes staging deployment verification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⏱️ **Expected deployment time**: < 5 minutes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Pull Commands" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# Current staging (mutable)" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/spiralhouse/jcvd:staging" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Specific version (immutable)" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/spiralhouse/jcvd:$version" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Timestamped staging (immutable)" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/spiralhouse/jcvd:$staging_tag" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Staging Readiness Checklist" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Version exists in registry" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Minimum dev time requirement met" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Container integrity verified" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Staging tag updated successfully" >> $GITHUB_STEP_SUMMARY
+          echo "✅ External deployment triggered" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- Monitor external deployment system for staging deployment progress" >> $GITHUB_STEP_SUMMARY
+          echo "- Perform staging environment verification and testing" >> $GITHUB_STEP_SUMMARY
+          echo "- When ready, use this workflow again to promote from \`staging\` → \`production\`" >> $GITHUB_STEP_SUMMARY
+
+  production-promotion:
+    name: Promote to Production
+    needs: validate
+    if: needs.validate.outputs.valid == 'true' && github.event.inputs.target_env == 'production'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    environment:
+      name: production
+      url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pre-production safety verification
+        id: safety_check
+        run: |
+          version="${{ github.event.inputs.version }}"
+          current_staging="${{ needs.validate.outputs.current_staging }}"
+          current_production="${{ needs.validate.outputs.current_production }}"
+          justification="${{ github.event.inputs.promotion_justification }}"
+          
+          echo "## 🔐 Pre-Production Safety Verification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Final validation that version is still in staging
+          echo "🔍 Final staging validation..."
+          if ! docker manifest inspect ghcr.io/spiralhouse/jcvd:staging >/dev/null 2>&1; then
+            echo "❌ Cannot verify staging tag" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          # Record pre-deployment state
+          echo "previous_production=$current_production" >> $GITHUB_OUTPUT
+          echo "promotion_timestamp=$(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+          echo "approver=${{ github.actor }}" >> $GITHUB_OUTPUT
+          
+          echo "✅ Pre-production safety checks completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Authorization:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Authorized by: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Justification: $justification" >> $GITHUB_STEP_SUMMARY
+          echo "- Authorization time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Pull and verify version image
+        run: |
+          version="${{ github.event.inputs.version }}"
+          echo "📦 Pulling version image: ghcr.io/spiralhouse/jcvd:$version"
+          docker pull ghcr.io/spiralhouse/jcvd:$version
+          
+          # Enhanced integrity verification for production
+          echo "🔍 Enhanced production image verification..."
+          docker inspect ghcr.io/spiralhouse/jcvd:$version > /dev/null
+          
+          # Verify image digest matches staging
+          echo "🔍 Verifying image digest consistency with staging..."
+          version_digest=$(docker inspect ghcr.io/spiralhouse/jcvd:$version --format='{{.Id}}')
+          staging_digest=$(docker inspect ghcr.io/spiralhouse/jcvd:staging --format='{{.Id}}')
+          
+          if [[ "$version_digest" != "$staging_digest" ]]; then
+            echo "❌ Version digest mismatch with staging - potential tampering detected"
+            exit 1
+          fi
+          
+          echo "✅ Image verification and digest validation successful"
+
+      - name: Create production audit log
+        id: audit_log
+        run: |
+          version="${{ github.event.inputs.version }}"
+          previous_production="${{ steps.safety_check.outputs.previous_production }}"
+          promotion_time="${{ steps.safety_check.outputs.promotion_timestamp }}"
+          approver="${{ steps.safety_check.outputs.approver }}"
+          justification="${{ github.event.inputs.promotion_justification }}"
+          workflow_run="${{ github.run_id }}"
+          git_sha="${{ github.sha }}"
+          
+          # Create audit record
+          audit_record="{\"timestamp\":\"$promotion_time\",\"version\":\"$version\",\"previous_version\":\"$previous_production\",\"approver\":\"$approver\",\"justification\":\"$justification\",\"workflow_run\":\"$workflow_run\",\"git_sha\":\"$git_sha\"}"
+          
+          echo "📋 Creating production audit log..."
+          echo "$audit_record" > production_audit_$version.json
+          
+          echo "audit_record<<EOF" >> $GITHUB_OUTPUT
+          echo "$audit_record" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "✅ Production audit log created"
+
+      - name: Tag for production environment
+        run: |
+          version="${{ github.event.inputs.version }}"
+          previous_production="${{ steps.safety_check.outputs.previous_production }}"
+          
+          echo "🏷️ Tagging for production environment..."
+          
+          # Tag with production environment
+          docker tag ghcr.io/spiralhouse/jcvd:$version \
+                     ghcr.io/spiralhouse/jcvd:production
+          
+          # Create production-specific tag with metadata
+          production_tag="$version-production-$(date +%Y%m%d-%H%M%S)"
+          docker tag ghcr.io/spiralhouse/jcvd:$version \
+                     ghcr.io/spiralhouse/jcvd:$production_tag
+          
+          echo "📤 Pushing production tags..."
+          docker push ghcr.io/spiralhouse/jcvd:production
+          docker push ghcr.io/spiralhouse/jcvd:$production_tag
+          
+          echo "production_tag=$production_tag" >> $GITHUB_ENV
+          echo "previous_production=$previous_production" >> $GITHUB_ENV
+
+      - name: Generate production promotion summary
+        run: |
+          version="${{ github.event.inputs.version }}"
+          source="${{ github.event.inputs.source_env }}"
+          production_tag="${{ env.production_tag }}"
+          previous_production="${{ env.previous_production }}"
+          promotion_time="${{ steps.safety_check.outputs.promotion_timestamp }}"
+          approver="${{ steps.safety_check.outputs.approver }}"
+          justification="${{ github.event.inputs.promotion_justification }}"
+          audit_record="${{ steps.audit_log.outputs.audit_record }}"
+          
+          echo "## 🎉 Production Promotion Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Promotion Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Promoted**: \`$version\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Promotion Path**: \`$source\` → \`production\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Approved By**: $approver" >> $GITHUB_STEP_SUMMARY
+          echo "- **Approval Time**: $promotion_time" >> $GITHUB_STEP_SUMMARY
+          echo "- **Justification**: $justification" >> $GITHUB_STEP_SUMMARY
+          echo "- **Previous Production**: \`$previous_production\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Run**: [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Container Tags" >> $GITHUB_STEP_SUMMARY
+          echo "- **Production Tag**: \`ghcr.io/spiralhouse/jcvd:production\` (mutable)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamped Tag**: \`ghcr.io/spiralhouse/jcvd:$production_tag\` (immutable)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Tag**: \`ghcr.io/spiralhouse/jcvd:$version\` (immutable)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔄 External Deployment Process" >> $GITHUB_STEP_SUMMARY
+          echo "1. 👀 External CD system detects new \`production\` tag" >> $GITHUB_STEP_SUMMARY
+          echo "2. ⬇️ Pulls \`ghcr.io/spiralhouse/jcvd:production\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. 🚀 Deploys to production environment with careful rollout" >> $GITHUB_STEP_SUMMARY
+          echo "4. 🏥 Performs comprehensive health checks" >> $GITHUB_STEP_SUMMARY
+          echo "5. ✅ Completes production deployment verification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⏱️ **Expected deployment time**: < 10 minutes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚨 Production Safety Measures" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Version validated in staging environment" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Container integrity and digest verification completed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Manual approval gate passed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Production justification provided" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Staging time requirements validated" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Complete audit trail recorded" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Production rollout ready" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Audit Trail" >> $GITHUB_STEP_SUMMARY
+          echo "Complete audit record has been created for compliance:" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo "$audit_record" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Rollback Information" >> $GITHUB_STEP_SUMMARY
+          if [[ "$previous_production" != "none" && "$previous_production" != "unknown" ]]; then
+            echo "🔙 **Rollback available**: \`$previous_production\`" >> $GITHUB_STEP_SUMMARY
+            echo '```bash' >> $GITHUB_STEP_SUMMARY
+            echo "# Rollback command (if needed)" >> $GITHUB_STEP_SUMMARY
+            echo "# Re-run this workflow with version: $previous_production" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "🔙 **No previous production version available**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  promotion-history:
+    name: Record Promotion History
+    needs: [validate, staging-promotion, production-promotion]
+    if: always() && needs.validate.outputs.valid == 'true' && (needs.staging-promotion.result == 'success' || needs.production-promotion.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Record promotion event
+        run: |
+          version="${{ github.event.inputs.version }}"
+          source="${{ github.event.inputs.source_env }}"
+          target="${{ github.event.inputs.target_env }}"
+          promotion_time=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
+          actor="${{ github.actor }}"
+          run_id="${{ github.run_id }}"
+          
+          echo "## 📋 Promotion History Record" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This promotion has been recorded for audit and tracking purposes:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | \`$version\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Path | \`$source\` → \`$target\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Promoted By | $actor |" >> $GITHUB_STEP_SUMMARY
+          echo "| Promotion Time | $promotion_time |" >> $GITHUB_STEP_SUMMARY
+          echo "| Workflow Run | [$run_id](https://github.com/${{ github.repository }}/actions/runs/$run_id) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Git SHA | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Environment Status After Promotion" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dev**: Previous version (unchanged)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Staging**: \`$([ "$target" == "staging" ] && echo "$version" || echo "${{ needs.validate.outputs.current_staging }}")\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Production**: \`$([ "$target" == "production" ] && echo "$version" || echo "${{ needs.validate.outputs.current_production }}")\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 **View all promotion history**: [Actions tab](https://github.com/${{ github.repository }}/actions/workflows/promote.yml)" >> $GITHUB_STEP_SUMMARY

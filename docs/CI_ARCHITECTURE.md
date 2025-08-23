@@ -536,6 +536,9 @@ The container publishing process implements multiple validation gates to ensure 
 # Latest stable version (main branch)
 docker pull ghcr.io/spiralhouse/jcvd:latest
 
+# Dev environment (auto-deployed from main)
+docker pull ghcr.io/spiralhouse/jcvd:dev
+
 # Specific commit (immutable reference)
 docker pull ghcr.io/spiralhouse/jcvd:sha-abc1234
 
@@ -897,3 +900,355 @@ docker build -t jcvd:test .          # Verify Docker build
 5. **Update Dependencies Carefully**: Dependency changes invalidate caches
 
 This architecture provides a robust, performant, and maintainable CI/CD pipeline that scales with the project and team while maintaining excellent developer experience through fast feedback loops and intelligent optimization strategies.
+
+## Dev Environment Auto-Deployment (SPI-497)
+
+### Overview
+
+JCVD implements automatic deployment to the dev environment through container tagging and external deployment system integration. This approach provides zero-configuration dev deployments while maintaining clear separation between CI/CD and deployment responsibilities.
+
+### Deployment Architecture
+
+```mermaid
+%%{init: {'theme':'dark', 'themeVariables': { 'primaryColor':'#1f2937', 'primaryTextColor':'#f3f4f6', 'primaryBorderColor':'#4b5563', 'lineColor':'#6b7280', 'secondaryColor':'#374151', 'tertiaryColor':'#1f2937', 'background':'#111827', 'mainBkg':'#1f2937', 'secondBkg':'#374151', 'tertiaryBkg':'#4b5563', 'textColor':'#f3f4f6', 'labelTextColor':'#f3f4f6', 'nodeTextColor':'#f3f4f6', 'edgeLabelBackground':'#1f2937'}}}%%
+flowchart TD
+    A[Push to main branch] --> B[CI Pipeline Executes]
+    B --> C[All Tests Pass]
+    C --> D[Container Built & Tagged]
+    D --> E[Push to GHCR with 'dev' tag]
+    E --> F[External CD System Watches]
+    F --> G[Detects 'dev' Tag Change]
+    G --> H[Pulls New Container]
+    H --> I[Deploys to Dev Environment]
+    I --> J[Health Checks Complete]
+    J --> K[Dev Deployment Ready]
+
+    style A fill:#16a34a,stroke:#4ade80,color:#f3f4f6
+    style B fill:#0891b2,stroke:#06b6d4,color:#f3f4f6
+    style C fill:#7c3aed,stroke:#a78bfa,color:#f3f4f6
+    style D fill:#1e40af,stroke:#3b82f6,color:#f3f4f6
+    style E fill:#ca8a04,stroke:#facc15,color:#f3f4f6
+    style F fill:#65a30d,stroke:#a3e635,color:#f3f4f6
+    style G fill:#374151,stroke:#6b7280,color:#f3f4f6
+    style H fill:#374151,stroke:#6b7280,color:#f3f4f6
+    style I fill:#374151,stroke:#6b7280,color:#f3f4f6
+    style J fill:#374151,stroke:#6b7280,color:#f3f4f6
+    style K fill:#059669,stroke:#10b981,color:#f3f4f6
+```
+
+### Dev Deployment Process
+
+#### 1. Trigger Conditions
+
+Dev deployment automatically triggers when:
+- ✅ Push to `main` branch
+- ✅ All CI tests pass (unit, integration, system)
+- ✅ Code quality checks pass
+- ✅ Security scans pass
+- ✅ Container builds successfully
+- ✅ Container smoke tests pass
+
+#### 2. Container Tagging Strategy
+
+Every successful main branch build creates multiple tags:
+
+```yaml
+tags: |
+  # Version-specific tag (immutable)
+  type=raw,value=${{ version }},enable=${{ is_release }}
+  type=raw,value=${{ version }},enable=${{ !is_release }},suffix=-snapshot
+  # Latest stable (for releases only)
+  type=raw,value=latest,enable=${{ is_release }}
+  # Dev environment tag (MUTABLE - overwrites on each build)
+  type=raw,value=dev,enable=true
+  # Commit-specific tag (immutable)
+  type=sha,prefix=sha-
+```
+
+**Key Properties of `dev` Tag**:
+- **Mutable**: Overwrites on each main branch build
+- **Always Applied**: Every main branch build gets tagged as `dev`
+- **External Trigger**: External CD system watches for changes to this tag
+- **Automatic**: No manual intervention required
+
+#### 3. Container Metadata for External CD System
+
+Each container includes comprehensive deployment metadata in labels:
+
+```yaml
+labels: |
+  # Standard OCI labels
+  org.opencontainers.image.title=JCVD Server
+  org.opencontainers.image.description=Project orchestration framework with MCP integration
+  org.opencontainers.image.version=${{ version }}
+  org.opencontainers.image.revision=${{ commit_sha }}
+  org.opencontainers.image.created=${{ timestamp }}
+  
+  # Deployment-specific metadata
+  deployment.environment=dev
+  deployment.version=${{ version }}
+  deployment.commit=${{ commit_sha }}
+  deployment.branch=${{ branch_name }}
+  deployment.build-timestamp=${{ build_id }}
+  deployment.trigger=push-to-main
+```
+
+#### 4. External Deployment System Integration
+
+**Our Responsibilities** (CI/CD Pipeline):
+- ✅ Build and test container thoroughly
+- ✅ Tag with mutable `dev` tag
+- ✅ Push to GitHub Container Registry
+- ✅ Include comprehensive deployment metadata
+- ✅ Report deployment trigger status
+
+**External System Responsibilities** (CD System):
+- 👀 Watch for `dev` tag changes in GHCR
+- ⬇️ Pull `ghcr.io/spiralhouse/jcvd:dev` when changed
+- 🚀 Deploy to dev environment automatically
+- 🏥 Perform application health checks
+- ✅ Complete deployment verification
+
+### Dev Deployment Commands
+
+#### Checking Current Dev Version
+
+```bash
+# Inspect current dev image metadata
+docker pull ghcr.io/spiralhouse/jcvd:dev
+docker inspect ghcr.io/spiralhouse/jcvd:dev --format='{{.Config.Labels}}'
+
+# Extract deployment information
+docker inspect ghcr.io/spiralhouse/jcvd:dev \
+  --format='Version: {{index .Config.Labels "deployment.version"}}' \
+  --format='Commit: {{index .Config.Labels "deployment.commit"}}' \
+  --format='Build: {{index .Config.Labels "deployment.build-timestamp"}}'
+```
+
+#### Manual Dev Environment Testing
+
+```bash
+# Run dev environment locally (matches external deployment)
+docker run -p 8080:8080 --name jcvd-dev \
+  -e DATABASE_URL=jdbc:sqlite:/app/data/jcvd.db \
+  -v $(pwd)/dev-data:/app/data \
+  ghcr.io/spiralhouse/jcvd:dev
+
+# Test health endpoints
+curl http://localhost:8080/health
+curl http://localhost:8080/mcp/resources
+
+# View deployment metadata
+curl http://localhost:8080/info  # If implemented
+```
+
+#### Monitoring Dev Deployments
+
+```bash
+# Check for latest dev image
+docker pull ghcr.io/spiralhouse/jcvd:dev && echo "New dev version available"
+
+# Compare local vs remote dev tag
+LOCAL_SHA=$(docker images ghcr.io/spiralhouse/jcvd:dev --format "{{.ID}}")
+docker pull ghcr.io/spiralhouse/jcvd:dev > /dev/null
+REMOTE_SHA=$(docker images ghcr.io/spiralhouse/jcvd:dev --format "{{.ID}}" | head -1)
+
+if [ "$LOCAL_SHA" != "$REMOTE_SHA" ]; then
+  echo "Dev environment has been updated!"
+else
+  echo "Dev environment is up to date"
+fi
+```
+
+### Deployment Workflow
+
+#### Success Path
+
+```
+1. 🔧 Developer pushes to main
+2. ⚡ CI pipeline executes (5-15 minutes)
+3. ✅ All validation gates pass
+4. 🐳 Container tagged with 'dev' and pushed to GHCR
+5. 📢 Pipeline reports deployment trigger
+6. 👀 External CD system detects 'dev' tag change (< 30 seconds)
+7. ⬇️ Pulls new container image (< 1 minute)
+8. 🚀 Deploys to dev environment (< 3 minutes)
+9. 🏥 Health checks complete (< 1 minute)
+10. ✅ Dev environment ready with new version (< 5 minutes total)
+```
+
+#### Failure Handling
+
+```
+CI Stage Failure:
+- ❌ Any test fails → dev tag not updated
+- ❌ Container build fails → no deployment trigger
+- ❌ Security scan fails → deployment blocked
+Result: Dev environment remains on last known good version
+
+CD Stage Failure:
+- ❌ Health checks fail → external system handles rollback
+- ❌ Deployment fails → external system retry logic
+- ❌ Network issues → external system monitoring alerts
+Result: External CD system maintains environment stability
+```
+
+### Monitoring and Observability
+
+#### CI Pipeline Monitoring
+
+The pipeline provides comprehensive deployment status in GitHub Actions:
+
+```markdown
+## 🚀 Dev Environment Deployment Triggered
+
+✅ Container successfully pushed to GHCR
+📦 Registry: ghcr.io/spiralhouse/jcvd
+🏷️ Version: 1.2.3-snapshot
+🌟 Dev Tag: ghcr.io/spiralhouse/jcvd:dev
+📋 Commit: abc1234
+🔗 Branch: main
+
+## 🔄 External Deployment Process
+1. 👀 External CD system detects new 'dev' tag
+2. ⬇️ Pulls ghcr.io/spiralhouse/jcvd:dev
+3. 🚀 Deploys to dev environment automatically
+4. 🏥 Performs automated health checks
+5. ✅ Completes deployment verification
+
+⏱️ Expected deployment time: < 5 minutes
+
+### 📋 Container Labels for External System
+- deployment.environment=dev
+- deployment.version=1.2.3-snapshot
+- deployment.commit=abc1234
+- deployment.branch=main
+- deployment.build-timestamp=123456789
+```
+
+#### External System Integration Points
+
+**Container Labels**: External system can extract metadata
+```bash
+DEPLOYMENT_VERSION=$(docker inspect ghcr.io/spiralhouse/jcvd:dev \
+  --format='{{index .Config.Labels "deployment.version"}}')
+```
+
+**Health Endpoints**: External system validates deployment
+```bash
+curl -f http://dev-jcvd.example.com/health || deployment_failed
+```
+
+**Image Change Detection**: External system watches registry
+```bash
+# Pseudocode for external CD system
+watch_registry("ghcr.io/spiralhouse/jcvd:dev") {
+  on_change(new_image) {
+    deploy_to_dev_environment(new_image)
+  }
+}
+```
+
+### Dev Environment Characteristics
+
+#### Container Configuration
+- **Registry**: `ghcr.io/spiralhouse/jcvd:dev`
+- **Update Frequency**: Every main branch push (multiple times per day)
+- **Rollback Strategy**: External CD system maintains previous image
+- **Health Checks**: Standard endpoints + custom validation
+
+#### Performance Expectations
+- **Build to Push**: 10-20 minutes (full CI pipeline)
+- **Push to Deployment**: < 5 minutes (external system)
+- **Total Deployment Time**: < 25 minutes from code push
+- **Deployment Frequency**: Continuous (every main branch push)
+
+#### Environment Stability
+- **Deployment Isolation**: Dev deployments don't affect production
+- **Test Quality Gate**: Extensive testing before dev deployment
+- **Container Validation**: Smoke tests ensure basic functionality
+- **Metadata Tracking**: Full deployment provenance in container labels
+
+### Security Considerations
+
+#### Container Security
+- ✅ All dependencies scanned for vulnerabilities (CVSS < 7.0)
+- ✅ Container built from secure base images
+- ✅ No secrets embedded in container images
+- ✅ Container runs as non-root user
+
+#### Registry Security
+- ✅ GitHub Container Registry with organization access controls
+- ✅ Container images signed and verified
+- ✅ External system uses read-only registry access
+- ✅ Image provenance tracked through metadata labels
+
+#### Deployment Security
+- ✅ Dev environment isolated from production networks
+- ✅ External CD system uses service account authentication
+- ✅ Health check endpoints don't expose sensitive information
+- ✅ Container resource limits prevent resource exhaustion
+
+### Troubleshooting Dev Deployments
+
+#### Common Issues
+
+**1. Dev Tag Not Updated**
+```bash
+# Diagnosis
+gh api repos/spiralhouse/jcvd/actions/runs \
+  --jq '.workflow_runs[] | select(.head_branch == "main") | {id, conclusion, created_at}'
+
+# Look for failed CI runs preventing dev tag update
+```
+
+**2. External System Not Deploying**
+```bash
+# Check if dev tag changed
+docker pull ghcr.io/spiralhouse/jcvd:dev
+docker inspect ghcr.io/spiralhouse/jcvd:dev \
+  --format='Build: {{index .Config.Labels "deployment.build-timestamp"}}'
+
+# Verify external system can access registry
+docker pull ghcr.io/spiralhouse/jcvd:dev  # Should succeed from external system
+```
+
+**3. Health Checks Failing**
+```bash
+# Test container locally
+docker run -p 8080:8080 --rm ghcr.io/spiralhouse/jcvd:dev &
+sleep 30
+curl -f http://localhost:8080/health || echo "Health check failed"
+```
+
+#### Recovery Procedures
+
+**Rollback Dev Environment**:
+```bash
+# External CD system should maintain previous working image
+# If manual rollback needed:
+docker pull ghcr.io/spiralhouse/jcvd:sha-<previous-commit>
+# Deploy specific commit instead of 'dev' tag
+```
+
+**Force Dev Deployment**:
+```bash
+# Re-trigger pipeline with workflow_dispatch
+gh workflow run cicd.yml --ref main
+
+# Or create empty commit to trigger deployment
+git commit --allow-empty -m "Force dev deployment"
+git push origin main
+```
+
+**Verify Deployment**:
+```bash
+# Comprehensive dev environment verification
+curl http://dev-jcvd.example.com/health | jq .
+curl http://dev-jcvd.example.com/mcp/resources | jq '.resources | length'
+
+# Check deployment metadata
+docker inspect ghcr.io/spiralhouse/jcvd:dev | jq '.Config.Labels'
+```
+
+This dev deployment architecture provides fully automated, reliable, and observable deployments while maintaining clear separation of concerns between the CI/CD pipeline and the external deployment system.
