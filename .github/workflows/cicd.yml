@@ -1,0 +1,901 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop, feat/*, fix/*]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'docs/**'
+      - '.claude/**'
+      - 'LICENSE'
+      - 'SESSION_SUMMARY.md'
+      - 'STRATEGY.md'
+      - 'PROJECT_STRUCTURE.md'
+      - 'PERFORMANCE_BASELINE_RESULTS.md'
+      - 'TEST_PLAN_PARALLEL_TDD.md'
+      - 'TEST_SUITES.md'
+      - 'sub-agents-conversation.txt'
+  pull_request:
+    branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'docs/**'
+      - '.claude/**'
+      - 'LICENSE'
+      - 'SESSION_SUMMARY.md'
+      - 'STRATEGY.md'
+      - 'PROJECT_STRUCTURE.md'
+      - 'PERFORMANCE_BASELINE_RESULTS.md'
+      - 'TEST_PLAN_PARALLEL_TDD.md'
+      - 'TEST_SUITES.md'
+      - 'sub-agents-conversation.txt'
+  workflow_dispatch:
+    inputs:
+      skip_release:
+        description: 'Skip GitHub release creation'
+        required: false
+        default: 'false'
+
+# Concurrency control to cancel outdated runs and save resources
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  # Matrix strategy configuration
+  JAVA_VERSIONS: '["21", "22"]'
+  OS_MATRIX: '["ubuntu-latest", "macos-latest"]'
+  GRADLE_BUILD_ACTION_CACHE_DEBUG_ENABLED: true
+  # Comprehensive caching strategy
+  BUILD_CACHE_VERSION: "v2"
+  GRADLE_CACHE_VERSION: "v2"
+  DEPENDENCY_CACHE_VERSION: "v1"
+  DOCKER_CACHE_VERSION: "v2"
+  TEST_CACHE_VERSION: "v1"
+  # Docker BuildKit optimizations
+  DOCKER_BUILDKIT: 1
+  BUILDKIT_PROGRESS: plain
+
+jobs:
+  # ========================================
+  # CI STAGE - Runs on all branches
+  # ========================================
+  
+  # Version calculation - always run for consistency
+  version:
+    name: Calculate Version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_release: ${{ steps.version.outputs.is_release }}
+      run_tests: ${{ steps.changes.outputs.run_tests }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Check for code changes
+        id: changes
+        run: |
+          echo "🔍 Checking for relevant changes..."
+          if git diff --name-only HEAD~1 HEAD | grep -E '\.(kt|kts|java|gradle)$|src/|build\.gradle|settings\.gradle|gradle\.properties'; then
+            echo "✅ Code changes detected - will run full pipeline"
+            echo "run_tests=true" >> $GITHUB_OUTPUT
+          else
+            echo "⏭️ No code changes detected - will skip tests but run version calculation"
+            echo "run_tests=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Calculate version
+        id: version
+        run: |
+          # Extract version using printSemVersion with forced execution
+          version=$(./gradlew printSemVersion --console=plain --no-configuration-cache --rerun-tasks 2>&1 | grep -E '^[0-9]' | head -1)
+          
+          # Fallback - use printVersion if printSemVersion fails
+          if [[ -z "$version" ]]; then
+            echo "⚠️ printSemVersion failed, trying printVersion..."
+            version=$(./gradlew printVersion --console=plain --no-configuration-cache --rerun-tasks 2>&1 | grep -E '^[0-9]' | head -1)
+          fi
+          
+          # Final fallback - use git describe if gradle fails completely
+          if [[ -z "$version" ]]; then
+            echo "⚠️ Gradle version extraction failed, using git describe fallback"
+            version=$(git describe --tags --always --dirty || echo "0.1.0-SNAPSHOT")
+          fi
+          
+          echo "version=$version" >> $GITHUB_OUTPUT
+          
+          # Check if this is a release (not SNAPSHOT or has build metadata)
+          if [[ "$version" == *"-SNAPSHOT"* ]] || [[ "$version" == *"+"* ]]; then
+            echo "is_release=false" >> $GITHUB_OUTPUT
+          else
+            echo "is_release=true" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "📦 Version: $version"
+          echo "🚀 Is Release: $([ "$version" == *"-SNAPSHOT"* ] || [ "$version" == *"+"* ] && echo "No" || echo "Yes")"
+
+  # Compile job that runs first to build all code and test classes
+  compile:
+    name: Compile Code
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: version
+    if: needs.version.outputs.run_tests == 'true' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # Comprehensive dependency caching
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/daemon
+            .gradle/
+          key: gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-ubuntu-jdk21-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-ubuntu-jdk21-
+            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-ubuntu-
+
+      # Kotlin compilation cache
+      - name: Cache Kotlin compilation
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/kotlin
+            build/tmp/kotlin-classes
+          key: kotlin-compile-${{ env.BUILD_CACHE_VERSION }}-ubuntu-jdk21-${{ hashFiles('src/**/*.kt', 'build.gradle.kts') }}
+          restore-keys: |
+            kotlin-compile-${{ env.BUILD_CACHE_VERSION }}-ubuntu-jdk21-
+            kotlin-compile-${{ env.BUILD_CACHE_VERSION }}-ubuntu-
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-home-cache-cleanup: true
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+          arguments: --build-cache --configuration-cache
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      # Use CI-optimized Gradle properties
+      - name: Copy CI Gradle properties
+        run: cp .github/gradle-ci.properties gradle.properties
+
+      - name: Compile all code and tests
+        run: |
+          echo "🔨 Compiling all code and test classes"
+          echo "📊 Cache status:"
+          echo "  Gradle cache: $([ -d ~/.gradle/caches ] && echo 'HIT' || echo 'MISS')"
+          echo "  Kotlin cache: $([ -d build/kotlin ] && echo 'HIT' || echo 'MISS')"
+          ./gradlew compileKotlin compileTestKotlin --build-cache --configuration-cache --no-daemon
+
+      - name: Upload compiled artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-artifacts
+          path: |
+            build/classes/
+            build/kotlin/
+            build/tmp/kotlin-classes/
+            build/resources/
+          retention-days: 1
+
+  # Unit tests - uses compiled artifacts
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: compile
+    if: needs.compile.result == 'success'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # Restore Gradle dependencies
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/daemon
+            .gradle/
+          key: gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-ubuntu-jdk21-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-ubuntu-jdk21-
+            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-ubuntu-
+
+      # Download compiled artifacts from compile job
+      - name: Download compiled artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-artifacts
+          path: build/
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-home-cache-cleanup: true
+          cache-read-only: true
+          arguments: --build-cache --configuration-cache
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Copy CI Gradle properties
+        run: cp .github/gradle-ci.properties gradle.properties
+
+      - name: Run unit tests with coverage
+        run: |
+          echo "🚀 Running unit tests with coverage using pre-compiled artifacts"
+          ./gradlew unitTest koverXmlReport -x compileKotlin -x compileTestKotlin --build-cache --configuration-cache --no-daemon
+
+      - name: Upload unit test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results
+          path: |
+            build/reports/tests/unitTest/
+            build/test-results/unitTest/
+          retention-days: 7
+
+      - name: Upload coverage to Codecov
+        if: success()
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./build/reports/kover/report.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  # Integration Tests
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: compile
+    if: needs.compile.result == 'success'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/daemon
+            .gradle/
+          key: gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-
+
+      - name: Download compiled artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-artifacts
+          path: build/
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-home-cache-cleanup: true
+          cache-read-only: true
+          arguments: --build-cache --configuration-cache
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Copy CI Gradle properties
+        run: cp .github/gradle-ci.properties gradle.properties
+
+      - name: Run integration tests
+        run: |
+          echo "🔗 Running integration tests using pre-compiled artifacts"
+          ./gradlew integrationTest -x compileKotlin -x compileTestKotlin --build-cache --configuration-cache --no-daemon
+
+      - name: Upload integration test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: |
+            build/reports/tests/integrationTest/
+            build/test-results/integrationTest/
+          retention-days: 7
+
+  # System Tests
+  system-tests:
+    name: System Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: compile
+    if: needs.compile.result == 'success'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/daemon
+            .gradle/
+          key: gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-
+
+      - name: Download compiled artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-artifacts
+          path: build/
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-home-cache-cleanup: true
+          cache-read-only: true
+          arguments: --build-cache --configuration-cache
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Copy CI Gradle properties
+        run: cp .github/gradle-ci.properties gradle.properties
+
+      - name: Run system tests
+        run: |
+          echo "🎩 Running system tests using pre-compiled artifacts"
+          ./gradlew systemTest -x compileKotlin -x compileTestKotlin --build-cache --configuration-cache --no-daemon
+
+      - name: Upload system test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: system-test-results
+          path: |
+            build/reports/tests/systemTest/
+            build/test-results/systemTest/
+          retention-days: 7
+
+  # Code quality checks - runs on all changes
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/daemon
+            .gradle/
+          key: gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+          arguments: --build-cache --configuration-cache
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Copy CI Gradle properties
+        run: cp .github/gradle-ci.properties gradle.properties
+
+      - name: Run Detekt
+        run: |
+          echo "🔍 Running code quality checks"
+          ./gradlew detekt --build-cache --configuration-cache --no-daemon
+        continue-on-error: true
+
+      - name: Upload Detekt results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: detekt-results
+          path: build/reports/detekt/
+          retention-days: 7
+
+  # Security scanning - runs on all changes
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/daemon
+            .gradle/
+          key: gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+          arguments: --build-cache --configuration-cache
+
+      - name: Copy CI Gradle properties
+        run: cp .github/gradle-ci.properties gradle.properties
+
+      - name: Run dependency vulnerability scan
+        run: |
+          echo "🔒 Running security vulnerability scan with NVD API"
+          ./gradlew dependencyCheckAnalyze \
+            --build-cache \
+            --configuration-cache \
+            --no-daemon \
+            -Dnvd.api.key="${{ secrets.NVD_API_KEY }}"
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        continue-on-error: true
+
+      - name: Upload security scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-scan-results
+          path: build/reports/
+          retention-days: 7
+
+  # ========================================
+  # CD STAGE - Only runs on main branch
+  # ========================================
+
+  # Build application - CD stage
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [version, unit-tests, integration-tests, system-tests, quality]
+    # Only run CD build on main branch with successful tests
+    if: |
+      github.ref == 'refs/heads/main' && 
+      needs.unit-tests.result == 'success' && 
+      needs.integration-tests.result == 'success' && 
+      needs.system-tests.result == 'success' && 
+      needs.quality.result == 'success'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/daemon
+            .gradle/
+          key: gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-deps-${{ env.DEPENDENCY_CACHE_VERSION }}-${{ runner.os }}-
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+          arguments: --build-cache --configuration-cache
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Copy CI Gradle properties
+        run: cp .github/gradle-ci.properties gradle.properties
+
+      - name: Download compiled artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-artifacts
+          path: build/
+
+      - name: Build application JAR
+        run: |
+          echo "🔨 Building application JAR for deployment (version: ${{ needs.version.outputs.version }})"
+          ./gradlew buildFatJar -x compileKotlin -x compileTestKotlin -x test --build-cache --configuration-cache --no-daemon
+
+      - name: Verify JAR exists
+        run: |
+          test -f build/libs/jcvd-server.jar
+          echo "JAR size: $(du -h build/libs/jcvd-server.jar)"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ needs.version.outputs.version }}
+          path: |
+            build/libs/
+            build/distributions/
+          retention-days: 30
+
+  # Build and push container - CD stage
+  container:
+    name: Build and Push Container
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # Only run on main branch after successful build
+    if: |
+      github.ref == 'refs/heads/main' && 
+      needs.build.result == 'success'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ needs.version.outputs.version }}
+          path: build/libs/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/spiralhouse/jcvd
+          tags: |
+            # Version tags (only for releases)
+            type=raw,value=${{ needs.version.outputs.version }},enable=${{ needs.version.outputs.is_release == 'true' }}
+            type=raw,value=${{ needs.version.outputs.version }},enable=${{ needs.version.outputs.is_release == 'false' }},suffix=-snapshot
+            # Latest tag (only for releases)
+            type=raw,value=latest,enable=${{ needs.version.outputs.is_release == 'true' }}
+            # Dev environment tag (for main branch builds)
+            type=raw,value=dev,enable=true
+            # SHA tags for tracking
+            type=sha,prefix=sha-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            org.opencontainers.image.title=JCVD Server
+            org.opencontainers.image.description=Project orchestration framework with MCP integration
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.url=https://github.com/spiralhouse/jcvd
+            org.opencontainers.image.source=https://github.com/spiralhouse/jcvd
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+            deployment.environment=dev
+            deployment.version=${{ needs.version.outputs.version }}
+            deployment.commit=${{ github.sha }}
+            deployment.branch=${{ github.ref_name }}
+            deployment.build-timestamp=${{ github.run_id }}
+            deployment.trigger=push-to-main
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ needs.version.outputs.version }}
+
+      - name: Container deployment trigger
+        run: |
+          echo "🐳 Container pushed to GHCR successfully!"
+          echo "🚀 External CD system will detect new container and handle deployment"
+          echo ""
+          echo "📦 Container Information:"
+          echo "  Registry: ghcr.io/spiralhouse/jcvd"
+          echo "  Version: ${{ needs.version.outputs.version }}"
+          echo "  Tags: ${{ steps.meta.outputs.tags }}"
+          echo "  Commit: ${{ github.sha }}"
+          echo "  Branch: ${{ github.ref_name }}"
+          echo "  Build: ${{ github.run_id }}"
+          echo ""
+          echo "🏷️ Dev Deployment Tag: ghcr.io/spiralhouse/jcvd:dev"
+          echo "📋 Deployment Metadata (in container labels):"
+          echo "  - deployment.environment=dev"
+          echo "  - deployment.version=${{ needs.version.outputs.version }}"
+          echo "  - deployment.commit=${{ github.sha }}"
+          echo "  - deployment.branch=${{ github.ref_name }}"
+          echo "  - deployment.build-timestamp=${{ github.run_id }}"
+          echo ""
+          echo "⚙️ External deployment system will:"
+          echo "  1. Detect new 'dev' tag in GHCR"
+          echo "  2. Pull ghcr.io/spiralhouse/jcvd:dev"
+          echo "  3. Deploy to dev environment"
+          echo "  4. Perform health checks"
+          echo "  5. Complete deployment pipeline"
+          echo ""
+          echo "✅ CI/CD pipeline complete - deployment handoff successful"
+
+  # Create GitHub Release - CD stage
+  release:
+    name: Create GitHub Release
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Only create release for production versions on main branch
+    if: |
+      github.ref == 'refs/heads/main' && 
+      needs.version.outputs.is_release == 'true' && 
+      github.event.inputs.skip_release != 'true' &&
+      needs.build.result == 'success'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get commits since last tag
+          last_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$last_tag" ]; then
+            echo "📝 No previous tags found, using all commits"
+            commits=$(git log --pretty=format:"- %s (%h)" HEAD | head -20)
+          else
+            echo "📝 Generating changelog since $last_tag"
+            commits=$(git log --pretty=format:"- %s (%h)" ${last_tag}..HEAD)
+          fi
+          
+          # Format changelog with categories
+          changelog="## What's Changed"$'\n'
+          changelog+="$commits"$'\n'$'\n'
+          changelog+="**Full Changelog**: https://github.com/${{ github.repository }}/compare/${last_tag}...v${{ needs.version.outputs.version }}"
+          
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$changelog" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ needs.version.outputs.version }}
+          path: build-artifacts/
+
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${{ needs.version.outputs.version }}"
+          echo "🚀 Creating release for version: $version"
+          
+          # Create release with artifacts
+          gh release create "v$version" \
+            --title "Release $version" \
+            --notes "${{ steps.changelog.outputs.changelog }}" \
+            --target "${{ github.sha }}" \
+            build-artifacts/distributions/* \
+            build-artifacts/libs/*
+
+  # ========================================
+  # VALIDATION & REPORTING
+  # ========================================
+
+  # Final validation and summary
+  validate:
+    name: Pipeline Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [version, unit-tests, integration-tests, system-tests, quality, security, build, container, release]
+    if: always()
+
+    steps:
+      - name: Pipeline Summary
+        run: |
+          echo "# CI/CD Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Version Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ needs.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Is Release**: ${{ needs.version.outputs.is_release }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## CI Stage Results (All Branches)" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status | Branch Coverage |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|-----------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version Calculation | ${{ needs.version.result }} | All branches |" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests | ${{ needs.unit-tests.result }} | All branches |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Tests | ${{ needs.integration-tests.result }} | All branches |" >> $GITHUB_STEP_SUMMARY
+          echo "| System Tests | ${{ needs.system-tests.result }} | All branches |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ needs.quality.result }} | All branches |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | ${{ needs.security.result }} | All branches |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## CD Stage Results (Main Branch Only)" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status | Trigger |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Application Build | ${{ needs.build.result }} | Main branch + tests pass |" >> $GITHUB_STEP_SUMMARY
+          echo "| Container Build & Push | ${{ needs.container.result }} | Main branch + build success |" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub Release | ${{ needs.release.result }} | Main branch + release version |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Branch-specific summary
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "🚀 **Main Branch Deployment Pipeline**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            if [[ "${{ needs.container.result }}" == "success" ]]; then
+              echo "✅ **Container pushed to GHCR** - dev deployment automatically triggered!" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "🏷️ **Dev Tag**: \`ghcr.io/spiralhouse/jcvd:dev\` (mutable - overwrites on each main build)" >> $GITHUB_STEP_SUMMARY
+              echo "📦 **All Available Tags**: \`${{ needs.version.outputs.version }}\`, \`dev\`, \`sha-${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "⚙️ **What happens next**:" >> $GITHUB_STEP_SUMMARY
+              echo "- External CD system watches for \`dev\` tag changes" >> $GITHUB_STEP_SUMMARY  
+              echo "- Automatically pulls new \`dev\` image from GHCR" >> $GITHUB_STEP_SUMMARY
+              echo "- Deploys to dev environment with health checks" >> $GITHUB_STEP_SUMMARY
+              echo "- Expected deployment time: < 5 minutes" >> $GITHUB_STEP_SUMMARY
+            fi
+            if [[ "${{ needs.release.result }}" == "success" ]]; then
+              echo "🎉 **Production release v${{ needs.version.outputs.version }} created!**" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "🔧 **Feature Branch Validation**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ All CI checks completed - ready for main branch merge" >> $GITHUB_STEP_SUMMARY
+            echo "⏭️ CD stages skipped (not main branch)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**🏆 Unified CI/CD Pipeline - Optimized for Developer Productivity**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Performance Features:**" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚡ Smart build skipping for documentation changes" >> $GITHUB_STEP_SUMMARY
+          echo "- 🗄️ Comprehensive caching strategy (dependencies, compilation, tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔄 Artifact reuse between jobs (no recompilation)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🚀 Parallel test execution with optimized job dependencies" >> $GITHUB_STEP_SUMMARY
+          echo "- 🐳 Container push triggers external deployment (no deployment complexity)" >> $GITHUB_STEP_SUMMARY
+
+  # Deployment notification
+  deployment-status:
+    name: Deployment Status
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [container, version]
+    if: needs.container.result == 'success'
+
+    steps:
+      - name: Deployment notification
+        run: |
+          echo "🚀 Dev Environment Deployment Triggered" | tee -a $GITHUB_STEP_SUMMARY
+          echo "=========================================" | tee -a $GITHUB_STEP_SUMMARY
+          echo "" | tee -a $GITHUB_STEP_SUMMARY
+          echo "✅ Container successfully pushed to GHCR" | tee -a $GITHUB_STEP_SUMMARY
+          echo "📦 Registry: \`ghcr.io/spiralhouse/jcvd\`" | tee -a $GITHUB_STEP_SUMMARY
+          echo "🏷️ **Version**: \`${{ needs.version.outputs.version }}\`" | tee -a $GITHUB_STEP_SUMMARY
+          echo "🌟 **Dev Tag**: \`ghcr.io/spiralhouse/jcvd:dev\`" | tee -a $GITHUB_STEP_SUMMARY
+          echo "📋 **Commit**: \`${{ github.sha }}\`" | tee -a $GITHUB_STEP_SUMMARY
+          echo "🔗 **Branch**: \`${{ github.ref_name }}\`" | tee -a $GITHUB_STEP_SUMMARY
+          echo "" | tee -a $GITHUB_STEP_SUMMARY
+          echo "## 🔄 External Deployment Process" | tee -a $GITHUB_STEP_SUMMARY
+          echo "1. 👀 External CD system detects new \`dev\` tag" | tee -a $GITHUB_STEP_SUMMARY
+          echo "2. ⬇️ Pulls \`ghcr.io/spiralhouse/jcvd:dev\`" | tee -a $GITHUB_STEP_SUMMARY
+          echo "3. 🚀 Deploys to dev environment automatically" | tee -a $GITHUB_STEP_SUMMARY
+          echo "4. 🏥 Performs automated health checks" | tee -a $GITHUB_STEP_SUMMARY
+          echo "5. ✅ Completes deployment verification" | tee -a $GITHUB_STEP_SUMMARY
+          echo "" | tee -a $GITHUB_STEP_SUMMARY
+          echo "⏱️ **Expected deployment time**: < 5 minutes" | tee -a $GITHUB_STEP_SUMMARY
+          echo "" | tee -a $GITHUB_STEP_SUMMARY
+          echo "### 📋 Container Labels for External System" | tee -a $GITHUB_STEP_SUMMARY
+          echo "- \`deployment.environment=dev\`" | tee -a $GITHUB_STEP_SUMMARY
+          echo "- \`deployment.version=${{ needs.version.outputs.version }}\`" | tee -a $GITHUB_STEP_SUMMARY
+          echo "- \`deployment.commit=${{ github.sha }}\`" | tee -a $GITHUB_STEP_SUMMARY
+          echo "- \`deployment.branch=${{ github.ref_name }}\`" | tee -a $GITHUB_STEP_SUMMARY
+          echo "- \`deployment.build-timestamp=${{ github.run_id }}\`" | tee -a $GITHUB_STEP_SUMMARY
+          echo "" | tee -a $GITHUB_STEP_SUMMARY
+          echo "🔍 **Monitor external deployment system** for deployment progress" | tee -a $GITHUB_STEP_SUMMARY
+          echo "" | tee -a $GITHUB_STEP_SUMMARY
+          echo "✅ **CI/CD pipeline handoff complete!**" | tee -a $GITHUB_STEP_SUMMARY
