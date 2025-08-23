@@ -41,7 +41,10 @@ application {
     mainClass.set("io.spiralhouse.jcvd.ApplicationKt")
 
     val isDevelopment: Boolean = project.ext.has("development")
-    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
+    applicationDefaultJvmArgs = listOf(
+        "-Dio.ktor.development=$isDevelopment",
+        "-Djcvd.version=${version}" // Pass version to runtime
+    )
 }
 
 dependencies {
@@ -690,6 +693,7 @@ val devRun by tasks.registering(JavaExec::class) {
         "-DKTOR_DEVELOPMENT=true",
         "-DKTOR_AUTORELOAD=true",
         "-DDATABASE_LOGGING=true",
+        "-Djcvd.version=${version}", // Pass version for runtime
         "-Xmx1024m",
         "-XX:+UseG1GC",
         "-XX:+UseStringDeduplication",

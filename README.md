@@ -851,13 +851,44 @@ JAVA_OPTS="-Xmx2g -Xms512m" ./gradlew run
 
 ## 🤝 Contributing
 
-This proof-of-concept demonstrates a complete, working migration path from TypeScript to Kotlin. Key achievements:
+We welcome contributions to JCVD! This project uses Conventional Commits for automated changelog generation and semantic versioning.
+
+### Quick Setup
+
+```bash
+# Setup commit message validation
+./scripts/setup-commit-hooks.sh
+
+# Install dependencies
+npm install
+
+# Your commits will now be validated locally and in CI
+```
+
+### Commit Message Format
+
+Use [Conventional Commits](https://conventionalcommits.org/) format:
+
+```
+<type>(<scope>): <subject>
+
+feat(auth): add OAuth2 integration
+fix(api): handle null response in user endpoint
+docs: update installation instructions
+```
+
+**Valid types**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
+
+For detailed guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Key Achievements
 
 - ✅ Complete domain model port
-- ✅ Working Docker deployment
+- ✅ Working Docker deployment  
 - ✅ Clean architecture maintained
 - ✅ Performance improvements verified
 - ✅ Development workflow established
+- ✅ Automated commit validation
 
 ## 📝 License
 

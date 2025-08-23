@@ -306,29 +306,51 @@ docker run --memory="512m" --cpus="1.0" jcvd:smoke-test
 - Validates publishing readiness
 - No actual registry push
 
-**Tagging Strategy**:
-- **Main Branch**: 
-  - `:latest` (rolling latest)
-  - `:sha-{commit}` (specific commit)
-- **Release Tags**: 
-  - `:v{version}` (semantic version)
-  - `:latest` (updated to latest release)
+**Advanced Container Tagging Strategy (SPI-485)**:
+
+The pipeline implements a comprehensive multi-tag strategy using `docker/metadata-action` for intelligent tag generation:
+
+#### Production Releases (v1.2.3)
+- `ghcr.io/spiralhouse/jcvd:1.2.3` (immutable exact version)
+- `ghcr.io/spiralhouse/jcvd:1.2` (mutable minor version)
+- `ghcr.io/spiralhouse/jcvd:1` (mutable major version)
+- `ghcr.io/spiralhouse/jcvd:latest` (mutable latest stable)
+
+#### Pre-releases (v1.2.3-rc.1)
+- `ghcr.io/spiralhouse/jcvd:1.2.3-rc.1` (exact pre-release)
+- No major/minor tags for pre-releases
+- No latest tag update for pre-releases
+
+#### Development Builds (main branch)
+- `ghcr.io/spiralhouse/jcvd:edge` (latest main branch)
+- `ghcr.io/spiralhouse/jcvd:sha-{commit}` (specific commit)
+- `ghcr.io/spiralhouse/jcvd:latest` (development latest)
+
+#### Tag Immutability Patterns
+- **Immutable Forever**: Exact versions (`v1.2.3`) and SHA tags (`sha-abc123`)
+- **Mutable (Updated with Releases)**: Major/minor versions (`1`, `1.2`)
+- **Mutable (Rolling)**: `latest`, `edge`
 
 **Registry Details**:
 - **Registry**: `ghcr.io/spiralhouse/jcvd`
 - **Authentication**: GitHub token with packages scope
 - **Visibility**: Public registry for container distribution
+- **Metadata**: Comprehensive OCI labels for title, description, source, etc.
 
 **Pull Commands**:
 ```bash
-# Latest from main branch
-docker pull ghcr.io/spiralhouse/jcvd:latest
+# Production releases
+docker pull ghcr.io/spiralhouse/jcvd:1.2.3    # Immutable exact version
+docker pull ghcr.io/spiralhouse/jcvd:1.2      # Mutable minor version
+docker pull ghcr.io/spiralhouse/jcvd:1        # Mutable major version
+docker pull ghcr.io/spiralhouse/jcvd:latest   # Latest stable
 
-# Specific commit
-docker pull ghcr.io/spiralhouse/jcvd:sha-abc1234
+# Pre-releases
+docker pull ghcr.io/spiralhouse/jcvd:1.2.3-rc.1  # Exact pre-release
 
-# Release version
-docker pull ghcr.io/spiralhouse/jcvd:v1.0.0
+# Development builds
+docker pull ghcr.io/spiralhouse/jcvd:edge         # Latest development
+docker pull ghcr.io/spiralhouse/jcvd:sha-abc123   # Specific commit
 ```
 
 ### 8. Security Job (Continuous)

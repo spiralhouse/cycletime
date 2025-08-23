@@ -1,5 +1,6 @@
 package io.spiralhouse.jcvd.mcp
 
+import io.spiralhouse.jcvd.domain.services.BuildInfo
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -26,9 +27,9 @@ fun Routing.configureMCP() {
     // MCP Server info endpoint
     get("/mcp") {
         call.respond(MCPServerInfo(
-            name = "jcvd-kotlin",
-            version = "0.1.0",
-            description = "JCVD Project Orchestration MCP Server (Kotlin POC)",
+            name = BuildInfo.serviceName,
+            version = BuildInfo.version,
+            description = BuildInfo.serviceDescription,
             capabilities = MCPCapabilities()
         ))
     }
