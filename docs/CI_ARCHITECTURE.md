@@ -30,9 +30,9 @@ graph TD
     B --> G
     G --> H[container-smoke-tests]
     B --> H
-    I[security] --> J[deploy]
+    I[security] --> J[deploy/deploy-dry-run]
     H --> J
-    H --> M[publish-container]
+    H --> M[publish-container/dry-run]
     J --> M
     F --> J
     E --> J
@@ -41,10 +41,12 @@ graph TD
     D --> K
     E --> K
     F --> K
+    G --> K
     H --> K
     I --> K
     J --> K
     K --> L[notify-failure]
+    K --> M
     
     style A fill:#1e40af,stroke:#3b82f6,stroke-width:2px,color:#f3f4f6
     style B fill:#7c3aed,stroke:#a78bfa,stroke-width:2px,color:#f3f4f6
@@ -62,9 +64,11 @@ graph TD
     
     classDef parallel stroke:#4ade80,stroke-width:3px,stroke-dasharray: 5 5
     classDef sequential stroke:#facc15,stroke-width:2px
+    classDef conditional stroke:#f59e0b,stroke-width:2px,stroke-dasharray: 10 5
     
     class B,C,D parallel
     class F,G,H sequential
+    class J,M conditional
 ```
 
 ## Artifact Flow Architecture
@@ -273,8 +277,9 @@ docker run --memory="512m" --cpus="1.0" jcvd:smoke-test
 - Same image tested and later published
 - Comprehensive production-readiness validation
 
-### 7. Container Publishing (Registry Distribution)
+### 7. Container Publishing Jobs (Registry Distribution)
 
+#### Publish Container (Production)
 **Purpose**: Publish validated container images to GitHub Container Registry
 
 **Conditions**:
@@ -287,6 +292,19 @@ docker run --memory="512m" --cpus="1.0" jcvd:smoke-test
 2. Loads pre-built and tested Docker image
 3. Tags image according to branch/release strategy
 4. Pushes to GitHub Container Registry (`ghcr.io`)
+
+#### Publish Container Dry-Run (Feature Branches)
+**Purpose**: Show what would be published without actual registry push
+
+**Conditions**:
+- Runs on feature branches after validation
+- Shows tagging strategy that would be applied
+
+**Features**:
+- Displays registry details
+- Shows what tags would be created
+- Validates publishing readiness
+- No actual registry push
 
 **Tagging Strategy**:
 - **Main Branch**: 
@@ -324,19 +342,33 @@ docker pull ghcr.io/spiralhouse/jcvd:v1.0.0
 - **Cache Strategy**: Caches vulnerability database for performance
 - **Threshold**: Fails on CVSS >= 7.0
 
-### 9. Deploy Job (Conditional)
+### 9. Deploy Jobs (Production & Dry-Run)
 
+#### Deploy (Production)
 **Purpose**: Production deployment (main branch only)
 
 **Conditions**:
 - Only runs on `refs/heads/main`
 - All prerequisite jobs must succeed
-- No job failures allowed
+- Container smoke tests must pass
 
 **Validation**:
 - Deployment readiness checks
 - Artifact validation
 - Environment preparation
+
+#### Deploy Dry-Run (Feature Branches)
+**Purpose**: Validate deployment readiness without actual deployment
+
+**Conditions**:
+- Runs on feature branches (not main)
+- Container smoke tests must succeed
+
+**Features**:
+- Shows deployment readiness status
+- Validates all prerequisites met
+- Provides clear feedback on what would happen on main
+- No actual deployment performed
 
 ### 10. Validate Job (Reporting)
 
@@ -348,6 +380,47 @@ docker pull ghcr.io/spiralhouse/jcvd:v1.0.0
 - Provides detailed success/failure analysis
 - Reports caching performance metrics
 - Summarizes optimization benefits
+
+## Dry-Run Strategy for Feature Branches
+
+### Purpose
+
+Feature branches use dry-run jobs to validate deployment and publishing readiness without performing actual production operations. This provides developers with confidence that their changes are production-ready while maintaining security.
+
+### Dry-Run Jobs
+
+#### Deploy Dry-Run
+- **When**: Feature branches with successful smoke tests
+- **What**: Shows deployment readiness without actual deployment
+- **Output**: Confirmation that all prerequisites are met
+- **Security**: No production access required
+
+#### Publish Container Dry-Run
+- **When**: Feature branches after validation passes
+- **What**: Shows what would be published to registry
+- **Output**: Registry paths and tags that would be created
+- **Security**: No registry write permissions needed
+
+### Benefits
+
+1. **Visibility**: Developers see deployment/publishing readiness
+2. **Validation**: Confirms all prerequisites are met
+3. **Education**: Shows what happens when merged to main
+4. **Safety**: No accidental production deployments
+5. **Feedback**: Clear messaging about branch requirements
+
+### Example Output
+
+```
+🔍 Deployment Dry Run
+=====================
+✅ Container smoke tests passed
+✅ Build artifacts created
+✅ Quality checks passed
+⚠️ This is a DRY RUN - no actual deployment
+📝 Deployment will occur when merged to main
+Ready for deployment: YES ✅
+```
 
 ## Container Image Lifecycle
 
