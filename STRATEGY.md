@@ -82,7 +82,7 @@ CycleTime EE: Same core + provider interface for external integrations
 
 **Sequence**:
 1. **Immediate**: Rebrand documentation in JCVD repo to CycleTime CE
-2. **This Week**: Rename Linear project from JCVD to CycleTime CE  
+2. **This Week**: ✅ Rename Linear project from JCVD to CycleTime (completed)  
 3. **Next 2-3 Weeks**: Continue development in JCVD repo
 4. **After MVP**: Rename GitHub repository from jcvd to cycletime
 
@@ -323,7 +323,7 @@ The architecture ensures zero-friction upgrade from CE to EE:
 - [x] Complete SPI-346: Cross-session state persistence
 - [x] Create STRATEGY.md to capture decisions
 - [ ] Update documentation following branding guidelines
-- [ ] Consolidate Linear projects (rename JCVD → CycleTime)
+- [x] Consolidate Linear projects (rename JCVD → CycleTime)
 - [ ] Continue Phase 1 MVP development
 
 ### Phase 1: Core MCP Server with Dashboard (September 2025)
@@ -428,11 +428,11 @@ cycletime/               # Renamed from jcvd
 
 ### Linear Project Organization
 
-**Current**: 
-- JCVD project (active development)
-- CycleTime project (planning only)
+**Current** (✅ Completed): 
+- ~~JCVD project (active development)~~ → Renamed to CycleTime
+- ~~CycleTime project (planning only)~~ → Archived
 
-**Target**:
+**Target** (✅ Achieved):
 - Single "CycleTime" project (renamed from JCVD, not "CycleTime CE")
 - Archive original CycleTime project
 - All issues consolidated with history preserved
