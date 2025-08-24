@@ -37,7 +37,7 @@ I notice this story has [N] independent subtasks that could be developed in para
 - [Subtask 2]: [Y] points - [brief description]  
 - [Subtask 3]: [Z] points - [brief description]
 
-Using parallel development with specialized agents (@docs/PARALLEL_DEVELOPMENT.md), we could:
+Using parallel development with specialized agents (see docs/testing/parallel-development.md), we could:
 - Complete all subtasks simultaneously vs sequentially
 - Maintain isolation between features (separate worktrees)
 - Choose the most appropriate workflow for each feature

@@ -143,7 +143,7 @@ files=(
   "docs/ENVIRONMENT_PROTECTION.md"
   "docs/STAGING_PROMOTION.md"
   "docs/PRODUCTION_APPROVALS.md"
-  ".github/CONTAINER_TAGGING.md"
+  "docs/ci-cd/container-tagging.md"
 )
 
 for file in "${files[@]}"; do
