@@ -45,11 +45,12 @@ Continuous Integration and Deployment.
 
 - [Pipeline Overview](ci-cd/overview.md) - CI/CD architecture
 - [Environments](ci-cd/environments.md) - Dev, staging, production
-- [Release Process](ci-cd/release-process.md) - Version management
+- [Release Process](ci-cd/release-process.md) - Continuous delivery workflow
+- [Versioning](ci-cd/versioning.md) - Git.SemVersioning details
+- [Container Tagging](ci-cd/container-tagging.md) - Container tag strategy
 - [Staging Promotion](ci-cd/staging-promotion.md) - Promotion workflows
 - [Production Approvals](ci-cd/production-approvals.md) - Deployment approvals
 - [Environment Protection](ci-cd/environment-protection.md) - Security settings
-- [Release Token Setup](ci-cd/release-token-setup.md) - Authentication
 
 ### [Operations](operations/)
 Deployment and operational guides.
