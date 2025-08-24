@@ -100,6 +100,7 @@ dependencies {
 tasks.withType<KotlinCompile> {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_21)
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
         
         // Performance optimizations
         freeCompilerArgs.addAll(
@@ -112,8 +113,6 @@ tasks.withType<KotlinCompile> {
             "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
             
             // Performance and optimization flags
-            "-Xuse-fir",                    // Use new FIR compiler frontend (faster)
-            "-Xuse-k2",                     // Use K2 compiler (experimental but faster)
             "-Xallow-unstable-dependencies", // Allow K2 with current dependencies
             
             // Java interop optimizations

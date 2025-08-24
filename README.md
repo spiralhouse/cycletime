@@ -2,7 +2,7 @@
 
 <!-- Status Badges -->
 [![Build Status](https://github.com/spiralhouse/jcvd/actions/workflows/ci.yml/badge.svg)](https://github.com/spiralhouse/jcvd/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/spiralhouse/jcvd/branch/main/graph/badge.svg)](https://codecov.io/gh/spiralhouse/jcvd)
+[![codecov](https://codecov.io/gh/spiralhouse/jcvd/graph/badge.svg?token=Rz1p5Wx0O8)](https://codecov.io/gh/spiralhouse/jcvd)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Kotlin](https://img.shields.io/badge/kotlin-2.0.21-7F52FF.svg?logo=kotlin)](https://kotlinlang.org/)
 [![Ktor](https://img.shields.io/badge/ktor-3.2.3-FF6B35.svg)](https://ktor.io/)
