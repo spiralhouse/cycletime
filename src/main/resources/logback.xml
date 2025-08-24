@@ -28,11 +28,11 @@
     </appender>
 
     <!-- Logger configurations for different packages -->
-    <logger name="io.spiralhouse.jcvd" level="DEBUG"/>
+    <logger name="io.spiralhouse.cycletime" level="DEBUG"/>
     <logger name="io.ktor" level="INFO"/>
     <logger name="Exposed" level="INFO"/>
     <logger name="org.jetbrains.exposed.sql" level="DEBUG"/>
-    
+
     <!-- Suppress noisy loggers -->
     <logger name="io.netty" level="WARN"/>
     <logger name="io.ktor.routing.Routing" level="INFO"/>
