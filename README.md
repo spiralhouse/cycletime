@@ -6,14 +6,14 @@
 [![Kotlin](https://img.shields.io/badge/kotlin-2.0.21-7F52FF.svg?logo=kotlin)](https://kotlinlang.org/)
 [![Gradle](https://img.shields.io/badge/gradle-9.0-02303A.svg?logo=gradle)](https://gradle.org/)
 
-JCVD provides structured context management for Claude Code sessions, enabling continuity across conversations and systematic project tracking. It maintains project state, tracks dependencies, and preserves decision history through an embedded database accessible via MCP (Model Context Protocol).
+JCVD provides structured context management for Claude Code, solving the fundamental challenge of maintaining project continuity across sessions. It preserves your project state, tracks dependencies, and maintains decision history through an embedded H2 database accessible via MCP (Model Context Protocol), enabling you to resume work exactly where you left off.
 
 ## Key Capabilities
 
-- **Session Continuity** - Resume work where you left off with preserved project context and decision history
+- **Cross-Session Continuity** - Resume work where you left off with preserved project context and decision history
 - **Dependency Tracking** - Automatically maintain relationships between tasks, files, and project components
 - **MCP Integration** - Native server implementation for direct Claude Code communication
-- **Embedded Database** - SQLite storage with no external dependencies required
+- **Embedded H2 Database** - Fast, reliable storage with no external dependencies required
 - **Structured Project Data** - Domain-driven models for projects, tasks, and workflows
 - **Minimal Configuration** - Start with defaults, configure as needed
 
@@ -25,6 +25,11 @@ JCVD is designed for developers using Claude Code who:
 - Want systematic project organization without manual documentation overhead
 - Collaborate with Claude Code on long-running development efforts
 
+## Prerequisites
+
+- Java 21 or later (required for runtime)
+- Docker (optional, for containerized deployment)
+
 ## Quick Start
 
 ### Installation
@@ -34,7 +39,7 @@ JCVD is designed for developers using Claude Code who:
 git clone https://github.com/spiralhouse/jcvd.git
 cd jcvd
 
-# Build and run (requires Java 21+)
+# Build and run
 ./gradlew run
 
 # Server starts on http://localhost:8080
@@ -49,13 +54,22 @@ docker run -p 8080:8080 ghcr.io/spiralhouse/jcvd:latest
 
 ### Claude Code Integration
 
-Once running, JCVD provides MCP endpoints that Claude Code can access to:
-- Store and retrieve project context between sessions
-- Track task dependencies and completion status
-- Maintain a structured history of project decisions
-- Query project state and relationships
+**JCVD extends Claude Code with persistent context management through MCP:**
 
-See [Quick Start Guide](docs/getting-started/quick-start.md) for detailed integration steps.
+When integrated with Claude Code, JCVD enables:
+- **Persistent Project Context** - Your project state survives between Claude Code sessions
+- **Intelligent Task Recommendations** - Claude Code understands your project dependencies and suggests next steps
+- **Structured Workflow Management** - Track issues, milestones, and decisions systematically
+- **Automatic Context Recovery** - Resume conversations with full project awareness
+
+Example interactions:
+```
+"What tasks are ready to work on?" - Returns unblocked tasks based on dependency graph
+"Show me the project structure" - Displays current project hierarchy and relationships
+"Create a new epic for authentication" - Structures work with proper issue tracking
+```
+
+See [Quick Start Guide](docs/getting-started/quick-start.md) for detailed MCP configuration steps.
 
 ## Documentation
 
@@ -80,18 +94,6 @@ See [Quick Start Guide](docs/getting-started/quick-start.md) for detailed integr
 - [Technical Design](docs/reference/technical-design/)
 - [Known Limitations](docs/reference/limitations.md)
 
-## Technology Stack
-
-Built with modern JVM technologies for reliability and performance:
-
-- **Kotlin 2.0** - Primary implementation language with coroutines support
-- **Ktor 3.2** - Lightweight asynchronous web framework
-- **Exposed ORM** - Type-safe SQL DSL and database abstraction
-- **SQLite** - Zero-configuration embedded database
-- **Gradle 9.0** - Build automation and dependency management
-- **Docker** - Container deployment options
-- **GitHub Actions** - Automated testing and deployment
-
 ## Contributing
 
 We welcome contributions. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
@@ -112,6 +114,18 @@ git checkout -b feat/your-feature
 # Build project
 ./gradlew build
 ```
+
+## Technology Stack
+
+Built with modern JVM technologies for reliability and performance:
+
+- **Kotlin 2.0** - Primary implementation language with coroutines support
+- **Ktor 3.2** - Lightweight asynchronous web framework
+- **Exposed ORM** - Type-safe SQL DSL and database abstraction
+- **H2 Database** - Fast, embedded database with full SQL support
+- **Gradle 9.0** - Build automation and dependency management
+- **Docker** - Container deployment options
+- **GitHub Actions** - Automated testing and deployment
 
 ## License
 
