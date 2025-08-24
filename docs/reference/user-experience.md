@@ -1,4 +1,4 @@
-# JCVD User Experience Design
+# CycleTime User Experience Design
 
 **Version:** 1.0  
 **Date:** July 30, 2025
@@ -11,15 +11,15 @@
 
 ## Overview
 
-This document defines the complete user experience for JCVD, from first
-installation through daily development workflows. JCVD prioritizes developer
+This document defines the complete user experience for CycleTime, from first
+installation through daily development workflows. CycleTime prioritizes developer
 control, simplicity, and professional project management without bureaucracy.
 
 ## First-Time Installation and Setup
 
 ### Discovery and Installation
 
-Users discover JCVD through:
+Users discover CycleTime through:
 
 - Claude Code MCP server marketplace/directory
 - GitHub repository or documentation
@@ -27,7 +27,7 @@ Users discover JCVD through:
 
 Installation options (coming soon):
 
-1. Via Claude Code: Browse MCP servers → Search "JCVD" → Install
+1. Via Claude Code: Browse MCP servers → Search "CycleTime" → Install
 2. Manual: npm install -g @jcvd/mcp-server (package in development)
 3. Docker: docker run -d jcvd/mcp-server (for advanced users)
 
@@ -36,11 +36,11 @@ Installation options (coming soon):
 ```
 User: "I want to start a new project"
 
-Claude: [JCVD MCP server detected for first time]
-"I see you have JCVD installed! This is a comprehensive project orchestration
+Claude: [CycleTime MCP server detected for first time]
+"I see you have CycleTime installed! This is a comprehensive project orchestration
 framework that will help you build software projects from start to finish.
 
-JCVD works completely offline by default using an embedded database, with no
+CycleTime works completely offline by default using an embedded database, with no
 external accounts or internet connection required. You also have the option
 to integrate with cloud-based issue tracking systems like Linear.
 
@@ -51,7 +51,7 @@ Before we begin, I need to set up a few things:
    - **Linear Integration**: Cloud-based, team collaboration, requires Linear account
 
 2. **Project Location**: Where would you like to create your project?
-   JCVD will set up a complete repository structure.
+   CycleTime will set up a complete repository structure.
 
 3. **Development Preferences**: Any preferred technologies, frameworks,
    or development methodologies I should know about?
@@ -65,7 +65,7 @@ project tasks, dependencies, and progress..."
 ### Initial Setup Dialog
 
 ```
-Claude: "Let's set up your issue tracking system. JCVD provides intelligent task
+Claude: "Let's set up your issue tracking system. CycleTime provides intelligent task
 management, dependency tracking, and progress orchestration regardless of which
 option you choose.
 
@@ -86,13 +86,13 @@ B) **Existing Linear Workspace**
    ❗ Requires Linear API key with appropriate permissions
 
 C) **New Linear Workspace**
-   ✅ Optimized setup specifically for JCVD workflows
+   ✅ Optimized setup specifically for CycleTime workflows
    ✅ Free for personal use (up to 10 team members)
    ✅ Cloud-based collaboration and sharing
    ❗ Requires creating new Linear account
 
 Which option would you prefer? **Option A (Local Database)** is recommended for
-getting started - it provides the complete JCVD experience with no setup friction,
+getting started - it provides the complete CycleTime experience with no setup friction,
 and you can migrate to Linear or other providers anytime."
 ```
 
@@ -101,7 +101,7 @@ and you can migrate to Linear or other providers anytime."
 ```
 User: "I'll use Local Mode for now"
 
-Claude: "Excellent choice! Local Mode provides full JCVD functionality using an embedded H2 database - no compromises on features:
+Claude: "Excellent choice! Local Mode provides full CycleTime functionality using an embedded H2 database - no compromises on features:
 
 **What you get in Local Mode:**
 ✅ Complete project orchestration with full dependency tracking
@@ -116,12 +116,12 @@ Claude: "Excellent choice! Local Mode provides full JCVD functionality using an 
 **How it works:**
 - Embedded H2 database stores all project data locally
 - Linear-inspired data model optimized for seamless future migration
-- All JCVD features work identically to cloud providers
+- All CycleTime features work identically to cloud providers
 - Data stored securely in your project directory
 
-I'll create a `.jcvd/` directory in your project to store:
+I'll create a `.cycletime/` directory in your project to store:
 - `database.mv.db` - Local H2 project database (encrypted)
-- `config.json` - JCVD configuration and preferences
+- `config.json` - CycleTime configuration and preferences
 - `backups/` - Automated database backups
 - `exports/` - Data export files for migration
 
@@ -133,9 +133,9 @@ User: "Yes"
 
 Claude: "Local Mode activated! Initializing embedded database and project structure...
 
-📁 Created .jcvd/
+📁 Created .cycletime/
 ├── database.mv.db        # Encrypted H2 database with full schema
-├── config.json          # JCVD configuration
+├── config.json          # CycleTime configuration
 ├── backups/              # Automated daily backups
 │   └── 2025-07-30.db.backup
 └── exports/              # Migration and backup exports
@@ -145,7 +145,7 @@ Claude: "Local Mode activated! Initializing embedded database and project struct
 ✅ Task orchestration engine configured
 ✅ Cross-session state management active
 
-Your local JCVD instance is ready with full feature parity! Let's begin project setup."
+Your local CycleTime instance is ready with full feature parity! Let's begin project setup."
 ```
 
 ### Option B: Existing Linear Workspace
@@ -158,10 +158,10 @@ Claude: "Perfect! To connect to your existing Linear workspace, I need:
 1. **Linear API Key**:
    - Go to Linear Settings → API → Personal API Keys
    - Create a new key with 'read' and 'write' permissions
-   - Name it 'JCVD Integration' for easy identification
+   - Name it 'CycleTime Integration' for easy identification
 
 2. **Team ID** (optional but recommended):
-   - If you want JCVD to use a specific team
+   - If you want CycleTime to use a specific team
    - Find it in Linear URL: linear.app/[workspace]/team/[TEAM_ID]
    - Leave blank to use your default team
 
@@ -169,7 +169,7 @@ Please provide your API key when ready. I'll validate the connection and check p
 
 User: [Provides API key]
 
-Claude: [JCVD validates API key]
+Claude: [CycleTime validates API key]
 
 **Success Path:**
 "✅ Linear connection successful!
@@ -215,7 +215,7 @@ Claude: [JCVD validates API key]
 ```
 User: "I want to create a new Linear workspace"
 
-Claude: "Great choice! I'll guide you through creating a Linear workspace optimized for JCVD.
+Claude: "Great choice! I'll guide you through creating a Linear workspace optimized for CycleTime.
 
 **Step 1: Create Linear Account**
 1. Visit: https://linear.app/signup
@@ -229,7 +229,7 @@ After signup, Linear will prompt you to:
 - Select team name (suggestion: 'Development')
 - Choose workflow preferences
 
-For JCVD optimization, I recommend:
+For CycleTime optimization, I recommend:
 - ✅ Enable 'Auto-assign issues to creator'
 - ✅ Enable 'Issue auto-archiving' (after 30 days)
 - ✅ Use 'Backlog' as default issue state
@@ -243,7 +243,7 @@ Claude: "Perfect! Now I need your Linear API key to complete the integration:
 
 1. In Linear, go to Settings → API → Personal API Keys
 2. Click 'Create API Key'
-3. Name: 'JCVD Integration'
+3. Name: 'CycleTime Integration'
 4. Permissions: Select 'read' and 'write'
 5. Copy the generated key
 
@@ -271,7 +271,7 @@ Paste your API key here when ready."
 - Rate limiting → Graceful backoff with user notification
 - Service unavailable → Option to continue in Local Mode
 
-**Configuration Storage:** JCVD stores provider configurations securely:
+**Configuration Storage:** CycleTime stores provider configurations securely:
 
 - Mac: ~/Library/Application Support/jcvd/provider-config.json
 - Linux: ~/.config/jcvd/provider-config.json
@@ -284,7 +284,7 @@ API keys and sensitive data encrypted using system keychain when available.
 ```
 User: "I have my issue tracking set up, now I want to build a task management web app"
 
-Claude: "Perfect! I'll start the JCVD Project Bootstrap for your task management app.
+Claude: "Perfect! I'll start the CycleTime Project Bootstrap for your task management app.
 
 Let me ask a few key questions to understand your project:
 
@@ -308,7 +308,7 @@ Let's start with #1 - what problem will your task management app solve?"
 
 ## Interactive Requirements Gathering
 
-Following the interview questions above, JCVD conducts a structured
+Following the interview questions above, CycleTime conducts a structured
 conversation:
 
 ```
@@ -336,7 +336,7 @@ Claude: "Excellent! Now I'll create your complete project structure:
 
 This will take about 2-3 minutes..."
 
-[JCVD generates all artifacts]
+[CycleTime generates all artifacts]
 ```
 
 ## Project Structure Creation
@@ -412,7 +412,7 @@ Ready to begin? I'll guide you through each step!"
 ```
 User: "What should I work on next?"
 
-Claude: [Calls JCVD to analyze issue state, dependencies, priorities]
+Claude: [Calls CycleTime to analyze issue state, dependencies, priorities]
 "Based on your project backlog and current progress, I recommend working on
 Story PROJ-15: 'User Authentication System'.
 
@@ -430,7 +430,7 @@ Shall we begin with the first subtask: 'Create User Model with Tests'?"
 ```
 User: "Yes, let's start the User Model task"
 
-Claude: [JCVD loads task context and requirements]
+Claude: [CycleTime loads task context and requirements]
 "Perfect! I've loaded the context for Story PROJ-15 'User Authentication System'.
 
 **Current Subtask: PROJ-15-1 'Create User Model with Tests'**
@@ -455,13 +455,13 @@ that cover all the user authentication requirements from your PRD."
 
 ### Session Lifecycle Management
 
-JCVD automatically manages session state across Claude Code interactions with intelligent validation and persistence:
+CycleTime automatically manages session state across Claude Code interactions with intelligent validation and persistence:
 
 #### Session Creation
 ```
 User: "Start working on my project"
 
-Claude: [JCVD creates new session with unique SessionKey]
+Claude: [CycleTime creates new session with unique SessionKey]
 "I've initialized a new development session for your project.
 
 Session Details:
@@ -483,7 +483,7 @@ Your session will persist across Claude Code restarts and maintain:
 User: [Starts new Claude Code session after a break]
 "Continue with my project work"
 
-Claude: [JCVD retrieves and validates existing session]
+Claude: [CycleTime retrieves and validates existing session]
 "Welcome back! I've restored your development session.
 
 Session Status:
@@ -506,7 +506,7 @@ Ready to continue where you left off?"
 User: [Returns after 8 days]
 "Continue working on the project"
 
-Claude: [JCVD detects expired session]
+Claude: [CycleTime detects expired session]
 "Your previous session has expired (older than 7 days).
 
 Previous Session Summary:
@@ -530,7 +530,7 @@ Shall we continue with the API implementation?"
 ```
 User: "Show me my session information"
 
-Claude: [JCVD provides detailed session metadata]
+Claude: [CycleTime provides detailed session metadata]
 "Current Session Information:
 
 Session Details:
@@ -565,7 +565,7 @@ Session Health:
 ```
 User: "Continue with development"
 
-Claude: [JCVD detects and repairs corrupted session]
+Claude: [CycleTime detects and repairs corrupted session]
 "I detected some issues with your session data and automatically repaired them:
 
 Repairs Applied:
@@ -582,7 +582,7 @@ you were working on PROJ-16 'API Endpoints' in the implementation stage."
 ```
 User: "Clear my current session and start fresh"
 
-Claude: [JCVD provides session control]
+Claude: [CycleTime provides session control]
 "I'll clear your current session and create a fresh one.
 
 Closing Session Summary:
@@ -601,7 +601,7 @@ Fresh session created. Would you like to:
 
 ### Automatic Session Cleanup
 
-JCVD performs hourly background cleanup to maintain system health:
+CycleTime performs hourly background cleanup to maintain system health:
 
 ```
 System: [Background cleanup process runs]
@@ -622,7 +622,7 @@ Sessions can be configured per project needs:
 ```
 User: "Configure longer session timeout for this project"
 
-Claude: [JCVD adjusts session configuration]
+Claude: [CycleTime adjusts session configuration]
 "I've updated the session configuration for your project:
 
 Session Configuration:
@@ -641,7 +641,7 @@ These settings will apply to all future sessions for this project."
 User: [Starts new Claude Code session]
 "Continue with my project work"
 
-Claude: [JCVD loads project state from issue tracker and docs]
+Claude: [CycleTime loads project state from issue tracker and docs]
 "Welcome back! You're working on the DevLog project.
 
 Current status:
@@ -664,7 +664,7 @@ Ready to continue with the middleware setup?"
 
 ### Context Recovery Details
 
-JCVD maintains comprehensive project context through:
+CycleTime maintains comprehensive project context through:
 
 **Issue Tracking State**
 

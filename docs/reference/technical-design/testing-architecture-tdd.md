@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the comprehensive testing architecture for JCVD, emphasizing Test-Driven Development (TDD) methodology with Ktor's `testApplication` framework and dependency injection overrides. The architecture ensures high-quality, maintainable code through systematic testing at all levels.
+This document outlines the comprehensive testing architecture for CycleTime, emphasizing Test-Driven Development (TDD) methodology with Ktor's `testApplication` framework and dependency injection overrides. The architecture ensures high-quality, maintainable code through systematic testing at all levels.
 
 ## Core Testing Principles
 

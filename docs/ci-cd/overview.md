@@ -2,7 +2,7 @@
 
 ## Overview
 
-JCVD employs a comprehensive CI/CD pipeline designed for maximum performance, reliability, and developer experience. The pipeline implements a **compile-first architecture** with intelligent caching, parallel execution, and smart build skipping to minimize feedback time and resource consumption.
+CycleTime employs a comprehensive CI/CD pipeline designed for maximum performance, reliability, and developer experience. The pipeline implements a **compile-first architecture** with intelligent caching, parallel execution, and smart build skipping to minimize feedback time and resource consumption.
 
 ## Pipeline Philosophy
 
@@ -240,7 +240,7 @@ cache-from: |
   type=gha,scope=docker-main
   type=gha,scope=docker-${{ github.ref_name }}
 cache-to: type=gha,mode=max,scope=docker-${{ github.ref_name }}
-outputs: type=docker,dest=/tmp/jcvd-image.tar
+outputs: type=docker,dest=/tmp/cycletime-image.tar
 ```
 
 **Outputs**:
@@ -268,7 +268,7 @@ outputs: type=docker,dest=/tmp/jcvd-image.tar
 **Performance Validation**:
 ```bash
 # Resource constraints applied during testing
-docker run --memory="512m" --cpus="1.0" jcvd:smoke-test
+docker run --memory="512m" --cpus="1.0" cycletime:smoke-test
 ```
 
 **Key Benefits**:
@@ -448,7 +448,7 @@ Ready for deployment: YES ✅
 
 ### Build Once, Test Everywhere Philosophy
 
-JCVD implements a sophisticated container image lifecycle that follows the "build once, test everywhere" principle to ensure consistency, performance, and reliability across all pipeline stages.
+CycleTime implements a sophisticated container image lifecycle that follows the "build once, test everywhere" principle to ensure consistency, performance, and reliability across all pipeline stages.
 
 #### Image Build and Artifact Flow
 
@@ -546,7 +546,7 @@ docker pull ghcr.io/spiralhouse/jcvd:sha-abc1234
 docker pull ghcr.io/spiralhouse/jcvd:v1.0.0
 
 # Running the container
-docker run -p 8080:8080 -e DATABASE_URL=jdbc:sqlite:/app/data/jcvd.db ghcr.io/spiralhouse/jcvd:latest
+docker run -p 8080:8080 -e DATABASE_URL=jdbc:sqlite:/app/data/cycletime.db ghcr.io/spiralhouse/jcvd:latest
 ```
 
 **Development Usage**:
@@ -773,7 +773,7 @@ GRADLE_OPTS="-Xmx3072m" ./gradlew test
 ```bash
 # Build locally with BuildKit
 export DOCKER_BUILDKIT=1
-docker build -t jcvd:test .
+docker build -t cycletime:test .
 
 # Check artifact availability
 ls -la build/libs/jcvd-server.jar
@@ -888,7 +888,7 @@ The `validate` job provides comprehensive performance reporting:
 # Comprehensive validation before push
 ./gradlew clean build                  # Full build + all tests
 ./gradlew buildStatus                  # Check optimization status
-docker build -t jcvd:test .          # Verify Docker build
+docker build -t cycletime:test .          # Verify Docker build
 ```
 
 ### CI Optimization Tips
@@ -905,7 +905,7 @@ This architecture provides a robust, performant, and maintainable CI/CD pipeline
 
 ### Overview
 
-JCVD implements automatic deployment to the dev environment through container tagging and external deployment system integration. This approach provides zero-configuration dev deployments while maintaining clear separation between CI/CD and deployment responsibilities.
+CycleTime implements automatic deployment to the dev environment through container tagging and external deployment system integration. This approach provides zero-configuration dev deployments while maintaining clear separation between CI/CD and deployment responsibilities.
 
 ### Deployment Architecture
 
@@ -978,7 +978,7 @@ Each container includes comprehensive deployment metadata in labels:
 ```yaml
 labels: |
   # Standard OCI labels
-  org.opencontainers.image.title=JCVD Server
+  org.opencontainers.image.title=CycleTime Server
   org.opencontainers.image.description=Project orchestration framework with MCP integration
   org.opencontainers.image.version=${{ version }}
   org.opencontainers.image.revision=${{ commit_sha }}
@@ -1029,8 +1029,8 @@ docker inspect ghcr.io/spiralhouse/jcvd:dev \
 
 ```bash
 # Run dev environment locally (matches external deployment)
-docker run -p 8080:8080 --name jcvd-dev \
-  -e DATABASE_URL=jdbc:sqlite:/app/data/jcvd.db \
+docker run -p 8080:8080 --name cycletime-dev \
+  -e DATABASE_URL=jdbc:sqlite:/app/data/cycletime.db \
   -v $(pwd)/dev-data:/app/data \
   ghcr.io/spiralhouse/jcvd:dev
 

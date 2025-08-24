@@ -1,6 +1,6 @@
 # Environment Protection Rules
 
-This document outlines how to configure GitHub environment protection rules for the JCVD container promotion workflow.
+This document outlines how to configure GitHub environment protection rules for the CycleTime container promotion workflow.
 
 ## Environment Configuration
 

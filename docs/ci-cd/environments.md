@@ -2,7 +2,7 @@
 
 ## Overview
 
-JCVD uses a continuous delivery pipeline with automatic deployments to development and manual approvals for staging and production.
+CycleTime uses a continuous delivery pipeline with automatic deployments to development and manual approvals for staging and production.
 
 ## Environment Hierarchy
 

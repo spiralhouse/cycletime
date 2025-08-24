@@ -107,6 +107,137 @@ CycleTime EE: Same core + provider interface for external integrations
 - Open core model (AGPL CE + proprietary EE extensions)
 - Dual licensing (AGPL default + commercial license)
 
+## Branding Guidelines
+
+### Product vs Edition Naming
+
+**CycleTime** (the product):
+- Use when referring to the overall product line or features common to both editions
+- Use in general value propositions and marketing messages
+- Use when describing the core functionality that both editions share
+- Examples:
+  - "CycleTime enables project orchestration through Claude Code"
+  - "The CycleTime dashboard provides real-time visibility"
+  - "Configure CycleTime for your workflow"
+
+**CycleTime CE** (Community Edition):
+- Use when specifically discussing the free, open-source edition
+- Use when highlighting CE-specific features or limitations
+- Use in download links, installation guides specific to CE
+- Examples:
+  - "CycleTime CE includes embedded issue tracking"
+  - "Download CycleTime CE for free"
+  - "CycleTime CE is perfect for solo developers"
+
+**CycleTime EE** (Enterprise Edition):
+- Use when discussing enterprise-specific features
+- Use in pricing discussions and enterprise sales materials
+- Use when describing integrations not available in CE
+- Examples:
+  - "CycleTime EE integrates with Linear and Jira"
+  - "Upgrade to CycleTime EE for team collaboration"
+  - "CycleTime EE includes priority support"
+
+### Technical Naming Conventions
+
+**Configuration & Data** (Shared between editions):
+```
+.cycletime/                 # Configuration directory (NOT .cycletime-ce)
+cycletime.db               # Database file (NOT cycletime-ce.db)
+cycletime.conf             # Configuration file
+```
+
+**Package Names** (Maintain for compatibility):
+```
+io.spiralhouse.jcvd        # Keep existing package structure for now
+```
+
+**Docker Images**:
+```
+cycletime:latest           # Latest stable release (defaults to CE)
+cycletime:ce               # Explicitly CE edition
+cycletime:ee               # Enterprise edition
+cycletime:2.0.0            # Specific version (defaults to CE)
+cycletime:2.0.0-ce         # Explicit CE version
+cycletime:2.0.0-ee         # Explicit EE version
+```
+
+**Binary & JAR Names**:
+```
+cycletime.jar              # Main executable (edition determined by license)
+cycletime-cli              # Command-line interface
+```
+
+### Documentation Guidelines
+
+**Page Titles**:
+- Use "CycleTime" for shared documentation
+- Add edition suffix only for edition-specific content
+- Examples:
+  - "CycleTime Installation Guide" (covers both)
+  - "CycleTime CE Quick Start" (CE-specific)
+  - "CycleTime EE Integration Guide" (EE-specific)
+
+**In-Text References**:
+- First mention: Use full name with edition if relevant
+- Subsequent mentions: Can use "CycleTime" alone if context is clear
+- Be explicit when features differ between editions
+
+**Correct Examples**:
+- "CycleTime provides project orchestration for Claude Code"
+- "Install CycleTime CE to get started with embedded issue tracking"
+- "CycleTime stores its configuration in the `.cycletime` directory"
+- "Both CycleTime CE and EE share the same core architecture"
+
+**Incorrect Examples**:
+- ❌ "CycleTime CE provides..." (when feature is in both editions)
+- ❌ "Install CycleTime CE EE" (confusing)
+- ❌ ".cycletime-ce directory" (breaks upgrade path)
+- ❌ "The CycleTime CE product" (redundant, use "CycleTime CE" alone)
+
+### Practical Application Examples
+
+**README.md Header**:
+```markdown
+# CycleTime
+
+Project orchestration framework for Claude Code, available in Community (CE) and Enterprise (EE) editions.
+```
+
+**Installation Section**:
+```markdown
+## Installation
+
+CycleTime can be installed via Docker, JAR, or from source:
+
+### Docker (Recommended)
+docker pull cycletime:latest  # Defaults to CE
+docker run -v ~/.cycletime:/root/.cycletime cycletime:latest
+
+### For Enterprise Edition
+Contact sales for EE license, then:
+docker pull cycletime:ee
+```
+
+**Feature Comparison Table**:
+```markdown
+| Feature | CycleTime CE | CycleTime EE |
+|---------|--------------|--------------|
+| Embedded Issue Tracking | ✓ | ✓ |
+| Claude Code MCP | ✓ | ✓ |
+| Linear Integration | - | ✓ |
+| Multi-team Support | - | ✓ |
+```
+
+**Error Messages**:
+```
+# When EE feature accessed without license:
+"Linear integration requires CycleTime EE. Upgrade at cycletime.dev/upgrade"
+
+# Generic errors (no edition mention):
+"Failed to connect to CycleTime database"
+```
+
 ## Technical Architecture
 
 ### Core Principles
@@ -114,13 +245,50 @@ CycleTime EE: Same core + provider interface for external integrations
 2. **Offline-capable**: Full functionality without internet
 3. **Provider-agnostic**: Unified interface across issue trackers
 4. **Progressive complexity**: Simple defaults, flexible when needed
+5. **Edition Compatibility**: Seamless upgrade path from CE to EE
+
+### Shared Architecture Model
+
+Both CycleTime CE and EE share the same core codebase with feature flags and licensing controlling available functionality:
+
+```
+CycleTime Core (Shared)
+├── Domain Layer           # Business logic (100% shared)
+├── Application Layer       # Use cases (100% shared)
+├── Infrastructure Layer    # Providers & integrations
+│   ├── Embedded H2        # Always available
+│   └── External Providers # EE-only (Linear, Jira, GitHub)
+├── MCP Layer              # Claude Code integration (100% shared)
+└── Configuration Layer     # Edition detection & feature flags
+```
 
 ### Technology Stack
-- **Backend**: JVM-based (Kotlin) for JCVD/CE
-- **Database**: Embedded H2 for CE, provider-based for EE
+- **Backend**: JVM-based (Kotlin) - single codebase for both editions
+- **Database**: Embedded H2 (always available) + external providers in EE
 - **MCP Integration**: stdio/HTTP transport for Claude Code
-- **Dashboard**: Web-based (planned)
+- **Dashboard**: Web-based (shared UI, features vary by edition)
 - **Testing**: Comprehensive unit and integration tests (96.91% domain coverage achieved)
+
+### Edition Detection & Feature Enablement
+
+```kotlin
+// Shared configuration approach
+class CycleTimeConfig {
+    val edition: Edition = detectEdition()  // CE or EE based on license
+    val features: Set<Feature> = edition.enabledFeatures()
+    val providers: List<IssueProvider> = loadProviders(edition)
+}
+
+// Feature flags control available functionality
+enum class Feature {
+    EMBEDDED_ISSUES,      // ✓ CE, ✓ EE
+    PROJECT_TEMPLATES,    // ✓ CE, ✓ EE
+    LINEAR_INTEGRATION,   // ✗ CE, ✓ EE
+    JIRA_INTEGRATION,     // ✗ CE, ✓ EE
+    MULTI_TEAM,          // ✗ CE, ✓ EE
+    AUDIT_LOGS,          // ✗ CE, ✓ EE
+}
+```
 
 ### Provider Architecture
 ```kotlin
@@ -130,23 +298,33 @@ interface IssueProvider {
     // ... other operations
 }
 
-// CE includes only:
+// Always available in both editions:
 class EmbeddedH2Provider : IssueProvider  // Zero configuration
 
-// EE adds:
-class LinearProvider : IssueProvider      // Requires API keys
-class JiraProvider : IssueProvider        // Requires API keys
-class GitHubProvider : IssueProvider      // Requires API keys
+// EE adds these via feature flags:
+class LinearProvider : IssueProvider      // Requires API keys + EE license
+class JiraProvider : IssueProvider        // Requires API keys + EE license
+class GitHubProvider : IssueProvider      // Requires API keys + EE license
 ```
+
+### Upgrade Path Architecture
+
+The architecture ensures zero-friction upgrade from CE to EE:
+
+1. **Shared Configuration**: `.cycletime/` directory used by both editions
+2. **Shared Database**: `cycletime.db` persists through upgrade
+3. **License Activation**: Drop in license file to enable EE features
+4. **No Migration Required**: EE features activate in-place
+5. **Graceful Degradation**: Remove license to revert to CE features
 
 ## Development Roadmap
 
 ### Current Sprint (August 2025)
 - [x] Complete SPI-346: Cross-session state persistence
-- [ ] Rebrand JCVD documentation to CycleTime CE
-- [ ] Consolidate Linear projects (rename JCVD → CycleTime CE)
+- [x] Create STRATEGY.md to capture decisions
+- [ ] Update documentation following branding guidelines
+- [ ] Consolidate Linear projects (rename JCVD → CycleTime)
 - [ ] Continue Phase 1 MVP development
-- [ ] Create STRATEGY.md to capture decisions
 
 ### Phase 1: Core MCP Server with Dashboard (September 2025)
 **Goal**: Basic functionality with observability
@@ -212,16 +390,41 @@ cycletime/               # Empty shell
 └── docs/PRD.md         # Documentation only
 ```
 
-**Target State**:
+**Target State** (Single Codebase Model):
 ```
 cycletime/               # Renamed from jcvd
-├── ce/                  # Current JCVD code
-├── ee/                  # Future enterprise features
-├── shared/              # Common components
+├── src/                 # Shared codebase (not split by edition)
+│   ├── domain/         # Core business logic (100% shared)
+│   ├── application/    # Use cases (100% shared)
+│   ├── infrastructure/ # Providers (feature-flagged)
+│   └── mcp/           # MCP integration (100% shared)
+├── config/
+│   └── editions.conf   # Edition feature definitions
 └── docs/
-    ├── ce/             # CE documentation
-    └── ee/             # EE documentation
+    ├── shared/         # Documentation for both editions
+    ├── ce/            # CE-specific documentation
+    └── ee/            # EE-specific documentation
 ```
+
+**Important**: We maintain a single codebase with feature flags, NOT separate directories for CE/EE code. This ensures maximum code reuse and simplifies maintenance.
+
+### Configuration & Data Migration
+
+**Shared Infrastructure** (Both editions use the same):
+```
+~/.cycletime/           # User configuration directory
+├── cycletime.conf      # Main configuration
+├── cycletime.db        # Embedded database (H2)
+├── license.key         # EE license file (if present)
+└── providers/          # External provider configs (EE)
+```
+
+**Upgrade Path from CE to EE**:
+1. User installs CycleTime (defaults to CE functionality)
+2. User adds `license.key` to `.cycletime/` directory
+3. System detects license and enables EE features
+4. Existing data and configuration remain intact
+5. No migration scripts or data conversion required
 
 ### Linear Project Organization
 
@@ -230,16 +433,17 @@ cycletime/               # Renamed from jcvd
 - CycleTime project (planning only)
 
 **Target**:
-- Single "CycleTime CE" project (renamed from JCVD)
+- Single "CycleTime" project (renamed from JCVD, not "CycleTime CE")
 - Archive original CycleTime project
 - All issues consolidated with history preserved
+- Use labels to distinguish CE vs EE features
 
 ### Branding Timeline
 
-1. **Week 1**: Documentation uses "CycleTime CE" 
-2. **Week 2**: Linear project renamed
+1. **Week 1**: Documentation updated with branding guidelines
+2. **Week 2**: Linear project renamed to "CycleTime" 
 3. **Week 4**: GitHub repo renamed (after MVP)
-4. **Week 6**: Public announcement of CycleTime CE
+4. **Week 6**: Public announcement of CycleTime with CE/EE editions
 
 ## Business Model
 

@@ -1,6 +1,6 @@
 # Claude Code Configuration Structure
 
-This directory contains configuration files for Claude Code integration with the JCVD project.
+This directory contains configuration files for Claude Code integration with the CycleTime project.
 
 ## Directory Structure
 

@@ -1,12 +1,14 @@
-# JCVD - Context Management for Claude Code
+# CycleTime - Context Management for Claude Code
 
-[![Build Status](https://github.com/spiralhouse/jcvd/actions/workflows/cicd.yml/badge.svg)](https://github.com/spiralhouse/jcvd/actions/workflows/cicd.yml)
-[![codecov](https://codecov.io/gh/spiralhouse/jcvd/graph/badge.svg?token=Rz1p5Wx0O8)](https://codecov.io/gh/spiralhouse/jcvd)
+*Community Edition*
+
+[![Build Status](https://github.com/spiralhouse/cycletime/actions/workflows/cicd.yml/badge.svg)](https://github.com/spiralhouse/cycletime/actions/workflows/cicd.yml)
+[![codecov](https://codecov.io/gh/spiralhouse/cycletime/graph/badge.svg?token=Rz1p5Wx0O8)](https://codecov.io/gh/spiralhouse/cycletime)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Kotlin](https://img.shields.io/badge/kotlin-2.0.21-7F52FF.svg?logo=kotlin)](https://kotlinlang.org/)
 [![Gradle](https://img.shields.io/badge/gradle-9.0-02303A.svg?logo=gradle)](https://gradle.org/)
 
-JCVD provides structured context management for Claude Code, solving the fundamental challenge of maintaining project continuity across sessions. It preserves your project state, tracks dependencies, and maintains decision history through an embedded H2 database accessible via MCP (Model Context Protocol), enabling you to resume work exactly where you left off.
+CycleTime provides structured context management for Claude Code, solving the fundamental challenge of maintaining project continuity across sessions. It preserves your project state, tracks dependencies, and maintains decision history through an embedded H2 database accessible via MCP (Model Context Protocol), enabling you to resume work exactly where you left off.
 
 ## Key Capabilities
 
@@ -19,7 +21,7 @@ JCVD provides structured context management for Claude Code, solving the fundame
 
 ## Who Benefits
 
-JCVD is designed for developers using Claude Code who:
+CycleTime is designed for developers using Claude Code who:
 - Work on multi-file projects requiring context across sessions
 - Need to track complex dependencies and decision rationale
 - Want systematic project organization without manual documentation overhead
@@ -27,17 +29,17 @@ JCVD is designed for developers using Claude Code who:
 
 ## Prerequisites
 
-- Docker (for running JCVD)
+- Docker (for running CycleTime)
 - Java 21 or later (only for contributors building from source)
 
 ## Quick Start
 
-### Running JCVD
+### Running CycleTime
 
 ```bash
 # Pull and run the latest version
-docker pull ghcr.io/spiralhouse/jcvd:latest
-docker run -p 8080:8080 ghcr.io/spiralhouse/jcvd:latest
+docker pull ghcr.io/spiralhouse/cycletime:latest
+docker run -p 8080:8080 ghcr.io/spiralhouse/cycletime:latest
 
 # Server starts on http://localhost:8080
 ```
@@ -48,8 +50,8 @@ For contributors who want to test changes locally:
 
 ```bash
 # Clone repository
-git clone https://github.com/spiralhouse/jcvd.git
-cd jcvd
+git clone https://github.com/spiralhouse/cycletime.git
+cd cycletime
 
 # Build and run with Gradle (requires Java 21+)
 ./gradlew run
@@ -57,9 +59,9 @@ cd jcvd
 
 ### Claude Code Integration
 
-**JCVD extends Claude Code with persistent context management through MCP:**
+**CycleTime extends Claude Code with persistent context management through MCP:**
 
-When integrated with Claude Code, JCVD enables:
+When integrated with Claude Code, CycleTime enables:
 - **Persistent Project Context** - Your project state survives between Claude Code sessions
 - **Intelligent Task Recommendations** - Claude Code understands your project dependencies and suggests next steps
 - **Structured Workflow Management** - Track issues, milestones, and decisions systematically
@@ -107,8 +109,8 @@ Contributors need Java 21+ installed for local development:
 
 ```bash
 # Fork and clone your fork
-git clone https://github.com/YOUR_USERNAME/jcvd.git
-cd jcvd
+git clone https://github.com/YOUR_USERNAME/cycletime.git
+cd cycletime
 
 # Create feature branch
 git checkout -b feat/your-feature
@@ -141,7 +143,7 @@ This project is licensed under the AGPL v3 License. See [LICENSE](LICENSE) for d
 
 ## Resources
 
-- [Documentation](https://github.com/spiralhouse/jcvd/tree/main/docs)
-- [Issues](https://github.com/spiralhouse/jcvd/issues)
-- [Discussions](https://github.com/spiralhouse/jcvd/discussions)
-- [Releases](https://github.com/spiralhouse/jcvd/releases)
+- [Documentation](https://github.com/spiralhouse/cycletime/tree/main/docs)
+- [Issues](https://github.com/spiralhouse/cycletime/issues)
+- [Discussions](https://github.com/spiralhouse/cycletime/discussions)
+- [Releases](https://github.com/spiralhouse/cycletime/releases)

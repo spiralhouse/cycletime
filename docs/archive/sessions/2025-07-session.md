@@ -1,4 +1,4 @@
-# JCVD Development Session Summary
+# CycleTime Development Session Summary
 
 **Date:** July 30, 2025  
 **Session Duration:** Extended strategic planning and architecture session  
@@ -6,7 +6,7 @@
 
 ## Session Overview
 
-This session focused on refining JCVD's architecture and user experience design,
+This session focused on refining CycleTime's architecture and user experience design,
 with significant pivots based on feasibility analysis and architectural
 insights. The key transformation was moving from Linear-first to embedded
 SQLite-first approach with comprehensive multi-provider support.
@@ -16,7 +16,7 @@ SQLite-first approach with comprehensive multi-provider support.
 ### 1. Multi-Provider Architecture Revolution
 
 **Decision:** Implement provider-agnostic issue tracking architecture with
-embedded SQLite as default **Impact:** Transforms JCVD from Linear-dependent to
+embedded SQLite as default **Impact:** Transforms CycleTime from Linear-dependent to
 truly standalone framework
 
 **Before:** Linear required for all functionality **After:** Full offline
@@ -225,7 +225,7 @@ interface IssueProvider {
 
 **Strategic Positioning:**
 
-- JCVD positioned as comprehensive project orchestration platform
+- CycleTime positioned as comprehensive project orchestration platform
 - Embedded SQLite as recommended starting point
 - Linear as important but optional enhancement
 - Future providers (GitHub Issues, Jira) treated as equals
@@ -321,7 +321,7 @@ interface IssueProvider {
 
 ## Conclusion
 
-This session successfully transformed JCVD from a simple Linear integration into
+This session successfully transformed CycleTime from a simple Linear integration into
 a comprehensive, provider-agnostic project orchestration platform. The key
 insight was recognizing that **local-first development with embedded SQLite
 provides more immediate value than cloud-first approaches**, while maintaining

@@ -1,11 +1,11 @@
-# JCVD Documentation
+# CycleTime Documentation
 
-Welcome to the JCVD documentation! This guide will help you navigate through all available documentation.
+Welcome to the CycleTime documentation! This guide will help you navigate through all available documentation.
 
 ## 📚 Documentation Structure
 
 ### [Getting Started](getting-started/)
-Quick guides to get you up and running with JCVD.
+Quick guides to get you up and running with CycleTime.
 
 - [Installation Guide](getting-started/installation.md) - System requirements and installation
 - [Quick Start](getting-started/quick-start.md) - Get running in 5 minutes
@@ -13,7 +13,7 @@ Quick guides to get you up and running with JCVD.
 - [Onboarding](getting-started/onboarding.md) - New project integration
 
 ### [Development](development/)
-Everything you need for developing with JCVD.
+Everything you need for developing with CycleTime.
 
 - [Development Setup](development/setup.md) - IDE configuration and workflows
 - [Project Structure](development/project-structure.md) - Code organization
@@ -128,6 +128,6 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines on improving documentat
 
 ## 🆘 Need Help?
 
-- [GitHub Issues](https://github.com/spiralhouse/jcvd/issues) - Report problems
-- [Discussions](https://github.com/spiralhouse/jcvd/discussions) - Ask questions
+- [GitHub Issues](https://github.com/spiralhouse/cycletime/issues) - Report problems
+- [Discussions](https://github.com/spiralhouse/cycletime/discussions) - Ask questions
 - [Quick Start](getting-started/quick-start.md) - Get started quickly

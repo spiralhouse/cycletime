@@ -2,7 +2,7 @@
 
 ## Environment Variables
 
-JCVD uses environment variables for configuration. All settings have sensible defaults for development.
+CycleTime uses environment variables for configuration. All settings have sensible defaults for development.
 
 ### Core Settings
 
@@ -10,7 +10,7 @@ JCVD uses environment variables for configuration. All settings have sensible de
 |----------|---------|-------------|
 | `PORT` | `8080` | Server port |
 | `HOST` | `0.0.0.0` | Server host |
-| `DATABASE_URL` | `jdbc:sqlite:jcvd.db` | Database connection string |
+| `DATABASE_URL` | `jdbc:sqlite:cycletime.db` | Database connection string |
 | `DATABASE_LOGGING` | `false` | Enable SQL query logging |
 | `LOG_LEVEL` | `INFO` | Logging level (DEBUG, INFO, WARN, ERROR) |
 
@@ -58,7 +58,7 @@ Create a `.env` file for Docker:
 
 ```env
 PORT=8080
-DATABASE_URL=jdbc:sqlite:/data/jcvd.db
+DATABASE_URL=jdbc:sqlite:/data/cycletime.db
 LOG_LEVEL=INFO
 ```
 
@@ -79,7 +79,7 @@ services:
 
 ### SQLite (Default)
 ```bash
-DATABASE_URL=jdbc:sqlite:jcvd.db
+DATABASE_URL=jdbc:sqlite:cycletime.db
 ```
 
 ### H2 (In-Memory)

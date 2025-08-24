@@ -1,8 +1,8 @@
-# JCVD Project Structure
+# CycleTime Project Structure
 
 ## Overview
 
-This document defines the repository structure for JCVD, a **simplified data and
+This document defines the repository structure for CycleTime, a **simplified data and
 context provider** for Claude Code project management. The system provides
 structured project data, dependency tracking, and cross-session continuity
 through embedded database (currently SQLite, migrating to H2) and MCP Resource integration.
@@ -24,7 +24,7 @@ jcvd/                                    # Root project directory
 ├── gradlew                              # Gradle wrapper script (Unix)
 ├── gradlew.bat                          # Gradle wrapper script (Windows)
 ├── Dockerfile                           # Docker container definition
-├── jcvd.db                             # SQLite database file (auto-created)
+├── cycletime.db                     # SQLite database file (auto-created)
 ├── .gitignore                           # Git ignore patterns
 ├── .editorconfig                        # Editor configuration
 │
@@ -278,10 +278,10 @@ import io.ktor.server.di.*
 
 ```bash
 # Build Docker image
-docker build -t jcvd-kotlin .
+docker build -t cycletime-kotlin .
 
 # Run container
-docker run -p 8080:8080 jcvd-kotlin
+docker run -p 8080:8080 cycletime-kotlin
 ```
 
 ## Database Architecture
@@ -291,7 +291,7 @@ docker run -p 8080:8080 jcvd-kotlin
 - **Embedded database** for zero-dependency operation
 - **Exposed DSL** for type-safe queries
 - **HikariCP** connection pooling
-- **File-based persistence** at `jcvd.db`
+- **File-based persistence** at `cycletime.db`
 
 ### Future: H2 Database (SPI-439)
 
@@ -342,7 +342,7 @@ The migration from TypeScript to Kotlin provides:
 
 ## Scope Boundaries
 
-### ✅ What JCVD Does
+### ✅ What CycleTime Does
 
 - **Data Storage**: Embedded database for project data
 - **Context Provision**: MCP Resources exposing project information
@@ -350,7 +350,7 @@ The migration from TypeScript to Kotlin provides:
 - **State Persistence**: Cross-session continuity
 - **Type Safety**: Strong typing throughout the application
 
-### ❌ What JCVD Does NOT Do
+### ❌ What CycleTime Does NOT Do
 
 - **Complex Analysis**: No LLM-powered analysis or recommendations
 - **Agent Coordination**: No multi-agent orchestration
@@ -407,6 +407,6 @@ src/test/kotlin/io/spiralhouse/jcvd/
 - **Performance optimizations** for larger projects
 - **Streaming updates** via Server-Sent Events
 
-This structure supports JCVD's vision as a **focused, reliable data and context
+This structure supports CycleTime's vision as a **focused, reliable data and context
 provider** built with Domain-Driven Design principles, providing a solid foundation
 for future growth while maintaining simplicity and type safety through Kotlin/JVM.

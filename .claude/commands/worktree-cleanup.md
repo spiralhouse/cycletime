@@ -21,11 +21,11 @@ but the user executes the cleanup commands manually for safety.
 # List all git worktrees
 git worktree list
 
-# Check contents of .jcvd/worktrees directory
-find .jcvd/worktrees -type d -name ".git" -exec dirname {} \;
+# Check contents of .cycletime-ce/worktrees directory
+find .cycletime-ce/worktrees -type d -name ".git" -exec dirname {} \;
 
 # Show age and activity of each worktree
-for dir in .jcvd/worktrees/*/; do
+for dir in .cycletime-ce/worktrees/*/; do
   if [ -d "$dir" ]; then
     echo "=== $dir ==="
     echo "Created: $(stat -c %y "$dir" 2>/dev/null || stat -f %SB "$dir")"
@@ -80,7 +80,7 @@ git log -1 --format="%cr" HEAD
 
 ```bash
 # Remove worktree (safe - branch is merged)
-git worktree remove .jcvd/worktrees/developer-task-123
+git worktree remove .cycletime-ce/worktrees/developer-task-123
 
 # Clean up merged branch
 git branch -d feature/developer/task-123
@@ -90,10 +90,10 @@ git branch -d feature/developer/task-123
 
 ```bash
 # Backup first (optional but recommended)
-cp -r .jcvd/worktrees/abandoned-task-456 /tmp/backup-abandoned-task-456
+cp -r .cycletime-ce/worktrees/abandoned-task-456 /tmp/backup-abandoned-task-456
 
 # Force remove worktree
-git worktree remove --force .jcvd/worktrees/abandoned-task-456
+git worktree remove --force .cycletime-ce/worktrees/abandoned-task-456
 
 # Delete unmerged branch (careful!)
 git branch -D feature/abandoned/task-456
@@ -103,11 +103,11 @@ git branch -D feature/abandoned/task-456
 
 ```bash
 # Create archive of unmerged work
-mkdir -p .jcvd/archives
-tar -czf .jcvd/archives/task-456-$(date +%Y%m%d).tar.gz .jcvd/worktrees/abandoned-task-456
+mkdir -p .cycletime-ce/archives
+tar -czf .cycletime-ce/archives/task-456-$(date +%Y%m%d).tar.gz .cycletime-ce/worktrees/abandoned-task-456
 
 # Then remove worktree
-git worktree remove .jcvd/worktrees/abandoned-task-456
+git worktree remove .cycletime-ce/worktrees/abandoned-task-456
 ```
 
 ### 5. Batch Cleanup
@@ -116,7 +116,7 @@ For multiple worktrees:
 
 ```bash
 # Clean all merged worktrees
-for worktree in .jcvd/worktrees/*/; do
+for worktree in .cycletime-ce/worktrees/*/; do
   branch=$(cd "$worktree" && git branch --show-current)
   if git branch --merged main | grep -q "$branch"; then
     echo "Cleaning merged worktree: $worktree ($branch)"
@@ -170,7 +170,7 @@ done
 
 ```bash
 # Clean merged developer worktree
-git worktree remove .jcvd/worktrees/developer-auth-123
+git worktree remove .cycletime-ce/worktrees/developer-auth-123
 git branch -d feature/developer/auth-implementation
 ```
 
@@ -178,8 +178,8 @@ git branch -d feature/developer/auth-implementation
 
 ```bash
 # Backup before cleaning qa worktree
-cp -r .jcvd/worktrees/qa-auth-123 /tmp/backup-qa-auth-123
-git worktree remove --force .jcvd/worktrees/qa-auth-123
+cp -r .cycletime-ce/worktrees/qa-auth-123 /tmp/backup-qa-auth-123
+git worktree remove --force .cycletime-ce/worktrees/qa-auth-123
 # Branch feature/qa/auth-testing will be preserved
 ```
 

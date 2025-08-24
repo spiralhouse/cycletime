@@ -19,13 +19,13 @@
 
 ## Docker & Deployment
 
-- `docker build -t jcvd-kotlin .` - Build Docker container
-- `docker run -p 8080:8080 jcvd-kotlin` - Run Docker container
+- `docker build -t cycletime-ce .` - Build Docker container
+- `docker run -p 8080:8080 cycletime-ce` - Run Docker container
 - `./gradlew installDist` - Install distribution locally
 
 ## Database Management
 
-- Database file location: `jcvd.db` (SQLite, auto-created on first run)
+- Database file location: `cycletime-ce.db` (SQLite, auto-created on first run)
 - Future H2 migration: Will use in-memory or file-based H2 database
 
 ## Commit Message Validation

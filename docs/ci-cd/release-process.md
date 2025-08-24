@@ -2,7 +2,7 @@
 
 ## Overview
 
-JCVD uses Git.SemVersioning for automatic semantic versioning based on conventional commits, combined with a Continuous Delivery pipeline that makes every commit to main production-ready.
+CycleTime uses Git.SemVersioning for automatic semantic versioning based on conventional commits, combined with a Continuous Delivery pipeline that makes every commit to main production-ready.
 
 ## Version Management
 

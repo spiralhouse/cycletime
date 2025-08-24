@@ -3,7 +3,7 @@
 ## Prerequisites
 
 ### Java 21
-JCVD requires Java 21 or later. We recommend using SDKMAN for managing Java versions.
+CycleTime requires Java 21 or later. We recommend using SDKMAN for managing Java versions.
 
 ```bash
 # Install SDKMAN (if not already installed)
@@ -30,8 +30,8 @@ java -version
 ## Clone Repository
 
 ```bash
-git clone https://github.com/spiralhouse/jcvd.git
-cd jcvd
+git clone https://github.com/spiralhouse/cycletime.git
+cd cycletime
 
 # Make Gradle wrapper executable
 chmod +x gradlew
@@ -53,10 +53,10 @@ If you prefer using Docker:
 
 ```bash
 # Build container
-docker build -t jcvd .
+docker build -t cycletime .
 
 # Run container
-docker run -p 8080:8080 jcvd
+docker run -p 8080:8080 cycletime
 ```
 
 ## Next Steps
