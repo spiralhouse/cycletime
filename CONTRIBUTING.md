@@ -37,7 +37,7 @@ Thank you for your interest in contributing to CycleTime CE! This document provi
 
 ## Commit Message Guidelines
 
-CycleTime CE uses [Conventional Commits](https://conventionalcommits.org/) specification to enable automated changelog generation and semantic versioning through [Release Please](https://github.com/googleapis/release-please).
+CycleTime CE uses [Conventional Commits](https://conventionalcommits.org/) specification to enable automatic semantic versioning through Git.SemVersioning plugin.
 
 ### Format
 
@@ -196,14 +196,14 @@ Understanding how your commits affect releases:
 | `BREAKING CHANGE:` | MAJOR (X.0.0) | Breaking change | `feat!: redesign API endpoints` |
 | `docs:`, `style:`, `test:` | None | No release | Documentation/test updates |
 
-### How Releases Work
+### How Versioning Works
 
-**Automatic Release Process:**
-1. **Commit Analysis**: Release Please scans all commits since the last release
-2. **Version Calculation**: Determines next version based on commit types above
-3. **Release PR**: Creates PR with updated version and generated changelog
-4. **Manual Review**: Team reviews and approves release PR
-5. **Automated Release**: Merging release PR triggers full release pipeline
+**Automatic Versioning Process:**
+1. **Commit Analysis**: Git.SemVersioning scans all commits since the last version
+2. **Version Calculation**: Automatically determines next version based on commit types above
+3. **Continuous Delivery**: Every merge to main is production-ready and deployable
+4. **Container Publishing**: Automatic container publishing with appropriate tags
+5. **No Manual Releases**: Versions are calculated at build time, no release PRs needed
 
 **What Gets Released:**
 - 📦 JAR archive with all dependencies
@@ -339,18 +339,18 @@ docker build -t cycletime-ce:dev .
 
 ## Release Process
 
-CycleTime CE uses a fully automated release process via [Release Please](https://github.com/googleapis/release-please) with comprehensive quality gates and multi-format artifact distribution.
+CycleTime CE uses a continuous delivery approach with Git.SemVersioning plugin for automatic version calculation and comprehensive quality gates.
 
-### Complete Release Pipeline
+### Complete Build Pipeline
 
 1. **Development**: Feature branches with conventional commits
 2. **Pull Request**: Automated validation (tests, linting, security scans)
-3. **Merge to Main**: Triggers Release Please analysis
-4. **Release PR Generation**: Automated version bump and changelog
-5. **Release Review**: Manual approval of generated release PR
-6. **Release Execution**: Full automated pipeline on release PR merge
+3. **Merge to Main**: Triggers automatic build and versioning
+4. **Version Calculation**: Git.SemVersioning determines version from commits
+5. **Automatic Deployment**: Container published to registry, deployed to dev environment
+6. **No Release PRs**: Continuous delivery without manual release approval steps
 
-### What Happens During a Release
+### What Happens During a Build
 
 **Automated Pipeline Execution:**
 - 🔨 **Artifact Building**: JAR, native image, container image
@@ -360,7 +360,7 @@ CycleTime CE uses a fully automated release process via [Release Please](https:/
 - 🔐 **Security**: SHA256 checksums and artifact attestation
 - ⚡ **Performance**: Optimized builds with comprehensive caching
 
-**Release Artifacts Generated:**
+**Build Artifacts Generated:**
 - `cycletime-ce-X.Y.Z.jar` - Executable JAR with all dependencies (~50-80MB)
 - `cycletime-ce-X.Y.Z-native` - GraalVM native binary (~30-50MB, experimental)
 - `ghcr.io/spiralhouse/jcvd:X.Y.Z` - Production container image (~200MB)
@@ -405,7 +405,7 @@ ghcr.io/spiralhouse/jcvd:latest
 - Can bypass normal review cycle for severity 1 issues
 - Immediate container publication for urgent fixes
 
-For detailed release procedures, rollback strategies, and emergency protocols, see [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
+For detailed CI/CD procedures, deployment strategies, and versioning information, see [docs/ci-cd/release-process.md](docs/ci-cd/release-process.md) and [docs/ci-cd/versioning.md](docs/ci-cd/versioning.md).
 
 ## Getting Help
 
