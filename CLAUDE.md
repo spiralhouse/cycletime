@@ -69,25 +69,25 @@ work directly unless otherwise instructed to.
 
 ## Documentation Structure
 
-**📋 Business Requirements (docs/PRD.md)**
+**📋 Business Requirements (docs/reference/PRD.md)**
 
 - Product vision, target users, and core functional requirements
 - Success metrics and implementation roadmap
 - Developer experience philosophy
 
-**🏗️ Technical Architecture (docs/ARCHITECTURE.md)**
+**🏗️ Technical Architecture (docs/architecture/overview.md)**
 
 - Multi-provider architecture with embedded SQLite foundation
 - Database schemas, provider interfaces, and system components
 - Integration patterns with Claude Code MCP framework
 
-**👤 User Experience (docs/USER_EXPERIENCE.md)**
+**👤 User Experience (docs/reference/user-experience.md)**
 
 - Complete setup workflows and daily development experience
 - Provider selection flows and cross-session continuity patterns
 - Task orchestration and project structure creation
 
-**🚀 Project Integration (docs/ONBOARDING.md)**
+**🚀 Project Integration (docs/getting-started/onboarding.md)**
 
 - Onboarding strategies for new and existing projects
 - Integration approaches based on project size and complexity
@@ -95,11 +95,10 @@ work directly unless otherwise instructed to.
 
 **Implementation Guidelines:**
 
-- Follow the provider-agnostic architecture patterns from ARCHITECTURE.md
-- Use the multi-layer state management approach (embedded SQLite → cloud
-  providers)
-- Implement user workflows as specified in USER_EXPERIENCE.md
-- Design with the developer experience philosophy from PRD.md
+- Follow the provider-agnostic architecture patterns from docs/architecture/overview.md
+- Use the multi-layer state management approach (embedded SQLite → cloud providers)
+- Implement user workflows as specified in docs/reference/user-experience.md
+- Design with the developer experience philosophy from docs/reference/PRD.md
 
 ## Linear Reference
 
