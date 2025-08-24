@@ -1,4 +1,4 @@
-# CycleTime CE Scope Limitations and Boundaries
+# CycleTime Scope Limitations and Boundaries
 
 **Version:** 1.0  
 **Date:** August 1, 2025  
@@ -12,17 +12,17 @@
 
 ## Purpose
 
-This document establishes clear boundaries for CycleTime CE's scope to prevent
-over-engineering and maintain focus on the core value proposition. CycleTime CE is a
+This document establishes clear boundaries for CycleTime's scope to prevent
+over-engineering and maintain focus on the core value proposition. CycleTime is a
 **data and context provider** for Claude Code, not a comprehensive project
 management platform.
 
 ## Core Principle
 
-**CycleTime CE enhances Claude Code's existing capabilities rather than replacing
+**CycleTime enhances Claude Code's existing capabilities rather than replacing
 them.**
 
-## What CycleTime CE Does
+## What CycleTime Does
 
 ### ✅ **Core Functionality (In Scope)**
 
@@ -67,7 +67,7 @@ them.**
 - Basic validation of issue hierarchy constraints
 - Template expansion for common project types
 
-## What CycleTime CE Does NOT Do
+## What CycleTime Does NOT Do
 
 ### ❌ **Complex Analysis and Intelligence (Out of Scope)**
 
@@ -296,7 +296,7 @@ other providers."
 
 ## Maintaining Focus
 
-CycleTime CE's value comes from **doing a few things extremely well** rather than
+CycleTime's value comes from **doing a few things extremely well** rather than
 attempting to be a comprehensive solution:
 
 1. **Structured Data Storage**: Reliable, fast H2-based storage
@@ -304,6 +304,6 @@ attempting to be a comprehensive solution:
 3. **Cross-Session Continuity**: Seamless project state recovery
 4. **Simple Operations**: Basic CRUD with validation and dependency tracking
 
-By maintaining these boundaries, CycleTime CE remains a focused, reliable tool that
+By maintaining these boundaries, CycleTime remains a focused, reliable tool that
 enhances Claude Code's capabilities without competing with them or introducing
 unnecessary complexity.

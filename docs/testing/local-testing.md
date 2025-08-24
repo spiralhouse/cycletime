@@ -64,7 +64,7 @@ GRADLE_OPTS="-Dorg.gradle.daemon=false" ./gradlew test
 
 ```bash
 # Build Docker image locally
-docker build -t cycletime-ce:test .
+docker build -t cycletime:test .
 
 # Run smoke tests locally
 docker-compose -f docker-compose.test.yml up --abort-on-container-exit
@@ -127,7 +127,7 @@ When CI fails but local tests pass:
 # Before pushing, run these locally:
 ./gradlew clean build                    # Full build and test
 ./gradlew buildStatus                     # Check build configuration
-docker build -t cycletime-ce:test .       # Verify Docker build
+docker build -t cycletime:test .       # Verify Docker build
 act --dryrun                             # Validate workflow syntax
 ```
 

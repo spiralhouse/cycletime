@@ -134,7 +134,7 @@ For the best development experience, use multiple terminals:
 docker-compose -f docker-compose.dev.yml up
 
 # Services available:
-# • CycleTime CE Server: http://localhost:8080
+# • CycleTime Server: http://localhost:8080
 # • Health Check: http://localhost:8080/health  
 ```
 

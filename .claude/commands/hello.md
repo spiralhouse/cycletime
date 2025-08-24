@@ -1,6 +1,6 @@
 # Hello World Test Command
 
-Hello from CycleTime CE! This is a test slash command.
+Hello from CycleTime! This is a test slash command.
 
 ## Current Status
 
@@ -10,7 +10,7 @@ Hello from CycleTime CE! This is a test slash command.
 
 ## Test Message
 
-🚀 CycleTime CE slash command is working! This demonstrates that we can create custom
+🚀 CycleTime slash command is working! This demonstrates that we can create custom
 commands for workflow orchestration.
 
 This could be extended to:

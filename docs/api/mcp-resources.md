@@ -1,4 +1,4 @@
-# CycleTime CE MCP Resources Specification
+# CycleTime MCP Resources Specification
 
 **Version:** 1.0  
 **Date:** August 1, 2025  
@@ -12,14 +12,14 @@
 
 ## Overview
 
-This document specifies how CycleTime CE integrates with Claude Code through the Model
-Context Protocol (MCP). CycleTime CE serves as a **data and context provider** that
+This document specifies how CycleTime integrates with Claude Code through the Model
+Context Protocol (MCP). CycleTime serves as a **data and context provider** that
 exposes structured project information to Claude Code agents through MCP
 Resources and Tools.
 
 ## Architecture Pattern
 
-CycleTime CE follows the **Context Provider Pattern** for Claude Code integration:
+CycleTime follows the **Context Provider Pattern** for Claude Code integration:
 
 1. **Data Storage**: Embedded H2 database stores project data locally
 2. **Context Provision**: MCP Resources expose structured project context
@@ -31,7 +31,7 @@ CycleTime CE follows the **Context Provider Pattern** for Claude Code integratio
 
 ### Project Context Resource
 
-**Resource URI**: `cycletime-ce://project/{projectId}/context`
+**Resource URI**: `cycletime://project/{projectId}/context`
 
 **Purpose**: Provides comprehensive project context for Claude Code analysis and
 task recommendations.
@@ -73,13 +73,13 @@ task recommendations.
 ```
 User: "What should I work on next?"
 
-Claude Code: [Accesses cycletime-ce://project/proj_123/context]
+Claude Code: [Accesses cycletime://project/proj_123/context]
 "Based on your project context, I see you have 8 unblocked issues. The user authentication system was just completed, so I recommend working on the next logical task: implementing the content management core (issue #457), which is now unblocked."
 ```
 
 ### Unblocked Tasks Resource
 
-**Resource URI**: `cycletime-ce://project/{projectId}/tasks/unblocked`
+**Resource URI**: `cycletime://project/{projectId}/tasks/unblocked`
 
 **Purpose**: Lists all issues that have no blocking dependencies and are ready
 for work.
@@ -123,7 +123,7 @@ for work.
 
 ### Dependency Graph Resource
 
-**Resource URI**: `cycletime-ce://project/{projectId}/dependencies`
+**Resource URI**: `cycletime://project/{projectId}/dependencies`
 
 **Purpose**: Exposes issue relationships and dependencies for Claude Code's
 analysis.
@@ -167,7 +167,7 @@ analysis.
 
 ### Issue Hierarchy Resource
 
-**Resource URI**: `cycletime-ce://project/{projectId}/hierarchy`
+**Resource URI**: `cycletime://project/{projectId}/hierarchy`
 
 **Purpose**: Provides Epic → Story → Subtask structure for project organization
 understanding.
@@ -206,7 +206,7 @@ understanding.
 
 #### Create Issue Tool
 
-**Tool Name**: `cycletime_ce_create_issue`
+**Tool Name**: `cycletime_create_issue`
 
 **Purpose**: Creates new issues with proper hierarchy and validation.
 
@@ -226,10 +226,10 @@ understanding.
 **Example Usage**:
 
 ```
-Claude Code: [Uses cycletime_ce_create_issue tool]
+Claude Code: [Uses cycletime_create_issue tool]
 "I'll create a new story for implementing the search functionality:
 
-Tool: cycletime_ce_create_issue
+Tool: cycletime_create_issue
 Parameters: {
   "title": "Implement search functionality",
   "description": "Add search capability for user content",
@@ -243,7 +243,7 @@ Story created successfully! This is now unblocked and ready for development."
 
 #### Update Issue Status Tool
 
-**Tool Name**: `cycletime_ce_update_issue_status`
+**Tool Name**: `cycletime_update_issue_status`
 
 **Purpose**: Updates issue status with dependency checking.
 
@@ -258,7 +258,7 @@ Story created successfully! This is now unblocked and ready for development."
 
 #### Add Dependency Tool
 
-**Tool Name**: `cycletime_ce_add_dependency`
+**Tool Name**: `cycletime_add_dependency`
 
 **Purpose**: Creates blocking relationships between issues.
 
@@ -275,7 +275,7 @@ Story created successfully! This is now unblocked and ready for development."
 
 #### Initialize Project Tool
 
-**Tool Name**: `cycletime_ce_initialize_project`
+**Tool Name**: `cycletime_initialize_project`
 
 **Purpose**: Sets up new project with basic structure.
 
@@ -299,7 +299,7 @@ suggestions.
 **Flow**:
 
 1. User asks "What should I work on next?"
-2. Claude Code accesses `cycletime-ce://project/{id}/context` Resource
+2. Claude Code accesses `cycletime://project/{id}/context` Resource
 3. Claude Code analyzes unblocked tasks, priorities, and recent progress
 4. Claude Code provides contextual recommendation with reasoning
 
@@ -308,7 +308,7 @@ suggestions.
 ```
 User: "What should I work on next?"
 
-Claude Code: [Accesses CycleTime CE resources automatically]
+Claude Code: [Accesses CycleTime resources automatically]
 "Based on your project state, I recommend working on 'Implement search functionality' (Story #459). Here's why:
 
 • It's unblocked (dependencies completed)
@@ -328,7 +328,7 @@ persisted context.
 
 1. User starts new Claude Code session
 2. User mentions project work or asks for status
-3. Claude Code accesses CycleTime CE resources to recover full project context
+3. Claude Code accesses CycleTime resources to recover full project context
 4. User can immediately continue where they left off
 
 ### Dependency Management
@@ -339,8 +339,8 @@ guidance.
 **Flow**:
 
 1. User completes work on an issue
-2. Claude Code uses `cycletime_ce_update_issue_status` tool to mark completion
-3. CycleTime CE automatically identifies newly unblocked tasks
+2. Claude Code uses `cycletime_update_issue_status` tool to mark completion
+3. CycleTime automatically identifies newly unblocked tasks
 4. Claude Code suggests next steps based on unblocked dependencies
 
 ## Implementation Guidelines
@@ -373,7 +373,7 @@ guidance.
 
 ### TDD Support
 
-CycleTime CE supports Test-Driven Development through context provision:
+CycleTime supports Test-Driven Development through context provision:
 
 1. **Context**: Exposes testing requirements and patterns through project
    context
@@ -405,6 +405,6 @@ Potential future resources:
 - Performance metrics and technical debt tracking
 - Automated quality gate status and recommendations
 
-This MCP integration approach ensures CycleTime CE enhances Claude Code's existing
+This MCP integration approach ensures CycleTime enhances Claude Code's existing
 capabilities without replacing them, providing rich project context that enables
 intelligent task orchestration and seamless development workflows.

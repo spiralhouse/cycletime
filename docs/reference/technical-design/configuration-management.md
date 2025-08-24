@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the configuration management strategy for CycleTime CE using Ktor's HOCON (Human-Optimized Config Object Notation) configuration system integrated with dependency injection. The design enables environment-specific configurations, secure secret management, and runtime configuration updates while maintaining testability.
+This document outlines the configuration management strategy for CycleTime using Ktor's HOCON (Human-Optimized Config Object Notation) configuration system integrated with dependency injection. The design enables environment-specific configurations, secure secret management, and runtime configuration updates while maintaining testability.
 
 ## Core Principles
 
@@ -64,7 +64,7 @@ ktor {
 
 jcvd {
     server {
-        name = "CycleTime CE MCP Server"
+        name = "CycleTime MCP Server"
         version = "1.0.0"
         
         cors {
@@ -420,7 +420,7 @@ import kotlin.time.Duration
  * Root configuration
  */
 @Serializable
-data class CycleTime CEConfig(
+data class CycleTimeConfig(
     val server: ServerConfig,
     val database: DatabaseConfig,
     val mcp: MCPConfig,
@@ -529,16 +529,16 @@ class ConfigurationService(
     private val environment: ApplicationEnvironment
 ) {
     private val config: Config = ConfigFactory.load()
-    private var jcvdConfig: CycleTime CEConfig = loadConfiguration()
+    private var jcvdConfig: CycleTimeConfig = loadConfiguration()
     private val listeners = mutableListOf<ConfigurationListener>()
     
     /**
      * Load configuration from HOCON
      */
-    private fun loadConfiguration(): CycleTime CEConfig {
+    private fun loadConfiguration(): CycleTimeConfig {
         val appConfig = environment.config
         
-        return CycleTime CEConfig(
+        return CycleTimeConfig(
             server = loadServerConfig(appConfig),
             database = loadDatabaseConfig(appConfig),
             mcp = loadMCPConfig(appConfig),
@@ -552,7 +552,7 @@ class ConfigurationService(
     /**
      * Get current configuration
      */
-    fun getConfig(): CycleTime CEConfig = jcvdConfig
+    fun getConfig(): CycleTimeConfig = jcvdConfig
     
     /**
      * Get specific configuration section
@@ -595,7 +595,7 @@ class ConfigurationService(
     /**
      * Validate configuration
      */
-    private fun validateConfiguration(config: CycleTime CEConfig) {
+    private fun validateConfiguration(config: CycleTimeConfig) {
         // Database validation
         require(config.database.h2?.url?.isNotBlank() == true) {
             "Database URL is required"
@@ -619,7 +619,7 @@ class ConfigurationService(
         }
     }
     
-    private fun notifyListeners(config: CycleTime CEConfig) {
+    private fun notifyListeners(config: CycleTimeConfig) {
         listeners.forEach { it.onConfigurationChanged(config) }
     }
     
@@ -679,7 +679,7 @@ class ConfigurationService(
  * Configuration change listener
  */
 interface ConfigurationListener {
-    fun onConfigurationChanged(config: CycleTime CEConfig)
+    fun onConfigurationChanged(config: CycleTimeConfig)
 }
 ```
 
@@ -702,7 +702,7 @@ val configurationModule = DIModule("configuration") {
         ConfigurationService(environment)
     }
     
-    single<CycleTime CEConfig> {
+    single<CycleTimeConfig> {
         get<ConfigurationService>().getConfig()
     }
     
@@ -923,7 +923,7 @@ fun Route.configurationRoutes(configService: ConfigurationService) {
 /**
  * Remove sensitive information from config
  */
-private fun sanitizeConfig(config: CycleTime CEConfig): CycleTime CEConfig {
+private fun sanitizeConfig(config: CycleTimeConfig): CycleTimeConfig {
     return config.copy(
         database = sanitizeDatabaseConfig(config.database),
         features = sanitizeFeaturesConfig(config.features)
@@ -962,7 +962,7 @@ class ConfigurationTool(
     private val configService: ConfigurationService
 ) : MCPTool {
     
-    override val name = "cycletime_ce_update_config"
+    override val name = "cycletime_update_config"
     
     override val description = "Update runtime configuration"
     
@@ -1042,7 +1042,7 @@ class ConfigurationValidator {
     /**
      * Validate complete configuration
      */
-    fun validate(config: CycleTime CEConfig): ValidationResult {
+    fun validate(config: CycleTimeConfig): ValidationResult {
         val errors = mutableListOf<ValidationError>()
         
         // Server validation
@@ -1176,7 +1176,7 @@ class ConfigurationServiceTest : DescribeSpec({
                 val config = configService.getConfig()
                 
                 config shouldNotBe null
-                config.server.name shouldBe "CycleTime CE MCP Server"
+                config.server.name shouldBe "CycleTime MCP Server"
                 config.database.type shouldBe "h2"
             }
         }
@@ -1215,7 +1215,7 @@ class ConfigurationServiceTest : DescribeSpec({
                 var notified = false
                 
                 configService.addListener(object : ConfigurationListener {
-                    override fun onConfigurationChanged(config: CycleTime CEConfig) {
+                    override fun onConfigurationChanged(config: CycleTimeConfig) {
                         notified = true
                     }
                 })

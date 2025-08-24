@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers deploying CycleTime CE to production environments using Docker and Kubernetes.
+This guide covers deploying CycleTime to production environments using Docker and Kubernetes.
 
 ## Prerequisites
 
@@ -27,7 +27,7 @@ docker run -d \
   --name jcvd \
   -p 8080:8080 \
   -v /data/jcvd:/data \
-  -e DATABASE_URL=jdbc:sqlite:/data/cycletime-ce.db \
+  -e DATABASE_URL=jdbc:sqlite:/data/cycletime.db \
   -e LOG_LEVEL=INFO \
   ghcr.io/spiralhouse/jcvd:latest
 ```
@@ -40,10 +40,10 @@ git clone https://github.com/spiralhouse/jcvd.git
 cd jcvd
 
 # Build image
-docker build -t cycletime-ce:custom .
+docker build -t cycletime:custom .
 
 # Run custom image
-docker run -d --name cycletime-ce -p 8080:8080 cycletime-ce:custom
+docker run -d --name cycletime -p 8080:8080 cycletime:custom
 ```
 
 ## Kubernetes Deployment
@@ -123,7 +123,7 @@ kubectl create namespace jcvd-prod
 
 # Create secrets
 kubectl create secret generic jcvd-secrets \
-  --from-literal=database-url=jdbc:sqlite:/data/cycletime-ce.db \
+  --from-literal=database-url=jdbc:sqlite:/data/cycletime.db \
   -n jcvd-prod
 
 # Apply deployment
@@ -152,7 +152,7 @@ services:
     ports:
       - "80:8080"
     environment:
-      - DATABASE_URL=jdbc:sqlite:/data/cycletime-ce.db
+      - DATABASE_URL=jdbc:sqlite:/data/cycletime.db
       - LOG_LEVEL=INFO
     volumes:
       - jcvd-data:/data
@@ -209,7 +209,7 @@ docker-compose -f docker-compose.prod.yml down
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `DATABASE_URL` | Database connection string | `jdbc:sqlite:/data/cycletime-ce.db` |
+| `DATABASE_URL` | Database connection string | `jdbc:sqlite:/data/cycletime.db` |
 | `PORT` | Server port | `8080` |
 | `HOST` | Server host | `0.0.0.0` |
 | `LOG_LEVEL` | Logging level | `INFO` |
@@ -234,7 +234,7 @@ Expected response:
 ```json
 {
   "status": "healthy",
-  "service": "cycletime-ce",
+  "service": "cycletime",
   "version": "0.3.0",
   "dependencies": {
     "database": "connected"
@@ -254,23 +254,23 @@ Expected response:
 
 ```bash
 # Backup SQLite database
-docker exec cycletime-ce-prod sqlite3 /data/cycletime-ce.db ".backup /data/backup.db"
+docker exec cycletime-prod sqlite3 /data/cycletime.db ".backup /data/backup.db"
 
 # Copy backup to host
-docker cp cycletime-ce-prod:/data/backup.db ./backups/cycletime-ce-$(date +%Y%m%d).db
+docker cp cycletime-prod:/data/backup.db ./backups/cycletime-$(date +%Y%m%d).db
 ```
 
 ### Restore from Backup
 
 ```bash
 # Copy backup to container
-docker cp ./backups/cycletime-ce-20250823.db cycletime-ce-prod:/data/restore.db
+docker cp ./backups/cycletime-20250823.db cycletime-prod:/data/restore.db
 
 # Restore database
-docker exec cycletime-ce-prod sh -c "mv /data/cycletime-ce.db /data/cycletime-ce.db.old && mv /data/restore.db /data/cycletime-ce.db"
+docker exec cycletime-prod sh -c "mv /data/cycletime.db /data/cycletime.db.old && mv /data/restore.db /data/cycletime.db"
 
 # Restart container
-docker restart cycletime-ce-prod
+docker restart cycletime-prod
 ```
 
 ## Security Considerations
@@ -288,20 +288,20 @@ docker restart cycletime-ce-prod
 
 ```bash
 # Check logs
-docker logs cycletime-ce-prod
+docker logs cycletime-prod
 
 # Verify environment variables
-docker exec cycletime-ce-prod env
+docker exec cycletime-prod env
 
 # Test database connection
-docker exec cycletime-ce-prod sqlite3 /data/cycletime-ce.db "SELECT 1"
+docker exec cycletime-prod sqlite3 /data/cycletime.db "SELECT 1"
 ```
 
 ### Performance Issues
 
 ```bash
 # Check resource usage
-docker stats cycletime-ce-prod
+docker stats cycletime-prod
 
 # Increase resources in docker-compose.yml
 deploy:
@@ -315,10 +315,10 @@ deploy:
 
 ```bash
 # Check database integrity
-docker exec cycletime-ce-prod sqlite3 /data/cycletime-ce.db "PRAGMA integrity_check"
+docker exec cycletime-prod sqlite3 /data/cycletime.db "PRAGMA integrity_check"
 
 # Vacuum database
-docker exec cycletime-ce-prod sqlite3 /data/cycletime-ce.db "VACUUM"
+docker exec cycletime-prod sqlite3 /data/cycletime.db "VACUUM"
 ```
 
 ## Related Documentation

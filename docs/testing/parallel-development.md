@@ -4,7 +4,7 @@ This document describes how to enable multiple agents to work on independent fea
 
 ## Overview
 
-Parallel development in CycleTime CE allows multiple features to be developed simultaneously by leveraging Git Worktrees. Each feature can follow any development workflow with Claude-orchestrated specialized agents within its own isolated workspace.
+Parallel development in CycleTime allows multiple features to be developed simultaneously by leveraging Git Worktrees. Each feature can follow any development workflow with Claude-orchestrated specialized agents within its own isolated workspace.
 
 ### Key Concepts
 

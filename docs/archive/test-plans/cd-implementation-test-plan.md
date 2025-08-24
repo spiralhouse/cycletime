@@ -85,32 +85,32 @@ act push -j version -W .github/workflows/cicd.yml --secret GITHUB_TOKEN=$GITHUB_
 #### Test 3.1: Local Docker Build
 ```bash
 # Build container with version argument
-docker build -t cycletime-ce:test --build-arg VERSION=0.2.0-SNAPSHOT .
+docker build -t cycletime:test --build-arg VERSION=0.2.0-SNAPSHOT .
 
 # Verify version is set in container
-docker run --rm cycletime-ce:test env | grep CYCLETIME_CE_VERSION
-# Expected: CycleTime CE_VERSION=0.2.0-SNAPSHOT
+docker run --rm cycletime:test env | grep CYCLETIME_VERSION
+# Expected: CYCLETIME_VERSION=0.2.0-SNAPSHOT
 
 # Check container labels
-docker inspect cycletime-ce:test | jq '.[0].Config.Labels'
+docker inspect cycletime:test | jq '.[0].Config.Labels'
 # Expected: Shows OCI labels with version metadata
 ```
 
 #### Test 3.2: Container Tagging Simulation
 ```bash
 # Simulate version tagging
-docker tag cycletime-ce:test cycletime-ce:0.2.0
-docker tag cycletime-ce:test cycletime-ce:0.2
-docker tag cycletime-ce:test cycletime-ce:0
-docker tag cycletime-ce:test cycletime-ce:latest
+docker tag cycletime:test cycletime:0.2.0
+docker tag cycletime:test cycletime:0.2
+docker tag cycletime:test cycletime:0
+docker tag cycletime:test cycletime:latest
 
 # Simulate environment tagging
-docker tag cycletime-ce:test cycletime-ce:dev
-docker tag cycletime-ce:test cycletime-ce:staging
-docker tag cycletime-ce:test cycletime-ce:production
+docker tag cycletime:test cycletime:dev
+docker tag cycletime:test cycletime:staging
+docker tag cycletime:test cycletime:production
 
 # List all tags
-docker images cycletime-ce --format "table {{.Tag}}\t{{.ID}}"
+docker images cycletime --format "table {{.Tag}}\t{{.ID}}"
 # Expected: All tags point to same image ID
 ```
 
@@ -232,7 +232,7 @@ echo "=== Testing Container Build Dependencies ==="
 rm -rf build/libs/
 
 # Attempt container build (should fail gracefully)
-if docker build -t cycletime-ce:test-no-jar --build-arg VERSION=test . 2>&1; then
+if docker build -t cycletime:test-no-jar --build-arg VERSION=test . 2>&1; then
   echo "❌ Container build should have failed without JAR"
   exit 1
 else
@@ -243,7 +243,7 @@ fi
 ./gradlew buildFatJar
 
 # Verify container build now works
-docker build -t cycletime-ce:test-with-jar --build-arg VERSION=test .
+docker build -t cycletime:test-with-jar --build-arg VERSION=test .
 echo "✅ Container build succeeds with JAR present"
 ```
 
@@ -342,7 +342,7 @@ VERSION="0.1.0"
 echo "Checking if version $VERSION exists..."
 
 # Would normally check GHCR, simulate locally
-if docker images cycletime-ce:test --format "{{.Tag}}" | grep -q "test"; then
+if docker images cycletime:test --format "{{.Tag}}" | grep -q "test"; then
   echo "✅ Version exists (simulated)"
 else
   echo "❌ Version not found"

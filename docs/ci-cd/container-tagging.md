@@ -4,7 +4,7 @@ This document describes the container tagging strategy used in the Continuous De
 
 ## Overview
 
-CycleTime CE uses Git.SemVersioning for automatic version management and a multi-tag strategy for container images to support different deployment environments.
+CycleTime uses Git.SemVersioning for automatic version management and a multi-tag strategy for container images to support different deployment environments.
 
 ## Registry
 
@@ -86,7 +86,7 @@ The container accepts the following build arguments:
 
 This version is used for:
 - Container labels (OCI metadata)
-- Environment variable `CycleTime CE_VERSION`
+- Environment variable `CycleTime_VERSION`
 - Container registry tags
 
 ## Container Labels
@@ -94,8 +94,8 @@ This version is used for:
 All containers include OpenContainer Initiative (OCI) compliant labels:
 
 ```dockerfile
-LABEL org.opencontainers.image.title="CycleTime CE Server"
-LABEL org.opencontainers.image.description="CycleTime CE project orchestration framework MCP server"
+LABEL org.opencontainers.image.title="CycleTime Server"
+LABEL org.opencontainers.image.description="CycleTime project orchestration framework MCP server"
 LABEL org.opencontainers.image.version="$VERSION"
 LABEL org.opencontainers.image.vendor="Spiral House"
 LABEL org.opencontainers.image.source="https://github.com/spiralhouse/jcvd"

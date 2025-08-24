@@ -1,6 +1,6 @@
-# Contributing to CycleTime CE
+# Contributing to CycleTime
 
-Thank you for your interest in contributing to CycleTime CE! This document provides guidelines for contributing to the project, with a focus on maintaining high code quality and consistent commit practices.
+Thank you for your interest in contributing to CycleTime! This document provides guidelines for contributing to the project, with a focus on maintaining high code quality and consistent commit practices.
 
 ## Table of Contents
 
@@ -14,8 +14,8 @@ Thank you for your interest in contributing to CycleTime CE! This document provi
 
 1. **Fork the repository** and clone your fork:
    ```bash
-   git clone https://github.com/your-username/jcvd.git
-   cd jcvd
+   git clone https://github.com/your-username/cycletime.git
+   cd cycletime
    ```
 
 2. **Set up your development environment**:
@@ -37,7 +37,7 @@ Thank you for your interest in contributing to CycleTime CE! This document provi
 
 ## Commit Message Guidelines
 
-CycleTime CE uses [Conventional Commits](https://conventionalcommits.org/) specification to enable automatic semantic versioning through Git.SemVersioning plugin.
+CycleTime uses [Conventional Commits](https://conventionalcommits.org/) specification to enable automatic semantic versioning through Git.SemVersioning plugin.
 
 ### Format
 
@@ -207,7 +207,7 @@ Understanding how your commits affect releases:
 
 **What Gets Released:**
 - 📦 JAR archive with all dependencies
-- 🐳 Container image (ghcr.io/spiralhouse/jcvd:version)
+- 🐳 Container image (ghcr.io/spiralhouse/cycletime:version)
 - 🚀 Native image (experimental)
 - 📝 Generated changelog with all changes
 - 🔒 SHA256 checksums for security verification
@@ -278,7 +278,7 @@ Before submitting your changes:
 ./gradlew build
 
 # Build Docker image
-docker build -t cycletime-ce:dev .
+docker build -t cycletime:dev .
 ```
 
 ## Code Quality Standards
@@ -339,7 +339,7 @@ docker build -t cycletime-ce:dev .
 
 ## Release Process
 
-CycleTime CE uses a continuous delivery approach with Git.SemVersioning plugin for automatic version calculation and comprehensive quality gates.
+CycleTime uses a continuous delivery approach with Git.SemVersioning plugin for automatic version calculation and comprehensive quality gates.
 
 ### Complete Build Pipeline
 
@@ -361,9 +361,9 @@ CycleTime CE uses a continuous delivery approach with Git.SemVersioning plugin f
 - ⚡ **Performance**: Optimized builds with comprehensive caching
 
 **Build Artifacts Generated:**
-- `cycletime-ce-X.Y.Z.jar` - Executable JAR with all dependencies (~50-80MB)
-- `cycletime-ce-X.Y.Z-native` - GraalVM native binary (~30-50MB, experimental)
-- `ghcr.io/spiralhouse/jcvd:X.Y.Z` - Production container image (~200MB)
+- `cycletime-X.Y.Z.jar` - Executable JAR with all dependencies (~50-80MB)
+- `cycletime-X.Y.Z-native` - GraalVM native binary (~30-50MB, experimental)
+- `ghcr.io/spiralhouse/cycletime:X.Y.Z` - Production container image (~200MB)
 - `checksums-X.Y.Z.txt` - SHA256 checksums for verification
 
 ### Version Bumping Rules
@@ -381,16 +381,16 @@ Each release creates multiple container tags for different use cases:
 
 ```bash
 # Immutable version-specific tag (recommended for production)
-ghcr.io/spiralhouse/jcvd:1.2.3
+ghcr.io/spiralhouse/cycletime:1.2.3
 
 # Minor version tag (gets patch updates automatically)
-ghcr.io/spiralhouse/jcvd:1.2
+ghcr.io/spiralhouse/cycletime:1.2
 
 # Major version tag (gets minor/patch updates)
-ghcr.io/spiralhouse/jcvd:1
+ghcr.io/spiralhouse/cycletime:1
 
 # Latest stable release (updated with each release)
-ghcr.io/spiralhouse/jcvd:latest
+ghcr.io/spiralhouse/cycletime:latest
 ```
 
 ### Pre-release and Hotfix Support
@@ -420,4 +420,4 @@ Please note that this project is released with a Contributor Code of Conduct. By
 
 ---
 
-Thank you for contributing to CycleTime CE! 🚀
+Thank you for contributing to CycleTime! 🚀

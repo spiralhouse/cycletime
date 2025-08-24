@@ -1,4 +1,4 @@
-# CycleTime CE Project Onboarding Guide
+# CycleTime Project Onboarding Guide
 
 **Version:** 1.0  
 **Date:** July 30, 2025
@@ -11,15 +11,15 @@
 
 ## Overview
 
-CycleTime CE provides guided onboarding for both new and existing projects through a
+CycleTime provides guided onboarding for both new and existing projects through a
 simple "Onboarding Assistant" that helps determine the best approach for
-integrating CycleTime CE with ongoing work. Rather than complex automated analysis, CycleTime CE
+integrating CycleTime with ongoing work. Rather than complex automated analysis, CycleTime
 uses targeted questions to understand project state and provide realistic
 recommendations.
 
 ## New Project Onboarding
 
-For new (greenfield) projects, CycleTime CE provides comprehensive Project Bootstrap
+For new (greenfield) projects, CycleTime provides comprehensive Project Bootstrap
 that includes:
 
 1. **Requirements Gathering**: Interactive interview process or PRD acceptance
@@ -36,9 +36,9 @@ See [USER_EXPERIENCE.md](USER_EXPERIENCE.md) for detailed new project workflows.
 #### Initial Assessment Through Questions
 
 ```
-User: "I want to use CycleTime CE with my existing project that's already in Linear"
+User: "I want to use CycleTime with my existing project that's already in Linear"
 
-Claude: "Great! I can help you integrate CycleTime CE with your existing project. Let me ask
+Claude: "Great! I can help you integrate CycleTime with your existing project. Let me ask
 a few questions to recommend the best approach:
 
 **Project Context:**
@@ -62,7 +62,7 @@ a few questions to recommend the best approach:
    - Moderately active (weekly activity)
    - Maintenance mode (occasional updates)
 
-Based on your answers, I'll recommend the best way to get started with CycleTime CE."
+Based on your answers, I'll recommend the best way to get started with CycleTime."
 
 User: "Medium size, some documentation, mostly organized, very active"
 
@@ -70,26 +70,26 @@ Claude: "Perfect! Based on your answers, here's my recommendation:
 
 ## 🎯 **Recommended Approach: Hybrid Integration**
 
-Your project is a good candidate for gradual CycleTime CE integration:
+Your project is a good candidate for gradual CycleTime integration:
 
 ### **Phase 1: Start with New Work (Immediate)**
-- Use CycleTime CE for new features and stories going forward
+- Use CycleTime for new features and stories going forward
 - Leave existing in-progress work in current workflow
-- Create new Epic/Story/Subtask structures using CycleTime CE standards
+- Create new Epic/Story/Subtask structures using CycleTime standards
 
 ### **Phase 2: Documentation Review (Week 1-2)**
-- Review and enhance existing documentation to CycleTime CE standards
+- Review and enhance existing documentation to CycleTime standards
 - I can help identify gaps and suggest improvements
 - Add missing PRD sections or architecture details
 
 ### **Phase 3: Gradual Expansion (Week 3+)**
-- Optionally bring existing work into CycleTime CE workflows
-- Apply CycleTime CE orchestration to broader project scope
+- Optionally bring existing work into CycleTime workflows
+- Apply CycleTime orchestration to broader project scope
 - Full integration when ready
 
 **Benefits of This Approach:**
 ✅ No disruption to current active development
-✅ Immediate value from CycleTime CE for new work
+✅ Immediate value from CycleTime for new work
 ✅ Gradual learning and adoption
 ✅ Preserve existing team velocity
 
@@ -103,11 +103,11 @@ Ready to start with Phase 1?"
 ```
 User: "Small size, minimal documentation, mixed structure, moderately active"
 
-Claude: "Excellent! Small projects are perfect for full CycleTime CE integration:
+Claude: "Excellent! Small projects are perfect for full CycleTime integration:
 
 ## 🚀 **Recommended Approach: Full Integration**
 
-Your project size (10-50 issues) is ideal for comprehensive CycleTime CE onboarding:
+Your project size (10-50 issues) is ideal for comprehensive CycleTime onboarding:
 
 ### **Quick Integration Plan (2-4 hours total)**
 
@@ -121,15 +121,15 @@ Your project size (10-50 issues) is ideal for comprehensive CycleTime CE onboard
 - Simple recommendations for Epic/Story/Subtask organization
 - Optional: guided cleanup of any structural issues
 
-**Step 3: CycleTime CE Activation (30 minutes)**
-- Connect CycleTime CE to your project
+**Step 3: CycleTime Activation (30 minutes)**
+- Connect CycleTime to your project
 - Set up intelligent task orchestration
-- Ready for full CycleTime CE workflow management
+- Ready for full CycleTime workflow management
 
 **Why Full Integration Works for Your Project:**
 ✅ Small scope makes comprehensive review manageable
 ✅ Moderate activity allows time for setup
-✅ Complete CycleTime CE benefits from day one
+✅ Complete CycleTime benefits from day one
 ✅ Strong foundation for future growth
 
 Would you like to start with the documentation foundation?"
@@ -137,23 +137,23 @@ Would you like to start with the documentation foundation?"
 
 #### Medium Project Hybrid Integration (50-200 issues)
 
-For medium-sized projects, CycleTime CE recommends a gradual approach:
+For medium-sized projects, CycleTime recommends a gradual approach:
 
 **Phase 1: New Work Integration**
 
-- Use CycleTime CE for all new Epics and Stories
+- Use CycleTime for all new Epics and Stories
 - Leave existing active work unchanged
-- Establish CycleTime CE patterns for future development
+- Establish CycleTime patterns for future development
 
 **Phase 2: Documentation Enhancement**
 
-- Review existing documentation for CycleTime CE compatibility
+- Review existing documentation for CycleTime compatibility
 - Fill gaps in PRD, architecture, or technical documentation
 - Establish standardized documentation structure
 
 **Phase 3: Optional Existing Work Integration**
 
-- Selectively bring existing work into CycleTime CE workflows
+- Selectively bring existing work into CycleTime workflows
 - Focus on high-value or strategic initiatives
 - Maintain flexibility based on team preferences
 
@@ -169,19 +169,19 @@ Claude: "Smart! Large, active projects need careful integration:
 For large, active projects (200+ issues), I recommend starting small:
 
 ### **Phase 1: Pilot with New Epic (Week 1)**
-- Select one new Epic for CycleTime CE pilot
-- Use CycleTime CE workflow for this Epic only
+- Select one new Epic for CycleTime pilot
+- Use CycleTime workflow for this Epic only
 - Existing work continues unchanged
 
 ### **Phase 2: Evaluate and Expand (Week 2-4)**
-- Assess CycleTime CE value with pilot Epic
+- Assess CycleTime value with pilot Epic
 - Gradually expand to additional new work
-- Optional: bring selected existing work into CycleTime CE
+- Optional: bring selected existing work into CycleTime
 
 ### **Phase 3: Broader Integration (Month 2+)**
-- Expand CycleTime CE usage based on pilot success
+- Expand CycleTime usage based on pilot success
 - Consider broader project integration if beneficial
-- Maintain flexibility to use CycleTime CE where it adds most value
+- Maintain flexibility to use CycleTime where it adds most value
 
 **Why Conservative Approach:**
 ✅ Minimal disruption to established workflows
@@ -190,14 +190,14 @@ For large, active projects (200+ issues), I recommend starting small:
 ✅ Flexible expansion based on results
 
 **Good News:** Your existing documentation and organization mean you're
-already following many CycleTime CE best practices!
+already following many CycleTime best practices!
 
 Ready to identify a good pilot Epic to start with?"
 ```
 
 ## Simple Health Checks (Small Projects Only)
 
-For small projects (< 100 issues), CycleTime CE can perform basic validation to identify
+For small projects (< 100 issues), CycleTime can perform basic validation to identify
 improvement opportunities:
 
 ### Health Check Process
@@ -242,7 +242,7 @@ data class SimpleHealthCheck(
 5. **Review Epic structure** - one subtask bypasses Story level (should be Epic → Story → Subtask)
 
 **Estimated remediation time:** 2-3 hours
-**CycleTime CE can help with:** All documentation creation and issue organization
+**CycleTime can help with:** All documentation creation and issue organization
 ```
 
 ### Health Check Limitations
@@ -263,9 +263,9 @@ data class SimpleHealthCheck(
 
 ## Realistic Scope and Limitations
 
-### What CycleTime CE Won't Do
+### What CycleTime Won't Do
 
-CycleTime CE is designed with realistic limitations to ensure reliable, valuable
+CycleTime is designed with realistic limitations to ensure reliable, valuable
 assistance:
 
 **❌ Complex Automated Analysis**
@@ -281,7 +281,7 @@ assistance:
 - No automated requirement extraction from extensive existing work
 - No complex project archaeology or historical analysis
 
-### What CycleTime CE Will Do
+### What CycleTime Will Do
 
 **✅ Guided Assessment and Recommendations**
 
@@ -299,7 +299,7 @@ assistance:
 
 **✅ Immediate Value for New Work**
 
-- Full CycleTime CE orchestration for new Epics and Stories
+- Full CycleTime orchestration for new Epics and Stories
 - Professional project management for future development
 - Established patterns that can optionally expand to existing work
 
@@ -310,7 +310,7 @@ assistance:
 **Small Projects (10-50 issues):**
 
 - Complete integration within 2-4 hours
-- Immediate comprehensive CycleTime CE benefits
+- Immediate comprehensive CycleTime benefits
 - Strong foundation for future growth
 - High success rate (>90%)
 
@@ -334,7 +334,7 @@ assistance:
 
 - Missing or incomplete PRD/requirements documentation
 - Inconsistent architecture documentation
-- Solution: CycleTime CE provides templates and guided creation
+- Solution: CycleTime provides templates and guided creation
 
 **Issue Structure Inconsistencies**
 
@@ -356,7 +356,7 @@ assistance:
 
 ## Next Steps After Onboarding
 
-Once onboarding is complete, projects transition to full CycleTime CE orchestration:
+Once onboarding is complete, projects transition to full CycleTime orchestration:
 
 1. **Daily Task Orchestration**: Intelligent next-task recommendations based on
    dependencies and priorities

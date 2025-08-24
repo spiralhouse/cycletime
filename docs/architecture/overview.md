@@ -1,4 +1,4 @@
-# CycleTime CE Technical Architecture
+# CycleTime Technical Architecture
 
 **Version:** 1.0  
 **Date:** July 30, 2025  
@@ -12,7 +12,7 @@
 
 ## Overview
 
-CycleTime CE (Project Orchestration Framework) implements a **simplified data and
+CycleTime (Project Orchestration Framework) implements a **simplified data and
 context provider architecture** for Claude Code project management. The system
 enhances Claude Code's existing capabilities by providing structured project
 data, dependency tracking, and cross-session continuity through embedded
@@ -22,7 +22,7 @@ database (currently SQLite, migrating to H2 in SPI-439) and MCP Resource integra
 
 **Simplicity First**
 
-- CycleTime CE serves as data and context provider, not orchestration manager
+- CycleTime serves as data and context provider, not orchestration manager
 - Claude Code handles agent delegation and complex workflow management
 - Simple dependency graph traversal and basic CRUD operations only
 
@@ -48,7 +48,7 @@ database (currently SQLite, migrating to H2 in SPI-439) and MCP Resource integra
 
 ### Layered Architecture Approach
 
-CycleTime CE follows **Domain-Driven Design** and **Hexagonal Architecture** principles
+CycleTime follows **Domain-Driven Design** and **Hexagonal Architecture** principles
 with clear separation of concerns:
 
 ```kotlin
@@ -98,7 +98,7 @@ class ProjectResource(
 
 ### Domain Model Design
 
-CycleTime CE implements rich domain entities with business logic and value objects for
+CycleTime implements rich domain entities with business logic and value objects for
 type safety:
 
 ```kotlin
@@ -398,7 +398,7 @@ CREATE INDEX idx_issues_parent_type ON issues(parent_id, issue_type);
 
 ### Data Migration Schema
 
-For seamless provider switching, CycleTime CE implements a standardized export/import
+For seamless provider switching, CycleTime implements a standardized export/import
 format:
 
 ```kotlin
@@ -703,13 +703,13 @@ suspend fun getDependencyGraph(projectId: String): DependencyGraph
 
 ```kotlin
 // Basic issue operations
-@MCPTool("cycletime_ce_create_issue")
+@MCPTool("cycletime_create_issue")
 suspend fun createIssue(config: IssueConfig): Issue
 
-@MCPTool("cycletime_ce_update_issue_status")
+@MCPTool("cycletime_update_issue_status")
 suspend fun updateIssueStatus(issueId: String, status: String): Issue
 
-@MCPTool("cycletime_ce_add_dependency")
+@MCPTool("cycletime_add_dependency")
 suspend fun addDependency(blockerId: String, blockedId: String)
 ```
 
@@ -1035,39 +1035,39 @@ class TDDOrchestrator {
 
 ### Claude Code MCP Server Architecture
 
-CycleTime CE integrates with Claude Code through the Model Context Protocol (MCP) server
+CycleTime integrates with Claude Code through the Model Context Protocol (MCP) server
 framework:
 
 ```kotlin
-class CycleTime CEMCPServer(
+class CycleTimeMCPServer(
     private val resources: List<MCPResource>,
     private val tools: List<MCPTool>
 ) {
     // Project orchestration tools
-    @MCPTool("cycletime_ce_create_project")
+    @MCPTool("cycletime_create_project")
     suspend fun createProject(requirements: ProjectRequirements): Project
 
-    @MCPTool("cycletime_ce_get_next_task")
+    @MCPTool("cycletime_get_next_task")
     suspend fun getNextTask(projectId: String): TaskRecommendation
 
-    @MCPTool("cycletime_ce_update_issue")
+    @MCPTool("cycletime_update_issue")
     suspend fun updateIssue(issueId: String, updates: IssueUpdate): Issue
 
-    @MCPTool("cycletime_ce_analyze_dependencies")
+    @MCPTool("cycletime_analyze_dependencies")
     suspend fun analyzeDependencies(projectId: String): DependencyAnalysis
 
     // Documentation management
-    @MCPTool("cycletime_ce_generate_docs")
+    @MCPTool("cycletime_generate_docs")
     suspend fun generateDocumentation(projectId: String, docType: DocumentType): Document
 
-    @MCPTool("cycletime_ce_sync_docs")
+    @MCPTool("cycletime_sync_docs")
     suspend fun syncDocumentation(projectId: String): SyncResult
 }
 ```
 
 ### State Management Architecture
 
-CycleTime CE implements multi-layer state management for comprehensive project tracking:
+CycleTime implements multi-layer state management for comprehensive project tracking:
 
 **Layer 1: In-Memory State**
 
@@ -1160,7 +1160,7 @@ provider for the Kotlin/JVM implementation.
 
 ### MCP Server Architecture
 
-**Decision**: Build CycleTime CE as a Claude Code MCP server rather than standalone
+**Decision**: Build CycleTime as a Claude Code MCP server rather than standalone
 application.
 
 **Rationale**:
@@ -1252,6 +1252,6 @@ project state modifications
 
 ---
 
-This architecture provides the technical foundation for CycleTime CE's comprehensive
+This architecture provides the technical foundation for CycleTime's comprehensive
 project orchestration capabilities while maintaining flexibility, performance,
 and developer control principles outlined in the product requirements.

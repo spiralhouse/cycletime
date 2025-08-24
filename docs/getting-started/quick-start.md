@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get CycleTime CE up and running in under 5 minutes.
+Get CycleTime up and running in under 5 minutes.
 
 ## 1. Prerequisites
 
@@ -35,7 +35,7 @@ curl http://localhost:8080/health
 # Expected response:
 {
   "status": "healthy",
-  "service": "cycletime-ce",
+  "service": "cycletime",
   "version": "0.1.0"
 }
 ```
@@ -44,8 +44,8 @@ curl http://localhost:8080/health
 
 ```bash
 # Build and run with Docker
-docker build -t cycletime-ce .
-docker run -p 8080:8080 jcvd
+docker build -t cycletime .
+docker run -p 8080:8080 cycletime
 ```
 
 ## What's Next?
