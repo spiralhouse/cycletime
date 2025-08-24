@@ -27,29 +27,32 @@ JCVD is designed for developers using Claude Code who:
 
 ## Prerequisites
 
-- Java 21 or later (required for runtime)
-- Docker (optional, for containerized deployment)
+- Docker (for running JCVD)
+- Java 21 or later (only for contributors building from source)
 
 ## Quick Start
 
-### Installation
+### Running JCVD
+
+```bash
+# Pull and run the latest version
+docker pull ghcr.io/spiralhouse/jcvd:latest
+docker run -p 8080:8080 ghcr.io/spiralhouse/jcvd:latest
+
+# Server starts on http://localhost:8080
+```
+
+### Building from Source (Contributors)
+
+For contributors who want to test changes locally:
 
 ```bash
 # Clone repository
 git clone https://github.com/spiralhouse/jcvd.git
 cd jcvd
 
-# Build and run
+# Build and run with Gradle (requires Java 21+)
 ./gradlew run
-
-# Server starts on http://localhost:8080
-```
-
-### Docker Alternative
-
-```bash
-docker pull ghcr.io/spiralhouse/jcvd:latest
-docker run -p 8080:8080 ghcr.io/spiralhouse/jcvd:latest
 ```
 
 ### Claude Code Integration
@@ -100,6 +103,8 @@ We welcome contributions. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 ### Development Setup
 
+Contributors need Java 21+ installed for local development:
+
 ```bash
 # Fork and clone your fork
 git clone https://github.com/YOUR_USERNAME/jcvd.git
@@ -107,6 +112,9 @@ cd jcvd
 
 # Create feature branch
 git checkout -b feat/your-feature
+
+# Run locally for testing
+./gradlew run
 
 # Run tests
 ./gradlew test
