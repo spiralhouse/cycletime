@@ -610,8 +610,8 @@ jobs:
 
       - name: Verify JAR exists
         run: |
-          test -f build/libs/jcvd-server.jar
-          echo "JAR size: $(du -h build/libs/jcvd-server.jar)"
+          test -f build/libs/cycletime-server.jar
+          echo "JAR size: $(du -h build/libs/cycletime-server.jar)"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -648,14 +648,14 @@ jobs:
           echo "🔍 Verifying JAR exists before Docker build..."
           
           # Check for JAR in expected location
-          if [[ -f "build/libs/jcvd-server.jar" ]]; then
-            echo "✅ JAR file verified: $(du -h build/libs/jcvd-server.jar)"
+          if [[ -f "build/libs/cycletime-server.jar" ]]; then
+            echo "✅ JAR file verified: $(du -h build/libs/cycletime-server.jar)"
           # Check if artifact download created nested structure (legacy fix)
-          elif [[ -f "build/libs/libs/jcvd-server.jar" ]]; then
+          elif [[ -f "build/libs/libs/cycletime-server.jar" ]]; then
             echo "⚠️ Found JAR in nested structure, moving to correct location..."
             mv build/libs/libs/*.jar build/libs/
             rmdir build/libs/libs
-            echo "✅ JAR file moved and verified: $(du -h build/libs/jcvd-server.jar)"
+            echo "✅ JAR file moved and verified: $(du -h build/libs/cycletime-server.jar)"
           else
             echo "❌ JAR file not found!"
             echo "Contents of build/libs/:"
@@ -677,7 +677,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/spiralhouse/jcvd
+          images: ghcr.io/spiralhouse/cycletime
           tags: |
             # Version tags (for all builds)
             type=raw,value=${{ needs.version.outputs.version }}
@@ -696,12 +696,12 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: |
             ${{ steps.meta.outputs.labels }}
-            org.opencontainers.image.title=JCVD Server
-            org.opencontainers.image.description=Project orchestration framework with MCP integration
+            org.opencontainers.image.title=CycleTime Server
+            org.opencontainers.image.description=CycleTime project orchestration framework with MCP integration
             org.opencontainers.image.version=${{ needs.version.outputs.version }}
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.url=https://github.com/spiralhouse/jcvd
-            org.opencontainers.image.source=https://github.com/spiralhouse/jcvd
+            org.opencontainers.image.url=https://github.com/spiralhouse/cycletime
+            org.opencontainers.image.source=https://github.com/spiralhouse/cycletime
             org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
             deployment.environment=dev
             deployment.version=${{ needs.version.outputs.version }}
@@ -720,14 +720,14 @@ jobs:
           echo "🚀 External CD system will detect new container and handle deployment"
           echo ""
           echo "📦 Container Information:"
-          echo "  Registry: ghcr.io/spiralhouse/jcvd"
+          echo "  Registry: ghcr.io/spiralhouse/cycletime"
           echo "  Version: ${{ needs.version.outputs.version }}"
           echo "  Tags: ${{ steps.meta.outputs.tags }}"
           echo "  Commit: ${{ github.sha }}"
           echo "  Branch: ${{ github.ref_name }}"
           echo "  Build: ${{ github.run_id }}"
           echo ""
-          echo "🏷️ Dev Deployment Tag: ghcr.io/spiralhouse/jcvd:dev"
+          echo "🏷️ Dev Deployment Tag: ghcr.io/spiralhouse/cycletime:dev"
           echo "📋 Deployment Metadata (in container labels):"
           echo "  - deployment.environment=dev"
           echo "  - deployment.version=${{ needs.version.outputs.version }}"
@@ -737,7 +737,7 @@ jobs:
           echo ""
           echo "⚙️ External deployment system will:"
           echo "  1. Detect new 'dev' tag in GHCR"
-          echo "  2. Pull ghcr.io/spiralhouse/jcvd:dev"
+          echo "  2. Pull ghcr.io/spiralhouse/cycletime:dev"
           echo "  3. Deploy to dev environment"
           echo "  4. Perform health checks"
           echo "  5. Complete deployment pipeline"
@@ -856,7 +856,7 @@ jobs:
             if [[ "${{ needs.container.result }}" == "success" ]]; then
               echo "✅ **Container pushed to GHCR** - dev deployment automatically triggered!" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
-              echo "🏷️ **Dev Tag**: \`ghcr.io/spiralhouse/jcvd:dev\` (mutable - overwrites on each main build)" >> $GITHUB_STEP_SUMMARY
+              echo "🏷️ **Dev Tag**: \`ghcr.io/spiralhouse/cycletime:dev\` (mutable - overwrites on each main build)" >> $GITHUB_STEP_SUMMARY
               echo "📦 **All Available Tags**: \`${{ needs.version.outputs.version }}\`, \`dev\`, \`sha-${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
               echo "⚙️ **What happens next**:" >> $GITHUB_STEP_SUMMARY
@@ -902,15 +902,15 @@ jobs:
           echo "=========================================" | tee -a $GITHUB_STEP_SUMMARY
           echo "" | tee -a $GITHUB_STEP_SUMMARY
           echo "✅ Container successfully pushed to GHCR" | tee -a $GITHUB_STEP_SUMMARY
-          echo "📦 Registry: \`ghcr.io/spiralhouse/jcvd\`" | tee -a $GITHUB_STEP_SUMMARY
+          echo "📦 Registry: \`ghcr.io/spiralhouse/cycletime\`" | tee -a $GITHUB_STEP_SUMMARY
           echo "🏷️ **Version**: \`${{ needs.version.outputs.version }}\`" | tee -a $GITHUB_STEP_SUMMARY
-          echo "🌟 **Dev Tag**: \`ghcr.io/spiralhouse/jcvd:dev\`" | tee -a $GITHUB_STEP_SUMMARY
+          echo "🌟 **Dev Tag**: \`ghcr.io/spiralhouse/cycletime:dev\`" | tee -a $GITHUB_STEP_SUMMARY
           echo "📋 **Commit**: \`${{ github.sha }}\`" | tee -a $GITHUB_STEP_SUMMARY
           echo "🔗 **Branch**: \`${{ github.ref_name }}\`" | tee -a $GITHUB_STEP_SUMMARY
           echo "" | tee -a $GITHUB_STEP_SUMMARY
           echo "## 🔄 External Deployment Process" | tee -a $GITHUB_STEP_SUMMARY
           echo "1. 👀 External CD system detects new \`dev\` tag" | tee -a $GITHUB_STEP_SUMMARY
-          echo "2. ⬇️ Pulls \`ghcr.io/spiralhouse/jcvd:dev\`" | tee -a $GITHUB_STEP_SUMMARY
+          echo "2. ⬇️ Pulls \`ghcr.io/spiralhouse/cycletime:dev\`" | tee -a $GITHUB_STEP_SUMMARY
           echo "3. 🚀 Deploys to dev environment automatically" | tee -a $GITHUB_STEP_SUMMARY
           echo "4. 🏥 Performs automated health checks" | tee -a $GITHUB_STEP_SUMMARY
           echo "5. ✅ Completes deployment verification" | tee -a $GITHUB_STEP_SUMMARY

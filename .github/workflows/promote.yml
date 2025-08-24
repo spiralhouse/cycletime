@@ -79,7 +79,7 @@ jobs:
           echo "🔍 Checking if version $version exists in registry..."
           
           # Check if version tag exists
-          if docker manifest inspect ghcr.io/spiralhouse/jcvd:$version >/dev/null 2>&1; then
+          if docker manifest inspect ghcr.io/spiralhouse/cycletime:$version >/dev/null 2>&1; then
             echo "✅ Version $version exists in registry"
             echo "version_exists=true" >> $GITHUB_OUTPUT
           else
@@ -91,10 +91,10 @@ jobs:
           echo "🏷️ Checking current environment tags..."
           
           # Current staging version
-          if staging_manifest=$(docker manifest inspect ghcr.io/spiralhouse/jcvd:staging 2>/dev/null); then
+          if staging_manifest=$(docker manifest inspect ghcr.io/spiralhouse/cycletime:staging 2>/dev/null); then
             staging_digest=$(echo "$staging_manifest" | jq -r '.config.digest // .mediaType')
             # Try to find version tag with same digest
-            current_staging=$(docker manifest inspect ghcr.io/spiralhouse/jcvd:$version 2>/dev/null | jq -r '.config.digest // .mediaType' | head -1)
+            current_staging=$(docker manifest inspect ghcr.io/spiralhouse/cycletime:$version 2>/dev/null | jq -r '.config.digest // .mediaType' | head -1)
             if [[ "$staging_digest" == "$current_staging" ]]; then
               current_staging="$version"
             else
@@ -107,9 +107,9 @@ jobs:
           echo "📋 Current staging: $current_staging"
           
           # Current production version
-          if production_manifest=$(docker manifest inspect ghcr.io/spiralhouse/jcvd:production 2>/dev/null); then
+          if production_manifest=$(docker manifest inspect ghcr.io/spiralhouse/cycletime:production 2>/dev/null); then
             production_digest=$(echo "$production_manifest" | jq -r '.config.digest // .mediaType')
-            current_production=$(docker manifest inspect ghcr.io/spiralhouse/jcvd:$version 2>/dev/null | jq -r '.config.digest // .mediaType' | head -1)
+            current_production=$(docker manifest inspect ghcr.io/spiralhouse/cycletime:$version 2>/dev/null | jq -r '.config.digest // .mediaType' | head -1)
             if [[ "$production_digest" == "$current_production" ]]; then
               current_production="$version"
             else
@@ -125,9 +125,9 @@ jobs:
           if [[ "${{ github.event.inputs.source_env }}" == "dev" ]]; then
             echo "⏰ Checking dev deployment time..."
             # Get image creation time from manifest
-            if dev_manifest=$(docker manifest inspect ghcr.io/spiralhouse/jcvd:$version 2>/dev/null); then
+            if dev_manifest=$(docker manifest inspect ghcr.io/spiralhouse/cycletime:$version 2>/dev/null); then
               # Extract created timestamp from image config
-              dev_time=$(docker inspect ghcr.io/spiralhouse/jcvd:$version 2>/dev/null | jq -r '.[0].Created // "unknown"' || echo "unknown")
+              dev_time=$(docker inspect ghcr.io/spiralhouse/cycletime:$version 2>/dev/null | jq -r '.[0].Created // "unknown"' || echo "unknown")
               echo "dev_deployment_time=$dev_time" >> $GITHUB_OUTPUT
               echo "📅 Version created: $dev_time"
             else
@@ -142,9 +142,9 @@ jobs:
             echo "⏰ Checking staging deployment time for production promotion..."
             # For staging time, we need to check when the version was first tagged as staging
             # This is approximated by looking for staging-specific tags in chronological order
-            if staging_tags=$(docker manifest inspect ghcr.io/spiralhouse/jcvd:staging 2>/dev/null); then
+            if staging_tags=$(docker manifest inspect ghcr.io/spiralhouse/cycletime:staging 2>/dev/null); then
               # Get the staging deployment time from the manifest
-              staging_time=$(docker inspect ghcr.io/spiralhouse/jcvd:staging 2>/dev/null | jq -r '.[0].Created // "unknown"' || echo "unknown")
+              staging_time=$(docker inspect ghcr.io/spiralhouse/cycletime:staging 2>/dev/null | jq -r '.[0].Created // "unknown"' || echo "unknown")
               echo "staging_deployment_time=$staging_time" >> $GITHUB_OUTPUT
               echo "📅 Staging deployment time: $staging_time"
             else
@@ -320,12 +320,12 @@ jobs:
       - name: Pull and verify version image
         run: |
           version="${{ github.event.inputs.version }}"
-          echo "📦 Pulling version image: ghcr.io/spiralhouse/jcvd:$version"
-          docker pull ghcr.io/spiralhouse/jcvd:$version
+          echo "📦 Pulling version image: ghcr.io/spiralhouse/cycletime:$version"
+          docker pull ghcr.io/spiralhouse/cycletime:$version
           
           # Verify image integrity
           echo "🔍 Verifying image integrity..."
-          docker inspect ghcr.io/spiralhouse/jcvd:$version > /dev/null
+          docker inspect ghcr.io/spiralhouse/cycletime:$version > /dev/null
           echo "✅ Image verification successful"
 
       - name: Add staging-specific metadata and tag
@@ -336,17 +336,17 @@ jobs:
           echo "🏷️ Tagging for staging environment..."
           
           # Tag with staging environment
-          docker tag ghcr.io/spiralhouse/jcvd:$version \
-                     ghcr.io/spiralhouse/jcvd:staging
+          docker tag ghcr.io/spiralhouse/cycletime:$version \
+                     ghcr.io/spiralhouse/cycletime:staging
           
           # Create staging-specific tag with metadata
           staging_tag="$version-staging-$(date +%Y%m%d-%H%M%S)"
-          docker tag ghcr.io/spiralhouse/jcvd:$version \
-                     ghcr.io/spiralhouse/jcvd:$staging_tag
+          docker tag ghcr.io/spiralhouse/cycletime:$version \
+                     ghcr.io/spiralhouse/cycletime:$staging_tag
           
           echo "📤 Pushing staging tags..."
-          docker push ghcr.io/spiralhouse/jcvd:staging
-          docker push ghcr.io/spiralhouse/jcvd:$staging_tag
+          docker push ghcr.io/spiralhouse/cycletime:staging
+          docker push ghcr.io/spiralhouse/cycletime:$staging_tag
           
           echo "staging_tag=$staging_tag" >> $GITHUB_ENV
           echo "previous_staging=$previous_staging" >> $GITHUB_ENV
@@ -369,13 +369,13 @@ jobs:
           echo "- **Previous Staging**: \`$previous_staging\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Container Tags" >> $GITHUB_STEP_SUMMARY
-          echo "- **Staging Tag**: \`ghcr.io/spiralhouse/jcvd:staging\` (mutable)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Timestamped Tag**: \`ghcr.io/spiralhouse/jcvd:$staging_tag\` (immutable)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version Tag**: \`ghcr.io/spiralhouse/jcvd:$version\` (immutable)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Staging Tag**: \`ghcr.io/spiralhouse/cycletime:staging\` (mutable)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamped Tag**: \`ghcr.io/spiralhouse/cycletime:$staging_tag\` (immutable)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Tag**: \`ghcr.io/spiralhouse/cycletime:$version\` (immutable)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔄 External Deployment Process" >> $GITHUB_STEP_SUMMARY
           echo "1. 👀 External CD system detects new \`staging\` tag" >> $GITHUB_STEP_SUMMARY
-          echo "2. ⬇️ Pulls \`ghcr.io/spiralhouse/jcvd:staging\`" >> $GITHUB_STEP_SUMMARY
+          echo "2. ⬇️ Pulls \`ghcr.io/spiralhouse/cycletime:staging\`" >> $GITHUB_STEP_SUMMARY
           echo "3. 🚀 Deploys to staging environment automatically" >> $GITHUB_STEP_SUMMARY
           echo "4. 🏥 Performs automated health checks" >> $GITHUB_STEP_SUMMARY
           echo "5. ✅ Completes staging deployment verification" >> $GITHUB_STEP_SUMMARY
@@ -385,13 +385,13 @@ jobs:
           echo "### Pull Commands" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
           echo "# Current staging (mutable)" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ghcr.io/spiralhouse/jcvd:staging" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/spiralhouse/cycletime:staging" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "# Specific version (immutable)" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ghcr.io/spiralhouse/jcvd:$version" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/spiralhouse/cycletime:$version" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "# Timestamped staging (immutable)" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ghcr.io/spiralhouse/jcvd:$staging_tag" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/spiralhouse/cycletime:$staging_tag" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📋 Staging Readiness Checklist" >> $GITHUB_STEP_SUMMARY
@@ -439,7 +439,7 @@ jobs:
           
           # Final validation that version is still in staging
           echo "🔍 Final staging validation..."
-          if ! docker manifest inspect ghcr.io/spiralhouse/jcvd:staging >/dev/null 2>&1; then
+          if ! docker manifest inspect ghcr.io/spiralhouse/cycletime:staging >/dev/null 2>&1; then
             echo "❌ Cannot verify staging tag" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
@@ -460,17 +460,17 @@ jobs:
       - name: Pull and verify version image
         run: |
           version="${{ github.event.inputs.version }}"
-          echo "📦 Pulling version image: ghcr.io/spiralhouse/jcvd:$version"
-          docker pull ghcr.io/spiralhouse/jcvd:$version
+          echo "📦 Pulling version image: ghcr.io/spiralhouse/cycletime:$version"
+          docker pull ghcr.io/spiralhouse/cycletime:$version
           
           # Enhanced integrity verification for production
           echo "🔍 Enhanced production image verification..."
-          docker inspect ghcr.io/spiralhouse/jcvd:$version > /dev/null
+          docker inspect ghcr.io/spiralhouse/cycletime:$version > /dev/null
           
           # Verify image digest matches staging
           echo "🔍 Verifying image digest consistency with staging..."
-          version_digest=$(docker inspect ghcr.io/spiralhouse/jcvd:$version --format='{{.Id}}')
-          staging_digest=$(docker inspect ghcr.io/spiralhouse/jcvd:staging --format='{{.Id}}')
+          version_digest=$(docker inspect ghcr.io/spiralhouse/cycletime:$version --format='{{.Id}}')
+          staging_digest=$(docker inspect ghcr.io/spiralhouse/cycletime:staging --format='{{.Id}}')
           
           if [[ "$version_digest" != "$staging_digest" ]]; then
             echo "❌ Version digest mismatch with staging - potential tampering detected"
@@ -510,17 +510,17 @@ jobs:
           echo "🏷️ Tagging for production environment..."
           
           # Tag with production environment
-          docker tag ghcr.io/spiralhouse/jcvd:$version \
-                     ghcr.io/spiralhouse/jcvd:production
+          docker tag ghcr.io/spiralhouse/cycletime:$version \
+                     ghcr.io/spiralhouse/cycletime:production
           
           # Create production-specific tag with metadata
           production_tag="$version-production-$(date +%Y%m%d-%H%M%S)"
-          docker tag ghcr.io/spiralhouse/jcvd:$version \
-                     ghcr.io/spiralhouse/jcvd:$production_tag
+          docker tag ghcr.io/spiralhouse/cycletime:$version \
+                     ghcr.io/spiralhouse/cycletime:$production_tag
           
           echo "📤 Pushing production tags..."
-          docker push ghcr.io/spiralhouse/jcvd:production
-          docker push ghcr.io/spiralhouse/jcvd:$production_tag
+          docker push ghcr.io/spiralhouse/cycletime:production
+          docker push ghcr.io/spiralhouse/cycletime:$production_tag
           
           echo "production_tag=$production_tag" >> $GITHUB_ENV
           echo "previous_production=$previous_production" >> $GITHUB_ENV
@@ -548,13 +548,13 @@ jobs:
           echo "- **Workflow Run**: [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Container Tags" >> $GITHUB_STEP_SUMMARY
-          echo "- **Production Tag**: \`ghcr.io/spiralhouse/jcvd:production\` (mutable)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Timestamped Tag**: \`ghcr.io/spiralhouse/jcvd:$production_tag\` (immutable)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version Tag**: \`ghcr.io/spiralhouse/jcvd:$version\` (immutable)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Production Tag**: \`ghcr.io/spiralhouse/cycletime:production\` (mutable)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamped Tag**: \`ghcr.io/spiralhouse/cycletime:$production_tag\` (immutable)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Tag**: \`ghcr.io/spiralhouse/cycletime:$version\` (immutable)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔄 External Deployment Process" >> $GITHUB_STEP_SUMMARY
           echo "1. 👀 External CD system detects new \`production\` tag" >> $GITHUB_STEP_SUMMARY
-          echo "2. ⬇️ Pulls \`ghcr.io/spiralhouse/jcvd:production\`" >> $GITHUB_STEP_SUMMARY
+          echo "2. ⬇️ Pulls \`ghcr.io/spiralhouse/cycletime:production\`" >> $GITHUB_STEP_SUMMARY
           echo "3. 🚀 Deploys to production environment with careful rollout" >> $GITHUB_STEP_SUMMARY
           echo "4. 🏥 Performs comprehensive health checks" >> $GITHUB_STEP_SUMMARY
           echo "5. ✅ Completes production deployment verification" >> $GITHUB_STEP_SUMMARY

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * JCVD WebSocket Connection Smoke Test
+ * CycleTime WebSocket Connection Smoke Test
  * Validates WebSocket functionality and protocol compliance
  * Usage: node websocket-test.js <websocket_url>
  */
@@ -10,8 +10,8 @@ const WebSocket = require('ws');
 const process = require('process');
 
 // Configuration
-const WS_URL = process.argv[2] || 'ws://jcvd-smoke:8080/ws';
-const SSE_URL = process.argv[3] || 'http://jcvd-smoke:8080/mcp/events';
+const WS_URL = process.argv[2] || 'ws://cycletime-smoke:8080/ws';
+const SSE_URL = process.argv[3] || 'http://cycletime-smoke:8080/mcp/events';
 const CONNECTION_TIMEOUT = 10000; // 10 seconds
 const RESPONSE_TIMEOUT = 5000;    // 5 seconds
 const TEST_MESSAGES = [
@@ -56,7 +56,7 @@ class WebSocketSmokeTest {
 
     async runTests() {
         logInfo('======================================');
-        logInfo('JCVD WebSocket Smoke Tests - Starting');
+        logInfo('CycleTime WebSocket Smoke Tests - Starting');
         logInfo('======================================');
         logInfo(`Target URL: ${this.url}`);
         logInfo(`Connection timeout: ${CONNECTION_TIMEOUT}ms`);

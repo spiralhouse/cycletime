@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# JCVD Container Smoke Test Script
+# CycleTime Container Smoke Test Script
 # Comprehensive validation of containerized application functionality
 # Usage: ./smoke-test.sh <container_name> <port>
 
 set -euo pipefail
 
 # Configuration
-CONTAINER_NAME="${1:-jcvd-smoke}"
+CONTAINER_NAME="${1:-cycletime-smoke}"
 PORT="${2:-8080}"
 BASE_URL="http://${CONTAINER_NAME}:${PORT}"
 TIMEOUT=30
@@ -110,7 +110,7 @@ test_mcp_endpoints() {
     # Test MCP server info endpoint
     if wait_for_response "${BASE_URL}/mcp" 200 $TIMEOUT; then
         local info_response=$(curl -s --max-time $TIMEOUT "${BASE_URL}/mcp")
-        if echo "$info_response" | grep -q "jcvd-kotlin"; then
+        if echo "$info_response" | grep -q "cycletime-kotlin"; then
             log_success "MCP server info endpoint responding with correct service info"
         else
             log_warning "MCP server info endpoint responding but unexpected content"
@@ -201,7 +201,7 @@ test_application_readiness() {
 
 run_comprehensive_smoke_tests() {
     log_info "========================================"
-    log_info "JCVD Container Smoke Tests - Starting"
+    log_info "CycleTime Container Smoke Tests - Starting"
     log_info "========================================"
     log_info "Target: ${BASE_URL}"
     log_info "Timeout: ${TIMEOUT}s"

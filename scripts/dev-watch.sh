@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# JCVD Development File Watcher Script
+# CycleTime Development File Watcher Script
 # SPI-479: Enhance local development experience
 # 
 # This script provides file watching and automatic execution for development tasks.
@@ -65,7 +65,7 @@ check_dependencies() {
 
 # Debounce function to avoid rapid repeated executions
 debounce() {
-    local debounce_file="/tmp/jcvd-dev-debounce"
+    local debounce_file="/tmp/cycletime-dev-debounce"
     local debounce_time=2  # seconds
     
     if [ -f "$debounce_file" ]; then
@@ -152,7 +152,7 @@ watch_server() {
     cd "$PROJECT_ROOT"
     
     # Kill any existing development server
-    pkill -f "jcvd.*development" || true
+    pkill -f "cycletime.*development" || true
     
     # Start initial server in background
     ./gradlew devRun &
@@ -191,7 +191,7 @@ watch_server() {
 # Show usage information
 show_usage() {
     cat << EOF
-JCVD Development File Watcher
+CycleTime Development File Watcher
 
 Usage: $0 [COMMAND]
 
@@ -256,7 +256,7 @@ cleanup() {
     log_info "Cleaning up..."
     # Kill any background processes
     jobs -p | xargs -r kill 2>/dev/null || true
-    rm -f /tmp/jcvd-dev-debounce
+    rm -f /tmp/cycletime-dev-debounce
     exit 0
 }
 

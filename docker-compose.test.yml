@@ -1,26 +1,26 @@
 version: '3.8'
 
 services:
-  # Main JCVD application for smoke testing
-  jcvd-smoke:
+  # Main CycleTime application for smoke testing
+  cycletime-smoke:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: jcvd-smoke-test
+    container_name: cycletime-smoke-test
     ports:
       - "8080:8080"
     environment:
       # Test environment configuration
-      - DATABASE_URL=jdbc:sqlite:/app/data/jcvd.db
+      - DATABASE_URL=jdbc:sqlite:/app/data/cycletime.db
       - PORT=8080
       - HOST=0.0.0.0
       - KTOR_DEVELOPMENT=false
       - JAVA_OPTS=-Xmx512m -XX:+UseG1GC -XX:MaxRAMPercentage=75.0
     volumes:
       # Persistent test database
-      - jcvd-smoke-data:/app/data
+      - cycletime-smoke-data:/app/data
     networks:
-      - jcvd-smoke-network
+      - cycletime-smoke-network
     
     # Resource limits for smoke testing
     deploy:
@@ -46,47 +46,47 @@ services:
   # Smoke test runner service
   smoke-test-runner:
     image: curlimages/curl:8.4.0
-    container_name: jcvd-smoke-test-runner
+    container_name: cycletime-smoke-test-runner
     depends_on:
-      jcvd-smoke:
+      cycletime-smoke:
         condition: service_healthy
     networks:
-      - jcvd-smoke-network
+      - cycletime-smoke-network
     volumes:
       - ./scripts/smoke-test.sh:/smoke-test.sh:ro
     command: >
       sh -c "
         echo 'Starting smoke tests...' &&
         chmod +x /smoke-test.sh &&
-        /smoke-test.sh jcvd-smoke 8080
+        /smoke-test.sh cycletime-smoke 8080
       "
     restart: "no"
 
   # WebSocket test service
   websocket-test:
     image: node:18-alpine
-    container_name: jcvd-websocket-test
+    container_name: cycletime-websocket-test
     depends_on:
-      jcvd-smoke:
+      cycletime-smoke:
         condition: service_healthy
     networks:
-      - jcvd-smoke-network
+      - cycletime-smoke-network
     volumes:
       - ./scripts/websocket-test.js:/websocket-test.js:ro
     working_dir: /
     command: >
       sh -c "
         npm install -g ws &&
-        node /websocket-test.js ws://jcvd-smoke:8080/ws
+        node /websocket-test.js ws://cycletime-smoke:8080/ws
       "
     restart: "no"
 
 volumes:
-  jcvd-smoke-data:
+  cycletime-smoke-data:
     driver: local
 
 networks:
-  jcvd-smoke-network:
+  cycletime-smoke-network:
     driver: bridge
     ipam:
       config:

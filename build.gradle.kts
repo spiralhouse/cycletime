@@ -13,7 +13,7 @@ plugins {
     application
 }
 
-group = "io.spiralhouse.jcvd"
+group = "io.spiralhouse.cycletime"
 version = semver.version
 
 // Git SemVersioning configuration
@@ -38,12 +38,12 @@ semver {
 }
 
 application {
-    mainClass.set("io.spiralhouse.jcvd.ApplicationKt")
+    mainClass.set("io.spiralhouse.cycletime.ApplicationKt")
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf(
         "-Dio.ktor.development=$isDevelopment",
-        "-Djcvd.version=${version}" // Pass version to runtime
+        "-Dcycletime.version=${version}" // Pass version to runtime
     )
 }
 
@@ -490,15 +490,15 @@ val buildStatus by tasks.registering {
 
 ktor {
     fatJar {
-        archiveFileName.set("jcvd-server.jar")
+        archiveFileName.set("cycletime-server.jar")
     }
 }
 
 graalvmNative {
     binaries {
         named("main") {
-            imageName.set("jcvd-server")
-            mainClass.set("io.spiralhouse.jcvd.ApplicationKt")
+            imageName.set("cycletime-server")
+            mainClass.set("io.spiralhouse.cycletime.ApplicationKt")
 
             buildArgs.add("--no-fallback")
             buildArgs.add("--enable-http")
@@ -683,7 +683,7 @@ val devRun by tasks.registering(JavaExec::class) {
     description = "Run development server with hot-reload and automatic restart"
     group = "development"
     
-    mainClass.set("io.spiralhouse.jcvd.ApplicationKt")
+    mainClass.set("io.spiralhouse.cycletime.ApplicationKt")
     classpath = sourceSets.main.get().runtimeClasspath
     
     // Development JVM arguments

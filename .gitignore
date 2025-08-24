@@ -217,9 +217,9 @@ pnpm-lock.yaml
 generated/
 auto-generated/
 
-# JCVD specific
-.jcvd/
-jcvd.db*
+# CycleTime specific
+.cycletime/
+cycletime.db*
 workflows/*.local.yml
 providers/*/secrets.*
 # Local testing artifacts (but not workflows)
