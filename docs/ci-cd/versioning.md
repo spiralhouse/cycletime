@@ -2,7 +2,7 @@
 
 ## Overview
 
-JCVD uses Git.SemVersioning to automatically calculate semantic versions from git commit history. This eliminates manual version management and ensures consistent versioning based on conventional commits.
+CycleTime CE uses Git.SemVersioning to automatically calculate semantic versions from git commit history. This eliminates manual version management and ensures consistent versioning based on conventional commits.
 
 ## How It Works
 

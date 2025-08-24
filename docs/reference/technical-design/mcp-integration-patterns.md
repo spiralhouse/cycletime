@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the Model Context Protocol (MCP) integration patterns for JCVD, enabling seamless communication with Claude Code through WebSocket connections and JSON-RPC messaging. The implementation leverages Ktor's WebSocket support and dependency injection for maintainable, testable MCP server components.
+This document outlines the Model Context Protocol (MCP) integration patterns for CycleTime CE, enabling seamless communication with Claude Code through WebSocket connections and JSON-RPC messaging. The implementation leverages Ktor's WebSocket support and dependency injection for maintainable, testable MCP server components.
 
 ## MCP Protocol Overview
 
@@ -17,7 +17,7 @@ This document outlines the Model Context Protocol (MCP) integration patterns for
 ### Protocol Flow
 
 ```
-Claude Code                    JCVD MCP Server
+Claude Code                    CycleTime CE MCP Server
     |                               |
     |-------- WebSocket Connect --->|
     |                               |
@@ -61,7 +61,7 @@ dependencies {
 ### Core MCP Server Implementation
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/JCVDMCPServer.kt
+// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/CycleTime CEMCPServer.kt
 
 import io.ktor.server.application.*
 import io.ktor.server.websocket.*
@@ -74,12 +74,12 @@ import java.time.Duration
 /**
  * Main MCP server coordinating resources and tools
  */
-class JCVDMCPServer(
+class CycleTime CEMCPServer(
     private val resources: List<MCPResource>,
     private val tools: List<MCPTool>,
     private val prompts: List<MCPPrompt> = emptyList()
 ) {
-    private val logger = LoggerFactory.getLogger(JCVDMCPServer::class.java)
+    private val logger = LoggerFactory.getLogger(CycleTime CEMCPServer::class.java)
     private val sessions = mutableMapOf<String, MCPSession>()
     
     /**
@@ -190,7 +190,7 @@ class JCVDMCPServer(
             result = buildJsonObject {
                 put("protocolVersion", "1.0")
                 put("serverInfo", buildJsonObject {
-                    put("name", "JCVD MCP Server")
+                    put("name", "CycleTime CE MCP Server")
                     put("version", "1.0.0")
                 })
                 put("capabilities", buildJsonObject {
@@ -654,7 +654,7 @@ class CreateProjectTool(
     private val projectService: ProjectApplicationService
 ) : MCPTool {
     
-    override val name = "jcvd_create_project"
+    override val name = "cycletime_ce_create_project"
     
     override val description = "Create a new project"
     
@@ -710,7 +710,7 @@ class CreateIssueTool(
     private val issueService: IssueApplicationService
 ) : MCPTool {
     
-    override val name = "jcvd_create_issue"
+    override val name = "cycletime_ce_create_issue"
     
     override val description = "Create a new issue in a project"
     
@@ -808,7 +808,7 @@ class UpdateIssueStatusTool(
     private val issueService: IssueApplicationService
 ) : MCPTool {
     
-    override val name = "jcvd_update_issue_status"
+    override val name = "cycletime_ce_update_issue_status"
     
     override val description = "Update the status of an issue"
     
@@ -975,8 +975,8 @@ val mcpModule = DIModule("mcp") {
     }
     
     // MCP Server
-    single<JCVDMCPServer> {
-        JCVDMCPServer(
+    single<CycleTime CEMCPServer> {
+        CycleTime CEMCPServer(
             resources = listOf(get<ProjectResource>(), get<IssueResource>(), get<WorkflowResource>()),
             tools = listOf(
                 get<CreateProjectTool>(),
@@ -993,7 +993,7 @@ val mcpModule = DIModule("mcp") {
  * Configure MCP in application
  */
 fun Application.configureMCP() {
-    val mcpServer = dependencies.get<JCVDMCPServer>()
+    val mcpServer = dependencies.get<CycleTime CEMCPServer>()
     with(mcpServer) {
         configureMCP()
     }
@@ -1102,7 +1102,7 @@ class MCPServerTest : DescribeSpec({
                             put("method", "tools/call")
                             put("id", 3)
                             put("params", buildJsonObject {
-                                put("name", "jcvd_create_project")
+                                put("name", "cycletime_ce_create_project")
                                 put("arguments", buildJsonObject {
                                     put("name", "Test Project")
                                     put("description", "Created via MCP")
@@ -1164,7 +1164,7 @@ class MockMCPClient {
             result = buildJsonObject {
                 put("protocolVersion", "1.0")
                 put("serverInfo", buildJsonObject {
-                    put("name", "JCVD MCP Server")
+                    put("name", "CycleTime CE MCP Server")
                     put("version", "1.0.0")
                 })
             }
@@ -1298,7 +1298,7 @@ class MCPMetrics(
 ## Best Practices
 
 1. **Resource URIs**: Use consistent, hierarchical URI patterns
-2. **Tool Naming**: Prefix tools with namespace (e.g., `jcvd_`)
+2. **Tool Naming**: Prefix tools with namespace (e.g., `cycletime_ce_`)
 3. **Error Handling**: Return proper JSON-RPC error codes
 4. **Validation**: Validate all inputs before processing
 5. **Async Operations**: Use coroutines for non-blocking I/O

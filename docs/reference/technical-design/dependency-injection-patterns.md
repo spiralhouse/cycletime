@@ -28,7 +28,7 @@ val service = application.dependencies.instance<YourInterface>()
 
 ## Overview
 
-This document outlines the dependency injection (DI) patterns for JCVD using **Ktor native DI** (implemented in SPI-458). The design enables testable, maintainable code following Domain-Driven Design (DDD) principles while leveraging Kotlin's type safety.
+This document outlines the dependency injection (DI) patterns for CycleTime CE using **Ktor native DI** (implemented in SPI-458). The design enables testable, maintainable code following Domain-Driven Design (DDD) principles while leveraging Kotlin's type safety.
 
 **Current State**: Using Ktor's native DI (`ktor-server-di`) - completed migration from Koin 4.0
 **Implementation**: Ktor 3.2.3 with native DI plugin for seamless integration with Ktor's testing framework
@@ -93,7 +93,7 @@ fun Application.module() {
     
     // Initialize database
     DatabaseFactory.init(
-        jdbcUrl = System.getenv("DATABASE_URL") ?: "jdbc:sqlite:jcvd.db",
+        jdbcUrl = System.getenv("DATABASE_URL") ?: "jdbc:sqlite:cycletime-ce.db",
         enableLogging = System.getenv("DATABASE_LOGGING")?.toBoolean() ?: false
     )
     
@@ -317,7 +317,7 @@ val mcpModule = DIModule("mcp") {
     }
     
     single<MCPServer> {
-        JCVDMCPServer(
+        CycleTime CEMCPServer(
             projectResource = get(),
             issueResource = get(),
             workflowResource = get(),
@@ -817,7 +817,7 @@ class CreateProjectTool(
     private val projectService: ProjectApplicationService
 ) : MCPTool {
     
-    override val name = "jcvd_create_project"
+    override val name = "cycletime_ce_create_project"
     override val description = "Create a new project"
     
     override val inputSchema = JsonSchema(

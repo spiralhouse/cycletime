@@ -1,6 +1,6 @@
-# Contributing to JCVD
+# Contributing to CycleTime CE
 
-Thank you for your interest in contributing to JCVD! This document provides guidelines for contributing to the project, with a focus on maintaining high code quality and consistent commit practices.
+Thank you for your interest in contributing to CycleTime CE! This document provides guidelines for contributing to the project, with a focus on maintaining high code quality and consistent commit practices.
 
 ## Table of Contents
 
@@ -37,7 +37,7 @@ Thank you for your interest in contributing to JCVD! This document provides guid
 
 ## Commit Message Guidelines
 
-JCVD uses [Conventional Commits](https://conventionalcommits.org/) specification to enable automated changelog generation and semantic versioning through [Release Please](https://github.com/googleapis/release-please).
+CycleTime CE uses [Conventional Commits](https://conventionalcommits.org/) specification to enable automated changelog generation and semantic versioning through [Release Please](https://github.com/googleapis/release-please).
 
 ### Format
 
@@ -278,7 +278,7 @@ Before submitting your changes:
 ./gradlew build
 
 # Build Docker image
-docker build -t jcvd:dev .
+docker build -t cycletime-ce:dev .
 ```
 
 ## Code Quality Standards
@@ -339,7 +339,7 @@ docker build -t jcvd:dev .
 
 ## Release Process
 
-JCVD uses a fully automated release process via [Release Please](https://github.com/googleapis/release-please) with comprehensive quality gates and multi-format artifact distribution.
+CycleTime CE uses a fully automated release process via [Release Please](https://github.com/googleapis/release-please) with comprehensive quality gates and multi-format artifact distribution.
 
 ### Complete Release Pipeline
 
@@ -361,8 +361,8 @@ JCVD uses a fully automated release process via [Release Please](https://github.
 - ⚡ **Performance**: Optimized builds with comprehensive caching
 
 **Release Artifacts Generated:**
-- `jcvd-X.Y.Z.jar` - Executable JAR with all dependencies (~50-80MB)
-- `jcvd-X.Y.Z-native` - GraalVM native binary (~30-50MB, experimental)
+- `cycletime-ce-X.Y.Z.jar` - Executable JAR with all dependencies (~50-80MB)
+- `cycletime-ce-X.Y.Z-native` - GraalVM native binary (~30-50MB, experimental)
 - `ghcr.io/spiralhouse/jcvd:X.Y.Z` - Production container image (~200MB)
 - `checksums-X.Y.Z.txt` - SHA256 checksums for verification
 
@@ -420,4 +420,4 @@ Please note that this project is released with a Contributor Code of Conduct. By
 
 ---
 
-Thank you for contributing to JCVD! 🚀
+Thank you for contributing to CycleTime CE! 🚀

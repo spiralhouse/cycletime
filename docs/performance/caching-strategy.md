@@ -1,6 +1,6 @@
 # Comprehensive Caching Strategy (SPI-475)
 
-This document outlines the multi-layer caching strategy implemented for the JCVD project to achieve 40-60% overall CI time reduction and consistent sub-10 minute builds.
+This document outlines the multi-layer caching strategy implemented for the CycleTime CE project to achieve 40-60% overall CI time reduction and consistent sub-10 minute builds.
 
 ## Overview
 

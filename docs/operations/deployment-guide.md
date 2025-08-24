@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers deploying JCVD to production environments using Docker and Kubernetes.
+This guide covers deploying CycleTime CE to production environments using Docker and Kubernetes.
 
 ## Prerequisites
 
@@ -27,7 +27,7 @@ docker run -d \
   --name jcvd \
   -p 8080:8080 \
   -v /data/jcvd:/data \
-  -e DATABASE_URL=jdbc:sqlite:/data/jcvd.db \
+  -e DATABASE_URL=jdbc:sqlite:/data/cycletime-ce.db \
   -e LOG_LEVEL=INFO \
   ghcr.io/spiralhouse/jcvd:latest
 ```
@@ -40,10 +40,10 @@ git clone https://github.com/spiralhouse/jcvd.git
 cd jcvd
 
 # Build image
-docker build -t jcvd:custom .
+docker build -t cycletime-ce:custom .
 
 # Run custom image
-docker run -d --name jcvd -p 8080:8080 jcvd:custom
+docker run -d --name cycletime-ce -p 8080:8080 cycletime-ce:custom
 ```
 
 ## Kubernetes Deployment
@@ -123,7 +123,7 @@ kubectl create namespace jcvd-prod
 
 # Create secrets
 kubectl create secret generic jcvd-secrets \
-  --from-literal=database-url=jdbc:sqlite:/data/jcvd.db \
+  --from-literal=database-url=jdbc:sqlite:/data/cycletime-ce.db \
   -n jcvd-prod
 
 # Apply deployment
@@ -152,7 +152,7 @@ services:
     ports:
       - "80:8080"
     environment:
-      - DATABASE_URL=jdbc:sqlite:/data/jcvd.db
+      - DATABASE_URL=jdbc:sqlite:/data/cycletime-ce.db
       - LOG_LEVEL=INFO
     volumes:
       - jcvd-data:/data
@@ -209,7 +209,7 @@ docker-compose -f docker-compose.prod.yml down
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `DATABASE_URL` | Database connection string | `jdbc:sqlite:/data/jcvd.db` |
+| `DATABASE_URL` | Database connection string | `jdbc:sqlite:/data/cycletime-ce.db` |
 | `PORT` | Server port | `8080` |
 | `HOST` | Server host | `0.0.0.0` |
 | `LOG_LEVEL` | Logging level | `INFO` |
@@ -234,7 +234,7 @@ Expected response:
 ```json
 {
   "status": "healthy",
-  "service": "jcvd",
+  "service": "cycletime-ce",
   "version": "0.3.0",
   "dependencies": {
     "database": "connected"
@@ -254,23 +254,23 @@ Expected response:
 
 ```bash
 # Backup SQLite database
-docker exec jcvd-prod sqlite3 /data/jcvd.db ".backup /data/backup.db"
+docker exec cycletime-ce-prod sqlite3 /data/cycletime-ce.db ".backup /data/backup.db"
 
 # Copy backup to host
-docker cp jcvd-prod:/data/backup.db ./backups/jcvd-$(date +%Y%m%d).db
+docker cp cycletime-ce-prod:/data/backup.db ./backups/cycletime-ce-$(date +%Y%m%d).db
 ```
 
 ### Restore from Backup
 
 ```bash
 # Copy backup to container
-docker cp ./backups/jcvd-20250823.db jcvd-prod:/data/restore.db
+docker cp ./backups/cycletime-ce-20250823.db cycletime-ce-prod:/data/restore.db
 
 # Restore database
-docker exec jcvd-prod sh -c "mv /data/jcvd.db /data/jcvd.db.old && mv /data/restore.db /data/jcvd.db"
+docker exec cycletime-ce-prod sh -c "mv /data/cycletime-ce.db /data/cycletime-ce.db.old && mv /data/restore.db /data/cycletime-ce.db"
 
 # Restart container
-docker restart jcvd-prod
+docker restart cycletime-ce-prod
 ```
 
 ## Security Considerations
@@ -288,20 +288,20 @@ docker restart jcvd-prod
 
 ```bash
 # Check logs
-docker logs jcvd-prod
+docker logs cycletime-ce-prod
 
 # Verify environment variables
-docker exec jcvd-prod env
+docker exec cycletime-ce-prod env
 
 # Test database connection
-docker exec jcvd-prod sqlite3 /data/jcvd.db "SELECT 1"
+docker exec cycletime-ce-prod sqlite3 /data/cycletime-ce.db "SELECT 1"
 ```
 
 ### Performance Issues
 
 ```bash
 # Check resource usage
-docker stats jcvd-prod
+docker stats cycletime-ce-prod
 
 # Increase resources in docker-compose.yml
 deploy:
@@ -315,10 +315,10 @@ deploy:
 
 ```bash
 # Check database integrity
-docker exec jcvd-prod sqlite3 /data/jcvd.db "PRAGMA integrity_check"
+docker exec cycletime-ce-prod sqlite3 /data/cycletime-ce.db "PRAGMA integrity_check"
 
 # Vacuum database
-docker exec jcvd-prod sqlite3 /data/jcvd.db "VACUUM"
+docker exec cycletime-ce-prod sqlite3 /data/cycletime-ce.db "VACUUM"
 ```
 
 ## Related Documentation

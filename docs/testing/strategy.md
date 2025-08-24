@@ -2,7 +2,7 @@
 
 ## Overview
 
-JCVD follows a three-tier testing approach to ensure comprehensive coverage while maintaining test reliability and maintainability:
+CycleTime CE follows a three-tier testing approach to ensure comprehensive coverage while maintaining test reliability and maintainability:
 
 1. **Unit Tests** - Fast, isolated, no external dependencies
 2. **Integration Tests** - Real components with controlled infrastructure

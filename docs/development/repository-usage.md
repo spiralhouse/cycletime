@@ -1,6 +1,6 @@
 # Repository Usage Patterns
 
-This document describes the repository pattern implementation and usage patterns for the JCVD domain model.
+This document describes the repository pattern implementation and usage patterns for the CycleTime CE domain model.
 
 ## Overview
 

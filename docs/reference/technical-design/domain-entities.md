@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the design for implementing core domain entities following Domain-Driven Design (DDD) patterns with Test-Driven Development (TDD) methodology. The goal is to create a solid foundation for the JCVD domain model using Kotlin's type safety and Exposed ORM integration while maintaining clean architecture principles.
+This document outlines the design for implementing core domain entities following Domain-Driven Design (DDD) patterns with Test-Driven Development (TDD) methodology. The goal is to create a solid foundation for the CycleTime CE domain model using Kotlin's type safety and Exposed ORM integration while maintaining clean architecture principles.
 
 ## Pattern Mapping to Session Implementation
 

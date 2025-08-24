@@ -5,11 +5,11 @@ code in this repository.
 
 ## Project Overview
 
-JCVD is a project orchestration framework that extends Claude Code to manage
+CycleTime CE (Community Edition) is a project orchestration framework that extends Claude Code to manage
 complete software development lifecycles with minimal configuration overhead.
 The system provides structured project data, dependency tracking, and 
 cross-session continuity through embedded database and MCP Resource integration.
-Rather than focusing on individual coding tasks, JCVD serves as a data and 
+Rather than focusing on individual coding tasks, CycleTime CE serves as a data and 
 context provider for Claude Code to make intelligent project management decisions.
 
 **Status**: Kotlin/JVM implementation with Domain-Driven Design architecture.

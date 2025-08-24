@@ -1,4 +1,4 @@
-# JCVD: Comprehensive Project Orchestration Framework
+# CycleTime CE: Comprehensive Project Orchestration Framework
 
 ## Product Requirements Document
 
@@ -14,23 +14,23 @@
 
 ## Executive Summary
 
-**JCVD** is a data and context provider designed specifically for the Claude
+**CycleTime CE** is a data and context provider designed specifically for the Claude
 Code ecosystem, providing structured project information that enhances Claude
 Code's existing capabilities with cross-session continuity and intelligent task
 recommendations. Building on Claude Code's proven agent capabilities and natural
-language workflow, JCVD creates and manages ALL artifacts required to execute a
+language workflow, CycleTime CE creates and manages ALL artifacts required to execute a
 software project from inception to deployment, including specifications,
 architecture documentation, issue tracking and management, and repository setup.
 
 Targeting the growing community of solo developers and freelancers who rely on
-Claude Code for productivity, JCVD addresses the specific challenges these users
+Claude Code for productivity, CycleTime CE addresses the specific challenges these users
 face: cognitive overload from maintaining entire project context, loss of
 project state between Claude Code sessions, and the need for professional
 project deliverables when working with clients.
 
 The system operates on a project-centric model where every development effort
 begins with **Project Bootstrap** - either through an interactive requirements
-gathering interview or by accepting a user-provided PRD. JCVD then orchestrates
+gathering interview or by accepting a user-provided PRD. CycleTime CE then orchestrates
 the entire development lifecycle through intelligent issue tracking systems,
 ensuring structured progression from high-level design through proof-of-concept
 delivery, all while preserving Claude Code's familiar agent-based interaction
@@ -113,7 +113,7 @@ challenges with complete project orchestration:
 
 ### Solution Overview
 
-JCVD provides a **data and context provider** for Claude Code that:
+CycleTime CE provides a **data and context provider** for Claude Code that:
 
 1. **Project Bootstrap Management**: Basic requirements gathering and systematic
    project setup with templates
@@ -190,7 +190,7 @@ JCVD provides a **data and context provider** for Claude Code that:
 
 ## Developer Experience Philosophy
 
-JCVD is designed around core principles that extend Claude Code's
+CycleTime CE is designed around core principles that extend Claude Code's
 developer-first philosophy to comprehensive project orchestration:
 
 **Claude Code Ecosystem Integration First**
@@ -334,7 +334,7 @@ Audience)_
 
 **FR5.1: Seamless Claude Code Workflow Integration**
 
-- Natural language interface for all JCVD operations
+- Natural language interface for all CycleTime CE operations
 - Context-aware suggestions based on current project phase and issue tracking
   state
 - Intelligent task delegation to Claude Code's built-in agents based on task
@@ -352,7 +352,7 @@ Audience)_
 
 **FR6.1: Real-Time System Observability**
 
-- Web-based dashboard accessible at `http://localhost:3000/dashboard` providing immediate visibility into JCVD operations
+- Web-based dashboard accessible at `http://localhost:3000/dashboard` providing immediate visibility into CycleTime CE operations
 - Real-time display of active sessions, their states, and last activity timestamps
 - Project overview showing issue counts by status (backlog, in-progress, completed) and hierarchy levels
 - MCP resource access logs showing which resources Claude Code agents are accessing and when
@@ -376,7 +376,7 @@ Audience)_
 
 ## System Architecture
 
-JCVD uses a provider-agnostic architecture that supports multiple issue tracking
+CycleTime CE uses a provider-agnostic architecture that supports multiple issue tracking
 backends (H2, Linear, GitHub Issues, Jira) through a unified interface. This
 enables complete offline operation with embedded H2 while providing seamless
 migration to cloud providers when ready.
@@ -393,7 +393,7 @@ architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Claude Code Agent Integration
 
-JCVD is designed specifically for the Claude Code user community, working
+CycleTime CE is designed specifically for the Claude Code user community, working
 seamlessly **with** Claude Code's existing agent framework to address the unique
 challenges solo developers and freelancers face when managing complete projects.
 This architectural approach ensures:
@@ -402,7 +402,7 @@ This architectural approach ensures:
 
 - Claude Code's native agents (Developer, QA, Product Manager, etc.) remain the
   primary execution layer that solo developers already know and trust
-- JCVD provides project context, task recommendations, and orchestration
+- CycleTime CE provides project context, task recommendations, and orchestration
   intelligence to these existing agents, reducing the cognitive load of
   maintaining entire project context
 - No custom agent implementations or external coordination protocols required -
@@ -410,7 +410,7 @@ This architectural approach ensures:
 
 **Context-Aware Task Intelligence for Solo Development**
 
-- JCVD analyzes issue dependencies, project state, and task types to provide
+- CycleTime CE analyzes issue dependencies, project state, and task types to provide
   intelligent recommendations, addressing the lack of team input that solo
   developers typically face
 - Agents receive enhanced context about project goals, current phase, and
@@ -422,7 +422,7 @@ This architectural approach ensures:
 
 **Seamless Integration Model for Claude Code Ecosystem**
 
-- JCVD operates as an MCP server that enhances Claude Code's capabilities from
+- CycleTime CE operates as an MCP server that enhances Claude Code's capabilities from
   within, maintaining the terminal-based AI interaction that Claude Code users
   prefer
 - All agent interactions happen through Claude Code's native session management,
@@ -432,14 +432,14 @@ This architectural approach ensures:
 - Cross-session project continuity addresses one of the biggest pain points
   Claude Code users face when working on larger projects
 
-This approach ensures that JCVD amplifies Claude Code's proven ability to help
+This approach ensures that CycleTime CE amplifies Claude Code's proven ability to help
 solo developers \"work like a team of five\" by adding systematic project
 management capabilities without disrupting the development experience that
 attracted users to Claude Code in the first place.
 
 ## Project Phases
 
-JCVD organizes software development into structured phases:
+CycleTime CE organizes software development into structured phases:
 
 1. **Project Bootstrap**: Requirements gathering, project setup, and initial
    architecture
@@ -456,7 +456,7 @@ For detailed phase workflows and user experiences, see
 
 ## User Experience Overview
 
-JCVD prioritizes developer control and simplicity through Claude Code's familiar
+CycleTime CE prioritizes developer control and simplicity through Claude Code's familiar
 interaction model:
 
 1. **First-Time Setup**: Simple installation as MCP server with offline-first
@@ -473,7 +473,7 @@ interaction model:
    progress reports generated through familiar Claude Code interactions
 
 This approach ensures that existing Claude Code users can immediately leverage
-JCVD's project orchestration capabilities without learning new interfaces or
+CycleTime CE's project orchestration capabilities without learning new interfaces or
 abandoning their proven development workflows.
 
 For detailed user workflows, setup processes, and daily development experiences,
@@ -483,13 +483,13 @@ see [USER_EXPERIENCE.md](USER_EXPERIENCE.md).
 
 ### New Projects
 
-JCVD provides comprehensive greenfield project support through Project
+CycleTime CE provides comprehensive greenfield project support through Project
 Bootstrap, including requirements gathering, project structure creation, and
 complete development environment setup.
 
 ### Existing Projects
 
-JCVD uses a simple "Onboarding Assistant" with targeted questions to recommend
+CycleTime CE uses a simple "Onboarding Assistant" with targeted questions to recommend
 integration strategies:
 
 - **Small Projects (10-50 issues)**: Full integration with quick setup (2-4
@@ -567,17 +567,17 @@ Successfully delivered the foundational session management system with comprehen
 - **Claude Code Agent Integration**: >85% of task-to-agent recommendations are
   accepted and successfully executed by Claude Code's existing agents
 - **Context Utilization**: >90% of Claude Code agent interactions benefit from
-  JCVD-provided project context
+  CycleTime CE-provided project context
 - **Cross-Session Continuity**: >95% of users successfully resume project work
   in new Claude Code sessions without context loss
 - **Cognitive Load Reduction**: >80% of solo developers report reduced mental
-  fatigue from context switching when using JCVD
+  fatigue from context switching when using CycleTime CE
 - **Seamless Experience**: <2% of users report friction or confusion with agent
   delegation and recommendations within Claude Code
 
 ### Dashboard & Observability Success
 
-- **System Transparency**: >95% of users report understanding what JCVD is doing with their project data
+- **System Transparency**: >95% of users report understanding what CycleTime CE is doing with their project data
 - **Debugging Efficiency**: >70% reduction in time spent troubleshooting integration issues
 - **First-Time Experience**: >90% of new users successfully verify system operation through dashboard within first session
 - **Trust Metrics**: >85% of users report increased confidence in system reliability due to dashboard visibility
@@ -590,7 +590,7 @@ Successfully delivered the foundational session management system with comprehen
   90% of time
 - **Documentation Fidelity**: Architecture docs remain synchronized with
   implementation >85% of time
-- **User Retention**: >85% of users complete multiple projects using JCVD
+- **User Retention**: >85% of users complete multiple projects using CycleTime CE
   framework
 
 ## Implementation Roadmap
@@ -680,6 +680,6 @@ Successfully delivered the foundational session management system with comprehen
 - Clear integration pathways that preserve team velocity
 - Simple validation and recommendation system
 
-This approach provides JCVD as a data and context provider that enhances Claude
+This approach provides CycleTime CE as a data and context provider that enhances Claude
 Code's existing capabilities with structured project information, cross-session
 continuity, and intelligent task recommendations.

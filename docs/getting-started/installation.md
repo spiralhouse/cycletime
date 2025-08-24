@@ -3,7 +3,7 @@
 ## Prerequisites
 
 ### Java 21
-JCVD requires Java 21 or later. We recommend using SDKMAN for managing Java versions.
+CycleTime CE requires Java 21 or later. We recommend using SDKMAN for managing Java versions.
 
 ```bash
 # Install SDKMAN (if not already installed)
@@ -53,7 +53,7 @@ If you prefer using Docker:
 
 ```bash
 # Build container
-docker build -t jcvd .
+docker build -t cycletime-ce .
 
 # Run container
 docker run -p 8080:8080 jcvd

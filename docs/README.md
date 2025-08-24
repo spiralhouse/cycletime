@@ -1,11 +1,11 @@
-# JCVD Documentation
+# CycleTime CE Documentation
 
-Welcome to the JCVD documentation! This guide will help you navigate through all available documentation.
+Welcome to the CycleTime CE documentation! This guide will help you navigate through all available documentation.
 
 ## 📚 Documentation Structure
 
 ### [Getting Started](getting-started/)
-Quick guides to get you up and running with JCVD.
+Quick guides to get you up and running with CycleTime CE.
 
 - [Installation Guide](getting-started/installation.md) - System requirements and installation
 - [Quick Start](getting-started/quick-start.md) - Get running in 5 minutes
@@ -13,7 +13,7 @@ Quick guides to get you up and running with JCVD.
 - [Onboarding](getting-started/onboarding.md) - New project integration
 
 ### [Development](development/)
-Everything you need for developing with JCVD.
+Everything you need for developing with CycleTime CE.
 
 - [Development Setup](development/setup.md) - IDE configuration and workflows
 - [Project Structure](development/project-structure.md) - Code organization

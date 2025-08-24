@@ -4,7 +4,7 @@ This document describes the separate test suite implementation with parallel exe
 
 ## Test Suite Overview
 
-The JCVD project now uses three distinct test suites optimized for different purposes:
+The CycleTime CE project now uses three distinct test suites optimized for different purposes:
 
 ### 1. Unit Tests (`unitTest`)
 - **Purpose**: Fast feedback on business logic and domain rules

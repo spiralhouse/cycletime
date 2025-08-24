@@ -1,4 +1,4 @@
-# JCVD - Context Management for Claude Code
+# CycleTime CE - Context Management for Claude Code
 
 [![Build Status](https://github.com/spiralhouse/jcvd/actions/workflows/cicd.yml/badge.svg)](https://github.com/spiralhouse/jcvd/actions/workflows/cicd.yml)
 [![codecov](https://codecov.io/gh/spiralhouse/jcvd/graph/badge.svg?token=Rz1p5Wx0O8)](https://codecov.io/gh/spiralhouse/jcvd)
@@ -6,7 +6,7 @@
 [![Kotlin](https://img.shields.io/badge/kotlin-2.0.21-7F52FF.svg?logo=kotlin)](https://kotlinlang.org/)
 [![Gradle](https://img.shields.io/badge/gradle-9.0-02303A.svg?logo=gradle)](https://gradle.org/)
 
-JCVD provides structured context management for Claude Code, solving the fundamental challenge of maintaining project continuity across sessions. It preserves your project state, tracks dependencies, and maintains decision history through an embedded H2 database accessible via MCP (Model Context Protocol), enabling you to resume work exactly where you left off.
+CycleTime CE (Community Edition) provides structured context management for Claude Code, solving the fundamental challenge of maintaining project continuity across sessions. It preserves your project state, tracks dependencies, and maintains decision history through an embedded H2 database accessible via MCP (Model Context Protocol), enabling you to resume work exactly where you left off.
 
 ## Key Capabilities
 
@@ -19,7 +19,7 @@ JCVD provides structured context management for Claude Code, solving the fundame
 
 ## Who Benefits
 
-JCVD is designed for developers using Claude Code who:
+CycleTime CE is designed for developers using Claude Code who:
 - Work on multi-file projects requiring context across sessions
 - Need to track complex dependencies and decision rationale
 - Want systematic project organization without manual documentation overhead
@@ -27,12 +27,12 @@ JCVD is designed for developers using Claude Code who:
 
 ## Prerequisites
 
-- Docker (for running JCVD)
+- Docker (for running CycleTime CE)
 - Java 21 or later (only for contributors building from source)
 
 ## Quick Start
 
-### Running JCVD
+### Running CycleTime CE
 
 ```bash
 # Pull and run the latest version
@@ -57,9 +57,9 @@ cd jcvd
 
 ### Claude Code Integration
 
-**JCVD extends Claude Code with persistent context management through MCP:**
+**CycleTime CE extends Claude Code with persistent context management through MCP:**
 
-When integrated with Claude Code, JCVD enables:
+When integrated with Claude Code, CycleTime CE enables:
 - **Persistent Project Context** - Your project state survives between Claude Code sessions
 - **Intelligent Task Recommendations** - Claude Code understands your project dependencies and suggests next steps
 - **Structured Workflow Management** - Track issues, milestones, and decisions systematically

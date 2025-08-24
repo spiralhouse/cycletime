@@ -11,7 +11,7 @@
 
 ## Overview
 
-The JCVD Session Management system provides robust cross-session state persistence for Claude Code interactions, implementing Domain-Driven Design patterns with comprehensive validation, automatic repair, and lifecycle management. This document serves as the technical reference for developers working with or extending the session management capabilities.
+The CycleTime CE Session Management system provides robust cross-session state persistence for Claude Code interactions, implementing Domain-Driven Design patterns with comprehensive validation, automatic repair, and lifecycle management. This document serves as the technical reference for developers working with or extending the session management capabilities.
 
 ## Architecture Overview
 
@@ -792,6 +792,6 @@ The architecture provides clear extension points for future enhancements:
 
 ## Conclusion
 
-The JCVD Session Management system provides a robust, performant, and maintainable solution for cross-session state persistence. With comprehensive validation, automatic repair, and a clean domain-driven architecture, it ensures reliable session continuity for Claude Code interactions while maintaining data integrity and system health.
+The CycleTime CE Session Management system provides a robust, performant, and maintainable solution for cross-session state persistence. With comprehensive validation, automatic repair, and a clean domain-driven architecture, it ensures reliable session continuity for Claude Code interactions while maintaining data integrity and system health.
 
 For questions or contributions, refer to the main project documentation or submit issues through the project's issue tracking system.

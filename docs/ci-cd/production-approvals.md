@@ -1,6 +1,6 @@
 # Production Deployment Approval Process
 
-This document outlines the approval process, safety measures, and procedures for production deployments in the JCVD project.
+This document outlines the approval process, safety measures, and procedures for production deployments in the CycleTime CE project.
 
 ## Overview
 

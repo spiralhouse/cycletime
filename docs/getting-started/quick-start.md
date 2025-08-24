@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get JCVD up and running in under 5 minutes.
+Get CycleTime CE up and running in under 5 minutes.
 
 ## 1. Prerequisites
 
@@ -35,7 +35,7 @@ curl http://localhost:8080/health
 # Expected response:
 {
   "status": "healthy",
-  "service": "jcvd",
+  "service": "cycletime-ce",
   "version": "0.1.0"
 }
 ```
@@ -44,7 +44,7 @@ curl http://localhost:8080/health
 
 ```bash
 # Build and run with Docker
-docker build -t jcvd .
+docker build -t cycletime-ce .
 docker run -p 8080:8080 jcvd
 ```
 
