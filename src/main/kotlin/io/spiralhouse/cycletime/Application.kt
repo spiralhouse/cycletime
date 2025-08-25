@@ -67,7 +67,7 @@ fun Application.module() {
     val logger = LoggerFactory.getLogger("Application")
 
     // Initialize database
-    val jdbcUrl = System.getenv("DATABASE_URL") ?: "jdbc:sqlite:jcvd.db"
+    val jdbcUrl = System.getenv("DATABASE_URL") ?: "jdbc:sqlite:cycletime.db"
     val enableLogging = System.getenv("DATABASE_LOGGING")?.toBoolean() ?: false
 
     logger.info("Initializing database with URL: $jdbcUrl")
@@ -152,7 +152,7 @@ fun Application.module() {
         DatabaseFactory.close()
     }
 
-    logger.info("JCVD Kotlin server started successfully")
+    logger.info("CycleTime Kotlin server started successfully")
 }
 
 /**

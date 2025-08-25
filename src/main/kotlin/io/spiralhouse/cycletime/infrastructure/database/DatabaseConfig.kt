@@ -13,7 +13,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.LoggerFactory
 
 class DatabaseConfig(
-    private val jdbcUrl: String = "jdbc:sqlite:jcvd.db",
+    private val jdbcUrl: String = "jdbc:sqlite:cycletime.db",
     private val driver: String = "org.sqlite.JDBC",
     private val maxPoolSize: Int = 10,
     private val enableLogging: Boolean = false
@@ -106,7 +106,7 @@ object DatabaseFactory {
     private var config: DatabaseConfig? = null
 
     fun init(
-        jdbcUrl: String = "jdbc:sqlite:jcvd.db",
+        jdbcUrl: String = "jdbc:sqlite:cycletime.db",
         driver: String = "org.sqlite.JDBC",
         maxPoolSize: Int = 10,
         enableLogging: Boolean = false

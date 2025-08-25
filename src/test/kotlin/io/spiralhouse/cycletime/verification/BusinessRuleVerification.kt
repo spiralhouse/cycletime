@@ -43,7 +43,7 @@ import io.kotest.core.spec.style.StringSpec
  *
  * Run this test:
  * ```
- * ./gradlew test --tests "io.spiralhouse.jcvd.verification.BusinessRuleVerification"
+ * ./gradlew test --tests "io.spiralhouse.cycletime.verification.BusinessRuleVerification"
  * ```
  */
 class BusinessRuleVerification : StringSpec({

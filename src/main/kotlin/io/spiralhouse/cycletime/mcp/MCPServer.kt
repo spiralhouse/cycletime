@@ -34,7 +34,7 @@ fun Routing.configureMCP() {
 
     // SSE endpoint for MCP communication
     sse("/mcp/events") {
-        send("data: {\"type\":\"connected\",\"message\":\"Connected to JCVD Kotlin MCP Server\"}\n\n")
+        send("data: {\"type\":\"connected\",\"message\":\"Connected to CycleTime Kotlin MCP Server\"}\n\n")
 
         // Keep connection alive with heartbeat
         while (true) {
@@ -48,17 +48,17 @@ fun Routing.configureMCP() {
         call.respond(mapOf(
             "resources" to listOf(
                 mapOf(
-                    "uri" to "jcvd://projects",
+                    "uri" to "cycletime://projects",
                     "name" to "Projects",
                     "description" to "List of all projects"
                 ),
                 mapOf(
-                    "uri" to "jcvd://issues",
+                    "uri" to "cycletime://issues",
                     "name" to "Issues",
                     "description" to "List of all issues"
                 ),
                 mapOf(
-                    "uri" to "jcvd://sessions",
+                    "uri" to "cycletime://sessions",
                     "name" to "Sessions",
                     "description" to "Active sessions"
                 )
