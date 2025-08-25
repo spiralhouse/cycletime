@@ -917,7 +917,7 @@ object ProjectConfig : AbstractProjectConfig() {
 
     <logger name="org.jetbrains.exposed" level="WARN"/>
     <logger name="io.ktor" level="INFO"/>
-    <logger name="io.spiralhouse.jcvd" level="DEBUG"/>
+    <logger name="io.spiralhouse.cycletime" level="DEBUG"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>

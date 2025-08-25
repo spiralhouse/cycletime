@@ -13,7 +13,7 @@ plugins {
     application
 }
 
-group = "io.spiralhouse.jcvd"
+group = "io.spiralhouse.cycletime"
 version = semver.version
 
 // Git SemVersioning configuration
@@ -38,12 +38,12 @@ semver {
 }
 
 application {
-    mainClass.set("io.spiralhouse.jcvd.ApplicationKt")
+    mainClass.set("io.spiralhouse.cycletime.ApplicationKt")
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf(
         "-Dio.ktor.development=$isDevelopment",
-        "-Djcvd.version=${version}" // Pass version to runtime
+        "-Dcycletime.version=${version}" // Pass version to runtime
     )
 }
 
@@ -205,11 +205,11 @@ val unitTest by tasks.registering(Test::class) {
     
     // Filter for unit tests (domain and verification package tests)
     filter {
-        includeTestsMatching("io.spiralhouse.jcvd.domain.*")
-        includeTestsMatching("io.spiralhouse.jcvd.domain.*.*")
-        includeTestsMatching("io.spiralhouse.jcvd.verification.*")
-        excludeTestsMatching("io.spiralhouse.jcvd.integration.*")
-        excludeTestsMatching("io.spiralhouse.jcvd.performance.*")
+        includeTestsMatching("io.spiralhouse.cycletime.domain.*")
+        includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.verification.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.integration.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
     }
     
     // Precise task inputs for smart incremental testing
@@ -269,11 +269,11 @@ val integrationTest by tasks.registering(Test::class) {
     
     // Filter for integration tests
     filter {
-        includeTestsMatching("io.spiralhouse.jcvd.integration.*")
-        excludeTestsMatching("io.spiralhouse.jcvd.performance.*")
-        excludeTestsMatching("io.spiralhouse.jcvd.system.*")
-        excludeTestsMatching("io.spiralhouse.jcvd.domain.*")
-        excludeTestsMatching("io.spiralhouse.jcvd.verification.*")
+        includeTestsMatching("io.spiralhouse.cycletime.integration.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.system.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.domain.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.verification.*")
     }
     
     // Precise inputs for integration tests
@@ -333,11 +333,11 @@ val systemTest by tasks.registering(Test::class) {
     
     // Filter for system/performance tests
     filter {
-        includeTestsMatching("io.spiralhouse.jcvd.performance.*")
-        includeTestsMatching("io.spiralhouse.jcvd.system.*")
-        excludeTestsMatching("io.spiralhouse.jcvd.integration.*")
-        excludeTestsMatching("io.spiralhouse.jcvd.domain.*")
-        excludeTestsMatching("io.spiralhouse.jcvd.verification.*")
+        includeTestsMatching("io.spiralhouse.cycletime.performance.*")
+        includeTestsMatching("io.spiralhouse.cycletime.system.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.integration.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.domain.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.verification.*")
     }
     
     // System tests depend on entire application
@@ -441,7 +441,7 @@ val buildStatus by tasks.registering {
     notCompatibleWithConfigurationCache("This task prints build status information")
     
     doLast {
-        println("\n🛠️  JCVD Smart Build Status:")
+        println("\n🛠️  CycleTime Smart Build Status:")
         println("==========================================\n")
         
         println("🚀 Performance Optimizations:")
@@ -490,15 +490,15 @@ val buildStatus by tasks.registering {
 
 ktor {
     fatJar {
-        archiveFileName.set("jcvd-server.jar")
+        archiveFileName.set("cycletime-server.jar")
     }
 }
 
 graalvmNative {
     binaries {
         named("main") {
-            imageName.set("jcvd-server")
-            mainClass.set("io.spiralhouse.jcvd.ApplicationKt")
+            imageName.set("cycletime-server")
+            mainClass.set("io.spiralhouse.cycletime.ApplicationKt")
 
             buildArgs.add("--no-fallback")
             buildArgs.add("--enable-http")
@@ -547,7 +547,7 @@ kover {
             excludes {
                 // Exclude generated code and infrastructure
                 classes("*.di.*", "*.infrastructure.*")
-                packages("io.spiralhouse.jcvd.infrastructure.di")
+                packages("io.spiralhouse.cycletime.infrastructure.di")
             }
         }
 
@@ -683,7 +683,7 @@ val devRun by tasks.registering(JavaExec::class) {
     description = "Run development server with hot-reload and automatic restart"
     group = "development"
     
-    mainClass.set("io.spiralhouse.jcvd.ApplicationKt")
+    mainClass.set("io.spiralhouse.cycletime.ApplicationKt")
     classpath = sourceSets.main.get().runtimeClasspath
     
     // Development JVM arguments
@@ -692,7 +692,7 @@ val devRun by tasks.registering(JavaExec::class) {
         "-DKTOR_DEVELOPMENT=true",
         "-DKTOR_AUTORELOAD=true",
         "-DDATABASE_LOGGING=true",
-        "-Djcvd.version=${version}", // Pass version for runtime
+        "-Dcycletime.version=${version}", // Pass version for runtime
         "-Xmx1024m",
         "-XX:+UseG1GC",
         "-XX:+UseStringDeduplication",
@@ -703,7 +703,7 @@ val devRun by tasks.registering(JavaExec::class) {
     environment("KTOR_DEVELOPMENT", "true")
     environment("KTOR_AUTORELOAD", "true")
     environment("DATABASE_LOGGING", "true")
-    environment("DATABASE_URL", "jdbc:sqlite:jcvd-dev.db")
+    environment("DATABASE_URL", "jdbc:sqlite:cycletime-dev.db")
     
     // Watch for source changes
     inputs.files(fileTree("src/main/kotlin"))
@@ -716,9 +716,9 @@ val devRun by tasks.registering(JavaExec::class) {
     dependsOn("classes")
     
     doFirst {
-        println("🔥 Starting JCVD development server with hot-reload...")
+        println("🔥 Starting CycleTime development server with hot-reload...")
         println("   Server will restart automatically when source files change")
-        println("   Database: jcvd-dev.db (separate from production)")
+        println("   Database: cycletime-dev.db (separate from production)")
         println("   Health check: http://localhost:8080/health")
         println("   Press Ctrl+C to stop the server")
     }
@@ -753,7 +753,7 @@ val devWorkflow by tasks.registering {
     group = "development"
     
     doLast {
-        println("🚀 JCVD Development Workflow")
+        println("🚀 CycleTime Development Workflow")
         println("===========================")
         println("")
         println("To start the full development experience:")
@@ -772,7 +772,7 @@ val devWorkflow by tasks.registering {
         println("")
         println("💡 Tips:")
         println("   • Use multiple terminals for parallel workflows")
-        println("   • Database file: jcvd-dev.db (isolated from production)")
+        println("   • Database file: cycletime-dev.db (isolated from production)")
         println("   • Health check: http://localhost:8080/health")
         println("   • Press Ctrl+C in each terminal to stop processes")
         println("")
@@ -786,14 +786,14 @@ val devSetup by tasks.registering {
     notCompatibleWithConfigurationCache("This task sets up development environment")
     
     doLast {
-        println("🛠️ Setting up JCVD development environment...")
+        println("🛠️ Setting up CycleTime development environment...")
         
         // Create development database
-        val devDbFile = File(project.projectDir, "jcvd-dev.db")
+        val devDbFile = File(project.projectDir, "cycletime-dev.db")
         if (!devDbFile.exists()) {
-            println("   📄 Creating development database: jcvd-dev.db")
+            println("   📄 Creating development database: cycletime-dev.db")
         } else {
-            println("   ✅ Development database already exists: jcvd-dev.db")
+            println("   ✅ Development database already exists: cycletime-dev.db")
         }
         
         // Create logs directory
@@ -825,18 +825,18 @@ val devStatus by tasks.registering {
     notCompatibleWithConfigurationCache("This task shows development environment status")
     
     doLast {
-        println("🔍 JCVD Development Environment Status")
+        println("🔍 CycleTime Development Environment Status")
         println("======================================")
         println("")
         
         // Check if development database exists
-        val devDb = File(project.projectDir, "jcvd-dev.db")
+        val devDb = File(project.projectDir, "cycletime-dev.db")
         println("📄 Development Database:")
         if (devDb.exists()) {
             val sizeKB = devDb.length() / 1024
-            println("   ✅ jcvd-dev.db exists (${sizeKB}KB)")
+            println("   ✅ cycletime-dev.db exists (${sizeKB}KB)")
         } else {
-            println("   ❌ jcvd-dev.db not found (run './gradlew devSetup')")
+            println("   ❌ cycletime-dev.db not found (run './gradlew devSetup')")
         }
         
         // Check build directory

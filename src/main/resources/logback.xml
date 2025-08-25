@@ -9,9 +9,9 @@
 
     <!-- File appender for persistent logging -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/jcvd.log</file>
+        <file>logs/cycletime.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/jcvd.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>logs/cycletime.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
@@ -28,11 +28,11 @@
     </appender>
 
     <!-- Logger configurations for different packages -->
-    <logger name="io.spiralhouse.jcvd" level="DEBUG"/>
+    <logger name="io.spiralhouse.cycletime" level="DEBUG"/>
     <logger name="io.ktor" level="INFO"/>
     <logger name="Exposed" level="INFO"/>
     <logger name="org.jetbrains.exposed.sql" level="DEBUG"/>
-    
+
     <!-- Suppress noisy loggers -->
     <logger name="io.netty" level="WARN"/>
     <logger name="io.ktor.routing.Routing" level="INFO"/>

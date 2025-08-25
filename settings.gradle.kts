@@ -1,4 +1,4 @@
-rootProject.name = "jcvd"
+rootProject.name = "cycletime"
 
 dependencyResolutionManagement {
     repositories {

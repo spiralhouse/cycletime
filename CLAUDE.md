@@ -30,7 +30,7 @@ Currently using SQLite with Exposed ORM, migrating to H2 database in SPI-439.
 - **Layered Architecture**: Clean separation between domain, application, infrastructure, and MCP layers
 - **Repository Pattern**: Abstracted data access with interface-based design
 - **Dependency Injection**: Ktor native DI with constructor injection and interface-based design
-- **Package Structure**: `io.spiralhouse.jcvd` namespace
+- **Package Structure**: `io.spiralhouse.cycletime` namespace
 
 ## Agents
 
