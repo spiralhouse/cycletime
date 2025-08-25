@@ -9,9 +9,9 @@
 
     <!-- File appender for persistent logging -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/jcvd.log</file>
+        <file>logs/cycletime.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/jcvd.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>logs/cycletime.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
