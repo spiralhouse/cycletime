@@ -2,7 +2,8 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop, feat/*, fix/*]
+    # Only trigger push events on main/develop branches to prevent duplicate runs with pull_request events
+    branches: [main, develop]
     paths-ignore:
       - '**.md'
       - '.gitignore'
@@ -17,6 +18,7 @@ on:
       - 'TEST_SUITES.md'
       - 'sub-agents-conversation.txt'
   pull_request:
+    # CI runs on PRs targeting main/develop - covers all feature/fix branches
     branches: [main, develop]
     paths-ignore:
       - '**.md'
