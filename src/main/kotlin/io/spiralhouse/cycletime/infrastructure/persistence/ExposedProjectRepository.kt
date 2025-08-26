@@ -101,8 +101,7 @@ class ExposedProjectRepository(
             it[updatedAt] = project.updatedAt
         }
 
-        // Update associated issues
-        persistProjectIssues(project)
+        // Note: Issue persistence is handled by IssueRepository to maintain single responsibility
     }
 
     /**
@@ -120,8 +119,7 @@ class ExposedProjectRepository(
             it[updatedAt] = project.updatedAt
         }
 
-        // Save associated issues
-        persistProjectIssues(project)
+        // Note: Issue persistence is handled by IssueRepository to maintain single responsibility
     }
 
     /**
@@ -131,9 +129,8 @@ class ExposedProjectRepository(
      */
     override suspend fun delete(id: ProjectId) {
         dbQuery {
-            // Delete associated issues first (foreign key constraint)
-            deleteProjectIssues(id)
-            // Then delete the project
+            // Note: Issue cleanup should be handled by IssueRepository
+            // Only delete the project record itself
             ProjectsTable.deleteWhere { ProjectsTable.id eq id.value }
         }
     }
@@ -180,56 +177,6 @@ class ExposedProjectRepository(
             .map { row -> IssueId.fromString(row[IssuesTable.id].value) }
     }
 
-    /**
-     * Persists issue associations for a project.
-     *
-     * This implementation manages the project-issue relationship.
-     * Full issue data should be managed by a dedicated IssueRepository.
-     * Creates minimal issue records to maintain referential integrity.
-     *
-     * @param project The project whose issues should be persisted
-     */
-    private fun persistProjectIssues(project: Project) {
-        // Clear existing associations
-        deleteProjectIssues(project.id)
-
-        // Insert minimal issue records for each issue ID
-        project.issues.forEach { issueId ->
-            insertMinimalIssue(issueId, project)
-        }
-    }
-
-    /**
-     * Inserts a minimal issue record for maintaining project-issue association.
-     *
-     * @param issueId The issue ID to insert
-     * @param project The parent project
-     */
-    private fun insertMinimalIssue(issueId: IssueId, project: Project) {
-        IssuesTable.insert {
-            it[id] = EntityID(issueId.value, IssuesTable)
-            it[projectId] = project.id.value
-            it[parentId] = null // Managed by IssueRepository
-            it[title] = "Issue ${issueId.value}" // Placeholder
-            it[description] = null // Managed by IssueRepository
-            it[type] = "SUBTASK" // Default type
-            it[status] = "TODO" // Default status
-            it[priority] = 0 // Default priority
-            it[estimate] = null // Managed by IssueRepository
-            it[assigneeId] = null // Managed by IssueRepository
-            it[createdAt] = project.createdAt // Use project timestamp
-            it[updatedAt] = project.updatedAt // Use project timestamp
-        }
-    }
-
-    /**
-     * Deletes all issues associated with a project.
-     *
-     * @param projectId The project ID whose issues should be deleted
-     */
-    private fun deleteProjectIssues(projectId: ProjectId) {
-        IssuesTable.deleteWhere { IssuesTable.projectId eq projectId.value }
-    }
 
     /**
      * Checks if a project exists in the database.
