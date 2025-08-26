@@ -158,12 +158,15 @@ class WorkflowTest : DescribeSpec({
                     name = "Standard Workflow",
                     description = "Standard workflow",
                     initialStatus = IssueStatus.TODO,
-                    allowedStatuses = setOf(IssueStatus.TODO, IssueStatus.IN_PROGRESS, IssueStatus.DONE),
+                    allowedStatuses = setOf(IssueStatus.TODO, IssueStatus.IN_PROGRESS, IssueStatus.IN_REVIEW, IssueStatus.DONE),
                     timeProvider = mockTimeProvider
                 )
 
                 workflow.canTransition(IssueStatus.TODO, IssueStatus.IN_PROGRESS) shouldBe true
-                workflow.canTransition(IssueStatus.IN_PROGRESS, IssueStatus.DONE) shouldBe true
+                workflow.canTransition(IssueStatus.IN_PROGRESS, IssueStatus.IN_REVIEW) shouldBe true
+                workflow.canTransition(IssueStatus.IN_REVIEW, IssueStatus.DONE) shouldBe true
+                // Invalid direct transition - must go through IN_REVIEW
+                workflow.canTransition(IssueStatus.IN_PROGRESS, IssueStatus.DONE) shouldBe false
             }
 
             it("should reject transitions to disallowed statuses") {

@@ -264,7 +264,7 @@ class IssueTest : DescribeSpec({
                 issue.updatedAt shouldBe Instant.parse("2025-01-15T10:15:00Z")
             }
 
-            it("should transition from IN_PROGRESS to DONE") {
+            it("should transition from IN_PROGRESS to DONE through IN_REVIEW") {
                 val issue = Issue.create(
                     title = "Test Issue",
                     description = "Description",
@@ -273,7 +273,9 @@ class IssueTest : DescribeSpec({
                 )
 
                 issue.updateStatus(IssueStatus.IN_PROGRESS)
-                mockTimeProvider.advance(30.minutes)
+                mockTimeProvider.advance(20.minutes)
+                issue.updateStatus(IssueStatus.IN_REVIEW)
+                mockTimeProvider.advance(10.minutes)
                 issue.updateStatus(IssueStatus.DONE)
 
                 issue.status shouldBe IssueStatus.DONE

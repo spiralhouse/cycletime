@@ -201,12 +201,16 @@ val unitTest by tasks.registering(Test::class) {
     description = "Runs fast unit tests (domain entities, value objects)"
     group = "verification"
     
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    
     useJUnitPlatform()
     
     // Filter for unit tests (domain and verification package tests)
     filter {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
         excludeTestsMatching("io.spiralhouse.cycletime.integration.*")
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
@@ -264,6 +268,9 @@ val unitTest by tasks.registering(Test::class) {
 val integrationTest by tasks.registering(Test::class) {
     description = "Runs integration tests (repositories, services, database)"
     group = "verification"
+    
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
     
     useJUnitPlatform()
     
@@ -328,6 +335,9 @@ val integrationTest by tasks.registering(Test::class) {
 val systemTest by tasks.registering(Test::class) {
     description = "Runs system tests (performance, end-to-end scenarios)"
     group = "verification"
+    
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
     
     useJUnitPlatform()
     
