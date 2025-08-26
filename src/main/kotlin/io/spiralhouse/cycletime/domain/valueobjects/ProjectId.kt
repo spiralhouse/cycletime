@@ -12,7 +12,7 @@ import java.util.UUID
  * This is an immutable value object with value semantics.
  */
 @Serializable
-data class ProjectId @JvmOverloads constructor(private val _value: String?) {
+data class ProjectId constructor(private val _value: String?) {
     val value: String = _value ?: throw IllegalArgumentException("ProjectId cannot be null")
 
     init {
@@ -34,7 +34,7 @@ data class ProjectId @JvmOverloads constructor(private val _value: String?) {
             UUID.fromString(value)
         } catch (e: IllegalArgumentException) {
             val displayValue = value.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
-            throw IllegalArgumentException("Invalid UUID format: $displayValue")
+            throw IllegalArgumentException("Invalid UUID format: $displayValue", e)
         }
     }
 
