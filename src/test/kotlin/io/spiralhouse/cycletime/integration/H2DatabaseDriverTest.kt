@@ -1,25 +1,49 @@
 package io.spiralhouse.cycletime.integration
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import io.spiralhouse.cycletime.infrastructure.database.DatabaseConfig
+import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.sql.transactions.transaction
 
 /**
- * RED phase test - Should fail because H2 driver is not configured
- * This test validates TDD approach by ensuring H2 support fails initially
+ * Integration test for H2 database driver functionality
+ * Validates that H2 driver connects properly and supports PostgreSQL compatibility mode
  */
 class H2DatabaseDriverTest : StringSpec({
     
-    "should fail with current SQLite configuration when trying H2" {
-        // This should throw an exception because current config expects SQLite
-        shouldThrow<Exception> {
-            val config = DatabaseConfig(
-                jdbcUrl = "jdbc:h2:mem:test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
-                driver = "org.h2.Driver"  // This will fail with current SQLite-only setup
-            )
-            val database = config.connect()
-            database.toString() shouldBe "should not reach here"
-        }
+    "should connect to H2 database with PostgreSQL compatibility mode" {
+        val config = DatabaseConfig(
+            jdbcUrl = "jdbc:h2:mem:test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+            driver = "org.h2.Driver"
+        )
+        
+        // Should not throw exception
+        val database = config.connect()
+        database shouldNotBe null
+        
+        // Clean up
+        config.close()
+        TransactionManager.closeAndUnregister(database)
+    }
+    
+    "should create tables successfully with H2 driver" {
+        val config = DatabaseConfig(
+            jdbcUrl = "jdbc:h2:mem:testschema;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+            driver = "org.h2.Driver"
+        )
+        
+        // The connect() method should create all tables without throwing exceptions
+        val database = config.connect()
+        database shouldNotBe null
+        
+        // If we get here without exception, tables were created successfully
+        // This validates the H2 driver works with table creation
+        
+        // Clean up
+        config.close()
+        TransactionManager.closeAndUnregister(database)
     }
 })

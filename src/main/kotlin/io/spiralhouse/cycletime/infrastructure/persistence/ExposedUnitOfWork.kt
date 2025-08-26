@@ -11,54 +11,38 @@ import org.jetbrains.exposed.sql.transactions.transaction
  * UnitOfWork implementation using Exposed ORM transactions.
  * Provides transactional boundaries for application service operations.
  * 
- * This implementation manages transaction state and provides both automatic
- * transaction management via execute() and manual control via begin/commit/rollback.
+ * IMPORTANT: This implementation only supports the execute() method pattern.
+ * The begin/commit/rollback methods are no-ops as they don't work correctly
+ * with Exposed's transaction model where transactions auto-complete.
+ * 
+ * Use the execute() method which properly wraps operations in transactions
+ * with automatic commit/rollback handling.
  */
 class ExposedUnitOfWork(private val database: Database) : UnitOfWork {
     
-    // Thread-local storage for current transaction state
-    private val currentTransaction = ThreadLocal<Transaction?>()
-    
     override suspend fun <T> execute(block: suspend () -> T): T {
         return newSuspendedTransaction(Dispatchers.IO, database) {
-            currentTransaction.set(this)
-            try {
-                // Transaction will auto-commit at the end of newSuspendedTransaction
-                // Transaction will auto-rollback on exception in newSuspendedTransaction
-                block()
-            } finally {
-                currentTransaction.remove()
-            }
+            // Transaction will auto-commit at the end of newSuspendedTransaction
+            // Transaction will auto-rollback on exception in newSuspendedTransaction
+            block()
         }
     }
 
     override suspend fun begin() {
-        // Create a new transaction if none exists
-        if (currentTransaction.get() == null) {
-            val txn = transaction(database) { this }
-            currentTransaction.set(txn)
-        }
+        // NO-OP: Exposed transactions don't support manual begin/commit patterns.
+        // Use execute() method instead which properly manages transaction lifecycle.
+        // This method is kept for interface compatibility but does nothing.
     }
 
     override suspend fun commit() {
-        val txn = currentTransaction.get()
-        if (txn != null) {
-            try {
-                txn.commit()
-            } finally {
-                currentTransaction.remove()
-            }
-        }
+        // NO-OP: Exposed transactions don't support manual begin/commit patterns.
+        // Use execute() method instead which properly manages transaction lifecycle.
+        // This method is kept for interface compatibility but does nothing.
     }
 
     override suspend fun rollback() {
-        val txn = currentTransaction.get()
-        if (txn != null) {
-            try {
-                txn.rollback()
-            } finally {
-                currentTransaction.remove()
-            }
-        }
+        // NO-OP: Exposed transactions don't support manual begin/commit patterns.
+        // Use execute() method instead which properly manages transaction lifecycle.
+        // This method is kept for interface compatibility but does nothing.
     }
 }

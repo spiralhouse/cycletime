@@ -12,9 +12,16 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.LoggerFactory
 
+// Table imports for schema creation
+import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
+import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
+import io.spiralhouse.cycletime.infrastructure.database.IssueDependenciesTable
+import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
+import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
+
 class DatabaseConfig(
-    private val jdbcUrl: String = "jdbc:sqlite:cycletime.db",
-    private val driver: String = "org.sqlite.JDBC",
+    private val jdbcUrl: String = "jdbc:h2:file:./cycletime-ce;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+    private val driver: String = "org.h2.Driver",
     private val maxPoolSize: Int = 10,
     private val enableLogging: Boolean = false
 ) {
@@ -118,8 +125,8 @@ object DatabaseFactory {
     private var config: DatabaseConfig? = null
 
     fun init(
-        jdbcUrl: String = "jdbc:sqlite:cycletime.db",
-        driver: String = "org.sqlite.JDBC",
+        jdbcUrl: String = "jdbc:h2:file:./cycletime-ce;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+        driver: String = "org.h2.Driver",
         maxPoolSize: Int = 10,
         enableLogging: Boolean = false
     ) {
