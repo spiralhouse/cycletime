@@ -47,26 +47,50 @@ class ExposedProjectRepository(
 
     /**
      * Finds all projects with the specified status.
+     * Uses batch loading to avoid N+1 query issues.
      *
      * @param status The project status to filter by
      * @return List of projects matching the status
      */
     override suspend fun findByStatus(status: ProjectStatus): List<Project> = dbQuery {
-        ProjectsTable
+        val projectRows = ProjectsTable
             .selectAll()
             .where { ProjectsTable.status eq status.value }
-            .map { it.toProject() }
+            .toList()
+        
+        // Batch load all issues for these projects
+        val projectIds = projectRows.map { it[ProjectsTable.id].value }
+        val issueMap = loadProjectIssueIdsBatch(projectIds)
+        
+        // Convert rows to projects with their issues
+        projectRows.map { row ->
+            val projectId = row[ProjectsTable.id].value
+            val issues = issueMap[projectId] ?: emptyList()
+            row.toProjectWithIssues(issues)
+        }
     }
 
     /**
      * Retrieves all projects from the repository.
+     * Uses batch loading to avoid N+1 query issues.
      *
      * @return List of all projects
      */
     override suspend fun findAll(): List<Project> = dbQuery {
-        ProjectsTable
+        val projectRows = ProjectsTable
             .selectAll()
-            .map { it.toProject() }
+            .toList()
+        
+        // Batch load all issues for these projects
+        val projectIds = projectRows.map { it[ProjectsTable.id].value }
+        val issueMap = loadProjectIssueIdsBatch(projectIds)
+        
+        // Convert rows to projects with their issues
+        projectRows.map { row ->
+            val projectId = row[ProjectsTable.id].value
+            val issues = issueMap[projectId] ?: emptyList()
+            row.toProjectWithIssues(issues)
+        }
     }
 
     /**
@@ -101,7 +125,8 @@ class ExposedProjectRepository(
             it[updatedAt] = project.updatedAt
         }
 
-        // Note: Issue persistence is handled by IssueRepository to maintain single responsibility
+        // Update issue associations
+        persistProjectIssues(project)
     }
 
     /**
@@ -119,7 +144,8 @@ class ExposedProjectRepository(
             it[updatedAt] = project.updatedAt
         }
 
-        // Note: Issue persistence is handled by IssueRepository to maintain single responsibility
+        // Persist issue associations
+        persistProjectIssues(project)
     }
 
     /**
@@ -165,34 +191,36 @@ class ExposedProjectRepository(
     }
 
     /**
+     * Converts a database row to a Project domain entity with pre-loaded issues.
+     * Used by batch loading methods to avoid N+1 queries.
+     *
+     * @param issues Pre-loaded list of issue IDs for this project
+     * @return The reconstituted Project entity
+     */
+    private fun ResultRow.toProjectWithIssues(issues: List<IssueId>): Project {
+        val snapshot = ProjectSnapshot(
+            id = ProjectId(this[ProjectsTable.id].value),
+            name = this[ProjectsTable.name],
+            description = this[ProjectsTable.description],
+            status = ProjectStatus.fromString(this[ProjectsTable.status]),
+            issues = issues,
+            createdAt = this[ProjectsTable.createdAt],
+            updatedAt = this[ProjectsTable.updatedAt]
+        )
+        return Project.fromSnapshot(snapshot, timeProvider)
+    }
+
+    /**
      * Loads all issue IDs associated with a project.
      * 
-     * ## Performance Issue: N+1 Query Pattern
+     * ## Performance Optimization: Batch Loading Implementation
      * 
-     * **Problem**: When loading multiple projects (e.g., in findAll()), this method is called 
-     * once per project, resulting in N+1 database queries (1 for projects + N for issues).
+     * This method now supports both single and batch loading to avoid N+1 query issues.
+     * When loading multiple projects, use the batch variant through findAll() and findByStatus().
      * 
-     * **Impact**: With 100 projects averaging 50 issues each:
-     * - Current: 101 queries (1 + 100)
-     * - Database roundtrips create significant latency under load
-     * - Connection pool exhaustion risk with concurrent requests
-     * 
-     * **Proposed Solution**: Implement batch loading using IN clause:
-     * ```kotlin
-     * private fun loadProjectIssueIdsBatch(projectIds: List<String>): Map<String, List<IssueId>> {
-     *     return IssuesTable
-     *         .selectAll()
-     *         .where { IssuesTable.projectId inList projectIds }
-     *         .groupBy { it[IssuesTable.projectId] }
-     *         .mapValues { (_, rows) -> 
-     *             rows.map { IssueId.fromString(it[IssuesTable.id].value) }
-     *         }
-     * }
-     * ```
-     * This reduces queries from N+1 to 2 (1 for projects + 1 for all issues).
-     * 
-     * **Tracking**: Create Linear issue SPI-XXX for batch loading optimization
-     * Priority: Medium (becomes High when project count > 50)
+     * **Performance Improvement**: 
+     * - Single project: 2 queries (project + issues)
+     * - Multiple projects: 2 queries total (all projects + all issues in batch)
      *
      * @param projectId The project ID to load issues for
      * @return List of issue IDs associated with the project
@@ -202,6 +230,68 @@ class ExposedProjectRepository(
             .selectAll()
             .where { IssuesTable.projectId eq projectId }
             .map { row -> IssueId.fromString(row[IssuesTable.id].value) }
+    }
+
+    /**
+     * Batch loads issue IDs for multiple projects in a single query.
+     * Addresses the N+1 query performance issue.
+     *
+     * @param projectIds List of project IDs to load issues for
+     * @return Map of project ID to list of issue IDs
+     */
+    private fun loadProjectIssueIdsBatch(projectIds: List<String>): Map<String, List<IssueId>> {
+        if (projectIds.isEmpty()) return emptyMap()
+        
+        return IssuesTable
+            .selectAll()
+            .where { IssuesTable.projectId inList projectIds }
+            .mapNotNull { row ->
+                // Filter out null project IDs (shouldn't happen with our WHERE clause)
+                row[IssuesTable.projectId]?.let { projectId ->
+                    projectId to IssueId.fromString(row[IssuesTable.id].value)
+                }
+            }
+            .groupBy({ it.first }, { it.second })
+    }
+
+    /**
+     * Persists the issue associations for a project.
+     * Creates placeholder issue records to maintain referential integrity.
+     *
+     * @param project The project whose issues should be persisted
+     */
+    private fun persistProjectIssues(project: Project) {
+        // Delete existing issue associations
+        IssuesTable.deleteWhere { IssuesTable.projectId eq project.id.value }
+        
+        // Insert new issue associations
+        // Note: This creates minimal placeholder records. Full issue details
+        // should be managed by IssueRepository when that's implemented.
+        project.issues.forEach { issueId ->
+            // Check if issue already exists
+            val existingIssue = IssuesTable
+                .selectAll()
+                .where { IssuesTable.id eq issueId.value }
+                .singleOrNull()
+            
+            if (existingIssue == null) {
+                IssuesTable.insert {
+                    it[id] = EntityID(issueId.value, IssuesTable)
+                    it[projectId] = project.id.value
+                    it[title] = "Issue ${issueId.value}" // Placeholder title
+                    it[type] = "subtask" // Default type
+                    it[status] = "todo" // Default status
+                    it[priority] = 0
+                    it[createdAt] = project.createdAt
+                    it[updatedAt] = project.updatedAt
+                }
+            } else {
+                // Update the project association if the issue already exists
+                IssuesTable.update({ IssuesTable.id eq issueId.value }) {
+                    it[projectId] = project.id.value
+                }
+            }
+        }
     }
 
 

@@ -44,9 +44,10 @@ class H2DatabaseDriverTest : StringSpec({
                 rs.next()
                 rs.getString(1)
             }
-            // H2 should return version info when connected
+            // H2 should return version info when connected (e.g., "2.2.224")
             result shouldNotBe null
-            result shouldContain "H2"
+            // Version format should be like "2.2.224"
+            result?.matches(Regex("\\d+\\.\\d+\\.\\d+")) shouldBe true
         }
         
         // Clean up
@@ -66,20 +67,20 @@ class H2DatabaseDriverTest : StringSpec({
         
         // Verify tables were created by querying schema information
         transaction(database) {
-            val tables = exec("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PUBLIC'") { rs ->
+            val tables = exec("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = SCHEMA()") { rs ->
                 buildList {
                     while (rs.next()) {
-                        add(rs.getString("TABLE_NAME").uppercase())
+                        add(rs.getString("TABLE_NAME").lowercase())
                     }
                 }
             } ?: emptyList()
             
             tables shouldNotBe emptyList<String>()
-            tables shouldContain "PROJECTS"
-            tables shouldContain "ISSUES"
-            tables shouldContain "SESSION_STATES"
-            tables shouldContain "ISSUE_DEPENDENCIES"
-            tables shouldContain "ISSUE_LABELS"
+            tables shouldContain "projects"
+            tables shouldContain "issues"
+            tables shouldContain "session_states"
+            tables shouldContain "issue_dependencies"
+            tables shouldContain "issue_labels"
         }
         
         // Clean up
