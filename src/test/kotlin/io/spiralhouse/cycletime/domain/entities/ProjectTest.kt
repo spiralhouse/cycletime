@@ -9,6 +9,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.spiralhouse.cycletime.domain.DomainConstants
 import io.spiralhouse.cycletime.domain.exceptions.DomainException
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.domain.services.TimeProvider
@@ -53,7 +54,7 @@ class ProjectTest : DescribeSpec({
                 project.id.shouldBeInstanceOf<ProjectId>()
                 project.name shouldBe "Test Project"
                 project.description shouldBe "Test Description"
-                project.status shouldBe ProjectStatus.Active
+                project.status shouldBe ProjectStatus.ACTIVE
                 project.createdAt shouldBe Instant.parse("2025-01-15T10:00:00Z")
                 project.updatedAt shouldBe Instant.parse("2025-01-15T10:00:00Z")
                 project.issues.shouldBeEmpty()
@@ -74,8 +75,8 @@ class ProjectTest : DescribeSpec({
                 )
 
                 project1.id shouldNotBe project2.id
-                project1.id.value.length shouldBe 36 // UUID format
-                project2.id.value.length shouldBe 36 // UUID format
+                project1.id.value.length shouldBe DomainConstants.UUID_STRING_LENGTH
+                project2.id.value.length shouldBe DomainConstants.UUID_STRING_LENGTH
             }
 
             it("should set initial status to ACTIVE") {
@@ -85,7 +86,7 @@ class ProjectTest : DescribeSpec({
                     timeProvider = mockTimeProvider
                 )
 
-                project.status shouldBe ProjectStatus.Active
+                project.status shouldBe ProjectStatus.ACTIVE
             }
 
             it("should reject empty name") {
@@ -348,7 +349,7 @@ class ProjectTest : DescribeSpec({
 
                 project.archive()
 
-                project.status shouldBe ProjectStatus.Archived
+                project.status shouldBe ProjectStatus.ARCHIVED
                 project.updatedAt shouldBe Instant.parse("2025-01-15T12:00:00Z")
             }
 
@@ -363,7 +364,7 @@ class ProjectTest : DescribeSpec({
 
                 project.complete()
 
-                project.status shouldBe ProjectStatus.Completed
+                project.status shouldBe ProjectStatus.COMPLETED
                 project.updatedAt shouldBe Instant.parse("2025-01-15T13:00:00Z")
             }
         }
@@ -444,7 +445,7 @@ class ProjectTest : DescribeSpec({
 
                 project.shouldBeInstanceOf<Project>()
                 project.id.shouldBeInstanceOf<ProjectId>()
-                project.status shouldBe ProjectStatus.Active
+                project.status shouldBe ProjectStatus.ACTIVE
             }
 
             it("should support snapshot pattern for reconstitution") {

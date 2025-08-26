@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldMatch
+import io.spiralhouse.cycletime.domain.DomainConstants
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.string
 import io.kotest.property.forAll
@@ -584,7 +585,7 @@ class SessionKeyTest : DescribeSpec({
                 // Should be able to generate many keys quickly
                 repeat(100) {
                     val key = SessionKey.generate()
-                    key.value.length shouldBe 36 // Standard UUID length
+                    key.value.length shouldBe DomainConstants.UUID_STRING_LENGTH
                 }
             }
 
