@@ -231,4 +231,167 @@ class H2DatabaseDriverTest : StringSpec({
         config.close()
         TransactionManager.closeAndUnregister(database)
     }
+    
+    "should handle connection pool exhaustion gracefully" {
+        val config = DatabaseConfig(
+            jdbcUrl = "jdbc:h2:mem:exhaustion_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+            driver = "org.h2.Driver",
+            maxPoolSize = 2 // Very small pool to test exhaustion
+        )
+        
+        val database = config.connect()
+        
+        // Create long-running transactions to exhaust pool
+        val longRunningTransactions = mutableListOf<Thread>()
+        
+        // Start 3 threads trying to acquire connections (pool size is 2)
+        for (i in 1..3) {
+            val thread = Thread {
+                transaction(database) {
+                    ProjectsTable.insert {
+                        it[id] = EntityID("project-$i", ProjectsTable)
+                        it[name] = "Long Running Project $i"
+                        it[description] = "Testing pool exhaustion"
+                        it[status] = "active"
+                        it[createdAt] = Clock.System.now()
+                        it[updatedAt] = Clock.System.now()
+                    }
+                    Thread.sleep(100) // Simulate long operation
+                }
+            }
+            thread.start()
+            longRunningTransactions.add(thread)
+        }
+        
+        // Wait for all threads to complete
+        longRunningTransactions.forEach { it.join(5000) } // 5 second timeout
+        
+        // Verify operations completed despite pool constraints
+        transaction(database) {
+            val projectCount = ProjectsTable.selectAll().count()
+            projectCount shouldBe 3L // All 3 projects should be created
+        }
+        
+        // Clean up
+        config.close()
+        TransactionManager.closeAndUnregister(database)
+    }
+    
+    "should maintain transaction isolation between concurrent operations" {
+        val config = DatabaseConfig(
+            jdbcUrl = "jdbc:h2:mem:isolation_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+            driver = "org.h2.Driver"
+        )
+        
+        val database = config.connect()
+        
+        // Create initial project
+        val projectId = "isolation-test-project"
+        transaction(database) {
+            ProjectsTable.insert {
+                it[id] = EntityID(projectId, ProjectsTable)
+                it[name] = "Initial Name"
+                it[description] = "Testing isolation"
+                it[status] = "active"
+                it[createdAt] = Clock.System.now()
+                it[updatedAt] = Clock.System.now()
+            }
+        }
+        
+        // Test that concurrent reads don't see uncommitted writes
+        val thread1 = Thread {
+            transaction(database) {
+                // Update project name
+                ProjectsTable.update({ ProjectsTable.id eq projectId }) {
+                    it[name] = "Updated by Thread 1"
+                }
+                Thread.sleep(200) // Hold transaction open
+            }
+        }
+        
+        val thread2 = Thread {
+            Thread.sleep(100) // Let thread1 start first
+            transaction(database) {
+                // Should see original name, not thread1's uncommitted change
+                val project = ProjectsTable
+                    .selectAll()
+                    .where { ProjectsTable.id eq projectId }
+                    .single()
+                project[ProjectsTable.name] shouldBe "Initial Name"
+            }
+        }
+        
+        thread1.start()
+        thread2.start()
+        
+        thread1.join()
+        thread2.join()
+        
+        // After both complete, verify final state
+        transaction(database) {
+            val project = ProjectsTable
+                .selectAll()
+                .where { ProjectsTable.id eq projectId }
+                .single()
+            project[ProjectsTable.name] shouldBe "Updated by Thread 1"
+        }
+        
+        // Clean up
+        config.close()
+        TransactionManager.closeAndUnregister(database)
+    }
+    
+    "should support PostgreSQL compatibility features like array and JSON handling" {
+        val config = DatabaseConfig(
+            jdbcUrl = "jdbc:h2:mem:pg_features;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+            driver = "org.h2.Driver"
+        )
+        
+        val database = config.connect()
+        
+        transaction(database) {
+            // Test array syntax (H2 uses ARRAY constructor)
+            val arrayResult = exec("SELECT ARRAY[1, 2, 3] as test_array") { rs ->
+                rs.next()
+                val array = rs.getArray("test_array")
+                array.array as Array<*>
+            }
+            arrayResult shouldNotBe null
+            arrayResult!!.size shouldBe 3
+            arrayResult[0] shouldBe 1
+            arrayResult[1] shouldBe 2
+            arrayResult[2] shouldBe 3
+            
+            // Test JSON as VARCHAR (H2 limitation but compatible)
+            exec("""
+                CREATE TABLE IF NOT EXISTS json_test (
+                    id INT PRIMARY KEY,
+                    data VARCHAR(1000)
+                )
+            """)
+            
+            val jsonData = """{"key": "value", "number": 42}"""
+            exec("INSERT INTO json_test (id, data) VALUES (1, '$jsonData')")
+            
+            val retrievedJson = exec("SELECT data FROM json_test WHERE id = 1") { rs ->
+                rs.next()
+                rs.getString("data")
+            }
+            retrievedJson shouldBe jsonData
+            
+            // Test ILIKE operator (case-insensitive LIKE in PostgreSQL mode)
+            exec("CREATE TABLE IF NOT EXISTS text_test (id INT, name VARCHAR(100))")
+            exec("INSERT INTO text_test VALUES (1, 'TestName'), (2, 'TESTNAME'), (3, 'testname')")
+            
+            val ilikeResults = exec("SELECT COUNT(*) FROM text_test WHERE name ILIKE 'test%'") { rs ->
+                rs.next()
+                rs.getInt(1)
+            }
+            ilikeResults shouldBe 3 // Should match all case variations
+        }
+        
+        // Clean up
+        config.close()
+        TransactionManager.closeAndUnregister(database)
+    }
 })

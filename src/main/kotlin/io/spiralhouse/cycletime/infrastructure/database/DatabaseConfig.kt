@@ -22,7 +22,38 @@ import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
 class DatabaseConfig(
     private val jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
     private val driver: String = "org.h2.Driver",
-    private val maxPoolSize: Int = 10, // Suitable for development/small deployments, increase for production workloads
+    /**
+     * Maximum number of connections in the HikariCP connection pool.
+     * 
+     * ## Sizing Guidelines
+     * 
+     * **Formula**: connections = (core_count * 2) + effective_spindle_count
+     * - For SSDs: effective_spindle_count = 1
+     * - For spinning disks: effective_spindle_count = number of disks
+     * 
+     * **Examples**:
+     * - 4-core CPU with SSD: (4 * 2) + 1 = 9 connections
+     * - 8-core CPU with SSD: (8 * 2) + 1 = 17 connections
+     * 
+     * **Production Recommendations**:
+     * - Web applications: 20-30 connections typically sufficient
+     * - Batch processing: May need 50-100+ based on workload
+     * - Microservices: 10-20 connections (lower due to distributed nature)
+     * 
+     * **Monitoring Considerations**:
+     * - Track pool exhaustion events (when all connections are in use)
+     * - Monitor average connection acquisition time
+     * - Set alerts for connection leak detection (connections not returned)
+     * - Use HikariCP metrics: pending requests, active connections, idle connections
+     * 
+     * **H2 Specific Notes**:
+     * - H2 embedded mode: Lower pool size needed (5-10) as no network overhead
+     * - H2 server mode: Follow standard sizing guidelines
+     * - File-based H2: Consider disk I/O limitations when sizing
+     * 
+     * Current default (10) is suitable for development and small deployments.
+     */
+    private val maxPoolSize: Int = 10,
     private val enableLogging: Boolean = false
 ) {
     private val logger = LoggerFactory.getLogger(DatabaseConfig::class.java)

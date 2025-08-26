@@ -166,10 +166,33 @@ class ExposedProjectRepository(
 
     /**
      * Loads all issue IDs associated with a project.
-     *
-     * TODO: This method has an N+1 query pattern when called repeatedly for multiple projects.
-     * Consider implementing batch loading with a single query that fetches issue IDs for
-     * multiple projects at once to improve performance under load.
+     * 
+     * ## Performance Issue: N+1 Query Pattern
+     * 
+     * **Problem**: When loading multiple projects (e.g., in findAll()), this method is called 
+     * once per project, resulting in N+1 database queries (1 for projects + N for issues).
+     * 
+     * **Impact**: With 100 projects averaging 50 issues each:
+     * - Current: 101 queries (1 + 100)
+     * - Database roundtrips create significant latency under load
+     * - Connection pool exhaustion risk with concurrent requests
+     * 
+     * **Proposed Solution**: Implement batch loading using IN clause:
+     * ```kotlin
+     * private fun loadProjectIssueIdsBatch(projectIds: List<String>): Map<String, List<IssueId>> {
+     *     return IssuesTable
+     *         .selectAll()
+     *         .where { IssuesTable.projectId inList projectIds }
+     *         .groupBy { it[IssuesTable.projectId] }
+     *         .mapValues { (_, rows) -> 
+     *             rows.map { IssueId.fromString(it[IssuesTable.id].value) }
+     *         }
+     * }
+     * ```
+     * This reduces queries from N+1 to 2 (1 for projects + 1 for all issues).
+     * 
+     * **Tracking**: Create Linear issue SPI-XXX for batch loading optimization
+     * Priority: Medium (becomes High when project count > 50)
      *
      * @param projectId The project ID to load issues for
      * @return List of issue IDs associated with the project
