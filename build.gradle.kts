@@ -67,8 +67,8 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.46.1.3")  // SQLite JDBC driver
     implementation(libs.hikaricp)
 
-    // TODO: Future H2 migration in SPI-439
-    // implementation(libs.h2.database)
+    // H2 database for Phase 2 repository integration (SPI-439)
+    implementation(libs.h2.database)
 
     // Kotlin
     implementation(libs.kotlinx.coroutines.core)
