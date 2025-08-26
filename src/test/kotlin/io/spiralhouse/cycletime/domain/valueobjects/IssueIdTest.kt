@@ -99,18 +99,18 @@ class IssueIdTest : DescribeSpec({
                 }
             }
 
-            it("should validate UUID segment lengths") {
-                val wrongLengths = listOf(
-                    "550e840-e29b-41d4-a716-446655440000", // Short first segment
-                    "550e8400-e29-41d4-a716-446655440000", // Short second segment
-                    "550e8400-e29b-41d-a716-446655440000", // Short third segment
-                    "550e8400-e29b-41d4-a71-446655440000", // Short fourth segment
-                    "550e8400-e29b-41d4-a716-44665544000" // Short fifth segment
+            it("should validate UUID format using standard UUID parsing") {
+                val invalidFormats = listOf(
+                    "550e8400-e29b-41d4-a716-4466554400000", // Too long last segment
+                    "550e8400-e29b-41d4-a716-446655440000X", // Non-hex character
+                    "550e8400-e29b-41d4-a716", // Too few segments
+                    "not-a-uuid-at-all", // Completely invalid
+                    "550e8400-e29b-41d4-a716-446655440000-extra" // Extra segment
                 )
 
-                wrongLengths.forEach { wrongLength ->
+                invalidFormats.forEach { invalidFormat ->
                     shouldThrow<IllegalArgumentException> {
-                        IssueId(wrongLength)
+                        IssueId(invalidFormat)
                     }.message shouldMatch ".*Invalid UUID format.*"
                 }
             }

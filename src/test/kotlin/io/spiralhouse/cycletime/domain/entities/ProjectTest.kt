@@ -9,6 +9,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.spiralhouse.cycletime.domain.DomainConstants
 import io.spiralhouse.cycletime.domain.exceptions.DomainException
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.domain.services.TimeProvider
@@ -74,8 +75,8 @@ class ProjectTest : DescribeSpec({
                 )
 
                 project1.id shouldNotBe project2.id
-                project1.id.value.length shouldBe 36 // UUID format
-                project2.id.value.length shouldBe 36 // UUID format
+                project1.id.value.length shouldBe DomainConstants.UUID_STRING_LENGTH
+                project2.id.value.length shouldBe DomainConstants.UUID_STRING_LENGTH
             }
 
             it("should set initial status to ACTIVE") {

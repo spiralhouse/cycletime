@@ -21,18 +21,10 @@ data class ProjectId constructor(private val _value: String?) {
     }
 
     private fun validateUuidFormat(value: String) {
-        // UUID pattern: 8-4-4-4-12 hexadecimal digits
-        val uuidRegex = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
-        if (!uuidRegex.matches(value)) {
-            // Escape special characters for cleaner error messages
-            val displayValue = value.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
-            throw IllegalArgumentException("Invalid UUID format: $displayValue")
-        }
-
         try {
             UUID.fromString(value)
         } catch (e: IllegalArgumentException) {
+            // Escape special characters for cleaner error messages
             val displayValue = value.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
             throw IllegalArgumentException("Invalid UUID format: $displayValue", e)
         }

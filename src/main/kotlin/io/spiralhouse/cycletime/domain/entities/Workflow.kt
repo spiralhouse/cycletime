@@ -53,11 +53,13 @@ class Workflow private constructor(
 
     /**
      * Gets the terminal statuses (statuses with no outgoing transitions).
+     * Cached for performance since allowed statuses are immutable.
      */
-    val terminalStatuses: Set<IssueStatus> 
-        get() = _allowedStatuses.filter { status ->
+    val terminalStatuses: Set<IssueStatus> by lazy {
+        _allowedStatuses.filter { status ->
             status.getValidTransitions().none { it in _allowedStatuses }
         }.toSet()
+    }
 
     /**
      * Checks if a transition from one status to another is valid.
