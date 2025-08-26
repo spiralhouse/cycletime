@@ -53,7 +53,7 @@ class ProjectTest : DescribeSpec({
                 project.id.shouldBeInstanceOf<ProjectId>()
                 project.name shouldBe "Test Project"
                 project.description shouldBe "Test Description"
-                project.status shouldBe ProjectStatus.Active
+                project.status shouldBe ProjectStatus.ACTIVE
                 project.createdAt shouldBe Instant.parse("2025-01-15T10:00:00Z")
                 project.updatedAt shouldBe Instant.parse("2025-01-15T10:00:00Z")
                 project.issues.shouldBeEmpty()
@@ -85,7 +85,7 @@ class ProjectTest : DescribeSpec({
                     timeProvider = mockTimeProvider
                 )
 
-                project.status shouldBe ProjectStatus.Active
+                project.status shouldBe ProjectStatus.ACTIVE
             }
 
             it("should reject empty name") {
@@ -348,7 +348,7 @@ class ProjectTest : DescribeSpec({
 
                 project.archive()
 
-                project.status shouldBe ProjectStatus.Archived
+                project.status shouldBe ProjectStatus.ARCHIVED
                 project.updatedAt shouldBe Instant.parse("2025-01-15T12:00:00Z")
             }
 
@@ -363,7 +363,7 @@ class ProjectTest : DescribeSpec({
 
                 project.complete()
 
-                project.status shouldBe ProjectStatus.Completed
+                project.status shouldBe ProjectStatus.COMPLETED
                 project.updatedAt shouldBe Instant.parse("2025-01-15T13:00:00Z")
             }
         }
@@ -444,7 +444,7 @@ class ProjectTest : DescribeSpec({
 
                 project.shouldBeInstanceOf<Project>()
                 project.id.shouldBeInstanceOf<ProjectId>()
-                project.status shouldBe ProjectStatus.Active
+                project.status shouldBe ProjectStatus.ACTIVE
             }
 
             it("should support snapshot pattern for reconstitution") {
