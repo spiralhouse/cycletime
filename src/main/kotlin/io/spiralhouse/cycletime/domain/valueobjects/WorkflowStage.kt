@@ -25,9 +25,7 @@ data class WorkflowStage constructor(private val _name: String?) {
         val invalidChars = listOf('\n', '\t', '<', '>', '|', '/')
         
         invalidChars.forEach { char ->
-            if (char in name) {
-                throw IllegalArgumentException("Invalid stage name: contains invalid character '$char'")
-            }
+            require(char !in name) { "Invalid stage name: contains invalid character '$char'" }
         }
     }
 
