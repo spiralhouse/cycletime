@@ -16,6 +16,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 
 /**
  * Repository implementation for Project entities using Exposed ORM.
@@ -47,26 +48,50 @@ class ExposedProjectRepository(
 
     /**
      * Finds all projects with the specified status.
+     * Uses batch loading to avoid N+1 query issues.
      *
      * @param status The project status to filter by
      * @return List of projects matching the status
      */
     override suspend fun findByStatus(status: ProjectStatus): List<Project> = dbQuery {
-        ProjectsTable
+        val projectRows = ProjectsTable
             .selectAll()
             .where { ProjectsTable.status eq status.value }
-            .map { it.toProject() }
+            .toList()
+        
+        // Batch load all issues for these projects
+        val projectIds = projectRows.map { it[ProjectsTable.id].value }
+        val issueMap = loadProjectIssueIdsBatch(projectIds)
+        
+        // Convert rows to projects with their issues
+        projectRows.map { row ->
+            val projectId = row[ProjectsTable.id].value
+            val issues = issueMap[projectId] ?: emptyList()
+            row.toProjectWithIssues(issues)
+        }
     }
 
     /**
      * Retrieves all projects from the repository.
+     * Uses batch loading to avoid N+1 query issues.
      *
      * @return List of all projects
      */
     override suspend fun findAll(): List<Project> = dbQuery {
-        ProjectsTable
+        val projectRows = ProjectsTable
             .selectAll()
-            .map { it.toProject() }
+            .toList()
+        
+        // Batch load all issues for these projects
+        val projectIds = projectRows.map { it[ProjectsTable.id].value }
+        val issueMap = loadProjectIssueIdsBatch(projectIds)
+        
+        // Convert rows to projects with their issues
+        projectRows.map { row ->
+            val projectId = row[ProjectsTable.id].value
+            val issues = issueMap[projectId] ?: emptyList()
+            row.toProjectWithIssues(issues)
+        }
     }
 
     /**
@@ -101,7 +126,7 @@ class ExposedProjectRepository(
             it[updatedAt] = project.updatedAt
         }
 
-        // Update associated issues
+        // Update issue associations
         persistProjectIssues(project)
     }
 
@@ -120,7 +145,7 @@ class ExposedProjectRepository(
             it[updatedAt] = project.updatedAt
         }
 
-        // Save associated issues
+        // Persist issue associations
         persistProjectIssues(project)
     }
 
@@ -131,9 +156,8 @@ class ExposedProjectRepository(
      */
     override suspend fun delete(id: ProjectId) {
         dbQuery {
-            // Delete associated issues first (foreign key constraint)
-            deleteProjectIssues(id)
-            // Then delete the project
+            // Note: Issue cleanup should be handled by IssueRepository
+            // Only delete the project record itself
             ProjectsTable.deleteWhere { ProjectsTable.id eq id.value }
         }
     }
@@ -168,7 +192,36 @@ class ExposedProjectRepository(
     }
 
     /**
+     * Converts a database row to a Project domain entity with pre-loaded issues.
+     * Used by batch loading methods to avoid N+1 queries.
+     *
+     * @param issues Pre-loaded list of issue IDs for this project
+     * @return The reconstituted Project entity
+     */
+    private fun ResultRow.toProjectWithIssues(issues: List<IssueId>): Project {
+        val snapshot = ProjectSnapshot(
+            id = ProjectId(this[ProjectsTable.id].value),
+            name = this[ProjectsTable.name],
+            description = this[ProjectsTable.description],
+            status = ProjectStatus.fromString(this[ProjectsTable.status]),
+            issues = issues,
+            createdAt = this[ProjectsTable.createdAt],
+            updatedAt = this[ProjectsTable.updatedAt]
+        )
+        return Project.fromSnapshot(snapshot, timeProvider)
+    }
+
+    /**
      * Loads all issue IDs associated with a project.
+     * 
+     * ## Performance Optimization: Batch Loading Implementation
+     * 
+     * This method now supports both single and batch loading to avoid N+1 query issues.
+     * When loading multiple projects, use the batch variant through findAll() and findByStatus().
+     * 
+     * **Performance Improvement**: 
+     * - Single project: 2 queries (project + issues)
+     * - Multiple projects: 2 queries total (all projects + all issues in batch)
      *
      * @param projectId The project ID to load issues for
      * @return List of issue IDs associated with the project
@@ -181,55 +234,67 @@ class ExposedProjectRepository(
     }
 
     /**
-     * Persists issue associations for a project.
+     * Batch loads issue IDs for multiple projects in a single query.
+     * Addresses the N+1 query performance issue.
      *
-     * This implementation manages the project-issue relationship.
-     * Full issue data should be managed by a dedicated IssueRepository.
-     * Creates minimal issue records to maintain referential integrity.
+     * @param projectIds List of project IDs to load issues for
+     * @return Map of project ID to list of issue IDs
+     */
+    private fun loadProjectIssueIdsBatch(projectIds: List<String>): Map<String, List<IssueId>> {
+        if (projectIds.isEmpty()) return emptyMap()
+        
+        return IssuesTable
+            .selectAll()
+            .where { IssuesTable.projectId inList projectIds }
+            .mapNotNull { row ->
+                // Filter out null project IDs (shouldn't happen with our WHERE clause)
+                row[IssuesTable.projectId]?.let { projectId ->
+                    projectId to IssueId.fromString(row[IssuesTable.id].value)
+                }
+            }
+            .groupBy({ it.first }, { it.second })
+    }
+
+    /**
+     * Persists the issue associations for a project.
+     * Creates placeholder issue records to maintain referential integrity.
      *
      * @param project The project whose issues should be persisted
      */
     private fun persistProjectIssues(project: Project) {
-        // Clear existing associations
-        deleteProjectIssues(project.id)
-
-        // Insert minimal issue records for each issue ID
+        // Delete existing issue associations
+        IssuesTable.deleteWhere { IssuesTable.projectId eq project.id.value }
+        
+        // Insert new issue associations
+        // Note: This creates minimal placeholder records. Full issue details
+        // should be managed by IssueRepository when that's implemented.
         project.issues.forEach { issueId ->
-            insertMinimalIssue(issueId, project)
+            // Check if issue already exists
+            val existingIssue = IssuesTable
+                .selectAll()
+                .where { IssuesTable.id eq issueId.value }
+                .singleOrNull()
+            
+            if (existingIssue == null) {
+                IssuesTable.insert {
+                    it[id] = EntityID(issueId.value, IssuesTable)
+                    it[projectId] = project.id.value
+                    it[title] = "Issue ${issueId.value}" // Placeholder title
+                    it[type] = "subtask" // Default type
+                    it[status] = "todo" // Default status
+                    it[priority] = 0
+                    it[createdAt] = project.createdAt
+                    it[updatedAt] = project.updatedAt
+                }
+            } else {
+                // Update the project association if the issue already exists
+                IssuesTable.update({ IssuesTable.id eq issueId.value }) {
+                    it[projectId] = project.id.value
+                }
+            }
         }
     }
 
-    /**
-     * Inserts a minimal issue record for maintaining project-issue association.
-     *
-     * @param issueId The issue ID to insert
-     * @param project The parent project
-     */
-    private fun insertMinimalIssue(issueId: IssueId, project: Project) {
-        IssuesTable.insert {
-            it[id] = EntityID(issueId.value, IssuesTable)
-            it[projectId] = project.id.value
-            it[parentId] = null // Managed by IssueRepository
-            it[title] = "Issue ${issueId.value}" // Placeholder
-            it[description] = null // Managed by IssueRepository
-            it[type] = "SUBTASK" // Default type
-            it[status] = "TODO" // Default status
-            it[priority] = 0 // Default priority
-            it[estimate] = null // Managed by IssueRepository
-            it[assigneeId] = null // Managed by IssueRepository
-            it[createdAt] = project.createdAt // Use project timestamp
-            it[updatedAt] = project.updatedAt // Use project timestamp
-        }
-    }
-
-    /**
-     * Deletes all issues associated with a project.
-     *
-     * @param projectId The project ID whose issues should be deleted
-     */
-    private fun deleteProjectIssues(projectId: ProjectId) {
-        IssuesTable.deleteWhere { IssuesTable.projectId eq projectId.value }
-    }
 
     /**
      * Checks if a project exists in the database.
@@ -245,15 +310,31 @@ class ExposedProjectRepository(
     }
 
     /**
-     * Executes a database query within a transaction.
+     * Executes a database query, creating a transaction only if not already in one.
+     * 
+     * This fixes the nested transaction issue where repository methods
+     * were auto-committing before UnitOfWork could manage rollbacks.
+     * 
+     * When called from UnitOfWork.execute(), this will reuse the existing transaction.
+     * When called standalone, it will create its own transaction.
      *
      * @param block The query to execute
      * @return The query result
      */
-    private suspend fun <T> dbQuery(block: suspend () -> T): T =
-        if (database != null) {
-            newSuspendedTransaction(Dispatchers.IO, database) { block() }
+    private suspend fun <T> dbQuery(block: suspend () -> T): T {
+        // Check if we're already in a transaction
+        val currentTransaction = TransactionManager.currentOrNull()
+        
+        return if (currentTransaction != null) {
+            // We're already in a transaction - execute directly without creating a new one
+            block()
         } else {
-            newSuspendedTransaction(Dispatchers.IO) { block() }
+            // No transaction - create new transaction
+            if (database != null) {
+                newSuspendedTransaction(Dispatchers.IO, database) { block() }
+            } else {
+                newSuspendedTransaction(Dispatchers.IO) { block() }
+            }
         }
+    }
 }

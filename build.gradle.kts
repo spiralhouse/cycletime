@@ -67,8 +67,8 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.46.1.3")  // SQLite JDBC driver
     implementation(libs.hikaricp)
 
-    // TODO: Future H2 migration in SPI-439
-    // implementation(libs.h2.database)
+    // H2 database for Phase 2 repository integration (SPI-439)
+    implementation(libs.h2.database)
 
     // Kotlin
     implementation(libs.kotlinx.coroutines.core)
@@ -206,6 +206,10 @@ val unitTest by tasks.registering(Test::class) {
     
     useJUnitPlatform()
     
+    // Include test source sets - CRITICAL for test discovery
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    
     // Filter for unit tests (domain and verification package tests)
     filter {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*")
@@ -274,6 +278,10 @@ val integrationTest by tasks.registering(Test::class) {
     
     useJUnitPlatform()
     
+    // Include test source sets - CRITICAL for test discovery
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    
     // Filter for integration tests
     filter {
         includeTestsMatching("io.spiralhouse.cycletime.integration.*")
@@ -340,6 +348,10 @@ val systemTest by tasks.registering(Test::class) {
     classpath = sourceSets["test"].runtimeClasspath
     
     useJUnitPlatform()
+    
+    // Include test source sets - CRITICAL for test discovery
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
     
     // Filter for system/performance tests
     filter {

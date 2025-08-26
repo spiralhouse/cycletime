@@ -66,12 +66,19 @@ fun main() {
 fun Application.module() {
     val logger = LoggerFactory.getLogger("Application")
 
-    // Initialize database
-    val jdbcUrl = System.getenv("DATABASE_URL") ?: "jdbc:sqlite:cycletime.db"
-    val enableLogging = System.getenv("DATABASE_LOGGING")?.toBoolean() ?: false
+    // Initialize database from configuration
+    val jdbcUrl = environment.config.propertyOrNull("database.url")?.getString()
+        ?: System.getenv("DATABASE_URL") 
+        ?: "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+    val driver = environment.config.propertyOrNull("database.driver")?.getString()
+        ?: System.getenv("DATABASE_DRIVER")
+        ?: "org.h2.Driver"
+    val enableLogging = environment.config.propertyOrNull("database.logging")?.getString()?.toBoolean()
+        ?: System.getenv("DATABASE_LOGGING")?.toBoolean() 
+        ?: false
 
     logger.info("Initializing database with URL: $jdbcUrl")
-    DatabaseFactory.init(jdbcUrl = jdbcUrl, enableLogging = enableLogging)
+    DatabaseFactory.init(jdbcUrl = jdbcUrl, driver = driver, enableLogging = enableLogging)
 
     // Install features
     install(ContentNegotiation) {
