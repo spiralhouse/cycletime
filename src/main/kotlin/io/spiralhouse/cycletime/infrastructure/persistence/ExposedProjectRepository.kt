@@ -16,6 +16,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 
 /**
  * Repository implementation for Project entities using Exposed ORM.
@@ -309,15 +310,31 @@ class ExposedProjectRepository(
     }
 
     /**
-     * Executes a database query within a transaction.
+     * Executes a database query, creating a transaction only if not already in one.
+     * 
+     * This fixes the nested transaction issue where repository methods
+     * were auto-committing before UnitOfWork could manage rollbacks.
+     * 
+     * When called from UnitOfWork.execute(), this will reuse the existing transaction.
+     * When called standalone, it will create its own transaction.
      *
      * @param block The query to execute
      * @return The query result
      */
-    private suspend fun <T> dbQuery(block: suspend () -> T): T =
-        if (database != null) {
-            newSuspendedTransaction(Dispatchers.IO, database) { block() }
+    private suspend fun <T> dbQuery(block: suspend () -> T): T {
+        // Check if we're already in a transaction
+        val currentTransaction = TransactionManager.currentOrNull()
+        
+        return if (currentTransaction != null) {
+            // We're already in a transaction - execute directly without creating a new one
+            block()
         } else {
-            newSuspendedTransaction(Dispatchers.IO) { block() }
+            // No transaction - create new transaction
+            if (database != null) {
+                newSuspendedTransaction(Dispatchers.IO, database) { block() }
+            } else {
+                newSuspendedTransaction(Dispatchers.IO) { block() }
+            }
         }
+    }
 }

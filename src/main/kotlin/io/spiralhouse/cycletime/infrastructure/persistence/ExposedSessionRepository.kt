@@ -20,6 +20,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
@@ -420,12 +421,22 @@ class ExposedSessionRepository(
      * @param block The query to execute
      * @return The query result
      */
-    private suspend fun <T> dbQuery(block: suspend () -> T): T =
-        if (database != null) {
-            newSuspendedTransaction(Dispatchers.IO, database) { block() }
+    private suspend fun <T> dbQuery(block: suspend () -> T): T {
+        // Check if we're already in a transaction
+        val currentTransaction = TransactionManager.currentOrNull()
+        
+        return if (currentTransaction != null) {
+            // We're already in a transaction - execute directly without creating a new one
+            block()
         } else {
-            newSuspendedTransaction(Dispatchers.IO) { block() }
+            // No transaction - create new transaction
+            if (database != null) {
+                newSuspendedTransaction(Dispatchers.IO, database) { block() }
+            } else {
+                newSuspendedTransaction(Dispatchers.IO) { block() }
+            }
         }
+    }
 }
 
 /**
