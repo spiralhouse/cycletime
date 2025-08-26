@@ -69,7 +69,7 @@ fun Application.module() {
     // Initialize database from configuration
     val jdbcUrl = environment.config.propertyOrNull("database.url")?.getString()
         ?: System.getenv("DATABASE_URL") 
-        ?: "jdbc:h2:file:./cycletime-ce;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        ?: "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
     val driver = environment.config.propertyOrNull("database.driver")?.getString()
         ?: System.getenv("DATABASE_DRIVER")
         ?: "org.h2.Driver"

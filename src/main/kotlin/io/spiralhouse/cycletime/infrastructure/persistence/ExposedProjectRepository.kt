@@ -167,6 +167,10 @@ class ExposedProjectRepository(
     /**
      * Loads all issue IDs associated with a project.
      *
+     * TODO: This method has an N+1 query pattern when called repeatedly for multiple projects.
+     * Consider implementing batch loading with a single query that fetches issue IDs for
+     * multiple projects at once to improve performance under load.
+     *
      * @param projectId The project ID to load issues for
      * @return List of issue IDs associated with the project
      */

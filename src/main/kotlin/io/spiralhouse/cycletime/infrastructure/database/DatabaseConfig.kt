@@ -20,9 +20,9 @@ import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
 import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
 
 class DatabaseConfig(
-    private val jdbcUrl: String = "jdbc:h2:file:./cycletime-ce;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+    private val jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
     private val driver: String = "org.h2.Driver",
-    private val maxPoolSize: Int = 10,
+    private val maxPoolSize: Int = 10, // Suitable for development/small deployments, increase for production workloads
     private val enableLogging: Boolean = false
 ) {
     private val logger = LoggerFactory.getLogger(DatabaseConfig::class.java)
@@ -125,7 +125,7 @@ object DatabaseFactory {
     private var config: DatabaseConfig? = null
 
     fun init(
-        jdbcUrl: String = "jdbc:h2:file:./cycletime-ce;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+        jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
         driver: String = "org.h2.Driver",
         maxPoolSize: Int = 10,
         enableLogging: Boolean = false

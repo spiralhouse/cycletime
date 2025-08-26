@@ -29,20 +29,29 @@ class ExposedUnitOfWork(private val database: Database) : UnitOfWork {
     }
 
     override suspend fun begin() {
-        // NO-OP: Exposed transactions don't support manual begin/commit patterns.
-        // Use execute() method instead which properly manages transaction lifecycle.
-        // This method is kept for interface compatibility but does nothing.
+        throw UnsupportedOperationException(
+            "Manual transaction management is not supported with Exposed ORM. " +
+            "Exposed transactions are scoped to code blocks and cannot be manually controlled. " +
+            "Use the execute() method instead, which properly manages transaction lifecycle " +
+            "with automatic commit/rollback handling."
+        )
     }
 
     override suspend fun commit() {
-        // NO-OP: Exposed transactions don't support manual begin/commit patterns.
-        // Use execute() method instead which properly manages transaction lifecycle.
-        // This method is kept for interface compatibility but does nothing.
+        throw UnsupportedOperationException(
+            "Manual transaction management is not supported with Exposed ORM. " +
+            "Exposed transactions are scoped to code blocks and cannot be manually controlled. " +
+            "Use the execute() method instead, which properly manages transaction lifecycle " +
+            "with automatic commit/rollback handling."
+        )
     }
 
     override suspend fun rollback() {
-        // NO-OP: Exposed transactions don't support manual begin/commit patterns.
-        // Use execute() method instead which properly manages transaction lifecycle.
-        // This method is kept for interface compatibility but does nothing.
+        throw UnsupportedOperationException(
+            "Manual transaction management is not supported with Exposed ORM. " +
+            "Exposed transactions are scoped to code blocks and cannot be manually controlled. " +
+            "Use the execute() method instead, which properly manages transaction lifecycle " +
+            "with automatic commit/rollback handling."
+        )
     }
 }
