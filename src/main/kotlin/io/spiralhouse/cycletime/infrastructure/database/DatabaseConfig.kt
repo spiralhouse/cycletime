@@ -27,7 +27,10 @@ class DatabaseConfig(
         try {
             val hikariConfig = HikariConfig().apply {
                 jdbcUrl = this@DatabaseConfig.jdbcUrl
-                driverClassName = driver
+                // Let HikariCP auto-detect the driver for H2, explicitly set for others
+                if (!jdbcUrl.startsWith("jdbc:h2:")) {
+                    driverClassName = driver
+                }
                 maximumPoolSize = maxPoolSize
                 isAutoCommit = false
                 transactionIsolation = "TRANSACTION_SERIALIZABLE"
@@ -53,8 +56,17 @@ class DatabaseConfig(
                         SessionStatesTable
                     )
 
-                    // Enable foreign keys for SQLite
-                    connection.prepareStatement("PRAGMA foreign_keys = ON", false).executeUpdate()
+                    // Configure foreign keys based on database type
+                    when {
+                        jdbcUrl.startsWith("jdbc:sqlite:") -> {
+                            // Enable foreign keys for SQLite
+                            connection.prepareStatement("PRAGMA foreign_keys = ON", false).executeUpdate()
+                        }
+                        jdbcUrl.startsWith("jdbc:h2:") -> {
+                            // H2 foreign keys are enabled by default in PostgreSQL compatibility mode
+                            // No additional configuration needed
+                        }
+                    }
                 } catch (e: Exception) {
                     ExceptionLogger.logException(
                         logger,
