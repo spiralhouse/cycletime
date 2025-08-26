@@ -97,7 +97,7 @@ class WorkflowStageTest : DescribeSpec({
                 invalidStages.forEach { invalidName ->
                     shouldThrow<IllegalArgumentException> {
                         WorkflowStage(invalidName)
-                    }.message shouldMatch ".*Invalid stage name.*"
+                    }.message shouldMatch "(?s).*Invalid stage name.*"
                 }
             }
 
