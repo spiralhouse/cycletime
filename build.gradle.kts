@@ -55,6 +55,10 @@ dependencies {
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.server.sse)
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.server.cors)
+    implementation(libs.ktor.server.call.logging)
+    implementation(libs.ktor.server.status.pages)
+    implementation("io.ktor:ktor-server-call-id:${libs.versions.ktor.get()}")
 
     // Exposed ORM - Currently used for SQLite database access
     implementation(libs.exposed.core)
@@ -89,6 +93,7 @@ dependencies {
     testImplementation(libs.kotest.property)
     testImplementation(libs.mockk)
     testImplementation(libs.ktor.server.test.host)
+    testImplementation("io.ktor:ktor-client-content-negotiation:${libs.versions.ktor.get()}")
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.h2.database)  // H2 for integration testing
 
