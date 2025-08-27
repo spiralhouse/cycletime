@@ -18,6 +18,7 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import io.spiralhouse.cycletime.infrastructure.logging.ExceptionLogger
 import org.jetbrains.exposed.sql.Database
 import io.spiralhouse.cycletime.mcp.configureMCP
+import io.spiralhouse.cycletime.api.configuration.ApiConfiguration
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
@@ -163,12 +164,36 @@ fun Application.module() {
 }
 
 /**
+ * Configure the application for testing with project routes.
+ * This includes content negotiation, dependency injection, and API routes.
+ */
+fun Application.configureForTesting(timeProvider: TimeProvider? = null) {
+    configureDependencies(timeProvider)
+    configureContentNegotiation()
+    val injectedTimeProvider: TimeProvider by dependencies
+    ApiConfiguration.configure(this, injectedTimeProvider)
+}
+
+/**
+ * Configure content negotiation for JSON serialization.
+ */
+fun Application.configureContentNegotiation() {
+    install(ContentNegotiation) {
+        json(Json {
+            prettyPrint = true
+            isLenient = true
+            ignoreUnknownKeys = true
+        })
+    }
+}
+
+/**
  * Configure dependency injection using Ktor native DI plugin
  */
-fun Application.configureDependencies() {
+fun Application.configureDependencies(timeProvider: TimeProvider? = null) {
     dependencies {
-        // Domain Services
-        provide<TimeProvider> { SystemTimeProvider() }
+        // Domain Services - Allow override for testing
+        provide<TimeProvider> { timeProvider ?: SystemTimeProvider() }
 
         // Database
         provide<Database> { DatabaseFactory.getInstance() }
@@ -176,10 +201,10 @@ fun Application.configureDependencies() {
         // Unit of Work
         provide<UnitOfWork> { ExposedUnitOfWork(resolve()) }
 
-        // Repositories
-        provide<ProjectRepository> { ExposedProjectRepository(SystemTimeProvider(), resolve()) }
-        provide<IssueRepository> { ExposedIssueRepository(SystemTimeProvider(), resolve()) }
-        provide<SessionRepository> { ExposedSessionRepository(SystemTimeProvider(), resolve()) }
+        // Repositories - Use injected TimeProvider
+        provide<ProjectRepository> { ExposedProjectRepository(resolve(), resolve()) }
+        provide<IssueRepository> { ExposedIssueRepository(resolve(), resolve()) }
+        provide<SessionRepository> { ExposedSessionRepository(resolve(), resolve()) }
 
         // Application Services
         provide<ProjectApplicationService> {
