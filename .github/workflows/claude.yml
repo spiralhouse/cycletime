@@ -10,6 +10,11 @@ on:
   pull_request_review:
     types: [submitted]
 
+# Prevent duplicate Claude Code runs
+concurrency:
+  group: claude-code-${{ github.head_ref || github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
 jobs:
   claude:
     if: |
