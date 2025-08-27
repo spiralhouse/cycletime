@@ -2,7 +2,8 @@ name: CI/CD Pipeline
 
 on:
   push:
-    # Only trigger push events on main/develop branches to prevent duplicate runs with pull_request events
+    # Only trigger on main/develop branches for direct pushes (merges)
+    # This prevents duplicate runs when both push and pull_request events occur
     branches: [main, develop]
     paths-ignore:
       - '**.md'
@@ -18,7 +19,9 @@ on:
       - 'TEST_SUITES.md'
       - 'sub-agents-conversation.txt'
   pull_request:
-    # CI runs on PRs targeting main/develop - covers all feature/fix branches
+    # CI runs on PRs targeting main/develop - covers all feature branches
+    # This is the PRIMARY CI trigger for feature branches
+    types: [opened, synchronize, reopened]
     branches: [main, develop]
     paths-ignore:
       - '**.md'
@@ -40,9 +43,9 @@ on:
         required: false
         default: 'false'
 
-# Concurrency control to cancel outdated runs and save resources
+# Enhanced concurrency control to prevent duplicate runs and save resources
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 permissions:
