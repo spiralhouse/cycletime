@@ -37,6 +37,20 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Read code reviewer personality
+        id: read-personality
+        run: |
+          if [ -f .claude/agents/code-reviewer.md ]; then
+            # Read the file content and store in environment variable
+            {
+              echo 'REVIEWER_PERSONALITY<<EOF'
+              cat .claude/agents/code-reviewer.md
+              echo 'EOF'
+            } >> $GITHUB_ENV
+          else
+            echo "REVIEWER_PERSONALITY=Please review this pull request and provide constructive feedback." >> $GITHUB_ENV
+          fi
+
       - name: Run Claude Code Review
         id: claude-review
         uses: anthropics/claude-code-action@beta
@@ -47,18 +61,10 @@ jobs:
           # model: "claude-opus-4-1-20250805"
 
           # Direct prompt for automated review (no @claude mention needed)
-          direct_prompt: |
-            Please review this pull request and provide feedback on:
-            - Code quality and best practices
-            - Potential bugs or issues
-            - Performance considerations
-            - Security concerns
-            - Test coverage
-            
-            Be constructive and helpful in your feedback.
+          direct_prompt: ${{ env.REVIEWER_PERSONALITY }}
 
-          # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
-          # use_sticky_comment: true
+          # Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
+          use_sticky_comment: true
           
           # Optional: Customize review based on file types
           # direct_prompt: |
