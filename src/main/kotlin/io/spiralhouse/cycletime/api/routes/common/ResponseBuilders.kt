@@ -81,6 +81,24 @@ object ResponseBuilders {
             children = dto.children.map { buildIssueHierarchyResponse(it) }
         )
     }
+
+    /**
+     * Builds an extended hierarchical issue response.
+     * 
+     * This function builds a flat hierarchy view with parent, direct children,
+     * and total descendant count for efficient API consumption.
+     * 
+     * @param dto The extended hierarchy DTO from the application layer
+     * @return The API extended hierarchy response object
+     */
+    fun buildIssueHierarchyExtendedResponse(dto: IssueHierarchyExtendedDto): IssueHierarchyExtendedResponse {
+        return IssueHierarchyExtendedResponse(
+            issue = buildIssueResponse(dto.issue),
+            parent = dto.parent?.let { buildIssueResponse(it) },
+            children = dto.children.map { buildIssueResponse(it) },
+            totalDescendants = dto.totalDescendants
+        )
+    }
     
     /**
      * Builds a Project response from an application DTO.
@@ -194,6 +212,11 @@ fun List<IssueDto>.toIssueListResponse(): IssueListResponse = ResponseBuilders.b
  * Converts an IssueHierarchyDto to an API response.
  */
 fun IssueHierarchyDto.toResponse(): IssueHierarchyResponse = ResponseBuilders.buildIssueHierarchyResponse(this)
+
+/**
+ * Converts an IssueHierarchyExtendedDto to an API extended response.
+ */
+fun IssueHierarchyExtendedDto.toResponse(): IssueHierarchyExtendedResponse = ResponseBuilders.buildIssueHierarchyExtendedResponse(this)
 
 /**
  * Converts a ProjectDto to an API response.

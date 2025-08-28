@@ -2,15 +2,21 @@ package io.spiralhouse.cycletime.api.routes.common
 
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.*
 import io.ktor.server.plugins.di.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.spiralhouse.cycletime.api.dto.ErrorResponse
 import io.spiralhouse.cycletime.api.middleware.ValidationMiddleware
+import io.spiralhouse.cycletime.api.middleware.ErrorHandlingMiddleware
+import io.spiralhouse.cycletime.api.middleware.UnsupportedMediaTypeException
 import io.spiralhouse.cycletime.application.exceptions.*
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.IssueId
+import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import org.slf4j.LoggerFactory
 
@@ -124,10 +130,36 @@ suspend fun ApplicationCall.executeServiceCall(block: suspend () -> Unit) {
     } catch (e: HierarchyViolationException) {
         respondBadRequest("Hierarchy violation", e.message)
     } catch (e: InvalidStatusTransitionException) {
-        respondBadRequest("Invalid status transition", e.message)
+        respondUnprocessableEntity("Invalid status transition", e.message)
     } catch (e: IllegalArgumentException) {
-        // Use the actual error message which should contain context
-        respondBadRequest(e.message ?: "Invalid request", null)
+        // Enhanced validation error handling with specific messages
+        val message = e.message ?: "Invalid request"
+        val (errorMessage, details) = when {
+            message.startsWith("Invalid IssueStatus:") -> {
+                val invalidStatus = message.substringAfter("Invalid IssueStatus:").trim()
+                val details = if (invalidStatus.isNotEmpty()) {
+                    "Invalid status: '$invalidStatus'. Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
+                } else {
+                    "Status field is required. Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
+                }
+                message to details
+            }
+            message.startsWith("Invalid issue status:") -> {
+                val status = message.substringAfter("Invalid issue status:").substringBefore(".").trim()
+                "Invalid status: $status" to "Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
+            }
+            message.contains("Invalid UUID") -> {
+                val id = message.substringAfter("Invalid UUID format:").trim()
+                val errorMessage = if (id.isNotBlank()) "Invalid UUID format: $id" else "Invalid UUID format"
+                errorMessage to "The provided ID is not a valid UUID"
+            }
+            message.contains("cannot be empty") || message.contains("must not be empty") -> {
+                val field = message.substringBefore("cannot be empty").substringBefore("must not be empty").trim()
+                "$field is required" to message
+            }
+            else -> message to null
+        }
+        respondBadRequest(errorMessage, details)
     } catch (e: SerializationException) {
         logger.error("Serialization error", e)
         respondBadRequest("Invalid request format", e.message)
@@ -198,6 +230,21 @@ suspend fun ApplicationCall.respondNoContent() {
 }
 
 /**
+ * Responds with a standardized Unprocessable Entity (422) error.
+ * 
+ * @param error The error message
+ * @param details Additional details about the error
+ */
+suspend fun ApplicationCall.respondUnprocessableEntity(error: String, details: String? = null) {
+    val timeProvider: TimeProvider by application.dependencies
+    respond(HttpStatusCode.UnprocessableEntity, ErrorResponse(
+        error = error,
+        details = details,
+        timestamp = timeProvider.now().toString()
+    ))
+}
+
+/**
  * Validates a request body and executes a block if validation passes.
  * 
  * This function combines request deserialization, validation, and execution
@@ -220,15 +267,78 @@ suspend inline fun <reified T : Any> ApplicationCall.validateAndProcess(
     noinline block: suspend (T) -> Unit
 ) {
     try {
-        val request = receive<T>()
+        // Try to receive the request body first to prioritize body validation errors
+        val request = try {
+            receive<T>()
+        } catch (e: Exception) {
+            when {
+                e is SerializationException -> {
+                    logger.warn("Failed to deserialize request: ${e.message}")
+                    throw BadRequestException("Invalid JSON format: ${e.message}")
+                }
+                e.message?.contains("EOF") == true || 
+                e.message?.contains("Unexpected end") == true ||
+                e.message?.contains("Request body") == true ||
+                e.message?.contains("is empty") == true -> {
+                    throw BadRequestException("Request body is required")
+                }
+                else -> throw e
+            }
+        }
+        
+        // Check Content-Type header after body parsing (for consistency with other endpoints)
+        if (this.request.httpMethod != HttpMethod.Get && this.request.httpMethod != HttpMethod.Delete) {
+            val contentType = this.request.contentType()
+            if (contentType.contentType != "application" || contentType.contentSubtype != "json") {
+                throw UnsupportedMediaTypeException("Content-Type must be application/json")
+            }
+        }
+        
+        
+        // Validate the request
         validation(request)
+        
+        // Process the request
         block(request)
+    } catch (e: UnsupportedMediaTypeException) {
+        respondUnsupportedMediaType()
+    } catch (e: BadRequestException) {
+        val message = when {
+            e.message?.contains("Request body is required") == true -> "Request body is required"
+            e.message?.contains("Invalid JSON") == true -> "Invalid JSON format"
+            else -> e.message ?: "Bad request"
+        }
+        respondBadRequest(message, e.cause?.message)
     } catch (e: SerializationException) {
         logger.warn("Failed to deserialize request: ${e.message}")
-        respondBadRequest("Invalid request format", e.message)
+        respondBadRequest("Invalid JSON format", e.message)
     } catch (e: IllegalArgumentException) {
-        // Pass the actual error message from validation
-        respondBadRequest(e.message ?: "Validation failed", null)
+        // Enhanced validation error handling
+        val message = e.message ?: "Validation failed"
+        val (errorMessage, details) = when {
+            message.startsWith("Invalid IssueStatus:") -> {
+                val invalidStatus = message.substringAfter("Invalid IssueStatus:").trim()
+                val details = if (invalidStatus.isNotEmpty()) {
+                    "Invalid status: '$invalidStatus'. Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
+                } else {
+                    "Status field is required. Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
+                }
+                message to details
+            }
+            message.startsWith("Invalid issue status:") -> {
+                val status = message.substringAfter("Invalid issue status:").substringBefore(".").trim()
+                "Invalid status: $status" to "Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
+            }
+            message.contains("Issue status is required") -> {
+                "Issue status is required" to "Status field must not be empty"
+            }
+            else -> message to null
+        }
+        respondBadRequest(errorMessage, details)
+    } catch (e: Exception) {
+        // Log unexpected errors
+        logger.error("Unexpected error in request processing", e)
+        throw e // Let the global error handler deal with it
     }
 }
 
@@ -279,6 +389,20 @@ val ApplicationCall.isApiV1: Boolean
  */
 val ApplicationCall.isLegacyApi: Boolean
     get() = request.path().startsWith("/api/") && !isApiV1
+
+/**
+ * Responds with a standardized Unsupported Media Type (415) error.
+ * 
+ * @param details Additional details about the error
+ */
+suspend fun ApplicationCall.respondUnsupportedMediaType(details: String = "Content-Type header must be 'application/json'") {
+    val timeProvider: TimeProvider by application.dependencies
+    respond(HttpStatusCode.UnsupportedMediaType, ErrorResponse(
+        error = "Unsupported Media Type",
+        details = details,
+        timestamp = timeProvider.now().toString()
+    ))
+}
 
 /**
  * Logs API request details for debugging and monitoring.

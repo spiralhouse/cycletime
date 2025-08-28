@@ -98,7 +98,7 @@ object IssueValidation {
      * Validates a status transition request.
      * 
      * @param request The status transition request to validate
-     * @throws IllegalArgumentException if the status is invalid
+     * @throws IllegalArgumentException if the status is invalid or empty
      */
     fun validateStatusTransition(request: StatusTransitionRequest) {
         validateStatus(request.status)
@@ -158,14 +158,16 @@ object IssueValidation {
      * Validates an issue status string.
      * 
      * @param statusString The status string to validate
-     * @throws IllegalArgumentException if the status is invalid
+     * @throws IllegalArgumentException if the status is invalid or empty
      */
     fun validateStatus(statusString: String) {
-        val upperStatus = statusString.uppercase()
-        if (upperStatus !in VALID_ISSUE_STATUSES) {
-            throw IllegalArgumentException(
-                "Invalid issue status: '$statusString'. Valid statuses are: ${VALID_ISSUE_STATUSES.joinToString(", ")}"
-            )
+        // Let the domain layer (IssueStatus.fromString) handle all validation
+        // to ensure consistent error messages
+        try {
+            IssueStatus.fromString(statusString)
+        } catch (e: IllegalArgumentException) {
+            // Re-throw to maintain error message consistency with domain layer
+            throw e
         }
     }
     

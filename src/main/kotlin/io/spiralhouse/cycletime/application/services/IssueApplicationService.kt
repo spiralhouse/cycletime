@@ -10,6 +10,7 @@ import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
 import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.*
+import io.spiralhouse.cycletime.infrastructure.persistence.queries.HierarchyQueries
 
 /**
  * Application service for managing Issue operations.
@@ -293,6 +294,36 @@ class IssueApplicationService(
         }
     }
 
+    /**
+     * Gets the extended hierarchy information for an issue.
+     * Returns the issue with its parent, direct children, and total descendant count.
+     *
+     * @param issueId The issue ID
+     * @return IssueHierarchyExtendedDto representing the extended hierarchy
+     * @throws io.spiralhouse.cycletime.application.exceptions.IssueNotFoundException if the issue doesn't exist
+     */
+    suspend fun getIssueHierarchyExtended(issueId: IssueId): IssueHierarchyExtendedDto {
+        return unitOfWork.execute {
+            val issue = issueRepository.findById(issueId)
+                ?: throw IssueNotFoundException(issueId)
+
+            val parent = issue.parentId?.let { parentId ->
+                issueRepository.findById(parentId)
+            }
+
+            val children = issueRepository.findByParent(issue.id)
+            // Use optimized query to avoid N+1 problem
+            val totalDescendants = HierarchyQueries.countDescendantsOptimized(issue.id)
+
+            IssueHierarchyExtendedDto.fromIssueWithParentAndChildren(
+                issue = issue,
+                parent = parent,
+                children = children,
+                totalDescendants = totalDescendants
+            )
+        }
+    }
+
     private suspend fun buildHierarchy(issue: Issue): IssueHierarchyDto {
         val children = issueRepository.findByParent(issue.id)
         val childHierarchies = children.map { child -> buildHierarchy(child) }
@@ -301,6 +332,22 @@ class IssueApplicationService(
             issue = issue,
             childHierarchies = childHierarchies
         )
+    }
+
+    /**
+     * Counts descendants using optimized batch queries.
+     * 
+     * This method has been replaced by HierarchyQueries.countDescendantsOptimized
+     * to avoid N+1 query problems in deep hierarchies.
+     * 
+     * @deprecated Use HierarchyQueries.countDescendantsOptimized for better performance
+     */
+    @Deprecated("Use HierarchyQueries.countDescendantsOptimized for better performance",
+        ReplaceWith("HierarchyQueries.countDescendantsOptimized(issueId)"))
+    private suspend fun countDescendants(issueId: IssueId): Int {
+        // This implementation is kept for backward compatibility
+        // but should not be used due to N+1 query issues
+        return HierarchyQueries.countDescendantsOptimized(issueId)
     }
 
     /**
