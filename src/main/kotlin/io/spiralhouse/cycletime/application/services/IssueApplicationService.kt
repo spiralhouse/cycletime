@@ -10,6 +10,7 @@ import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
 import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.*
+import io.spiralhouse.cycletime.infrastructure.persistence.queries.HierarchyQueries
 
 /**
  * Application service for managing Issue operations.
@@ -311,7 +312,8 @@ class IssueApplicationService(
             }
 
             val children = issueRepository.findByParent(issue.id)
-            val totalDescendants = countDescendants(issue.id)
+            // Use optimized query to avoid N+1 problem
+            val totalDescendants = HierarchyQueries.countDescendantsOptimized(issue.id)
 
             IssueHierarchyExtendedDto.fromIssueWithParentAndChildren(
                 issue = issue,
@@ -332,12 +334,20 @@ class IssueApplicationService(
         )
     }
 
+    /**
+     * Counts descendants using optimized batch queries.
+     * 
+     * This method has been replaced by HierarchyQueries.countDescendantsOptimized
+     * to avoid N+1 query problems in deep hierarchies.
+     * 
+     * @deprecated Use HierarchyQueries.countDescendantsOptimized for better performance
+     */
+    @Deprecated("Use HierarchyQueries.countDescendantsOptimized for better performance",
+        ReplaceWith("HierarchyQueries.countDescendantsOptimized(issueId)"))
     private suspend fun countDescendants(issueId: IssueId): Int {
-        val directChildren = issueRepository.findByParent(issueId)
-        val childCounts = directChildren.map { child -> 
-            1 + countDescendants(child.id)
-        }
-        return childCounts.sum()
+        // This implementation is kept for backward compatibility
+        // but should not be used due to N+1 query issues
+        return HierarchyQueries.countDescendantsOptimized(issueId)
     }
 
     /**

@@ -98,9 +98,12 @@ object IssueValidation {
      * Validates a status transition request.
      * 
      * @param request The status transition request to validate
-     * @throws IllegalArgumentException if the status is invalid
+     * @throws IllegalArgumentException if the status is invalid or empty
      */
     fun validateStatusTransition(request: StatusTransitionRequest) {
+        if (request.status.isBlank()) {
+            throw IllegalArgumentException("Issue status is required")
+        }
         validateStatus(request.status)
     }
     
@@ -158,9 +161,13 @@ object IssueValidation {
      * Validates an issue status string.
      * 
      * @param statusString The status string to validate
-     * @throws IllegalArgumentException if the status is invalid
+     * @throws IllegalArgumentException if the status is invalid or empty
      */
     fun validateStatus(statusString: String) {
+        if (statusString.isBlank()) {
+            throw IllegalArgumentException("Issue status is required")
+        }
+        
         val upperStatus = statusString.uppercase()
         if (upperStatus !in VALID_ISSUE_STATUSES) {
             throw IllegalArgumentException(
