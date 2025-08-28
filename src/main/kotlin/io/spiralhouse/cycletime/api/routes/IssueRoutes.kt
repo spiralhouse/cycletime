@@ -210,12 +210,11 @@ private fun Route.updateIssueRoute() {
     put("/{id}") {
         call.logApiOperation("UpdateIssue", mapOf("id" to call.parameters["id"]))
         
-        val issueId = call.extractIssueId()
-        
         call.validateAndProcess<UpdateIssueRequest>(
             validation = { it.validateForUpdate() }
         ) { request ->
             call.executeServiceCall {
+                val issueId = call.extractIssueId()
                 val service = call.service<IssueApplicationService>()
                 val command = buildUpdateIssueCommand(issueId, request)
                 val updated = service.updateIssue(command)
@@ -341,12 +340,11 @@ private fun Route.statusTransitionRoute() {
     post("/status") {
         call.logApiOperation("TransitionIssueStatus", mapOf("id" to call.parameters["id"]))
         
-        val issueId = call.extractIssueId()
-        
         call.validateAndProcess<StatusTransitionRequest>(
             validation = { it.validateForStatusTransition() }
         ) { request ->
             call.executeServiceCall {
+                val issueId = call.extractIssueId()
                 val service = call.service<IssueApplicationService>()
                 val newStatus = IssueStatus.fromString(request.status)
                 val command = UpdateIssueStatusCommand(issueId, newStatus)

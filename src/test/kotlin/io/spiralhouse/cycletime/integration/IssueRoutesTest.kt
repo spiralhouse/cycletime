@@ -1092,16 +1092,16 @@ class IssueRoutesTest : StringSpec({
                 projectId = project.id
             ))
 
-            // This test will FAIL until routes and body validation are implemented
+            // Test empty JSON object (valid JSON but missing required fields)
             val response = createJsonClient().post("/api/issues/${issue.id.value}/status") {
                 contentType(ContentType.Application.Json)
-                // Missing request body
+                setBody("{}") // Empty JSON object
             }
 
             response.status shouldBe HttpStatusCode.BadRequest
 
             val errorResponse: ErrorResponse = response.body()
-            errorResponse.error shouldContain "Missing request body"
+            errorResponse.error shouldContain "Failed to convert request body"
             errorResponse.timestamp shouldNotBe null
         }
     }

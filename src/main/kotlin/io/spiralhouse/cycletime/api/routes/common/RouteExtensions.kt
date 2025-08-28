@@ -136,8 +136,13 @@ suspend fun ApplicationCall.executeServiceCall(block: suspend () -> Unit) {
         val message = e.message ?: "Invalid request"
         val (errorMessage, details) = when {
             message.startsWith("Invalid IssueStatus:") -> {
-                val status = message.substringAfter("Invalid IssueStatus:").trim()
-                "Invalid status: $status" to "Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
+                val invalidStatus = message.substringAfter("Invalid IssueStatus:").trim()
+                val details = if (invalidStatus.isNotEmpty()) {
+                    "Invalid status: '$invalidStatus'. Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
+                } else {
+                    "Status field is required. Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
+                }
+                message to details
             }
             message.startsWith("Invalid issue status:") -> {
                 val status = message.substringAfter("Invalid issue status:").substringBefore(".").trim()
@@ -145,7 +150,8 @@ suspend fun ApplicationCall.executeServiceCall(block: suspend () -> Unit) {
             }
             message.contains("Invalid UUID") -> {
                 val id = message.substringAfter("Invalid UUID format:").trim()
-                "Invalid UUID format" to if (id.isNotBlank()) "Invalid ID: $id" else "The provided ID is not a valid UUID"
+                val errorMessage = if (id.isNotBlank()) "Invalid UUID format: $id" else "Invalid UUID format"
+                errorMessage to "The provided ID is not a valid UUID"
             }
             message.contains("cannot be empty") || message.contains("must not be empty") -> {
                 val field = message.substringBefore("cannot be empty").substringBefore("must not be empty").trim()
@@ -261,15 +267,7 @@ suspend inline fun <reified T : Any> ApplicationCall.validateAndProcess(
     noinline block: suspend (T) -> Unit
 ) {
     try {
-        // First check Content-Type header
-        val contentType = request.contentType()
-        if (request.httpMethod != HttpMethod.Get && request.httpMethod != HttpMethod.Delete) {
-            if (contentType.contentType != "application" || contentType.contentSubtype != "json") {
-                throw UnsupportedMediaTypeException("Content-Type must be application/json")
-            }
-        }
-        
-        // Try to receive the request body
+        // Try to receive the request body first to prioritize body validation errors
         val request = try {
             receive<T>()
         } catch (e: Exception) {
@@ -280,12 +278,22 @@ suspend inline fun <reified T : Any> ApplicationCall.validateAndProcess(
                 }
                 e.message?.contains("EOF") == true || 
                 e.message?.contains("Unexpected end") == true ||
-                e.message?.contains("Request body") == true -> {
+                e.message?.contains("Request body") == true ||
+                e.message?.contains("is empty") == true -> {
                     throw BadRequestException("Request body is required")
                 }
                 else -> throw e
             }
         }
+        
+        // Check Content-Type header after body parsing (for consistency with other endpoints)
+        if (this.request.httpMethod != HttpMethod.Get && this.request.httpMethod != HttpMethod.Delete) {
+            val contentType = this.request.contentType()
+            if (contentType.contentType != "application" || contentType.contentSubtype != "json") {
+                throw UnsupportedMediaTypeException("Content-Type must be application/json")
+            }
+        }
+        
         
         // Validate the request
         validation(request)
@@ -309,8 +317,13 @@ suspend inline fun <reified T : Any> ApplicationCall.validateAndProcess(
         val message = e.message ?: "Validation failed"
         val (errorMessage, details) = when {
             message.startsWith("Invalid IssueStatus:") -> {
-                val status = message.substringAfter("Invalid IssueStatus:").trim()
-                "Invalid status: $status" to "Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
+                val invalidStatus = message.substringAfter("Invalid IssueStatus:").trim()
+                val details = if (invalidStatus.isNotEmpty()) {
+                    "Invalid status: '$invalidStatus'. Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
+                } else {
+                    "Status field is required. Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
+                }
+                message to details
             }
             message.startsWith("Invalid issue status:") -> {
                 val status = message.substringAfter("Invalid issue status:").substringBefore(".").trim()
