@@ -355,7 +355,7 @@ class ProjectRoutesTest : StringSpec({
             val created = projectService.createProject(command)
 
             // This test will FAIL until routes are implemented
-            val response = client.delete("/api/projects/${created.id.value}")
+            val response = createJsonClient().delete("/api/projects/${created.id.value}")
 
             response.status shouldBe HttpStatusCode.NoContent
             response.bodyAsText() shouldBe ""
