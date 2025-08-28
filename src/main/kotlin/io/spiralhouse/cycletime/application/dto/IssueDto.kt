@@ -87,3 +87,30 @@ data class IssueHierarchyDto(
         }
     }
 }
+
+/**
+ * Extended Data Transfer Object for issue hierarchy that includes parent and descendant count.
+ */
+@Serializable
+data class IssueHierarchyExtendedDto(
+    val issue: IssueDto,
+    val parent: IssueDto?,
+    val children: List<IssueDto>,
+    val totalDescendants: Int
+) {
+    companion object {
+        fun fromIssueWithParentAndChildren(
+            issue: Issue,
+            parent: Issue?,
+            children: List<Issue>,
+            totalDescendants: Int
+        ): IssueHierarchyExtendedDto {
+            return IssueHierarchyExtendedDto(
+                issue = IssueDto.fromIssue(issue),
+                parent = parent?.let { IssueDto.fromIssue(it) },
+                children = children.map { IssueDto.fromIssue(it) },
+                totalDescendants = totalDescendants
+            )
+        }
+    }
+}

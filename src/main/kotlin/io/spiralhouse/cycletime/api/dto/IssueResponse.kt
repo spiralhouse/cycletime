@@ -88,3 +88,15 @@ data class IssueHierarchyResponse(
         }
     }
 }
+
+/**
+ * Extended response DTO for issue hierarchy that includes parent and descendant count.
+ * This is used for the GET /api/issues/{id}/hierarchy endpoint.
+ */
+@Serializable
+data class IssueHierarchyExtendedResponse(
+    val issue: IssueResponse,
+    val parent: IssueResponse?,
+    val children: List<IssueResponse>,
+    val totalDescendants: Int
+)

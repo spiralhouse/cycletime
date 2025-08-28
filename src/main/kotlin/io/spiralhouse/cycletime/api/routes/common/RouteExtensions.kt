@@ -2,6 +2,7 @@ package io.spiralhouse.cycletime.api.routes.common
 
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.*
 import io.ktor.server.plugins.di.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -124,10 +125,23 @@ suspend fun ApplicationCall.executeServiceCall(block: suspend () -> Unit) {
     } catch (e: HierarchyViolationException) {
         respondBadRequest("Hierarchy violation", e.message)
     } catch (e: InvalidStatusTransitionException) {
-        respondBadRequest("Invalid status transition", e.message)
+        respondUnprocessableEntity("Invalid status transition", e.message)
     } catch (e: IllegalArgumentException) {
-        // Use the actual error message which should contain context
-        respondBadRequest(e.message ?: "Invalid request", null)
+        // Check if this is an IssueStatus validation error and extract details
+        val message = e.message ?: "Invalid request"
+        val details = when {
+            message.startsWith("Invalid IssueStatus:") -> {
+                // Extract the invalid value from the error message
+                val value = message.substringAfter("Invalid IssueStatus:").trim()
+                if (value.isNotEmpty()) value else null
+            }
+            message.contains("Invalid UUID") -> {
+                // For UUID errors, include the invalid value in details
+                message.substringAfter("Invalid UUID").trim().takeIf { it.isNotBlank() }
+            }
+            else -> null
+        }
+        respondBadRequest(message, details)
     } catch (e: SerializationException) {
         logger.error("Serialization error", e)
         respondBadRequest("Invalid request format", e.message)
@@ -198,6 +212,21 @@ suspend fun ApplicationCall.respondNoContent() {
 }
 
 /**
+ * Responds with a standardized Unprocessable Entity (422) error.
+ * 
+ * @param error The error message
+ * @param details Additional details about the error
+ */
+suspend fun ApplicationCall.respondUnprocessableEntity(error: String, details: String? = null) {
+    val timeProvider: TimeProvider by application.dependencies
+    respond(HttpStatusCode.UnprocessableEntity, ErrorResponse(
+        error = error,
+        details = details,
+        timestamp = timeProvider.now().toString()
+    ))
+}
+
+/**
  * Validates a request body and executes a block if validation passes.
  * 
  * This function combines request deserialization, validation, and execution
@@ -229,6 +258,14 @@ suspend inline fun <reified T : Any> ApplicationCall.validateAndProcess(
     } catch (e: IllegalArgumentException) {
         // Pass the actual error message from validation
         respondBadRequest(e.message ?: "Validation failed", null)
+    } catch (e: Exception) {
+        // This catches cases where the request body is completely missing or malformed
+        logger.warn("Request processing failed: ${e.message}")
+        if (e.message?.contains("EOF") == true || e.message?.contains("Unexpected end") == true) {
+            respondBadRequest("Missing or invalid request body", null)
+        } else {
+            respondBadRequest("Invalid request", e.message)
+        }
     }
 }
 

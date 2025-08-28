@@ -293,6 +293,35 @@ class IssueApplicationService(
         }
     }
 
+    /**
+     * Gets the extended hierarchy information for an issue.
+     * Returns the issue with its parent, direct children, and total descendant count.
+     *
+     * @param issueId The issue ID
+     * @return IssueHierarchyExtendedDto representing the extended hierarchy
+     * @throws io.spiralhouse.cycletime.application.exceptions.IssueNotFoundException if the issue doesn't exist
+     */
+    suspend fun getIssueHierarchyExtended(issueId: IssueId): IssueHierarchyExtendedDto {
+        return unitOfWork.execute {
+            val issue = issueRepository.findById(issueId)
+                ?: throw IssueNotFoundException(issueId)
+
+            val parent = issue.parentId?.let { parentId ->
+                issueRepository.findById(parentId)
+            }
+
+            val children = issueRepository.findByParent(issue.id)
+            val totalDescendants = countDescendants(issue.id)
+
+            IssueHierarchyExtendedDto.fromIssueWithParentAndChildren(
+                issue = issue,
+                parent = parent,
+                children = children,
+                totalDescendants = totalDescendants
+            )
+        }
+    }
+
     private suspend fun buildHierarchy(issue: Issue): IssueHierarchyDto {
         val children = issueRepository.findByParent(issue.id)
         val childHierarchies = children.map { child -> buildHierarchy(child) }
@@ -301,6 +330,14 @@ class IssueApplicationService(
             issue = issue,
             childHierarchies = childHierarchies
         )
+    }
+
+    private suspend fun countDescendants(issueId: IssueId): Int {
+        val directChildren = issueRepository.findByParent(issueId)
+        val childCounts = directChildren.map { child -> 
+            1 + countDescendants(child.id)
+        }
+        return childCounts.sum()
     }
 
     /**

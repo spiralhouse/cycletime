@@ -34,6 +34,19 @@ import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.hours
 
 /**
+ * Extended hierarchy response DTO that includes parent and totalDescendants.
+ * This represents the expected response structure for GET /api/issues/{id}/hierarchy
+ * that will be implemented in the GREEN phase.
+ */
+@Serializable
+data class IssueHierarchyExtendedResponse(
+    val issue: IssueResponse,
+    val parent: IssueResponse?,
+    val children: List<IssueResponse>,
+    val totalDescendants: Int
+)
+
+/**
  * TDD RED Phase Integration Tests for Issue REST API Endpoints
  *
  * These tests define the expected behavior of Issue REST endpoints that will be implemented
@@ -610,7 +623,121 @@ class IssueRoutesTest : StringSpec({
     // Status Transition Tests
     // ================================================================================
 
-    "POST /api/issues/{id}/status should transition issue status and return 200 OK" {
+    "POST /api/issues/{id}/status should transition from TODO to IN_PROGRESS and return 200 OK" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create project and issue in TODO status
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val issue = issueService.createIssue(CreateIssueCommand(
+                title = "Test Issue",
+                type = IssueType.STORY,
+                projectId = project.id
+            ))
+
+            mockTimeProvider.advance(1.hours)
+
+            val statusRequest = StatusTransitionRequest(
+                status = "IN_PROGRESS"
+            )
+
+            // This test will FAIL until routes are implemented
+            val response = createJsonClient().post("/api/issues/${issue.id.value}/status") {
+                contentType(ContentType.Application.Json)
+                setBody(statusRequest)
+            }
+
+            response.status shouldBe HttpStatusCode.OK
+
+            val issueResponse: IssueResponse = response.body()
+            issueResponse.id shouldBe issue.id.value.toString()
+            issueResponse.status shouldBe "IN_PROGRESS"
+            issueResponse.title shouldBe "Test Issue"
+            issueResponse.updatedAt shouldBe "2025-01-15T11:00:00Z"
+        }
+    }
+
+    "POST /api/issues/{id}/status should transition from IN_PROGRESS to IN_REVIEW and return 200 OK" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create project and issue, then move to IN_PROGRESS
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val issue = issueService.createIssue(CreateIssueCommand(
+                title = "Test Issue",
+                type = IssueType.STORY,
+                projectId = project.id
+            ))
+
+            // First transition to IN_PROGRESS
+            issueService.updateStatus(UpdateIssueStatusCommand(issue.id, IssueStatus.IN_PROGRESS))
+
+            mockTimeProvider.advance(2.hours)
+
+            val statusRequest = StatusTransitionRequest(
+                status = "IN_REVIEW"
+            )
+
+            // This test will FAIL until routes are implemented
+            val response = createJsonClient().post("/api/issues/${issue.id.value}/status") {
+                contentType(ContentType.Application.Json)
+                setBody(statusRequest)
+            }
+
+            response.status shouldBe HttpStatusCode.OK
+
+            val issueResponse: IssueResponse = response.body()
+            issueResponse.status shouldBe "IN_REVIEW"
+            issueResponse.updatedAt shouldBe "2025-01-15T12:00:00Z"
+        }
+    }
+
+    "POST /api/issues/{id}/status should transition from IN_REVIEW to DONE and return 200 OK" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create project and issue, then move to IN_REVIEW
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val issue = issueService.createIssue(CreateIssueCommand(
+                title = "Test Issue",
+                type = IssueType.STORY,
+                projectId = project.id
+            ))
+
+            // Transition to IN_REVIEW first
+            issueService.updateStatus(UpdateIssueStatusCommand(issue.id, IssueStatus.IN_PROGRESS))
+            issueService.updateStatus(UpdateIssueStatusCommand(issue.id, IssueStatus.IN_REVIEW))
+
+            mockTimeProvider.advance(3.hours)
+
+            val statusRequest = StatusTransitionRequest(
+                status = "DONE"
+            )
+
+            // This test will FAIL until routes are implemented
+            val response = createJsonClient().post("/api/issues/${issue.id.value}/status") {
+                contentType(ContentType.Application.Json)
+                setBody(statusRequest)
+            }
+
+            response.status shouldBe HttpStatusCode.OK
+
+            val issueResponse: IssueResponse = response.body()
+            issueResponse.status shouldBe "DONE"
+            issueResponse.updatedAt shouldBe "2025-01-15T13:00:00Z"
+        }
+    }
+
+    "POST /api/issues/{id}/status should handle alternative status format (lowercase)" {
         configuredTestApplication {
             client.get("/health")
 
@@ -621,12 +748,12 @@ class IssueRoutesTest : StringSpec({
             val issueService: IssueApplicationService by application.dependencies
             val issue = issueService.createIssue(CreateIssueCommand(
                 title = "Test Issue",
-                type = IssueType.EPIC,
+                type = IssueType.STORY,
                 projectId = project.id
             ))
 
             val statusRequest = StatusTransitionRequest(
-                status = "IN_PROGRESS"
+                status = "in_progress" // lowercase format
             )
 
             // This test will FAIL until routes are implemented
@@ -642,18 +769,85 @@ class IssueRoutesTest : StringSpec({
         }
     }
 
-    "POST /api/issues/{id}/status should validate status transitions and return 400 Bad Request" {
+    "POST /api/issues/{id}/status should reject invalid status value and return 400 Bad Request" {
         configuredTestApplication {
             client.get("/health")
 
-            // Create issue in DONE status
+            // Create project and issue first
             val projectService: ProjectApplicationService by application.dependencies
             val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
 
             val issueService: IssueApplicationService by application.dependencies
             val issue = issueService.createIssue(CreateIssueCommand(
                 title = "Test Issue",
-                type = IssueType.EPIC,
+                type = IssueType.STORY,
+                projectId = project.id
+            ))
+
+            val invalidStatusRequest = StatusTransitionRequest(
+                status = "INVALID_STATUS"
+            )
+
+            // This test will FAIL until validation is implemented
+            val response = createJsonClient().post("/api/issues/${issue.id.value}/status") {
+                contentType(ContentType.Application.Json)
+                setBody(invalidStatusRequest)
+            }
+
+            response.status shouldBe HttpStatusCode.BadRequest
+
+            val errorResponse: ErrorResponse = response.body()
+            errorResponse.error shouldContain "Invalid IssueStatus"
+            errorResponse.details shouldContain "INVALID_STATUS"
+            errorResponse.timestamp shouldNotBe null
+        }
+    }
+
+    "POST /api/issues/{id}/status should reject empty status value and return 400 Bad Request" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create project and issue first
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val issue = issueService.createIssue(CreateIssueCommand(
+                title = "Test Issue",
+                type = IssueType.STORY,
+                projectId = project.id
+            ))
+
+            val emptyStatusRequest = StatusTransitionRequest(
+                status = ""
+            )
+
+            // This test will FAIL until validation is implemented
+            val response = createJsonClient().post("/api/issues/${issue.id.value}/status") {
+                contentType(ContentType.Application.Json)
+                setBody(emptyStatusRequest)
+            }
+
+            response.status shouldBe HttpStatusCode.BadRequest
+
+            val errorResponse: ErrorResponse = response.body()
+            errorResponse.error shouldContain "Invalid IssueStatus"
+            errorResponse.timestamp shouldNotBe null
+        }
+    }
+
+    "POST /api/issues/{id}/status should reject disallowed status transition from DONE to IN_PROGRESS" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create issue and transition to DONE status
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val issue = issueService.createIssue(CreateIssueCommand(
+                title = "Test Issue",
+                type = IssueType.STORY,
                 projectId = project.id
             ))
 
@@ -673,12 +867,169 @@ class IssueRoutesTest : StringSpec({
                 setBody(invalidStatusRequest)
             }
 
-            response.status shouldBe HttpStatusCode.BadRequest
+            response.status shouldBe HttpStatusCode.UnprocessableEntity
 
             val errorResponse: ErrorResponse = response.body()
             errorResponse.error shouldContain "Invalid status transition"
             errorResponse.details shouldContain "DONE"
             errorResponse.details shouldContain "IN_PROGRESS"
+            errorResponse.timestamp shouldNotBe null
+        }
+    }
+
+    "POST /api/issues/{id}/status should reject disallowed status transition from CANCELED to IN_PROGRESS" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create issue and transition to CANCELED status
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val issue = issueService.createIssue(CreateIssueCommand(
+                title = "Test Issue",
+                type = IssueType.STORY,
+                projectId = project.id
+            ))
+
+            // Transition to CANCELED first
+            issueService.updateStatus(UpdateIssueStatusCommand(issue.id, IssueStatus.CANCELED))
+
+            // Try invalid transition from CANCELED to IN_PROGRESS
+            val invalidStatusRequest = StatusTransitionRequest(
+                status = "IN_PROGRESS"
+            )
+
+            // This test will FAIL until transition validation is implemented
+            val response = createJsonClient().post("/api/issues/${issue.id.value}/status") {
+                contentType(ContentType.Application.Json)
+                setBody(invalidStatusRequest)
+            }
+
+            response.status shouldBe HttpStatusCode.UnprocessableEntity
+
+            val errorResponse: ErrorResponse = response.body()
+            errorResponse.error shouldContain "Invalid status transition"
+            errorResponse.details shouldContain "CANCELED"
+            errorResponse.details shouldContain "IN_PROGRESS"
+        }
+    }
+
+    "POST /api/issues/{id}/status should allow valid transition from CANCELED to TODO" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create issue and transition to CANCELED status
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val issue = issueService.createIssue(CreateIssueCommand(
+                title = "Test Issue",
+                type = IssueType.STORY,
+                projectId = project.id
+            ))
+
+            // Transition to CANCELED first
+            issueService.updateStatus(UpdateIssueStatusCommand(issue.id, IssueStatus.CANCELED))
+
+            mockTimeProvider.advance(1.hours)
+
+            // Valid transition from CANCELED to TODO
+            val statusRequest = StatusTransitionRequest(
+                status = "TODO"
+            )
+
+            // This test will FAIL until routes are implemented
+            val response = createJsonClient().post("/api/issues/${issue.id.value}/status") {
+                contentType(ContentType.Application.Json)
+                setBody(statusRequest)
+            }
+
+            response.status shouldBe HttpStatusCode.OK
+
+            val issueResponse: IssueResponse = response.body()
+            issueResponse.status shouldBe "TODO"
+            issueResponse.updatedAt shouldBe "2025-01-15T11:00:00Z"
+        }
+    }
+
+    "POST /api/issues/{id}/status should allow back transition from IN_PROGRESS to TODO" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create project and issue, then move to IN_PROGRESS
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val issue = issueService.createIssue(CreateIssueCommand(
+                title = "Test Issue",
+                type = IssueType.STORY,
+                projectId = project.id
+            ))
+
+            // First transition to IN_PROGRESS
+            issueService.updateStatus(UpdateIssueStatusCommand(issue.id, IssueStatus.IN_PROGRESS))
+
+            mockTimeProvider.advance(1.hours)
+
+            // Valid back transition from IN_PROGRESS to TODO
+            val statusRequest = StatusTransitionRequest(
+                status = "TODO"
+            )
+
+            // This test will FAIL until routes are implemented
+            val response = createJsonClient().post("/api/issues/${issue.id.value}/status") {
+                contentType(ContentType.Application.Json)
+                setBody(statusRequest)
+            }
+
+            response.status shouldBe HttpStatusCode.OK
+
+            val issueResponse: IssueResponse = response.body()
+            issueResponse.status shouldBe "TODO"
+            issueResponse.updatedAt shouldBe "2025-01-15T11:00:00Z"
+        }
+    }
+
+    "POST /api/issues/{id}/status should allow back transition from IN_REVIEW to IN_PROGRESS" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create project and issue, then move to IN_REVIEW
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val issue = issueService.createIssue(CreateIssueCommand(
+                title = "Test Issue",
+                type = IssueType.STORY,
+                projectId = project.id
+            ))
+
+            // Transition to IN_REVIEW first
+            issueService.updateStatus(UpdateIssueStatusCommand(issue.id, IssueStatus.IN_PROGRESS))
+            issueService.updateStatus(UpdateIssueStatusCommand(issue.id, IssueStatus.IN_REVIEW))
+
+            mockTimeProvider.advance(1.hours)
+
+            // Valid back transition from IN_REVIEW to IN_PROGRESS
+            val statusRequest = StatusTransitionRequest(
+                status = "IN_PROGRESS"
+            )
+
+            // This test will FAIL until routes are implemented
+            val response = createJsonClient().post("/api/issues/${issue.id.value}/status") {
+                contentType(ContentType.Application.Json)
+                setBody(statusRequest)
+            }
+
+            response.status shouldBe HttpStatusCode.OK
+
+            val issueResponse: IssueResponse = response.body()
+            issueResponse.status shouldBe "IN_PROGRESS"
+            issueResponse.updatedAt shouldBe "2025-01-15T11:00:00Z"
         }
     }
 
@@ -699,6 +1050,115 @@ class IssueRoutesTest : StringSpec({
 
             val errorResponse: ErrorResponse = response.body()
             errorResponse.error shouldContain "not found"
+            errorResponse.details shouldContain nonExistentId.toString()
+            errorResponse.timestamp shouldNotBe null
+        }
+    }
+
+    "POST /api/issues/{id}/status should handle invalid UUID format and return 400 Bad Request" {
+        configuredTestApplication {
+            val invalidId = "invalid-uuid-format"
+            val statusRequest = StatusTransitionRequest(
+                status = "IN_PROGRESS"
+            )
+
+            // This test will FAIL until parameter validation is implemented
+            val response = createJsonClient().post("/api/issues/$invalidId/status") {
+                contentType(ContentType.Application.Json)
+                setBody(statusRequest)
+            }
+
+            response.status shouldBe HttpStatusCode.BadRequest
+
+            val errorResponse: ErrorResponse = response.body()
+            errorResponse.error shouldContain "Invalid UUID"
+            errorResponse.error shouldContain invalidId
+            errorResponse.timestamp shouldNotBe null
+        }
+    }
+
+    "POST /api/issues/{id}/status should handle missing request body and return 400 Bad Request" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create project and issue first
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val issue = issueService.createIssue(CreateIssueCommand(
+                title = "Test Issue",
+                type = IssueType.STORY,
+                projectId = project.id
+            ))
+
+            // This test will FAIL until routes and body validation are implemented
+            val response = createJsonClient().post("/api/issues/${issue.id.value}/status") {
+                contentType(ContentType.Application.Json)
+                // Missing request body
+            }
+
+            response.status shouldBe HttpStatusCode.BadRequest
+
+            val errorResponse: ErrorResponse = response.body()
+            errorResponse.error shouldContain "Missing request body"
+            errorResponse.timestamp shouldNotBe null
+        }
+    }
+
+    "POST /api/issues/{id}/status should handle malformed JSON request body and return 400 Bad Request" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create project and issue first
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val issue = issueService.createIssue(CreateIssueCommand(
+                title = "Test Issue",
+                type = IssueType.STORY,
+                projectId = project.id
+            ))
+
+            val malformedJson = """{"status": "IN_PROGRESS", "invalid": }"""
+
+            // This test will FAIL until JSON error handling is implemented
+            val response = client.post("/api/issues/${issue.id.value}/status") {
+                contentType(ContentType.Application.Json)
+                setBody(malformedJson)
+            }
+
+            response.status shouldBe HttpStatusCode.BadRequest
+            // Note: Exact error format depends on JSON parsing framework
+        }
+    }
+
+    "POST /api/issues/{id}/status should handle missing Content-Type header and return 415 Unsupported Media Type" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create project and issue first
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val issue = issueService.createIssue(CreateIssueCommand(
+                title = "Test Issue",
+                type = IssueType.STORY,
+                projectId = project.id
+            ))
+
+            val requestBody = """{"status": "IN_PROGRESS"}"""
+
+            // Use plain client without ContentNegotiation to test missing Content-Type
+            val response = client.post("/api/issues/${issue.id.value}/status") {
+                // Deliberately omit Content-Type header
+                setBody(requestBody)
+            }
+
+            response.status shouldBe HttpStatusCode.UnsupportedMediaType
+            // 415 errors may have empty body from framework level
         }
     }
 
@@ -706,7 +1166,43 @@ class IssueRoutesTest : StringSpec({
     // Hierarchy Tests
     // ================================================================================
 
-    "GET /api/issues/{id}/hierarchy should return issue hierarchy with 200 OK" {
+    // ================================================================================
+    // Issue Hierarchy Tests - GET /api/issues/{id}/hierarchy
+    // ================================================================================
+
+    "GET /api/issues/{id}/hierarchy should return standalone issue with no parent and no children" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create project and standalone issue
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val standAloneIssue = issueService.createIssue(CreateIssueCommand(
+                title = "Standalone Issue",
+                description = "A standalone issue with no relationships",
+                type = IssueType.EPIC,
+                projectId = project.id
+            ))
+
+            // This test will FAIL until routes are implemented
+            val response = createJsonClient().get("/api/issues/${standAloneIssue.id.value}/hierarchy")
+
+            response.status shouldBe HttpStatusCode.OK
+
+            val hierarchyResponse: IssueHierarchyExtendedResponse = response.body()
+            hierarchyResponse.issue.id shouldBe standAloneIssue.id.value.toString()
+            hierarchyResponse.issue.title shouldBe "Standalone Issue"
+            hierarchyResponse.issue.description shouldBe "A standalone issue with no relationships"
+            hierarchyResponse.issue.type shouldBe "EPIC"
+            hierarchyResponse.parent shouldBe null
+            hierarchyResponse.children shouldHaveSize 0
+            hierarchyResponse.totalDescendants shouldBe 0
+        }
+    }
+
+    "GET /api/issues/{id}/hierarchy should return issue with parent but no children" {
         configuredTestApplication {
             client.get("/health")
 
@@ -716,20 +1212,65 @@ class IssueRoutesTest : StringSpec({
 
             val issueService: IssueApplicationService by application.dependencies
             val epic = issueService.createIssue(CreateIssueCommand(
-                title = "Epic Issue",
+                title = "Parent Epic",
+                description = "Epic that serves as parent",
                 type = IssueType.EPIC,
                 projectId = project.id
             ))
             val story = issueService.createIssue(CreateIssueCommand(
-                title = "Story Issue",
+                title = "Child Story",
+                description = "Story with parent but no children",
                 type = IssueType.STORY,
                 parentId = epic.id
             ))
-            val subtask = issueService.createIssue(CreateIssueCommand(
-                title = "Subtask Issue",
-                type = IssueType.SUBTASK,
-                parentId = story.id,
-                estimate = Estimate.of(3)
+
+            // This test will FAIL until routes are implemented
+            val response = createJsonClient().get("/api/issues/${story.id.value}/hierarchy")
+
+            response.status shouldBe HttpStatusCode.OK
+
+            val hierarchyResponse: IssueHierarchyExtendedResponse = response.body()
+            hierarchyResponse.issue.id shouldBe story.id.value.toString()
+            hierarchyResponse.issue.title shouldBe "Child Story"
+            hierarchyResponse.issue.type shouldBe "STORY"
+            hierarchyResponse.issue.parentId shouldBe epic.id.value.toString()
+            
+            // Should include parent information
+            hierarchyResponse.parent shouldNotBe null
+            hierarchyResponse.parent!!.id shouldBe epic.id.value.toString()
+            hierarchyResponse.parent!!.title shouldBe "Parent Epic"
+            hierarchyResponse.parent!!.type shouldBe "EPIC"
+            
+            // Should have no children
+            hierarchyResponse.children shouldHaveSize 0
+            hierarchyResponse.totalDescendants shouldBe 0
+        }
+    }
+
+    "GET /api/issues/{id}/hierarchy should return issue with children but no parent" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create project and hierarchical issues
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val epic = issueService.createIssue(CreateIssueCommand(
+                title = "Root Epic",
+                description = "Epic with children but no parent",
+                type = IssueType.EPIC,
+                projectId = project.id
+            ))
+            val story1 = issueService.createIssue(CreateIssueCommand(
+                title = "First Story",
+                type = IssueType.STORY,
+                parentId = epic.id
+            ))
+            val story2 = issueService.createIssue(CreateIssueCommand(
+                title = "Second Story",
+                type = IssueType.STORY,
+                parentId = epic.id
             ))
 
             // This test will FAIL until routes are implemented
@@ -737,21 +1278,287 @@ class IssueRoutesTest : StringSpec({
 
             response.status shouldBe HttpStatusCode.OK
 
-            val hierarchyResponse: IssueHierarchyResponse = response.body()
-            hierarchyResponse.issue.title shouldBe "Epic Issue"
+            val hierarchyResponse: IssueHierarchyExtendedResponse = response.body()
+            hierarchyResponse.issue.id shouldBe epic.id.value.toString()
+            hierarchyResponse.issue.title shouldBe "Root Epic"
             hierarchyResponse.issue.type shouldBe "EPIC"
-            hierarchyResponse.children shouldHaveSize 1
+            
+            // Should have no parent
+            hierarchyResponse.parent shouldBe null
+            
+            // Should have two children
+            hierarchyResponse.children shouldHaveSize 2
+            hierarchyResponse.totalDescendants shouldBe 2
+            
+            val childTitles = hierarchyResponse.children.map { it.title }
+            childTitles shouldContain "First Story"
+            childTitles shouldContain "Second Story"
+            
+            hierarchyResponse.children.forEach { child ->
+                child.type shouldBe "STORY"
+                child.parentId shouldBe epic.id.value.toString()
+            }
+        }
+    }
 
-            val storyChild = hierarchyResponse.children[0]
-            storyChild.issue.title shouldBe "Story Issue"
-            storyChild.issue.type shouldBe "STORY"
-            storyChild.children shouldHaveSize 1
+    "GET /api/issues/{id}/hierarchy should return issue with both parent and children" {
+        configuredTestApplication {
+            client.get("/health")
 
-            val subtaskChild = storyChild.children[0]
-            subtaskChild.issue.title shouldBe "Subtask Issue"
-            subtaskChild.issue.type shouldBe "SUBTASK"
-            subtaskChild.issue.estimate shouldBe 3
-            subtaskChild.children shouldHaveSize 0
+            // Create project and hierarchical issues
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val epic = issueService.createIssue(CreateIssueCommand(
+                title = "Root Epic",
+                type = IssueType.EPIC,
+                projectId = project.id
+            ))
+            val story = issueService.createIssue(CreateIssueCommand(
+                title = "Middle Story",
+                description = "Story with both parent and children",
+                type = IssueType.STORY,
+                parentId = epic.id
+            ))
+            val subtask1 = issueService.createIssue(CreateIssueCommand(
+                title = "First Subtask",
+                type = IssueType.SUBTASK,
+                parentId = story.id,
+                estimate = Estimate.of(3)
+            ))
+            val subtask2 = issueService.createIssue(CreateIssueCommand(
+                title = "Second Subtask",
+                type = IssueType.SUBTASK,
+                parentId = story.id,
+                estimate = Estimate.of(5)
+            ))
+
+            // This test will FAIL until routes are implemented
+            val response = createJsonClient().get("/api/issues/${story.id.value}/hierarchy")
+
+            response.status shouldBe HttpStatusCode.OK
+
+            val hierarchyResponse: IssueHierarchyExtendedResponse = response.body()
+            hierarchyResponse.issue.id shouldBe story.id.value.toString()
+            hierarchyResponse.issue.title shouldBe "Middle Story"
+            hierarchyResponse.issue.type shouldBe "STORY"
+            
+            // Should have parent
+            hierarchyResponse.parent shouldNotBe null
+            hierarchyResponse.parent!!.id shouldBe epic.id.value.toString()
+            hierarchyResponse.parent!!.title shouldBe "Root Epic"
+            hierarchyResponse.parent!!.type shouldBe "EPIC"
+            
+            // Should have children
+            hierarchyResponse.children shouldHaveSize 2
+            hierarchyResponse.totalDescendants shouldBe 2
+            
+            val childTitles = hierarchyResponse.children.map { it.title }
+            childTitles shouldContain "First Subtask"
+            childTitles shouldContain "Second Subtask"
+            
+            hierarchyResponse.children.forEach { child ->
+                child.type shouldBe "SUBTASK"
+                child.parentId shouldBe story.id.value.toString()
+            }
+            
+            // Verify estimates on subtasks
+            val firstSubtask = hierarchyResponse.children.find { it.title == "First Subtask" }
+            firstSubtask!!.estimate shouldBe 3
+            val secondSubtask = hierarchyResponse.children.find { it.title == "Second Subtask" }
+            secondSubtask!!.estimate shouldBe 5
+        }
+    }
+
+    "GET /api/issues/{id}/hierarchy should return complete multi-level hierarchy (parent -> issue -> children -> grandchildren)" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create project and deep hierarchical issues
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val epic = issueService.createIssue(CreateIssueCommand(
+                title = "Root Epic",
+                description = "Top level epic",
+                type = IssueType.EPIC,
+                projectId = project.id
+            ))
+            val story = issueService.createIssue(CreateIssueCommand(
+                title = "Parent Story",
+                description = "Story in middle of hierarchy",
+                type = IssueType.STORY,
+                parentId = epic.id
+            ))
+            val subtask1 = issueService.createIssue(CreateIssueCommand(
+                title = "Child Subtask 1",
+                type = IssueType.SUBTASK,
+                parentId = story.id,
+                estimate = Estimate.of(2)
+            ))
+            val subtask2 = issueService.createIssue(CreateIssueCommand(
+                title = "Child Subtask 2",
+                type = IssueType.SUBTASK,
+                parentId = story.id,
+                estimate = Estimate.of(3)
+            ))
+            val subtask3 = issueService.createIssue(CreateIssueCommand(
+                title = "Child Subtask 3",
+                type = IssueType.SUBTASK,
+                parentId = story.id,
+                estimate = Estimate.of(1)
+            ))
+
+            // This test will FAIL until routes are implemented  
+            val response = createJsonClient().get("/api/issues/${story.id.value}/hierarchy")
+
+            response.status shouldBe HttpStatusCode.OK
+
+            val hierarchyResponse: IssueHierarchyExtendedResponse = response.body()
+            
+            // Verify main issue
+            hierarchyResponse.issue.id shouldBe story.id.value.toString()
+            hierarchyResponse.issue.title shouldBe "Parent Story"
+            hierarchyResponse.issue.type shouldBe "STORY"
+            
+            // Verify parent information
+            hierarchyResponse.parent shouldNotBe null
+            hierarchyResponse.parent!!.id shouldBe epic.id.value.toString()
+            hierarchyResponse.parent!!.title shouldBe "Root Epic"
+            hierarchyResponse.parent!!.type shouldBe "EPIC"
+            
+            // Verify children
+            hierarchyResponse.children shouldHaveSize 3
+            hierarchyResponse.totalDescendants shouldBe 3
+            
+            val childTitles = hierarchyResponse.children.map { it.title }.sorted()
+            childTitles shouldBe listOf("Child Subtask 1", "Child Subtask 2", "Child Subtask 3")
+            
+            // Verify all children are subtasks with correct estimates
+            hierarchyResponse.children.forEach { child ->
+                child.type shouldBe "SUBTASK"
+                child.parentId shouldBe story.id.value.toString()
+                child.estimate shouldNotBe null
+                child.estimate!! shouldBe when (child.title) {
+                    "Child Subtask 1" -> 2
+                    "Child Subtask 2" -> 3
+                    "Child Subtask 3" -> 1
+                    else -> error("Unexpected child title: ${child.title}")
+                }
+            }
+        }
+    }
+
+    "GET /api/issues/{id}/hierarchy should calculate totalDescendants correctly with nested children" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create deep hierarchy to test totalDescendants calculation
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val epic = issueService.createIssue(CreateIssueCommand(
+                title = "Root Epic",
+                type = IssueType.EPIC,
+                projectId = project.id
+            ))
+            
+            // Create 3 stories under epic
+            val story1 = issueService.createIssue(CreateIssueCommand(
+                title = "Story 1",
+                type = IssueType.STORY,
+                parentId = epic.id
+            ))
+            val story2 = issueService.createIssue(CreateIssueCommand(
+                title = "Story 2", 
+                type = IssueType.STORY,
+                parentId = epic.id
+            ))
+            val story3 = issueService.createIssue(CreateIssueCommand(
+                title = "Story 3",
+                type = IssueType.STORY,
+                parentId = epic.id
+            ))
+            
+            // Create subtasks under each story
+            // Story 1: 2 subtasks
+            issueService.createIssue(CreateIssueCommand(
+                title = "Subtask 1.1",
+                type = IssueType.SUBTASK,
+                parentId = story1.id,
+                estimate = Estimate.of(1)
+            ))
+            issueService.createIssue(CreateIssueCommand(
+                title = "Subtask 1.2",
+                type = IssueType.SUBTASK,
+                parentId = story1.id,
+                estimate = Estimate.of(2)
+            ))
+            
+            // Story 2: 1 subtask
+            issueService.createIssue(CreateIssueCommand(
+                title = "Subtask 2.1",
+                type = IssueType.SUBTASK,
+                parentId = story2.id,
+                estimate = Estimate.of(3)
+            ))
+            
+            // Story 3: 3 subtasks
+            issueService.createIssue(CreateIssueCommand(
+                title = "Subtask 3.1",
+                type = IssueType.SUBTASK,
+                parentId = story3.id,
+                estimate = Estimate.of(1)
+            ))
+            issueService.createIssue(CreateIssueCommand(
+                title = "Subtask 3.2",
+                type = IssueType.SUBTASK,
+                parentId = story3.id,
+                estimate = Estimate.of(2)
+            ))
+            issueService.createIssue(CreateIssueCommand(
+                title = "Subtask 3.3",
+                type = IssueType.SUBTASK,
+                parentId = story3.id,
+                estimate = Estimate.of(1)
+            ))
+
+            // This test will FAIL until routes are implemented
+            val response = createJsonClient().get("/api/issues/${epic.id.value}/hierarchy")
+
+            response.status shouldBe HttpStatusCode.OK
+
+            val hierarchyResponse: IssueHierarchyExtendedResponse = response.body()
+            
+            // Verify epic has 3 direct children (stories)
+            hierarchyResponse.children shouldHaveSize 3
+            
+            // Total descendants should include all stories and subtasks (3 stories + 6 subtasks = 9)
+            hierarchyResponse.totalDescendants shouldBe 9
+            
+            // Verify story children counts are not included in individual story objects
+            // (This tests that children array contains direct children only)
+            val storyTitles = hierarchyResponse.children.map { it.title }.sorted()
+            storyTitles shouldBe listOf("Story 1", "Story 2", "Story 3")
+        }
+    }
+
+    "GET /api/issues/{id}/hierarchy should return 400 Bad Request for invalid UUID format" {
+        configuredTestApplication {
+            val invalidId = "invalid-uuid-format"
+
+            // This test will FAIL until parameter validation is implemented
+            val response = createJsonClient().get("/api/issues/$invalidId/hierarchy")
+
+            response.status shouldBe HttpStatusCode.BadRequest
+
+            val errorResponse: ErrorResponse = response.body()
+            errorResponse.error shouldContain "Invalid UUID"
+            errorResponse.error shouldContain invalidId
+            errorResponse.timestamp shouldNotBe null
         }
     }
 
@@ -766,6 +1573,107 @@ class IssueRoutesTest : StringSpec({
 
             val errorResponse: ErrorResponse = response.body()
             errorResponse.error shouldContain "not found"
+            errorResponse.details shouldContain nonExistentId.toString()
+            errorResponse.timestamp shouldNotBe null
+        }
+    }
+
+    "GET /api/issues/{id}/hierarchy should handle empty hierarchy gracefully" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create project with minimal issue (no parent, no children, minimal fields)
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val minimalIssue = issueService.createIssue(CreateIssueCommand(
+                title = "Minimal Issue",
+                // description = null (default)
+                type = IssueType.EPIC,
+                projectId = project.id
+                // parentId = null (default)
+                // estimate = Estimate.NONE (default for EPIC)
+                // assigneeId = null (default)
+            ))
+
+            // This test will FAIL until routes are implemented
+            val response = createJsonClient().get("/api/issues/${minimalIssue.id.value}/hierarchy")
+
+            response.status shouldBe HttpStatusCode.OK
+
+            val hierarchyResponse: IssueHierarchyExtendedResponse = response.body()
+            hierarchyResponse.issue.id shouldBe minimalIssue.id.value.toString()
+            hierarchyResponse.issue.title shouldBe "Minimal Issue"
+            hierarchyResponse.issue.description shouldBe null
+            hierarchyResponse.issue.type shouldBe "EPIC"
+            hierarchyResponse.issue.parentId shouldBe null
+            hierarchyResponse.issue.estimate shouldBe null // Epics have no estimates
+            hierarchyResponse.issue.assignee shouldBe null
+            hierarchyResponse.issue.dependencies shouldHaveSize 0
+            hierarchyResponse.issue.blockedBy shouldHaveSize 0
+            
+            hierarchyResponse.parent shouldBe null
+            hierarchyResponse.children shouldHaveSize 0
+            hierarchyResponse.totalDescendants shouldBe 0
+        }
+    }
+
+    "GET /api/issues/{id}/hierarchy should include all issue metadata in hierarchy response" {
+        configuredTestApplication {
+            client.get("/health")
+
+            // Create comprehensive test data
+            val projectService: ProjectApplicationService by application.dependencies
+            val project = projectService.createProject(CreateProjectCommand("Test Project", "Description"))
+
+            val issueService: IssueApplicationService by application.dependencies
+            val epic = issueService.createIssue(CreateIssueCommand(
+                title = "Comprehensive Epic",
+                description = "Epic with all metadata fields populated",
+                type = IssueType.EPIC,
+                projectId = project.id
+            ))
+            
+            val story = issueService.createIssue(CreateIssueCommand(
+                title = "Comprehensive Story",
+                description = "Story with assignee and relationships",
+                type = IssueType.STORY,
+                parentId = epic.id,
+                assigneeId = "user-12345"
+            ))
+
+            // This test will FAIL until routes are implemented
+            val response = createJsonClient().get("/api/issues/${story.id.value}/hierarchy")
+
+            response.status shouldBe HttpStatusCode.OK
+
+            val hierarchyResponse: IssueHierarchyExtendedResponse = response.body()
+            
+            // Verify all metadata fields are present
+            hierarchyResponse.issue.id shouldBe story.id.value.toString()
+            hierarchyResponse.issue.projectId shouldBe project.id.value.toString()
+            hierarchyResponse.issue.title shouldBe "Comprehensive Story"
+            hierarchyResponse.issue.description shouldBe "Story with assignee and relationships"
+            hierarchyResponse.issue.type shouldBe "STORY"
+            hierarchyResponse.issue.status shouldBe "TODO" // Default status
+            hierarchyResponse.issue.parentId shouldBe epic.id.value.toString()
+            hierarchyResponse.issue.estimate shouldBe null // Stories without subtasks can have estimates, but this one doesn't
+            hierarchyResponse.issue.assignee shouldBe "user-12345"
+            hierarchyResponse.issue.dependencies shouldHaveSize 0
+            hierarchyResponse.issue.blockedBy shouldHaveSize 0
+            hierarchyResponse.issue.createdAt shouldBe "2025-01-15T10:00:00Z"
+            hierarchyResponse.issue.updatedAt shouldBe "2025-01-15T10:00:00Z"
+            
+            // Verify parent metadata is complete
+            hierarchyResponse.parent shouldNotBe null
+            hierarchyResponse.parent!!.id shouldBe epic.id.value.toString()
+            hierarchyResponse.parent!!.title shouldBe "Comprehensive Epic"
+            hierarchyResponse.parent!!.description shouldBe "Epic with all metadata fields populated"
+            hierarchyResponse.parent!!.type shouldBe "EPIC"
+            hierarchyResponse.parent!!.parentId shouldBe null
+            hierarchyResponse.parent!!.estimate shouldBe null
+            hierarchyResponse.parent!!.assignee shouldBe null
         }
     }
 

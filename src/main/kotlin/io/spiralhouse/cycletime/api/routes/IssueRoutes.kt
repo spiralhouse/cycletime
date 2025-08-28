@@ -358,33 +358,30 @@ private fun Route.statusTransitionRoute() {
 }
 
 /**
- * Retrieves the complete hierarchy tree for an issue.
+ * Retrieves the extended hierarchy information for an issue.
  * 
  * ## Path Parameters
  * - `id` - The UUID of the issue
  * 
  * ## Response
- * - `200 OK` - Hierarchy tree with nested children
+ * - `200 OK` - Extended hierarchy with parent, children, and descendant count
  * - `404 Not Found` - Issue not found
  * 
  * ## Response Structure
- * Returns a recursive tree structure:
+ * Returns an extended flat structure:
  * ```json
  * {
  *   "issue": { ... },
- *   "children": [
- *     {
- *       "issue": { ... },
- *       "children": [ ... ]
- *     }
- *   ]
+ *   "parent": { ... },
+ *   "children": [ ... ],
+ *   "totalDescendants": 5
  * }
  * ```
  * 
  * ## Use Cases
- * - Visualizing epic breakdown into stories and subtasks
- * - Calculating aggregate estimates for parent issues
- * - Understanding work breakdown structure
+ * - Getting issue context with parent and children
+ * - Calculating total work breakdown (descendant count)
+ * - Efficient hierarchy information for UI components
  */
 private fun Route.hierarchyRoute() {
     get("/hierarchy") {
@@ -393,7 +390,7 @@ private fun Route.hierarchyRoute() {
         call.executeServiceCall {
             val issueId = call.extractIssueId()
             val service = call.service<IssueApplicationService>()
-            val hierarchy = service.getIssueHierarchy(issueId)
+            val hierarchy = service.getIssueHierarchyExtended(issueId)
             call.respondOk(hierarchy.toResponse())
         }
     }
