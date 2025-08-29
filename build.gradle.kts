@@ -102,6 +102,12 @@ dependencies {
     // testImplementation("org.testcontainers:junit-jupiter:1.19.3")
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
 tasks.withType<KotlinCompile> {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_21)
@@ -659,6 +665,8 @@ tasks.withType<Jar> {
 tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
     // Parallel execution
     parallel = true
+    // Set JVM target for detekt
+    jvmTarget = "21"
 }
 
 // Apply performance optimizations to all compilation tasks
