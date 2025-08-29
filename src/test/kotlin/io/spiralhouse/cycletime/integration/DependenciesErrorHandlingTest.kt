@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldNotBe
 import io.ktor.server.testing.*
 import io.ktor.server.plugins.di.*
 import io.ktor.client.request.*
+import io.ktor.server.config.MapApplicationConfig
 import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseFactory
 import io.spiralhouse.cycletime.module
@@ -16,17 +17,17 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 
 /**
- * Tests for error handling in the simplified dependency injection system.
+ * Tests for error handling in the dependency injection system.
  * 
  * These tests verify that the DI system properly handles:
  * - Database initialization failures
  * - Dependency resolution failures
  * - Database operation failures
  * 
- * Note: With the simplified DI, there are no profiles to validate,
+ * Note: With the current DI, there are no profiles to validate,
  * making the system more robust and less prone to configuration errors.
  */
-class SimplifiedDIErrorHandlingTest : StringSpec({
+class DependenciesErrorHandlingTest : StringSpec({
     
     "should handle failing database operations" {
         val failingDb = TestDatabaseFactory.createFailingDatabase()
@@ -42,11 +43,17 @@ class SimplifiedDIErrorHandlingTest : StringSpec({
     
     "should handle null database parameter correctly" {
         testApplication {
+            environment {
+                config = MapApplicationConfig(
+                    "ktor.deployment.port" to "8080",
+                    "database.url" to "jdbc:h2:mem:test_error_handling;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+                )
+            }
             application {
-                // The simplified DI requires an explicit database parameter
+                // The DI requires an explicit database parameter
                 // There's no way to pass null in the type-safe API
                 // This is by design - the system is more robust
-                // Test this by using the full module which uses the simplified DI
+                // Test this by using the full module which uses the DI
                 module()
             }
             

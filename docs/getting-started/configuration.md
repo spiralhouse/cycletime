@@ -10,7 +10,7 @@ CycleTime uses environment variables for configuration. All settings have sensib
 |----------|---------|-------------|
 | `PORT` | `8080` | Server port |
 | `HOST` | `0.0.0.0` | Server host |
-| `DATABASE_URL` | `jdbc:sqlite:cycletime.db` | Database connection string |
+| `DATABASE_URL` | `jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1` | Database connection string |
 | `DATABASE_LOGGING` | `false` | Enable SQL query logging |
 | `LOG_LEVEL` | `INFO` | Logging level (DEBUG, INFO, WARN, ERROR) |
 
@@ -18,7 +18,7 @@ CycleTime uses environment variables for configuration. All settings have sensib
 
 ```bash
 # Custom port and database
-PORT=3000 DATABASE_URL=jdbc:sqlite:custom.db ./gradlew run
+PORT=3000 DATABASE_URL=jdbc:h2:file:./custom;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1 ./gradlew run
 
 # Enable debug logging
 LOG_LEVEL=DEBUG DATABASE_LOGGING=true ./gradlew run
@@ -58,7 +58,7 @@ Create a `.env` file for Docker:
 
 ```env
 PORT=8080
-DATABASE_URL=jdbc:sqlite:/data/cycletime.db
+DATABASE_URL=jdbc:h2:file:/data/cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
 LOG_LEVEL=INFO
 ```
 
@@ -77,19 +77,19 @@ services:
 
 ## Database Configuration
 
-### SQLite (Default)
+### H2 File-based (Default)
 ```bash
-DATABASE_URL=jdbc:sqlite:cycletime.db
+DATABASE_URL=jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
 ```
 
 ### H2 (In-Memory)
 ```bash
-DATABASE_URL=jdbc:h2:mem:test;DB_CLOSE_DELAY=-1
+DATABASE_URL=jdbc:h2:mem:test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
 ```
 
-### H2 (File-based)
+### H2 (Custom File Location)
 ```bash
-DATABASE_URL=jdbc:h2:file:/data/jcvd
+DATABASE_URL=jdbc:h2:file:/data/cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
 ```
 
 ## Production Configuration

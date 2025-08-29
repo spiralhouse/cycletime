@@ -738,7 +738,7 @@ val devRun by tasks.registering(JavaExec::class) {
     environment("KTOR_DEVELOPMENT", "true")
     environment("KTOR_AUTORELOAD", "true")
     environment("DATABASE_LOGGING", "true")
-    environment("DATABASE_URL", "jdbc:sqlite:cycletime-dev.db")
+    environment("DATABASE_URL", "jdbc:h2:file:./cycletime-dev;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
     
     // Watch for source changes
     inputs.files(fileTree("src/main/kotlin"))

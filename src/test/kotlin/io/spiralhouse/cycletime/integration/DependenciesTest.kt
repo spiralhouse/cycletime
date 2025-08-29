@@ -30,21 +30,21 @@ import io.spiralhouse.cycletime.module
 import io.spiralhouse.cycletime.configureForTesting
 
 /**
- * Tests for the simplified dependency injection system.
+ * Tests for the dependency injection system.
  * 
- * These tests verify that the simplified DI configuration:
+ * These tests verify that the DI configuration:
  * - Properly configures all dependencies
  * - Respects singleton scoping
  * - Allows test overrides
  * - Works consistently without profiles
  */
-class SimplifiedDITest : StringSpec({
+class DependenciesTest : StringSpec({
     
     "should configure all dependencies using Ktor's native DI" {
         testApplication {
             application {
                 // Use the test configuration approach like DependencyInjectionIntegrationTest
-                // This tests the simplified DI without database conflicts
+                // This tests the DI without database conflicts
                 configureForTesting(
                     database = createTestDatabase(),
                     timeProvider = null // Use default SystemTimeProvider

@@ -96,10 +96,6 @@ class DatabaseConfig(
 
                     // Configure foreign keys based on database type
                     when {
-                        jdbcUrl.startsWith("jdbc:sqlite:") -> {
-                            // Enable foreign keys for SQLite
-                            connection.prepareStatement("PRAGMA foreign_keys = ON", false).executeUpdate()
-                        }
                         jdbcUrl.startsWith("jdbc:h2:") -> {
                             // H2 foreign keys are enabled by default in PostgreSQL compatibility mode
                             // No additional configuration needed
