@@ -18,7 +18,7 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import io.spiralhouse.cycletime.infrastructure.logging.ExceptionLogger
 import org.jetbrains.exposed.sql.Database
 import io.spiralhouse.cycletime.mcp.configureMCP
-import io.spiralhouse.cycletime.infrastructure.di.configureSimplifiedDependencies
+import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 import io.spiralhouse.cycletime.api.configuration.ApiConfiguration
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -26,6 +26,7 @@ import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.di.*
+import io.ktor.server.plugins.di.DI
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
@@ -81,6 +82,7 @@ fun Application.module() {
 
     logger.info("Initializing database with URL: $jdbcUrl")
     DatabaseFactory.init(jdbcUrl = jdbcUrl, driver = driver, enableLogging = enableLogging)
+    val database = DatabaseFactory.getInstance()
 
     // Install features
     install(ContentNegotiation) {
@@ -93,8 +95,12 @@ fun Application.module() {
 
     install(SSE)
 
-    // Configure Ktor native DI
-    configureDependencies()
+    // Configure DI with explicit database - simple and clear
+    configureDependencies(
+        database = database,
+        timeProvider = null, // Use default SystemTimeProvider
+        includeMCP = true
+    )
 
     // Configure routing
     routing {
@@ -168,8 +174,15 @@ fun Application.module() {
  * Configure the application for testing with project routes.
  * This includes content negotiation, dependency injection, and API routes.
  */
-fun Application.configureForTesting(timeProvider: TimeProvider? = null) {
-    configureDependencies(timeProvider)
+fun Application.configureForTesting(
+    database: Database,
+    timeProvider: TimeProvider? = null
+) {
+    configureDependencies(
+        database = database,
+        timeProvider = timeProvider,
+        includeMCP = false // Tests don't need MCP
+    )
     configureContentNegotiation()
     val injectedTimeProvider: TimeProvider by dependencies
     ApiConfiguration.configure(this, injectedTimeProvider)
@@ -188,18 +201,3 @@ fun Application.configureContentNegotiation() {
     }
 }
 
-/**
- * Configure dependency injection using Ktor native DI plugin.
- * 
- * This method uses the simplified DI configuration that leverages Ktor's
- * built-in dependency injection features exclusively.
- */
-fun Application.configureDependencies(timeProvider: TimeProvider? = null) {
-    // Get the profile from configuration
-    val profile = environment.config.propertyOrNull("application.profile")?.getString()
-        ?: System.getenv("APPLICATION_PROFILE")
-        ?: "dev"
-    
-    // Use the simplified DI configuration
-    configureSimplifiedDependencies(profile, timeProvider)
-}
