@@ -10,19 +10,17 @@ import io.spiralhouse.cycletime.mcp.server.MCPServerEngine
 import io.spiralhouse.cycletime.mcp.tools.*
 
 /**
- * Simplified MCP configuration for Ktor's native DI.
+ * MCP dependencies configuration for Ktor's native DI.
  * 
- * This replaces the complex MCPModule with a straightforward
- * configuration using Ktor's built-in dependency injection.
+ * Simple, straightforward configuration with no profiles or variations.
+ * If you need different behavior, pass different implementations.
  */
-object SimplifiedMCPConfig {
+object MCPDependencies {
     
     /**
      * Configure MCP dependencies in the Ktor DI container.
-     * 
-     * This should be called as part of the main dependency configuration.
      */
-    fun DependencyRegistry.configureMCPDependencies(profile: DIProfile = DIProfile.DEV) {
+    fun DependencyRegistry.configureMCPDependencies() {
         // MCP Server Engine
         provide<MCPServerEngine> { 
             DefaultMCPServerEngine(
@@ -73,19 +71,6 @@ object SimplifiedMCPConfig {
         
         provide<SessionToolProvider> { 
             DefaultSessionToolProvider()
-        }
-        
-        // Profile-specific configurations
-        when (profile) {
-            DIProfile.DEV -> {
-                // Development: Could add debug logging wrappers here
-            }
-            DIProfile.TEST -> {
-                // Test: Minimal configuration already set
-            }
-            DIProfile.PROD -> {
-                // Production: Could add monitoring wrappers here
-            }
         }
     }
 }
