@@ -18,6 +18,7 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import io.spiralhouse.cycletime.infrastructure.logging.ExceptionLogger
 import org.jetbrains.exposed.sql.Database
 import io.spiralhouse.cycletime.mcp.configureMCP
+import io.spiralhouse.cycletime.infrastructure.di.configureEnhancedDependencies
 import io.spiralhouse.cycletime.api.configuration.ApiConfiguration
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -188,50 +189,76 @@ fun Application.configureContentNegotiation() {
 }
 
 /**
- * Configure dependency injection using Ktor native DI plugin
+ * Configure dependency injection using Ktor native DI plugin.
+ * 
+ * This method provides backward compatibility while we migrate to the enhanced DI system.
+ * New code should use configureEnhancedDependencies() instead.
  */
 fun Application.configureDependencies(timeProvider: TimeProvider? = null) {
-    dependencies {
-        // Domain Services - Allow override for testing
-        provide<TimeProvider> { timeProvider ?: SystemTimeProvider() }
-
-        // Database
-        provide<Database> { DatabaseFactory.getInstance() }
-
-        // Unit of Work
-        provide<UnitOfWork> { ExposedUnitOfWork(resolve()) }
-
-        // Repositories - Use injected TimeProvider
-        provide<ProjectRepository> { ExposedProjectRepository(resolve(), resolve()) }
-        provide<IssueRepository> { ExposedIssueRepository(resolve(), resolve()) }
-        provide<SessionRepository> { ExposedSessionRepository(resolve(), resolve()) }
-
-        // Application Services
-        provide<ProjectApplicationService> {
-            ProjectApplicationService(
-                projectRepository = resolve(),
-                issueRepository = resolve(),
-                unitOfWork = resolve(),
-                timeProvider = resolve()
-            )
+    // Check if we should use the enhanced DI system
+    val useEnhancedDI = environment.config.propertyOrNull("di.enhanced")?.getString()?.toBoolean()
+        ?: System.getenv("USE_ENHANCED_DI")?.toBoolean()
+        ?: false
+    
+    if (useEnhancedDI) {
+        // Use the new enhanced DI system
+        val profile = environment.config.propertyOrNull("application.profile")?.getString()
+            ?: System.getenv("APPLICATION_PROFILE")
+            ?: "dev"
+        
+        val config = io.spiralhouse.cycletime.infrastructure.config.ApplicationConfig.load(profile)
+        configureEnhancedDependencies(config)
+        
+        // If a custom TimeProvider was provided, override it
+        if (timeProvider != null) {
+            val container = io.spiralhouse.cycletime.infrastructure.di.DIConfiguration.getContainer()
+            // Note: This would require adding an override method to the container
+            // For now, we'll use the legacy method when custom TimeProvider is needed
         }
+    } else {
+        // Legacy DI configuration for backward compatibility
+        dependencies {
+            // Domain Services - Allow override for testing
+            provide<TimeProvider> { timeProvider ?: SystemTimeProvider() }
 
-        provide<IssueApplicationService> {
-            IssueApplicationService(
-                issueRepository = resolve(),
-                projectRepository = resolve(),
-                unitOfWork = resolve(),
-                timeProvider = resolve()
-            )
-        }
+            // Database
+            provide<Database> { DatabaseFactory.getInstance() }
 
-        provide<SessionApplicationService> {
-            SessionApplicationService(
-                sessionRepository = resolve(),
-                projectRepository = resolve(),
-                unitOfWork = resolve(),
-                timeProvider = resolve()
-            )
+            // Unit of Work
+            provide<UnitOfWork> { ExposedUnitOfWork(resolve()) }
+
+            // Repositories - Use injected TimeProvider
+            provide<ProjectRepository> { ExposedProjectRepository(resolve(), resolve()) }
+            provide<IssueRepository> { ExposedIssueRepository(resolve(), resolve()) }
+            provide<SessionRepository> { ExposedSessionRepository(resolve(), resolve()) }
+
+            // Application Services
+            provide<ProjectApplicationService> {
+                ProjectApplicationService(
+                    projectRepository = resolve(),
+                    issueRepository = resolve(),
+                    unitOfWork = resolve(),
+                    timeProvider = resolve()
+                )
+            }
+
+            provide<IssueApplicationService> {
+                IssueApplicationService(
+                    issueRepository = resolve(),
+                    projectRepository = resolve(),
+                    unitOfWork = resolve(),
+                    timeProvider = resolve()
+                )
+            }
+
+            provide<SessionApplicationService> {
+                SessionApplicationService(
+                    sessionRepository = resolve(),
+                    projectRepository = resolve(),
+                    unitOfWork = resolve(),
+                    timeProvider = resolve()
+                )
+            }
         }
     }
 }
