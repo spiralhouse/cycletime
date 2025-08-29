@@ -1,6 +1,6 @@
-# Simplified Dependency Injection
+# Dependency Injection
 
-This directory contains the simplified dependency injection configuration for CycleTime, using Ktor's native DI solution exclusively.
+This directory contains the dependency injection configuration for CycleTime, using Ktor's native DI solution exclusively.
 
 ## Overview
 
@@ -15,11 +15,11 @@ The DI system has been simplified to leverage Ktor's built-in `ktor-server-di` p
 
 ```
 di/
-├── SimplifiedDI.kt           # Main DI configuration
-├── SimplifiedMCPConfig.kt    # MCP-specific dependencies
+├── Dependencies.kt        # Main DI configuration
+├── MCPDependencies.kt     # MCP-specific dependencies
 └── modules/
     └── test/
-        └── SimplifiedTestSupport.kt  # Test helpers
+        └── TestSupport.kt  # Test helpers
 ```
 
 ## Usage
@@ -31,10 +31,10 @@ In your `Application.kt`:
 ```kotlin
 fun Application.module() {
     // Configure dependencies with default profile (dev)
-    configureSimplifiedDependencies()
+    configureDependencies()
     
     // Or specify a profile
-    configureSimplifiedDependencies("prod")
+    configureDependencies(timeProvider = null)
 }
 ```
 
@@ -96,9 +96,9 @@ The system supports three profiles:
 - **TEST**: Test configuration with in-memory H2 database
 - **PROD**: Production configuration (same as DEV currently)
 
-## Migration from Complex DI
+## Architecture
 
-The previous complex DI system with custom container, modules, and decorators has been removed in favor of this simplified approach. Key changes:
+This DI system leverages Ktor's built-in dependency injection without custom containers or complex abstractions. Key changes:
 
 1. **No Custom Container**: Use Ktor's native DI directly
 2. **No Module Classes**: Dependencies configured in simple functions
