@@ -44,7 +44,6 @@ class HealthEndpointTest : StringSpec({
         testApplication {
             application {
                 module()
-                module()
             }
             
             val response = client.get("/health")

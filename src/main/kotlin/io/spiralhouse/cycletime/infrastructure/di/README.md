@@ -7,7 +7,7 @@ This directory contains the dependency injection configuration for CycleTime, us
 The DI system has been simplified to leverage Ktor's built-in `ktor-server-di` plugin without any custom container implementation. This provides:
 
 - **Simplicity**: Direct use of Ktor's `dependencies` block
-- **Profile Support**: Dev/Test/Prod configurations
+- **Explicit Configuration**: No profiles, just explicit parameters
 - **Test Support**: Easy mocking and override capabilities
 - **Type Safety**: Compile-time dependency resolution
 
@@ -30,11 +30,17 @@ In your `Application.kt`:
 
 ```kotlin
 fun Application.module() {
-    // Configure dependencies with default profile (dev)
-    configureDependencies()
+    val database = DatabaseFactory.init(
+        jdbcUrl = "jdbc:h2:file:./cycletime;MODE=PostgreSQL",
+        enableLogging = false
+    )
     
-    // Or specify a profile
-    configureDependencies(timeProvider = null)
+    // Configure dependencies with explicit database
+    configureDependencies(
+        database = database,
+        timeProvider = null, // Use default SystemTimeProvider
+        includeMCP = true
+    )
 }
 ```
 
@@ -63,9 +69,15 @@ For tests, use the test support utilities:
 ```kotlin
 testApplication {
     application {
-        // Configure with test profile and fixed time
+        // Configure with test database and fixed time
+        val testDb = createTestDatabase()
         val testTime = testTimeProvider("2024-01-01T00:00:00Z")
-        configureTestDependencies(testTime)
+        
+        configureDependencies(
+            database = testDb,
+            timeProvider = testTime,
+            includeMCP = false // Usually disabled for tests
+        )
     }
     
     // Access dependencies in test
@@ -88,13 +100,13 @@ testApplication {
 }
 ```
 
-## Profiles
+## Configuration Approach
 
-The system supports three profiles:
+The system uses explicit configuration without profiles:
 
-- **DEV**: Development configuration with standard database
-- **TEST**: Test configuration with in-memory H2 database
-- **PROD**: Production configuration (same as DEV currently)
+- **Database**: Passed explicitly as a parameter
+- **TimeProvider**: Optional override for testing (defaults to SystemTimeProvider)
+- **MCP Components**: Optional via `includeMCP` flag
 
 ## Architecture
 

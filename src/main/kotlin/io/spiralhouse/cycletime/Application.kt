@@ -70,6 +70,7 @@ fun Application.module() {
     val logger = LoggerFactory.getLogger("Application")
 
     // Initialize database from configuration
+    // Note: Migration from SQLite to H2 completed. H2 is now the default database.
     val jdbcUrl = environment.config.propertyOrNull("database.url")?.getString()
         ?: System.getenv("DATABASE_URL") 
         ?: "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
