@@ -16,6 +16,7 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectReposit
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import org.jetbrains.exposed.sql.Database
+import org.slf4j.LoggerFactory
 
 /**
  * Dependency injection configuration using Ktor's native DI.
@@ -31,10 +32,18 @@ fun Application.configureDependencies(
     timeProvider: TimeProvider? = null,
     includeMCP: Boolean = true
 ) {
+    val logger = LoggerFactory.getLogger("DependencyInjection")
+    val configStartTime = System.currentTimeMillis()
+    
     dependencies {
         // Domain layer - Time provider with optional override for testing
         provide<TimeProvider> { 
-            timeProvider ?: SystemTimeProvider()
+            try {
+                timeProvider ?: SystemTimeProvider()
+            } catch (e: Exception) {
+                logger.error("Failed to create TimeProvider", e)
+                throw IllegalStateException("TimeProvider initialization failed", e)
+            }
         }
         
         // Infrastructure layer - Database passed in explicitly
@@ -42,64 +51,115 @@ fun Application.configureDependencies(
         
         // Unit of Work
         provide<UnitOfWork> { 
-            ExposedUnitOfWork(resolve())
+            try {
+                ExposedUnitOfWork(resolve())
+            } catch (e: Exception) {
+                logger.error("Failed to create UnitOfWork", e)
+                throw IllegalStateException("UnitOfWork initialization failed", e)
+            }
         }
         
         // Repositories - Constructor injection with resolved dependencies
         provide<ProjectRepository> { 
-            ExposedProjectRepository(
-                timeProvider = resolve(),
-                database = resolve()
-            )
+            try {
+                ExposedProjectRepository(
+                    timeProvider = resolve(),
+                    database = resolve()
+                )
+            } catch (e: Exception) {
+                logger.error("Failed to create ProjectRepository", e)
+                throw IllegalStateException("ProjectRepository initialization failed", e)
+            }
         }
         
         provide<IssueRepository> { 
-            ExposedIssueRepository(
-                timeProvider = resolve(),
-                database = resolve()
-            )
+            try {
+                ExposedIssueRepository(
+                    timeProvider = resolve(),
+                    database = resolve()
+                )
+            } catch (e: Exception) {
+                logger.error("Failed to create IssueRepository", e)
+                throw IllegalStateException("IssueRepository initialization failed", e)
+            }
         }
         
         provide<SessionRepository> { 
-            ExposedSessionRepository(
-                timeProvider = resolve(),
-                database = resolve()
-            )
+            try {
+                ExposedSessionRepository(
+                    timeProvider = resolve(),
+                    database = resolve()
+                )
+            } catch (e: Exception) {
+                logger.error("Failed to create SessionRepository", e)
+                throw IllegalStateException("SessionRepository initialization failed", e)
+            }
         }
         
         // Application Services - Constructor injection with resolved dependencies
         provide<ProjectApplicationService> {
-            ProjectApplicationService(
-                projectRepository = resolve(),
-                issueRepository = resolve(),
-                unitOfWork = resolve(),
-                timeProvider = resolve()
-            )
+            try {
+                ProjectApplicationService(
+                    projectRepository = resolve(),
+                    issueRepository = resolve(),
+                    unitOfWork = resolve(),
+                    timeProvider = resolve()
+                )
+            } catch (e: Exception) {
+                logger.error("Failed to create ProjectApplicationService", e)
+                throw IllegalStateException("ProjectApplicationService initialization failed", e)
+            }
         }
         
         provide<IssueApplicationService> {
-            IssueApplicationService(
-                issueRepository = resolve(),
-                projectRepository = resolve(),
-                unitOfWork = resolve(),
-                timeProvider = resolve()
-            )
+            try {
+                IssueApplicationService(
+                    issueRepository = resolve(),
+                    projectRepository = resolve(),
+                    unitOfWork = resolve(),
+                    timeProvider = resolve()
+                )
+            } catch (e: Exception) {
+                logger.error("Failed to create IssueApplicationService", e)
+                throw IllegalStateException("IssueApplicationService initialization failed", e)
+            }
         }
         
         provide<SessionApplicationService> {
-            SessionApplicationService(
-                sessionRepository = resolve(),
-                projectRepository = resolve(),
-                unitOfWork = resolve(),
-                timeProvider = resolve()
-            )
+            try {
+                SessionApplicationService(
+                    sessionRepository = resolve(),
+                    projectRepository = resolve(),
+                    unitOfWork = resolve(),
+                    timeProvider = resolve()
+                )
+            } catch (e: Exception) {
+                logger.error("Failed to create SessionApplicationService", e)
+                throw IllegalStateException("SessionApplicationService initialization failed", e)
+            }
         }
         
         // MCP layer - Optional for testing
         if (includeMCP) {
-            with(MCPDependencies) {
-                configureMCPDependencies()
+            val mcpStartTime = System.currentTimeMillis()
+            try {
+                with(MCPDependencies) {
+                    configureMCPDependencies()
+                }
+                val mcpEndTime = System.currentTimeMillis()
+                logger.debug("MCP dependencies configured in ${mcpEndTime - mcpStartTime}ms")
+            } catch (e: Exception) {
+                logger.error("Failed to configure MCP dependencies", e)
+                throw IllegalStateException("MCP dependencies initialization failed", e)
             }
         }
     }
+    
+    val configEndTime = System.currentTimeMillis()
+    val totalConfigTime = configEndTime - configStartTime
+    logger.debug("Total dependency configuration completed in ${totalConfigTime}ms")
+    
+    // Log dependency resolution count (approximation based on configured services)
+    val serviceCount = 9 + if (includeMCP) 8 else 0  // Core services + MCP services
+    logger.info("Configured $serviceCount dependency bindings in ${totalConfigTime}ms")
 }

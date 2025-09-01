@@ -20,7 +20,7 @@ import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
 import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
 
 class DatabaseConfig(
-    private val jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+    private val jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
     private val driver: String = "org.h2.Driver",
     /**
      * Maximum number of connections in the HikariCP connection pool.
@@ -54,6 +54,15 @@ class DatabaseConfig(
      * Current default (10) is suitable for development and small deployments.
      */
     private val maxPoolSize: Int = 10,
+    /**
+     * Minimum number of connections in the HikariCP connection pool.
+     * 
+     * **Guidelines**:
+     * - Keep this low for development (2) to avoid holding unused connections
+     * - For production, set to expected baseline load (typically 20-30% of maxPoolSize)
+     * - H2 embedded: Can be as low as 1-2 since there's no network overhead
+     */
+    private val minPoolSize: Int = 2,
     private val enableLogging: Boolean = false
 ) {
     private val logger = LoggerFactory.getLogger(DatabaseConfig::class.java)
@@ -61,6 +70,9 @@ class DatabaseConfig(
 
     fun connect(): Database {
         logger.info("Connecting to database: $jdbcUrl")
+        
+        // Validate configuration before attempting connection
+        validateConfiguration()
 
         try {
             val hikariConfig = HikariConfig().apply {
@@ -70,8 +82,15 @@ class DatabaseConfig(
                     driverClassName = driver
                 }
                 maximumPoolSize = maxPoolSize
+                minimumIdle = minPoolSize
                 isAutoCommit = false
                 transactionIsolation = "TRANSACTION_SERIALIZABLE"
+                
+                // Connection pool timeouts for production readiness
+                connectionTimeout = 30000 // 30 seconds
+                idleTimeout = 600000 // 10 minutes
+                maxLifetime = 1800000 // 30 minutes
+                
                 validate()
             }
 
@@ -135,6 +154,91 @@ class DatabaseConfig(
         }
     }
 
+    /**
+     * Validates database configuration parameters.
+     * 
+     * @throws IllegalArgumentException if configuration is invalid
+     */
+    private fun validateConfiguration() {
+        // Validate JDBC URL format
+        validateJdbcUrl()
+        
+        // Validate driver class exists (if not using auto-detection)
+        validateDriverClass()
+        
+        // Validate connection pool parameters
+        validatePoolConfiguration()
+    }
+    
+    private fun validateJdbcUrl() {
+        if (jdbcUrl.isBlank()) {
+            throw IllegalArgumentException("JDBC URL cannot be blank")
+        }
+        
+        if (!jdbcUrl.startsWith("jdbc:")) {
+            throw IllegalArgumentException("JDBC URL must start with 'jdbc:'. Got: $jdbcUrl")
+        }
+        
+        // Validate specific URL patterns
+        when {
+            jdbcUrl.startsWith("jdbc:h2:") -> {
+                if (!jdbcUrl.matches(Regex("^jdbc:h2:(file:|mem:|tcp:|ssl:)?.*"))) {
+                    throw IllegalArgumentException("Invalid H2 JDBC URL format: $jdbcUrl")
+                }
+            }
+            jdbcUrl.startsWith("jdbc:postgresql:") -> {
+                if (!jdbcUrl.matches(Regex("^jdbc:postgresql://.*"))) {
+                    throw IllegalArgumentException("Invalid PostgreSQL JDBC URL format: $jdbcUrl")
+                }
+            }
+            jdbcUrl.startsWith("jdbc:mysql:") -> {
+                if (!jdbcUrl.matches(Regex("^jdbc:mysql://.*"))) {
+                    throw IllegalArgumentException("Invalid MySQL JDBC URL format: $jdbcUrl")
+                }
+            }
+            else -> {
+                logger.warn("Unknown JDBC URL type, skipping detailed validation: $jdbcUrl")
+            }
+        }
+    }
+    
+    private fun validateDriverClass() {
+        // Skip driver validation for H2 since we use auto-detection
+        if (jdbcUrl.startsWith("jdbc:h2:")) {
+            return
+        }
+        
+        try {
+            Class.forName(driver)
+            logger.debug("Driver class validated: $driver")
+        } catch (e: ClassNotFoundException) {
+            throw IllegalArgumentException("JDBC driver class not found: $driver. Ensure the driver is on the classpath.", e)
+        }
+    }
+    
+    private fun validatePoolConfiguration() {
+        if (maxPoolSize <= 0) {
+            throw IllegalArgumentException("maxPoolSize must be positive. Got: $maxPoolSize")
+        }
+        
+        if (minPoolSize < 0) {
+            throw IllegalArgumentException("minPoolSize cannot be negative. Got: $minPoolSize")
+        }
+        
+        if (minPoolSize > maxPoolSize) {
+            throw IllegalArgumentException("minPoolSize ($minPoolSize) cannot be greater than maxPoolSize ($maxPoolSize)")
+        }
+        
+        // Warn about potentially problematic configurations
+        if (maxPoolSize > 50) {
+            logger.warn("High maxPoolSize ($maxPoolSize) may cause resource exhaustion. Consider using 10-30 for most applications.")
+        }
+        
+        if (minPoolSize == 0 && maxPoolSize > 10) {
+            logger.warn("minPoolSize is 0 with maxPoolSize $maxPoolSize. Consider setting minPoolSize to 20-30% of maxPoolSize for better performance.")
+        }
+    }
+
     fun close() {
         if (::dataSource.isInitialized && !dataSource.isClosed) {
             dataSource.close()
@@ -152,13 +256,14 @@ object DatabaseFactory {
     private var config: DatabaseConfig? = null
 
     fun init(
-        jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+        jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
         driver: String = "org.h2.Driver",
         maxPoolSize: Int = 10,
+        minPoolSize: Int = 2,
         enableLogging: Boolean = false
     ) {
         if (database == null) {
-            config = DatabaseConfig(jdbcUrl, driver, maxPoolSize, enableLogging)
+            config = DatabaseConfig(jdbcUrl, driver, maxPoolSize, minPoolSize, enableLogging)
             database = config!!.connect()
         }
     }
