@@ -225,3 +225,4 @@ providers/*/secrets.*
 # Local testing artifacts (but not workflows)
 .local/*
 !.local/workflows/
+.kotlin/
