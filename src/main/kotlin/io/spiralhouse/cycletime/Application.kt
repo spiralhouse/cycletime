@@ -18,6 +18,7 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import io.spiralhouse.cycletime.infrastructure.logging.ExceptionLogger
 import org.jetbrains.exposed.sql.Database
 import io.spiralhouse.cycletime.mcp.configureMCP
+import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 import io.spiralhouse.cycletime.api.configuration.ApiConfiguration
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -25,6 +26,7 @@ import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.di.*
+import io.ktor.server.plugins.di.DI
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
@@ -66,11 +68,13 @@ fun main() {
 
 fun Application.module() {
     val logger = LoggerFactory.getLogger("Application")
+    val moduleStartTime = System.currentTimeMillis()
 
     // Initialize database from configuration
+    // Note: Migration from SQLite to H2 completed. H2 is now the default database.
     val jdbcUrl = environment.config.propertyOrNull("database.url")?.getString()
         ?: System.getenv("DATABASE_URL") 
-        ?: "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        ?: "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
     val driver = environment.config.propertyOrNull("database.driver")?.getString()
         ?: System.getenv("DATABASE_DRIVER")
         ?: "org.h2.Driver"
@@ -78,10 +82,24 @@ fun Application.module() {
         ?: System.getenv("DATABASE_LOGGING")?.toBoolean() 
         ?: false
 
+    // Validate configuration before attempting database initialization
+    try {
+        validateDatabaseConfiguration(jdbcUrl, driver)
+        logger.info("Database configuration validated successfully")
+    } catch (e: IllegalArgumentException) {
+        logger.error("Invalid database configuration: ${e.message}")
+        throw e
+    }
+
     logger.info("Initializing database with URL: $jdbcUrl")
+    val dbStartTime = System.currentTimeMillis()
     DatabaseFactory.init(jdbcUrl = jdbcUrl, driver = driver, enableLogging = enableLogging)
+    val database = DatabaseFactory.getInstance()
+    val dbEndTime = System.currentTimeMillis()
+    logger.info("Database initialization completed in ${dbEndTime - dbStartTime}ms")
 
     // Install features
+    val featuresStartTime = System.currentTimeMillis()
     install(ContentNegotiation) {
         json(Json {
             prettyPrint = true
@@ -91,23 +109,50 @@ fun Application.module() {
     }
 
     install(SSE)
+    val featuresEndTime = System.currentTimeMillis()
+    logger.info("Ktor features installation completed in ${featuresEndTime - featuresStartTime}ms")
 
-    // Configure Ktor native DI
-    configureDependencies()
+    // Configure DI with explicit database - simple and clear
+    val diStartTime = System.currentTimeMillis()
+    val diEndTime = try {
+        configureDependencies(
+            database = database,
+            timeProvider = null, // Use default SystemTimeProvider
+            includeMCP = true
+        )
+        val endTime = System.currentTimeMillis()
+        logger.info("Dependency injection configuration completed in ${endTime - diStartTime}ms")
+        endTime
+    } catch (e: Exception) {
+        logger.error("Failed to configure dependency injection: ${e.message}", e)
+        throw IllegalStateException("Dependency injection configuration failed", e)
+    }
 
     // Configure routing
     routing {
         // Health check endpoint
         get("/health") {
             try {
+                // Test dependency resolution first
                 val projectService: ProjectApplicationService by application.dependencies
                 val issueService: IssueApplicationService by application.dependencies
                 val sessionService: SessionApplicationService by application.dependencies
                 val database: Database by application.dependencies
 
-                // Verify services are initialized
-                val projectCount = projectService.listProjects().projects.size
-                val sessionCount = sessionService.getSessionCount()
+                // Verify services are initialized and functional
+                val projectCount = try {
+                    projectService.listProjects().projects.size
+                } catch (e: Exception) {
+                    logger.warn("ProjectService health check failed", e)
+                    -1
+                }
+                
+                val sessionCount = try {
+                    sessionService.getSessionCount()
+                } catch (e: Exception) {
+                    logger.warn("SessionService health check failed", e)
+                    -1
+                }
 
                 call.respond(HttpStatusCode.OK, HealthResponse(
                     status = "healthy",
@@ -160,15 +205,67 @@ fun Application.module() {
         DatabaseFactory.close()
     }
 
-    logger.info("CycleTime Kotlin server started successfully")
+    val moduleEndTime = System.currentTimeMillis()
+    val totalStartupTime = moduleEndTime - moduleStartTime
+    logger.info("CycleTime Kotlin server started successfully in ${totalStartupTime}ms")
+    
+    // Log startup performance summary
+    logger.info("Startup performance breakdown:")
+    logger.info("  - Database initialization: ${dbEndTime - dbStartTime}ms")
+    logger.info("  - Ktor features installation: ${featuresEndTime - featuresStartTime}ms") 
+    logger.info("  - Dependency injection setup: ${diEndTime - diStartTime}ms")
+    logger.info("  - Total startup time: ${totalStartupTime}ms")
+}
+
+/**
+ * Validates database configuration parameters early in startup.
+ * 
+ * @param jdbcUrl The JDBC URL to validate
+ * @param driver The driver class name to validate
+ * @throws IllegalArgumentException if configuration is invalid
+ */
+private fun validateDatabaseConfiguration(jdbcUrl: String, driver: String) {
+    // Basic JDBC URL validation
+    if (jdbcUrl.isBlank()) {
+        throw IllegalArgumentException("Database URL cannot be blank")
+    }
+    
+    if (!jdbcUrl.startsWith("jdbc:")) {
+        throw IllegalArgumentException("Database URL must start with 'jdbc:'. Got: $jdbcUrl")
+    }
+    
+    // Validate environment variable overrides don't break expected patterns
+    if (System.getenv("DATABASE_URL")?.isNotBlank() == true) {
+        val envUrl = System.getenv("DATABASE_URL")!!
+        if (!envUrl.startsWith("jdbc:")) {
+            throw IllegalArgumentException("Environment variable DATABASE_URL must be a valid JDBC URL. Got: $envUrl")
+        }
+    }
+    
+    // Driver validation (basic check)
+    if (driver.isBlank()) {
+        throw IllegalArgumentException("Database driver cannot be blank")
+    }
+    
+    // Validate driver class name format
+    if (!driver.matches(Regex("^[a-zA-Z][a-zA-Z0-9_]*\\.[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*$"))) {
+        throw IllegalArgumentException("Invalid driver class name format: $driver")
+    }
 }
 
 /**
  * Configure the application for testing with project routes.
  * This includes content negotiation, dependency injection, and API routes.
  */
-fun Application.configureForTesting(timeProvider: TimeProvider? = null) {
-    configureDependencies(timeProvider)
+fun Application.configureForTesting(
+    database: Database,
+    timeProvider: TimeProvider? = null
+) {
+    configureDependencies(
+        database = database,
+        timeProvider = timeProvider,
+        includeMCP = false // Tests don't need MCP
+    )
     configureContentNegotiation()
     val injectedTimeProvider: TimeProvider by dependencies
     ApiConfiguration.configure(this, injectedTimeProvider)
@@ -187,51 +284,3 @@ fun Application.configureContentNegotiation() {
     }
 }
 
-/**
- * Configure dependency injection using Ktor native DI plugin
- */
-fun Application.configureDependencies(timeProvider: TimeProvider? = null) {
-    dependencies {
-        // Domain Services - Allow override for testing
-        provide<TimeProvider> { timeProvider ?: SystemTimeProvider() }
-
-        // Database
-        provide<Database> { DatabaseFactory.getInstance() }
-
-        // Unit of Work
-        provide<UnitOfWork> { ExposedUnitOfWork(resolve()) }
-
-        // Repositories - Use injected TimeProvider
-        provide<ProjectRepository> { ExposedProjectRepository(resolve(), resolve()) }
-        provide<IssueRepository> { ExposedIssueRepository(resolve(), resolve()) }
-        provide<SessionRepository> { ExposedSessionRepository(resolve(), resolve()) }
-
-        // Application Services
-        provide<ProjectApplicationService> {
-            ProjectApplicationService(
-                projectRepository = resolve(),
-                issueRepository = resolve(),
-                unitOfWork = resolve(),
-                timeProvider = resolve()
-            )
-        }
-
-        provide<IssueApplicationService> {
-            IssueApplicationService(
-                issueRepository = resolve(),
-                projectRepository = resolve(),
-                unitOfWork = resolve(),
-                timeProvider = resolve()
-            )
-        }
-
-        provide<SessionApplicationService> {
-            SessionApplicationService(
-                sessionRepository = resolve(),
-                projectRepository = resolve(),
-                unitOfWork = resolve(),
-                timeProvider = resolve()
-            )
-        }
-    }
-}

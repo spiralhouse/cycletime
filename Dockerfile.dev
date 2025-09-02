@@ -31,13 +31,13 @@ RUN ./gradlew dependencies --no-daemon --build-cache
 # Copy configuration files
 COPY config/ config/
 
-# Create directory for SQLite database with proper permissions
+# Create directory for H2 database with proper permissions
 RUN mkdir -p /app/data && chmod 755 /app/data
 
 # Environment variables for development
 ENV KTOR_DEVELOPMENT=true
 ENV KTOR_AUTORELOAD=true
-ENV DATABASE_URL="jdbc:sqlite:/app/data/cycletime.db"
+ENV DATABASE_URL="jdbc:h2:file:/app/data/cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
 ENV DATABASE_LOGGING=true
 ENV PORT=8080
 ENV HOST=0.0.0.0

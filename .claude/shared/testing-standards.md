@@ -126,7 +126,7 @@ class SessionManagerIntegrationTest : StringSpec({
     lateinit var sessionManager: SessionManager
 
     beforeEach {
-        database = Database.connect("jdbc:sqlite::memory:") // Fresh DB per test
+        database = Database.connect("jdbc:h2:mem:test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1") // Fresh DB per test
         transaction(database) {
             SchemaUtils.create(SessionStates, Projects, Issues)
         }

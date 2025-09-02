@@ -88,7 +88,8 @@ class IssueRoutesTest : StringSpec({
     fun configuredTestApplication(test: suspend ApplicationTestBuilder.() -> Unit) {
         testApplication {
             application {
-                configureForTesting(mockTimeProvider)
+                val database = DatabaseFactory.getInstance()
+                configureForTesting(database, mockTimeProvider)
             }
 
             test()

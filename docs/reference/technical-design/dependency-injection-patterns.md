@@ -93,7 +93,7 @@ fun Application.module() {
     
     // Initialize database
     DatabaseFactory.init(
-        jdbcUrl = System.getenv("DATABASE_URL") ?: "jdbc:sqlite:cycletime.db",
+        jdbcUrl = System.getenv("DATABASE_URL") ?: "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
         enableLogging = System.getenv("DATABASE_LOGGING")?.toBoolean() ?: false
     )
     

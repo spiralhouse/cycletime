@@ -20,7 +20,7 @@ WORKDIR /app
 # This JAR is downloaded as an artifact from the previous build stage
 COPY --chown=cycletime:cycletime build/libs/cycletime-server.jar /app/cycletime-server.jar
 
-# Create directory for SQLite database
+# Create directory for H2 database
 RUN mkdir -p /app/data && chown -R cycletime:cycletime /app/data
 
 # Switch to non-root user
@@ -34,7 +34,7 @@ LABEL org.opencontainers.image.vendor="Spiral House"
 LABEL org.opencontainers.image.source="https://github.com/spiralhouse/cycletime"
 
 # Environment variables
-ENV DATABASE_URL="jdbc:sqlite:/app/data/cycletime.db"
+ENV DATABASE_URL="jdbc:h2:file:/app/data/cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
 ENV PORT=8080
 ENV HOST=0.0.0.0
 ENV CYCLETIME_VERSION="$VERSION"
