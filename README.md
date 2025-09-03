@@ -3,7 +3,7 @@
 *Community Edition*
 
 [![Build Status](https://github.com/spiralhouse/cycletime/actions/workflows/cicd.yml/badge.svg)](https://github.com/spiralhouse/cycletime/actions/workflows/cicd.yml)
-[![codecov](https://codecov.io/gh/spiralhouse/cycletime/graph/badge.svg?token=Rz1p5Wx0O8)](https://codecov.io/gh/spiralhouse/cycletime)
+[![codecov](https://codecov.io/gh/spiralhouse/cycletime/graph/badge.svg?token=8mTaC8tX64)](https://codecov.io/gh/spiralhouse/cycletime)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Kotlin](https://img.shields.io/badge/kotlin-2.0.21-7F52FF.svg?logo=kotlin)](https://kotlinlang.org/)
 [![Gradle](https://img.shields.io/badge/gradle-9.0-02303A.svg?logo=gradle)](https://gradle.org/)
