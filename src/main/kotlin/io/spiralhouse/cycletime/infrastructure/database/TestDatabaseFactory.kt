@@ -28,7 +28,7 @@ object TestDatabaseFactory {
         }
         
         return Database.connect(
-            url = "jdbc:h2:mem:$dbName;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+            url = "jdbc:h2:mem:$dbName;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;LOCK_TIMEOUT=5000;DB_CLOSE_DELAY=-1",
             driver = "org.h2.Driver"
         )
     }

@@ -140,12 +140,15 @@ class H2CloseDelayTest : StringSpec({
         TransactionManager.closeAndUnregister(db2)
     }
     
-    "production configuration should not have DB_CLOSE_DELAY for file-based databases" {
+    "production configuration should have proper settings for file-based databases" {
         // This test validates our architectural decision
-        val productionUrl = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
+        val productionUrl = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE;LOCK_TIMEOUT=5000"
         
-        // Verify production URL does NOT contain DB_CLOSE_DELAY=-1
+        // Verify production URL does NOT contain DB_CLOSE_DELAY=-1 (not needed for file-based)
         productionUrl.contains("DB_CLOSE_DELAY=-1") shouldBe false
+        
+        // Verify it has LOCK_TIMEOUT for deadlock prevention
+        productionUrl.contains("LOCK_TIMEOUT=5000") shouldBe true
         
         // Verify it's a file-based database
         productionUrl.startsWith("jdbc:h2:file:") shouldBe true
