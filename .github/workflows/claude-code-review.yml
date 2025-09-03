@@ -11,9 +11,12 @@ on:
     #   - "build.gradle.kts"
     #   - "settings.gradle.kts"
 
-# Prevent duplicate Claude review runs
+# Prevent duplicate Claude review runs on the same PR
+# This will cancel any in-progress review when a new commit is pushed to the PR
 concurrency:
-  group: claude-review-${{ github.head_ref || github.ref }}
+  # Group by PR number to ensure only one review runs per PR at a time
+  group: claude-review-pr-${{ github.event.pull_request.number }}
+  # Cancel previous review when new commits are pushed
   cancel-in-progress: true
 
 jobs:

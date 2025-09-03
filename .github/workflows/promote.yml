@@ -39,9 +39,12 @@ on:
         required: false
         type: string
 
-# Concurrency control to prevent simultaneous promotions
+# Concurrency control to prevent simultaneous promotions to the same environment
+# Production promotions should never be cancelled, hence cancel-in-progress is false
 concurrency:
+  # Group by target environment to prevent conflicting deployments
   group: promote-${{ github.event.inputs.target_env }}
+  # Never cancel in-progress promotions (especially critical for production)
   cancel-in-progress: false
 
 permissions:
