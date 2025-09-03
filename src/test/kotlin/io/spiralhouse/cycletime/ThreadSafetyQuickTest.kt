@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.spiralhouse.cycletime.domain.entities.Project
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
+import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -13,6 +14,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 
 /**
  * Quick thread-safety verification test.
@@ -27,12 +29,15 @@ class ThreadSafetyQuickTest : StringSpec({
         runTest {
             // Setup test database
             val database = Database.connect(
-                url = "jdbc:h2:mem:quick_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;MVCC=TRUE",
+                url = "jdbc:h2:mem:quick_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
                 driver = "org.h2.Driver"
             )
+            
+            // Set the default database
+            TransactionManager.defaultDatabase = database
 
             transaction(database) {
-                SchemaUtils.create(ProjectsTable)
+                SchemaUtils.create(ProjectsTable, IssuesTable)
             }
 
             val mockTimeProvider = MockTimeProvider()
