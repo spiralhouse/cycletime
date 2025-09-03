@@ -34,7 +34,8 @@ LABEL org.opencontainers.image.vendor="Spiral House"
 LABEL org.opencontainers.image.source="https://github.com/spiralhouse/cycletime"
 
 # Environment variables
-ENV DATABASE_URL="jdbc:h2:file:/app/data/cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+# Note: DB_CLOSE_DELAY=-1 removed - not needed for file-based H2 databases
+ENV DATABASE_URL="jdbc:h2:file:/app/data/cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
 ENV PORT=8080
 ENV HOST=0.0.0.0
 ENV CYCLETIME_VERSION="$VERSION"

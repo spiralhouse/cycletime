@@ -20,7 +20,7 @@ import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
 import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
 
 class DatabaseConfig(
-    private val jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
+    private val jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE;LOCK_TIMEOUT=5000",
     private val driver: String = "org.h2.Driver",
     /**
      * Maximum number of connections in the HikariCP connection pool.
@@ -87,9 +87,14 @@ class DatabaseConfig(
                 transactionIsolation = "TRANSACTION_SERIALIZABLE"
                 
                 // Connection pool timeouts for production readiness
-                connectionTimeout = 30000 // 30 seconds
-                idleTimeout = 600000 // 10 minutes
-                maxLifetime = 1800000 // 30 minutes
+                connectionTimeout = 30000 // 30 seconds - max wait time to get a connection from pool
+                idleTimeout = 600000 // 10 minutes - how long a connection can be idle before removal
+                maxLifetime = 1800000 // 30 minutes - max lifetime of a connection in the pool
+                leakDetectionThreshold = 60000 // 1 minute - log connections not returned to pool
+                validationTimeout = 5000 // 5 seconds - max time to validate a connection
+                
+                // Pool behavior configuration
+                poolName = "CycleTimeHikariCP"
                 
                 validate()
             }
@@ -256,7 +261,7 @@ object DatabaseFactory {
     private var config: DatabaseConfig? = null
 
     fun init(
-        jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
+        jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE;LOCK_TIMEOUT=5000",
         driver: String = "org.h2.Driver",
         maxPoolSize: Int = 10,
         minPoolSize: Int = 2,

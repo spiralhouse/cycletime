@@ -57,6 +57,7 @@ import java.util.UUID
  *
  * @property timeProvider The time provider for entity reconstitution, defaults to SystemTimeProvider
  */
+@ThreadSafe // Documenting thread-safety guarantee
 class ExposedSessionRepository(
     private val timeProvider: TimeProvider = SystemTimeProvider(),
     private val database: Database? = null
@@ -413,23 +414,27 @@ class ExposedSessionRepository(
     }
 
     /**
-     * Executes a database query within a transaction.
-     *
-     * All database operations are executed within a coroutine context using
-     * the IO dispatcher for optimal thread management.
+     * Executes a database query with proper transaction management.
+     * 
+     * Thread-safe implementation that:
+     * - Reuses existing transactions when called from UnitOfWork
+     * - Creates new transactions for standalone operations
+     * - Uses the specified database instance if provided
+     * - Properly handles concurrent access through Exposed's transaction management
      *
      * @param block The query to execute
      * @return The query result
      */
     private suspend fun <T> dbQuery(block: suspend () -> T): T {
-        // Check if we're already in a transaction
+        // Check if we're already in a transaction (e.g., from UnitOfWork)
         val currentTransaction = TransactionManager.currentOrNull()
         
         return if (currentTransaction != null) {
             // We're already in a transaction - execute directly without creating a new one
+            // This preserves UnitOfWork behavior and transaction boundaries
             block()
         } else {
-            // No transaction - create new transaction
+            // No transaction - create new transaction (thread-safe)
             if (database != null) {
                 newSuspendedTransaction(Dispatchers.IO, database) { block() }
             } else {

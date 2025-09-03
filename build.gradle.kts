@@ -433,18 +433,21 @@ val testAll by tasks.registering {
     systemTest.get().mustRunAfter(integrationTest)
 }
 
-// Update the main test task to run all suites (maintaining backward compatibility)
+// Configure the main test task to run unit tests for fast feedback (standard Gradle convention)
 tasks.test {
-    // The default test task now delegates to all test suites
-    description = "Runs all tests (unit, integration, system) - backward compatible"
+    // Follow Gradle convention: 'test' runs unit tests for rapid development feedback
+    description = "Runs unit tests (fast domain and verification tests)"
     
-    // Delegate to the testAll task which runs all suites
-    dependsOn(testAll)
-    
-    // Disable this task from running tests directly since testAll handles it
-    onlyIf { false }
-    
-    // Final message is handled by testAll task
+    // Instead of delegating, configure test to run only unit tests directly
+    filter {
+        includeTestsMatching("io.spiralhouse.cycletime.domain.*")
+        includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.verification.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.integration.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.api.*")
+    }
 }
 
 // Quality gate task that runs fast tests first
@@ -575,6 +578,18 @@ detekt {
 
 // Kover configuration
 kover {
+    // Configure Kover to only collect coverage from unitTest task
+    // This prevents integrationTest and systemTest from running during coverage collection
+    currentProject {
+        instrumentation {
+            // Disable instrumentation for integration and system test tasks
+            // This ensures koverXmlReport only uses data from unitTest
+            disabledForTestTasks.add("integrationTest")
+            disabledForTestTasks.add("systemTest")
+            disabledForTestTasks.add("test") // Disable the delegation task as well
+        }
+    }
+    
     reports {
         filters {
             excludes {
@@ -738,7 +753,7 @@ val devRun by tasks.registering(JavaExec::class) {
     environment("KTOR_DEVELOPMENT", "true")
     environment("KTOR_AUTORELOAD", "true")
     environment("DATABASE_LOGGING", "true")
-    environment("DATABASE_URL", "jdbc:h2:file:./cycletime-dev;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
+    environment("DATABASE_URL", "jdbc:h2:file:./cycletime-dev;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE")
     
     // Watch for source changes
     inputs.files(fileTree("src/main/kotlin"))

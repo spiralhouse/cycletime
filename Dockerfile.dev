@@ -37,7 +37,8 @@ RUN mkdir -p /app/data && chmod 755 /app/data
 # Environment variables for development
 ENV KTOR_DEVELOPMENT=true
 ENV KTOR_AUTORELOAD=true
-ENV DATABASE_URL="jdbc:h2:file:/app/data/cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+# Note: DB_CLOSE_DELAY=-1 removed - not needed for file-based H2 databases
+ENV DATABASE_URL="jdbc:h2:file:/app/data/cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
 ENV DATABASE_LOGGING=true
 ENV PORT=8080
 ENV HOST=0.0.0.0
