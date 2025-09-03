@@ -44,8 +44,11 @@ on:
         default: 'false'
 
 # Enhanced concurrency control to prevent duplicate runs and save resources
+# This will cancel any in-progress runs when a new push is made to the same branch
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}
+  # Use PR number for pull requests, branch name for pushes
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Cancel previous runs on the same branch when a new one starts
   cancel-in-progress: true
 
 permissions:
