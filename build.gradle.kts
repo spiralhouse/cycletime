@@ -438,11 +438,16 @@ tasks.test {
     // Follow Gradle convention: 'test' runs unit tests for rapid development feedback
     description = "Runs unit tests (fast domain and verification tests)"
     
-    // Delegate to unit tests only - use 'testAll' for comprehensive testing
-    dependsOn(unitTest)
-    
-    // This is now a proper delegation task
-    onlyIf { true }
+    // Instead of delegating, configure test to run only unit tests directly
+    filter {
+        includeTestsMatching("io.spiralhouse.cycletime.domain.*")
+        includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.verification.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.integration.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.api.*")
+    }
 }
 
 // Quality gate task that runs fast tests first
@@ -581,6 +586,7 @@ kover {
             // This ensures koverXmlReport only uses data from unitTest
             disabledForTestTasks.add("integrationTest")
             disabledForTestTasks.add("systemTest")
+            disabledForTestTasks.add("test") // Disable the delegation task as well
         }
     }
     
