@@ -48,13 +48,14 @@ class ConnectionPoolConcurrencyTest : StringSpec({
     beforeSpec {
         // Setup H2 with small connection pool to test limits
         // Note: H2 2.x removed MVCC mode - it now uses improved transaction isolation by default
+        // Using DB_CLOSE_DELAY=-1 to keep the in-memory database alive during the entire test suite
         database = Database.connect(
-            url = "jdbc:h2:mem:pool_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;LOCK_TIMEOUT=5000",
+            url = "jdbc:h2:mem:test_pool;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;LOCK_TIMEOUT=5000;DB_CLOSE_DELAY=-1",
             driver = "org.h2.Driver"
         )
 
         transaction(database) {
-            SchemaUtils.create(ProjectsTable)
+            SchemaUtils.createMissingTablesAndColumns(ProjectsTable)
         }
 
         mockTimeProvider = MockTimeProvider()
@@ -62,6 +63,12 @@ class ConnectionPoolConcurrencyTest : StringSpec({
     }
 
     beforeEach {
+        // Ensure schema exists (defensive programming for in-memory databases)
+        transaction(database) {
+            SchemaUtils.createMissingTablesAndColumns(ProjectsTable)
+        }
+        
+        // Clean database before each test
         transaction(database) {
             ProjectsTable.deleteAll()
         }

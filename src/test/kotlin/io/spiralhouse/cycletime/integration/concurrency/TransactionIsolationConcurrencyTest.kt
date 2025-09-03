@@ -57,13 +57,14 @@ class TransactionIsolationConcurrencyTest : StringSpec({
         // Setup database with specific isolation settings for testing
         // Note: H2 2.x removed MVCC mode - it now uses improved transaction isolation by default
         // LOCK_MODE=3 ensures PESSIMISTIC locking for stronger consistency
+        // Using DB_CLOSE_DELAY=-1 to keep the in-memory database alive during the entire test suite
         database = Database.connect(
-            url = "jdbc:h2:mem:isolation_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;LOCK_MODE=3;LOCK_TIMEOUT=5000",
+            url = "jdbc:h2:mem:test_isolation;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;LOCK_MODE=3;LOCK_TIMEOUT=5000;DB_CLOSE_DELAY=-1",
             driver = "org.h2.Driver"
         )
 
         transaction(database) {
-            SchemaUtils.create(ProjectsTable, IssuesTable, IssueDependenciesTable, SessionStatesTable)
+            SchemaUtils.createMissingTablesAndColumns(ProjectsTable, IssuesTable, IssueDependenciesTable, SessionStatesTable)
         }
 
         mockTimeProvider = MockTimeProvider()
@@ -73,6 +74,12 @@ class TransactionIsolationConcurrencyTest : StringSpec({
     }
 
     beforeEach {
+        // Ensure schema exists (defensive programming for in-memory databases)
+        transaction(database) {
+            SchemaUtils.createMissingTablesAndColumns(ProjectsTable, IssuesTable, IssueDependenciesTable, SessionStatesTable)
+        }
+        
+        // Clean database before each test
         transaction(database) {
             IssueDependenciesTable.deleteAll()
             IssuesTable.deleteAll()
