@@ -57,6 +57,7 @@ import java.util.UUID
  *
  * @property timeProvider The time provider for entity reconstitution, defaults to SystemTimeProvider
  */
+@ThreadSafe // Documenting thread-safety guarantee
 class ExposedSessionRepository(
     private val timeProvider: TimeProvider = SystemTimeProvider(),
     private val database: Database? = null
