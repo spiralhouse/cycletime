@@ -26,6 +26,38 @@ import org.slf4j.LoggerFactory
  * - Allows optional TimeProvider override for testing
  * - Has ONE way to configure (no profiles, no variations)
  * - Follows the principle: boring is better than clever
+ * 
+ * ## Thread-Safety and Scoping Strategy
+ * 
+ * All repositories and services are registered as **SINGLETONS** because:
+ * - They are stateless (only immutable dependencies)
+ * - Thread-safety is guaranteed at the transaction level
+ * - Connection pooling is handled by HikariCP
+ * - This minimizes memory overhead and object creation
+ * 
+ * ### Why Singleton Scope is Correct Here
+ * 
+ * 1. **Repositories**: Thread-safe via transaction isolation
+ *    - Each operation gets its own transaction context
+ *    - No mutable state between operations
+ *    - Database connections are pooled, not held
+ * 
+ * 2. **Application Services**: Stateless orchestrators
+ *    - Only coordinate between repositories
+ *    - Business logic operates on entities, not service state
+ *    - Transaction boundaries managed via UnitOfWork
+ * 
+ * 3. **Infrastructure**: Designed for sharing
+ *    - Database instance is thread-safe (HikariCP)
+ *    - TimeProvider is immutable
+ *    - UnitOfWork creates new transaction contexts
+ * 
+ * ### Performance Benefits
+ * 
+ * - No object creation overhead per request
+ * - Better CPU cache utilization
+ * - Reduced GC pressure
+ * - Predictable memory footprint
  */
 fun Application.configureDependencies(
     database: Database,

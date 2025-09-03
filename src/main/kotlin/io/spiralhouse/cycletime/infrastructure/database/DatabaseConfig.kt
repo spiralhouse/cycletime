@@ -20,7 +20,7 @@ import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
 import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
 
 class DatabaseConfig(
-    private val jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
+    private val jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE",
     private val driver: String = "org.h2.Driver",
     /**
      * Maximum number of connections in the HikariCP connection pool.
@@ -256,7 +256,7 @@ object DatabaseFactory {
     private var config: DatabaseConfig? = null
 
     fun init(
-        jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
+        jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE",
         driver: String = "org.h2.Driver",
         maxPoolSize: Int = 10,
         minPoolSize: Int = 2,
