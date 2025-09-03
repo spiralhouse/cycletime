@@ -573,6 +573,17 @@ detekt {
 
 // Kover configuration
 kover {
+    // Configure Kover to only collect coverage from unitTest task
+    // This prevents integrationTest and systemTest from running during coverage collection
+    currentProject {
+        instrumentation {
+            // Disable instrumentation for integration and system test tasks
+            // This ensures koverXmlReport only uses data from unitTest
+            disabledForTestTasks.add("integrationTest")
+            disabledForTestTasks.add("systemTest")
+        }
+    }
+    
     reports {
         filters {
             excludes {
