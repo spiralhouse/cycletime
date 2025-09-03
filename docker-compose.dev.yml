@@ -13,7 +13,8 @@ services:
       # Development mode settings
       - KTOR_DEVELOPMENT=true
       - KTOR_AUTORELOAD=true
-      - DATABASE_URL=jdbc:h2:file:/app/data/cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+      # Note: DB_CLOSE_DELAY=-1 removed - not needed for file-based H2 databases
+      - DATABASE_URL=jdbc:h2:file:/app/data/cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
       - DATABASE_LOGGING=true
       - PORT=8080
       - HOST=0.0.0.0
