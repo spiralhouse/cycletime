@@ -15,6 +15,7 @@ import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.IssueId
 import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
@@ -101,6 +102,24 @@ fun ApplicationCall.extractIssueId(paramName: String = "id"): IssueId {
 }
 
 /**
+ * Extracts and parses a Workflow ID from path parameters.
+ * 
+ * Combines parameter extraction and UUID parsing with proper error handling.
+ * 
+ * @param paramName The parameter name (defaults to "id")
+ * @return The parsed WorkflowId
+ * @throws IllegalArgumentException if parameter is missing or invalid UUID
+ */
+fun ApplicationCall.extractWorkflowId(paramName: String = "id"): WorkflowId {
+    val idString = requirePathParameter(paramName, "Workflow ID")
+    return try {
+        WorkflowId.fromString(idString)
+    } catch (e: IllegalArgumentException) {
+        throw IllegalArgumentException("Invalid UUID format: $idString")
+    }
+}
+
+/**
  * Executes a service operation with standardized error handling.
  * 
  * This function provides a consistent pattern for calling application services
@@ -127,6 +146,8 @@ suspend fun ApplicationCall.executeServiceCall(block: suspend () -> Unit) {
         respondNotFound("Project not found", e.message)
     } catch (e: IssueNotFoundException) {
         respondNotFound("Issue not found", e.message)
+    } catch (e: WorkflowNotFoundException) {
+        respondNotFound("Workflow not found", e.message)
     } catch (e: HierarchyViolationException) {
         respondBadRequest("Hierarchy violation", e.message)
     } catch (e: InvalidStatusTransitionException) {
