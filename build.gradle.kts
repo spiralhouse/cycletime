@@ -470,6 +470,7 @@ val ciTest by tasks.registering {
     systemTest.get().mustRunAfter(unitTest)
 }
 
+
 // Smart build status reporting (configuration cache compatible)
 val buildStatus by tasks.registering {
     description = "Display smart build optimization status"
