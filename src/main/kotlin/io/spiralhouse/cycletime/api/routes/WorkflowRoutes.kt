@@ -6,11 +6,9 @@ import io.ktor.server.routing.*
 import io.spiralhouse.cycletime.api.dto.*
 import io.spiralhouse.cycletime.api.routes.common.*
 import io.spiralhouse.cycletime.api.validation.WorkflowValidation
-import io.spiralhouse.cycletime.application.commands.CreateWorkflowCommand
-import io.spiralhouse.cycletime.application.commands.UpdateWorkflowCommand
+import io.spiralhouse.cycletime.application.dto.WorkflowDto
 import io.spiralhouse.cycletime.application.services.WorkflowApplicationService
 import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
-import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
 
 /**
  * Configures Workflow REST API routes with versioning support.
@@ -28,27 +26,33 @@ import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
  * 
  * ## Endpoints Overview
  * 
+ * ### CRUD Operations
  * - `POST /api/workflows` - Create a new workflow
  * - `GET /api/workflows/{id}` - Retrieve a workflow by ID
  * - `PUT /api/workflows/{id}` - Update an existing workflow
  * - `DELETE /api/workflows/{id}` - Delete a workflow
  * - `GET /api/workflows` - List all workflows
- * - `GET /api/workflows/{id}/transitions` - Get valid transitions for a status
+ * 
+ * ### Workflow Transitions
+ * - `GET /api/workflows/{id}/transitions?status={status}` - Get valid transitions for a status
  * - `POST /api/workflows/{id}/validate-transition` - Validate a status transition
- * - `POST /api/workflows/default` - Create default workflow
- * - `POST /api/workflows/bug` - Create bug workflow
- * - `POST /api/workflows/feature` - Create feature workflow
+ * 
+ * ### Predefined Workflows
+ * - `POST /api/workflows/default` - Create default workflow (TODO → IN_PROGRESS → DONE)
+ * - `POST /api/workflows/bug` - Create bug workflow optimized for bug tracking
+ * - `POST /api/workflows/feature` - Create feature workflow optimized for feature development
  * 
  * ## Error Handling
  * 
  * All endpoints return consistent error responses:
- * - `400 Bad Request` - Validation failures
- * - `404 Not Found` - Resource not found
+ * - `400 Bad Request` - Validation failures or invalid request format
+ * - `404 Not Found` - Workflow not found
+ * - `422 Unprocessable Entity` - Invalid state transitions
  * - `500 Internal Server Error` - Unexpected server errors
  * 
  * ## Version Support
  * 
- * - **API v1**: `/api/v1/workflows` - Current version
+ * - **API v1**: `/api/v1/workflows` - Current version with full feature support
  * - **Legacy**: `/api/workflows` - Maintained for backward compatibility
  * 
  * @since 1.0.0
@@ -70,15 +74,25 @@ fun Route.configureWorkflowRoutes() {
  * 
  * This function groups all workflow management endpoints together,
  * making them reusable across different API versions.
+ * 
+ * ## Route Organization
+ * - **CRUD Operations**: Basic workflow management
+ * - **Transition Operations**: Status transition validation and queries
+ * - **Predefined Templates**: Quick workflow creation for common use cases
  */
 private fun Route.configureWorkflowCrudRoutes() {
+    // Core CRUD operations
     createWorkflowRoute()
     getWorkflowRoute()
     updateWorkflowRoute()
     deleteWorkflowRoute()
     listWorkflowsRoute()
+    
+    // Transition management
     getTransitionsRoute()
     validateTransitionRoute()
+    
+    // Predefined workflow templates
     createDefaultWorkflowRoute()
     createBugWorkflowRoute()
     createFeatureWorkflowRoute()
@@ -116,12 +130,7 @@ private fun Route.createWorkflowRoute() {
         ) { request ->
             call.executeServiceCall {
                 val service = call.service<WorkflowApplicationService>()
-                val command = CreateWorkflowCommand(
-                    name = request.name,
-                    description = request.description,
-                    initialStatus = IssueStatus.fromString(request.initialStatus),
-                    allowedStatuses = request.allowedStatuses.map { IssueStatus.fromString(it) }.toSet()
-                )
+                val command = request.toCreateCommand()
                 
                 val created = service.createWorkflow(command)
                 call.respondCreated(WorkflowResponse.fromDto(created))
@@ -200,11 +209,7 @@ private fun Route.updateWorkflowRoute() {
         ) { request ->
             call.executeServiceCall {
                 val service = call.service<WorkflowApplicationService>()
-                val command = UpdateWorkflowCommand(
-                    id = workflowId,
-                    name = request.name,
-                    description = request.description
-                )
+                val command = request.toUpdateCommand(workflowId)
                 
                 val updated = service.updateWorkflow(command)
                 call.respondOk(WorkflowResponse.fromDto(updated))
@@ -300,7 +305,7 @@ private fun Route.getTransitionsRoute() {
         call.executeServiceCall {
             val workflowId = call.extractWorkflowId("id")
             val statusParam = call.request.queryParameters["status"]
-                ?: throw IllegalArgumentException("Query parameter status parameter is required")
+                ?: throw IllegalArgumentException("Query parameter 'status' is required")
             
             val status = IssueStatus.fromString(statusParam)
             val service = call.service<WorkflowApplicationService>()
@@ -351,10 +356,12 @@ private fun Route.validateTransitionRoute() {
             validation = { WorkflowValidation.validateTransitionValidationRequest(it) }
         ) { request ->
             call.executeServiceCall {
-                val fromStatus = IssueStatus.fromString(request.fromStatus)
-                val toStatus = IssueStatus.fromString(request.toStatus)
                 val service = call.service<WorkflowApplicationService>()
-                val result = service.validateTransition(workflowId, fromStatus, toStatus)
+                val result = service.validateTransition(
+                    workflowId, 
+                    IssueStatus.fromString(request.fromStatus),
+                    IssueStatus.fromString(request.toStatus)
+                )
                 
                 call.respondOk(ValidationResponse.fromValidationResult(result))
             }
@@ -372,6 +379,7 @@ private fun Route.validateTransitionRoute() {
  * - Name: "Default Workflow"
  * - Initial Status: TODO
  * - Allowed Statuses: TODO, IN_PROGRESS, DONE
+ * - Transitions: Linear flow from TODO → IN_PROGRESS → DONE
  */
 private fun Route.createDefaultWorkflowRoute() {
     post("/default") {
@@ -393,7 +401,9 @@ private fun Route.createDefaultWorkflowRoute() {
  * 
  * ## Bug Workflow Configuration
  * - Name: "Bug Workflow"
- * - Optimized for bug tracking processes
+ * - Initial Status: TODO
+ * - Optimized for bug tracking with appropriate status transitions
+ * - Includes verification and resolution states
  */
 private fun Route.createBugWorkflowRoute() {
     post("/bug") {
@@ -415,7 +425,9 @@ private fun Route.createBugWorkflowRoute() {
  * 
  * ## Feature Workflow Configuration
  * - Name: "Feature Workflow"
- * - Optimized for feature development processes
+ * - Initial Status: TODO
+ * - Optimized for feature development with review states
+ * - Supports iterative development cycles
  */
 private fun Route.createFeatureWorkflowRoute() {
     post("/feature") {

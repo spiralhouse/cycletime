@@ -25,6 +25,11 @@ import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
  * - Status names must follow IssueStatus enum constraints
  * - Transition validations must specify valid statuses
  *
+ * ## Design Principles
+ * - **Fail Fast**: Validate early to provide immediate feedback
+ * - **Clear Messages**: Provide actionable error messages
+ * - **Consistent Patterns**: Follow the same validation approach across all endpoints
+ *
  * @since 1.0.0
  */
 object WorkflowValidation {
@@ -193,22 +198,23 @@ object WorkflowValidation {
     /**
      * Validates a status string.
      *
+     * Delegates to the domain layer to ensure consistent validation
+     * and error messages across the application.
+     *
      * @param statusString The status string to validate
      * @throws IllegalArgumentException if the status is invalid or empty
      */
     fun validateStatusString(statusString: String) {
-        // Let the domain layer (IssueStatus.fromString) handle all validation
-        // to ensure consistent error messages
-        try {
-            IssueStatus.fromString(statusString)
-        } catch (e: IllegalArgumentException) {
-            // Re-throw to maintain error message consistency with domain layer
-            throw e
-        }
+        // Delegate to domain layer for consistent validation
+        IssueStatus.fromString(statusString)
     }
 
     /**
      * Creates a detailed validation error message for better debugging.
+     *
+     * This helper function ensures consistent error formatting across
+     * all validation failures, making it easier for API consumers to
+     * understand and fix validation issues.
      *
      * @param field The field that failed validation
      * @param value The invalid value
@@ -216,7 +222,13 @@ object WorkflowValidation {
      * @return A formatted error message
      */
     fun formatValidationError(field: String, value: Any?, constraint: String): String {
-        return "Validation failed for field '$field': $constraint. Provided value: ${value?.toString() ?: "null"}"
+        return buildString {
+            append("Validation failed for field '$field': ")
+            append(constraint)
+            if (value != null) {
+                append(". Provided value: $value")
+            }
+        }
     }
 }
 
