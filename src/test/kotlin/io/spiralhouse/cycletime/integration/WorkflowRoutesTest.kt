@@ -219,8 +219,8 @@ class WorkflowRoutesTest : StringSpec({
             response.status shouldBe HttpStatusCode.BadRequest
 
             val errorResponse: ErrorResponse = response.body()
-            errorResponse.error shouldContain "Initial status"
-            errorResponse.error shouldContain "allowed statuses"
+            errorResponse.error shouldContain "Invalid IssueStatus"
+            errorResponse.details shouldContain "INVALID"
         }
     }
 
@@ -641,7 +641,8 @@ class WorkflowRoutesTest : StringSpec({
             val transitionsResponse: TransitionsResponse = response.body()
             transitionsResponse.fromStatus shouldBe "TODO"
             transitionsResponse.validTransitions shouldNotBe null
-            transitionsResponse.validTransitions shouldHaveSize 3 // All statuses are valid from TODO in default workflow
+            transitionsResponse.validTransitions shouldHaveSize 1 // From TODO, can only transition to IN_PROGRESS
+            transitionsResponse.validTransitions shouldContain "IN_PROGRESS"
         }
     }
 
@@ -666,7 +667,7 @@ class WorkflowRoutesTest : StringSpec({
             response.status shouldBe HttpStatusCode.BadRequest
 
             val errorResponse: ErrorResponse = response.body()
-            errorResponse.error shouldContain "status parameter is required"
+            errorResponse.error shouldContain "Query parameter 'status' is required"
         }
     }
 

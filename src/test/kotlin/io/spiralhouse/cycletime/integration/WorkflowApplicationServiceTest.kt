@@ -186,16 +186,15 @@ class WorkflowApplicationServiceTest : StringSpec({
         runTest {
             val workflowId = WorkflowId.generate()
             val existingWorkflow = mockk<Workflow>(relaxed = true)
-            val updatedWorkflow = mockk<Workflow>()
-
+            
+            // Configure the existing workflow to properly return updated values after method calls
             every { existingWorkflow.id } returns workflowId
-            every { updatedWorkflow.id } returns workflowId
-            every { updatedWorkflow.name } returns "Updated Workflow"
-            every { updatedWorkflow.description } returns "Updated description"
-            every { updatedWorkflow.initialStatus } returns IssueStatus.TODO
-            every { updatedWorkflow.allowedStatuses } returns setOf(IssueStatus.TODO, IssueStatus.DONE)
-            every { updatedWorkflow.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
-            every { updatedWorkflow.updatedAt } returns Instant.parse("2025-01-15T10:30:00Z")
+            every { existingWorkflow.name } returns "Updated Workflow"
+            every { existingWorkflow.description } returns "Updated description"
+            every { existingWorkflow.initialStatus } returns IssueStatus.TODO
+            every { existingWorkflow.allowedStatuses } returns setOf(IssueStatus.TODO, IssueStatus.DONE)
+            every { existingWorkflow.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
+            every { existingWorkflow.updatedAt } returns Instant.parse("2025-01-15T10:30:00Z")
 
             val command = UpdateWorkflowCommand(
                 id = workflowId,
@@ -208,7 +207,7 @@ class WorkflowApplicationServiceTest : StringSpec({
                 block()
             }
             coEvery { mockWorkflowRepository.findById(workflowId) } returns existingWorkflow
-            coEvery { mockWorkflowRepository.save(existingWorkflow) } returns updatedWorkflow
+            coEvery { mockWorkflowRepository.save(existingWorkflow) } returns existingWorkflow
 
             mockTimeProvider.advance(kotlin.time.Duration.parse("30m"))
 
@@ -643,7 +642,7 @@ class WorkflowApplicationServiceTest : StringSpec({
                 workflowApplicationService.createWorkflow(command)
             }
 
-            exception.message shouldContain "initial status"
+            exception.message shouldContain "Initial status"
 
             coVerify { mockUnitOfWork.execute(any<suspend () -> WorkflowDto>()) }
         }
@@ -667,7 +666,7 @@ class WorkflowApplicationServiceTest : StringSpec({
                 workflowApplicationService.createWorkflow(command)
             }
 
-            exception.message shouldContain "at least one"
+            exception.message shouldContain "At least one"
 
             coVerify { mockUnitOfWork.execute(any<suspend () -> WorkflowDto>()) }
         }
