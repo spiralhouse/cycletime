@@ -74,8 +74,13 @@ class Workflow private constructor(
             return false
         }
 
-        // Use the IssueStatus's built-in transition rules
-        return from.canTransitionTo(to)
+        // Don't allow transition to the same status
+        if (from == to) {
+            return false
+        }
+
+        // Check if the transition is valid according to the IssueStatus rules
+        return to in from.getValidTransitions()
     }
 
     /**

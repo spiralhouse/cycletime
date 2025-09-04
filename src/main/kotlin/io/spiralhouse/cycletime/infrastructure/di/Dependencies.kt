@@ -5,15 +5,18 @@ import io.ktor.server.plugins.di.*
 import io.spiralhouse.cycletime.application.services.IssueApplicationService
 import io.spiralhouse.cycletime.application.services.ProjectApplicationService
 import io.spiralhouse.cycletime.application.services.SessionApplicationService
+import io.spiralhouse.cycletime.application.services.WorkflowApplicationService
 import io.spiralhouse.cycletime.domain.repositories.IssueRepository
 import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
 import io.spiralhouse.cycletime.domain.repositories.SessionRepository
+import io.spiralhouse.cycletime.domain.repositories.WorkflowRepository
 import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionRepository
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedWorkflowRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import org.jetbrains.exposed.sql.Database
 import org.slf4j.LoggerFactory
@@ -128,6 +131,18 @@ fun Application.configureDependencies(
             }
         }
         
+        provide<WorkflowRepository> { 
+            try {
+                ExposedWorkflowRepository(
+                    timeProvider = resolve(),
+                    database = resolve()
+                )
+            } catch (e: Exception) {
+                logger.error("Failed to create WorkflowRepository", e)
+                throw IllegalStateException("WorkflowRepository initialization failed", e)
+            }
+        }
+        
         // Application Services - Constructor injection with resolved dependencies
         provide<ProjectApplicationService> {
             try {
@@ -171,6 +186,19 @@ fun Application.configureDependencies(
             }
         }
         
+        provide<WorkflowApplicationService> {
+            try {
+                WorkflowApplicationService(
+                    workflowRepository = resolve(),
+                    unitOfWork = resolve(),
+                    timeProvider = resolve()
+                )
+            } catch (e: Exception) {
+                logger.error("Failed to create WorkflowApplicationService", e)
+                throw IllegalStateException("WorkflowApplicationService initialization failed", e)
+            }
+        }
+        
         // MCP layer - Optional for testing
         if (includeMCP) {
             val mcpStartTime = System.currentTimeMillis()
@@ -192,6 +220,6 @@ fun Application.configureDependencies(
     logger.debug("Total dependency configuration completed in ${totalConfigTime}ms")
     
     // Log dependency resolution count (approximation based on configured services)
-    val serviceCount = 9 + if (includeMCP) 8 else 0  // Core services + MCP services
+    val serviceCount = 11 + if (includeMCP) 8 else 0  // Core services + MCP services (added Workflow repo & service)
     logger.info("Configured $serviceCount dependency bindings in ${totalConfigTime}ms")
 }

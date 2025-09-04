@@ -5,6 +5,7 @@ import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
 import io.spiralhouse.cycletime.domain.valueobjects.IssueType
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
 import io.spiralhouse.cycletime.domain.valueobjects.SessionKey
+import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
 
 /**
  * Base exception for application-layer errors.
@@ -25,6 +26,11 @@ class IssueNotFoundException(id: IssueId) : ApplicationException("Issue with ID 
  * Exception thrown when a session is not found.
  */
 class SessionNotFoundException(sessionKey: SessionKey) : ApplicationException("Session with key ${sessionKey.value} not found")
+
+/**
+ * Exception thrown when a workflow is not found.
+ */
+class WorkflowNotFoundException(id: WorkflowId) : ApplicationException("Workflow with ID ${id.value} not found")
 
 /**
  * Exception thrown when validation fails at the application layer.

@@ -87,3 +87,20 @@ object SessionStatesTable : IdTable<String>("session_states") {
         index(false, projectId)
     }
 }
+
+object WorkflowsTable : IdTable<String>("workflows") {
+    override val id: Column<EntityID<String>> = varchar("id", 100).entityId()
+    val name = varchar("name", 255)
+    val description = text("description").nullable()
+    val initialStatus = varchar("initial_status", 50)
+    val allowedStatuses = text("allowed_statuses") // JSON array of status names
+    val createdAt = timestamp("created_at")
+    val updatedAt = timestamp("updated_at")
+
+    override val primaryKey = PrimaryKey(id)
+
+    init {
+        index(false, name)
+        index(false, initialStatus)
+    }
+}
