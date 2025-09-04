@@ -15,41 +15,77 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.json.JsonPrimitive
 import java.time.Duration
-import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.UUID
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toKotlinDuration
 
 /**
- * WebSocket Connection Manager implementation.
+ * WebSocket-specific implementation of ConnectionManager.
  * 
- * Manages WebSocket server lifecycle, connections, and message routing to the JSON-RPC protocol handler.
+ * Manages WebSocket server lifecycle, connections, and message routing through
+ * a modular architecture with separated concerns.
+ * 
+ * ## Architecture
+ * This class orchestrates several components:
+ * - Server lifecycle management (start/stop)
+ * - Connection tracking and state management
+ * - Message routing through MessageHandler
+ * - Heartbeat monitoring through HeartbeatManager
+ * - Event notifications through ConnectionEventListener
+ * 
+ * ## Thread Safety
+ * - All public methods are thread-safe
+ * - Uses mutex for connection collection modifications
+ * - Atomic operations for server state
+ * 
+ * ## Resource Management
+ * - Proper cleanup on shutdown
+ * - Graceful connection closure
+ * - Coroutine scope management
+ * 
+ * @property config Configuration for the WebSocket server
  */
 class WebSocketConnectionManager(
     private val config: WebSocketServerConfig = WebSocketServerConfig()
-) {
+) : ConnectionManager {
+    // Core components
     private var server: EmbeddedServer<*, *>? = null
     private val isServerRunning = AtomicBoolean(false)
     private val connections = ConcurrentHashMap<String, ActiveWebSocketSession>()
     private val connectionsMutex = Mutex()
     
-    private var protocolHandler: JsonRpcProtocolHandler? = null
+    // Delegated responsibilities
     private var logger: WebSocketLogger = DefaultWebSocketLogger()
-    private val methodHandlers = ConcurrentHashMap<String, (JsonRpcRequest) -> JsonRpcResponse>()
+    private val messageHandler = DefaultMessageHandler(config, logger)
+    private val connectionFactory = DefaultConnectionFactory()
+    private val heartbeatManager = DefaultHeartbeatManager(
+        config, 
+        logger,
+        connectionProvider = { connections.values }
+    )
     
-    private var heartbeatJob: Job? = null
+    // Event handling
+    private val eventListeners = mutableListOf<ConnectionEventListener>()
+    
+    // Protocol handling
+    private var protocolHandler: JsonRpcProtocolHandler? = null
+    
+    // Coroutine management
     private val supervisorJob = SupervisorJob()
-    private val coroutineScope = CoroutineScope(Dispatchers.IO + supervisorJob)
     
     /**
      * Starts the WebSocket server.
+     * 
+     * This method:
+     * 1. Configures the Ktor server with WebSocket support
+     * 2. Starts listening on the configured port
+     * 3. Initializes heartbeat monitoring if enabled
+     * 4. Sets up routing for WebSocket connections
+     * 
+     * @throws WebSocketServerException if the server fails to start
      */
-    suspend fun start() {
+    override suspend fun start() {
         if (isServerRunning.get()) {
             logger.logInfo("Server is already running on port ${config.port}")
             return
@@ -83,10 +119,8 @@ class WebSocketConnectionManager(
             isServerRunning.set(true)
             logger.logInfo("WebSocket server started on port ${config.port}")
             
-            // Start heartbeat if enabled
-            if (config.heartbeatInterval > Duration.ZERO) {
-                startHeartbeat()
-            }
+            // Start heartbeat manager
+            heartbeatManager.start()
             
         } catch (e: Exception) {
             throw WebSocketServerException("Failed to start WebSocket server on port ${config.port}", e)
@@ -94,18 +128,23 @@ class WebSocketConnectionManager(
     }
     
     /**
-     * Stops the WebSocket server.
+     * Stops the WebSocket server gracefully.
+     * 
+     * This method:
+     * 1. Stops heartbeat monitoring
+     * 2. Closes all active connections
+     * 3. Shuts down the server
+     * 4. Cleans up resources
      */
-    suspend fun stop() {
+    override suspend fun stop() {
         if (!isServerRunning.get()) {
             return
         }
         
         logger.logInfo("Stopping WebSocket server...")
         
-        // Stop heartbeat
-        heartbeatJob?.cancel()
-        heartbeatJob = null
+        // Stop heartbeat manager
+        heartbeatManager.stop()
         
         // Close all connections
         closeAllConnections()
@@ -121,76 +160,73 @@ class WebSocketConnectionManager(
         logger.logInfo("WebSocket server stopped")
     }
     
-    /**
-     * Checks if the server is running.
-     */
-    fun isRunning(): Boolean = isServerRunning.get()
+    override fun isRunning(): Boolean = isServerRunning.get()
     
-    /**
-     * Gets the configured port.
-     */
-    fun getPort(): Int = config.port
+    override fun getPort(): Int = config.port
     
-    /**
-     * Checks if SSL is supported.
-     */
-    fun supportsSSL(): Boolean = config.enableSSL
+    override fun supportsSSL(): Boolean = config.enableSSL
     
-    /**
-     * Sets the protocol handler for processing JSON-RPC messages.
-     */
-    fun setProtocolHandler(handler: JsonRpcProtocolHandler) {
+    override fun setProtocolHandler(handler: JsonRpcProtocolHandler) {
         this.protocolHandler = handler
+        messageHandler.setProtocolHandler(handler)
     }
     
-    /**
-     * Gets all active connections.
-     */
-    suspend fun getActiveConnections(): List<WebSocketConnection> {
+    override suspend fun getActiveConnections(): List<WebSocketConnection> {
         return connectionsMutex.withLock {
             connections.values.map { it.toConnection() }
         }
     }
     
-    /**
-     * Gets a connection by ID.
-     */
-    suspend fun getConnectionById(id: String): WebSocketConnection? {
+    override suspend fun getConnectionById(id: String): WebSocketConnection? {
         return connectionsMutex.withLock {
             connections[id]?.toConnection()
         }
     }
     
     /**
-     * Registers a method handler.
+     * Registers a method handler for JSON-RPC requests.
+     * 
+     * @param method the JSON-RPC method name
+     * @param handler the handler function for this method
      */
     fun registerMethodHandler(method: String, handler: (JsonRpcRequest) -> JsonRpcResponse) {
-        methodHandlers[method] = handler
+        messageHandler.registerMethodHandler(method, handler)
+    }
+    
+    override fun getMessageQueueSize(): Int = config.messageQueueSize
+    
+    override fun setLogger(logger: WebSocketLogger) {
+        this.logger = logger
     }
     
     /**
-     * Gets the current message queue size (simplified implementation).
+     * Adds an event listener for connection events.
+     * 
+     * @param listener the event listener to add
      */
-    fun getMessageQueueSize(): Int = config.messageQueueSize
+    fun addEventListener(listener: ConnectionEventListener) {
+        eventListeners.add(listener)
+    }
     
     /**
-     * Sets the logger.
+     * Removes an event listener.
+     * 
+     * @param listener the event listener to remove
      */
-    fun setLogger(logger: WebSocketLogger) {
-        this.logger = logger
+    fun removeEventListener(listener: ConnectionEventListener) {
+        eventListeners.remove(listener)
     }
     
     // Private implementation methods
     
+    /**
+     * Handles a new WebSocket connection.
+     * 
+     * @param session the WebSocket session to handle
+     */
     private suspend fun handleConnection(session: DefaultWebSocketSession) {
-        val connectionId = UUID.randomUUID().toString()
-        val now = Instant.now()
-        val activeSession = ActiveWebSocketSession(
-            id = connectionId,
-            session = session,
-            connectedAt = now,
-            lastActivity = AtomicReference(now)
-        )
+        val activeSession = connectionFactory.createConnection(session)
+        val connectionId = activeSession.id
         
         // Add to connections
         connectionsMutex.withLock {
@@ -198,6 +234,9 @@ class WebSocketConnectionManager(
         }
         
         logger.logInfo("New WebSocket connection: $connectionId")
+        
+        // Notify listeners
+        notifyConnectionEstablished(activeSession.toConnection())
         
         try {
             // Handle incoming messages
@@ -207,160 +246,172 @@ class WebSocketConnectionManager(
                         handleTextFrame(activeSession, frame.readText())
                     }
                     is Frame.Binary -> {
-                        handleBinaryFrame(activeSession)
+                        handleBinaryFrame(activeSession, frame.data)
                     }
                     is Frame.Pong -> {
-                        activeSession.updateActivity()
-                        logger.logDebug("Received pong from $connectionId")
+                        handlePongFrame(activeSession)
                     }
                     is Frame.Ping -> {
-                        activeSession.updateActivity()
-                        session.send(Frame.Pong(frame.buffer))
-                        logger.logDebug("Replied to ping from $connectionId")
+                        handlePingFrame(activeSession, frame)
                     }
                     is Frame.Close -> {
                         logger.logInfo("Connection closed by client: $connectionId")
+                        notifyConnectionClosed(connectionId, "Client initiated close")
                         break
                     }
                 }
             }
         } catch (e: ClosedReceiveChannelException) {
             logger.logInfo("Connection closed: $connectionId")
+            notifyConnectionClosed(connectionId, "Channel closed")
         } catch (e: Exception) {
             logger.logError("Error in connection $connectionId", e)
+            notifyConnectionError(connectionId, e)
         } finally {
             // Remove from connections
             connectionsMutex.withLock {
                 connections.remove(connectionId)
             }
             logger.logInfo("Removed connection: $connectionId")
+            
+            // Ensure listeners are notified if not already done
+            if (!activeSession.session.closeReason.isCompleted) {
+                notifyConnectionClosed(connectionId, "Unexpected closure")
+            }
         }
     }
     
+    /**
+     * Handles incoming text frames.
+     */
     private suspend fun handleTextFrame(session: ActiveWebSocketSession, text: String) {
         session.updateActivity()
+        heartbeatManager.recordActivity(session.id)
+        notifyMessageReceived(session.id, text.length)
         
-        if (text.length > config.maxMessageSize) {
-            logger.logError("Message too large from ${session.id}: ${text.length} bytes", null)
-            return
+        val response = messageHandler.handleTextMessage(session.id, text)
+        if (response != null) {
+            session.session.send(Frame.Text(response))
+            notifyMessageSent(session.id, response.length)
+            logger.logDebug("Sent response to ${session.id}")
         }
+    }
+    
+    /**
+     * Handles incoming binary frames.
+     */
+    private suspend fun handleBinaryFrame(session: ActiveWebSocketSession, data: ByteArray) {
+        session.updateActivity()
+        heartbeatManager.recordActivity(session.id)
+        notifyMessageReceived(session.id, data.size)
         
-        try {
+        val response = messageHandler.handleBinaryMessage(session.id, data)
+        if (response != null) {
+            // We don't support binary responses, but keeping the interface
+            logger.logError("Binary response not supported", null)
+        } else {
+            // Send error as text
             val handler = protocolHandler
-            if (handler == null) {
-                logger.logError("No protocol handler set", null)
-                return
-            }
-            
-            // Try to parse as JSON-RPC request
-            val request = try {
-                handler.parseRequest(text)
-            } catch (e: Exception) {
-                logger.logError("Failed to parse JSON-RPC request from ${session.id}", e)
+            if (handler != null) {
                 val errorResponse = handler.createErrorResponse(
                     null,
-                    -32700, // Parse error
-                    "Parse error",
+                    -32600,
+                    "Binary frames not supported",
                     null
                 )
                 session.session.send(Frame.Text(handler.serializeResponse(errorResponse)))
-                return
             }
-            
-            // Handle the request
-            val response = handleJsonRpcRequest(request)
-            
-            // Send response (only for non-notifications)
-            if (response != null && !handler.isNotification(request)) {
-                val responseJson = handler.serializeResponse(response)
-                session.session.send(Frame.Text(responseJson))
-                logger.logDebug("Sent response to ${session.id}")
-            }
-            
-        } catch (e: Exception) {
-            logger.logError("Error processing message from ${session.id}", e)
         }
     }
     
-    private suspend fun handleBinaryFrame(session: ActiveWebSocketSession) {
+    /**
+     * Handles pong frames (heartbeat response).
+     */
+    private fun handlePongFrame(session: ActiveWebSocketSession) {
         session.updateActivity()
-        logger.logError("Binary frames not supported", null)
-        
-        // Send error response for binary frames
-        val handler = protocolHandler
-        if (handler != null) {
-            val errorResponse = handler.createErrorResponse(
-                null,
-                -32600, // Invalid request
-                "Binary frames not supported",
-                null
-            )
-            session.session.send(Frame.Text(handler.serializeResponse(errorResponse)))
-        }
+        heartbeatManager.recordActivity(session.id)
+        logger.logDebug("Received pong from ${session.id}")
     }
     
-    private fun handleJsonRpcRequest(request: JsonRpcRequest): JsonRpcResponse? {
-        val handler = protocolHandler ?: return null
-        
-        // Check if it's a notification
-        if (handler.isNotification(request)) {
-            return handler.handleNotification(request)
-        }
-        
-        // Try registered method handlers first
-        val methodHandler = methodHandlers[request.method]
-        if (methodHandler != null) {
-            return try {
-                methodHandler(request)
+    /**
+     * Handles ping frames (heartbeat request).
+     */
+    private suspend fun handlePingFrame(session: ActiveWebSocketSession, frame: Frame.Ping) {
+        session.updateActivity()
+        heartbeatManager.recordActivity(session.id)
+        session.session.send(Frame.Pong(frame.buffer))
+        logger.logDebug("Replied to ping from ${session.id}")
+    }
+    
+    /**
+     * Event notification helpers
+     */
+    private fun notifyConnectionEstablished(connection: WebSocketConnection) {
+        eventListeners.forEach { listener ->
+            try {
+                listener.onConnectionEstablished(connection)
             } catch (e: Exception) {
-                handler.createErrorResponse(
-                    request.id,
-                    -32603, // Internal error
-                    "Method execution failed: ${e.message}",
-                    null
-                )
-            }
-        }
-        
-        // Default response for unknown methods
-        return handler.createErrorResponse(
-            request.id,
-            -32601, // Method not found
-            "Method not found: ${request.method}",
-            null
-        )
-    }
-    
-    private fun startHeartbeat() {
-        heartbeatJob = coroutineScope.launch {
-            while (isActive && isServerRunning.get()) {
-                delay(config.heartbeatInterval.toMillis())
-                
-                val connectionsToCheck = connectionsMutex.withLock {
-                    connections.values.toList()
-                }
-                
-                connectionsToCheck.forEach { session ->
-                    try {
-                        // Send ping
-                        session.session.send(Frame.Ping(ByteArray(0)))
-                        logger.logDebug("Sent ping to ${session.id}")
-                        
-                        // Check for timeout
-                        val timeSinceActivity = Duration.between(session.lastActivity.get(), Instant.now())
-                        if (timeSinceActivity > config.connectionTimeout) {
-                            logger.logInfo("Connection timed out: ${session.id}")
-                            session.session.close(CloseReason(CloseReason.Codes.GOING_AWAY, "Connection timeout"))
-                        }
-                        
-                    } catch (e: Exception) {
-                        logger.logError("Error sending ping to ${session.id}", e)
-                    }
-                }
+                logger.logError("Error notifying listener of connection established", e)
             }
         }
     }
     
+    private fun notifyConnectionClosed(connectionId: String, reason: String?) {
+        eventListeners.forEach { listener ->
+            try {
+                listener.onConnectionClosed(connectionId, reason)
+            } catch (e: Exception) {
+                logger.logError("Error notifying listener of connection closed", e)
+            }
+        }
+    }
+    
+    private fun notifyMessageReceived(connectionId: String, messageSize: Int) {
+        eventListeners.forEach { listener ->
+            try {
+                listener.onMessageReceived(connectionId, messageSize)
+            } catch (e: Exception) {
+                logger.logError("Error notifying listener of message received", e)
+            }
+        }
+    }
+    
+    private fun notifyMessageSent(connectionId: String, messageSize: Int) {
+        eventListeners.forEach { listener ->
+            try {
+                listener.onMessageSent(connectionId, messageSize)
+            } catch (e: Exception) {
+                logger.logError("Error notifying listener of message sent", e)
+            }
+        }
+    }
+    
+    private fun notifyConnectionError(connectionId: String, error: Throwable) {
+        eventListeners.forEach { listener ->
+            try {
+                listener.onConnectionError(connectionId, error)
+            } catch (e: Exception) {
+                logger.logError("Error notifying listener of connection error", e)
+            }
+        }
+    }
+    
+    // Note: Connection timeout notification is handled by HeartbeatManager
+    // This method is kept for future use when implementing timeout notifications
+    @Suppress("UnusedPrivateMember")
+    private fun notifyConnectionTimeout(connectionId: String) {
+        eventListeners.forEach { listener ->
+            try {
+                listener.onConnectionTimeout(connectionId)
+            } catch (e: Exception) {
+                logger.logError("Error notifying listener of connection timeout", e)
+            }
+        }
+    }
+    
+    /**
+     * Closes all active connections during shutdown.
+     */
     private suspend fun closeAllConnections() {
         val connectionsToClose = connectionsMutex.withLock {
             connections.values.toList()
@@ -369,6 +420,7 @@ class WebSocketConnectionManager(
         connectionsToClose.forEach { session ->
             try {
                 session.session.close(CloseReason(CloseReason.Codes.GOING_AWAY, "Server shutting down"))
+                notifyConnectionClosed(session.id, "Server shutdown")
             } catch (e: Exception) {
                 logger.logError("Error closing connection ${session.id}", e)
             }

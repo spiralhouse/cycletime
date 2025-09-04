@@ -21,9 +21,12 @@ data class WebSocketConnection(
 )
 
 /**
- * Internal wrapper for active WebSocket sessions with state tracking.
+ * Wrapper for active WebSocket sessions with state tracking.
+ * 
+ * This class is used internally by the connection manager to track
+ * WebSocket sessions with additional metadata.
  */
-internal data class ActiveWebSocketSession(
+data class ActiveWebSocketSession(
     val id: String,
     val session: DefaultWebSocketSession,
     val connectedAt: Instant,
