@@ -1,6 +1,6 @@
 package io.spiralhouse.cycletime.mcp.tools
 
-import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 
 /**
  * JSON-RPC error response structure.
@@ -8,5 +8,5 @@ import kotlinx.serialization.json.JsonElement
 data class JsonRpcError(
     val code: Int,
     val message: String,
-    val data: JsonElement? = null
+    val data: JsonObject? = null
 )

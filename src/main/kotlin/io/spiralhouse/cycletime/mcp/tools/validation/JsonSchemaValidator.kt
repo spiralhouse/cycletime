@@ -1,16 +1,25 @@
 package io.spiralhouse.cycletime.mcp.tools.validation
 
+import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolValidator
 import kotlinx.serialization.json.*
 
 /**
- * Simple JSON Schema validator for tool parameters.
+ * Default JSON Schema validator implementation for tool parameters.
  * 
- * This is a minimal implementation that supports the basic validation
- * requirements needed for the tool system tests.
+ * Supports the following JSON Schema validation features:
+ * - Type validation (object, array, string, number, boolean)
+ * - Required property validation for objects
+ * - Nested object and array validation
+ * - String constraints (minLength, maxLength)
+ * - Number constraints (minimum, maximum)
+ * - Array item type validation
+ * 
+ * This implementation provides clear error messages with path information
+ * to help developers quickly identify validation issues.
  */
-class JsonSchemaValidator {
+class JsonSchemaValidator : ToolValidator {
     
-    fun validate(data: JsonElement, schema: JsonObject): ValidationResult {
+    override fun validate(data: JsonElement, schema: JsonObject): ValidationResult {
         val errors = mutableListOf<String>()
         
         try {
@@ -95,7 +104,7 @@ class JsonSchemaValidator {
         val itemsSchema = schema["items"]?.jsonObject
         if (itemsSchema != null) {
             data.forEachIndexed { index, item ->
-                val itemPath = "${if (path.isEmpty()) "" else "$path"}[$index]"
+                val itemPath = "$path[$index]"
                 validateElement(item, itemsSchema, itemPath, errors)
             }
         }
@@ -108,7 +117,13 @@ class JsonSchemaValidator {
         errors: MutableList<String>
     ) {
         if (data !is JsonPrimitive || !data.isString) {
-            errors.add("${if (path.isEmpty()) "root" else path} must be a string")
+            val message = if (path.contains("[")) {
+                // If we're validating an array item, mention it in the error
+                "${if (path.isEmpty()) "root" else path} must be a string (array item validation)"
+            } else {
+                "${if (path.isEmpty()) "root" else path} must be a string"
+            }
+            errors.add(message)
             return
         }
         

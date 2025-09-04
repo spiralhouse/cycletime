@@ -7,4 +7,4 @@ class ParameterValidationException(
     val toolName: String,
     val validationErrors: List<String>,
     val errorCode: ToolErrorCode = ToolErrorCode.INVALID_PARAMETERS
-) : Exception("Parameter validation failed for tool '$toolName': ${validationErrors.joinToString(", ")}")
+) : Exception("parameter validation failed for tool '$toolName': ${validationErrors.joinToString(", ")}")
