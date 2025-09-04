@@ -11,6 +11,7 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldMatch
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.spiralhouse.cycletime.mcp.tools.exceptions.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -366,7 +367,7 @@ class ToolRegistryTest : DescribeSpec({
 
                 val result = registry.invoke("nonexistent.tool", params)
                 result.isFailure shouldBe true
-                result.exceptionOrNull() shouldBeInstanceOf<ToolNotFoundException>()
+                result.exceptionOrNull()?.shouldBeInstanceOf<ToolNotFoundException>()
             }
 
             it("should validate parameters against tool schema") {
@@ -378,7 +379,7 @@ class ToolRegistryTest : DescribeSpec({
 
                 val result1 = registry.invoke("math.add", invalidParams1)
                 result1.isFailure shouldBe true
-                result1.exceptionOrNull() shouldBeInstanceOf<ParameterValidationException>()
+                result1.exceptionOrNull()?.shouldBeInstanceOf<ParameterValidationException>()
 
                 // Wrong parameter type
                 val invalidParams2 = buildJsonObject {
@@ -388,7 +389,7 @@ class ToolRegistryTest : DescribeSpec({
 
                 val result2 = registry.invoke("math.add", invalidParams2)
                 result2.isFailure shouldBe true
-                result2.exceptionOrNull() shouldBeInstanceOf<ParameterValidationException>()
+                result2.exceptionOrNull()?.shouldBeInstanceOf<ParameterValidationException>()
             }
 
             it("should handle tool execution errors") {
@@ -404,7 +405,7 @@ class ToolRegistryTest : DescribeSpec({
 
                 val result = registry.invoke("error.tool", JsonObject(emptyMap()))
                 result.isFailure shouldBe true
-                result.exceptionOrNull() shouldBeInstanceOf<ToolExecutionException>()
+                result.exceptionOrNull()?.shouldBeInstanceOf<ToolExecutionException>()
                 result.exceptionOrNull()!!.message shouldContain "Tool execution failed"
             }
 
@@ -414,7 +415,7 @@ class ToolRegistryTest : DescribeSpec({
                         put("milliseconds", 50)
                     }
 
-                    val result = registry.invokeAsync("async.delay", params)
+                    val result = registry.invokeAsync("async.delay", params, timeout = 30000)
                     result.isSuccess shouldBe true
                     result.getOrNull()?.jsonPrimitive?.content shouldBe "delayed for 50ms"
                 }
@@ -435,7 +436,7 @@ class ToolRegistryTest : DescribeSpec({
                 runBlocking {
                     val result = registry.invokeAsync("long.running", JsonObject(emptyMap()), timeout = 100)
                     result.isFailure shouldBe true
-                    result.exceptionOrNull() shouldBeInstanceOf<ToolTimeoutException>()
+                    result.exceptionOrNull()?.shouldBeInstanceOf<ToolTimeoutException>()
                 }
             }
         }
@@ -590,14 +591,14 @@ class ToolRegistryTest : DescribeSpec({
             it("should provide specific error codes") {
                 // Tool not found
                 var result = registry.invoke("nonexistent.tool", JsonObject(emptyMap()))
-                var error = result.exceptionOrNull() as ToolNotFoundException
-                error.errorCode shouldBe ToolErrorCode.TOOL_NOT_FOUND
+                var error1 = result.exceptionOrNull() as ToolNotFoundException
+                error1.errorCode shouldBe ToolErrorCode.TOOL_NOT_FOUND
 
                 // Parameter validation error
                 registry.register(createMathAddTool())
                 result = registry.invoke("math.add", buildJsonObject { put("invalid", true) })
-                error = result.exceptionOrNull() as ParameterValidationException
-                error.errorCode shouldBe ToolErrorCode.INVALID_PARAMETERS
+                var error2 = result.exceptionOrNull() as ParameterValidationException
+                error2.errorCode shouldBe ToolErrorCode.INVALID_PARAMETERS
 
                 // Tool execution error
                 val errorTool = Tool(
@@ -608,8 +609,8 @@ class ToolRegistryTest : DescribeSpec({
                 )
                 registry.register(errorTool)
                 result = registry.invoke("error.tool", JsonObject(emptyMap()))
-                error = result.exceptionOrNull() as ToolExecutionException
-                error.errorCode shouldBe ToolErrorCode.EXECUTION_ERROR
+                var error3 = result.exceptionOrNull() as ToolExecutionException
+                error3.errorCode shouldBe ToolErrorCode.EXECUTION_ERROR
             }
 
             it("should handle malformed JSON parameters gracefully") {
@@ -620,7 +621,7 @@ class ToolRegistryTest : DescribeSpec({
                 
                 val result = registry.invoke("math.add", malformedJson)
                 result.isFailure shouldBe true
-                result.exceptionOrNull() shouldBeInstanceOf<ParameterValidationException>()
+                result.exceptionOrNull()?.shouldBeInstanceOf<ParameterValidationException>()
             }
         }
 
@@ -673,7 +674,7 @@ class ToolRegistryTest : DescribeSpec({
                 response.isFailure shouldBe true
                 
                 val error = response.exceptionOrNull()
-                error shouldBeInstanceOf<JsonRpcException>()
+                error?.shouldBeInstanceOf<JsonRpcException>()
                 (error as JsonRpcException).code shouldBe -32601 // Method not found (tool not found)
             }
         }
@@ -704,9 +705,21 @@ private fun createMathAddTool(): Tool {
             }
         },
         handler = { params ->
-            val a = params.jsonObject["a"]!!.jsonPrimitive.double
-            val b = params.jsonObject["b"]!!.jsonPrimitive.double
-            Result.success(JsonPrimitive(a + b))
+            val aElement = params.jsonObject["a"]!!.jsonPrimitive
+            val bElement = params.jsonObject["b"]!!.jsonPrimitive
+            
+            // Try to parse as int first to preserve integer type
+            val a = aElement.intOrNull ?: aElement.double
+            val b = bElement.intOrNull ?: bElement.double
+            
+            val result = a.toDouble() + b.toDouble()
+            
+            // Return as int if result is a whole number, otherwise as double
+            if (result == result.toInt().toDouble()) {
+                Result.success(JsonPrimitive(result.toInt()))
+            } else {
+                Result.success(JsonPrimitive(result))
+            }
         }
     )
 }
@@ -824,99 +837,3 @@ private fun createComplexValidationTool(): Tool {
     )
 }
 
-// Exception classes that need to be implemented
-
-class ToolNotFoundException(
-    val toolName: String,
-    val errorCode: ToolErrorCode = ToolErrorCode.TOOL_NOT_FOUND
-) : Exception("Tool not found: $toolName")
-
-class ParameterValidationException(
-    val toolName: String,
-    val validationErrors: List<String>,
-    val errorCode: ToolErrorCode = ToolErrorCode.INVALID_PARAMETERS
-) : Exception("Parameter validation failed for tool '$toolName': ${validationErrors.joinToString(", ")}")
-
-class ToolExecutionException(
-    val toolName: String,
-    cause: Throwable,
-    val errorCode: ToolErrorCode = ToolErrorCode.EXECUTION_ERROR
-) : Exception("Tool execution failed for '$toolName': ${cause.message}", cause)
-
-class ToolTimeoutException(
-    val toolName: String,
-    val timeoutMs: Long,
-    val errorCode: ToolErrorCode = ToolErrorCode.TIMEOUT
-) : Exception("Tool '$toolName' timed out after ${timeoutMs}ms")
-
-class JsonRpcException(
-    val code: Int,
-    message: String,
-    val data: JsonElement? = null
-) : Exception(message)
-
-enum class ToolErrorCode {
-    TOOL_NOT_FOUND,
-    INVALID_PARAMETERS,
-    EXECUTION_ERROR,
-    TIMEOUT
-}
-
-// Interface and classes that need to be implemented
-
-interface ToolRegistry {
-    fun register(tool: Tool): Boolean
-    fun update(tool: Tool): Boolean
-    fun unregister(toolName: String): Boolean
-    fun isRegistered(toolName: String): Boolean
-    fun getTool(toolName: String): Tool?
-    fun getRegisteredToolNames(): List<String>
-    fun getToolMetadata(toolName: String): ToolMetadata?
-    fun getAllToolMetadata(): List<ToolMetadata>
-    fun searchTools(query: String): List<ToolMetadata>
-    fun getParameterSchema(toolName: String): JsonObject?
-    fun invoke(toolName: String, parameters: JsonElement): Result<JsonElement>
-    suspend fun invokeAsync(toolName: String, parameters: JsonElement, timeout: Long = 30000): Result<JsonElement>
-    fun formatErrorForJsonRpc(error: Throwable): JsonRpcError
-    fun handleJsonRpcMethod(method: String, params: JsonElement): Result<JsonElement>
-}
-
-data class Tool(
-    val name: String,
-    val description: String,
-    val parametersSchema: JsonObject,
-    val handler: (JsonElement) -> Result<JsonElement>
-) {
-    init {
-        require(name.matches(Regex("^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)*$"))) {
-            "Tool name must be lowercase with optional dots for namespacing: $name"
-        }
-    }
-}
-
-data class AsyncTool(
-    val name: String,
-    val description: String, 
-    val parametersSchema: JsonObject,
-    val handler: suspend (JsonElement) -> Result<JsonElement>
-) {
-    init {
-        require(name.matches(Regex("^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)*$"))) {
-            "Tool name must be lowercase with optional dots for namespacing: $name"
-        }
-    }
-
-    suspend fun handlerAsync(params: JsonElement): Result<JsonElement> = handler(params)
-}
-
-data class ToolMetadata(
-    val name: String,
-    val description: String,
-    val parametersSchema: JsonObject
-)
-
-data class JsonRpcError(
-    val code: Int,
-    val message: String,
-    val data: JsonElement? = null
-)
