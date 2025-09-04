@@ -5,6 +5,7 @@ import io.ktor.server.routing.*
 import io.spiralhouse.cycletime.api.middleware.*
 import io.spiralhouse.cycletime.api.routes.configureProjectRoutes
 import io.spiralhouse.cycletime.api.routes.configureIssueRoutes
+import io.spiralhouse.cycletime.api.routes.configureWorkflowRoutes
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 
 /**
@@ -64,9 +65,11 @@ object ApiConfiguration {
             // Issue management endpoints
             configureIssueRoutes()
             
+            // Workflow management endpoints
+            configureWorkflowRoutes()
+            
             // Future route configurations can be added here:
             // configureSessionRoutes()
-            // configureWorkflowRoutes()
         }
     }
 }
