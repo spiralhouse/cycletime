@@ -232,6 +232,7 @@ val unitTest by tasks.registering(Test::class) {
         includeTestsMatching("io.spiralhouse.cycletime.mcp.protocol.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.websocket.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.tools.*")
+        includeTestsMatching("io.spiralhouse.cycletime.mcp.resources.*")
         excludeTestsMatching("io.spiralhouse.cycletime.integration.*")
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
     }
@@ -454,6 +455,7 @@ tasks.test {
         includeTestsMatching("io.spiralhouse.cycletime.mcp.protocol.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.websocket.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.tools.*")
+        includeTestsMatching("io.spiralhouse.cycletime.mcp.resources.*")
         excludeTestsMatching("io.spiralhouse.cycletime.integration.*")
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
         excludeTestsMatching("io.spiralhouse.cycletime.api.*")
