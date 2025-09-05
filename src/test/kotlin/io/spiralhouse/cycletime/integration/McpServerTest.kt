@@ -1,9 +1,10 @@
-package io.spiralhouse.cycletime.mcp.integration
+package io.spiralhouse.cycletime.integration
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.string.shouldContain as shouldContainString
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.assertions.throwables.shouldThrow
@@ -15,6 +16,8 @@ import io.spiralhouse.cycletime.mcp.tools.Tool
 import io.spiralhouse.cycletime.mcp.tools.AsyncTool
 import io.spiralhouse.cycletime.mcp.resources.ResourceProviderRegistry
 import io.spiralhouse.cycletime.mcp.resources.ResourceProvider
+import io.spiralhouse.cycletime.mcp.server.McpServer
+import io.spiralhouse.cycletime.mcp.server.McpServerConfig
 import kotlinx.serialization.json.*
 import kotlinx.coroutines.delay
 import java.time.Duration
@@ -53,14 +56,14 @@ class McpServerTest : StringSpec({
         
         server shouldNotBe null
         server.isRunning() shouldBe false
-        server.getProtocolHandler() shouldBeInstanceOf<JsonRpcProtocolHandler>
-        server.getConnectionManager() shouldBeInstanceOf<WebSocketConnectionManager>
-        server.getToolRegistry() shouldBeInstanceOf<DefaultToolRegistry>
-        server.getResourceRegistry() shouldBeInstanceOf<ResourceProviderRegistry>
+        server.getProtocolHandler().shouldBeInstanceOf<JsonRpcProtocolHandler>()
+        server.getConnectionManager().shouldBeInstanceOf<WebSocketConnectionManager>()
+        server.getToolRegistry().shouldBeInstanceOf<DefaultToolRegistry>()
+        server.getResourceRegistry().shouldBeInstanceOf<ResourceProviderRegistry>()
     }
 
     "should start server and initialize all components in correct sequence" {
-        val server = McpServer()
+        val server = McpServer(McpServerConfig(port = 3001))
         
         // Starting should initialize components in proper order:
         // 1. Protocol handler setup
@@ -70,7 +73,7 @@ class McpServerTest : StringSpec({
         server.start()
         
         server.isRunning() shouldBe true
-        server.getPort() shouldBe 3000 // Default port
+        server.getPort() shouldBe 3001
         
         // Connection manager should be wired with protocol handler
         val connectionManager = server.getConnectionManager()
@@ -80,7 +83,7 @@ class McpServerTest : StringSpec({
     }
 
     "should stop server and cleanup all components gracefully" {
-        val server = McpServer()
+        val server = McpServer(McpServerConfig(port = 3010))
         server.start()
         server.isRunning() shouldBe true
         
@@ -96,7 +99,7 @@ class McpServerTest : StringSpec({
     }
 
     "should handle full MCP initialization flow with capability exchange" {
-        val server = McpServer()
+        val server = McpServer(McpServerConfig(port = 3002))
         server.start()
         
         // MCP initialization should support standard protocol flow:
@@ -115,7 +118,7 @@ class McpServerTest : StringSpec({
                     put("roots", buildJsonObject {
                         put("listChanged", false)
                     })
-                    put("sampling", buildJsonObject())
+                    put("sampling", buildJsonObject {})
                 })
                 put("clientInfo", buildJsonObject {
                     put("name", "test-client")
@@ -128,7 +131,7 @@ class McpServerTest : StringSpec({
         val response = server.handleRequest(initRequest.toString())
         
         response shouldNotBe null
-        val responseJson = Json.parseToJsonElement(response) as JsonObject
+        val responseJson = Json.parseToJsonElement(response!!) as JsonObject
         responseJson["jsonrpc"]?.jsonPrimitive?.content shouldBe "2.0"
         responseJson["id"]?.jsonPrimitive?.int shouldBe 1
         
@@ -141,11 +144,11 @@ class McpServerTest : StringSpec({
     }
 
     "should register and invoke tools through WebSocket JSON-RPC flow" {
-        val server = McpServer()
+        val server = McpServer(McpServerConfig(port = 3003))
         
         // Register a test tool before starting
         val testTool = Tool(
-            name = "test_tool",
+            name = "testtool",
             description = "A test tool for integration testing",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -175,13 +178,13 @@ class McpServerTest : StringSpec({
         val listResponse = server.handleRequest(listRequest.toString())
         listResponse shouldNotBe null
         
-        val listJson = Json.parseToJsonElement(listResponse) as JsonObject
+        val listJson = Json.parseToJsonElement(listResponse!!) as JsonObject
         val result = listJson["result"] as JsonObject
         val tools = result["tools"] as JsonArray
         tools shouldHaveSize 1
         
         val toolInfo = tools[0] as JsonObject
-        toolInfo["name"]?.jsonPrimitive?.content shouldBe "test_tool"
+        toolInfo["name"]?.jsonPrimitive?.content shouldBe "testtool"
         
         // Should handle tools/call request
         val callRequest = buildJsonObject {
@@ -189,7 +192,7 @@ class McpServerTest : StringSpec({
             put("id", 2)
             put("method", "tools/call")
             put("params", buildJsonObject {
-                put("name", "test_tool")
+                put("name", "testtool")
                 put("arguments", buildJsonObject {
                     put("message", "integration test")
                 })
@@ -199,21 +202,30 @@ class McpServerTest : StringSpec({
         val callResponse = server.handleRequest(callRequest.toString())
         callResponse shouldNotBe null
         
-        val callJson = Json.parseToJsonElement(callResponse) as JsonObject
+        val callJson = Json.parseToJsonElement(callResponse!!) as JsonObject
         val callResult = callJson["result"] as JsonObject
         val content = callResult["content"] as JsonArray
         val textContent = content[0] as JsonObject
-        textContent["text"]?.jsonPrimitive?.content shouldContain "Tool executed with: integration test"
+        textContent["text"]!!.jsonPrimitive.content shouldContainString "Tool executed with: integration test"
         
         server.stop()
     }
 
     "should register and access resources through WebSocket JSON-RPC flow" {
-        val server = McpServer()
+        val server = McpServer(McpServerConfig(port = 3004))
         
         // Create and register a test resource provider
         val testResourceProvider = object : ResourceProvider {
             override val name: String = "test_provider"
+            override val isRunning: Boolean = true
+            
+            override suspend fun start() {
+                // No-op for test
+            }
+            
+            override suspend fun stop() {
+                // No-op for test
+            }
             
             override suspend fun getResource(uri: String): io.spiralhouse.cycletime.mcp.resources.Resource {
                 return io.spiralhouse.cycletime.mcp.resources.Resource(
@@ -224,7 +236,10 @@ class McpServerTest : StringSpec({
                 )
             }
             
-            override suspend fun listResources(filter: io.spiralhouse.cycletime.mcp.resources.ResourceFilter?): List<io.spiralhouse.cycletime.mcp.resources.Resource> {
+            override suspend fun listResources(
+                filter: io.spiralhouse.cycletime.mcp.resources.ResourceFilter?,
+                pagination: io.spiralhouse.cycletime.mcp.resources.ResourcePagination?
+            ): List<io.spiralhouse.cycletime.mcp.resources.Resource> {
                 return listOf(
                     io.spiralhouse.cycletime.mcp.resources.Resource(
                         uri = "test://example",
@@ -233,6 +248,14 @@ class McpServerTest : StringSpec({
                         mimeType = "text/plain"
                     )
                 )
+            }
+            
+            override suspend fun searchResources(query: String): List<io.spiralhouse.cycletime.mcp.resources.Resource> {
+                return emptyList()
+            }
+            
+            override suspend fun updateResource(uri: String, content: io.spiralhouse.cycletime.mcp.resources.ResourceContent) {
+                // No-op for test
             }
         }
         
@@ -249,7 +272,7 @@ class McpServerTest : StringSpec({
         val listResponse = server.handleRequest(listRequest.toString())
         listResponse shouldNotBe null
         
-        val listJson = Json.parseToJsonElement(listResponse) as JsonObject
+        val listJson = Json.parseToJsonElement(listResponse!!) as JsonObject
         val result = listJson["result"] as JsonObject
         val resources = result["resources"] as JsonArray
         resources shouldHaveSize 1
@@ -262,11 +285,11 @@ class McpServerTest : StringSpec({
     }
 
     "should handle async tool invocation with timeout management" {
-        val server = McpServer()
+        val server = McpServer(McpServerConfig(port = 3005))
         
         // Register an async tool that takes time
         val asyncTool = AsyncTool(
-            name = "slow_tool",
+            name = "slowtool",
             description = "A slow async tool",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -293,7 +316,7 @@ class McpServerTest : StringSpec({
             put("id", 1)
             put("method", "tools/call")
             put("params", buildJsonObject {
-                put("name", "slow_tool")
+                put("name", "slowtool")
                 put("arguments", buildJsonObject {
                     put("delay", 50)
                 })
@@ -303,21 +326,21 @@ class McpServerTest : StringSpec({
         val callResponse = server.handleRequestAsync(callRequest.toString())
         callResponse shouldNotBe null
         
-        val callJson = Json.parseToJsonElement(callResponse) as JsonObject
+        val callJson = Json.parseToJsonElement(callResponse!!) as JsonObject
         val result = callJson["result"] as JsonObject
         val content = result["content"] as JsonArray
         val textContent = content[0] as JsonObject
-        textContent["text"]?.jsonPrimitive?.content shouldContain "completed after 50ms"
+        textContent["text"]!!.jsonPrimitive.content shouldContainString "completed after 50ms"
         
         server.stop()
     }
 
     "should handle component errors gracefully and return proper JSON-RPC errors" {
-        val server = McpServer()
+        val server = McpServer(McpServerConfig(port = 3006))
         
         // Register a tool that throws an error
         val errorTool = Tool(
-            name = "error_tool",
+            name = "errortool",
             description = "A tool that always fails",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -334,7 +357,7 @@ class McpServerTest : StringSpec({
             put("id", 1)
             put("method", "tools/call")
             put("params", buildJsonObject {
-                put("name", "error_tool")
+                put("name", "errortool")
                 put("arguments", buildJsonObject {})
             })
         }
@@ -342,12 +365,12 @@ class McpServerTest : StringSpec({
         val response = server.handleRequest(callRequest.toString())
         response shouldNotBe null
         
-        val responseJson = Json.parseToJsonElement(response) as JsonObject
+        val responseJson = Json.parseToJsonElement(response!!) as JsonObject
         responseJson["error"] shouldNotBe null
         
         val error = responseJson["error"] as JsonObject
         error["code"]?.jsonPrimitive?.int shouldBe -32603 // Internal error
-        error["message"]?.jsonPrimitive?.content shouldContain "Tool execution failed"
+        error["message"]!!.jsonPrimitive.content shouldContainString "Tool execution failed"
         
         server.stop()
     }
@@ -379,7 +402,7 @@ class McpServerTest : StringSpec({
     }
 
     "should support notifications without response generation" {
-        val server = McpServer()
+        val server = McpServer(McpServerConfig(port = 3007))
         server.start()
         
         // Notification requests (no id field) should not generate responses
@@ -400,17 +423,17 @@ class McpServerTest : StringSpec({
     }
 
     "should handle batch requests with mixed success and error responses" {
-        val server = McpServer()
+        val server = McpServer(McpServerConfig(port = 3008))
         
         // Register tools for testing
         val successTool = Tool(
-            name = "success_tool",
+            name = "successtool",
             description = "Always succeeds",
             parametersSchema = buildJsonObject { put("type", "object") }
         ) { _ -> Result.success(JsonPrimitive("success")) }
         
         val errorTool = Tool(
-            name = "error_tool", 
+            name = "errortool", 
             description = "Always fails",
             parametersSchema = buildJsonObject { put("type", "object") }
         ) { _ -> throw RuntimeException("Tool failed") }
@@ -426,7 +449,7 @@ class McpServerTest : StringSpec({
                 put("id", 1)
                 put("method", "tools/call")
                 put("params", buildJsonObject {
-                    put("name", "success_tool")
+                    put("name", "successtool")
                     put("arguments", buildJsonObject {})
                 })
             })
@@ -435,7 +458,7 @@ class McpServerTest : StringSpec({
                 put("id", 2)
                 put("method", "tools/call")
                 put("params", buildJsonObject {
-                    put("name", "error_tool")
+                    put("name", "errortool")
                     put("arguments", buildJsonObject {})
                 })
             })
@@ -444,7 +467,7 @@ class McpServerTest : StringSpec({
         val response = server.handleBatchRequest(batchRequest.toString())
         response shouldNotBe null
         
-        val responses = Json.parseToJsonElement(response) as JsonArray
+        val responses = Json.parseToJsonElement(response!!) as JsonArray
         responses shouldHaveSize 2
         
         // First response should be successful
@@ -461,14 +484,14 @@ class McpServerTest : StringSpec({
     }
 
     "should maintain component isolation during partial failures" {
-        val server = McpServer()
+        val server = McpServer(McpServerConfig(port = 3009))
         server.start()
         
         // Even if one component experiences errors, others should continue working
         
         // Test tool registry continues to work after resource error
         val workingTool = Tool(
-            name = "working_tool",
+            name = "workingtool",
             description = "Still works",
             parametersSchema = buildJsonObject { put("type", "object") }
         ) { _ -> Result.success(JsonPrimitive("still working")) }
@@ -485,7 +508,7 @@ class McpServerTest : StringSpec({
         val toolListResponse = server.handleRequest(toolListRequest.toString())
         toolListResponse shouldNotBe null
         
-        val toolListJson = Json.parseToJsonElement(toolListResponse) as JsonObject
+        val toolListJson = Json.parseToJsonElement(toolListResponse!!) as JsonObject
         val result = toolListJson["result"] as JsonObject
         val tools = result["tools"] as JsonArray
         tools shouldHaveSize 1
@@ -494,49 +517,3 @@ class McpServerTest : StringSpec({
     }
 })
 
-// Configuration class that would be needed
-data class McpServerConfig(
-    val port: Int = 3000,
-    val enableSSL: Boolean = false,
-    val connectionTimeout: Duration = Duration.ofSeconds(30),
-    val heartbeatInterval: Duration = Duration.ofSeconds(10),
-    val maxConnections: Int = 100,
-    val toolInvocationTimeout: Duration = Duration.ofSeconds(60)
-) {
-    init {
-        require(port in 1..65535) { "Port must be between 1 and 65535, got $port" }
-        require(connectionTimeout.toMillis() > 0) { "Connection timeout must be positive" }
-        require(heartbeatInterval.toMillis() > 0) { "Heartbeat interval must be positive" }
-        require(maxConnections > 0) { "Max connections must be positive" }
-        require(toolInvocationTimeout.toMillis() > 0) { "Tool invocation timeout must be positive" }
-    }
-}
-
-// Integration service interface that would be needed
-interface McpServer {
-    // Lifecycle management
-    suspend fun start()
-    suspend fun stop() 
-    fun isRunning(): Boolean
-    fun getPort(): Int
-    
-    // Component access
-    fun getProtocolHandler(): JsonRpcProtocolHandler
-    fun getConnectionManager(): WebSocketConnectionManager
-    fun getToolRegistry(): DefaultToolRegistry
-    fun getResourceRegistry(): ResourceProviderRegistry
-    
-    // Tool management
-    fun registerTool(tool: Tool): Boolean
-    fun registerAsyncTool(tool: AsyncTool): Boolean
-    fun unregisterTool(toolName: String): Boolean
-    
-    // Resource management
-    suspend fun registerResourceProvider(provider: ResourceProvider)
-    fun unregisterResourceProvider(name: String): ResourceProvider?
-    
-    // Request handling
-    suspend fun handleRequest(json: String): String?
-    suspend fun handleRequestAsync(json: String): String?
-    suspend fun handleBatchRequest(json: String): String?
-}
