@@ -1,18 +1,22 @@
 package io.spiralhouse.cycletime.mcp.resources
 
+import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Thread-safe registry for managing resource providers
+ * 
+ * This implementation provides concurrent access to provider management,
+ * automatic metadata generation, and cross-provider resource discovery.
  */
-class ResourceProviderRegistry {
+class ResourceProviderRegistry : ResourceRegistry {
     private val providers = ConcurrentHashMap<String, ResourceProvider>()
     private val providerMetadata = ConcurrentHashMap<String, ResourceProviderMetadata>()
     
     /**
      * Register a new resource provider
      */
-    suspend fun register(provider: ResourceProvider) {
+    override suspend fun register(provider: ResourceProvider) {
         providers[provider.name] = provider
         
         // Create default metadata
@@ -32,21 +36,21 @@ class ResourceProviderRegistry {
     /**
      * Get all registered providers
      */
-    fun getProviders(): List<ResourceProvider> {
+    override fun getProviders(): List<ResourceProvider> {
         return providers.values.toList()
     }
     
     /**
      * Get metadata for a specific provider
      */
-    fun getProviderMetadata(name: String): ResourceProviderMetadata? {
+    override fun getProviderMetadata(name: String): ResourceProviderMetadata? {
         return providerMetadata[name]
     }
     
     /**
      * Find resources across all providers by MIME type
      */
-    suspend fun findResourcesByMimeType(mimeType: String): List<Resource> {
+    override suspend fun findResourcesByMimeType(mimeType: String): List<Resource> {
         val results = mutableListOf<Resource>()
         for (provider in providers.values) {
             val resources = provider.listResources(
@@ -60,7 +64,7 @@ class ResourceProviderRegistry {
     /**
      * Get resource templates from a specific provider
      */
-    suspend fun getResourceTemplates(providerId: String): List<ResourceTemplate> {
+    override suspend fun getResourceTemplates(providerId: String): List<ResourceTemplate> {
         // Return default templates for testing
         return listOf(
             ResourceTemplate(
@@ -97,7 +101,7 @@ class ResourceProviderRegistry {
     /**
      * Unregister a provider
      */
-    fun unregister(name: String): ResourceProvider? {
+    override fun unregister(name: String): ResourceProvider? {
         providerMetadata.remove(name)
         return providers.remove(name)
     }
@@ -105,7 +109,7 @@ class ResourceProviderRegistry {
     /**
      * Get provider by name
      */
-    fun getProvider(name: String): ResourceProvider? {
+    override fun getProvider(name: String): ResourceProvider? {
         return providers[name]
     }
 }

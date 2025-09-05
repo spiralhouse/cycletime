@@ -6,7 +6,18 @@ import java.net.URI
 
 /**
  * Represents a resource in the MCP Resource Provider Framework.
- * Resources are immutable - updates create new versions.
+ * 
+ * Resources are the fundamental unit of data in the MCP framework. Each resource
+ * is uniquely identified by a URI and contains content that can be accessed and
+ * monitored for changes. Resources are immutable - updates create new versions.
+ * 
+ * @property uri Unique identifier for the resource (e.g., "config://settings/database")
+ * @property name Human-readable name for the resource
+ * @property description Optional description of the resource's purpose
+ * @property mimeType MIME type indicating the content format (e.g., "application/json")
+ * @property content The actual content of the resource (text or binary)
+ * @property metadata Additional metadata about the resource (timestamps, version, size)
+ * @property permissions Optional access control permissions for the resource
  */
 data class Resource(
     val uri: String,
@@ -48,6 +59,48 @@ data class Resource(
                 // Text content is always valid
             }
         }
+    }
+    
+    /**
+     * Get the resource scheme (e.g., "config", "file", "state")
+     */
+    val scheme: String
+        get() = URI.create(uri).scheme
+    
+    /**
+     * Get the resource path without the scheme
+     */
+    val path: String
+        get() = uri.substringAfter("://")
+    
+    /**
+     * Check if this resource is newer than the given timestamp
+     */
+    fun isNewerThan(timestamp: Instant): Boolean {
+        return metadata?.modified?.isAfter(timestamp) ?: false
+    }
+    
+    /**
+     * Check if this resource matches the given filter
+     */
+    fun matches(filter: ResourceFilter): Boolean {
+        return filter.mimeType?.let { it == mimeType } ?: true
+    }
+    
+    /**
+     * Create a copy of this resource with updated content
+     */
+    fun withContent(newContent: ResourceContent): Resource {
+        return copy(
+            content = newContent,
+            metadata = metadata?.copy(
+                modified = Instant.now(),
+                size = when (newContent) {
+                    is ResourceContent.Text -> newContent.data.length.toLong()
+                    is ResourceContent.Binary -> newContent.data.length.toLong()
+                }
+            )
+        )
     }
 }
 

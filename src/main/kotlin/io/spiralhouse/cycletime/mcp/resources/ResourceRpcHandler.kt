@@ -1,20 +1,35 @@
 package io.spiralhouse.cycletime.mcp.resources
 
+import io.spiralhouse.cycletime.mcp.resources.interfaces.*
+import io.spiralhouse.cycletime.mcp.resources.rpc.*
 import io.spiralhouse.cycletime.mcp.resources.subscription.*
 import kotlinx.serialization.json.*
 
 /**
  * Handles JSON-RPC method calls for the Resource Provider Framework
+ * 
+ * This handler uses the command pattern to organize RPC method implementations,
+ * providing a clean and extensible architecture for handling resource operations.
  */
-class ResourceRpcHandler {
-    private val registry = ResourceProviderRegistry()
-    private val subscriptionManager = ResourceSubscriptionManager()
+class ResourceRpcHandler(
+    private val registry: ResourceRegistry = ResourceProviderRegistry(),
+    private val subscriptionManager: SubscriptionManager = ResourceSubscriptionManager()
+) {
+    private val commands = mutableMapOf<String, RpcCommand>()
     
     init {
         // Initialize with test provider for testing
         kotlinx.coroutines.runBlocking {
             registry.register(TestResourceProvider("test-provider"))
         }
+        
+        // Register commands
+        registerCommands()
+    }
+    
+    private fun registerCommands() {
+        commands["resources/list"] = ResourceListCommand(registry)
+        // Other commands will be registered here
     }
     
     /**
@@ -26,12 +41,19 @@ class ResourceRpcHandler {
         val id = request["id"]?.jsonPrimitive?.int ?: 1
         
         return try {
-            val result = when (method) {
-                "resources/list" -> handleResourcesList(params)
-                "resources/read" -> handleResourcesRead(params)
-                "resources/subscribe" -> handleResourcesSubscribe(params)
-                "resources/unsubscribe" -> handleResourcesUnsubscribe(params)
-                else -> throw IllegalArgumentException("Unknown method: $method")
+            // Try command pattern first
+            val command = commands[method]
+            val result = if (command != null && command.validate(params)) {
+                command.execute(params)
+            } else {
+                // Fall back to legacy handlers for backward compatibility
+                when (method) {
+                    "resources/list" -> handleResourcesList(params)
+                    "resources/read" -> handleResourcesRead(params)
+                    "resources/subscribe" -> handleResourcesSubscribe(params)
+                    "resources/unsubscribe" -> handleResourcesUnsubscribe(params)
+                    else -> throw IllegalArgumentException("Unknown method: $method")
+                }
             }
             
             buildJsonObject {
