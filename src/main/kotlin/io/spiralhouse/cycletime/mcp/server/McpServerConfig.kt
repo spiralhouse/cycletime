@@ -21,6 +21,14 @@ data class McpServerConfig(
     val toolInvocationTimeout: Duration = Duration.ofSeconds(60)
 ) {
     init {
+        validate()
+    }
+    
+    /**
+     * Validates the configuration parameters.
+     * @throws IllegalArgumentException if any parameter is invalid
+     */
+    fun validate() {
         require(port in 1..65535) { "Port must be between 1 and 65535, got $port" }
         require(connectionTimeout.toMillis() > 0) { "Connection timeout must be positive" }
         require(heartbeatInterval.toMillis() > 0) { "Heartbeat interval must be positive" }

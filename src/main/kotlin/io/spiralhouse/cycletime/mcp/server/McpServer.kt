@@ -3,6 +3,11 @@ package io.spiralhouse.cycletime.mcp.server
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
+import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
+import io.spiralhouse.cycletime.mcp.server.handlers.DefaultMcpMethodHandler
+import io.spiralhouse.cycletime.mcp.server.state.ServerState
+import io.spiralhouse.cycletime.mcp.server.state.ServerStatus
+import io.spiralhouse.cycletime.mcp.server.exceptions.ServerLifecycleException
 import io.spiralhouse.cycletime.mcp.websocket.WebSocketConnectionManager
 import io.spiralhouse.cycletime.mcp.websocket.WebSocketServerConfig
 import io.spiralhouse.cycletime.mcp.tools.DefaultToolRegistry
@@ -14,38 +19,149 @@ import kotlinx.serialization.json.*
 import kotlinx.coroutines.runBlocking
 
 /**
- * MCP Server interface providing lifecycle management and component integration
+ * MCP Server interface providing lifecycle management and component integration.
+ * 
+ * This interface defines the contract for an MCP (Model Context Protocol) server
+ * that manages WebSocket connections, processes JSON-RPC requests, and coordinates
+ * between tool registries and resource providers.
+ * 
+ * Thread Safety: Implementations should be thread-safe for all operations.
  */
 interface McpServer {
-    // Lifecycle management
+    // ===== Lifecycle Management =====
+    
+    /**
+     * Starts the MCP server and all its components.
+     * This method should initialize components in the correct order:
+     * 1. Protocol handler setup
+     * 2. Registry initialization
+     * 3. Connection manager startup
+     * 4. WebSocket server binding
+     * 
+     * @throws IllegalStateException if the server is already running
+     */
     suspend fun start()
+    
+    /**
+     * Stops the MCP server and cleans up all resources.
+     * This method should cleanup components in reverse order of initialization:
+     * 1. Close active connections
+     * 2. Stop connection manager
+     * 3. Clear registries
+     * 4. Release resources
+     * 
+     * @throws IllegalStateException if the server is not running
+     */
     suspend fun stop()
+    
+    /**
+     * Checks if the server is currently running.
+     * @return true if the server is running, false otherwise
+     */
     fun isRunning(): Boolean
+    
+    /**
+     * Gets the port number the server is configured to use.
+     * @return the configured port number
+     */
     fun getPort(): Int
     
-    // Component access
+    // ===== Component Access =====
+    
+    /**
+     * Gets the JSON-RPC protocol handler.
+     * @return the protocol handler instance
+     */
     fun getProtocolHandler(): JsonRpcProtocolHandler
+    
+    /**
+     * Gets the WebSocket connection manager.
+     * @return the connection manager instance
+     */
     fun getConnectionManager(): WebSocketConnectionManager
+    
+    /**
+     * Gets the tool registry.
+     * @return the tool registry instance
+     */
     fun getToolRegistry(): DefaultToolRegistry
+    
+    /**
+     * Gets the resource provider registry.
+     * @return the resource registry instance
+     */
     fun getResourceRegistry(): ResourceProviderRegistry
     
-    // Tool management
+    // ===== Tool Management =====
+    
+    /**
+     * Registers a synchronous tool with the server.
+     * @param tool the tool to register
+     * @return true if registration succeeded, false if a tool with that name already exists
+     */
     fun registerTool(tool: Tool): Boolean
+    
+    /**
+     * Registers an asynchronous tool with the server.
+     * @param tool the async tool to register
+     * @return true if registration succeeded, false if a tool with that name already exists
+     */
     fun registerAsyncTool(tool: AsyncTool): Boolean
+    
+    /**
+     * Unregisters a tool by name.
+     * @param toolName the name of the tool to unregister
+     * @return true if the tool was found and removed, false otherwise
+     */
     fun unregisterTool(toolName: String): Boolean
     
-    // Resource management
+    // ===== Resource Management =====
+    
+    /**
+     * Registers a resource provider with the server.
+     * @param provider the resource provider to register
+     */
     suspend fun registerResourceProvider(provider: ResourceProvider)
+    
+    /**
+     * Unregisters a resource provider by name.
+     * @param name the name of the provider to unregister
+     * @return the unregistered provider if found, null otherwise
+     */
     fun unregisterResourceProvider(name: String): ResourceProvider?
     
-    // Request handling
+    // ===== Request Handling =====
+    
+    /**
+     * Handles a single JSON-RPC request synchronously.
+     * @param json the JSON-RPC request string
+     * @return the JSON-RPC response string, or null for notifications
+     */
     suspend fun handleRequest(json: String): String?
+    
+    /**
+     * Handles a single JSON-RPC request asynchronously.
+     * This method supports async tool invocation.
+     * @param json the JSON-RPC request string
+     * @return the JSON-RPC response string, or null for notifications
+     */
     suspend fun handleRequestAsync(json: String): String?
+    
+    /**
+     * Handles a batch of JSON-RPC requests.
+     * @param json the JSON array of requests
+     * @return the JSON array of responses, or null if all were notifications
+     */
     suspend fun handleBatchRequest(json: String): String?
 }
 
 /**
- * Default implementation of McpServer that integrates all MCP components
+ * Default implementation of McpServer that integrates all MCP components.
+ * 
+ * This server coordinates between the protocol handler, connection manager,
+ * tool registry, and resource registry to provide a complete MCP implementation.
+ * It follows the Single Responsibility Principle by delegating method handling
+ * to a dedicated handler component.
  */
 class DefaultMcpServer(
     private val config: McpServerConfig = McpServerConfig()
@@ -56,8 +172,13 @@ class DefaultMcpServer(
     private val toolRegistry = DefaultToolRegistry()
     private val resourceRegistry = ResourceProviderRegistry()
     private val connectionManager: WebSocketConnectionManager
+    private val methodHandler: McpMethodHandler
+    private val serverState = ServerState()
     
     init {
+        // Validate configuration
+        config.validate()
+        
         // Configure WebSocket connection manager
         val wsConfig = WebSocketServerConfig(
             port = config.port,
@@ -70,6 +191,13 @@ class DefaultMcpServer(
         // Wire protocol handler to connection manager
         connectionManager.setProtocolHandler(protocolHandler)
         
+        // Create method handler with dependencies
+        methodHandler = DefaultMcpMethodHandler(
+            protocolHandler = protocolHandler,
+            toolRegistry = toolRegistry,
+            resourceRegistry = resourceRegistry
+        )
+        
         // Register MCP method handlers
         setupMethodHandlers()
     }
@@ -77,14 +205,42 @@ class DefaultMcpServer(
     // ===== Lifecycle Management =====
     
     override suspend fun start() {
-        connectionManager.start()
+        if (!serverState.canStart()) {
+            throw ServerLifecycleException(
+                "Cannot start server in state: ${serverState.getStatus()}"
+            )
+        }
+        
+        try {
+            serverState.transitionTo(ServerStatus.STARTING)
+            connectionManager.start()
+            serverState.transitionTo(ServerStatus.RUNNING)
+        } catch (e: Exception) {
+            serverState.recordError(e)
+            throw ServerLifecycleException("Failed to start server", e)
+        }
     }
     
     override suspend fun stop() {
-        connectionManager.stop()
+        if (!serverState.canStop()) {
+            throw ServerLifecycleException(
+                "Cannot stop server in state: ${serverState.getStatus()}"
+            )
+        }
+        
+        try {
+            serverState.transitionTo(ServerStatus.STOPPING)
+            // Cleanup in reverse order of initialization
+            connectionManager.stop()
+            // Note: Registries maintain their state for potential restart
+            serverState.transitionTo(ServerStatus.STOPPED)
+        } catch (e: Exception) {
+            serverState.recordError(e)
+            throw ServerLifecycleException("Failed to stop server gracefully", e)
+        }
     }
     
-    override fun isRunning(): Boolean = connectionManager.isRunning()
+    override fun isRunning(): Boolean = serverState.isRunning()
     
     override fun getPort(): Int = config.port
     
@@ -124,17 +280,17 @@ class DefaultMcpServer(
             
             // Handle notifications (no response)
             if (protocolHandler.isNotification(request)) {
-                handleNotificationRequest(request)
+                methodHandler.handleNotification(request)
                 return null
             }
             
-            val response = handleSingleRequest(request)
+            val response = methodHandler.handleRequest(request)
             protocolHandler.serializeResponse(response)
         } catch (e: Exception) {
             val errorResponse = protocolHandler.createErrorResponse(
                 id = null,
                 code = -32700, // Parse error
-                message = "Parse error",
+                message = "Parse error: ${e.message}",
                 data = null
             )
             protocolHandler.serializeResponse(errorResponse)
@@ -142,8 +298,27 @@ class DefaultMcpServer(
     }
     
     override suspend fun handleRequestAsync(json: String): String? {
-        // For async handling, we'll use the same logic but allow async tool invocation
-        return handleRequest(json)
+        return try {
+            val request = protocolHandler.parseRequest(json)
+            
+            // Handle notifications (no response)
+            if (protocolHandler.isNotification(request)) {
+                methodHandler.handleNotification(request)
+                return null
+            }
+            
+            // Use async handler for async tool invocation
+            val response = methodHandler.handleRequestAsync(request)
+            protocolHandler.serializeResponse(response)
+        } catch (e: Exception) {
+            val errorResponse = protocolHandler.createErrorResponse(
+                id = null,
+                code = -32700, // Parse error
+                message = "Parse error: ${e.message}",
+                data = null
+            )
+            protocolHandler.serializeResponse(errorResponse)
+        }
     }
     
     override suspend fun handleBatchRequest(json: String): String? {
@@ -153,10 +328,12 @@ class DefaultMcpServer(
             
             for (request in requests) {
                 if (!protocolHandler.isNotification(request)) {
-                    val response = handleSingleRequest(request)
+                    val response = methodHandler.handleRequest(request)
                     responses.add(response)
+                } else {
+                    // Handle notification but don't add to responses
+                    methodHandler.handleNotification(request)
                 }
-                // Notifications don't generate responses
             }
             
             if (responses.isEmpty()) {
@@ -168,7 +345,7 @@ class DefaultMcpServer(
             val errorResponse = protocolHandler.createErrorResponse(
                 id = null,
                 code = -32700, // Parse error
-                message = "Parse error",
+                message = "Parse error: ${e.message}",
                 data = null
             )
             protocolHandler.serializeResponse(errorResponse)
@@ -178,178 +355,36 @@ class DefaultMcpServer(
     // ===== Private Implementation =====
     
     private fun setupMethodHandlers() {
-        // Register initialize method
+        // Register method handlers with the connection manager
+        // These will be invoked when WebSocket messages arrive
         connectionManager.registerMethodHandler("initialize") { request ->
-            handleInitialize(request)
+            runBlocking { methodHandler.handleRequest(request) }
         }
         
-        // Register tools methods
         connectionManager.registerMethodHandler("tools/list") { request ->
-            handleToolsList(request)
+            runBlocking { methodHandler.handleRequest(request) }
         }
         
         connectionManager.registerMethodHandler("tools/call") { request ->
-            handleToolsCall(request)
+            // Use runBlocking to bridge the async gap for now
+            // This will be improved in a future iteration
+            runBlocking { methodHandler.handleRequestAsync(request) }
         }
         
-        // Register resources methods  
         connectionManager.registerMethodHandler("resources/list") { request ->
-            runBlocking { handleResourcesList(request) }
+            runBlocking { methodHandler.handleRequestAsync(request) }
         }
     }
     
-    private suspend fun handleSingleRequest(request: JsonRpcRequest): JsonRpcResponse {
-        return try {
-            when (request.method) {
-                "initialize" -> handleInitialize(request)
-                "tools/list" -> handleToolsList(request)
-                "tools/call" -> handleToolsCall(request)
-                "resources/list" -> handleResourcesList(request)
-                else -> protocolHandler.createErrorResponse(
-                    id = request.id,
-                    code = -32601, // Method not found
-                    message = "Method not found: ${request.method}",
-                    data = null
-                )
-            }
-        } catch (e: Exception) {
-            protocolHandler.createErrorResponse(
-                id = request.id,
-                code = -32603, // Internal error
-                message = e.message ?: "Internal error",
-                data = null
-            )
-        }
-    }
-    
-    private fun handleNotificationRequest(request: JsonRpcRequest) {
-        // Handle notifications that don't require responses
-        when (request.method) {
-            "notifications/message" -> {
-                // Log notification but don't respond
-            }
-            // Add other notification handlers as needed
-        }
-    }
-    
-    private fun handleInitialize(request: JsonRpcRequest): JsonRpcResponse {
-        val result = buildJsonObject {
-            put("protocolVersion", "2024-11-05")
-            put("capabilities", buildJsonObject {
-                put("logging", buildJsonObject {})
-                put("prompts", buildJsonObject {
-                    put("listChanged", false)
-                })
-                put("resources", buildJsonObject {
-                    put("subscribe", false)
-                    put("listChanged", false)
-                })
-                put("tools", buildJsonObject {
-                    put("listChanged", false)
-                })
-            })
-            put("serverInfo", buildJsonObject {
-                put("name", "CycleTime MCP Server")
-                put("version", "1.0.0")
-            })
-        }
-        
-        return protocolHandler.createResponse(request.id, result)
-    }
-    
-    private fun handleToolsList(request: JsonRpcRequest): JsonRpcResponse {
-        val metadata = toolRegistry.getAllToolMetadata()
-        val tools = metadata.map { tool ->
-            buildJsonObject {
-                put("name", tool.name)
-                put("description", tool.description)
-                put("inputSchema", tool.parametersSchema)
-            }
-        }
-        
-        val result = buildJsonObject {
-            put("tools", JsonArray(tools))
-        }
-        
-        return protocolHandler.createResponse(request.id, result)
-    }
-    
-    private fun handleToolsCall(request: JsonRpcRequest): JsonRpcResponse {
-        try {
-            val params = request.params as? JsonObject
-                ?: return protocolHandler.createErrorResponse(
-                    request.id, -32602, "Invalid parameters", null
-                )
-            
-            val toolName = params["name"]?.jsonPrimitive?.content
-                ?: return protocolHandler.createErrorResponse(
-                    request.id, -32602, "Missing tool name", null
-                )
-            
-            val arguments = params["arguments"] ?: JsonObject(emptyMap())
-            
-            val result = toolRegistry.invoke(toolName, arguments)
-            
-            return result.fold(
-                onSuccess = { value ->
-                    val textValue = when {
-                        value is JsonPrimitive && value.isString -> value.content
-                        else -> value.toString().trim('"')
-                    }
-                    val responseData = buildJsonObject {
-                        put("content", buildJsonArray {
-                            add(buildJsonObject {
-                                put("type", "text")
-                                put("text", textValue)
-                            })
-                        })
-                    }
-                    protocolHandler.createResponse(request.id, responseData)
-                },
-                onFailure = { error ->
-                    protocolHandler.createErrorResponse(
-                        request.id, -32603, error.message ?: "Tool execution failed", null
-                    )
-                }
-            )
-        } catch (e: Exception) {
-            return protocolHandler.createErrorResponse(
-                request.id, -32603, e.message ?: "Internal error", null
-            )
-        }
-    }
-    
-    private suspend fun handleResourcesList(request: JsonRpcRequest): JsonRpcResponse {
-        return try {
-            val allResources = mutableListOf<JsonObject>()
-            
-            for (provider in resourceRegistry.getProviders()) {
-                val resources = provider.listResources()
-                for (resource in resources) {
-                    allResources.add(buildJsonObject {
-                        put("uri", resource.uri)
-                        put("name", resource.name)
-                        resource.description?.let { put("description", it) }
-                        put("mimeType", resource.mimeType)
-                    })
-                }
-            }
-            
-            val result = buildJsonObject {
-                put("resources", JsonArray(allResources))
-            }
-            
-            protocolHandler.createResponse(request.id, result)
-        } catch (e: Exception) {
-            protocolHandler.createErrorResponse(
-                request.id, -32603, e.message ?: "Failed to list resources", null
-            )
-        }
-    }
+    // Method handling is now delegated to the McpMethodHandler
 }
 
 /**
- * Factory function to create an McpServer instance
+ * Factory function to create an McpServer instance.
+ * 
+ * @param config the server configuration
+ * @return a new McpServer instance
+ * @throws IllegalArgumentException if the configuration is invalid
  */
 fun McpServer(config: McpServerConfig = McpServerConfig()): McpServer {
     return DefaultMcpServer(config)
