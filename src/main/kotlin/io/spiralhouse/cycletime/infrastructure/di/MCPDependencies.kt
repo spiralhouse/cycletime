@@ -58,7 +58,20 @@ object MCPDependencies {
             MCPIntegrationService(
                 methodHandler = resolve(),
                 protocolHandler = resolve(),
-                config = MCPServerConfig() // Uses environment variables by default
+                config = MCPServerConfig(), // Uses environment variables by default
+                resourceRegistry = resolve(),
+                toolRegistry = resolve(),
+                resourceProviders = listOf(
+                    resolve<ProjectResourceProvider>(),
+                    resolve<IssueResourceProvider>(),
+                    resolve<SessionResourceProvider>(),
+                    resolve<WorkflowResourceProvider>()
+                ),
+                toolProviders = listOf(
+                    resolve<ProjectToolProvider>(),
+                    resolve<IssueToolProvider>(),
+                    resolve<SessionToolProvider>()
+                )
             )
         }
         

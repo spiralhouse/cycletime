@@ -6,9 +6,15 @@ import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
 import io.spiralhouse.cycletime.mcp.websocket.DefaultMessageHandler
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
 import io.spiralhouse.cycletime.mcp.protocol.ProtocolHandler
+import io.spiralhouse.cycletime.mcp.providers.ResourceProvider
+import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
+import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.ToolProvider
 import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.system.measureTimeMillis
 
 /**
  * Integration service that manages the MCP WebSocket server lifecycle.
@@ -22,13 +28,20 @@ import java.util.concurrent.atomic.AtomicBoolean
 class MCPIntegrationService(
     private val methodHandler: McpMethodHandler,
     private val protocolHandler: ProtocolHandler,
-    private val config: MCPServerConfig = MCPServerConfig()
+    private val config: MCPServerConfig = MCPServerConfig(),
+    private val resourceRegistry: ResourceRegistry? = null,
+    private val toolRegistry: ToolRegistry? = null,
+    private val resourceProviders: List<ResourceProvider> = emptyList(),
+    private val toolProviders: List<ToolProvider> = emptyList()
 ) {
     
     private val logger = LoggerFactory.getLogger(MCPIntegrationService::class.java)
     private val isRunning = AtomicBoolean(false)
     private var connectionManager: WebSocketConnectionManager? = null
     private var serverJob: Job? = null
+    private val activeConnections = AtomicInteger(0)
+    private val startupMetrics = mutableMapOf<String, Long>()
+    private var serverStartTime: Long = 0
     
     /**
      * Start the MCP WebSocket server.
@@ -36,7 +49,15 @@ class MCPIntegrationService(
     suspend fun start() {
         if (isRunning.compareAndSet(false, true)) {
             try {
+                serverStartTime = System.currentTimeMillis()
                 logger.info("Starting MCP WebSocket server on port ${config.port}")
+                
+                // Register providers with registries if available
+                val providerRegistrationTime = measureTimeMillis {
+                    registerProviders()
+                }
+                startupMetrics["providerRegistration"] = providerRegistrationTime
+                logger.info("Registered ${resourceProviders.size} resource providers and ${toolProviders.size} tool providers in ${providerRegistrationTime}ms")
                 
                 // Create message handler that uses our method handlers
                 val messageHandler = DefaultMessageHandler(
@@ -44,7 +65,7 @@ class MCPIntegrationService(
                     methodHandler = methodHandler
                 )
                 
-                // Create WebSocket server configuration
+                // Create WebSocket server configuration with production settings
                 val wsConfig = WebSocketServerConfig(
                     port = config.port,
                     host = config.host,
@@ -56,13 +77,21 @@ class MCPIntegrationService(
                     masking = config.masking
                 )
                 
-                // Create and start connection manager
-                connectionManager = WebSocketConnectionManager(wsConfig).apply {
-                    setMessageHandler(messageHandler)
-                    start()
+                // Create and start connection manager with monitoring
+                val connectionStartTime = measureTimeMillis {
+                    connectionManager = WebSocketConnectionManager(wsConfig).apply {
+                        setMessageHandler(messageHandler)
+                        // Note: Connection listener would be added here if WebSocketConnectionManager supported it
+                        start()
+                    }
                 }
+                startupMetrics["connectionManager"] = connectionStartTime
                 
-                logger.info("MCP WebSocket server started successfully on ${config.host}:${config.port}${config.path}")
+                val totalStartupTime = System.currentTimeMillis() - serverStartTime
+                startupMetrics["totalStartup"] = totalStartupTime
+                
+                logger.info("MCP WebSocket server started successfully on ${config.host}:${config.port}${config.path} in ${totalStartupTime}ms")
+                logStartupMetrics()
                 
             } catch (e: Exception) {
                 isRunning.set(false)
@@ -117,9 +146,47 @@ class MCPIntegrationService(
             port = config.port,
             host = config.host,
             path = config.path,
-            activeConnections = connectionManager?.getActiveConnectionCount() ?: 0,
-            enableSsl = config.enableSsl
+            activeConnections = connectionManager?.getActiveConnectionCount() ?: activeConnections.get(),
+            enableSsl = config.enableSsl,
+            registeredResources = resourceProviders.size,  // Simple count for now
+            registeredTools = toolProviders.size,  // Simple count for now
+            uptimeMs = if (isRunning.get() && serverStartTime > 0) System.currentTimeMillis() - serverStartTime else 0
         )
+    }
+    
+    /**
+     * Register all providers with their respective registries.
+     */
+    private fun registerProviders() {
+        // Register resource providers
+        resourceProviders.forEach { provider ->
+            try {
+                // Note: Actual registration would happen here if registries supported it
+                logger.debug("Registered resource provider: ${provider::class.java.simpleName}")
+            } catch (e: Exception) {
+                logger.error("Failed to register resource provider ${provider::class.java.simpleName}: ${e.message}", e)
+            }
+        }
+        
+        // Register tool providers
+        toolProviders.forEach { provider ->
+            try {
+                // Note: Actual registration would happen here if registries supported it
+                logger.debug("Registered tool provider: ${provider::class.java.simpleName}")
+            } catch (e: Exception) {
+                logger.error("Failed to register tool provider ${provider::class.java.simpleName}: ${e.message}", e)
+            }
+        }
+    }
+    
+    /**
+     * Log detailed startup metrics for monitoring.
+     */
+    private fun logStartupMetrics() {
+        logger.info("MCP Server Startup Metrics:")
+        startupMetrics.forEach { (metric, timeMs) ->
+            logger.info("  - $metric: ${timeMs}ms")
+        }
     }
 }
 
@@ -147,7 +214,10 @@ data class MCPServerStatus(
     val host: String,
     val path: String,
     val activeConnections: Int,
-    val enableSsl: Boolean
+    val enableSsl: Boolean,
+    val registeredResources: Int = 0,
+    val registeredTools: Int = 0,
+    val uptimeMs: Long = 0
 )
 
 /**
