@@ -257,6 +257,10 @@ class McpServerTest : StringSpec({
             override suspend fun updateResource(uri: String, content: io.spiralhouse.cycletime.mcp.resources.ResourceContent) {
                 // No-op for test
             }
+            
+            override suspend fun readResource(uri: String): String {
+                return "test content"
+            }
         }
         
         server.registerResourceProvider(testResourceProvider)

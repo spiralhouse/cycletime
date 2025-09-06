@@ -19,6 +19,11 @@ interface ResourceProvider {
     suspend fun getResource(uri: String): Resource?
     suspend fun searchResources(query: String): List<Resource>
     suspend fun updateResource(uri: String, content: ResourceContent)
+    
+    /**
+     * Read the content of a resource by URI
+     */
+    suspend fun readResource(uri: String): String
 }
 
 /**
@@ -156,6 +161,25 @@ class TestResourceProvider(override val name: String) : ResourceProvider {
             globalNotificationCallbacks.values.forEach { callback ->
                 callback(notification)
             }
+        }
+    }
+    
+    override suspend fun readResource(uri: String): String {
+        if (!isRunning) {
+            if (explicitlyStarted) {
+                throw ProviderUnavailableException(name)
+            } else {
+                running = true
+            }
+        }
+        
+        val resource = testResources.find { it.uri == uri }
+            ?: throw io.spiralhouse.cycletime.mcp.resources.exceptions.ResourceNotFoundException(uri)
+            
+        return when (val content = resource.content) {
+            is ResourceContent.Text -> content.data
+            is ResourceContent.Binary -> content.data // return base64 as string
+            null -> ""
         }
     }
     

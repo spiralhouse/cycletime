@@ -59,6 +59,10 @@ class CachedResourceProvider(
         delegate.updateResource(uri, content)
     }
     
+    override suspend fun readResource(uri: String): String {
+        return delegate.readResource(uri)
+    }
+    
     /**
      * Determine TTL based on resource characteristics
      */

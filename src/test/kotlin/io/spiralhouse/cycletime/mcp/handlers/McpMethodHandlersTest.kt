@@ -45,6 +45,14 @@ class McpMethodHandlersTest : StringSpec({
         toolRegistry = DefaultToolRegistry()
         resourceRegistry = ResourceProviderRegistry()
         methodHandler = DefaultMcpMethodHandler(protocolHandler, toolRegistry, resourceRegistry)
+        
+        // Register test resource provider with expected resources
+        kotlinx.coroutines.runBlocking {
+            setupTestResourceProvider(resourceRegistry)
+        }
+        
+        // Register tools needed for specific tests
+        setupSpecialTestTools(toolRegistry)
     }
 
     // ===== INITIALIZE METHOD TESTS =====
@@ -139,7 +147,7 @@ class McpMethodHandlersTest : StringSpec({
     "should handle tools/list request and return available tools" {
         // First register some test tools
         val testTool = createTestTool(
-            name = "test_tool",
+            name = "test.tool",
             description = "A test tool for verification",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -172,7 +180,7 @@ class McpMethodHandlersTest : StringSpec({
         tools shouldHaveSize 1
 
         val tool = tools[0] as JsonObject
-        tool["name"]?.jsonPrimitive?.content shouldBe "test_tool"
+        tool["name"]?.jsonPrimitive?.content shouldBe "test.tool"
         tool["description"]?.jsonPrimitive?.content shouldBe "A test tool for verification"
         tool["inputSchema"] shouldNotBe null
     }
@@ -201,7 +209,7 @@ class McpMethodHandlersTest : StringSpec({
     "should handle tools/call request with valid parameters" {
         // Register a test tool
         val testTool = createTestTool(
-            name = "echo_tool",
+            name = "echo.tool",
             description = "Echoes input back",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -222,7 +230,7 @@ class McpMethodHandlersTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "echo_tool")
+                put("name", "echo.tool")
                 put("arguments", buildJsonObject {
                     put("message", "Hello, World!")
                 })
@@ -267,7 +275,7 @@ class McpMethodHandlersTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "non_existent_tool")
+                put("name", "non.existent.tool")
                 put("arguments", buildJsonObject {})
             },
             id = JsonPrimitive("tools-call-3")
@@ -284,7 +292,7 @@ class McpMethodHandlersTest : StringSpec({
     "should handle tools/call request with invalid arguments" {
         // Register a tool with strict parameter validation
         val strictTool = createTestTool(
-            name = "strict_tool",
+            name = "strict.tool",
             description = "Tool with strict parameter validation",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -306,7 +314,7 @@ class McpMethodHandlersTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "strict_tool")
+                put("name", "strict.tool")
                 put("arguments", buildJsonObject {
                     // Missing required parameter
                 })
@@ -353,6 +361,10 @@ class McpMethodHandlersTest : StringSpec({
     }
 
     "should handle resources/list request when no resources are available" {
+        // Create a new handler with empty resource registry for this test
+        val emptyResourceRegistry = ResourceProviderRegistry()
+        val emptyMethodHandler = DefaultMcpMethodHandler(protocolHandler, toolRegistry, emptyResourceRegistry)
+        
         val request = JsonRpcRequest(
             jsonrpc = "2.0",
             method = "resources/list",
@@ -360,7 +372,7 @@ class McpMethodHandlersTest : StringSpec({
             id = JsonPrimitive("resources-list-2")
         )
 
-        val response = methodHandler.handleRequest(request)
+        val response = emptyMethodHandler.handleRequest(request)
 
         // Should return empty resources array
         response.error shouldBe null
@@ -634,7 +646,7 @@ class McpMethodHandlersTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "failing_tool") // This tool would cause internal error
+                put("name", "failing.tool") // This tool would cause internal error
                 put("arguments", buildJsonObject {})
             },
             id = JsonPrimitive("internal-error-1")
@@ -669,7 +681,7 @@ class McpMethodHandlersTest : StringSpec({
     "should handle async tools/call requests with timeout" {
         // Register an async tool
         val asyncTool = createTestAsyncTool(
-            name = "slow_tool",
+            name = "slow.tool",
             description = "A slow async tool",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -693,7 +705,7 @@ class McpMethodHandlersTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "slow_tool")
+                put("name", "slow.tool")
                 put("arguments", buildJsonObject {
                     put("delay", 100)
                 })
@@ -720,7 +732,7 @@ class McpMethodHandlersTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "slow_tool")
+                put("name", "slow.tool")
                 put("arguments", buildJsonObject {
                     put("delay", 10000) // 10 second delay
                 })
@@ -778,4 +790,123 @@ private fun createTestAsyncTool(
             }
         }
     )
+}
+
+/**
+ * Setup test resource provider with expected test resources
+ */
+suspend fun setupTestResourceProvider(resourceRegistry: ResourceProviderRegistry) {
+    val testProvider = object : io.spiralhouse.cycletime.mcp.resources.ResourceProvider {
+        override val name = "test-provider"
+        override val isRunning = true
+        
+        override suspend fun start() {}
+        override suspend fun stop() {}
+        
+        override suspend fun listResources(
+            filter: io.spiralhouse.cycletime.mcp.resources.ResourceFilter?,
+            pagination: io.spiralhouse.cycletime.mcp.resources.ResourcePagination?
+        ): List<io.spiralhouse.cycletime.mcp.resources.Resource> {
+            return listOf(
+                io.spiralhouse.cycletime.mcp.resources.Resource(
+                    uri = "cycletime://projects/test",
+                    name = "Test Project",
+                    description = "A test project resource",
+                    mimeType = "application/json",
+                    content = io.spiralhouse.cycletime.mcp.resources.ResourceContent.Text("""{"project": "test"}""")
+                )
+            )
+        }
+        
+        override suspend fun getResource(uri: String): io.spiralhouse.cycletime.mcp.resources.Resource? {
+            // Return specific resources for different URIs as needed by different tests
+            return when (uri) {
+                "cycletime://projects/test" -> io.spiralhouse.cycletime.mcp.resources.Resource(
+                    uri = "cycletime://projects/test",
+                    name = "Test Project",
+                    description = "A test project resource",
+                    mimeType = "application/json",
+                    content = io.spiralhouse.cycletime.mcp.resources.ResourceContent.Text("""{"project": "test"}""")
+                )
+                "cycletime://data/sample.json" -> io.spiralhouse.cycletime.mcp.resources.Resource(
+                    uri = "cycletime://data/sample.json",
+                    name = "Sample Data",
+                    description = "Sample JSON data",
+                    mimeType = "application/json",
+                    content = io.spiralhouse.cycletime.mcp.resources.ResourceContent.Text("""{"message": "Hello from resource"}""")
+                )
+                "cycletime://live/data" -> io.spiralhouse.cycletime.mcp.resources.Resource(
+                    uri = "cycletime://live/data",
+                    name = "Live Data",
+                    description = "Live data stream",
+                    mimeType = "application/json",
+                    content = io.spiralhouse.cycletime.mcp.resources.ResourceContent.Text("""{"live": true}""")
+                )
+                else -> null
+            }
+        }
+        
+        override suspend fun readResource(uri: String): String {
+            val resource = getResource(uri) ?: throw io.spiralhouse.cycletime.mcp.resources.exceptions.ResourceNotFoundException(uri)
+            return when (val content = resource.content) {
+                is io.spiralhouse.cycletime.mcp.resources.ResourceContent.Text -> content.data
+                is io.spiralhouse.cycletime.mcp.resources.ResourceContent.Binary -> content.data
+                null -> ""
+            }
+        }
+        
+        override suspend fun searchResources(query: String): List<io.spiralhouse.cycletime.mcp.resources.Resource> {
+            return listResources().filter { 
+                it.name.contains(query, ignoreCase = true) ||
+                it.description?.contains(query, ignoreCase = true) == true
+            }
+        }
+        
+        override suspend fun updateResource(uri: String, content: io.spiralhouse.cycletime.mcp.resources.ResourceContent) {
+            // Test implementation - do nothing for now
+        }
+    }
+    
+    resourceRegistry.register(testProvider)
+}
+
+/**
+ * Setup special test tools for specific test cases (failing, slow async, etc.)
+ */
+fun setupSpecialTestTools(toolRegistry: DefaultToolRegistry) {
+    // Tool that always fails with an internal error
+    val failingTool = createTestTool(
+        name = "failing.tool",
+        description = "A tool that always fails",
+        parametersSchema = buildJsonObject {
+            put("type", "object")
+            put("properties", buildJsonObject {})
+        },
+        implementation = { _ ->
+            throw RuntimeException("Tool execution failed")
+        }
+    )
+    toolRegistry.register(failingTool)
+    
+    // Async tool that can be used for timeout testing
+    val slowAsyncTool = createTestAsyncTool(
+        name = "slow.tool",
+        description = "A slow async tool",
+        parametersSchema = buildJsonObject {
+            put("type", "object")
+            put("properties", buildJsonObject {
+                put("delay", buildJsonObject {
+                    put("type", "integer")
+                    put("minimum", 0)
+                    put("description", "Delay in milliseconds")
+                })
+            })
+        },
+        asyncImplementation = { params ->
+            val delay = (params as JsonObject)["delay"]?.jsonPrimitive?.longOrNull ?: 1000L
+            kotlinx.coroutines.delay(delay)
+            JsonPrimitive("Async result after ${delay}ms delay")
+        }
+    )
+    toolRegistry.register(slowAsyncTool)
 }
