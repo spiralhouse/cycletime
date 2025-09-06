@@ -120,7 +120,8 @@ class WebSocketConnectionManagerTest : StringSpec({
         connections.size shouldBe 0 // No connections initially
     }
 
-    "should implement connection timeout with configurable duration".config(enabled = false) { // SPI-585: Enhance WebSocket Connection Management
+    "should implement connection timeout with configurable duration"
+        .config(enabled = false) { // SPI-585: Enhance WebSocket Connection Management
         val config = WebSocketServerConfig(
             port = 3004,
             connectionTimeout = Duration.ofSeconds(1)
@@ -144,7 +145,8 @@ class WebSocketConnectionManagerTest : StringSpec({
         manager.stop()
     }
 
-    "should close connection when pong not received within timeout".config(enabled = false) { // SPI-585: Enhance WebSocket Connection Management
+    "should close connection when pong not received within timeout"
+        .config(enabled = false) { // SPI-585: Enhance WebSocket Connection Management
         val config = WebSocketServerConfig(
             port = 3006,
             heartbeatInterval = Duration.ofMillis(200),

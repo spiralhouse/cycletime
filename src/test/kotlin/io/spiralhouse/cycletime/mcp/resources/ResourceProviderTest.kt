@@ -573,7 +573,8 @@ class ResourceProviderTest : DescribeSpec({
             provider = TestResourceProvider("error-provider")
         }
         
-        xit("should throw ResourceNotFoundException for missing resources") { // SPI-581: Enhance MCP Resource Handler Error Scenarios
+        xit("should throw ResourceNotFoundException for missing resources")
+            { // SPI-581: Enhance MCP Resource Handler Error Scenarios
             shouldThrow<ResourceNotFoundException> {
                 runBlocking {
                     provider.getResource("nonexistent://resource/path")
@@ -582,7 +583,8 @@ class ResourceProviderTest : DescribeSpec({
             }
         }
         
-        xit("should throw ProviderUnavailableException when provider is stopped") { // SPI-581: Enhance MCP Resource Handler Error Scenarios
+        xit("should throw ProviderUnavailableException when provider is stopped")
+            { // SPI-581: Enhance MCP Resource Handler Error Scenarios
             runBlocking { provider.stop() }
             
             shouldThrow<ProviderUnavailableException> {
@@ -590,7 +592,8 @@ class ResourceProviderTest : DescribeSpec({
             }
         }
         
-        xit("should throw SubscriptionLimitExceededException for too many subscriptions") { // SPI-581: Enhance MCP Resource Handler Error Scenarios
+        xit("should throw SubscriptionLimitExceededException for too many subscriptions")
+            { // SPI-581: Enhance MCP Resource Handler Error Scenarios
             val subscriptionManager = ResourceSubscriptionManager(maxSubscriptionsPerClient = 2)
             val subscriber = TestSubscriber("greedy-client")
             
@@ -606,7 +609,8 @@ class ResourceProviderTest : DescribeSpec({
             }
         }
         
-        xit("should handle invalid URI format errors") { // SPI-581: Enhance MCP Resource Handler Error Scenarios
+        xit("should handle invalid URI format errors")
+            { // SPI-581: Enhance MCP Resource Handler Error Scenarios
             shouldThrow<InvalidResourceUriException> {
                 Resource(
                     uri = "not-a-valid-uri-format-missing-scheme",
@@ -616,7 +620,8 @@ class ResourceProviderTest : DescribeSpec({
             }
         }
         
-        xit("should handle content encoding errors for binary resources") { // SPI-581: Enhance MCP Resource Handler Error Scenarios
+        xit("should handle content encoding errors for binary resources")
+            { // SPI-581: Enhance MCP Resource Handler Error Scenarios
             shouldThrow<ContentEncodingException> {
                 Resource(
                     uri = "file://binary/image.png",
@@ -635,7 +640,8 @@ class ResourceProviderTest : DescribeSpec({
             rpcHandler = ResourceRpcHandler()
         }
         
-        xit("should handle resources/list JSON-RPC method") { // SPI-581: Enhance MCP Resource Handler Error Scenarios
+        xit("should handle resources/list JSON-RPC method")
+            { // SPI-581: Enhance MCP Resource Handler Error Scenarios
             val request = JsonObject(mapOf(
                 "jsonrpc" to JsonPrimitive("2.0"),
                 "method" to JsonPrimitive("resources/list"),
@@ -656,7 +662,8 @@ class ResourceProviderTest : DescribeSpec({
             result["resources"]!!.jsonArray shouldHaveSize 4
         }
         
-        xit("should handle resources/read JSON-RPC method") { // SPI-581: Enhance MCP Resource Handler Error Scenarios
+        xit("should handle resources/read JSON-RPC method")
+            { // SPI-581: Enhance MCP Resource Handler Error Scenarios
             val request = JsonObject(mapOf(
                 "jsonrpc" to JsonPrimitive("2.0"),
                 "method" to JsonPrimitive("resources/read"),

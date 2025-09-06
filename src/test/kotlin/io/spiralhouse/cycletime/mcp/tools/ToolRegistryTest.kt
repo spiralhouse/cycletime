@@ -447,7 +447,8 @@ class ToolRegistryTest : DescribeSpec({
                 registry.register(createComplexValidationTool())
             }
 
-            xit("should validate required parameters") { // SPI-582: Enhance MCP Tool Parameter Validation
+            xit("should validate required parameters")
+                { // SPI-582: Enhance MCP Tool Parameter Validation
                 val missingRequired = buildJsonObject {
                     put("optional_field", "test")
                     // Missing required "name" field
@@ -460,7 +461,8 @@ class ToolRegistryTest : DescribeSpec({
                 error.message shouldContain "name"
             }
 
-            xit("should validate parameter types") { // SPI-582: Enhance MCP Tool Parameter Validation
+            xit("should validate parameter types")
+                { // SPI-582: Enhance MCP Tool Parameter Validation
                 val wrongType = buildJsonObject {
                     put("name", 123) // Should be string
                     put("age", "twenty") // Should be number
@@ -473,7 +475,8 @@ class ToolRegistryTest : DescribeSpec({
                 error.validationErrors shouldHaveSize 3
             }
 
-            xit("should validate string constraints") { // SPI-582: Enhance MCP Tool Parameter Validation
+            xit("should validate string constraints")
+                { // SPI-582: Enhance MCP Tool Parameter Validation
                 val invalidString = buildJsonObject {
                     put("name", "xy") // Too short (minLength: 3)
                     put("age", 25)

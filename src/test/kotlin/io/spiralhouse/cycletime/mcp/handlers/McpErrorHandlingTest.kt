@@ -45,7 +45,8 @@ class McpErrorHandlingTest : StringSpec({
 
     // ===== STANDARD JSON-RPC ERROR CODES =====
 
-    "should return parse error (-32700) for malformed JSON-RPC requests".config(enabled = false) { // SPI-583: Enhance MCP Protocol Error Handling
+    "should return parse error (-32700) for malformed JSON-RPC requests"
+        .config(enabled = false) { // SPI-583: Enhance MCP Protocol Error Handling
         // This test would typically be handled at the protocol level,
         // but we test the handler's response to such errors
         val request = JsonRpcRequest(
@@ -63,7 +64,8 @@ class McpErrorHandlingTest : StringSpec({
         response.id shouldBe JsonPrimitive("parse-error-test")
     }
 
-    "should return invalid request error (-32600) for malformed MCP requests".config(enabled = false) { // SPI-583: Enhance MCP Protocol Error Handling
+    "should return invalid request error (-32600) for malformed MCP requests"
+        .config(enabled = false) { // SPI-583: Enhance MCP Protocol Error Handling
         val request = JsonRpcRequest(
             jsonrpc = "2.0",
             method = "initialize",
@@ -79,7 +81,8 @@ class McpErrorHandlingTest : StringSpec({
         response.id shouldBe JsonPrimitive("invalid-request-test")
     }
 
-    "should return method not found error (-32601) for unsupported methods".config(enabled = false) { // SPI-583: Enhance MCP Protocol Error Handling
+    "should return method not found error (-32601) for unsupported methods"
+        .config(enabled = false) { // SPI-583: Enhance MCP Protocol Error Handling
         val request = JsonRpcRequest(
             jsonrpc = "2.0",
             method = "unsupported/method",
@@ -142,7 +145,8 @@ class McpErrorHandlingTest : StringSpec({
         }
     }
 
-    "should return internal error (-32603) for unexpected server failures".config(enabled = false) { // SPI-583: Enhance MCP Protocol Error Handling
+    "should return internal error (-32603) for unexpected server failures"
+        .config(enabled = false) { // SPI-583: Enhance MCP Protocol Error Handling
         // This would require mocking internal failures or creating a scenario
         // where the handler throws an unexpected exception
         val request = JsonRpcRequest(
