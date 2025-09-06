@@ -17,20 +17,7 @@ This document outlines the comprehensive testing architecture for CycleTime, emp
 
 ### 2. Testing Pyramid
 
-```
-         /\
-        /  \  System Tests (5%)
-       /    \   - End-to-end workflows
-      /------\   - Production scenarios
-     /        \
-    /  Integr. \ Integration Tests (25%)
-   /   Tests    \  - Real components
-  /--------------\  - Database operations
- /                \
-/   Unit Tests     \ Unit Tests (70%)
---------------------  - Business logic
-                      - Fast, isolated
-```
+![Test Pyramid Architecture](./testing-pyramid.svg)
 
 ### 3. Test Isolation Principles
 
