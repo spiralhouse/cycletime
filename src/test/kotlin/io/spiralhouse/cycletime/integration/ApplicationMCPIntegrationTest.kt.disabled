@@ -1,0 +1,365 @@
+package io.spiralhouse.cycletime.integration
+
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.timing.eventually
+import io.kotest.common.ExperimentalKotest
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.server.testing.*
+import io.ktor.server.plugins.di.*
+import io.spiralhouse.cycletime.module
+import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
+import io.spiralhouse.cycletime.mcp.integration.MCPServerConfig
+import kotlinx.coroutines.delay
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlin.time.Duration.Companion.seconds
+
+/**
+ * Integration tests for MCP WebSocket server integration into Application.kt startup flow.
+ * 
+ * EXPECTATION: ALL TESTS SHOULD FAIL INITIALLY (RED Phase)
+ * These tests define the expected behavior for:
+ * 1. Application startup with MCP server enabled/disabled
+ * 2. Port management between REST (8080) and MCP (3006) servers  
+ * 3. Graceful shutdown with both servers running
+ * 4. Health endpoint reporting MCP server status
+ * 5. Environment variable configuration
+ * 6. DI container registration of MCP components
+ */
+@OptIn(ExperimentalKotest::class)
+class ApplicationMCPIntegrationTest : StringSpec({
+
+    "should start application with MCP server enabled by default" {
+        testApplication {
+            application {
+                module() // This will fail - module() doesn't start MCP server yet
+            }
+
+            // Verify REST server is running on port 8080 (default in test)
+            val healthResponse = client.get("/health")
+            healthResponse.status shouldBe HttpStatusCode.OK
+
+            // Verify MCP integration service is registered in DI
+            val mcpService: MCPIntegrationService by application.dependencies
+            mcpService shouldNotBe null
+            mcpService.isRunning() shouldBe true // Will fail - MCP not started by module()
+        }
+    }
+
+    "should include MCP server status in health endpoint" {
+        testApplication {
+            application {
+                module()
+            }
+
+            val healthResponse = client.get("/health")
+            healthResponse.status shouldBe HttpStatusCode.OK
+
+            val healthJson = Json.parseToJsonElement(healthResponse.bodyAsText())
+            val dependencies = healthJson.jsonObject["dependencies"]?.jsonObject
+            
+            // Health endpoint should include MCP server status
+            dependencies?.get("mcpServer")?.jsonPrimitive?.content shouldBe "running"
+            
+            val metrics = healthJson.jsonObject["metrics"]?.jsonObject
+            metrics?.get("mcpConnections")?.jsonPrimitive?.content shouldBe "0"
+            metrics?.get("mcpPort")?.jsonPrimitive?.content shouldBe "3006"
+        }
+    }
+
+    "should start application with MCP server disabled via environment variable" {
+        testApplication {
+            environment {
+                config {
+                    put("mcp.enabled", "false")
+                }
+            }
+            application {
+                module() // Should not start MCP when disabled
+            }
+
+            // REST server should still work
+            val healthResponse = client.get("/health")
+            healthResponse.status shouldBe HttpStatusCode.OK
+
+            // MCP service should exist but not be running
+            val mcpService: MCPIntegrationService by application.dependencies
+            mcpService shouldNotBe null
+            mcpService.isRunning() shouldBe false
+
+            val healthJson = Json.parseToJsonElement(healthResponse.bodyAsText())
+            val dependencies = healthJson.jsonObject["dependencies"]?.jsonObject
+            dependencies?.get("mcpServer")?.jsonPrimitive?.content shouldBe "disabled"
+        }
+    }
+
+    "should handle MCP_PORT environment variable override" {
+        testApplication {
+            environment {
+                config {
+                    put("mcp.port", "4001")
+                }
+            }
+            application {
+                module()
+            }
+
+            val mcpService: MCPIntegrationService by application.dependencies
+            val status = mcpService.getStatus()
+            status.port shouldBe 4001 // Will fail - environment config not implemented
+
+            val healthResponse = client.get("/health")
+            val healthJson = Json.parseToJsonElement(healthResponse.bodyAsText())
+            val metrics = healthJson.jsonObject["metrics"]?.jsonObject
+            metrics?.get("mcpPort")?.jsonPrimitive?.content shouldBe "4001"
+        }
+    }
+
+    "should handle MCP_HOST environment variable override" {
+        testApplication {
+            environment {
+                config {
+                    put("mcp.host", "127.0.0.1")
+                }
+            }
+            application {
+                module()
+            }
+
+            val mcpService: MCPIntegrationService by application.dependencies
+            val status = mcpService.getStatus()
+            status.host shouldBe "127.0.0.1" // Will fail - environment config not implemented
+        }
+    }
+
+    "should start MCP server on different port than REST server" {
+        testApplication {
+            // Default test application runs on a random port
+            // MCP should run on 3006 (default) or configured port
+            application {
+                module()
+            }
+
+            val healthResponse = client.get("/health")
+            healthResponse.status shouldBe HttpStatusCode.OK
+
+            val mcpService: MCPIntegrationService by application.dependencies
+            val status = mcpService.getStatus()
+            status.isRunning shouldBe true
+            status.port shouldBe 3006 // MCP port should be different from REST port
+
+            // Verify no port conflict between REST and MCP servers
+            status.port shouldNotBe 8080 // Common REST port
+        }
+    }
+
+    "should handle MCP server startup failure gracefully" {
+        testApplication {
+            environment {
+                // Set invalid configuration that should cause startup failure
+                config {
+                    put("mcp.port", "-1") // Invalid port
+                }
+            }
+            application {
+                // Application should still start even if MCP fails
+                module() // Will fail - error handling for invalid MCP config not implemented
+            }
+
+            // REST server should still work
+            val healthResponse = client.get("/health")
+            healthResponse.status shouldBe HttpStatusCode.OK
+
+            // Health should indicate MCP server failed to start
+            val healthJson = Json.parseToJsonElement(healthResponse.bodyAsText())
+            val dependencies = healthJson.jsonObject["dependencies"]?.jsonObject
+            dependencies?.get("mcpServer")?.jsonPrimitive?.content shouldBe "failed"
+        }
+    }
+
+    "should register all MCP components in DI container" {
+        testApplication {
+            application {
+                module()
+            }
+
+            // All MCP components should be registered and resolvable
+            val mcpService: MCPIntegrationService by application.dependencies
+            mcpService shouldNotBe null
+
+            // These will fail - components not registered in DI yet
+            val mcpConfig: MCPServerConfig by application.dependencies
+            mcpConfig shouldNotBe null
+            mcpConfig.port shouldBe 3006
+
+            // Verify singleton behavior
+            val mcpService2: MCPIntegrationService by application.dependencies
+            mcpService shouldBe mcpService2 // Same instance
+        }
+    }
+
+    "should support graceful shutdown of both REST and MCP servers" {
+        testApplication {
+            application {
+                module()
+            }
+
+            val healthResponse = client.get("/health")
+            healthResponse.status shouldBe HttpStatusCode.OK
+
+            val mcpService: MCPIntegrationService by application.dependencies
+            mcpService.isRunning() shouldBe true
+
+            // Application shutdown should stop MCP server
+            // This is tested by testApplication cleanup
+            // Will fail - shutdown hook for MCP not implemented in module()
+        }
+    }
+
+    "should handle MCP SSL configuration from environment" {
+        testApplication {
+            environment {
+                config {
+                    put("mcp.ssl", "true")
+                }
+            }
+            application {
+                module()
+            }
+
+            val mcpService: MCPIntegrationService by application.dependencies
+            val status = mcpService.getStatus()
+            status.enableSsl shouldBe true // Will fail - SSL config not implemented
+
+            val healthResponse = client.get("/health")
+            val healthJson = Json.parseToJsonElement(healthResponse.bodyAsText())
+            val metrics = healthJson.jsonObject["metrics"]?.jsonObject
+            metrics?.get("mcpSsl")?.jsonPrimitive?.content shouldBe "true"
+        }
+    }
+
+    "should handle MCP WebSocket path configuration" {
+        testApplication {
+            environment {
+                config {
+                    put("mcp.path", "/websocket/mcp")
+                }
+            }
+            application {
+                module()
+            }
+
+            val mcpService: MCPIntegrationService by application.dependencies
+            val status = mcpService.getStatus()
+            status.path shouldBe "/websocket/mcp" // Will fail - path config not implemented
+
+            val healthResponse = client.get("/health")
+            val healthJson = Json.parseToJsonElement(healthResponse.bodyAsText())
+            val metrics = healthJson.jsonObject["metrics"]?.jsonObject
+            metrics?.get("mcpPath")?.jsonPrimitive?.content shouldBe "/websocket/mcp"
+        }
+    }
+
+    "should report MCP server performance metrics in health check" {
+        testApplication {
+            application {
+                module()
+            }
+
+            val healthResponse = client.get("/health")
+            healthResponse.status shouldBe HttpStatusCode.OK
+
+            val healthJson = Json.parseToJsonElement(healthResponse.bodyAsText())
+            val metrics = healthJson.jsonObject["metrics"]?.jsonObject
+            
+            // These will fail - metrics not implemented in health endpoint yet
+            metrics?.get("mcpConnections") shouldNotBe null
+            metrics?.get("mcpPort") shouldNotBe null
+            metrics?.get("mcpUptime") shouldNotBe null
+            metrics?.get("mcpStatus") shouldNotBe null
+        }
+    }
+
+    "should handle rapid application restart with MCP server" {
+        // Test for resource cleanup issues
+        repeat(3) {
+            testApplication {
+                application {
+                    module()
+                }
+
+                val healthResponse = client.get("/health")
+                healthResponse.status shouldBe HttpStatusCode.OK
+
+                val mcpService: MCPIntegrationService by application.dependencies
+                mcpService.isRunning() shouldBe true
+                
+                // Each iteration should cleanly start and stop
+                // Will fail if cleanup is not properly implemented
+            }
+        }
+    }
+
+    "should detect and handle MCP port conflicts with REST server" {
+        testApplication {
+            environment {
+                // Try to configure MCP on same port as REST server (will conflict in real scenario)
+                config {
+                    put("mcp.port", "8080") // Same as typical REST port
+                }
+            }
+            application {
+                // Application should detect this conflict and either:
+                // 1. Fail with meaningful error, or
+                // 2. Auto-select different port for MCP
+                module() // Will fail - port conflict detection not implemented
+            }
+
+            val healthResponse = client.get("/health")
+            // Application should still be accessible even with MCP port conflict
+            healthResponse.status shouldBe HttpStatusCode.OK
+
+            val healthJson = Json.parseToJsonElement(healthResponse.bodyAsText())
+            val dependencies = healthJson.jsonObject["dependencies"]?.jsonObject
+            
+            // MCP should either be disabled or running on different port
+            val mcpStatus = dependencies?.get("mcpServer")?.jsonPrimitive?.content
+            mcpStatus shouldNotBe "failed"
+        }
+    }
+
+    "should validate MCP configuration during application startup" {
+        testApplication {
+            environment {
+                // Invalid MCP configuration
+                config {
+                    put("mcp.timeout", "-1000") // Invalid negative timeout
+                    put("mcp.maxFrameSize", "0") // Invalid frame size
+                }
+            }
+            application {
+                // Should validate config and either fix or fail gracefully
+                module() // Will fail - configuration validation not implemented
+            }
+
+            val healthResponse = client.get("/health")
+            healthResponse.status shouldBe HttpStatusCode.OK
+
+            // Check that validation caught the issues
+            val healthJson = Json.parseToJsonElement(healthResponse.bodyAsText())
+            val dependencies = healthJson.jsonObject["dependencies"]?.jsonObject
+            val mcpStatus = dependencies?.get("mcpServer")?.jsonPrimitive?.content
+            
+            // Should either be corrected or failed with proper error
+            (mcpStatus == "running" || mcpStatus == "failed") shouldBe true
+        }
+    }
+})
