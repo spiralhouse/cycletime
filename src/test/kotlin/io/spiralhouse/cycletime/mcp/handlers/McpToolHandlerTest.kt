@@ -66,7 +66,7 @@ class McpToolHandlerTest : StringSpec({
     "should list all registered tools with complete metadata" {
         // Register tools with different parameter schemas
         val simpleTool = createTestTool(
-            name = "simple_tool",
+            name = "simple.tool",
             description = "A simple tool for testing",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -81,7 +81,7 @@ class McpToolHandlerTest : StringSpec({
         )
 
         val complexTool = createTestTool(
-            name = "complex_tool",
+            name = "complex.tool",
             description = "A complex tool with multiple parameters",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -171,7 +171,7 @@ class McpToolHandlerTest : StringSpec({
         // Register a tool that will cause errors during metadata retrieval
         val problematicTool = createProblematicTool("problematic_tool")
         val workingTool = createTestTool(
-            name = "working_tool",
+            name = "working.tool",
             description = "A working tool",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -208,7 +208,7 @@ class McpToolHandlerTest : StringSpec({
 
     "should execute tool with valid parameters and return formatted result" {
         val echoTool = createTestTool(
-            name = "echo_tool",
+            name = "echo.tool",
             description = "Echoes input with prefix",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -239,7 +239,7 @@ class McpToolHandlerTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "echo_tool")
+                put("name", "echo.tool")
                 put("arguments", buildJsonObject {
                     put("message", "Hello, MCP!")
                     put("prefix", "Response:")
@@ -264,7 +264,7 @@ class McpToolHandlerTest : StringSpec({
 
     "should validate required parameters are present" {
         val strictTool = createTestTool(
-            name = "strict_tool",
+            name = "strict.tool",
             description = "Tool with strict parameter requirements",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -288,7 +288,7 @@ class McpToolHandlerTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "strict_tool")
+                put("name", "strict.tool")
                 put("arguments", buildJsonObject {
                     put("optional_param", "I'm here")
                     // Missing required_param
@@ -307,7 +307,7 @@ class McpToolHandlerTest : StringSpec({
 
     "should validate parameter types according to schema" {
         val typedTool = createTestTool(
-            name = "typed_tool",
+            name = "typed.tool",
             description = "Tool with typed parameters",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -341,7 +341,7 @@ class McpToolHandlerTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "typed_tool")
+                put("name", "typed.tool")
                 put("arguments", buildJsonObject {
                     put("number_param", "not_a_number")
                     put("boolean_param", true)
@@ -361,7 +361,7 @@ class McpToolHandlerTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "typed_tool")
+                put("name", "typed.tool")
                 put("arguments", buildJsonObject {
                     put("number_param", 150) // > maximum of 100
                     put("boolean_param", true)
@@ -382,7 +382,7 @@ class McpToolHandlerTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "nonexistent_tool")
+                put("name", "nonexistent.tool")
                 put("arguments", buildJsonObject {})
             },
             id = JsonPrimitive("tool-not-found")
@@ -398,7 +398,7 @@ class McpToolHandlerTest : StringSpec({
 
     "should handle tool execution errors gracefully" {
         val failingTool = createTestTool(
-            name = "failing_tool",
+            name = "failing.tool",
             description = "A tool that always fails",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -415,7 +415,7 @@ class McpToolHandlerTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "failing_tool")
+                put("name", "failing.tool")
                 put("arguments", buildJsonObject {})
             },
             id = JsonPrimitive("tool-execution-failure")
@@ -435,7 +435,7 @@ class McpToolHandlerTest : StringSpec({
 
     "should handle different result types and format them correctly" {
         val multiTypeTool = createTestTool(
-            name = "multi_type_tool",
+            name = "multi.type.tool",
             description = "Tool that returns different result types",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -482,7 +482,7 @@ class McpToolHandlerTest : StringSpec({
                 jsonrpc = "2.0",
                 method = "tools/call",
                 params = buildJsonObject {
-                    put("name", "multi_type_tool")
+                    put("name", "multi.type.tool")
                     put("arguments", buildJsonObject {
                         put("result_type", resultType)
                     })
@@ -509,7 +509,7 @@ class McpToolHandlerTest : StringSpec({
 
     "should execute async tool with timeout handling" {
         val asyncTool = createTestAsyncTool(
-            name = "async_tool",
+            name = "async.tool",
             description = "An asynchronous tool",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -536,7 +536,7 @@ class McpToolHandlerTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "async_tool")
+                put("name", "async.tool")
                 put("arguments", buildJsonObject {
                     put("delay", 200)
                 })
@@ -558,7 +558,7 @@ class McpToolHandlerTest : StringSpec({
 
     "should handle async tool timeout errors" {
         val slowAsyncTool = createTestAsyncTool(
-            name = "slow_async_tool",
+            name = "slow.async.tool",
             description = "A slow asynchronous tool",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -576,7 +576,7 @@ class McpToolHandlerTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "slow_async_tool")
+                put("name", "slow.async.tool")
                 put("arguments", buildJsonObject {})
                 put("timeout", 1000) // 1 second timeout
             },
@@ -592,7 +592,7 @@ class McpToolHandlerTest : StringSpec({
 
     "should reject async tools called synchronously" {
         val asyncOnlyTool = createTestAsyncTool(
-            name = "async_only_tool",
+            name = "async.only.tool",
             description = "A tool that only supports async execution",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -609,7 +609,7 @@ class McpToolHandlerTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "async_only_tool")
+                put("name", "async.only.tool")
                 put("arguments", buildJsonObject {})
                 // No timeout specified - should be treated as sync call
             },
@@ -652,7 +652,7 @@ class McpToolHandlerTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "test_tool")
+                put("name", "test.tool")
                 put("arguments", "invalid_arguments_format") // Should be object
             },
             id = JsonPrimitive("malformed-arguments")
@@ -667,7 +667,7 @@ class McpToolHandlerTest : StringSpec({
 
     "should provide default empty arguments when missing" {
         val noArgsTool = createTestTool(
-            name = "no_args_tool",
+            name = "no.args.tool",
             description = "Tool that accepts no arguments",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -684,7 +684,7 @@ class McpToolHandlerTest : StringSpec({
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "no_args_tool")
+                put("name", "no.args.tool")
                 // Missing arguments - should default to empty object
             },
             id = JsonPrimitive("missing-arguments")
@@ -701,7 +701,7 @@ class McpToolHandlerTest : StringSpec({
 
     "should handle concurrent tool executions safely" {
         val concurrentTool = createTestTool(
-            name = "concurrent_tool",
+            name = "concurrent.tool",
             description = "Tool for concurrent testing",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -725,7 +725,7 @@ class McpToolHandlerTest : StringSpec({
                 jsonrpc = "2.0",
                 method = "tools/call",
                 params = buildJsonObject {
-                    put("name", "concurrent_tool")
+                    put("name", "concurrent.tool")
                     put("arguments", buildJsonObject {
                         put("id", "request-$i")
                     })

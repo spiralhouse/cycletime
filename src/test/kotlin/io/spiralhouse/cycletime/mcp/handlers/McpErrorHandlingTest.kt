@@ -226,14 +226,14 @@ class McpErrorHandlingTest : StringSpec({
     }
 
     "should return tool execution error (-32004) for tool runtime failures" {
-        val failingTool = createFailingTool("failing_tool")
+        val failingTool = createFailingTool("failing.tool")
         toolRegistry.register(failingTool)
 
         val request = JsonRpcRequest(
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "failing_tool")
+                put("name", "failing.tool")
                 put("arguments", buildJsonObject {})
             },
             id = JsonPrimitive("tool-execution-error")
@@ -253,14 +253,14 @@ class McpErrorHandlingTest : StringSpec({
     }
 
     "should return tool timeout error (-32005) for async tool timeouts" {
-        val slowTool = createSlowAsyncTool("slow_tool")
+        val slowTool = createSlowAsyncTool("slow.tool")
         toolRegistry.register(slowTool)
 
         val request = JsonRpcRequest(
             jsonrpc = "2.0",
             method = "tools/call",
             params = buildJsonObject {
-                put("name", "slow_tool")
+                put("name", "slow.tool")
                 put("arguments", buildJsonObject {})
                 put("timeout", 100) // Very short timeout
             },
@@ -340,7 +340,7 @@ class McpErrorHandlingTest : StringSpec({
                 jsonrpc = "2.0",
                 method = "tools/call", 
                 params = buildJsonObject {
-                    put("name", "debug_tool")
+                    put("name", "debug.tool")
                     put("arguments", buildJsonObject {})
                 },
                 id = JsonPrimitive("debug-1")
@@ -357,7 +357,7 @@ class McpErrorHandlingTest : StringSpec({
         )
 
         // Register a tool that will fail for debugging
-        val debugTool = createFailingTool("debug_tool")
+        val debugTool = createFailingTool("debug.tool")
         toolRegistry.register(debugTool)
 
         debugScenarios.forEach { request ->

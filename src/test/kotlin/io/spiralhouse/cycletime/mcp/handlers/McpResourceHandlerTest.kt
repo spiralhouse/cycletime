@@ -9,8 +9,9 @@ import io.spiralhouse.cycletime.mcp.protocol.*
 import io.spiralhouse.cycletime.mcp.server.handlers.DefaultMcpMethodHandler
 import io.spiralhouse.cycletime.mcp.tools.DefaultToolRegistry
 import io.spiralhouse.cycletime.mcp.resources.ResourceProviderRegistry
-// Note: Imports removed to avoid compilation errors in RED phase
+import io.spiralhouse.cycletime.mcp.resources.*
 import kotlinx.serialization.json.*
+import kotlinx.coroutines.runBlocking
 
 /**
  * RED Phase TDD Tests for MCP Resource Handler - SPI-572
@@ -40,6 +41,11 @@ class McpResourceHandlerTest : StringSpec({
         toolRegistry = DefaultToolRegistry()
         resourceRegistry = ResourceProviderRegistry()
         methodHandler = DefaultMcpMethodHandler(protocolHandler, toolRegistry, resourceRegistry)
+        
+        // Setup test resource providers
+        runBlocking {
+            setupTestResources(resourceRegistry)
+        }
     }
 
     // ===== RESOURCES/LIST METHOD TESTS =====
@@ -497,7 +503,157 @@ class McpResourceHandlerTest : StringSpec({
 })
 
 // ===== TEST HELPER FUNCTIONS =====
-// Note: All helper functions removed to avoid compilation errors in RED phase
 
-// Note: Resource provider implementation removed to avoid compilation errors in RED phase
+private suspend fun setupTestResources(registry: ResourceProviderRegistry) {
+    // Create a custom test provider with expected resources
+    val projectProvider = object : ResourceProvider {
+        override val name = "ProjectProvider"
+        override var isRunning = true
+        
+        override suspend fun start() { isRunning = true }
+        override suspend fun stop() { isRunning = false }
+        
+        override suspend fun listResources(
+            filter: ResourceFilter?,
+            pagination: ResourcePagination?
+        ): List<Resource> {
+            return listOf(
+                Resource(
+                    uri = "cycletime://projects/project1",
+                    name = "Project 1",
+                    description = "First project",
+                    mimeType = "application/json"
+                ),
+                Resource(
+                    uri = "cycletime://projects/project2",
+                    name = "Project 2",
+                    description = "Second project",
+                    mimeType = "application/json"
+                )
+            )
+        }
+        
+        override suspend fun getResource(uri: String): Resource? {
+            return listResources().find { it.uri == uri }
+        }
+        
+        override suspend fun searchResources(query: String): List<Resource> {
+            return listResources().filter { 
+                it.name.contains(query, ignoreCase = true) ||
+                (it.description?.contains(query, ignoreCase = true) == true)
+            }
+        }
+        
+        override suspend fun updateResource(uri: String, content: ResourceContent) {}
+        
+        override suspend fun readResource(uri: String): String {
+            return when (uri) {
+                "cycletime://projects/project1" -> """{ "name": "Project 1", "status": "active" }"""
+                "cycletime://projects/project2" -> """{ "name": "Project 2", "status": "completed" }"""
+                else -> ""
+            }
+        }
+    }
+    
+    val docsProvider = object : ResourceProvider {
+        override val name = "DocsProvider"
+        override var isRunning = true
+        
+        override suspend fun start() { isRunning = true }
+        override suspend fun stop() { isRunning = false }
+        
+        override suspend fun listResources(
+            filter: ResourceFilter?,
+            pagination: ResourcePagination?
+        ): List<Resource> {
+            return listOf(
+                Resource(
+                    uri = "cycletime://docs/readme",
+                    name = "README",
+                    description = "Project documentation",
+                    mimeType = "text/markdown"
+                ),
+                Resource(
+                    uri = "cycletime://docs/api",
+                    name = "API Docs",
+                    description = "API documentation",
+                    mimeType = "text/markdown"
+                ),
+                Resource(
+                    uri = "file://docs/guide.md",
+                    name = "User Guide",
+                    description = "User guide",
+                    mimeType = "text/markdown"
+                ),
+                Resource(
+                    uri = "file://logs/app.log",
+                    name = "Application Logs",
+                    description = "Application log file",
+                    mimeType = "text/plain"
+                ),
+                Resource(
+                    uri = "project://tasks.json",
+                    name = "Task List",
+                    description = "Project tasks",
+                    mimeType = "application/json"
+                ),
+                Resource(
+                    uri = "static://resource.static",
+                    name = "Static Resource",
+                    description = "Non-subscribable resource",
+                    mimeType = "text/plain"
+                ),
+                Resource(
+                    uri = "cycletime://test/resource%20with%20spaces",
+                    name = "Resource with spaces",
+                    description = "Resource with encoded URI",
+                    mimeType = "text/plain"
+                ),
+                Resource(
+                    uri = "cycletime://test/binary",
+                    name = "Binary Resource",
+                    description = "Binary content",
+                    mimeType = "application/octet-stream"
+                ),
+                Resource(
+                    uri = "cycletime://test/large",
+                    name = "Large Resource",
+                    description = "Large content",
+                    mimeType = "text/plain"
+                )
+            )
+        }
+        
+        override suspend fun getResource(uri: String): Resource? {
+            return listResources().find { it.uri == uri }
+        }
+        
+        override suspend fun searchResources(query: String): List<Resource> {
+            return listResources().filter { 
+                it.name.contains(query, ignoreCase = true) ||
+                (it.description?.contains(query, ignoreCase = true) == true)
+            }
+        }
+        
+        override suspend fun updateResource(uri: String, content: ResourceContent) {}
+        
+        override suspend fun readResource(uri: String): String {
+            return when (uri) {
+                "cycletime://docs/readme" -> "# Project README\n\nDocumentation content"
+                "cycletime://docs/api" -> "# API Documentation\n\nAPI details"
+                "file://docs/guide.md" -> "# User Guide\n\nGuide content"
+                "file://logs/app.log" -> "Log entry content"
+                "project://tasks.json" -> """{ "tasks": [] }"""
+                "static://resource.static" -> "Static content"
+                "cycletime://test/resource%20with%20spaces" -> "Content with spaces"
+                "cycletime://test/binary" -> "YmluYXJ5IGRhdGE="  // base64 encoded
+                "cycletime://test/large" -> "X".repeat(100000)  // 100KB of content
+                else -> ""
+            }
+        }
+    }
+    
+    registry.register(projectProvider)
+    registry.register(docsProvider)
+}
 // These tests are designed to fail until proper implementations are created
