@@ -3,6 +3,7 @@ package io.spiralhouse.cycletime.mcp.websocket
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
+import io.spiralhouse.cycletime.mcp.protocol.ProtocolHandler
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -22,18 +23,36 @@ import java.util.concurrent.ConcurrentHashMap
  * - Internal errors return error response (-32603)
  * - Binary messages return error response (-32600)
  */
-class DefaultMessageHandler(
-    private val config: WebSocketServerConfig,
-    private val logger: WebSocketLogger
-) : MessageHandler {
+class DefaultMessageHandler : MessageHandler {
     
     private var protocolHandler: JsonRpcProtocolHandler? = null
     private val methodHandlers = ConcurrentHashMap<String, (JsonRpcRequest) -> JsonRpcResponse>()
     
+    // Constructor for MCP integration
+    constructor(
+        protocolHandler: ProtocolHandler,
+        methodHandler: io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
+    ) {
+        this.protocolHandler = protocolHandler as? JsonRpcProtocolHandler
+        // Register method handler methods here if needed
+    }
+    
+    // Constructor for direct configuration
+    constructor(
+        config: WebSocketServerConfig,
+        logger: WebSocketLogger
+    ) {
+        this.config = config
+        this.logger = logger
+    }
+    
+    private var config: WebSocketServerConfig = WebSocketServerConfig()
+    private var logger: WebSocketLogger = DefaultWebSocketLogger()
+    
     /**
      * Sets the protocol handler for JSON-RPC processing.
      */
-    fun setProtocolHandler(handler: JsonRpcProtocolHandler) {
+    override fun setProtocolHandler(handler: JsonRpcProtocolHandler) {
         this.protocolHandler = handler
     }
     

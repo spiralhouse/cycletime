@@ -2,6 +2,7 @@ package io.spiralhouse.cycletime.mcp.websocket
 
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
+import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
 
 /**
  * Interface for handling incoming messages in the connection manager.
@@ -57,4 +58,11 @@ interface MessageHandler {
      * @return the maximum message size
      */
     fun getMaxMessageSize(): Int
+    
+    /**
+     * Sets the protocol handler for JSON-RPC processing.
+     * 
+     * @param handler the protocol handler to use
+     */
+    fun setProtocolHandler(handler: JsonRpcProtocolHandler)
 }

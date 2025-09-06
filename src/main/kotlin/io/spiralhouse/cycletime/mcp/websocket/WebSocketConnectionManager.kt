@@ -57,7 +57,7 @@ class WebSocketConnectionManager(
     
     // Delegated responsibilities
     private var logger: WebSocketLogger = DefaultWebSocketLogger()
-    private val messageHandler = DefaultMessageHandler(config, logger)
+    private var messageHandler: MessageHandler = DefaultMessageHandler(config, logger)
     private val connectionFactory = DefaultConnectionFactory()
     private val heartbeatManager = DefaultHeartbeatManager(
         config, 
@@ -164,7 +164,7 @@ class WebSocketConnectionManager(
     
     override fun getPort(): Int = config.port
     
-    override fun supportsSSL(): Boolean = config.enableSSL
+    override fun supportsSSL(): Boolean = config.enableSsl
     
     override fun setProtocolHandler(handler: JsonRpcProtocolHandler) {
         this.protocolHandler = handler
@@ -215,6 +215,24 @@ class WebSocketConnectionManager(
      */
     fun removeEventListener(listener: ConnectionEventListener) {
         eventListeners.remove(listener)
+    }
+    
+    /**
+     * Sets the message handler for processing incoming messages.
+     * 
+     * @param handler the message handler to set
+     */
+    fun setMessageHandler(handler: MessageHandler) {
+        this.messageHandler = handler
+    }
+    
+    /**
+     * Gets the current number of active connections.
+     * 
+     * @return the number of active connections
+     */
+    fun getActiveConnectionCount(): Int {
+        return connections.size
     }
     
     // Private implementation methods
