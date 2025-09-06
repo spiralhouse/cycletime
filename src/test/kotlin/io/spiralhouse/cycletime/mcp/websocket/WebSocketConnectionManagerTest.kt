@@ -82,7 +82,7 @@ class WebSocketConnectionManagerTest : StringSpec({
     "should support both ws:// and wss:// protocols" {
         val config = WebSocketServerConfig(
             port = 3003,
-            enableSSL = true,
+            enableSsl = true,
             sslKeyStore = "classpath:test-keystore.p12",
             sslKeyStorePassword = "test123"
         )
