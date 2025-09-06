@@ -18,6 +18,9 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import io.spiralhouse.cycletime.infrastructure.logging.ExceptionLogger
 import org.jetbrains.exposed.sql.Database
 import io.spiralhouse.cycletime.mcp.configureMCP
+import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
+import io.spiralhouse.cycletime.mcp.integration.MCPServerStatus
+import kotlinx.coroutines.launch
 import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 import io.spiralhouse.cycletime.api.configuration.ApiConfiguration
 import io.ktor.serialization.kotlinx.json.*
@@ -33,6 +36,7 @@ import io.ktor.server.sse.*
 import io.ktor.http.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.Serializable
+import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 
 @Serializable
@@ -114,11 +118,12 @@ fun Application.module() {
 
     // Configure DI with explicit database - simple and clear
     val diStartTime = System.currentTimeMillis()
+    val mcpEnabled = System.getenv("MCP_ENABLED")?.toBoolean() ?: true
     val diEndTime = try {
         configureDependencies(
             database = database,
             timeProvider = null, // Use default SystemTimeProvider
-            includeMCP = true
+            includeMCP = mcpEnabled
         )
         val endTime = System.currentTimeMillis()
         logger.info("Dependency injection configuration completed in ${endTime - diStartTime}ms")
@@ -128,6 +133,32 @@ fun Application.module() {
         throw IllegalStateException("Dependency injection configuration failed", e)
     }
 
+    // Start MCP server if enabled
+    val mcpStartTime = System.currentTimeMillis()
+    val mcpIntegrationService = if (mcpEnabled) {
+        try {
+            val mcpService: MCPIntegrationService by dependencies
+            val mcpConfig = mcpService.getStatus()
+            
+            launch {
+                try {
+                    mcpService.start()
+                    val mcpEndTime = System.currentTimeMillis()
+                    logger.info("MCP WebSocket server started on ${mcpConfig.host}:${mcpConfig.port}${mcpConfig.path} in ${mcpEndTime - mcpStartTime}ms")
+                } catch (e: Exception) {
+                    logger.error("Failed to start MCP WebSocket server: ${e.message}", e)
+                    // Don't fail the entire application if MCP fails to start
+                }
+            }
+            mcpService
+        } catch (e: Exception) {
+            logger.warn("MCP Integration Service not available: ${e.message}")
+            null
+        }
+    } else {
+        null
+    }
+    
     // Configure routing
     routing {
         // Health check endpoint
@@ -153,6 +184,18 @@ fun Application.module() {
                     logger.warn("SessionService health check failed", e)
                     -1
                 }
+                
+                // MCP status
+                val mcpStatus = mcpIntegrationService?.getStatus()
+                val mcpHealth = if (mcpStatus != null) {
+                    mapOf(
+                        "mcp" to if (mcpStatus.isRunning) "running" else "stopped",
+                        "mcp_port" to mcpStatus.port.toString(),
+                        "mcp_connections" to mcpStatus.activeConnections.toString()
+                    )
+                } else {
+                    mapOf("mcp" to "not_configured")
+                }
 
                 call.respond(HttpStatusCode.OK, HealthResponse(
                     status = "healthy",
@@ -163,7 +206,7 @@ fun Application.module() {
                         "projectService" to "initialized",
                         "issueService" to "initialized",
                         "sessionService" to "initialized"
-                    ),
+                    ) + mcpHealth,
                     metrics = mapOf(
                         "projects" to projectCount.toString(),
                         "sessions" to sessionCount.toString()
@@ -201,8 +244,25 @@ fun Application.module() {
 
     // Shutdown hook
     monitor.subscribe(ApplicationStopped) {
-        logger.info("Application stopping, closing database connection")
+        logger.info("Application stopping, shutting down services...")
+        
+        // Stop MCP server if running
+        mcpIntegrationService?.let { service ->
+            if (service.isRunning()) {
+                try {
+                    runBlocking {
+                        service.stop()
+                    }
+                    logger.info("MCP WebSocket server stopped")
+                } catch (e: Exception) {
+                    logger.warn("Error stopping MCP server: ${e.message}")
+                }
+            }
+        }
+        
+        // Close database connection
         DatabaseFactory.close()
+        logger.info("Database connection closed")
     }
 
     val moduleEndTime = System.currentTimeMillis()
@@ -214,6 +274,9 @@ fun Application.module() {
     logger.info("  - Database initialization: ${dbEndTime - dbStartTime}ms")
     logger.info("  - Ktor features installation: ${featuresEndTime - featuresStartTime}ms") 
     logger.info("  - Dependency injection setup: ${diEndTime - diStartTime}ms")
+    if (mcpIntegrationService != null) {
+        logger.info("  - MCP server startup: ${System.currentTimeMillis() - mcpStartTime}ms")
+    }
     logger.info("  - Total startup time: ${totalStartupTime}ms")
 }
 

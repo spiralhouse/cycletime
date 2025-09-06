@@ -182,7 +182,7 @@ class DefaultMcpServer(
         // Configure WebSocket connection manager
         val wsConfig = WebSocketServerConfig(
             port = config.port,
-            enableSSL = config.enableSSL,
+            enableSsl = config.enableSSL,
             connectionTimeout = config.connectionTimeout,
             heartbeatInterval = config.heartbeatInterval
         )
