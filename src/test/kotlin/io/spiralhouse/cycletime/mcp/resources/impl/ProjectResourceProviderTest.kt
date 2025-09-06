@@ -20,6 +20,7 @@ import io.spiralhouse.cycletime.mcp.resources.ResourceFilter
 import io.spiralhouse.cycletime.mcp.resources.ResourcePagination
 import io.spiralhouse.cycletime.mcp.resources.exceptions.ResourceNotFoundException
 import io.spiralhouse.cycletime.mcp.resources.exceptions.InvalidResourceUriException
+import io.spiralhouse.cycletime.mcp.providers.DefaultProjectResourceProvider
 import java.time.Instant
 import java.util.*
 

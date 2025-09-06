@@ -86,15 +86,15 @@ object MCPDependencies {
         
         // Resource Providers
         provide<ProjectResourceProvider> { 
-            DefaultProjectResourceProvider()
+            DefaultProjectResourceProvider(resolve())
         }
         
         provide<IssueResourceProvider> { 
-            DefaultIssueResourceProvider()
+            DefaultIssueResourceProvider(resolve())
         }
         
         provide<SessionResourceProvider> { 
-            DefaultSessionResourceProvider()
+            DefaultSessionResourceProvider(resolve())
         }
         
         provide<WorkflowResourceProvider> { 
@@ -103,15 +103,15 @@ object MCPDependencies {
         
         // Tool Providers  
         provide<ProjectToolProvider> { 
-            DefaultProjectToolProvider()
+            DefaultProjectToolProvider(resolve())
         }
         
         provide<IssueToolProvider> { 
-            DefaultIssueToolProvider()
+            DefaultIssueToolProvider(resolve())
         }
         
         provide<SessionToolProvider> { 
-            DefaultSessionToolProvider()
+            DefaultSessionToolProvider(resolve())
         }
     }
 }

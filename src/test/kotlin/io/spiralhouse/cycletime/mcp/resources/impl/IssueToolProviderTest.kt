@@ -19,6 +19,7 @@ import io.spiralhouse.cycletime.application.exceptions.IssueNotFoundException
 import io.spiralhouse.cycletime.domain.valueobjects.*
 import io.spiralhouse.cycletime.mcp.tools.exceptions.ToolExecutionException
 import io.spiralhouse.cycletime.mcp.tools.exceptions.ParameterValidationException
+import io.spiralhouse.cycletime.mcp.tools.DefaultIssueToolProvider
 import java.time.Instant
 import java.util.*
 

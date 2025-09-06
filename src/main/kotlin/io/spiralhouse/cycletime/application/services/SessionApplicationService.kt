@@ -12,6 +12,7 @@ import io.spiralhouse.cycletime.domain.repositories.SessionRepository
 import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.domain.valueobjects.SessionId
 import io.spiralhouse.cycletime.domain.valueobjects.SessionKey
 import kotlinx.datetime.Instant
 import org.slf4j.LoggerFactory

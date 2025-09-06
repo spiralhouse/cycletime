@@ -20,6 +20,7 @@ import io.spiralhouse.cycletime.mcp.tools.AsyncTool
 import io.spiralhouse.cycletime.mcp.tools.Tool
 import io.spiralhouse.cycletime.mcp.tools.exceptions.ToolExecutionException
 import io.spiralhouse.cycletime.mcp.tools.exceptions.ParameterValidationException
+import io.spiralhouse.cycletime.mcp.tools.DefaultProjectToolProvider
 import java.time.Instant
 import java.util.*
 
