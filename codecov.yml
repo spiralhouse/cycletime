@@ -1,0 +1,105 @@
+# CodeCov Configuration for CycleTime CE
+# https://docs.codecov.com/docs/codecov-yaml
+
+codecov:
+  # Require CI to pass before processing coverage
+  require_ci_to_pass: yes
+  
+  # Notify settings
+  notify:
+    # Reduce noise by requiring status checks to change
+    require_changes: no
+    
+    # Wait for builds to complete before processing
+    wait_for_ci: yes
+
+# Coverage processing configuration
+coverage:
+  # Precision of percentage values (0-5 decimal places)
+  precision: 2
+  
+  # Round coverage to nearest integer
+  round: down
+  
+  # Range for coverage percentage (red to green)
+  range: "70...100"
+  
+  # Status checks configuration
+  status:
+    # Project-level status check
+    project:
+      default:
+        # Coverage must not drop by more than 1%
+        threshold: 1%
+        # Only consider covered lines that changed
+        target: auto
+        # Base comparison (auto = automatic base detection)
+        base: auto
+        # Only run on these branches
+        branches:
+          - main
+          - develop
+    
+    # Patch-level status check (for PRs)
+    patch:
+      default:
+        # New code should have at least 80% coverage
+        target: 80%
+        # Only run for pull requests
+        only_pulls: true
+
+# Comment configuration for PR comments
+comment:
+  # Require changes to post comments
+  require_changes: true
+  
+  # Comment layout
+  layout: "reach,diff,flags,tree"
+  
+  # Hide complexity metrics to reduce noise
+  hide_project_coverage: false
+
+# File ignore patterns
+ignore:
+  # Ignore generated code and build artifacts
+  - "build/**/*"
+  - "*.gradle.kts"
+  - "gradle/**/*"
+  - "gradlew*"
+  
+  # Ignore test utilities and fixtures
+  - "src/test/**/fixtures/**/*"
+  - "src/test/**/utils/**/*"
+  - "src/test/**/TestUtils.kt"
+  
+  # Ignore configuration and infrastructure setup
+  - "src/main/kotlin/**/infrastructure/di/**/*"
+  - "src/main/kotlin/**/config/**/*"
+  - "src/main/resources/**/*"
+  
+  # Ignore documentation and examples
+  - "docs/**/*"
+  - "examples/**/*"
+  - "*.md"
+
+# Coverage targets for different contexts
+flag_management:
+  default_rules:
+    # Basic rules for all flags
+    carryforward: true
+    statuses:
+      - name_prefix: "codecov/"
+        type: "project"
+        target: 85%
+        threshold: 1%
+
+# Flags for different test types (matches CI workflow)
+flags:
+  unittests:
+    # Unit test coverage from unitTest task
+    paths:
+      - src/main/kotlin/
+    # Exclude integration infrastructure
+    ignore:
+      - src/main/kotlin/**/infrastructure/**
+      - src/main/kotlin/**/di/**
