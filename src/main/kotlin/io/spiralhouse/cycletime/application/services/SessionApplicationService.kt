@@ -659,6 +659,34 @@ class SessionApplicationService(
     }
 
     // ================================================================================
+    // RED PHASE: Additional methods for MCP test compatibility
+    // ================================================================================
+
+    /**
+     * Gets session by ID.
+     * RED PHASE: Method stub for test compilation - not implemented yet.
+     */
+    suspend fun getSession(sessionId: SessionId): SessionDto? {
+        throw NotImplementedError("RED PHASE: Not implemented yet")
+    }
+
+    /**
+     * Ends a work session.
+     * RED PHASE: Method stub for test compilation - not implemented yet.
+     */
+    suspend fun endSession(command: EndSessionCommand): SessionDto {
+        throw NotImplementedError("RED PHASE: Not implemented yet")
+    }
+
+    /**
+     * Lists sessions with filtering.
+     * RED PHASE: Method stub for test compilation - not implemented yet.
+     */
+    suspend fun listSessions(command: ListSessionsCommand): SessionListDto {
+        throw NotImplementedError("RED PHASE: Not implemented yet")
+    }
+
+    // ================================================================================
     // Companion Object - Constants and Factory Methods
     // ================================================================================
 

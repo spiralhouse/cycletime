@@ -631,4 +631,35 @@ class IssueApplicationService(
 
         return dfs(toIssueId)
     }
+
+    // ================================================================================
+    // RED PHASE: Additional methods for MCP test compatibility
+    // ================================================================================
+
+    /**
+     * Lists issues based on the provided filtering criteria.
+     * 
+     * RED PHASE: Method stub for test compilation - not implemented yet.
+     */
+    suspend fun listIssues(command: ListIssuesCommand): IssueListDto {
+        throw NotImplementedError("RED PHASE: Not implemented yet")
+    }
+    
+    /**
+     * Transitions an issue to a new status.
+     * 
+     * RED PHASE: Method stub for test compilation - not implemented yet.
+     */
+    suspend fun transitionIssue(command: TransitionIssueCommand): IssueDto {
+        throw NotImplementedError("RED PHASE: Not implemented yet")
+    }
+    
+    /**
+     * Gets the complete issue hierarchy tree for an issue.
+     * 
+     * RED PHASE: Method stub for test compilation - not implemented yet.
+     */
+    suspend fun getIssueTree(issueId: IssueId): IssueTreeDto {
+        throw NotImplementedError("RED PHASE: Not implemented yet")
+    }
 }
