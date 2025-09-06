@@ -140,10 +140,10 @@ class McpToolHandlerTest : StringSpec({
 
         // Verify simple tool
         val simpleToolJson = tools.first { 
-            (it as JsonObject)["name"]?.jsonPrimitive?.content == "simple_tool" 
+            (it as JsonObject)["name"]?.jsonPrimitive?.content == "simple.tool" 
         } as JsonObject
 
-        simpleToolJson["name"]?.jsonPrimitive?.content shouldBe "simple_tool"
+        simpleToolJson["name"]?.jsonPrimitive?.content shouldBe "simple.tool"
         simpleToolJson["description"]?.jsonPrimitive?.content shouldBe "A simple tool for testing"
         simpleToolJson["inputSchema"] shouldNotBe null
 
@@ -154,10 +154,10 @@ class McpToolHandlerTest : StringSpec({
 
         // Verify complex tool
         val complexToolJson = tools.first {
-            (it as JsonObject)["name"]?.jsonPrimitive?.content == "complex_tool"
+            (it as JsonObject)["name"]?.jsonPrimitive?.content == "complex.tool"
         } as JsonObject
 
-        complexToolJson["name"]?.jsonPrimitive?.content shouldBe "complex_tool"
+        complexToolJson["name"]?.jsonPrimitive?.content shouldBe "complex.tool"
         complexToolJson["description"]?.jsonPrimitive?.content shouldBe "A complex tool with multiple parameters"
         
         val complexSchema = complexToolJson["inputSchema"] as JsonObject
@@ -169,7 +169,7 @@ class McpToolHandlerTest : StringSpec({
 
     "should handle tool registry errors during listing" {
         // Register a tool that will cause errors during metadata retrieval
-        val problematicTool = createProblematicTool("problematic_tool")
+        val problematicTool = createProblematicTool("problematic.tool")
         val workingTool = createTestTool(
             name = "working.tool",
             description = "A working tool",
@@ -201,7 +201,7 @@ class McpToolHandlerTest : StringSpec({
         tools shouldHaveSize 1
 
         val tool = tools[0] as JsonObject
-        tool["name"]?.jsonPrimitive?.content shouldBe "working_tool"
+        tool["name"]?.jsonPrimitive?.content shouldBe "working.tool"
     }
 
     // ===== TOOLS/CALL SYNCHRONOUS TESTS =====
@@ -393,7 +393,7 @@ class McpToolHandlerTest : StringSpec({
         response.error shouldNotBe null
         response.error!!.code shouldBe -32001 // Tool not found (server-defined error)
         response.error!!.message shouldContain "Tool not found"
-        response.error!!.message shouldContain "nonexistent_tool"
+        response.error!!.message shouldContain "nonexistent.tool"
     }
 
     "should handle tool execution errors gracefully" {
@@ -578,7 +578,7 @@ class McpToolHandlerTest : StringSpec({
     }
 
     "should handle malformed arguments parameter" {
-        val testTool = createTestTool("test_tool", "Test", buildJsonObject { put("type", "object") })
+        val testTool = createTestTool("test.tool", "Test", buildJsonObject { put("type", "object") })
         toolRegistry.register(testTool)
 
         val request = JsonRpcRequest(

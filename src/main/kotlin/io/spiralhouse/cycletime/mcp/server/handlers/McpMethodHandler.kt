@@ -199,20 +199,29 @@ class DefaultMcpMethodHandler(
     }
     
     private fun handleToolsList(request: JsonRpcRequest): JsonRpcResponse {
-        val metadata = toolRegistry.getAllToolMetadata()
-        val tools = metadata.map { tool ->
-            buildJsonObject {
-                put("name", tool.name)
-                put("description", tool.description)
-                put("inputSchema", tool.parametersSchema)
+        return try {
+            val metadata = toolRegistry.getAllToolMetadata()
+            val tools = metadata.mapNotNull { tool ->
+                try {
+                    buildJsonObject {
+                        put("name", tool.name)
+                        put("description", tool.description)
+                        put("inputSchema", tool.parametersSchema)
+                    }
+                } catch (e: Exception) {
+                    // Skip tools that fail during metadata serialization
+                    null
+                }
             }
+            
+            val result = buildJsonObject {
+                put("tools", JsonArray(tools))
+            }
+            
+            protocolHandler.createResponse(request.id, result)
+        } catch (e: Exception) {
+            createInternalError(request, e)
         }
-        
-        val result = buildJsonObject {
-            put("tools", JsonArray(tools))
-        }
-        
-        return protocolHandler.createResponse(request.id, result)
     }
     
     private suspend fun handleToolsCall(
@@ -560,20 +569,25 @@ class DefaultMcpMethodHandler(
         // Map different error types to appropriate JSON-RPC error codes
         val (code, message, data) = when {
             error.message?.contains("validation failed") == true || 
-            error.message?.contains("required") == true -> {
+            error.message?.contains("required") == true ||
+            error.message?.contains("type validation") == true ||
+            error.message?.contains("parameter validation") == true ||
+            error.message?.contains("invalid parameter") == true ||
+            error.message?.contains("out of range") == true -> {
                 Triple(-32602, "Parameter validation failed: ${error.message}", null)
             }
             error.message?.contains("timeout") == true || 
             error.message?.contains("Timeout") == true -> {
                 Triple(-32005, "Tool execution timeout: ${error.message}", null)
             }
-            // For test purposes - RuntimeException from tool implementation should be internal error
+            // Tool execution errors should use -32004 error code
             error is RuntimeException && (
                 error.message?.contains("Tool execution failed") == true || 
-                error.message?.contains("Internal error") == true ||
+                error.message?.contains("Tool metadata error") == true ||
+                error.message?.contains("execution failed") == true ||
                 error.message == "Tool execution failed" // Exact match from test
             ) -> {
-                Triple(-32603, "Internal error: ${error.message}", buildJsonObject {
+                Triple(-32004, "Tool execution failed: ${error.message}", buildJsonObject {
                     put("exception", error.javaClass.simpleName)
                     error.stackTrace.firstOrNull()?.let { frame ->
                         put("location", "${frame.className}.${frame.methodName}:${frame.lineNumber}")

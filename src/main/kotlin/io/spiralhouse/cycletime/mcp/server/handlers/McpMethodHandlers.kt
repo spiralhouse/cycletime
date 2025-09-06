@@ -89,21 +89,25 @@ class McpMethodHandlers(
     }
     
     private suspend fun handleToolsList(request: JsonRpcRequest): JsonRpcResponse {
-        val tools = toolRegistry.getAllToolMetadata().map { tool ->
-            buildJsonObject {
-                put("name", tool.name)
-                put("description", tool.description)
-                tool.parametersSchema?.let { put("inputSchema", it) }
+        return try {
+            val tools = toolRegistry.getAllToolMetadata().map { tool ->
+                buildJsonObject {
+                    put("name", tool.name)
+                    put("description", tool.description)
+                    tool.parametersSchema?.let { put("inputSchema", it) }
+                }
             }
+            
+            JsonRpcResponse(
+                jsonrpc = "2.0",
+                result = buildJsonObject {
+                    put("tools", JsonArray(tools))
+                },
+                id = request.id ?: JsonPrimitive("null")
+            )
+        } catch (e: Exception) {
+            createInternalError(request, e)
         }
-        
-        return JsonRpcResponse(
-            jsonrpc = "2.0",
-            result = buildJsonObject {
-                put("tools", JsonArray(tools))
-            },
-            id = request.id ?: JsonPrimitive("null")
-        )
     }
     
     private suspend fun handleToolsCall(request: JsonRpcRequest): JsonRpcResponse {
@@ -133,33 +137,37 @@ class McpMethodHandlers(
         } catch (e: NoSuchElementException) {
             createToolNotFoundError(request, toolName)
         } catch (e: Exception) {
-            createInternalError(request, e)
+            createToolExecutionError(request, e)
         }
     }
     
     private suspend fun handleResourcesList(request: JsonRpcRequest): JsonRpcResponse {
-        val resources = mutableListOf<JsonObject>()
-        
-        // Aggregate resources from all providers
-        for (provider in resourceRegistry.getProviders()) {
-            val providerResources = provider.listResources()
-            providerResources.forEach { resource ->
-                resources.add(buildJsonObject {
-                    put("uri", resource.uri)
-                    put("name", resource.name)
-                    resource.description?.let { put("description", it) }
-                    put("mimeType", resource.mimeType ?: "text/plain")
-                })
+        return try {
+            val resources = mutableListOf<JsonObject>()
+            
+            // Aggregate resources from all providers
+            for (provider in resourceRegistry.getProviders()) {
+                val providerResources = provider.listResources()
+                providerResources.forEach { resource ->
+                    resources.add(buildJsonObject {
+                        put("uri", resource.uri)
+                        put("name", resource.name)
+                        resource.description?.let { put("description", it) }
+                        put("mimeType", resource.mimeType ?: "text/plain")
+                    })
+                }
             }
+            
+            JsonRpcResponse(
+                jsonrpc = "2.0",
+                result = buildJsonObject {
+                    put("resources", JsonArray(resources))
+                },
+                id = request.id ?: JsonPrimitive("null")
+            )
+        } catch (e: Exception) {
+            createInternalError(request, e)
         }
-        
-        return JsonRpcResponse(
-            jsonrpc = "2.0",
-            result = buildJsonObject {
-                put("resources", JsonArray(resources))
-            },
-            id = request.id ?: JsonPrimitive("null")
-        )
     }
     
     private suspend fun handleResourcesRead(request: JsonRpcRequest): JsonRpcResponse {
@@ -305,6 +313,20 @@ class McpMethodHandlers(
                 code = -32002,
                 message = "Resource not found: $uri",
                 data = null
+            ),
+            id = request.id ?: JsonPrimitive("null")
+        )
+    }
+    
+    private fun createToolExecutionError(request: JsonRpcRequest, error: Exception): JsonRpcResponse {
+        return JsonRpcResponse(
+            jsonrpc = "2.0",
+            error = JsonRpcError(
+                code = -32004,
+                message = "Tool execution failed: ${error.message}",
+                data = buildJsonObject {
+                    put("exception", error.javaClass.simpleName)
+                }
             ),
             id = request.id ?: JsonPrimitive("null")
         )
