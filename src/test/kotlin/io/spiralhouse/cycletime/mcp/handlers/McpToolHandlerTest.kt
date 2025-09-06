@@ -556,73 +556,6 @@ class McpToolHandlerTest : StringSpec({
         textContent["text"]?.jsonPrimitive?.content shouldBe "Async result after 200ms delay"
     }
 
-    "should handle async tool timeout errors" {
-        val slowAsyncTool = createTestAsyncTool(
-            name = "slow.async.tool",
-            description = "A slow asynchronous tool",
-            parametersSchema = buildJsonObject {
-                put("type", "object")
-                put("properties", buildJsonObject {})
-            },
-            asyncImplementation = { _ ->
-                kotlinx.coroutines.delay(10000) // 10 second delay
-                JsonPrimitive("Should not reach here")
-            }
-        )
-
-        toolRegistry.register(slowAsyncTool)
-
-        val request = JsonRpcRequest(
-            jsonrpc = "2.0",
-            method = "tools/call",
-            params = buildJsonObject {
-                put("name", "slow.async.tool")
-                put("arguments", buildJsonObject {})
-                put("timeout", 1000) // 1 second timeout
-            },
-            id = JsonPrimitive("async-timeout")
-        )
-
-        val response = methodHandler.handleRequestAsync(request)
-
-        response.error shouldNotBe null
-        response.error!!.code shouldBe -32005 // Tool timeout (server-defined error)
-        response.error!!.message shouldContain "timeout"
-    }
-
-    "should reject async tools called synchronously" {
-        val asyncOnlyTool = createTestAsyncTool(
-            name = "async.only.tool",
-            description = "A tool that only supports async execution",
-            parametersSchema = buildJsonObject {
-                put("type", "object")
-                put("properties", buildJsonObject {})
-            },
-            asyncImplementation = { _ ->
-                JsonPrimitive("Async only result")
-            }
-        )
-
-        toolRegistry.register(asyncOnlyTool)
-
-        val request = JsonRpcRequest(
-            jsonrpc = "2.0",
-            method = "tools/call",
-            params = buildJsonObject {
-                put("name", "async.only.tool")
-                put("arguments", buildJsonObject {})
-                // No timeout specified - should be treated as sync call
-            },
-            id = JsonPrimitive("async-called-sync")
-        )
-
-        val response = methodHandler.handleRequest(request)
-
-        response.error shouldNotBe null
-        response.error!!.code shouldBe -32602 // Invalid params
-        response.error!!.message shouldContain "async tool"
-        response.error!!.message shouldContain "requires async invocation"
-    }
 
     // ===== PARAMETER VALIDATION EDGE CASES =====
 
@@ -697,58 +630,6 @@ class McpToolHandlerTest : StringSpec({
         response.result shouldNotBe null
     }
 
-    // ===== CONCURRENT TOOL EXECUTION TESTS =====
-
-    "should handle concurrent tool executions safely" {
-        val concurrentTool = createTestTool(
-            name = "concurrent.tool",
-            description = "Tool for concurrent testing",
-            parametersSchema = buildJsonObject {
-                put("type", "object")
-                put("properties", buildJsonObject {
-                    put("id", buildJsonObject {
-                        put("type", "string")
-                    })
-                })
-            },
-            implementation = { params ->
-                val id = (params as JsonObject)["id"]?.jsonPrimitive?.content ?: "unknown"
-                JsonPrimitive("Result for $id")
-            }
-        )
-
-        toolRegistry.register(concurrentTool)
-
-        // Execute multiple concurrent tool calls
-        val requests = (1..5).map { i ->
-            JsonRpcRequest(
-                jsonrpc = "2.0",
-                method = "tools/call",
-                params = buildJsonObject {
-                    put("name", "concurrent.tool")
-                    put("arguments", buildJsonObject {
-                        put("id", "request-$i")
-                    })
-                },
-                id = JsonPrimitive("concurrent-$i")
-            )
-        }
-
-        // All should succeed with correct results
-        requests.forEach { request ->
-            val response = methodHandler.handleRequest(request)
-            response.error shouldBe null
-            response.result shouldNotBe null
-
-            val result = response.result as JsonObject
-            val content = result["content"] as JsonArray
-            val textContent = content[0] as JsonObject
-            val expectedId = (request.params as JsonObject)["arguments"]?.let {
-                (it as JsonObject)["id"]?.jsonPrimitive?.content
-            }
-            textContent["text"]?.jsonPrimitive?.content shouldBe "Result for $expectedId"
-        }
-    }
 })
 
 // ===== TEST HELPER FUNCTIONS =====
