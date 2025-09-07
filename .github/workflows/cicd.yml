@@ -308,6 +308,21 @@ jobs:
             build/test-results/unitTest/
           retention-days: 7
 
+      - name: Verify coverage report exists
+        run: |
+          echo "🔍 Checking coverage report generation..."
+          if [ -f "./build/reports/kover/report.xml" ]; then
+            echo "✅ Coverage report found: $(ls -lh ./build/reports/kover/report.xml)"
+            echo "📊 Report size: $(wc -c < ./build/reports/kover/report.xml) bytes"
+            echo "📈 First 10 lines of coverage report:"
+            head -10 ./build/reports/kover/report.xml
+          else
+            echo "❌ Coverage report not found at ./build/reports/kover/report.xml"
+            echo "📁 Contents of build/reports/:"
+            find ./build/reports/ -type f -name "*.xml" || echo "No XML files found"
+            exit 1
+          fi
+
       - name: Upload coverage to Codecov
         if: success()
         uses: codecov/codecov-action@v5
@@ -317,6 +332,27 @@ jobs:
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
+          verbose: true
+          # Additional configuration for better integration
+          directory: ./build/reports/kover/
+          root_dir: ./
+          working-directory: ./
+
+      - name: Fallback coverage upload (if primary fails)
+        if: failure()
+        run: |
+          echo "⚠️ Primary CodeCov upload failed, attempting direct upload..."
+          if command -v curl &> /dev/null && [ -f "./build/reports/kover/report.xml" ]; then
+            echo "🔄 Using curl to upload coverage report directly..."
+            curl -s https://codecov.io/bash | bash -s -- \
+              -t "${{ secrets.CODECOV_TOKEN }}" \
+              -f "./build/reports/kover/report.xml" \
+              -F "unittests" \
+              -n "codecov-fallback" \
+              -v || echo "❌ Fallback upload also failed"
+          else
+            echo "⚠️ Curl not available or coverage report missing, skipping fallback"
+          fi
 
   # Integration Tests
   integration-tests:
