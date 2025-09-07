@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.ktor.server.di)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.server.sse)
+    implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.server.cors)
     implementation(libs.ktor.server.call.logging)
@@ -94,6 +95,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.ktor.server.test.host)
     testImplementation("io.ktor:ktor-client-content-negotiation:${libs.versions.ktor.get()}")
+    testImplementation("io.ktor:ktor-client-websockets:${libs.versions.ktor.get()}")
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.h2.database)  // H2 for integration testing
 
