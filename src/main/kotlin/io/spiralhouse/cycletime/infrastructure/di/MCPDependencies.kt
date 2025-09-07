@@ -19,6 +19,9 @@ import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolInvoker
 import io.spiralhouse.cycletime.mcp.resources.ResourceProviderRegistry
 import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
 import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
+import io.spiralhouse.cycletime.application.services.ProjectApplicationService
+import io.spiralhouse.cycletime.application.services.IssueApplicationService
+import io.spiralhouse.cycletime.application.services.SessionApplicationService
 
 /**
  * MCP dependencies configuration for Ktor's native DI.
@@ -99,7 +102,7 @@ object MCPDependencies {
             DefaultWebSocketHandler(resolve())
         }
         
-        // Resource Providers
+        // Resource Providers - placeholder implementations for now
         provide<ProjectResourceProvider> { 
             DefaultProjectResourceProvider()
         }
@@ -116,17 +119,23 @@ object MCPDependencies {
             DefaultWorkflowResourceProvider()
         }
         
-        // Tool Providers  
+        // Tool Providers - connected to application services
         provide<ProjectToolProvider> { 
-            DefaultProjectToolProvider()
+            DefaultProjectToolProvider(
+                projectService = resolve<ProjectApplicationService>()
+            )
         }
         
         provide<IssueToolProvider> { 
-            DefaultIssueToolProvider()
+            DefaultIssueToolProvider(
+                issueService = resolve<IssueApplicationService>()
+            )
         }
         
         provide<SessionToolProvider> { 
-            DefaultSessionToolProvider()
+            DefaultSessionToolProvider(
+                sessionService = resolve<SessionApplicationService>()
+            )
         }
         
         // Tool Invoker
