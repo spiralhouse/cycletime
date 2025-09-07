@@ -4,7 +4,6 @@ import io.spiralhouse.cycletime.mcp.tools.*
 import io.spiralhouse.cycletime.application.commands.*
 import io.spiralhouse.cycletime.application.services.*
 import io.spiralhouse.cycletime.domain.valueobjects.*
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 
@@ -17,8 +16,10 @@ class DefaultProjectToolProvider(
     private val projectService: ProjectApplicationService
 ) : ProjectToolProvider {
     
-    override fun getTools(): List<Tool> = listOf(
-        Tool(
+    override fun getTools(): List<Tool> = emptyList()
+    
+    override fun getAsyncTools(): List<AsyncTool> = listOf(
+        AsyncTool(
             name = "project.create",
             description = "Create a new CycleTime project",
             parametersSchema = buildJsonObject {
@@ -46,12 +47,12 @@ class DefaultProjectToolProvider(
                         name = name,
                         description = description
                     )
-                    val result = runBlocking { projectService.createProject(command) }
+                    val result = projectService.createProject(command)
                     Json.encodeToJsonElement(result)
                 }
             }
         ),
-        Tool(
+        AsyncTool(
             name = "project.get",
             description = "Get a project by ID",
             parametersSchema = buildJsonObject {
@@ -70,13 +71,13 @@ class DefaultProjectToolProvider(
                     val id = obj["id"]?.jsonPrimitive?.content 
                         ?: throw IllegalArgumentException("id is required")
                     
-                    val result = runBlocking { projectService.getProject(ProjectId(id)) }
+                    val result = projectService.getProject(ProjectId(id))
                         ?: throw IllegalArgumentException("Project not found: $id")
                     Json.encodeToJsonElement(result)
                 }
             }
         ),
-        Tool(
+        AsyncTool(
             name = "project.list",
             description = "List all projects",
             parametersSchema = buildJsonObject {
@@ -85,14 +86,12 @@ class DefaultProjectToolProvider(
             },
             handler = { _ ->
                 Result.runCatching {
-                    val result = runBlocking { projectService.listProjects() }
+                    val result = projectService.listProjects()
                     Json.encodeToJsonElement(result)
                 }
             }
         )
     )
-    
-    override fun getAsyncTools(): List<AsyncTool> = emptyList()
 }
 
 /**
@@ -104,8 +103,10 @@ class DefaultIssueToolProvider(
     private val issueService: IssueApplicationService
 ) : IssueToolProvider {
     
-    override fun getTools(): List<Tool> = listOf(
-        Tool(
+    override fun getTools(): List<Tool> = emptyList()
+    
+    override fun getAsyncTools(): List<AsyncTool> = listOf(
+        AsyncTool(
             name = "issue.create",
             description = "Create a new issue",
             parametersSchema = buildJsonObject {
@@ -157,12 +158,12 @@ class DefaultIssueToolProvider(
                         type = type,
                         projectId = ProjectId(projectId)
                     )
-                    val result = runBlocking { issueService.createIssue(command) }
+                    val result = issueService.createIssue(command)
                     Json.encodeToJsonElement(result)
                 }
             }
         ),
-        Tool(
+        AsyncTool(
             name = "issue.get",
             description = "Get an issue by ID",
             parametersSchema = buildJsonObject {
@@ -181,13 +182,13 @@ class DefaultIssueToolProvider(
                     val id = obj["id"]?.jsonPrimitive?.content 
                         ?: throw IllegalArgumentException("id is required")
                     
-                    val result = runBlocking { issueService.getIssue(IssueId(id)) }
+                    val result = issueService.getIssue(IssueId(id))
                         ?: throw IllegalArgumentException("Issue not found: $id")
                     Json.encodeToJsonElement(result)
                 }
             }
         ),
-        Tool(
+        AsyncTool(
             name = "issue.list",
             description = "List all issues",
             parametersSchema = buildJsonObject {
@@ -196,14 +197,12 @@ class DefaultIssueToolProvider(
             },
             handler = { _ ->
                 Result.runCatching {
-                    val result = runBlocking { issueService.listIssues() }
+                    val result = issueService.listIssues()
                     Json.encodeToJsonElement(result)
                 }
             }
         )
     )
-    
-    override fun getAsyncTools(): List<AsyncTool> = emptyList()
 }
 
 /**
@@ -215,8 +214,10 @@ class DefaultSessionToolProvider(
     private val sessionService: SessionApplicationService
 ) : SessionToolProvider {
     
-    override fun getTools(): List<Tool> = listOf(
-        Tool(
+    override fun getTools(): List<Tool> = emptyList()
+    
+    override fun getAsyncTools(): List<AsyncTool> = listOf(
+        AsyncTool(
             name = "session.create",
             description = "Create a new work session",
             parametersSchema = buildJsonObject {
@@ -238,12 +239,12 @@ class DefaultSessionToolProvider(
                     val command = CreateSessionCommand(
                         projectId = ProjectId(projectId)
                     )
-                    val result = runBlocking { sessionService.createSession(command) }
+                    val result = sessionService.createSession(command)
                     Json.encodeToJsonElement(result)
                 }
             }
         ),
-        Tool(
+        AsyncTool(
             name = "session.list_active",
             description = "List active sessions",
             parametersSchema = buildJsonObject {
@@ -252,12 +253,12 @@ class DefaultSessionToolProvider(
             },
             handler = { _ ->
                 Result.runCatching {
-                    val result = runBlocking { sessionService.listActiveSessions() }
+                    val result = sessionService.listActiveSessions()
                     Json.encodeToJsonElement(result)
                 }
             }
         ),
-        Tool(
+        AsyncTool(
             name = "session.get",
             description = "Get session by key",
             parametersSchema = buildJsonObject {
@@ -276,13 +277,11 @@ class DefaultSessionToolProvider(
                     val sessionKey = obj["sessionKey"]?.jsonPrimitive?.content 
                         ?: throw IllegalArgumentException("sessionKey is required")
                     
-                    val result = runBlocking { sessionService.getSession(SessionKey(sessionKey)) }
+                    val result = sessionService.getSession(SessionKey(sessionKey))
                         ?: throw IllegalArgumentException("Session not found")
                     Json.encodeToJsonElement(result)
                 }
             }
         )
     )
-    
-    override fun getAsyncTools(): List<AsyncTool> = emptyList()
 }
