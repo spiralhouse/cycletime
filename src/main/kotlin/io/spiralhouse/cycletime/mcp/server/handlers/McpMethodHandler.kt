@@ -3,8 +3,12 @@ package io.spiralhouse.cycletime.mcp.server.handlers
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
-import io.spiralhouse.cycletime.mcp.tools.DefaultToolRegistry
-import io.spiralhouse.cycletime.mcp.resources.ResourceProviderRegistry
+import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolInvoker
+import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
+import io.spiralhouse.cycletime.mcp.server.state.ServerState
+import io.spiralhouse.cycletime.mcp.tools.exceptions.*
+import io.spiralhouse.cycletime.mcp.resources.exceptions.*
 import kotlinx.serialization.json.*
 
 /**
@@ -54,32 +58,24 @@ interface McpMethodHandler {
  */
 class DefaultMcpMethodHandler(
     private val protocolHandler: JsonRpcProtocolHandler,
-    private val toolRegistry: DefaultToolRegistry,
-    private val resourceRegistry: ResourceProviderRegistry
+    private val toolRegistry: ToolRegistry,
+    private val toolInvoker: ToolInvoker,
+    private val resourceRegistry: ResourceRegistry,
+    private val serverState: ServerState = ServerState()
 ) : McpMethodHandler {
     
     override suspend fun handleRequest(request: JsonRpcRequest): JsonRpcResponse {
         // Validate JSON-RPC protocol version
-        if (request.jsonrpc != "2.0" && request.jsonrpc != "invalid") {
+        if (request.jsonrpc != "2.0") {
             return createParseError(request)
         }
         
-        // Special case for test - check for invalid JSON-RPC version
-        if (request.jsonrpc == "invalid") {
+        // Ensure server is running
+        if (!serverState.isRunning() && request.method != "initialize") {
             return protocolHandler.createErrorResponse(
                 id = request.id,
-                code = -32700,
-                message = "Parse error: Invalid JSON-RPC version",
-                data = null
-            )
-        }
-        
-        // Check for invalid request structure
-        if (request.method == "initialize" && request.params !is JsonObject && request.params != null) {
-            return protocolHandler.createErrorResponse(
-                id = request.id,
-                code = -32600,
-                message = "Invalid Request: Parameters must be an object",
+                code = -32003,
+                message = "Server not initialized",
                 data = null
             )
         }
@@ -98,15 +94,6 @@ class DefaultMcpMethodHandler(
                 else -> createMethodNotFoundError(request)
             }
         } catch (e: Exception) {
-            // Check if this is a special test exception that should return -32001
-            if (e.message?.contains("Simulated internal error") == true) {
-                return protocolHandler.createErrorResponse(
-                    id = request.id,
-                    code = -32001,
-                    message = "Internal error: ${e.message}",
-                    data = null
-                )
-            }
             createInternalError(request, e)
         }
     }
@@ -175,19 +162,15 @@ class DefaultMcpMethodHandler(
             )
         }
         
-        // Handle clientInfo validation - different rules based on context
-        val requestId = request.id?.jsonPrimitive?.content
-        
-        // For the initialization handler test, clientInfo is required
-        if (requestId == "missing-client-info") {
-            return createInvalidParamsError(request, "clientInfo parameter is required")
-        }
-        
         // clientInfo is optional but if present, name should be provided
         val clientInfo = params["clientInfo"] as? JsonObject
         if (clientInfo != null && clientInfo.get("name")?.jsonPrimitive?.content.isNullOrBlank()) {
             return createInvalidParamsError(request, "client name is required in clientInfo")
         }
+        
+        // Update server state to running
+        serverState.transitionTo(io.spiralhouse.cycletime.mcp.server.state.ServerStatus.STARTING)
+        serverState.transitionTo(io.spiralhouse.cycletime.mcp.server.state.ServerStatus.RUNNING)
         
         val result = buildJsonObject {
             put("protocolVersion", "2024-11-05")
@@ -253,10 +236,10 @@ class DefaultMcpMethodHandler(
             // Invoke async tool with timeout
             val timeout = params["timeout"]?.jsonPrimitive?.longOrNull 
                 ?: 60000L // Default 60 seconds
-            toolRegistry.invokeAsync(toolName, arguments, timeout)
+            toolInvoker.invokeAsync(toolName, arguments, timeout)
         } else if (syncTool != null && !async) {
             // Invoke sync tool
-            toolRegistry.invoke(toolName, arguments)
+            toolInvoker.invoke(toolName, arguments)
         } else if (asyncTool != null && !async) {
             // Async tool called synchronously - not supported
             return createInvalidParamsError(
@@ -265,7 +248,7 @@ class DefaultMcpMethodHandler(
             )
         } else {
             // Sync tool called async - should work
-            toolRegistry.invoke(toolName, arguments)
+            toolInvoker.invoke(toolName, arguments)
         }
         
         return result.fold(
@@ -317,14 +300,13 @@ class DefaultMcpMethodHandler(
             var resourceContent: JsonObject? = null
             
             for (provider in resourceRegistry.getProviders()) {
-                val resources = provider.listResources()
-                val matchingResource = resources.find { it.uri == uri }
-                if (matchingResource != null) {
+                val resource = provider.getResource(uri)
+                if (resource != null) {
                     // Found the resource, read its content
                     val content = provider.readResource(uri)
                     resourceContent = buildJsonObject {
                         put("uri", uri)
-                        put("mimeType", matchingResource.mimeType)
+                        put("mimeType", resource.mimeType)
                         put("text", content)
                     }
                     break
@@ -332,12 +314,7 @@ class DefaultMcpMethodHandler(
             }
             
             if (resourceContent == null) {
-                return protocolHandler.createErrorResponse(
-                    id = request.id,
-                    code = -32002,
-                    message = "Resource not found: $uri",
-                    data = null
-                )
+                throw ResourceNotFoundException("Resource not found: $uri")
             }
             
             val result = buildJsonObject {
@@ -362,45 +339,33 @@ class DefaultMcpMethodHandler(
         return try {
             // Check if resource exists
             var resourceExists = false
-            var isSubscribable = true
-            
             for (provider in resourceRegistry.getProviders()) {
-                val resources = provider.listResources()
-                val matchingResource = resources.find { it.uri == uri }
-                if (matchingResource != null) {
+                val resource = provider.getResource(uri)
+                if (resource != null) {
                     resourceExists = true
-                    // Check if resource is subscribable (for test purposes, resources ending with .static are not)
-                    if (uri.endsWith(".static")) {
-                        isSubscribable = false
-                    }
                     break
                 }
             }
             
             if (!resourceExists) {
-                return protocolHandler.createErrorResponse(
-                    id = request.id,
-                    code = -32002,
-                    message = "Resource not found: $uri",
-                    data = null
-                )
+                throw ResourceNotFoundException("Resource not found: $uri")
             }
             
-            if (!isSubscribable) {
-                return protocolHandler.createErrorResponse(
-                    id = request.id,
-                    code = -32003,
-                    message = "Subscription not supported for resource: $uri",
-                    data = null
-                )
-            }
-            
-            // In a real implementation, this would set up a subscription
-            val result = buildJsonObject {
-                put("subscribed", true)
-            }
-            
-            protocolHandler.createResponse(request.id, result)
+            // For now, subscription is not implemented
+            // This will be properly implemented in a future phase
+            return protocolHandler.createErrorResponse(
+                id = request.id,
+                code = -32003,
+                message = "Subscription not yet implemented",
+                data = null
+            )
+        } catch (e: ResourceNotFoundException) {
+            return protocolHandler.createErrorResponse(
+                id = request.id,
+                code = -32002,
+                message = e.message ?: "Resource not found",
+                data = null
+            )
         } catch (e: Exception) {
             createInternalError(request, e)
         }
@@ -414,12 +379,14 @@ class DefaultMcpMethodHandler(
             ?: return createInvalidParamsError(request, "uri parameter is required")
         
         return try {
-            // In a real implementation, this would remove a subscription
-            val result = buildJsonObject {
-                put("unsubscribed", true)
-            }
-            
-            protocolHandler.createResponse(request.id, result)
+            // For now, subscription is not implemented
+            // This will be properly implemented in a future phase
+            return protocolHandler.createErrorResponse(
+                id = request.id,
+                code = -32003,
+                message = "Subscription not yet implemented",
+                data = null
+            )
         } catch (e: Exception) {
             createInternalError(request, e)
         }
@@ -434,9 +401,15 @@ class DefaultMcpMethodHandler(
     }
     
     private fun handleShutdown(request: JsonRpcRequest): JsonRpcResponse {
+        // Update server state to stopping
+        serverState.transitionTo(io.spiralhouse.cycletime.mcp.server.state.ServerStatus.STOPPING)
+        
         val result = buildJsonObject {
             put("acknowledged", true)
         }
+        
+        // Will transition to STOPPED after cleanup
+        serverState.transitionTo(io.spiralhouse.cycletime.mcp.server.state.ServerStatus.STOPPED)
         
         return protocolHandler.createResponse(request.id, result)
     }
@@ -566,33 +539,24 @@ class DefaultMcpMethodHandler(
         request: JsonRpcRequest, 
         error: Throwable
     ): JsonRpcResponse {
-        // Map different error types to appropriate JSON-RPC error codes
-        val (code, message, data) = when {
-            error.message?.contains("validation failed") == true || 
-            error.message?.contains("required") == true ||
-            error.message?.contains("type validation") == true ||
-            error.message?.contains("parameter validation") == true ||
-            error.message?.contains("invalid parameter") == true ||
-            error.message?.contains("out of range") == true -> {
+        // Map exception types to appropriate JSON-RPC error codes
+        val (code, message, data) = when (error) {
+            is ParameterValidationException -> {
                 Triple(-32602, "Parameter validation failed: ${error.message}", null)
             }
-            error.message?.contains("timeout") == true || 
-            error.message?.contains("Timeout") == true -> {
+            is ToolTimeoutException -> {
                 Triple(-32005, "Tool execution timeout: ${error.message}", null)
             }
-            // Tool execution errors should use -32004 error code
-            error is RuntimeException && (
-                error.message?.contains("Tool execution failed") == true || 
-                error.message?.contains("Tool metadata error") == true ||
-                error.message?.contains("execution failed") == true ||
-                error.message == "Tool execution failed" // Exact match from test
-            ) -> {
+            is ToolExecutionException -> {
                 Triple(-32004, "Tool execution failed: ${error.message}", buildJsonObject {
                     put("exception", error.javaClass.simpleName)
                     error.stackTrace.firstOrNull()?.let { frame ->
                         put("location", "${frame.className}.${frame.methodName}:${frame.lineNumber}")
                     }
                 })
+            }
+            is ToolNotFoundException -> {
+                Triple(-32001, error.message ?: "Tool not found", null)
             }
             else -> {
                 Triple(-32603, "Internal error: ${error.message ?: "Unknown error"}", buildJsonObject {

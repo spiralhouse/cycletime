@@ -18,11 +18,6 @@ class ResourceRpcHandler(
     private val commands = mutableMapOf<String, RpcCommand>()
     
     init {
-        // Initialize with test provider for testing
-        kotlinx.coroutines.runBlocking {
-            registry.register(TestResourceProvider("test-provider"))
-        }
-        
         // Register commands
         registerCommands()
     }
@@ -105,14 +100,8 @@ class ResourceRpcHandler(
     private suspend fun handleResourcesSubscribe(params: JsonObject): JsonObject {
         val uri = params["uri"]?.jsonPrimitive?.content ?: throw IllegalArgumentException("uri parameter required")
         
-        val subscription = subscriptionManager.subscribeToResource(
-            uri = uri,
-            subscriber = TestSubscriber("rpc-client")
-        ) { /* callback */ }
-        
-        return buildJsonObject {
-            put("subscriptionId", JsonPrimitive(subscription.id))
-        }
+        // Subscription not yet implemented
+        throw UnsupportedOperationException("Subscription not yet implemented")
     }
     
     private suspend fun handleResourcesUnsubscribe(params: JsonObject): JsonObject {
