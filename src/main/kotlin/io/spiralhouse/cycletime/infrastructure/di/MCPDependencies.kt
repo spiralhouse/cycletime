@@ -7,7 +7,7 @@ import io.spiralhouse.cycletime.mcp.handlers.WebSocketHandler
 import io.spiralhouse.cycletime.mcp.providers.*
 import io.spiralhouse.cycletime.mcp.server.DefaultMCPServerEngine
 import io.spiralhouse.cycletime.mcp.server.MCPServerEngine
-import io.spiralhouse.cycletime.mcp.tools.*
+import io.spiralhouse.cycletime.mcp.tools.ToolProvider
 
 /**
  * MCP dependencies configuration for Ktor's native DI.
@@ -31,9 +31,10 @@ object MCPDependencies {
                     resolve<WorkflowResourceProvider>()
                 ),
                 toolProviders = listOf(
-                    resolve<ProjectToolProvider>(),
-                    resolve<IssueToolProvider>(),
-                    resolve<SessionToolProvider>()
+                    // TODO: Add tool providers in Phase 8
+                    // resolve<ProjectToolProvider>(),
+                    // resolve<IssueToolProvider>(),
+                    // resolve<SessionToolProvider>()
                 )
             )
         }
@@ -61,16 +62,6 @@ object MCPDependencies {
         }
         
         // Tool Providers
-        provide<ProjectToolProvider> { 
-            DefaultProjectToolProvider()
-        }
-        
-        provide<IssueToolProvider> { 
-            DefaultIssueToolProvider()
-        }
-        
-        provide<SessionToolProvider> { 
-            DefaultSessionToolProvider()
-        }
+        // TODO: Add concrete tool provider implementations in Phase 8
     }
 }
