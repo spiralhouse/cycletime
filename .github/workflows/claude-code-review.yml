@@ -38,7 +38,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0  # Full history for better diff analysis
 
       - name: Read code reviewer personality
         id: read-personality
@@ -60,5 +60,19 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: ${{ env.REVIEWER_PERSONALITY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            
+            Please review this pull request with the following personality and approach:
+            
+            ${{ env.REVIEWER_PERSONALITY }}
+            
+            Note: The PR branch is already checked out in the current working directory.
+            
+            Use `gh pr comment` for top-level feedback.
+            Only post GitHub comments - don't submit review text as messages.
+          use_sticky_comment: true
+          claude_args: |
+            --allowedTools "Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
 
