@@ -30,6 +30,8 @@ import io.ktor.server.engine.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.di.*
 import io.ktor.server.plugins.di.DI
+import io.ktor.server.websocket.*
+import kotlin.time.Duration.Companion.seconds
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
@@ -113,6 +115,15 @@ fun Application.module() {
     }
 
     install(SSE)
+    
+    // Install WebSocket support for MCP
+    install(WebSockets) {
+        pingPeriod = 30.seconds
+        timeout = 15.seconds
+        maxFrameSize = Long.MAX_VALUE
+        masking = false
+    }
+    
     val featuresEndTime = System.currentTimeMillis()
     logger.info("Ktor features installation completed in ${featuresEndTime - featuresStartTime}ms")
 
@@ -133,29 +144,24 @@ fun Application.module() {
         throw IllegalStateException("Dependency injection configuration failed", e)
     }
 
-    // Start MCP server if enabled
-    val mcpStartTime = System.currentTimeMillis()
+    // Initialize MCP integration service for monitoring and lifecycle management
     val mcpIntegrationService = if (mcpEnabled) {
         try {
             val mcpService: MCPIntegrationService by dependencies
-            val mcpConfig = mcpService.getStatus()
             
-            launch {
-                try {
-                    mcpService.start()
-                    val mcpEndTime = System.currentTimeMillis()
-                    logger.info("MCP WebSocket server started on ${mcpConfig.host}:${mcpConfig.port}${mcpConfig.path} in ${mcpEndTime - mcpStartTime}ms")
-                } catch (e: Exception) {
-                    logger.error("Failed to start MCP WebSocket server: ${e.message}", e)
-                    // Don't fail the entire application if MCP fails to start
-                }
+            // Start the optimized MCP integration
+            runBlocking {
+                mcpService.start()
             }
+            
+            logger.info("MCP integration service started with optimizations")
             mcpService
         } catch (e: Exception) {
-            logger.warn("MCP Integration Service not available: ${e.message}")
+            logger.warn("MCP integration unavailable: ${e.message}")
             null
         }
     } else {
+        logger.info("MCP integration disabled by configuration")
         null
     }
     
@@ -185,16 +191,35 @@ fun Application.module() {
                     -1
                 }
                 
-                // MCP status
-                val mcpStatus = mcpIntegrationService?.getStatus()
-                val mcpHealth = if (mcpStatus != null) {
-                    mapOf(
-                        "mcp" to if (mcpStatus.isRunning) "running" else "stopped",
-                        "mcp_port" to mcpStatus.port.toString(),
-                        "mcp_connections" to mcpStatus.activeConnections.toString()
-                    )
+                // Enhanced MCP health status with performance metrics
+                val mcpHealth = if (mcpEnabled) {
+                    val mcpStatus = mcpIntegrationService?.getStatus()
+                    if (mcpStatus != null) {
+                        buildMap {
+                            put("mcp", if (mcpStatus.isRunning) "running" else "stopped")
+                            put("mcp_port", mcpStatus.port.toString())
+                            put("mcp_connections", mcpStatus.activeConnections.toString())
+                            
+                            // Add performance metrics if available
+                            if (mcpStatus.totalRequests > 0) {
+                                put("mcp_requests", mcpStatus.totalRequests.toString())
+                                put("mcp_latency", "${mcpStatus.averageLatency}ms")
+                                put("mcp_cache_hit_rate", "${(mcpStatus.cacheHitRate * 100).toInt()}%")
+                            }
+                            
+                            if (mcpStatus.optimizationsEnabled) {
+                                put("mcp_optimized", "true")
+                            }
+                        }
+                    } else {
+                        // WebSocket endpoint available but no monitoring
+                        mapOf(
+                            "mcp" to "running",
+                            "mcp_optimized" to "unknown"
+                        )
+                    }
                 } else {
-                    mapOf("mcp" to "not_configured")
+                    mapOf("mcp" to "disabled")
                 }
 
                 call.respond(HttpStatusCode.OK, HealthResponse(
@@ -242,20 +267,18 @@ fun Application.module() {
         configureMCP()
     }
 
-    // Shutdown hook
+    // Enhanced shutdown hook with graceful cleanup
     monitor.subscribe(ApplicationStopped) {
-        logger.info("Application stopping, shutting down services...")
+        logger.info("Application stopping, initiating graceful shutdown...")
         
-        // Stop MCP server if running
-        mcpIntegrationService?.let { service ->
-            if (service.isRunning()) {
+        // Stop MCP integration service gracefully
+        if (mcpIntegrationService != null) {
+            runBlocking {
                 try {
-                    runBlocking {
-                        service.stop()
-                    }
-                    logger.info("MCP WebSocket server stopped")
+                    mcpIntegrationService.stop()
+                    logger.info("MCP integration service stopped gracefully")
                 } catch (e: Exception) {
-                    logger.warn("Error stopping MCP server: ${e.message}")
+                    logger.error("Error stopping MCP integration: ${e.message}")
                 }
             }
         }
@@ -263,6 +286,8 @@ fun Application.module() {
         // Close database connection
         DatabaseFactory.close()
         logger.info("Database connection closed")
+        
+        logger.info("Application shutdown complete")
     }
 
     val moduleEndTime = System.currentTimeMillis()
@@ -275,9 +300,18 @@ fun Application.module() {
     logger.info("  - Ktor features installation: ${featuresEndTime - featuresStartTime}ms") 
     logger.info("  - Dependency injection setup: ${diEndTime - diStartTime}ms")
     if (mcpIntegrationService != null) {
-        logger.info("  - MCP server startup: ${System.currentTimeMillis() - mcpStartTime}ms")
+        val status = mcpIntegrationService.getStatus()
+        logger.info("  - MCP integration: started (optimized: ${status.optimizationsEnabled})")
     }
     logger.info("  - Total startup time: ${totalStartupTime}ms")
+    
+    // Log performance optimization status
+    if (mcpEnabled && mcpIntegrationService != null) {
+        val status = mcpIntegrationService.getStatus()
+        if (status.optimizationsEnabled) {
+            logger.info("Performance optimizations enabled: async processing, resource caching, connection pooling")
+        }
+    }
 }
 
 /**
