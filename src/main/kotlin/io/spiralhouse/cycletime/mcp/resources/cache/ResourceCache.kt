@@ -1,9 +1,11 @@
 package io.spiralhouse.cycletime.mcp.resources.cache
 
 import io.spiralhouse.cycletime.mcp.resources.Resource
+import io.spiralhouse.cycletime.mcp.resources.ResourceContent
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Cache layer for frequently accessed resources
@@ -37,11 +39,19 @@ class ResourceCache(
      * @return The cached resource, or null if not found or expired
      */
     fun get(uri: String): Resource? {
-        val entry = cache[uri] ?: return null
+        val entry = cache[uri]
+        
+        if (entry == null) {
+            misses.incrementAndGet()
+            return null
+        }
         
         if (entry.isExpired()) {
             cache.remove(uri)
-            accessOrder.remove(uri)
+            synchronized(accessOrder) {
+                accessOrder.remove(uri)
+            }
+            misses.incrementAndGet()
             return null
         }
         
@@ -50,6 +60,7 @@ class ResourceCache(
             accessOrder[uri] = Instant.now()
         }
         
+        hits.incrementAndGet()
         return entry.resource
     }
     
@@ -108,7 +119,9 @@ class ResourceCache(
      * @return Current cache statistics
      */
     fun getStats(): CacheStats {
-        val validEntries = cache.values.filterNot { it.isExpired() }
+        // Capture a snapshot of cache entries to avoid concurrent modification
+        val snapshot = cache.values.toList()
+        val validEntries = snapshot.filterNot { it.isExpired() }
         return CacheStats(
             size = validEntries.size,
             maxSize = maxSize,
@@ -117,12 +130,14 @@ class ResourceCache(
         )
     }
     
-    private var hits = 0L
-    private var misses = 0L
+    private val hits = AtomicLong(0)
+    private val misses = AtomicLong(0)
     
     private fun calculateHitRate(): Double {
-        val total = hits + misses
-        return if (total > 0) hits.toDouble() / total else 0.0
+        val hitsCount = hits.get()
+        val missesCount = misses.get()
+        val total = hitsCount + missesCount
+        return if (total > 0) hitsCount.toDouble() / total else 0.0
     }
     
     private fun calculateAverageAge(entries: List<CacheEntry>): Duration {
@@ -143,5 +158,39 @@ class ResourceCache(
         val maxSize: Int,
         val hitRate: Double,
         val averageAge: Duration
+    )
+    
+    /**
+     * Get cache statistics (alias for getStats for compatibility)
+     * 
+     * @return Current cache statistics as CacheStatistics
+     */
+    fun getStatistics(): CacheStatistics {
+        val stats = getStats()
+        return CacheStatistics(
+            hitCount = hits.get(),
+            missCount = misses.get(),
+            entryCount = stats.size,
+            totalSize = cache.values.toList().sumOf { calculateResourceSize(it.resource) }
+        )
+    }
+    
+    private fun calculateResourceSize(resource: Resource): Long {
+        // Estimate size based on content length or use a default
+        val content = resource.content ?: return 0L
+        return when (content) {
+            is ResourceContent.Text -> content.data.length.toLong()
+            is ResourceContent.Binary -> content.data.length.toLong() // base64 string length
+        }
+    }
+    
+    /**
+     * Cache statistics with detailed metrics
+     */
+    data class CacheStatistics(
+        val hitCount: Long,
+        val missCount: Long,
+        val entryCount: Int,
+        val totalSize: Long
     )
 }
