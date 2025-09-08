@@ -140,7 +140,7 @@ object MCPDependencies {
         
         // Tool Invoker
         provide<ToolInvoker> {
-            DefaultToolInvoker(resolve())
+            DefaultToolInvoker(resolve<ToolRegistry>())
         }
     }
 }
