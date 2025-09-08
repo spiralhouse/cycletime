@@ -78,10 +78,10 @@ class WebSocketConnectionManager(
      * Starts the WebSocket server.
      * 
      * This method:
-     * 1. Configures the Ktor server with WebSocket support
-     * 2. Starts listening on the configured port
+     * 1. Configures the Ktor server with WebSocket support (if embedded mode)
+     * 2. Starts listening on the configured port (if embedded mode)
      * 3. Initializes heartbeat monitoring if enabled
-     * 4. Sets up routing for WebSocket connections
+     * 4. Sets up routing for WebSocket connections (if embedded mode)
      * 
      * @throws WebSocketServerException if the server fails to start
      */
@@ -92,32 +92,39 @@ class WebSocketConnectionManager(
         }
         
         try {
-            server = embeddedServer(CIO, port = config.port, host = "0.0.0.0") {
-                install(WebSockets) {
-                    pingPeriod = config.heartbeatInterval.toKotlinDuration()
-                    timeout = config.connectionTimeout.toKotlinDuration()
-                    maxFrameSize = config.maxMessageSize.toLong()
-                    masking = false
-                }
-                
-                routing {
-                    // Handle non-WebSocket requests with proper error
-                    get("/") {
-                        call.respondText(
-                            "WebSocket endpoint. Use ws:// or wss:// protocol.",
-                            status = HttpStatusCode.BadRequest
-                        )
+            // Only create embedded server if in embedded mode
+            if (config.embeddedMode) {
+                server = embeddedServer(CIO, port = config.port, host = "0.0.0.0") {
+                    install(WebSockets) {
+                        pingPeriod = config.heartbeatInterval.toKotlinDuration()
+                        timeout = config.connectionTimeout.toKotlinDuration()
+                        maxFrameSize = config.maxMessageSize.toLong()
+                        masking = false
                     }
                     
-                    webSocket("/") {
-                        handleConnection(this)
+                    routing {
+                        // Handle non-WebSocket requests with proper error
+                        get("/") {
+                            call.respondText(
+                                "WebSocket endpoint. Use ws:// or wss:// protocol.",
+                                status = HttpStatusCode.BadRequest
+                            )
+                        }
+                        
+                        webSocket("/") {
+                            handleConnection(this)
+                        }
                     }
                 }
+                
+                server?.start(wait = false)
+                logger.logInfo("WebSocket server started on port ${config.port}")
+            } else {
+                // In integrated mode, we don't create a server
+                logger.logInfo("WebSocket connection manager initialized (integrated mode)")
             }
             
-            server?.start(wait = false)
             isServerRunning.set(true)
-            logger.logInfo("WebSocket server started on port ${config.port}")
             
             // Start heartbeat manager
             heartbeatManager.start()
@@ -149,9 +156,11 @@ class WebSocketConnectionManager(
         // Close all connections
         closeAllConnections()
         
-        // Stop server
-        server?.stop(1000, 2000)
-        server = null
+        // Stop server (only if in embedded mode)
+        if (config.embeddedMode) {
+            server?.stop(1000, 2000)
+            server = null
+        }
         isServerRunning.set(false)
         
         // Cancel coroutine scope

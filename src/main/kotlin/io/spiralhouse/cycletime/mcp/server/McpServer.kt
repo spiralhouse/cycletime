@@ -181,11 +181,13 @@ class DefaultMcpServer(
         config.validate()
         
         // Configure WebSocket connection manager
+        // Use embedded mode for tests (when standalone server is needed)
         val wsConfig = WebSocketServerConfig(
             port = config.port,
             enableSsl = config.enableSSL,
             connectionTimeout = config.connectionTimeout,
-            heartbeatInterval = config.heartbeatInterval
+            heartbeatInterval = config.heartbeatInterval,
+            embeddedMode = true // Enable embedded mode for standalone server
         )
         connectionManager = WebSocketConnectionManager(wsConfig)
         
