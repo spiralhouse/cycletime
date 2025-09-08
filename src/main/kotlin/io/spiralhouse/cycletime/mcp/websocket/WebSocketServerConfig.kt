@@ -20,6 +20,7 @@ import java.time.Duration
  * @property timeout Connection timeout in milliseconds
  * @property maxFrameSize Maximum frame size in bytes
  * @property masking Whether to enable masking
+ * @property embeddedMode Whether to run as embedded server (true) or integrated with existing Ktor app (false)
  */
 data class WebSocketServerConfig(
     val port: Int = 3000,
@@ -36,5 +37,6 @@ data class WebSocketServerConfig(
     val pingPeriod: Long = 30000L,
     val timeout: Long = 60000L,
     val maxFrameSize: Long = 1024 * 1024L,
-    val masking: Boolean = false
+    val masking: Boolean = false,
+    val embeddedMode: Boolean = true // Default to embedded for backward compatibility
 )
