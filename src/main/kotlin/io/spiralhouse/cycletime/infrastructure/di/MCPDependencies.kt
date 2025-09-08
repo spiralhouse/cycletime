@@ -61,11 +61,11 @@ object MCPDependencies {
         // MCP Integration Service - The main entry point for MCP server
         provide<MCPIntegrationService> {
             MCPIntegrationService(
-                methodHandler = resolve(),
-                protocolHandler = resolve(),
+                methodHandler = resolve<McpMethodHandler>(),
+                protocolHandler = resolve<ProtocolHandler>(),
                 config = MCPServerConfig(), // Uses environment variables by default
-                resourceRegistry = resolve(),
-                toolRegistry = resolve(),
+                resourceRegistry = resolve<ResourceRegistry>(),
+                toolRegistry = resolve<ToolRegistry>(),
                 resourceProviders = listOf(
                     resolve<ProjectResourceProvider>(),
                     resolve<IssueResourceProvider>(),
