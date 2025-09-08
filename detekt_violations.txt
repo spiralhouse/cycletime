@@ -1,0 +1,14 @@
+Reusing configuration cache.
+> Task :detekt UP-TO-DATE
+
+2 problems were found reusing the configuration cache, 1 of which seems unique.
+- Task `:detekt` of type `io.gitlab.arturbosch.detekt.Detekt`: invocation of 'Task.project' at execution time is unsupported with the configuration cache.
+  See https://docs.gradle.org/9.0.0/userguide/configuration_cache_requirements.html#config_cache:requirements:use_project_during_execution
+
+See the complete report at file:///Users/jburbridge/Projects/cycletime/build/reports/configuration-cache/p0f0bw0vfoth41pkctp6ti84/dqolo2hfakau4q3483s0settb/configuration-cache-report.html
+
+[Incubating] Problems report is available at: file:///Users/jburbridge/Projects/cycletime/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 301ms
+1 actionable task: 1 up-to-date
+Configuration cache entry reused with 2 problems.

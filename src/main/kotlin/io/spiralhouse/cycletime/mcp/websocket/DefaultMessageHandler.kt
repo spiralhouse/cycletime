@@ -5,6 +5,7 @@ import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
 import io.spiralhouse.cycletime.mcp.protocol.ProtocolHandler
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.serialization.SerializationException
 
 /**
  * Default implementation of the MessageHandler interface.
@@ -61,9 +62,18 @@ class DefaultMessageHandler : MessageHandler {
         return try {
             val request = parseRequest(handler, message, connectionId)
             processRequest(handler, request)
-        } catch (e: Exception) {
-            logger.logError("Error processing message from $connectionId", e)
-            createErrorResponse(null, -32603, "Internal server error")
+        } catch (e: SerializationException) {
+            logger.logError("JSON parsing error from $connectionId", e)
+            createErrorResponse(null, -32700, "Parse error")
+        } catch (e: IllegalArgumentException) {
+            logger.logError("Invalid request from $connectionId", e)
+            createErrorResponse(null, -32600, "Invalid Request")
+        } catch (e: UnsupportedOperationException) {
+            logger.logError("Method not supported from $connectionId", e)
+            createErrorResponse(null, -32601, "Method not found")
+        } catch (e: IllegalStateException) {
+            logger.logError("Handler in invalid state for $connectionId", e)
+            createErrorResponse(null, -32603, "Internal error")
         }
     }
     
@@ -85,8 +95,11 @@ class DefaultMessageHandler : MessageHandler {
     private fun parseRequest(handler: JsonRpcProtocolHandler, message: String, connectionId: String): JsonRpcRequest {
         return try {
             handler.parseRequest(message)
-        } catch (e: Exception) {
-            logger.logError("Failed to parse JSON-RPC request from $connectionId", e)
+        } catch (e: SerializationException) {
+            logger.logError("JSON deserialization failed from $connectionId: ${e.message}", e)
+            throw e
+        } catch (e: IllegalArgumentException) {
+            logger.logError("Invalid JSON-RPC format from $connectionId: ${e.message}", e)
             throw e
         }
     }
@@ -108,7 +121,22 @@ class DefaultMessageHandler : MessageHandler {
         if (methodHandler != null) {
             return try {
                 methodHandler(request)
-            } catch (e: Exception) {
+            } catch (e: IllegalArgumentException) {
+                logger.logError("Invalid method parameters for ${request.method}", e)
+                handler.createErrorResponse(
+                    request.id,
+                    -32602,
+                    "Invalid params"
+                )
+            } catch (e: UnsupportedOperationException) {
+                logger.logError("Unsupported operation in method ${request.method}", e)
+                handler.createErrorResponse(
+                    request.id,
+                    -32601,
+                    "Method not found"
+                )
+            } catch (e: IllegalStateException) {
+                logger.logError("Handler in invalid state for method ${request.method}", e)
                 handler.createErrorResponse(
                     request.id,
                     -32603,

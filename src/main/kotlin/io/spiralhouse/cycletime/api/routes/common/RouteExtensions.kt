@@ -288,79 +288,142 @@ suspend inline fun <reified T : Any> ApplicationCall.validateAndProcess(
     noinline block: suspend (T) -> Unit
 ) {
     try {
-        // Try to receive the request body first to prioritize body validation errors
-        val request = try {
-            receive<T>()
-        } catch (e: Exception) {
-            when {
-                e is SerializationException -> {
-                    logger.warn("Failed to deserialize request: ${e.message}")
-                    throw BadRequestException("Invalid JSON format: ${e.message}")
-                }
-                e.message?.contains("EOF") == true || 
-                e.message?.contains("Unexpected end") == true ||
-                e.message?.contains("Request body") == true ||
-                e.message?.contains("is empty") == true -> {
-                    throw BadRequestException("Request body is required")
-                }
-                else -> throw e
-            }
-        }
-        
-        // Check Content-Type header after body parsing (for consistency with other endpoints)
-        if (this.request.httpMethod != HttpMethod.Get && this.request.httpMethod != HttpMethod.Delete) {
-            val contentType = this.request.contentType()
-            if (contentType.contentType != "application" || contentType.contentSubtype != "json") {
-                throw UnsupportedMediaTypeException("Content-Type must be application/json")
-            }
-        }
-        
-        
-        // Validate the request
+        val request = receiveAndValidateRequest<T>()
+        validateContentTypeIfRequired()
         validation(request)
-        
-        // Process the request
         block(request)
     } catch (e: UnsupportedMediaTypeException) {
         respondUnsupportedMediaType()
     } catch (e: BadRequestException) {
-        val message = when {
-            e.message?.contains("Request body is required") == true -> "Request body is required"
-            e.message?.contains("Invalid JSON") == true -> "Invalid JSON format"
-            else -> e.message ?: "Bad request"
-        }
-        respondBadRequest(message, e.cause?.message)
+        handleBadRequestException(e)
     } catch (e: SerializationException) {
-        logger.warn("Failed to deserialize request: ${e.message}")
-        respondBadRequest("Invalid JSON format", e.message)
+        handleSerializationException(e)
     } catch (e: IllegalArgumentException) {
-        // Enhanced validation error handling
-        val message = e.message ?: "Validation failed"
-        val (errorMessage, details) = when {
-            message.startsWith("Invalid IssueStatus:") -> {
-                val invalidStatus = message.substringAfter("Invalid IssueStatus:").trim()
-                val details = if (invalidStatus.isNotEmpty()) {
-                    "Invalid status: '$invalidStatus'. Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
-                } else {
-                    "Status field is required. Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
-                }
-                message to details
-            }
-            message.startsWith("Invalid issue status:") -> {
-                val status = message.substringAfter("Invalid issue status:").substringBefore(".").trim()
-                "Invalid status: $status" to "Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
-            }
-            message.contains("Issue status is required") -> {
-                "Issue status is required" to "Status field must not be empty"
-            }
-            else -> message to null
-        }
-        respondBadRequest(errorMessage, details)
+        handleValidationException(e)
     } catch (e: Exception) {
-        // Log unexpected errors
         logger.error("Unexpected error in request processing", e)
         throw e // Let the global error handler deal with it
     }
+}
+
+/**
+ * Receive and validate the request body with proper error handling.
+ * 
+ * @param T The request type
+ * @return The parsed request object
+ * @throws BadRequestException if the request body is invalid
+ */
+suspend inline fun <reified T : Any> ApplicationCall.receiveAndValidateRequest(): T {
+    return try {
+        receive<T>()
+    } catch (e: Exception) {
+        when {
+            e is SerializationException -> {
+                logger.warn("Failed to deserialize request: ${e.message}")
+                throw BadRequestException("Invalid JSON format: ${e.message}")
+            }
+            isEmptyBodyError(e) -> {
+                throw BadRequestException("Request body is required")
+            }
+            else -> throw e
+        }
+    }
+}
+
+/**
+ * Check if the exception indicates an empty request body.
+ */
+fun isEmptyBodyError(e: Exception): Boolean {
+    val message = e.message ?: return false
+    return message.contains("EOF") ||
+           message.contains("Unexpected end") ||
+           message.contains("Request body") ||
+           message.contains("is empty")
+}
+
+/**
+ * Validate Content-Type header for non-GET/DELETE requests.
+ * 
+ * @throws UnsupportedMediaTypeException if Content-Type is not application/json
+ */
+fun ApplicationCall.validateContentTypeIfRequired() {
+    if (request.httpMethod != HttpMethod.Get && request.httpMethod != HttpMethod.Delete) {
+        val contentType = request.contentType()
+        if (contentType.contentType != "application" || contentType.contentSubtype != "json") {
+            throw UnsupportedMediaTypeException("Content-Type must be application/json")
+        }
+    }
+}
+
+/**
+ * Handle BadRequestException with proper message formatting.
+ */
+suspend fun ApplicationCall.handleBadRequestException(e: BadRequestException) {
+    val message = when {
+        e.message?.contains("Request body is required") == true -> "Request body is required"
+        e.message?.contains("Invalid JSON") == true -> "Invalid JSON format"
+        else -> e.message ?: "Bad request"
+    }
+    respondBadRequest(message, e.cause?.message)
+}
+
+/**
+ * Handle SerializationException with proper logging and response.
+ */
+suspend fun ApplicationCall.handleSerializationException(e: SerializationException) {
+    logger.warn("Failed to deserialize request: ${e.message}")
+    respondBadRequest("Invalid JSON format", e.message)
+}
+
+/**
+ * Handle IllegalArgumentException from validation with enhanced error messages.
+ */
+suspend fun ApplicationCall.handleValidationException(e: IllegalArgumentException) {
+    val message = e.message ?: "Validation failed"
+    val (errorMessage, details) = processValidationErrorMessage(message)
+    respondBadRequest(errorMessage, details)
+}
+
+/**
+ * Process validation error messages for better user experience.
+ * 
+ * @param message The original error message
+ * @return Pair of (formatted error message, additional details)
+ */
+fun processValidationErrorMessage(message: String): Pair<String, String?> {
+    return when {
+        message.startsWith("Invalid IssueStatus:") -> {
+            processInvalidIssueStatusError(message)
+        }
+        message.startsWith("Invalid issue status:") -> {
+            processInvalidStatusError(message)
+        }
+        message.contains("Issue status is required") -> {
+            "Issue status is required" to "Status field must not be empty"
+        }
+        else -> message to null
+    }
+}
+
+/**
+ * Process "Invalid IssueStatus:" error messages.
+ */
+fun processInvalidIssueStatusError(message: String): Pair<String, String> {
+    val invalidStatus = message.substringAfter("Invalid IssueStatus:").trim()
+    val details = if (invalidStatus.isNotEmpty()) {
+        "Invalid status: '$invalidStatus'. Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
+    } else {
+        "Status field is required. Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
+    }
+    return message to details
+}
+
+/**
+ * Process "Invalid issue status:" error messages.
+ */
+fun processInvalidStatusError(message: String): Pair<String, String> {
+    val status = message.substringAfter("Invalid issue status:").substringBefore(".").trim()
+    return "Invalid status: $status" to "Valid statuses are: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED"
 }
 
 /**

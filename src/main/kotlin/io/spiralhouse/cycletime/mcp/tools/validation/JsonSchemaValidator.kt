@@ -48,7 +48,7 @@ class JsonSchemaValidator : ToolValidator {
             "array" -> validateArray(data, schema, path, errors)
             "string" -> validateString(data, schema, path, errors)
             "number" -> validateNumber(data, schema, path, errors)
-            "boolean" -> validateBoolean(data, schema, path, errors)
+            "boolean" -> validateBoolean(data, path, errors)
             else -> {
                 // If no type specified, try to validate as object
                 if (schema.containsKey("properties")) {
@@ -178,7 +178,6 @@ class JsonSchemaValidator : ToolValidator {
     
     private fun validateBoolean(
         data: JsonElement, 
-        schema: JsonObject, 
         path: String, 
         errors: MutableList<String>
     ) {

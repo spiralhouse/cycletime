@@ -217,7 +217,7 @@ open class DefaultToolRegistry(
      */
     fun handleJsonRpcMethod(method: String, params: JsonElement): Result<JsonElement> {
         return when (method) {
-            "tools/list" -> handleToolsList(params)
+            "tools/list" -> handleToolsList()
             "tools/call" -> handleToolsCall(params)
             else -> Result.failure(
                 JsonRpcException(
@@ -228,7 +228,7 @@ open class DefaultToolRegistry(
         }
     }
     
-    private fun handleToolsList(params: JsonElement): Result<JsonElement> {
+    private fun handleToolsList(): Result<JsonElement> {
         val metadata = getAllToolMetadata()
         val tools = metadata.map { tool ->
             buildJsonObject {

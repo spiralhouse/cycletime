@@ -40,11 +40,8 @@ class DefaultConnectionFactory : ConnectionFactory {
     }
     
     override fun isValidConnectionId(connectionId: String): Boolean {
-        return try {
-            UUID.fromString(connectionId)
-            true
-        } catch (e: IllegalArgumentException) {
-            false
-        }
+        // Use regex validation instead of exception control flow to avoid detekt violation
+        val uuidRegex = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+        return connectionId.matches(uuidRegex)
     }
 }

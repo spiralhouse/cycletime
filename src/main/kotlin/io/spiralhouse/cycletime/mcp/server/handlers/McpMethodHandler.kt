@@ -120,9 +120,9 @@ class DefaultMcpMethodHandler(
     override suspend fun handleNotification(request: JsonRpcRequest) {
         // Process notifications without generating responses
         when (request.method) {
-            "notifications/message" -> handleMessageNotification(request)
-            "notifications/progress" -> handleProgressNotification(request)
-            "notifications/capabilities" -> handleCapabilitiesNotification(request)
+            "notifications/message" -> handleMessageNotification()
+            "notifications/progress" -> handleProgressNotification()
+            "notifications/capabilities" -> handleCapabilitiesNotification()
             // Add other notification handlers as needed
         }
     }
@@ -416,17 +416,17 @@ class DefaultMcpMethodHandler(
     
     // ===== Notification Handlers =====
     
-    private fun handleMessageNotification(request: JsonRpcRequest) {
+    private fun handleMessageNotification() {
         // Log or process message notifications
         // In a real implementation, this might forward to a logging system
     }
     
-    private fun handleProgressNotification(request: JsonRpcRequest) {
+    private fun handleProgressNotification() {
         // Handle progress updates
         // In a real implementation, this might update a progress tracker
     }
     
-    private fun handleCapabilitiesNotification(request: JsonRpcRequest) {
+    private fun handleCapabilitiesNotification() {
         // Handle capability update notifications
         // In a real implementation, this might update client capability tracking
     }

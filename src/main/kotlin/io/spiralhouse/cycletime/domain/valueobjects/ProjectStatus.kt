@@ -75,8 +75,8 @@ enum class ProjectStatus(
      * @throws IllegalStateException if the transition is not valid
      */
     fun validateTransitionTo(newStatus: ProjectStatus) {
-        if (!canTransitionTo(newStatus)) {
-            throw IllegalStateException("Invalid transition from ${this.value} to ${newStatus.value}")
+        check(canTransitionTo(newStatus)) {
+            "Invalid transition from ${this.value} to ${newStatus.value}"
         }
     }
 
