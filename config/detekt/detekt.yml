@@ -1,5 +1,7 @@
 build:
-  maxIssues: 400  # TEMPORARY EMERGENCY FIX (SPI-593): 374 violations blocking build - reduce back to 100 in phases
+  maxIssues: 400  # TEMPORARY EMERGENCY FIX (SPI-593): 374 violations blocking build
+                  # TODO: Reduce gradually: Phase1(400→200) → Phase2(200→100) → Phase3(100→50)
+                  # Deadline: Complete by end of next sprint
   excludeCorrectable: false
 
 config:
