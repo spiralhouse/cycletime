@@ -351,13 +351,16 @@ class DefaultMcpMethodHandler(
                 throw ResourceNotFoundException("Resource not found: $uri")
             }
             
-            // For now, subscription is not implemented
-            // This will be properly implemented in a future phase
+            // Resource subscription is not supported in this implementation
+            // Future versions may add real-time resource change notifications
             return protocolHandler.createErrorResponse(
                 id = request.id,
-                code = -32003,
-                message = "Subscription not yet implemented",
-                data = null
+                code = -32603,
+                message = "Resource subscription is not supported",
+                data = buildJsonObject {
+                    put("feature", "resource_subscription")
+                    put("reason", "not_implemented")
+                }
             )
         } catch (e: ResourceNotFoundException) {
             return protocolHandler.createErrorResponse(
@@ -379,13 +382,16 @@ class DefaultMcpMethodHandler(
             ?: return createInvalidParamsError(request, "uri parameter is required")
         
         return try {
-            // For now, subscription is not implemented
-            // This will be properly implemented in a future phase
+            // Resource subscription is not supported in this implementation
+            // Future versions may add real-time resource change notifications
             return protocolHandler.createErrorResponse(
                 id = request.id,
-                code = -32003,
-                message = "Subscription not yet implemented",
-                data = null
+                code = -32603,
+                message = "Resource subscription is not supported",
+                data = buildJsonObject {
+                    put("feature", "resource_subscription")
+                    put("reason", "not_implemented")
+                }
             )
         } catch (e: Exception) {
             createInternalError(request, e)

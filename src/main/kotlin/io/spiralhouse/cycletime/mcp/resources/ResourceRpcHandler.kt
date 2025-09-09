@@ -2,7 +2,6 @@ package io.spiralhouse.cycletime.mcp.resources
 
 import io.spiralhouse.cycletime.mcp.resources.interfaces.*
 import io.spiralhouse.cycletime.mcp.resources.rpc.*
-import io.spiralhouse.cycletime.mcp.resources.subscription.*
 import kotlinx.serialization.json.*
 
 /**
@@ -12,8 +11,7 @@ import kotlinx.serialization.json.*
  * providing a clean and extensible architecture for handling resource operations.
  */
 class ResourceRpcHandler(
-    private val registry: ResourceRegistry = ResourceProviderRegistry(),
-    private val subscriptionManager: SubscriptionManager = ResourceSubscriptionManager()
+    private val registry: ResourceRegistry = ResourceProviderRegistry()
 ) {
     private val commands = mutableMapOf<String, RpcCommand>()
     
@@ -100,19 +98,18 @@ class ResourceRpcHandler(
     private suspend fun handleResourcesSubscribe(params: JsonObject): JsonObject {
         val uri = params["uri"]?.jsonPrimitive?.content ?: throw IllegalArgumentException("uri parameter required")
         
-        // Subscription not yet implemented
-        throw UnsupportedOperationException("Subscription not yet implemented")
+        // Resource subscription is not supported in this implementation
+        // Future versions may add real-time resource change notifications
+        throw UnsupportedOperationException("Resource subscription is not supported")
     }
     
     private suspend fun handleResourcesUnsubscribe(params: JsonObject): JsonObject {
         val subscriptionId = params["subscriptionId"]?.jsonPrimitive?.content 
             ?: throw IllegalArgumentException("subscriptionId parameter required")
         
-        subscriptionManager.unsubscribe(subscriptionId)
-        
-        return buildJsonObject {
-            put("success", JsonPrimitive(true))
-        }
+        // Resource subscription is not supported in this implementation
+        // Future versions may add real-time resource change notifications
+        throw UnsupportedOperationException("Resource subscription is not supported")
     }
     
     private fun resourceToJson(resource: Resource): JsonObject {
