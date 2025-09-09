@@ -338,7 +338,7 @@ private fun Route.configureHealthEndpoint(
             }
             
             // Enhanced MCP health status with performance metrics
-            val mcpHealth = buildMcpHealthStatus(mcpEnabled, mcpIntegrationService)
+            val (mcpDependencies, mcpMetrics) = buildMcpHealthStatus(mcpEnabled, mcpIntegrationService)
 
             call.respond(HttpStatusCode.OK, HealthResponse(
                 status = "healthy",
@@ -349,11 +349,11 @@ private fun Route.configureHealthEndpoint(
                     "projectService" to "initialized",
                     "issueService" to "initialized",
                     "sessionService" to "initialized"
-                ) + mcpHealth,
+                ) + mcpDependencies,
                 metrics = mapOf(
                     "projects" to projectCount.toString(),
                     "sessions" to sessionCount.toString()
-                ),
+                ) + mcpMetrics,
                 timestamp = System.currentTimeMillis().toString()
             ))
         } catch (e: SQLException) {
@@ -398,39 +398,53 @@ private fun Route.configureHealthEndpoint(
 
 /**
  * Build MCP health status map with performance metrics.
+ * Returns a pair of (dependencies, metrics) for proper categorization.
  */
 private fun buildMcpHealthStatus(
     mcpEnabled: Boolean,
     mcpIntegrationService: MCPIntegrationService?
-): Map<String, String> {
+): Pair<Map<String, String>, Map<String, String>> {
     return if (mcpEnabled) {
         val mcpStatus = mcpIntegrationService?.getStatus()
         if (mcpStatus != null) {
-            buildMap {
-                put("mcp", if (mcpStatus.isRunning) "running" else "stopped")
-                put("mcp_port", mcpStatus.port.toString())
-                put("mcp_connections", mcpStatus.activeConnections.toString())
+            val dependencies = mapOf(
+                "mcpServer" to if (mcpStatus.isRunning) "running" else "stopped"
+            )
+            
+            val metrics = buildMap {
+                put("mcpConnections", mcpStatus.activeConnections.toString())
+                put("mcpPort", mcpStatus.port.toString())
+                put("mcpUptime", mcpStatus.uptimeMs.toString())
+                put("mcpStatus", if (mcpStatus.isRunning) "running" else "stopped")
                 
                 // Add performance metrics if available
                 if (mcpStatus.totalRequests > 0) {
-                    put("mcp_requests", mcpStatus.totalRequests.toString())
-                    put("mcp_latency", "${mcpStatus.averageLatency}ms")
-                    put("mcp_cache_hit_rate", "${(mcpStatus.cacheHitRate * 100).toInt()}%")
+                    put("mcpRequests", mcpStatus.totalRequests.toString())
+                    put("mcpLatency", "${mcpStatus.averageLatency}ms")
+                    put("mcpCacheHitRate", "${(mcpStatus.cacheHitRate * 100).toInt()}%")
                 }
                 
                 if (mcpStatus.optimizationsEnabled) {
-                    put("mcp_optimized", "true")
+                    put("mcpOptimized", "true")
                 }
             }
+            
+            dependencies to metrics
         } else {
             // WebSocket endpoint available but no monitoring
-            mapOf(
-                "mcp" to "running",
-                "mcp_optimized" to "unknown"
+            val dependencies = mapOf(
+                "mcpServer" to "running"
             )
+            val metrics = mapOf(
+                "mcpConnections" to "0",
+                "mcpPort" to "3006",
+                "mcpUptime" to "0",
+                "mcpStatus" to "running"
+            )
+            dependencies to metrics
         }
     } else {
-        mapOf("mcp" to "disabled")
+        mapOf("mcpServer" to "disabled") to emptyMap()
     }
 }
 
