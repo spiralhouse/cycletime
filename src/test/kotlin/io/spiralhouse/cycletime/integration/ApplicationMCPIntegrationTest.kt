@@ -34,6 +34,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
     "should start application with MCP server enabled by default" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -51,6 +53,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
     "should include MCP server status in health endpoint" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -75,6 +79,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
         testApplication {
             // TODO: Fix environment configuration
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -87,6 +93,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
     "should start MCP server on different port than REST server" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -104,6 +112,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
     "should register all MCP components in DI container" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -124,6 +134,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
     "should support graceful shutdown of both REST and MCP servers" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -141,6 +153,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
     "should report MCP server performance metrics in health check" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -163,7 +177,9 @@ class ApplicationMCPIntegrationTest : StringSpec({
         repeat(3) {
             testApplication {
                 application {
-                    module()
+                    // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
+                module()
                 }
 
                 val healthResponse = client.get("/health")

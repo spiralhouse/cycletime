@@ -24,6 +24,8 @@ class McpSimpleIntegrationTest : StringSpec({
     "should expose MCP info endpoint" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
             
@@ -40,6 +42,8 @@ class McpSimpleIntegrationTest : StringSpec({
     "should accept WebSocket connections on /mcp endpoint" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
             
@@ -88,6 +92,8 @@ class McpSimpleIntegrationTest : StringSpec({
     "should handle tools/list request via WebSocket" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
             
@@ -151,6 +157,8 @@ class McpSimpleIntegrationTest : StringSpec({
     "should expose MCP stats endpoint" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
             

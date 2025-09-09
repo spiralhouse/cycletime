@@ -16,6 +16,8 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.ktor.websocket.*
 import io.spiralhouse.cycletime.module
+import io.spiralhouse.cycletime.configureForTesting
+import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseFactory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
@@ -36,6 +38,10 @@ class MCPEndToEndTest : StringSpec({
     "should complete full application startup with REST and MCP servers" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module() // Will fail - MCP server not integrated into startup
             }
 
@@ -60,6 +66,8 @@ class MCPEndToEndTest : StringSpec({
     "should establish WebSocket connection to MCP server" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -93,6 +101,8 @@ class MCPEndToEndTest : StringSpec({
     "should handle MCP initialize protocol method" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -150,6 +160,8 @@ class MCPEndToEndTest : StringSpec({
     "should handle MCP resources/list method" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -201,6 +213,8 @@ class MCPEndToEndTest : StringSpec({
     "should handle MCP tools/list method" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -252,6 +266,8 @@ class MCPEndToEndTest : StringSpec({
     "should handle concurrent WebSocket connections" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -296,6 +312,8 @@ class MCPEndToEndTest : StringSpec({
     "should handle WebSocket connection errors gracefully" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -332,6 +350,8 @@ class MCPEndToEndTest : StringSpec({
     "should handle graceful server shutdown with active connections" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -364,6 +384,8 @@ class MCPEndToEndTest : StringSpec({
     "should maintain connection state across multiple requests" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -404,6 +426,8 @@ class MCPEndToEndTest : StringSpec({
     "should handle WebSocket ping/pong heartbeat" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 
@@ -438,6 +462,8 @@ class MCPEndToEndTest : StringSpec({
     "should report accurate connection metrics in health endpoint" {
         testApplication {
             application {
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
 

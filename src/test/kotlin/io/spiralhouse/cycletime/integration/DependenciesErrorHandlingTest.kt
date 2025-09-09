@@ -54,6 +54,8 @@ class DependenciesErrorHandlingTest : StringSpec({
                 // There's no way to pass null in the type-safe API
                 // This is by design - the system is more robust
                 // Test this by using the full module which uses the DI
+                // Use in-memory database for tests to avoid conflicts
+                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module()
             }
             
