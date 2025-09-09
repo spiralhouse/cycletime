@@ -130,10 +130,8 @@ object IssueValidation {
      * @throws IllegalArgumentException if validation fails
      */
     fun validateDescription(description: String) {
-        if (description.length > MAX_DESCRIPTION_LENGTH) {
-            throw IllegalArgumentException(
-                "Issue description exceeds maximum length of $MAX_DESCRIPTION_LENGTH characters (actual: ${description.length})"
-            )
+        require(description.length <= MAX_DESCRIPTION_LENGTH) {
+            "Issue description exceeds maximum length of $MAX_DESCRIPTION_LENGTH characters (actual: ${description.length})"
         }
     }
     
@@ -146,10 +144,8 @@ object IssueValidation {
      */
     fun validateAndParseIssueType(typeString: String): IssueType {
         val upperType = typeString.uppercase()
-        if (upperType !in VALID_ISSUE_TYPES) {
-            throw IllegalArgumentException(
-                "Invalid issue type: '$typeString'. Valid types are: ${VALID_ISSUE_TYPES.joinToString(", ")}"
-            )
+        require(upperType in VALID_ISSUE_TYPES) {
+            "Invalid issue type: '$typeString'. Valid types are: ${VALID_ISSUE_TYPES.joinToString(", ")}"
         }
         return IssueType.valueOf(upperType)
     }
@@ -180,10 +176,8 @@ object IssueValidation {
      * @throws IllegalArgumentException if the estimate is invalid
      */
     fun validateEstimate(estimate: Int) {
-        if (estimate !in VALID_ESTIMATES) {
-            throw IllegalArgumentException(
-                "Invalid estimate: $estimate. Valid estimates follow Fibonacci sequence: ${VALID_ESTIMATES.sorted().joinToString(", ")}"
-            )
+        require(estimate in VALID_ESTIMATES) {
+            "Invalid estimate: $estimate. Valid estimates follow Fibonacci sequence: ${VALID_ESTIMATES.sorted().joinToString(", ")}"
         }
     }
     
@@ -201,15 +195,11 @@ object IssueValidation {
      */
     private fun validateEpicBusinessRules(issueType: IssueType, estimate: Int?, parentId: String?) {
         if (issueType == IssueType.EPIC) {
-            if (estimate != null) {
-                throw IllegalArgumentException(
-                    "Epic issues cannot have estimates. Epics aggregate estimates from their child issues."
-                )
+            require(estimate == null) {
+                "Epic issues cannot have estimates. Epics aggregate estimates from their child issues."
             }
-            if (parentId != null) {
-                throw IllegalArgumentException(
-                    "Epic issues cannot have parent issues. Epics are top-level containers in the issue hierarchy."
-                )
+            require(parentId == null) {
+                "Epic issues cannot have parent issues. Epics are top-level containers in the issue hierarchy."
             }
         }
     }
@@ -226,10 +216,8 @@ object IssueValidation {
      * @throws IllegalArgumentException if subtask business rules are violated
      */
     private fun validateSubtaskBusinessRules(issueType: IssueType, parentId: String?) {
-        if (issueType == IssueType.SUBTASK && parentId == null) {
-            throw IllegalArgumentException(
-                "Subtask issues must have a parent issue. Subtasks cannot exist independently."
-            )
+        require(!(issueType == IssueType.SUBTASK && parentId == null)) {
+            "Subtask issues must have a parent issue. Subtasks cannot exist independently."
         }
     }
     

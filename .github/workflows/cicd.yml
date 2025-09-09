@@ -572,6 +572,7 @@ jobs:
         run: cp .github/gradle-ci.properties gradle.properties
 
       - name: Run dependency vulnerability scan
+        continue-on-error: true  # Temporarily non-blocking due to NVD API issues
         run: |
           echo "🔒 Running security vulnerability scan with NVD API"
           ./gradlew dependencyCheckAnalyze \
@@ -581,7 +582,6 @@ jobs:
             -Dnvd.api.key="${{ secrets.NVD_API_KEY }}"
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-        continue-on-error: true
 
       - name: Upload security scan results
         uses: actions/upload-artifact@v4

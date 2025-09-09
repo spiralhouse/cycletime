@@ -6,6 +6,8 @@ import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import java.io.IOException
+import kotlinx.coroutines.channels.ClosedSendChannelException
 
 /**
  * Default implementation of the HeartbeatManager interface.
@@ -86,8 +88,15 @@ class DefaultHeartbeatManager(
         connections.forEach { session ->
             try {
                 sendPingAndCheckTimeout(session)
-            } catch (e: Exception) {
-                logger.logError("Error during heartbeat for ${session.id}", e)
+            } catch (e: IOException) {
+                logger.logError("Network error during heartbeat for ${session.id}", e)
+            } catch (e: ClosedSendChannelException) {
+                logger.logError("Connection closed during heartbeat for ${session.id}", e)
+            } catch (e: IllegalStateException) {
+                logger.logError("Invalid state during heartbeat for ${session.id}", e)
+            } catch (e: CancellationException) {
+                logger.logDebug("Heartbeat cancelled for ${session.id}")
+                throw e // Re-throw cancellation to maintain coroutine contract
             }
         }
         
@@ -111,18 +120,31 @@ class DefaultHeartbeatManager(
                 logger.logInfo("Connection timed out: ${session.id}")
                 closeConnection(session)
             }
-        } catch (e: Exception) {
-            logger.logError("Failed to send ping to ${session.id}", e)
+        } catch (e: IOException) {
+            logger.logError("Network error sending ping to ${session.id}", e)
             // Connection might be dead, try to close it
             closeConnection(session)
+        } catch (e: ClosedSendChannelException) {
+            logger.logError("Connection closed while sending ping to ${session.id}", e)
+            // Connection is already closed
+            closeConnection(session)
+        } catch (e: IllegalStateException) {
+            logger.logError("Invalid state sending ping to ${session.id}", e)
+            closeConnection(session)
+        } catch (e: CancellationException) {
+            logger.logDebug("Ping operation cancelled for ${session.id}")
+            throw e // Re-throw cancellation to maintain coroutine contract
         }
     }
     
     private suspend fun closeConnection(session: ActiveWebSocketSession) {
         try {
             session.session.close(CloseReason(CloseReason.Codes.GOING_AWAY, "Connection timeout"))
-        } catch (e: Exception) {
-            logger.logDebug("Error closing timed-out connection ${session.id}: ${e.message}")
+        } catch (e: IOException) {
+            logger.logDebug("Network error closing connection ${session.id}: ${e.message}")
+        } catch (e: IllegalStateException) {
+            logger.logDebug("Connection ${session.id} already closed or invalid state: ${e.message}")
         }
+        // Note: Let CancellationException propagate to maintain coroutine cancellation contract
     }
 }

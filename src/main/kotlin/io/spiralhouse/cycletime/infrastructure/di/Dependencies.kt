@@ -203,8 +203,9 @@ fun Application.configureDependencies(
         if (includeMCP) {
             val mcpStartTime = System.currentTimeMillis()
             try {
+                // Use 'with' to bring MCPDependencies functions into scope while keeping 'this' as DependencyRegistry
                 with(MCPDependencies) {
-                    configureMCPDependencies()
+                    this@dependencies.configureMCPDependencies()
                 }
                 val mcpEndTime = System.currentTimeMillis()
                 logger.debug("MCP dependencies configured in ${mcpEndTime - mcpStartTime}ms")

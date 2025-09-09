@@ -19,6 +19,8 @@ import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.toKotlinDuration
+import java.io.IOException
+import java.net.BindException
 
 /**
  * WebSocket-specific implementation of ConnectionManager.
@@ -129,8 +131,14 @@ class WebSocketConnectionManager(
             // Start heartbeat manager
             heartbeatManager.start()
             
-        } catch (e: Exception) {
-            throw WebSocketServerException("Failed to start WebSocket server on port ${config.port}", e)
+        } catch (e: BindException) {
+            throw WebSocketServerException("Port ${config.port} already in use", e)
+        } catch (e: IOException) {
+            throw WebSocketServerException("Network error starting WebSocket server on port ${config.port}", e)
+        } catch (e: IllegalArgumentException) {
+            throw WebSocketServerException("Invalid configuration for WebSocket server", e)
+        } catch (e: IllegalStateException) {
+            throw WebSocketServerException("WebSocket server already running or in invalid state", e)
         }
     }
     
@@ -289,10 +297,15 @@ class WebSocketConnectionManager(
                 }
             }
         } catch (e: ClosedReceiveChannelException) {
-            logger.logInfo("Connection closed: $connectionId")
+            logger.logInfo("Connection closed gracefully: $connectionId")
             notifyConnectionClosed(connectionId, "Channel closed")
-        } catch (e: Exception) {
-            logger.logError("Error in connection $connectionId", e)
+            // Graceful close - re-throw to ensure calling code knows connection closed
+            throw IllegalStateException("WebSocket connection closed gracefully", e)
+        } catch (e: IOException) {
+            logger.logError("Network error in connection $connectionId", e)
+            notifyConnectionError(connectionId, e)
+        } catch (e: IllegalArgumentException) {
+            logger.logError("Invalid data received from connection $connectionId", e)
             notifyConnectionError(connectionId, e)
         } finally {
             // Remove from connections
@@ -377,8 +390,12 @@ class WebSocketConnectionManager(
         eventListeners.forEach { listener ->
             try {
                 listener.onConnectionEstablished(connection)
-            } catch (e: Exception) {
-                logger.logError("Error notifying listener of connection established", e)
+            } catch (e: IllegalStateException) {
+                logger.logError("Listener in invalid state during connection established notification", e)
+            } catch (e: IllegalArgumentException) {
+                logger.logError("Invalid argument in connection established listener", e)
+            } catch (e: UnsupportedOperationException) {
+                logger.logError("Unsupported operation in connection established listener", e)
             }
         }
     }
@@ -387,8 +404,12 @@ class WebSocketConnectionManager(
         eventListeners.forEach { listener ->
             try {
                 listener.onConnectionClosed(connectionId, reason)
-            } catch (e: Exception) {
-                logger.logError("Error notifying listener of connection closed", e)
+            } catch (e: IllegalStateException) {
+                logger.logError("Listener in invalid state during connection closed notification", e)
+            } catch (e: IllegalArgumentException) {
+                logger.logError("Invalid argument in connection closed listener", e)
+            } catch (e: UnsupportedOperationException) {
+                logger.logError("Unsupported operation in connection closed listener", e)
             }
         }
     }
@@ -397,8 +418,12 @@ class WebSocketConnectionManager(
         eventListeners.forEach { listener ->
             try {
                 listener.onMessageReceived(connectionId, messageSize)
-            } catch (e: Exception) {
-                logger.logError("Error notifying listener of message received", e)
+            } catch (e: IllegalStateException) {
+                logger.logError("Listener in invalid state during message received notification", e)
+            } catch (e: IllegalArgumentException) {
+                logger.logError("Invalid argument in message received listener", e)
+            } catch (e: UnsupportedOperationException) {
+                logger.logError("Unsupported operation in message received listener", e)
             }
         }
     }
@@ -407,8 +432,12 @@ class WebSocketConnectionManager(
         eventListeners.forEach { listener ->
             try {
                 listener.onMessageSent(connectionId, messageSize)
-            } catch (e: Exception) {
-                logger.logError("Error notifying listener of message sent", e)
+            } catch (e: IllegalStateException) {
+                logger.logError("Listener in invalid state during message sent notification", e)
+            } catch (e: IllegalArgumentException) {
+                logger.logError("Invalid argument in message sent listener", e)
+            } catch (e: UnsupportedOperationException) {
+                logger.logError("Unsupported operation in message sent listener", e)
             }
         }
     }
@@ -417,8 +446,12 @@ class WebSocketConnectionManager(
         eventListeners.forEach { listener ->
             try {
                 listener.onConnectionError(connectionId, error)
-            } catch (e: Exception) {
-                logger.logError("Error notifying listener of connection error", e)
+            } catch (e: IllegalStateException) {
+                logger.logError("Listener in invalid state during connection error notification", e)
+            } catch (e: IllegalArgumentException) {
+                logger.logError("Invalid argument in connection error listener", e)
+            } catch (e: UnsupportedOperationException) {
+                logger.logError("Unsupported operation in connection error listener", e)
             }
         }
     }
@@ -430,8 +463,12 @@ class WebSocketConnectionManager(
         eventListeners.forEach { listener ->
             try {
                 listener.onConnectionTimeout(connectionId)
-            } catch (e: Exception) {
-                logger.logError("Error notifying listener of connection timeout", e)
+            } catch (e: IllegalStateException) {
+                logger.logError("Listener in invalid state during connection timeout notification", e)
+            } catch (e: IllegalArgumentException) {
+                logger.logError("Invalid argument in connection timeout listener", e)
+            } catch (e: UnsupportedOperationException) {
+                logger.logError("Unsupported operation in connection timeout listener", e)
             }
         }
     }
@@ -448,8 +485,12 @@ class WebSocketConnectionManager(
             try {
                 session.session.close(CloseReason(CloseReason.Codes.GOING_AWAY, "Server shutting down"))
                 notifyConnectionClosed(session.id, "Server shutdown")
-            } catch (e: Exception) {
-                logger.logError("Error closing connection ${session.id}", e)
+            } catch (e: IOException) {
+                logger.logError("Network error closing connection ${session.id}", e)
+            } catch (e: IllegalStateException) {
+                logger.logError("Connection ${session.id} already closed or in invalid state", e)
+            } catch (e: IllegalArgumentException) {
+                logger.logError("Invalid argument closing connection ${session.id}", e)
             }
         }
         

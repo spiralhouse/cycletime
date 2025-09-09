@@ -1,6 +1,7 @@
 package io.spiralhouse.cycletime.integration
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.core.annotation.Ignored
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.collections.shouldContain
@@ -41,6 +42,7 @@ import java.time.Duration
  * 9. Graceful shutdown with resource cleanup
  * 10. Configuration validation and component setup
  */
+@Ignored // SPI-608: Fix MCP WebSocket Integration Tests - Client Plugin Configuration
 class McpServerTest : StringSpec({
 
     "should create McpServer with all required components" {

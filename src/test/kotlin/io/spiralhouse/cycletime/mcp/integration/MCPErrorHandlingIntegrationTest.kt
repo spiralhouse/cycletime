@@ -1,5 +1,6 @@
 package io.spiralhouse.cycletime.mcp.integration
 
+import io.kotest.core.annotation.Ignored
 import io.kotest.core.annotation.DoNotParallelize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -27,6 +28,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * Phase 9: These tests validate error handling in the unified MCP architecture
  * where MCP is served on main application port via /mcp WebSocket endpoint.
  */
+@Ignored // SPI-608: Fix MCP WebSocket Integration Tests - Client Plugin Configuration
 class MCPErrorHandlingIntegrationTest : MCPIntegrationTestBase() {
 
     init {

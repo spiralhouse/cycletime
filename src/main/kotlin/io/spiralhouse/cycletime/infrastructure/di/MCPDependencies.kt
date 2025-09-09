@@ -35,6 +35,11 @@ object MCPDependencies {
      * Configure MCP dependencies in the Ktor DI container.
      */
     fun DependencyRegistry.configureMCPDependencies() {
+        // MCP Server Configuration
+        provide<MCPServerConfig> {
+            MCPServerConfig() // Uses environment variables by default
+        }
+        
         // Protocol Handler
         provide<ProtocolHandler> {
             JsonRpcProtocolHandler()
@@ -61,11 +66,11 @@ object MCPDependencies {
         // MCP Integration Service - The main entry point for MCP server
         provide<MCPIntegrationService> {
             MCPIntegrationService(
-                methodHandler = resolve(),
-                protocolHandler = resolve(),
-                config = MCPServerConfig(), // Uses environment variables by default
-                resourceRegistry = resolve(),
-                toolRegistry = resolve(),
+                methodHandler = resolve<McpMethodHandler>(),
+                protocolHandler = resolve<ProtocolHandler>(),
+                config = resolve<MCPServerConfig>(), // Resolve from DI
+                resourceRegistry = resolve<ResourceRegistry>(),
+                toolRegistry = resolve<ToolRegistry>(),
                 resourceProviders = listOf(
                     resolve<ProjectResourceProvider>(),
                     resolve<IssueResourceProvider>(),
@@ -140,7 +145,7 @@ object MCPDependencies {
         
         // Tool Invoker
         provide<ToolInvoker> {
-            DefaultToolInvoker(resolve())
+            DefaultToolInvoker(resolve<ToolRegistry>())
         }
     }
 }

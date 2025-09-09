@@ -65,8 +65,8 @@ object ValidationMiddleware {
      * @throws IllegalArgumentException if validation fails
      */
     fun validateProjectDescription(description: String) {
-        if (description.length > MAX_PROJECT_DESCRIPTION_LENGTH) {
-            throw IllegalArgumentException("Project description length exceeds maximum ($MAX_PROJECT_DESCRIPTION_LENGTH characters)")
+        require(description.length <= MAX_PROJECT_DESCRIPTION_LENGTH) {
+            "Project description length exceeds maximum ($MAX_PROJECT_DESCRIPTION_LENGTH characters)"
         }
     }
     

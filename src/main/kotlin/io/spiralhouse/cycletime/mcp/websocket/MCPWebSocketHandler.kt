@@ -12,6 +12,8 @@ import io.spiralhouse.cycletime.mcp.server.MCPConnectionManager
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.serialization.json.*
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.SerializationException
+import java.io.IOException
 import org.slf4j.LoggerFactory
 
 /**
@@ -57,11 +59,24 @@ class MCPWebSocketHandler(
                     }
                 }
             }
-        } catch (e: ClosedReceiveChannelException) {
-            logger.info("WebSocket connection closed normally: $connectionId")
-        } catch (e: Exception) {
-            logger.error("Error handling WebSocket connection $connectionId", e)
-            session.close(CloseReason(CloseReason.Codes.INTERNAL_ERROR, "Server error"))
+        } catch (e: IOException) {
+            logger.warn("Network error on WebSocket connection $connectionId: ${e.message}")
+            try {
+                session.close(CloseReason(CloseReason.Codes.GOING_AWAY, "Network error"))
+            } catch (closeException: IOException) {
+                logger.debug("Network error during session close: ${closeException.message}")
+            } catch (closeException: IllegalStateException) {
+                logger.debug("Session already closed: ${closeException.message}")
+            }
+        } catch (e: IllegalArgumentException) {
+            logger.error("Invalid argument in WebSocket connection $connectionId: ${e.message}", e)
+            try {
+                session.close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Invalid data"))
+            } catch (closeException: IOException) {
+                logger.debug("Network error during session close: ${closeException.message}")
+            } catch (closeException: IllegalStateException) {
+                logger.debug("Session already closed: ${closeException.message}")
+            }
         } finally {
             connectionId?.let { connectionManager.unregisterConnection(it) }
             logger.info("MCP WebSocket connection cleaned up: $connectionId")
@@ -95,22 +110,55 @@ class MCPWebSocketHandler(
                 logger.debug("Sent to $connectionId: $responseText")
             }
             
-        } catch (e: Exception) {
-            logger.error("Error processing message from $connectionId", e)
+        } catch (e: SerializationException) {
+            logger.warn("JSON parsing error from $connectionId: ${e.message}")
             
-            // Send error response
+            // Send JSON-RPC parse error response  
             val errorResponse = JsonRpcResponse(
                 jsonrpc = "2.0",
                 id = JsonNull,
-                result = null,
-                error = JsonRpcError(
-                    code = -32603,
-                    message = "Internal error: ${e.message}",
-                    data = null
-                )
+                error = JsonRpcError(-32700, "Parse error", JsonNull)
             )
-            session.send(Frame.Text(json.encodeToString(JsonRpcResponse.serializer(), errorResponse)))
+            
+            try {
+                val responseText = json.encodeToString(JsonRpcResponse.serializer(), errorResponse)
+                session.send(Frame.Text(responseText))
+            } catch (sendException: IOException) {
+                logger.error("Network error sending parse error response to $connectionId: ${sendException.message}")
+            } catch (sendException: SerializationException) {
+                logger.error("Serialization error sending parse error response to $connectionId: ${sendException.message}")
+            }
+        } catch (e: IllegalArgumentException) {
+            logger.warn("Invalid request from $connectionId: ${e.message}")
+            
+            // Send JSON-RPC invalid request error
+            val errorResponse = JsonRpcResponse(
+                jsonrpc = "2.0",
+                id = JsonNull,
+                error = JsonRpcError(-32600, "Invalid Request", JsonNull)
+            )
+            
+            try {
+                val responseText = json.encodeToString(JsonRpcResponse.serializer(), errorResponse)
+                session.send(Frame.Text(responseText))
+            } catch (sendException: IOException) {
+                logger.error("Network error sending invalid request error to $connectionId: ${sendException.message}")
+            } catch (sendException: SerializationException) {
+                logger.error("Serialization error sending invalid request error to $connectionId: ${sendException.message}")
+            }
+        } catch (e: IOException) {
+            logger.error("Network error processing message from $connectionId: ${e.message}", e)
+            
+            // Network error - try to close connection gracefully
+            try {
+                session.close(CloseReason(CloseReason.Codes.GOING_AWAY, "Network error"))
+            } catch (closeException: IOException) {
+                logger.debug("Network error during session close: ${closeException.message}")
+            } catch (closeException: IllegalStateException) {
+                logger.debug("Session already closed: ${closeException.message}")
+            }
         }
+        // Note: Removed generic RuntimeException catch - specific exception handling above should cover most cases
     }
     
 }

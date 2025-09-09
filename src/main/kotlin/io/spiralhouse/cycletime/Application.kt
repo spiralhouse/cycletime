@@ -18,6 +18,10 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import io.spiralhouse.cycletime.infrastructure.logging.ExceptionLogger
 import org.jetbrains.exposed.sql.Database
 import io.spiralhouse.cycletime.mcp.configureMCP
+import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationException
+import java.sql.SQLException
+import org.jetbrains.exposed.exceptions.ExposedSQLException
+import java.io.IOException
 import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
 import io.spiralhouse.cycletime.mcp.integration.MCPServerStatus
 import kotlinx.coroutines.launch
@@ -51,6 +55,24 @@ data class HealthResponse(
     val timestamp: String
 )
 
+/**
+ * Self-documenting data class for MCP health status.
+ * Replaces the generic Pair<Map<String,String>, Map<String,String>> return type.
+ */
+data class HealthStatus(
+    val dependencies: Map<String, String>,
+    val metrics: Map<String, String>
+)
+
+/**
+ * Database configuration data class for clean parameter passing.
+ */
+data class DatabaseConfig(
+    val jdbcUrl: String,
+    val driver: String,
+    val enableLogging: Boolean
+)
+
 @Serializable
 data class ErrorResponse(
     val status: String,
@@ -72,40 +94,186 @@ fun main() {
     ).start(wait = true)
 }
 
-fun Application.module() {
-    val logger = LoggerFactory.getLogger("Application")
-    val moduleStartTime = System.currentTimeMillis()
-
-    // Initialize database from configuration
-    // Note: Migration from SQLite to H2 completed. H2 is now the default database.
+/**
+ * Build database configuration from environment variables and application config.
+ * Single responsibility: configuration building only.
+ */
+private fun Application.buildDatabaseConfig(): DatabaseConfig {
     val jdbcUrl = environment.config.propertyOrNull("database.url")?.getString()
-        ?: System.getenv("DATABASE_URL") 
+        ?: System.getProperty("DATABASE_URL")  // Check System property first (for tests)
+        ?: System.getenv("DATABASE_URL")       // Then check environment variable
         ?: "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
+    
     val driver = environment.config.propertyOrNull("database.driver")?.getString()
+        ?: System.getProperty("DATABASE_DRIVER")
         ?: System.getenv("DATABASE_DRIVER")
         ?: "org.h2.Driver"
+    
     val enableLogging = environment.config.propertyOrNull("database.logging")?.getString()?.toBoolean()
+        ?: System.getProperty("DATABASE_LOGGING")?.toBoolean()
         ?: System.getenv("DATABASE_LOGGING")?.toBoolean() 
         ?: false
 
+    return DatabaseConfig(jdbcUrl, driver, enableLogging)
+}
+
+/**
+ * Initialize database connection with timing metrics.
+ * Single responsibility: database initialization only.
+ */
+private fun initializeDatabase(
+    config: DatabaseConfig,
+    logger: org.slf4j.Logger,
+    performanceMetrics: MutableMap<String, Long>
+): Database {
+    logger.info("Initializing database with URL: ${config.jdbcUrl}")
+    val dbStartTime = System.currentTimeMillis()
+    DatabaseFactory.init(jdbcUrl = config.jdbcUrl, driver = config.driver, enableLogging = config.enableLogging)
+    val database = DatabaseFactory.getInstance()
+    val dbEndTime = System.currentTimeMillis()
+    val dbTime = dbEndTime - dbStartTime
+    performanceMetrics["database"] = dbTime
+    logger.info("Database initialization completed in ${dbTime}ms")
+    return database
+}
+
+/**
+ * Validate database configuration parameters.
+ * Single responsibility: validation only (pure function).
+ */
+private fun validateDatabaseConfig(config: DatabaseConfig) {
+    require(config.jdbcUrl.isNotBlank()) {
+        "Database URL cannot be blank"
+    }
+    
+    require(config.jdbcUrl.startsWith("jdbc:")) {
+        "Database URL must start with 'jdbc:'. Got: ${config.jdbcUrl}"
+    }
+    
+    // Validate environment variable overrides don't break expected patterns
+    if (System.getenv("DATABASE_URL")?.isNotBlank() == true) {
+        val envUrl = System.getenv("DATABASE_URL")!!
+        require(envUrl.startsWith("jdbc:")) {
+            "Environment variable DATABASE_URL must be a valid JDBC URL. Got: $envUrl"
+        }
+    }
+    
+    // Driver validation (basic check)
+    require(config.driver.isNotBlank()) {
+        "Database driver cannot be blank"
+    }
+    
+    // Validate driver class name format
+    require(config.driver.matches(Regex("^[a-zA-Z][a-zA-Z0-9_]*\\.[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*$"))) {
+        "Invalid driver class name format: ${config.driver}"
+    }
+}
+
+fun Application.module() {
+    val logger = LoggerFactory.getLogger("Application")
+    val moduleStartTime = System.currentTimeMillis()
+    val performanceMetrics = mutableMapOf<String, Long>()
+
+    // Initialize database
+    val database = configureDatabaseConnection(logger, performanceMetrics)
+    
+    // Install Ktor features
+    configureKtorFeatures(logger, performanceMetrics)
+    
+    // Setup MCP integration
+    val mcpIntegrationService = configureMCPIntegration(database, logger, performanceMetrics)
+
+    // Configure routing
+    routing {
+        configureHealthEndpoint(mcpIntegrationService, logger)
+        
+        // MCP Server endpoints
+        configureMCP()
+    }
+    
+    // Setup graceful shutdown
+    configureShutdownHooks(mcpIntegrationService, logger)
+    
+    // Log final performance summary
+    logPerformanceSummary(moduleStartTime, performanceMetrics, mcpIntegrationService, logger)
+}
+
+/**
+ * Validates database configuration parameters early in startup.
+ * 
+ * @param jdbcUrl The JDBC URL to validate
+ * @param driver The driver class name to validate
+ * @throws IllegalArgumentException if configuration is invalid
+ */
+private fun validateDatabaseConfiguration(jdbcUrl: String, driver: String) {
+    // Basic JDBC URL validation
+    require(jdbcUrl.isNotBlank()) {
+        "Database URL cannot be blank"
+    }
+    
+    require(jdbcUrl.startsWith("jdbc:")) {
+        "Database URL must start with 'jdbc:'. Got: $jdbcUrl"
+    }
+    
+    // Validate environment variable overrides don't break expected patterns
+    if (System.getenv("DATABASE_URL")?.isNotBlank() == true) {
+        val envUrl = System.getenv("DATABASE_URL")!!
+        require(envUrl.startsWith("jdbc:")) {
+            "Environment variable DATABASE_URL must be a valid JDBC URL. Got: $envUrl"
+        }
+    }
+    
+    // Driver validation (basic check)
+    require(driver.isNotBlank()) {
+        "Database driver cannot be blank"
+    }
+    
+    // Validate driver class name format
+    require(driver.matches(Regex("^[a-zA-Z][a-zA-Z0-9_]*\\.[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*$"))) {
+        "Invalid driver class name format: $driver"
+    }
+}
+
+/**
+ * Configure database connection with validation and initialization.
+ * Orchestrates the database setup using focused single-responsibility functions.
+ * 
+ * @param logger Application logger
+ * @param performanceMetrics Map to store timing metrics
+ * @return Initialized database instance
+ */
+private fun Application.configureDatabaseConnection(
+    logger: org.slf4j.Logger,
+    performanceMetrics: MutableMap<String, Long>
+): Database {
+    // Build configuration from environment/properties
+    val config = buildDatabaseConfig()
+
     // Validate configuration before attempting database initialization
     try {
-        validateDatabaseConfiguration(jdbcUrl, driver)
+        validateDatabaseConfig(config)
         logger.info("Database configuration validated successfully")
     } catch (e: IllegalArgumentException) {
         logger.error("Invalid database configuration: ${e.message}")
         throw e
     }
 
-    logger.info("Initializing database with URL: $jdbcUrl")
-    val dbStartTime = System.currentTimeMillis()
-    DatabaseFactory.init(jdbcUrl = jdbcUrl, driver = driver, enableLogging = enableLogging)
-    val database = DatabaseFactory.getInstance()
-    val dbEndTime = System.currentTimeMillis()
-    logger.info("Database initialization completed in ${dbEndTime - dbStartTime}ms")
+    // Initialize database with timing metrics
+    return initializeDatabase(config, logger, performanceMetrics)
+}
 
-    // Install features
+/**
+ * Configure Ktor features including content negotiation, SSE, and WebSockets.
+ * 
+ * @param logger Application logger
+ * @param performanceMetrics Map to store timing metrics
+ */
+private fun Application.configureKtorFeatures(
+    logger: org.slf4j.Logger,
+    performanceMetrics: MutableMap<String, Long>
+) {
     val featuresStartTime = System.currentTimeMillis()
+    
     install(ContentNegotiation) {
         json(Json {
             prettyPrint = true
@@ -125,8 +293,24 @@ fun Application.module() {
     }
     
     val featuresEndTime = System.currentTimeMillis()
-    logger.info("Ktor features installation completed in ${featuresEndTime - featuresStartTime}ms")
+    val featuresTime = featuresEndTime - featuresStartTime
+    performanceMetrics["features"] = featuresTime
+    logger.info("Ktor features installation completed in ${featuresTime}ms")
+}
 
+/**
+ * Configure MCP integration including dependency injection and service startup.
+ * 
+ * @param database Database instance
+ * @param logger Application logger
+ * @param performanceMetrics Map to store timing metrics
+ * @return MCP integration service instance or null if disabled/failed
+ */
+private fun Application.configureMCPIntegration(
+    database: Database,
+    logger: org.slf4j.Logger,
+    performanceMetrics: MutableMap<String, Long>
+): MCPIntegrationService? {
     // Configure DI with explicit database - simple and clear
     val diStartTime = System.currentTimeMillis()
     val mcpEnabled = System.getenv("MCP_ENABLED")?.toBoolean() ?: true
@@ -137,15 +321,20 @@ fun Application.module() {
             includeMCP = mcpEnabled
         )
         val endTime = System.currentTimeMillis()
-        logger.info("Dependency injection configuration completed in ${endTime - diStartTime}ms")
+        val diTime = endTime - diStartTime
+        performanceMetrics["di"] = diTime
+        logger.info("Dependency injection configuration completed in ${diTime}ms")
         endTime
-    } catch (e: Exception) {
-        logger.error("Failed to configure dependency injection: ${e.message}", e)
-        throw IllegalStateException("Dependency injection configuration failed", e)
+    } catch (e: IllegalStateException) {
+        logger.error("Dependency injection configuration failed: ${e.message}", e)
+        throw e // Re-throw DI configuration errors as they indicate critical startup failures
+    } catch (e: SQLException) {
+        logger.error("Database connection failed during DI setup: ${e.message}", e) 
+        throw IllegalStateException("Database initialization failed during startup", e)
     }
 
     // Initialize MCP integration service for monitoring and lifecycle management
-    val mcpIntegrationService = if (mcpEnabled) {
+    return if (mcpEnabled) {
         try {
             val mcpService: MCPIntegrationService by dependencies
             
@@ -156,118 +345,191 @@ fun Application.module() {
             
             logger.info("MCP integration service started with optimizations")
             mcpService
-        } catch (e: Exception) {
-            logger.warn("MCP integration unavailable: ${e.message}")
-            null
+        } catch (e: MCPIntegrationException) {
+            logger.warn("MCP integration service failed to start: ${e.message}", e)
+            null // Continue without MCP - this is not a critical failure
+        } catch (e: IllegalStateException) {
+            logger.warn("MCP integration unavailable due to configuration issue: ${e.message}", e)
+            null // Continue without MCP
+        } catch (e: IOException) {
+            logger.warn("Network/IO error starting MCP integration: ${e.message}", e)
+            null // Continue without MCP - network issue
         }
     } else {
         logger.info("MCP integration disabled by configuration")
         null
     }
+}
+
+/**
+ * Configure health endpoint with comprehensive system checks.
+ * 
+ * @param mcpIntegrationService MCP service for health reporting
+ * @param logger Application logger
+ */
+private fun Route.configureHealthEndpoint(
+    mcpIntegrationService: MCPIntegrationService?,
+    logger: org.slf4j.Logger
+) {
+    val mcpEnabled = System.getenv("MCP_ENABLED")?.toBoolean() ?: true
     
-    // Configure routing
-    routing {
-        // Health check endpoint
-        get("/health") {
-            try {
-                // Test dependency resolution first
-                val projectService: ProjectApplicationService by application.dependencies
-                val issueService: IssueApplicationService by application.dependencies
-                val sessionService: SessionApplicationService by application.dependencies
-                val database: Database by application.dependencies
+    get("/health") {
+        try {
+            // Test dependency resolution first
+            val projectService: ProjectApplicationService by application.dependencies
+            val issueService: IssueApplicationService by application.dependencies
+            val sessionService: SessionApplicationService by application.dependencies
+            val database: Database by application.dependencies
 
-                // Verify services are initialized and functional
-                val projectCount = try {
-                    projectService.listProjects().projects.size
-                } catch (e: Exception) {
-                    logger.warn("ProjectService health check failed", e)
-                    -1
-                }
-                
-                val sessionCount = try {
-                    sessionService.getSessionCount()
-                } catch (e: Exception) {
-                    logger.warn("SessionService health check failed", e)
-                    -1
-                }
-                
-                // Enhanced MCP health status with performance metrics
-                val mcpHealth = if (mcpEnabled) {
-                    val mcpStatus = mcpIntegrationService?.getStatus()
-                    if (mcpStatus != null) {
-                        buildMap {
-                            put("mcp", if (mcpStatus.isRunning) "running" else "stopped")
-                            put("mcp_port", mcpStatus.port.toString())
-                            put("mcp_connections", mcpStatus.activeConnections.toString())
-                            
-                            // Add performance metrics if available
-                            if (mcpStatus.totalRequests > 0) {
-                                put("mcp_requests", mcpStatus.totalRequests.toString())
-                                put("mcp_latency", "${mcpStatus.averageLatency}ms")
-                                put("mcp_cache_hit_rate", "${(mcpStatus.cacheHitRate * 100).toInt()}%")
-                            }
-                            
-                            if (mcpStatus.optimizationsEnabled) {
-                                put("mcp_optimized", "true")
-                            }
-                        }
-                    } else {
-                        // WebSocket endpoint available but no monitoring
-                        mapOf(
-                            "mcp" to "running",
-                            "mcp_optimized" to "unknown"
-                        )
-                    }
-                } else {
-                    mapOf("mcp" to "disabled")
-                }
-
-                call.respond(HttpStatusCode.OK, HealthResponse(
-                    status = "healthy",
-                    service = BuildInfo.serviceName,
-                    version = BuildInfo.version,
-                    dependencies = mapOf(
-                        "database" to "connected",
-                        "projectService" to "initialized",
-                        "issueService" to "initialized",
-                        "sessionService" to "initialized"
-                    ) + mcpHealth,
-                    metrics = mapOf(
-                        "projects" to projectCount.toString(),
-                        "sessions" to sessionCount.toString()
-                    ),
-                    timestamp = System.currentTimeMillis().toString()
-                ))
-            } catch (e: Exception) {
-                // Log full exception details internally while keeping user response generic
-                ExceptionLogger.logException(
-                    logger,
-                    e,
-                    "Health check failed",
-                    mapOf(
-                        "endpoint" to "/health",
-                        "method" to "GET",
-                        "service" to BuildInfo.serviceName,
-                        "version" to BuildInfo.version
-                    )
-                )
-
-                // Return sanitized error to client
-                call.respond(HttpStatusCode.InternalServerError, ErrorResponse(
-                    status = "unhealthy",
-                    service = BuildInfo.serviceName,
-                    version = BuildInfo.version,
-                    error = "Internal service error", // Generic message for security
-                    timestamp = System.currentTimeMillis().toString()
-                ))
+            // Verify services are initialized and functional
+            val projectCount = try {
+                projectService.listProjects().projects.size
+            } catch (e: SQLException) {
+                logger.warn("Database connection error during project health check: ${e.message}")
+                -1
+            } catch (e: ExposedSQLException) {
+                logger.warn("Database query error during project health check: ${e.message}")
+                -1
+            } catch (e: IllegalStateException) {
+                logger.warn("ProjectService not properly initialized: ${e.message}")
+                -1
             }
+            
+            val sessionCount = try {
+                sessionService.getSessionCount()
+            } catch (e: SQLException) {
+                logger.warn("Database connection error during session health check: ${e.message}")
+                -1
+            } catch (e: ExposedSQLException) {
+                logger.warn("Database query error during session health check: ${e.message}")
+                -1
+            } catch (e: IllegalStateException) {
+                logger.warn("SessionService not properly initialized: ${e.message}")
+                -1
+            }
+            
+            // Enhanced MCP health status with performance metrics
+            val mcpHealthStatus = buildMcpHealthStatus(mcpEnabled, mcpIntegrationService)
+
+            call.respond(HttpStatusCode.OK, HealthResponse(
+                status = "healthy",
+                service = BuildInfo.serviceName,
+                version = BuildInfo.version,
+                dependencies = mapOf(
+                    "database" to "connected",
+                    "projectService" to "initialized",
+                    "issueService" to "initialized",
+                    "sessionService" to "initialized"
+                ) + mcpHealthStatus.dependencies,
+                metrics = mapOf(
+                    "projects" to projectCount.toString(),
+                    "sessions" to sessionCount.toString()
+                ) + mcpHealthStatus.metrics,
+                timestamp = System.currentTimeMillis().toString()
+            ))
+        } catch (e: SQLException) {
+            logger.error("Database connection failure in health endpoint: ${e.message}", e)
+            call.respond(HttpStatusCode.ServiceUnavailable, ErrorResponse(
+                status = "unhealthy",
+                service = BuildInfo.serviceName,
+                version = BuildInfo.version,
+                error = "Database unavailable",
+                timestamp = System.currentTimeMillis().toString()
+            ))
+        } catch (e: ExposedSQLException) {
+            logger.error("Database query failure in health endpoint: ${e.message}", e)
+            call.respond(HttpStatusCode.ServiceUnavailable, ErrorResponse(
+                status = "unhealthy",
+                service = BuildInfo.serviceName,
+                version = BuildInfo.version,
+                error = "Database query failed",
+                timestamp = System.currentTimeMillis().toString()
+            ))
+        } catch (e: IllegalStateException) {
+            logger.error("Service initialization failure in health endpoint: ${e.message}", e)
+            call.respond(HttpStatusCode.ServiceUnavailable, ErrorResponse(
+                status = "unhealthy",
+                service = BuildInfo.serviceName,
+                version = BuildInfo.version,
+                error = "Service initialization failed",
+                timestamp = System.currentTimeMillis().toString()
+            ))
+        } catch (e: IOException) {
+            logger.error("IO error in health endpoint: ${e.message}", e)
+            call.respond(HttpStatusCode.ServiceUnavailable, ErrorResponse(
+                status = "unhealthy", 
+                service = BuildInfo.serviceName,
+                version = BuildInfo.version,
+                error = "Service communication error",
+                timestamp = System.currentTimeMillis().toString()
+            ))
         }
-
-        // MCP Server endpoints
-        configureMCP()
     }
+}
 
-    // Enhanced shutdown hook with graceful cleanup
+/**
+ * Build MCP health status with performance metrics.
+ * Returns a self-documenting HealthStatus data class instead of a generic Pair.
+ */
+private fun buildMcpHealthStatus(
+    mcpEnabled: Boolean,
+    mcpIntegrationService: MCPIntegrationService?
+): HealthStatus {
+    return if (mcpEnabled) {
+        val mcpStatus = mcpIntegrationService?.getStatus()
+        if (mcpStatus != null) {
+            val dependencies = mapOf(
+                "mcpServer" to if (mcpStatus.isRunning) "running" else "stopped"
+            )
+            
+            val metrics = buildMap {
+                put("mcpConnections", mcpStatus.activeConnections.toString())
+                put("mcpPort", mcpStatus.port.toString())
+                put("mcpUptime", mcpStatus.uptimeMs.toString())
+                put("mcpStatus", if (mcpStatus.isRunning) "running" else "stopped")
+                
+                // Add performance metrics if available
+                if (mcpStatus.totalRequests > 0) {
+                    put("mcpRequests", mcpStatus.totalRequests.toString())
+                    put("mcpLatency", "${mcpStatus.averageLatency}ms")
+                    put("mcpCacheHitRate", "${(mcpStatus.cacheHitRate * 100).toInt()}%")
+                }
+                
+                if (mcpStatus.optimizationsEnabled) {
+                    put("mcpOptimized", "true")
+                }
+            }
+            
+            HealthStatus(dependencies, metrics)
+        } else {
+            // WebSocket endpoint available but no monitoring
+            val dependencies = mapOf(
+                "mcpServer" to "running"
+            )
+            val metrics = mapOf(
+                "mcpConnections" to "0",
+                "mcpPort" to "3006",
+                "mcpUptime" to "0",
+                "mcpStatus" to "running"
+            )
+            HealthStatus(dependencies, metrics)
+        }
+    } else {
+        HealthStatus(mapOf("mcpServer" to "disabled"), emptyMap())
+    }
+}
+
+
+/**
+ * Configure shutdown hooks for graceful application termination.
+ * 
+ * @param mcpIntegrationService MCP service to stop gracefully
+ * @param logger Application logger
+ */
+private fun Application.configureShutdownHooks(
+    mcpIntegrationService: MCPIntegrationService?,
+    logger: org.slf4j.Logger
+) {
     monitor.subscribe(ApplicationStopped) {
         logger.info("Application stopping, initiating graceful shutdown...")
         
@@ -277,8 +539,13 @@ fun Application.module() {
                 try {
                     mcpIntegrationService.stop()
                     logger.info("MCP integration service stopped gracefully")
-                } catch (e: Exception) {
-                    logger.error("Error stopping MCP integration: ${e.message}")
+                } catch (e: MCPIntegrationException) {
+                    logger.error("MCP integration service shutdown failed: ${e.message}", e)
+                } catch (e: IllegalStateException) {
+                    logger.error("MCP service not properly initialized for shutdown: ${e.message}")
+                } catch (e: InterruptedException) {
+                    logger.warn("MCP service shutdown interrupted: ${e.message}")
+                    Thread.currentThread().interrupt() // Restore interrupted status
                 }
             }
         }
@@ -289,16 +556,32 @@ fun Application.module() {
         
         logger.info("Application shutdown complete")
     }
+}
 
+/**
+ * Log performance summary with startup metrics.
+ * 
+ * @param moduleStartTime Start time of module initialization
+ * @param performanceMetrics Map of timing metrics
+ * @param mcpIntegrationService MCP service for optimization status
+ * @param logger Application logger
+ */
+private fun logPerformanceSummary(
+    moduleStartTime: Long,
+    performanceMetrics: Map<String, Long>,
+    mcpIntegrationService: MCPIntegrationService?,
+    logger: org.slf4j.Logger
+) {
     val moduleEndTime = System.currentTimeMillis()
     val totalStartupTime = moduleEndTime - moduleStartTime
     logger.info("CycleTime Kotlin server started successfully in ${totalStartupTime}ms")
     
     // Log startup performance summary
     logger.info("Startup performance breakdown:")
-    logger.info("  - Database initialization: ${dbEndTime - dbStartTime}ms")
-    logger.info("  - Ktor features installation: ${featuresEndTime - featuresStartTime}ms") 
-    logger.info("  - Dependency injection setup: ${diEndTime - diStartTime}ms")
+    performanceMetrics["database"]?.let { logger.info("  - Database initialization: ${it}ms") }
+    performanceMetrics["features"]?.let { logger.info("  - Ktor features installation: ${it}ms") }
+    performanceMetrics["di"]?.let { logger.info("  - Dependency injection setup: ${it}ms") }
+    
     if (mcpIntegrationService != null) {
         val status = mcpIntegrationService.getStatus()
         logger.info("  - MCP integration: started (optimized: ${status.optimizationsEnabled})")
@@ -306,47 +589,12 @@ fun Application.module() {
     logger.info("  - Total startup time: ${totalStartupTime}ms")
     
     // Log performance optimization status
+    val mcpEnabled = System.getenv("MCP_ENABLED")?.toBoolean() ?: true
     if (mcpEnabled && mcpIntegrationService != null) {
         val status = mcpIntegrationService.getStatus()
         if (status.optimizationsEnabled) {
             logger.info("Performance optimizations enabled: async processing, resource caching, connection pooling")
         }
-    }
-}
-
-/**
- * Validates database configuration parameters early in startup.
- * 
- * @param jdbcUrl The JDBC URL to validate
- * @param driver The driver class name to validate
- * @throws IllegalArgumentException if configuration is invalid
- */
-private fun validateDatabaseConfiguration(jdbcUrl: String, driver: String) {
-    // Basic JDBC URL validation
-    if (jdbcUrl.isBlank()) {
-        throw IllegalArgumentException("Database URL cannot be blank")
-    }
-    
-    if (!jdbcUrl.startsWith("jdbc:")) {
-        throw IllegalArgumentException("Database URL must start with 'jdbc:'. Got: $jdbcUrl")
-    }
-    
-    // Validate environment variable overrides don't break expected patterns
-    if (System.getenv("DATABASE_URL")?.isNotBlank() == true) {
-        val envUrl = System.getenv("DATABASE_URL")!!
-        if (!envUrl.startsWith("jdbc:")) {
-            throw IllegalArgumentException("Environment variable DATABASE_URL must be a valid JDBC URL. Got: $envUrl")
-        }
-    }
-    
-    // Driver validation (basic check)
-    if (driver.isBlank()) {
-        throw IllegalArgumentException("Database driver cannot be blank")
-    }
-    
-    // Validate driver class name format
-    if (!driver.matches(Regex("^[a-zA-Z][a-zA-Z0-9_]*\\.[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*$"))) {
-        throw IllegalArgumentException("Invalid driver class name format: $driver")
     }
 }
 

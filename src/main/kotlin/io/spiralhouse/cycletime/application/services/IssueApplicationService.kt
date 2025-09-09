@@ -113,7 +113,12 @@ class IssueApplicationService(
 
             // Set estimate if provided
             command.estimate?.let { estimate ->
-                issue.setEstimate(estimate)
+                try {
+                    issue.setEstimate(estimate)
+                } catch (e: DomainException) {
+                    // Convert domain exceptions to IllegalArgumentException for API consistency
+                    throw IllegalArgumentException(e.message ?: "Invalid estimate for issue type", e)
+                }
             }
 
             // Set assignee if provided
@@ -163,7 +168,12 @@ class IssueApplicationService(
             }
 
             command.estimate?.let { estimate ->
-                issue.setEstimate(estimate)
+                try {
+                    issue.setEstimate(estimate)
+                } catch (e: DomainException) {
+                    // Convert domain exceptions to IllegalArgumentException for API consistency
+                    throw IllegalArgumentException(e.message ?: "Invalid estimate for issue type", e)
+                }
             }
 
             command.assigneeId?.let { assigneeId ->
@@ -334,21 +344,6 @@ class IssueApplicationService(
         )
     }
 
-    /**
-     * Counts descendants using optimized batch queries.
-     * 
-     * This method has been replaced by HierarchyQueries.countDescendantsOptimized
-     * to avoid N+1 query problems in deep hierarchies.
-     * 
-     * @deprecated Use HierarchyQueries.countDescendantsOptimized for better performance
-     */
-    @Deprecated("Use HierarchyQueries.countDescendantsOptimized for better performance",
-        ReplaceWith("HierarchyQueries.countDescendantsOptimized(issueId)"))
-    private suspend fun countDescendants(issueId: IssueId): Int {
-        // This implementation is kept for backward compatibility
-        // but should not be used due to N+1 query issues
-        return HierarchyQueries.countDescendantsOptimized(issueId)
-    }
 
     /**
      * Lists all direct children of a parent issue.
@@ -584,8 +579,8 @@ class IssueApplicationService(
                 parentType == null || parentType == IssueType.EPIC
             }
             IssueType.SUBTASK -> {
-                // Subtasks can have no parent or a Story parent only
-                parentType == null || parentType == IssueType.STORY
+                // Subtasks MUST have a Story parent (not null, not Epic)
+                parentType == IssueType.STORY
             }
         }
 
