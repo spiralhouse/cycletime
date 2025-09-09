@@ -1,4 +1,0 @@
-> Task :detekt UP-TO-DATE
-
-BUILD SUCCESSFUL in 436ms
-1 actionable task: 1 up-to-date
