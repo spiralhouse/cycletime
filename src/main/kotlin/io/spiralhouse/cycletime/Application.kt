@@ -152,14 +152,17 @@ private fun Application.configureDatabaseConnection(
     logger: org.slf4j.Logger,
     performanceMetrics: MutableMap<String, Long>
 ): Database {
-    // Database configuration
+    // Database configuration - check System properties first (for tests), then env vars
     val jdbcUrl = environment.config.propertyOrNull("database.url")?.getString()
-        ?: System.getenv("DATABASE_URL") 
+        ?: System.getProperty("DATABASE_URL")  // Check System property first (for tests)
+        ?: System.getenv("DATABASE_URL")       // Then check environment variable
         ?: "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
     val driver = environment.config.propertyOrNull("database.driver")?.getString()
+        ?: System.getProperty("DATABASE_DRIVER")
         ?: System.getenv("DATABASE_DRIVER")
         ?: "org.h2.Driver"
     val enableLogging = environment.config.propertyOrNull("database.logging")?.getString()?.toBoolean()
+        ?: System.getProperty("DATABASE_LOGGING")?.toBoolean()
         ?: System.getenv("DATABASE_LOGGING")?.toBoolean() 
         ?: false
 
