@@ -37,7 +37,7 @@ import kotlinx.serialization.json.*
  * 
  * Each failure will guide GREEN phase implementation of specification-compliant handlers.
  */
-@Ignored // SPI-608: Fix MCP WebSocket Integration Tests - Client Plugin Configuration
+@Ignored // SPI-610: Disable Broken MCP WebSocket Tests to Unblock CI/CD
 class MCPProtocolComplianceTest : MCPIntegrationTestBase() {
 
     init {
