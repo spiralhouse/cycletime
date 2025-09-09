@@ -55,6 +55,24 @@ data class HealthResponse(
     val timestamp: String
 )
 
+/**
+ * Self-documenting data class for MCP health status.
+ * Replaces the generic Pair<Map<String,String>, Map<String,String>> return type.
+ */
+data class HealthStatus(
+    val dependencies: Map<String, String>,
+    val metrics: Map<String, String>
+)
+
+/**
+ * Database configuration data class for clean parameter passing.
+ */
+data class DatabaseConfig(
+    val jdbcUrl: String,
+    val driver: String,
+    val enableLogging: Boolean
+)
+
 @Serializable
 data class ErrorResponse(
     val status: String,
@@ -74,6 +92,81 @@ fun main() {
         host = host,
         module = Application::module
     ).start(wait = true)
+}
+
+/**
+ * Build database configuration from environment variables and application config.
+ * Single responsibility: configuration building only.
+ */
+private fun Application.buildDatabaseConfig(): DatabaseConfig {
+    val jdbcUrl = environment.config.propertyOrNull("database.url")?.getString()
+        ?: System.getProperty("DATABASE_URL")  // Check System property first (for tests)
+        ?: System.getenv("DATABASE_URL")       // Then check environment variable
+        ?: "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
+    
+    val driver = environment.config.propertyOrNull("database.driver")?.getString()
+        ?: System.getProperty("DATABASE_DRIVER")
+        ?: System.getenv("DATABASE_DRIVER")
+        ?: "org.h2.Driver"
+    
+    val enableLogging = environment.config.propertyOrNull("database.logging")?.getString()?.toBoolean()
+        ?: System.getProperty("DATABASE_LOGGING")?.toBoolean()
+        ?: System.getenv("DATABASE_LOGGING")?.toBoolean() 
+        ?: false
+
+    return DatabaseConfig(jdbcUrl, driver, enableLogging)
+}
+
+/**
+ * Initialize database connection with timing metrics.
+ * Single responsibility: database initialization only.
+ */
+private fun initializeDatabase(
+    config: DatabaseConfig,
+    logger: org.slf4j.Logger,
+    performanceMetrics: MutableMap<String, Long>
+): Database {
+    logger.info("Initializing database with URL: ${config.jdbcUrl}")
+    val dbStartTime = System.currentTimeMillis()
+    DatabaseFactory.init(jdbcUrl = config.jdbcUrl, driver = config.driver, enableLogging = config.enableLogging)
+    val database = DatabaseFactory.getInstance()
+    val dbEndTime = System.currentTimeMillis()
+    val dbTime = dbEndTime - dbStartTime
+    performanceMetrics["database"] = dbTime
+    logger.info("Database initialization completed in ${dbTime}ms")
+    return database
+}
+
+/**
+ * Validate database configuration parameters.
+ * Single responsibility: validation only (pure function).
+ */
+private fun validateDatabaseConfig(config: DatabaseConfig) {
+    require(config.jdbcUrl.isNotBlank()) {
+        "Database URL cannot be blank"
+    }
+    
+    require(config.jdbcUrl.startsWith("jdbc:")) {
+        "Database URL must start with 'jdbc:'. Got: ${config.jdbcUrl}"
+    }
+    
+    // Validate environment variable overrides don't break expected patterns
+    if (System.getenv("DATABASE_URL")?.isNotBlank() == true) {
+        val envUrl = System.getenv("DATABASE_URL")!!
+        require(envUrl.startsWith("jdbc:")) {
+            "Environment variable DATABASE_URL must be a valid JDBC URL. Got: $envUrl"
+        }
+    }
+    
+    // Driver validation (basic check)
+    require(config.driver.isNotBlank()) {
+        "Database driver cannot be blank"
+    }
+    
+    // Validate driver class name format
+    require(config.driver.matches(Regex("^[a-zA-Z][a-zA-Z0-9_]*\\.[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*$"))) {
+        "Invalid driver class name format: ${config.driver}"
+    }
 }
 
 fun Application.module() {
@@ -143,6 +236,7 @@ private fun validateDatabaseConfiguration(jdbcUrl: String, driver: String) {
 
 /**
  * Configure database connection with validation and initialization.
+ * Orchestrates the database setup using focused single-responsibility functions.
  * 
  * @param logger Application logger
  * @param performanceMetrics Map to store timing metrics
@@ -152,40 +246,20 @@ private fun Application.configureDatabaseConnection(
     logger: org.slf4j.Logger,
     performanceMetrics: MutableMap<String, Long>
 ): Database {
-    // Database configuration - check System properties first (for tests), then env vars
-    val jdbcUrl = environment.config.propertyOrNull("database.url")?.getString()
-        ?: System.getProperty("DATABASE_URL")  // Check System property first (for tests)
-        ?: System.getenv("DATABASE_URL")       // Then check environment variable
-        ?: "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
-    val driver = environment.config.propertyOrNull("database.driver")?.getString()
-        ?: System.getProperty("DATABASE_DRIVER")
-        ?: System.getenv("DATABASE_DRIVER")
-        ?: "org.h2.Driver"
-    val enableLogging = environment.config.propertyOrNull("database.logging")?.getString()?.toBoolean()
-        ?: System.getProperty("DATABASE_LOGGING")?.toBoolean()
-        ?: System.getenv("DATABASE_LOGGING")?.toBoolean() 
-        ?: false
+    // Build configuration from environment/properties
+    val config = buildDatabaseConfig()
 
     // Validate configuration before attempting database initialization
     try {
-        validateDatabaseConfiguration(jdbcUrl, driver)
+        validateDatabaseConfig(config)
         logger.info("Database configuration validated successfully")
     } catch (e: IllegalArgumentException) {
         logger.error("Invalid database configuration: ${e.message}")
         throw e
     }
 
-    // Initialize database
-    logger.info("Initializing database with URL: $jdbcUrl")
-    val dbStartTime = System.currentTimeMillis()
-    DatabaseFactory.init(jdbcUrl = jdbcUrl, driver = driver, enableLogging = enableLogging)
-    val database = DatabaseFactory.getInstance()
-    val dbEndTime = System.currentTimeMillis()
-    val dbTime = dbEndTime - dbStartTime
-    performanceMetrics["database"] = dbTime
-    logger.info("Database initialization completed in ${dbTime}ms")
-    
-    return database
+    // Initialize database with timing metrics
+    return initializeDatabase(config, logger, performanceMetrics)
 }
 
 /**
@@ -257,12 +331,6 @@ private fun Application.configureMCPIntegration(
     } catch (e: SQLException) {
         logger.error("Database connection failed during DI setup: ${e.message}", e) 
         throw IllegalStateException("Database initialization failed during startup", e)
-    } catch (e: ClassNotFoundException) {
-        logger.error("Missing dependency class during DI setup: ${e.message}", e)
-        throw IllegalStateException("Required dependency class not found", e)
-    } catch (e: NoClassDefFoundError) {
-        logger.error("Class loading error during DI setup: ${e.message}", e)
-        throw IllegalStateException("Dependency class loading failed", e)
     }
 
     // Initialize MCP integration service for monitoring and lifecycle management
@@ -341,7 +409,7 @@ private fun Route.configureHealthEndpoint(
             }
             
             // Enhanced MCP health status with performance metrics
-            val (mcpDependencies, mcpMetrics) = buildMcpHealthStatus(mcpEnabled, mcpIntegrationService)
+            val mcpHealthStatus = buildMcpHealthStatus(mcpEnabled, mcpIntegrationService)
 
             call.respond(HttpStatusCode.OK, HealthResponse(
                 status = "healthy",
@@ -352,11 +420,11 @@ private fun Route.configureHealthEndpoint(
                     "projectService" to "initialized",
                     "issueService" to "initialized",
                     "sessionService" to "initialized"
-                ) + mcpDependencies,
+                ) + mcpHealthStatus.dependencies,
                 metrics = mapOf(
                     "projects" to projectCount.toString(),
                     "sessions" to sessionCount.toString()
-                ) + mcpMetrics,
+                ) + mcpHealthStatus.metrics,
                 timestamp = System.currentTimeMillis().toString()
             ))
         } catch (e: SQLException) {
@@ -400,13 +468,13 @@ private fun Route.configureHealthEndpoint(
 }
 
 /**
- * Build MCP health status map with performance metrics.
- * Returns a pair of (dependencies, metrics) for proper categorization.
+ * Build MCP health status with performance metrics.
+ * Returns a self-documenting HealthStatus data class instead of a generic Pair.
  */
 private fun buildMcpHealthStatus(
     mcpEnabled: Boolean,
     mcpIntegrationService: MCPIntegrationService?
-): Pair<Map<String, String>, Map<String, String>> {
+): HealthStatus {
     return if (mcpEnabled) {
         val mcpStatus = mcpIntegrationService?.getStatus()
         if (mcpStatus != null) {
@@ -432,7 +500,7 @@ private fun buildMcpHealthStatus(
                 }
             }
             
-            dependencies to metrics
+            HealthStatus(dependencies, metrics)
         } else {
             // WebSocket endpoint available but no monitoring
             val dependencies = mapOf(
@@ -444,10 +512,10 @@ private fun buildMcpHealthStatus(
                 "mcpUptime" to "0",
                 "mcpStatus" to "running"
             )
-            dependencies to metrics
+            HealthStatus(dependencies, metrics)
         }
     } else {
-        mapOf("mcpServer" to "disabled") to emptyMap()
+        HealthStatus(mapOf("mcpServer" to "disabled"), emptyMap())
     }
 }
 
