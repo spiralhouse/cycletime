@@ -37,7 +37,6 @@ import kotlin.time.Duration.Companion.milliseconds
  * See: https://linear.app/spiral-house/issue/SPI-608
  */
 @OptIn(ExperimentalKotest::class)
-@Ignored  // SPI-608: Fix MCP WebSocket Integration Tests - Client Plugin Configuration
 class MCPEndToEndTest : StringSpec({
 
     "should complete full application startup with REST and MCP servers" {
@@ -78,8 +77,12 @@ class MCPEndToEndTest : StringSpec({
             val healthCheck = client.get("/health")
             healthCheck.status shouldBe HttpStatusCode.OK
 
-            // Use the test client to connect to MCP WebSocket on main app port
-            client.webSocket("/mcp") {
+            // Use properly configured WebSocket client to connect to MCP endpoint
+            val wsClient = createClient {
+                install(WebSockets)
+            }
+            
+            wsClient.webSocket("/mcp") {
                 // Connection should be established
                 incoming.isEmpty shouldBe false
                 outgoing.isClosedForSend shouldBe false
@@ -95,7 +98,11 @@ class MCPEndToEndTest : StringSpec({
                 module()
             }
 
-            client.webSocket("/mcp") {
+            val wsClient = createClient {
+                install(WebSockets)
+            }
+            
+            wsClient.webSocket("/mcp") {
                 // Send MCP initialize request
                 val initRequest = """
                         {
@@ -142,7 +149,11 @@ class MCPEndToEndTest : StringSpec({
                 module()
             }
 
-            client.webSocket("/mcp") {
+            val wsClient = createClient {
+                install(WebSockets)
+            }
+            
+            wsClient.webSocket("/mcp") {
                 // First initialize
                 send(Frame.Text(createInitializeRequest()))
                 val initResponse = incoming.receive() as Frame.Text
@@ -183,7 +194,11 @@ class MCPEndToEndTest : StringSpec({
                 module()
             }
 
-            client.webSocket("/mcp") {
+            val wsClient = createClient {
+                install(WebSockets)
+            }
+            
+            wsClient.webSocket("/mcp") {
                 // Initialize first
                 send(Frame.Text(createInitializeRequest()))
                 incoming.receive()
@@ -228,14 +243,22 @@ class MCPEndToEndTest : StringSpec({
             // (testApplication doesn't provide easy concurrent WebSocket support)
             
             // First connection
-            client.webSocket("/mcp") {
+            val wsClient = createClient {
+                install(WebSockets)
+            }
+            
+            wsClient.webSocket("/mcp") {
                 send(Frame.Text(createInitializeRequest("client1")))
                 val response1 = incoming.receive() as Frame.Text
                 response1.readText() shouldContain "2.0"
             }
 
             // Second connection
-            client.webSocket("/mcp") {
+            val wsClient2 = createClient {
+                install(WebSockets)
+            }
+            
+            wsClient2.webSocket("/mcp") {
                 send(Frame.Text(createInitializeRequest("client2")))
                 val response2 = incoming.receive() as Frame.Text
                 response2.readText() shouldContain "2.0"
@@ -251,7 +274,11 @@ class MCPEndToEndTest : StringSpec({
                 module()
             }
 
-            client.webSocket("/mcp") {
+            val wsClient = createClient {
+                install(WebSockets)
+            }
+            
+            wsClient.webSocket("/mcp") {
                 // Send malformed JSON
                 send(Frame.Text("{invalid json")) // Will fail - error handling not implemented
 
@@ -277,7 +304,11 @@ class MCPEndToEndTest : StringSpec({
                 module()
             }
 
-            client.webSocket("/mcp") {
+            val wsClient = createClient {
+                install(WebSockets)
+            }
+            
+            wsClient.webSocket("/mcp") {
                 send(Frame.Text(createInitializeRequest()))
                 val initResponse = incoming.receive() as Frame.Text
                 initResponse shouldNotBe null
@@ -297,7 +328,11 @@ class MCPEndToEndTest : StringSpec({
                 module()
             }
 
-            client.webSocket("/mcp") {
+            val wsClient = createClient {
+                install(WebSockets)
+            }
+            
+            wsClient.webSocket("/mcp") {
                 // Initialize
                 send(Frame.Text(createInitializeRequest()))
                 val initResponse = incoming.receive() as Frame.Text
@@ -327,7 +362,11 @@ class MCPEndToEndTest : StringSpec({
                 module()
             }
 
-            client.webSocket("/mcp") {
+            val wsClient = createClient {
+                install(WebSockets)
+            }
+            
+            wsClient.webSocket("/mcp") {
                 send(Frame.Text(createInitializeRequest()))
                 incoming.receive()
 

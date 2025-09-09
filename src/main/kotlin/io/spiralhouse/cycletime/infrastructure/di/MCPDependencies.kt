@@ -71,12 +71,10 @@ object MCPDependencies {
                 config = resolve<MCPServerConfig>(), // Resolve from DI
                 resourceRegistry = resolve<ResourceRegistry>(),
                 toolRegistry = resolve<ToolRegistry>(),
-                resourceProviders = listOf(
-                    resolve<ProjectResourceProvider>(),
-                    resolve<IssueResourceProvider>(),
-                    resolve<SessionResourceProvider>(),
-                    resolve<WorkflowResourceProvider>()
-                ),
+                projectResourceProvider = resolve<ProjectResourceProvider>(),
+                issueResourceProvider = resolve<IssueResourceProvider>(),
+                sessionResourceProvider = resolve<SessionResourceProvider>(),
+                workflowResourceProvider = resolve<WorkflowResourceProvider>(),
                 toolProviders = listOf(
                     resolve<ProjectToolProvider>(),
                     resolve<IssueToolProvider>(),
@@ -107,9 +105,11 @@ object MCPDependencies {
             DefaultWebSocketHandler(resolve())
         }
         
-        // Resource Providers - placeholder implementations for now
+        // Resource Providers - connected to application services
         provide<ProjectResourceProvider> { 
-            DefaultProjectResourceProvider()
+            DefaultProjectResourceProvider(
+                projectService = resolve<ProjectApplicationService>()
+            )
         }
         
         provide<IssueResourceProvider> { 

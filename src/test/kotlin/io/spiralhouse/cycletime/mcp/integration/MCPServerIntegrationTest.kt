@@ -38,7 +38,6 @@ import kotlin.time.Duration.Companion.seconds
  * 
  * Each failure will indicate specific integration work needed for GREEN phase.
  */
-@Ignored // SPI-610: Disable Broken MCP WebSocket Tests to Unblock CI/CD
 class MCPServerIntegrationTest : MCPIntegrationTestBase() {
 
     init {

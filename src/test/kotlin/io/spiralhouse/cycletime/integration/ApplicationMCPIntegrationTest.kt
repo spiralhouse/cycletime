@@ -30,7 +30,6 @@ import kotlin.time.Duration.Companion.seconds
  * after the 8-phase extraction from the mega-PR.
  */
 @OptIn(ExperimentalKotest::class)
-@Ignored // SPI-608: Fix MCP WebSocket Integration Tests - Client Plugin Configuration
 class ApplicationMCPIntegrationTest : StringSpec({
 
     "should start application with MCP server enabled by default" {
