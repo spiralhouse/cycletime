@@ -66,9 +66,6 @@ class ResourceProviderRegistry : ResourceRegistry {
      * Get resource templates from a specific provider
      */
     override suspend fun getResourceTemplates(providerId: String): List<ResourceTemplate> {
-        val provider = providers[providerId] 
-            ?: throw ProviderNotFoundException(providerId)
-        
         // TODO: Provider templates need to be implemented in the provider interface
         // For now, return empty list instead of hardcoded test data
         return emptyList()
