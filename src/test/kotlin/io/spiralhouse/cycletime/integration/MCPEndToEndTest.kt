@@ -40,8 +40,6 @@ class MCPEndToEndTest : StringSpec({
             application {
                 // Use in-memory database for tests to avoid conflicts
                 System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
                 module() // Will fail - MCP server not integrated into startup
             }
 
