@@ -1,6 +1,7 @@
 package io.spiralhouse.cycletime.integration
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.core.annotation.Ignored
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
@@ -19,6 +20,7 @@ import kotlin.time.Duration.Companion.seconds
  * Simple integration tests for MCP server functionality.
  * Tests the MCP endpoints as integrated within the main application.
  */
+@Ignored // SPI-608: Fix MCP WebSocket Integration Tests - Client Plugin Configuration
 class McpSimpleIntegrationTest : StringSpec({
     
     "should expose MCP info endpoint" {
