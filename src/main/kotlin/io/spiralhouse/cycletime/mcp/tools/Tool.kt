@@ -16,8 +16,8 @@ data class Tool(
     val handler: (JsonElement) -> Result<JsonElement>
 ) {
     init {
-        require(name.matches(Regex("^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)*$"))) {
-            "Tool name must be lowercase with optional dots for namespacing: $name"
+        require(name.matches(Regex("^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)*$"))) {
+            "Tool name must be lowercase with optional dots or underscores for namespacing: $name"
         }
     }
 }

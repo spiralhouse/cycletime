@@ -235,17 +235,50 @@ class MCPIntegrationService(
         
         // Register tool providers
         var successfulTools = 0
-        toolProviders.forEach { provider ->
-            try {
-                // Tool registration logic here (if needed)
-                successfulTools++
-                logger.debug("Registered tool provider: ${provider::class.java.simpleName}")
-            } catch (e: Exception) {
-                logger.error(
-                    "Failed to register tool provider ${provider::class.java.simpleName}: ${e.message}", 
-                    e
-                )
+        toolRegistry?.let { registry ->
+            logger.info("Starting tool registration with ${toolProviders.size} providers")
+            toolProviders.forEach { provider ->
+                try {
+                    logger.debug("Processing tool provider: ${provider::class.java.simpleName}")
+                    
+                    // Register all tools from the provider
+                    val syncTools = provider.getTools()
+                    logger.debug("Found ${syncTools.size} sync tools from ${provider::class.java.simpleName}")
+                    syncTools.forEach { tool ->
+                        if (registry.register(tool)) {
+                            successfulTools++
+                            logger.info("Registered sync tool: ${tool.name} from ${provider::class.java.simpleName}")
+                        } else {
+                            logger.warn("Sync tool already registered: ${tool.name}")
+                        }
+                    }
+                    
+                    // Register all async tools from the provider
+                    val asyncTools = provider.getAsyncTools()
+                    logger.debug("Found ${asyncTools.size} async tools from ${provider::class.java.simpleName}")
+                    asyncTools.forEach { tool ->
+                        if (registry.register(tool)) {
+                            successfulTools++
+                            logger.info("Registered async tool: ${tool.name} from ${provider::class.java.simpleName}")
+                        } else {
+                            logger.warn("Async tool already registered: ${tool.name}")
+                        }
+                    }
+                    
+                    logger.info("Completed tool provider: ${provider::class.java.simpleName}")
+                } catch (e: Exception) {
+                    logger.error(
+                        "Failed to register tool provider ${provider::class.java.simpleName}: ${e.message}", 
+                        e
+                    )
+                }
             }
+            
+            // Verify registration worked
+            val registeredTools = registry.getRegisteredToolNames()
+            logger.info("Total tools registered: ${registeredTools.size} - ${registeredTools}")
+        } ?: run {
+            logger.error("ToolRegistry is null - cannot register tools!")
         }
         
         logger.info(

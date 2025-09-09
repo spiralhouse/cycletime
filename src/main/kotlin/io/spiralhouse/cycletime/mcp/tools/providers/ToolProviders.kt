@@ -20,7 +20,7 @@ class DefaultProjectToolProvider(
     
     override fun getAsyncTools(): List<AsyncTool> = listOf(
         AsyncTool(
-            name = "project.create",
+            name = "create_project",
             description = "Create a new CycleTime project",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -53,7 +53,7 @@ class DefaultProjectToolProvider(
             }
         ),
         AsyncTool(
-            name = "project.get",
+            name = "get_project",
             description = "Get a project by ID",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -78,7 +78,7 @@ class DefaultProjectToolProvider(
             }
         ),
         AsyncTool(
-            name = "project.list",
+            name = "list_projects",
             description = "List all projects",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -107,7 +107,7 @@ class DefaultIssueToolProvider(
     
     override fun getAsyncTools(): List<AsyncTool> = listOf(
         AsyncTool(
-            name = "issue.create",
+            name = "create_issue",
             description = "Create a new issue",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -164,7 +164,7 @@ class DefaultIssueToolProvider(
             }
         ),
         AsyncTool(
-            name = "issue.get",
+            name = "get_issue",
             description = "Get an issue by ID",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -189,7 +189,7 @@ class DefaultIssueToolProvider(
             }
         ),
         AsyncTool(
-            name = "issue.list",
+            name = "list_issues",
             description = "List all issues",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -218,7 +218,7 @@ class DefaultSessionToolProvider(
     
     override fun getAsyncTools(): List<AsyncTool> = listOf(
         AsyncTool(
-            name = "session.create",
+            name = "create_session",
             description = "Create a new work session",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -245,7 +245,7 @@ class DefaultSessionToolProvider(
             }
         ),
         AsyncTool(
-            name = "session.list_active",
+            name = "list_active_sessions",
             description = "List active sessions",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -259,7 +259,7 @@ class DefaultSessionToolProvider(
             }
         ),
         AsyncTool(
-            name = "session.get",
+            name = "get_session",
             description = "Get session by key",
             parametersSchema = buildJsonObject {
                 put("type", "object")
@@ -280,6 +280,36 @@ class DefaultSessionToolProvider(
                     val result = sessionService.getSession(SessionKey(sessionKey))
                         ?: throw IllegalArgumentException("Session not found")
                     Json.encodeToJsonElement(result)
+                }
+            }
+        ),
+        AsyncTool(
+            name = "get_next_task",
+            description = "Get the next task for the current session",
+            parametersSchema = buildJsonObject {
+                put("type", "object")
+                put("properties", buildJsonObject {
+                    put("sessionKey", buildJsonObject {
+                        put("type", "string")
+                        put("description", "Session key (optional)")
+                    })
+                })
+            },
+            handler = { params ->
+                Result.runCatching {
+                    val obj = params.jsonObject
+                    val sessionKey = obj["sessionKey"]?.jsonPrimitive?.contentOrNull?.let {
+                        SessionKey(it)
+                    }
+                    
+                    // For now, return a placeholder task
+                    val nextTask = buildJsonObject {
+                        put("id", "task-1")
+                        put("title", "Continue development on current feature")
+                        put("priority", "high")
+                        put("sessionKey", sessionKey?.value ?: "default")
+                    }
+                    Json.encodeToJsonElement(nextTask)
                 }
             }
         )

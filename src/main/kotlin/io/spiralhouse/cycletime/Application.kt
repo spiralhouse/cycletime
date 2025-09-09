@@ -479,7 +479,7 @@ private fun buildMcpHealthStatus(
         val mcpStatus = mcpIntegrationService?.getStatus()
         if (mcpStatus != null) {
             val dependencies = mapOf(
-                "mcp" to if (mcpStatus.isRunning) "running" else "stopped"
+                "mcpServer" to if (mcpStatus.isRunning) "running" else "stopped"
             )
             
             val metrics = buildMap {

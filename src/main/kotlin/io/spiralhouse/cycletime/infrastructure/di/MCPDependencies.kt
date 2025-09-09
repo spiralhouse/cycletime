@@ -113,11 +113,15 @@ object MCPDependencies {
         }
         
         provide<IssueResourceProvider> { 
-            DefaultIssueResourceProvider()
+            DefaultIssueResourceProvider(
+                issueService = resolve<IssueApplicationService>()
+            )
         }
         
         provide<SessionResourceProvider> { 
-            DefaultSessionResourceProvider()
+            DefaultSessionResourceProvider(
+                sessionService = resolve<SessionApplicationService>()
+            )
         }
         
         provide<WorkflowResourceProvider> { 

@@ -1,7 +1,7 @@
 package io.spiralhouse.cycletime.mcp.tools
 
 import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolInvoker
-import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
