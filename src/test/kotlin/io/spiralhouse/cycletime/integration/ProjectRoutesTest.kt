@@ -20,7 +20,7 @@ import io.spiralhouse.cycletime.application.commands.UpdateProjectCommand
 import io.spiralhouse.cycletime.application.dto.ProjectDto
 import io.spiralhouse.cycletime.application.dto.ProjectListDto
 import io.spiralhouse.cycletime.application.services.ProjectApplicationService
-import io.spiralhouse.cycletime.configureForTesting
+import io.spiralhouse.cycletime.infrastructure.di.modules.test.configureForTesting
 import io.spiralhouse.cycletime.api.dto.CreateProjectRequest
 import io.spiralhouse.cycletime.api.dto.UpdateProjectRequest
 import io.spiralhouse.cycletime.api.dto.ProjectResponse

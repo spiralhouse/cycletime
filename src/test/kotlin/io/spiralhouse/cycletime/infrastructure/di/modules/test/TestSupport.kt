@@ -3,12 +3,16 @@ package io.spiralhouse.cycletime.infrastructure.di.modules.test
 import io.ktor.server.application.*
 import io.ktor.server.application.install
 import io.ktor.server.plugins.di.DI
+import io.ktor.server.plugins.di.dependencies
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.serialization.kotlinx.json.*
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseFactory
 import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseNamingStrategy
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.serialization.json.Json
 import kotlin.time.Duration
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -94,4 +98,46 @@ fun Application.configureTestDependencies(
  */
 fun testTimeProvider(time: String = "2024-01-01T00:00:00Z"): FixedTimeProvider {
     return FixedTimeProvider(Instant.parse(time))
+}
+
+/**
+ * Configure the application for testing with project routes.
+ * This includes content negotiation, dependency injection, and API routes.
+ */
+fun Application.configureForTesting(
+    database: Database,
+    timeProvider: TimeProvider? = null
+) {
+    configureDependencies(
+        database = database,
+        timeProvider = timeProvider,
+        includeMCP = false // Tests don't need MCP
+    )
+    
+    // Ensure all tables exist for tests
+    transaction(database) {
+        SchemaUtils.createMissingTablesAndColumns(
+            ProjectsTable,
+            IssuesTable,
+            SessionStatesTable,
+            io.spiralhouse.cycletime.infrastructure.database.WorkflowsTable
+        )
+    }
+    
+    configureContentNegotiation()
+    val injectedTimeProvider: TimeProvider by dependencies
+    io.spiralhouse.cycletime.api.configuration.ApiConfiguration.configure(this, injectedTimeProvider)
+}
+
+/**
+ * Configure content negotiation for JSON serialization.
+ */
+fun Application.configureContentNegotiation() {
+    install(ContentNegotiation) {
+        json(Json {
+            prettyPrint = true
+            isLenient = true
+            ignoreUnknownKeys = true
+        })
+    }
 }

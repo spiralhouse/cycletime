@@ -598,45 +598,4 @@ private fun logPerformanceSummary(
     }
 }
 
-/**
- * Configure the application for testing with project routes.
- * This includes content negotiation, dependency injection, and API routes.
- */
-fun Application.configureForTesting(
-    database: Database,
-    timeProvider: TimeProvider? = null
-) {
-    configureDependencies(
-        database = database,
-        timeProvider = timeProvider,
-        includeMCP = false // Tests don't need MCP
-    )
-    
-    // Ensure all tables exist for tests
-    org.jetbrains.exposed.sql.transactions.transaction(database) {
-        org.jetbrains.exposed.sql.SchemaUtils.createMissingTablesAndColumns(
-            io.spiralhouse.cycletime.infrastructure.database.ProjectsTable,
-            io.spiralhouse.cycletime.infrastructure.database.IssuesTable,
-            io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable,
-            io.spiralhouse.cycletime.infrastructure.database.WorkflowsTable
-        )
-    }
-    
-    configureContentNegotiation()
-    val injectedTimeProvider: TimeProvider by dependencies
-    ApiConfiguration.configure(this, injectedTimeProvider)
-}
-
-/**
- * Configure content negotiation for JSON serialization.
- */
-fun Application.configureContentNegotiation() {
-    install(ContentNegotiation) {
-        json(Json {
-            prettyPrint = true
-            isLenient = true
-            ignoreUnknownKeys = true
-        })
-    }
-}
 

@@ -27,7 +27,7 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionReposit
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import org.jetbrains.exposed.sql.Database
 import io.spiralhouse.cycletime.module
-import io.spiralhouse.cycletime.configureForTesting
+import io.spiralhouse.cycletime.infrastructure.di.modules.test.configureForTesting
 
 /**
  * Tests for the dependency injection system.

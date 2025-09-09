@@ -18,7 +18,7 @@ import io.ktor.server.testing.*
 import io.spiralhouse.cycletime.application.commands.CreateWorkflowCommand
 import io.spiralhouse.cycletime.application.commands.UpdateWorkflowCommand
 import io.spiralhouse.cycletime.application.services.WorkflowApplicationService
-import io.spiralhouse.cycletime.configureForTesting
+import io.spiralhouse.cycletime.infrastructure.di.modules.test.configureForTesting
 import io.spiralhouse.cycletime.api.dto.*
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus

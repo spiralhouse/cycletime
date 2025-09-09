@@ -62,17 +62,6 @@ data class MCPConfiguration(
             return config
         }
         
-        /**
-         * Create a test configuration with optimized settings.
-         */
-        fun forTesting(): MCPConfiguration = MCPConfiguration(
-            pingPeriod = 5.seconds,
-            timeout = 5.seconds,
-            maxConnections = 10,
-            resourceCacheEnabled = false,
-            metricsEnabled = false,
-            detailedLogging = true
-        )
     }
     
     /**
