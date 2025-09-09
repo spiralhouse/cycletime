@@ -66,37 +66,9 @@ class ResourceProviderRegistry : ResourceRegistry {
      * Get resource templates from a specific provider
      */
     override suspend fun getResourceTemplates(providerId: String): List<ResourceTemplate> {
-        // Return default templates for testing
-        return listOf(
-            ResourceTemplate(
-                name = "Configuration Template",
-                schema = kotlinx.serialization.json.buildJsonObject {
-                    put("type", kotlinx.serialization.json.JsonPrimitive("object"))
-                    put("properties", kotlinx.serialization.json.buildJsonObject {
-                        put("name", kotlinx.serialization.json.buildJsonObject {
-                            put("type", kotlinx.serialization.json.JsonPrimitive("string"))
-                        })
-                        put("value", kotlinx.serialization.json.buildJsonObject {
-                            put("type", kotlinx.serialization.json.JsonPrimitive("string"))
-                        })
-                    })
-                }
-            ),
-            ResourceTemplate(
-                name = "Document Template",
-                schema = kotlinx.serialization.json.buildJsonObject {
-                    put("type", kotlinx.serialization.json.JsonPrimitive("object"))
-                    put("properties", kotlinx.serialization.json.buildJsonObject {
-                        put("title", kotlinx.serialization.json.buildJsonObject {
-                            put("type", kotlinx.serialization.json.JsonPrimitive("string"))
-                        })
-                        put("content", kotlinx.serialization.json.buildJsonObject {
-                            put("type", kotlinx.serialization.json.JsonPrimitive("string"))
-                        })
-                    })
-                }
-            )
-        )
+        // TODO: Provider templates need to be implemented in the provider interface
+        // For now, return empty list instead of hardcoded test data
+        return emptyList()
     }
     
     /**
