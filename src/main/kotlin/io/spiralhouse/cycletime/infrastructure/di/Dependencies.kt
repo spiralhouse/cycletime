@@ -18,7 +18,6 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectReposit
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedWorkflowRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
-import io.spiralhouse.cycletime.infrastructure.di.MCPDependencies.configureMCPDependencies
 import org.jetbrains.exposed.sql.Database
 import org.slf4j.LoggerFactory
 
@@ -204,8 +203,10 @@ fun Application.configureDependencies(
         if (includeMCP) {
             val mcpStartTime = System.currentTimeMillis()
             try {
-                // We're already in a DependencyRegistry context, just call the extension function
-                configureMCPDependencies()
+                // Use 'with' to bring MCPDependencies functions into scope while keeping 'this' as DependencyRegistry
+                with(MCPDependencies) {
+                    this@dependencies.configureMCPDependencies()
+                }
                 val mcpEndTime = System.currentTimeMillis()
                 logger.debug("MCP dependencies configured in ${mcpEndTime - mcpStartTime}ms")
             } catch (e: Exception) {
