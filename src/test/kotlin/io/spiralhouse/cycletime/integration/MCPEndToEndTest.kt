@@ -17,7 +17,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.ktor.websocket.*
 import io.spiralhouse.cycletime.module
-import io.spiralhouse.cycletime.configureForTesting
+import io.spiralhouse.cycletime.infrastructure.di.modules.test.configureForTesting
 import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseFactory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout

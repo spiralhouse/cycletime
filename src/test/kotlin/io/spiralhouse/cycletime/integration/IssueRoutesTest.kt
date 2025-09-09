@@ -21,7 +21,7 @@ import io.spiralhouse.cycletime.application.dto.IssueListDto
 import io.spiralhouse.cycletime.application.dto.IssueHierarchyDto
 import io.spiralhouse.cycletime.application.services.IssueApplicationService
 import io.spiralhouse.cycletime.application.services.ProjectApplicationService
-import io.spiralhouse.cycletime.configureForTesting
+import io.spiralhouse.cycletime.infrastructure.di.modules.test.configureForTesting
 import io.spiralhouse.cycletime.api.dto.*
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.*
