@@ -479,7 +479,7 @@ private fun buildMcpHealthStatus(
         val mcpStatus = mcpIntegrationService?.getStatus()
         if (mcpStatus != null) {
             val dependencies = mapOf(
-                "mcp" to if (mcpStatus.isRunning) "running" else "stopped"
+                "mcpServer" to if (mcpStatus.isRunning) "running" else "stopped"
             )
             
             val metrics = buildMap {
@@ -504,7 +504,7 @@ private fun buildMcpHealthStatus(
         } else {
             // WebSocket endpoint available but no monitoring
             val dependencies = mapOf(
-                "mcp" to "running"
+                "mcpServer" to "running"
             )
             val metrics = mapOf(
                 "mcpConnections" to "0",
@@ -515,7 +515,7 @@ private fun buildMcpHealthStatus(
             HealthStatus(dependencies, metrics)
         }
     } else {
-        HealthStatus(mapOf("mcp" to "disabled"), emptyMap())
+        HealthStatus(mapOf("mcpServer" to "disabled"), emptyMap())
     }
 }
 

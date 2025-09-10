@@ -21,23 +21,6 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import kotlin.system.measureTimeMillis
 
-@Serializable
-data class MCPServerInfo(
-    val name: String,
-    val version: String,
-    val description: String,
-    val capabilities: MCPCapabilities
-)
-
-// Non-serializable version with metadata for internal use
-data class MCPServerInfoWithMetadata(
-    val name: String,
-    val version: String,
-    val description: String,
-    val capabilities: MCPCapabilities,
-    val metadata: Map<String, Any> = emptyMap()
-)
-
 // Extension function for formatting doubles
 private fun Double.format(decimals: Int): String = "%.${decimals}f".format(this)
 
@@ -46,6 +29,18 @@ data class MCPCapabilities(
     val resources: Boolean = true,
     val tools: Boolean = true,
     val prompts: Boolean = false
+)
+
+@Serializable
+data class MCPServerInfo(
+    val name: String,
+    val version: String,
+    val description: String,
+    val capabilities: MCPCapabilities,
+    val activeConnections: Int,
+    val totalRequests: Long,
+    val averageLatency: String? = null,
+    val errorRate: String? = null
 )
 
 fun Routing.configureMCP() {
@@ -112,26 +107,23 @@ fun Routing.configureMCP() {
         val stats = connectionManager.getStatistics()
         // Cache stats removed for simplicity
         
-        // Create response with metadata as separate fields for JSON serialization
-        val response = buildMap<String, Any> {
-            put("name", config.serverName)
-            put("version", config.serverVersion)
-            put("description", config.serverDescription)
-            put("capabilities", MCPCapabilities(
+        // Create response using proper data class for JSON serialization
+        val response = MCPServerInfo(
+            name = config.serverName,
+            version = config.serverVersion,
+            description = config.serverDescription,
+            capabilities = MCPCapabilities(
                 resources = true,
                 tools = true,
                 prompts = false
-            ))
-            put("activeConnections", stats.activeCount)
-            put("totalRequests", stats.totalRequests)
-            if (config.metricsEnabled) {
-                put("averageLatency", "${stats.averageLatency}ms")
-                put("errorRate", if (stats.totalRequests > 0) {
-                    "${(stats.totalErrors.toDouble() / stats.totalRequests * 100).format(2)}%"
-                } else "0%")
-            }
-            // Cache stats removed for simplicity
-        }
+            ),
+            activeConnections = stats.activeCount,
+            totalRequests = stats.totalRequests,
+            averageLatency = if (config.metricsEnabled) "${stats.averageLatency}ms" else null,
+            errorRate = if (config.metricsEnabled && stats.totalRequests > 0) {
+                "${(stats.totalErrors.toDouble() / stats.totalRequests * 100).format(2)}%"
+            } else if (config.metricsEnabled) "0%" else null
+        )
         call.respond(response)
     }
 

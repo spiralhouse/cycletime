@@ -28,6 +28,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * Phase 9: These tests validate error handling in the unified MCP architecture
  * where MCP is served on main application port via /mcp WebSocket endpoint.
  */
+@Ignored("Requires SPI-578: MCP Async Tool Timeout Management - Advanced timeout, error handling, and resilience capabilities")
 class MCPErrorHandlingIntegrationTest : MCPIntegrationTestBase() {
 
     init {

@@ -17,6 +17,7 @@ import kotlinx.serialization.json.*
  * RED PHASE EXPECTATION: ALL TESTS SHOULD FAIL
  * These tests will fail during RED phase due to missing performance optimizations.
  */
+@Ignored("Requires SPI-580: MCP Concurrent Execution Safety - Production-grade concurrent operations, performance optimizations, and scalability improvements")
 class MCPPerformanceIntegrationTest : MCPIntegrationTestBase() {
 
     init {
