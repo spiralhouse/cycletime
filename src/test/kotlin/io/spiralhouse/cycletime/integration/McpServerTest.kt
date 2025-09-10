@@ -14,7 +14,7 @@ import io.spiralhouse.cycletime.mcp.websocket.WebSocketConnectionManager
 import io.spiralhouse.cycletime.mcp.websocket.WebSocketServerConfig
 import io.spiralhouse.cycletime.mcp.tools.DefaultToolRegistry
 import io.spiralhouse.cycletime.mcp.tools.Tool
-import io.spiralhouse.cycletime.mcp.tools.AsyncTool
+import io.spiralhouse.cycletime.mcp.tools.ToolHandler
 import io.spiralhouse.cycletime.mcp.resources.ResourceProviderRegistry
 import io.spiralhouse.cycletime.mcp.resources.ResourceProvider
 import io.spiralhouse.cycletime.mcp.server.McpServer
@@ -294,7 +294,7 @@ class McpServerTest : StringSpec({
         val server = McpServer(McpServerConfig(port = 3005))
         
         // Register an async tool that takes time
-        val asyncTool = AsyncTool(
+        val asyncTool = Tool(
             name = "slowtool",
             description = "A slow async tool",
             parametersSchema = buildJsonObject {
@@ -306,14 +306,15 @@ class McpServerTest : StringSpec({
                     })
                 })
                 put("required", buildJsonArray { add("delay") })
+            },
+            handler = ToolHandler.Async { params ->
+                val delayMs = (params as JsonObject)["delay"]?.jsonPrimitive?.int ?: 100
+                delay(delayMs.toLong())
+                Result.success(JsonPrimitive("Async operation completed after ${delayMs}ms"))
             }
-        ) { params ->
-            val delayMs = (params as JsonObject)["delay"]?.jsonPrimitive?.int ?: 100
-            delay(delayMs.toLong())
-            Result.success(JsonPrimitive("Async operation completed after ${delayMs}ms"))
-        }
+        )
         
-        server.registerAsyncTool(asyncTool)
+        server.registerTool(asyncTool)
         server.start()
         
         // Should handle async tool invocation

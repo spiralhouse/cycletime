@@ -1,7 +1,6 @@
 package io.spiralhouse.cycletime.mcp.tools.lifecycle
 
 import io.spiralhouse.cycletime.mcp.tools.Tool
-import io.spiralhouse.cycletime.mcp.tools.AsyncTool
 import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolRegistry
 import io.spiralhouse.cycletime.mcp.tools.ToolProvider
 import kotlinx.coroutines.*
@@ -86,28 +85,13 @@ class ToolLifecycleManager(
     
     /**
      * Register a tool with an optional disposal callback.
+     * Supports both sync and async tools.
      * 
      * @param tool The tool to register
      * @param onDispose Optional callback to invoke when the tool is unregistered
      * @return true if the tool was registered successfully
      */
     fun registerWithDisposal(tool: Tool, onDispose: (() -> Unit)? = null): Boolean {
-        val registered = registry.register(tool)
-        if (registered) {
-            activeTool[tool.name] = true
-            onDispose?.let { disposables[tool.name] = it }
-        }
-        return registered
-    }
-    
-    /**
-     * Register an async tool with an optional disposal callback.
-     * 
-     * @param tool The async tool to register
-     * @param onDispose Optional callback to invoke when the tool is unregistered
-     * @return true if the tool was registered successfully
-     */
-    fun registerWithDisposal(tool: AsyncTool, onDispose: (() -> Unit)? = null): Boolean {
         val registered = registry.register(tool)
         if (registered) {
             activeTool[tool.name] = true
@@ -135,11 +119,12 @@ class ToolLifecycleManager(
     
     /**
      * Batch register multiple async tools.
+     * AsyncTool is now a type alias for Tool.
      * 
      * @param tools The async tools to register
      * @return List of tool names that were successfully registered
      */
-    fun batchRegisterAsync(vararg tools: AsyncTool): List<String> {
+    fun batchRegisterAsync(vararg tools: Tool): List<String> {
         return tools.mapNotNull { tool ->
             if (registry.register(tool)) {
                 activeTool[tool.name] = true

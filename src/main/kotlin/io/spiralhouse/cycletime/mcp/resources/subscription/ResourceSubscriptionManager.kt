@@ -1,7 +1,6 @@
 package io.spiralhouse.cycletime.mcp.resources.subscription
 
 import io.spiralhouse.cycletime.mcp.resources.exceptions.SubscriptionLimitExceededException
-import io.spiralhouse.cycletime.mcp.resources.interfaces.SubscriptionManager
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -13,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class ResourceSubscriptionManager(
     private val maxSubscriptionsPerClient: Int = 100
-) : SubscriptionManager {
+) {
     private val subscriptions = ConcurrentHashMap<String, ResourceSubscription>()
     private val clientSubscriptions = ConcurrentHashMap<String, MutableSet<String>>()
     private val callbacks = ConcurrentHashMap<String, (ResourceChangeNotification) -> Unit>()
@@ -21,7 +20,7 @@ class ResourceSubscriptionManager(
     /**
      * Subscribe to changes for a specific resource
      */
-    override suspend fun subscribeToResource(
+    suspend fun subscribeToResource(
         uri: String,
         subscriber: TestSubscriber,
         callback: (ResourceChangeNotification) -> Unit
@@ -46,7 +45,7 @@ class ResourceSubscriptionManager(
     /**
      * Subscribe to provider-level changes (new/removed resources)
      */
-    override suspend fun subscribeToProvider(
+    suspend fun subscribeToProvider(
         providerId: String,
         subscriber: TestSubscriber,
         callback: (ResourceChangeNotification) -> Unit
@@ -68,7 +67,7 @@ class ResourceSubscriptionManager(
     /**
      * Unsubscribe from notifications
      */
-    override suspend fun unsubscribe(subscriptionId: String) {
+    suspend fun unsubscribe(subscriptionId: String) {
         val subscription = subscriptions[subscriptionId]
         subscription?.let {
             it.isActive = false
@@ -88,7 +87,7 @@ class ResourceSubscriptionManager(
     /**
      * Handle subscriber disconnection cleanup
      */
-    override suspend fun handleSubscriberDisconnection(subscriberId: String) {
+    suspend fun handleSubscriberDisconnection(subscriberId: String) {
         val subscriptionIds = clientSubscriptions[subscriberId] ?: emptySet()
         for (subscriptionId in subscriptionIds) {
             val subscription = subscriptions[subscriptionId]
@@ -104,7 +103,7 @@ class ResourceSubscriptionManager(
     /**
      * Notify subscribers of resource changes
      */
-    override suspend fun notifyChange(notification: ResourceChangeNotification) {
+    suspend fun notifyChange(notification: ResourceChangeNotification) {
         for ((subscriptionId, subscription) in subscriptions) {
             if (subscription.isActive) {
                 val shouldNotify = when {

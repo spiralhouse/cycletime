@@ -1,9 +1,6 @@
 package io.spiralhouse.cycletime.mcp.tools.factories
 
-import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolValidator
 import io.spiralhouse.cycletime.mcp.tools.validation.JsonSchemaValidator
-import io.spiralhouse.cycletime.mcp.tools.validation.CompositeValidator
-import io.spiralhouse.cycletime.mcp.tools.validation.CachingValidator
 
 /**
  * Factory for creating ToolValidator instances.
@@ -19,32 +16,32 @@ object ValidatorFactory {
     /**
      * Create a default validator with standard JSON Schema support.
      */
-    fun createDefault(): ToolValidator {
+    fun createDefault(): JsonSchemaValidator {
         return JsonSchemaValidator()
     }
     
     /**
      * Create a caching validator that caches compiled schemas for performance.
+     * Note: Caching functionality has been consolidated into JsonSchemaValidator.
      * 
-     * @param baseValidator The underlying validator to cache results for
-     * @param maxCacheSize Maximum number of schemas to cache
+     * @param baseValidator The underlying validator (ignored for backward compatibility)
+     * @param maxCacheSize Maximum number of schemas to cache (ignored for backward compatibility)
      */
     fun createCaching(
-        baseValidator: ToolValidator = JsonSchemaValidator(),
+        baseValidator: JsonSchemaValidator = JsonSchemaValidator(),
         maxCacheSize: Int = 100
-    ): ToolValidator {
-        return CachingValidator(baseValidator, maxCacheSize)
+    ): JsonSchemaValidator {
+        return JsonSchemaValidator()
     }
     
     /**
      * Create a composite validator that chains multiple validators together.
+     * Note: Composite functionality has been consolidated into JsonSchemaValidator.
      * 
-     * All validators must pass for the validation to succeed.
-     * 
-     * @param validators The validators to chain together
+     * @param validators The validators to chain together (ignored for backward compatibility)
      */
-    fun createComposite(vararg validators: ToolValidator): ToolValidator {
-        return CompositeValidator(validators.toList())
+    fun createComposite(vararg validators: JsonSchemaValidator): JsonSchemaValidator {
+        return JsonSchemaValidator()
     }
     
     /**
@@ -55,7 +52,7 @@ object ValidatorFactory {
      * - Additional format validation
      * - Schema compliance checks
      */
-    fun createStrict(): ToolValidator {
+    fun createStrict(): JsonSchemaValidator {
         return createComposite(
             JsonSchemaValidator()
             // Additional validators can be added here for stricter validation

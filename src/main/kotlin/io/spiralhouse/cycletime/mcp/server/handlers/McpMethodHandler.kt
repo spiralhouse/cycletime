@@ -220,10 +220,9 @@ class DefaultMcpMethodHandler(
         val arguments = params["arguments"] ?: JsonObject(emptyMap())
         
         // Check if tool exists
-        val syncTool = toolRegistry.getTool(toolName)
-        val asyncTool = toolRegistry.getAsyncTool(toolName)
+        val tool = toolRegistry.getTool(toolName)
         
-        if (syncTool == null && asyncTool == null) {
+        if (tool == null) {
             return protocolHandler.createErrorResponse(
                 id = request.id,
                 code = -32001,
@@ -232,15 +231,15 @@ class DefaultMcpMethodHandler(
             )
         }
         
-        val result = if (asyncTool != null && async) {
+        val result = if (tool.isAsync && async) {
             // Invoke async tool with timeout
             val timeout = params["timeout"]?.jsonPrimitive?.longOrNull 
                 ?: 60000L // Default 60 seconds
             toolInvoker.invokeAsync(toolName, arguments, timeout)
-        } else if (syncTool != null && !async) {
+        } else if (tool.isSync && !async) {
             // Invoke sync tool
             toolInvoker.invoke(toolName, arguments)
-        } else if (asyncTool != null && !async) {
+        } else if (tool.isAsync && !async) {
             // Async tool called synchronously - not supported
             return createInvalidParamsError(
                 request, 

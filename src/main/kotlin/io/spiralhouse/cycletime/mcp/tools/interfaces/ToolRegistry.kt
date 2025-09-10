@@ -1,7 +1,6 @@
 package io.spiralhouse.cycletime.mcp.tools.interfaces
 
 import io.spiralhouse.cycletime.mcp.tools.Tool
-import io.spiralhouse.cycletime.mcp.tools.AsyncTool
 import io.spiralhouse.cycletime.mcp.tools.ToolMetadata
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -13,7 +12,7 @@ import kotlinx.serialization.json.JsonObject
  */
 interface ToolRegistry {
     /**
-     * Register a synchronous tool.
+     * Register a tool (supports both sync and async handlers).
      * 
      * @param tool The tool to register
      * @return true if the tool was registered successfully, false if a tool with the same name already exists
@@ -21,28 +20,12 @@ interface ToolRegistry {
     fun register(tool: Tool): Boolean
     
     /**
-     * Register an asynchronous tool.
-     * 
-     * @param tool The async tool to register  
-     * @return true if the tool was registered successfully, false if a tool with the same name already exists
-     */
-    fun register(tool: AsyncTool): Boolean
-    
-    /**
-     * Update an existing synchronous tool implementation.
+     * Update an existing tool implementation (supports both sync and async handlers).
      * 
      * @param tool The updated tool implementation
      * @return true if the tool was updated, false if no tool with that name exists
      */
     fun update(tool: Tool): Boolean
-    
-    /**
-     * Update an existing asynchronous tool implementation.
-     * 
-     * @param tool The updated async tool implementation
-     * @return true if the tool was updated, false if no tool with that name exists
-     */
-    fun update(tool: AsyncTool): Boolean
     
     /**
      * Unregister a tool by name.
@@ -68,13 +51,6 @@ interface ToolRegistry {
      */
     fun getTool(toolName: String): Tool?
     
-    /**
-     * Get an asynchronous tool by name.
-     * 
-     * @param toolName The name of the tool to retrieve
-     * @return The async tool if found, null otherwise
-     */
-    fun getAsyncTool(toolName: String): AsyncTool?
     
     /**
      * Get a sorted list of all registered tool names.

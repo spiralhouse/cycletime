@@ -19,7 +19,7 @@ class DefaultProjectToolProvider(
     override fun getTools(): List<Tool> = emptyList()
     
     override fun getAsyncTools(): List<AsyncTool> = listOf(
-        AsyncTool(
+        Tool(
             name = "create_project",
             description = "Create a new CycleTime project",
             parametersSchema = buildJsonObject {
@@ -36,7 +36,7 @@ class DefaultProjectToolProvider(
                 })
                 put("required", buildJsonArray { add("name") })
             },
-            handler = { params ->
+            handler = ToolHandler.Async { params ->
                 Result.runCatching {
                     val obj = params.jsonObject
                     val name = obj["name"]?.jsonPrimitive?.content 
@@ -52,7 +52,7 @@ class DefaultProjectToolProvider(
                 }
             }
         ),
-        AsyncTool(
+        Tool(
             name = "get_project",
             description = "Get a project by ID",
             parametersSchema = buildJsonObject {
@@ -65,7 +65,7 @@ class DefaultProjectToolProvider(
                 })
                 put("required", buildJsonArray { add("id") })
             },
-            handler = { params ->
+            handler = ToolHandler.Async { params ->
                 Result.runCatching {
                     val obj = params.jsonObject
                     val id = obj["id"]?.jsonPrimitive?.content 
@@ -77,14 +77,14 @@ class DefaultProjectToolProvider(
                 }
             }
         ),
-        AsyncTool(
+        Tool(
             name = "list_projects",
             description = "List all projects",
             parametersSchema = buildJsonObject {
                 put("type", "object")
                 put("properties", buildJsonObject {})
             },
-            handler = { _ ->
+            handler = ToolHandler.Async { _ ->
                 Result.runCatching {
                     val result = projectService.listProjects()
                     Json.encodeToJsonElement(result)
@@ -106,7 +106,7 @@ class DefaultIssueToolProvider(
     override fun getTools(): List<Tool> = emptyList()
     
     override fun getAsyncTools(): List<AsyncTool> = listOf(
-        AsyncTool(
+        Tool(
             name = "create_issue",
             description = "Create a new issue",
             parametersSchema = buildJsonObject {
@@ -140,7 +140,7 @@ class DefaultIssueToolProvider(
                     add("projectId")
                 })
             },
-            handler = { params ->
+            handler = ToolHandler.Async { params ->
                 Result.runCatching {
                     val obj = params.jsonObject
                     val title = obj["title"]?.jsonPrimitive?.content 
@@ -163,7 +163,7 @@ class DefaultIssueToolProvider(
                 }
             }
         ),
-        AsyncTool(
+        Tool(
             name = "get_issue",
             description = "Get an issue by ID",
             parametersSchema = buildJsonObject {
@@ -176,7 +176,7 @@ class DefaultIssueToolProvider(
                 })
                 put("required", buildJsonArray { add("id") })
             },
-            handler = { params ->
+            handler = ToolHandler.Async { params ->
                 Result.runCatching {
                     val obj = params.jsonObject
                     val id = obj["id"]?.jsonPrimitive?.content 
@@ -188,14 +188,14 @@ class DefaultIssueToolProvider(
                 }
             }
         ),
-        AsyncTool(
+        Tool(
             name = "list_issues",
             description = "List all issues",
             parametersSchema = buildJsonObject {
                 put("type", "object")
                 put("properties", buildJsonObject {})
             },
-            handler = { _ ->
+            handler = ToolHandler.Async { _ ->
                 Result.runCatching {
                     val result = issueService.listIssues()
                     Json.encodeToJsonElement(result)
@@ -217,7 +217,7 @@ class DefaultSessionToolProvider(
     override fun getTools(): List<Tool> = emptyList()
     
     override fun getAsyncTools(): List<AsyncTool> = listOf(
-        AsyncTool(
+        Tool(
             name = "create_session",
             description = "Create a new work session",
             parametersSchema = buildJsonObject {
@@ -230,7 +230,7 @@ class DefaultSessionToolProvider(
                 })
                 put("required", buildJsonArray { add("projectId") })
             },
-            handler = { params ->
+            handler = ToolHandler.Async { params ->
                 Result.runCatching {
                     val obj = params.jsonObject
                     val projectId = obj["projectId"]?.jsonPrimitive?.content 
@@ -244,21 +244,21 @@ class DefaultSessionToolProvider(
                 }
             }
         ),
-        AsyncTool(
+        Tool(
             name = "list_active_sessions",
             description = "List active sessions",
             parametersSchema = buildJsonObject {
                 put("type", "object")
                 put("properties", buildJsonObject {})
             },
-            handler = { _ ->
+            handler = ToolHandler.Async { _ ->
                 Result.runCatching {
                     val result = sessionService.listActiveSessions()
                     Json.encodeToJsonElement(result)
                 }
             }
         ),
-        AsyncTool(
+        Tool(
             name = "get_session",
             description = "Get session by key",
             parametersSchema = buildJsonObject {
@@ -271,7 +271,7 @@ class DefaultSessionToolProvider(
                 })
                 put("required", buildJsonArray { add("sessionKey") })
             },
-            handler = { params ->
+            handler = ToolHandler.Async { params ->
                 Result.runCatching {
                     val obj = params.jsonObject
                     val sessionKey = obj["sessionKey"]?.jsonPrimitive?.content 
@@ -283,7 +283,7 @@ class DefaultSessionToolProvider(
                 }
             }
         ),
-        AsyncTool(
+        Tool(
             name = "get_next_task",
             description = "Get the next task for the current session",
             parametersSchema = buildJsonObject {
@@ -295,7 +295,7 @@ class DefaultSessionToolProvider(
                     })
                 })
             },
-            handler = { params ->
+            handler = ToolHandler.Async { params ->
                 Result.runCatching {
                     val obj = params.jsonObject
                     val sessionKey = obj["sessionKey"]?.jsonPrimitive?.contentOrNull?.let {
