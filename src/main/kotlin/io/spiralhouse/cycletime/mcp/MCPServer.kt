@@ -8,6 +8,7 @@ import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
 import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
 import io.spiralhouse.cycletime.mcp.server.MCPConfiguration
 import io.spiralhouse.cycletime.mcp.server.MCPConnectionManager
+import io.spiralhouse.cycletime.mcp.server.ConnectionCleanupService
 import io.spiralhouse.cycletime.mcp.websocket.MCPWebSocketHandler
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -16,6 +17,7 @@ import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import io.ktor.server.plugins.di.*
 import kotlinx.coroutines.*
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
@@ -55,6 +57,18 @@ fun Routing.configureMCP() {
     val connectionManager = MCPConnectionManager(config)
     val protocolHandler = JsonRpcProtocolHandler() // Reuse single instance
     
+    // Initialize and start the cleanup service with proper lifecycle management
+    val cleanupService = ConnectionCleanupService(
+        connectionManager = connectionManager,
+        config = config,
+        cleanupInterval = 30.seconds,
+        maxRetries = 3
+    )
+    
+    // Start cleanup service using the application's coroutine scope
+    // This ensures it's properly cancelled when the application shuts down
+    cleanupService.start(application)
+    
     // WebSocket endpoint for MCP protocol communication
     webSocket("/mcp") {
         val connectionStartTime = System.currentTimeMillis()
@@ -88,16 +102,16 @@ fun Routing.configureMCP() {
         }
     }
     
-    // Background tasks can be added here if needed
-    
-    // Connection cleanup task
-    GlobalScope.launch {
-        while (isActive) {
-            delay(30_000) // Check every 30 seconds
+    // Register cleanup service for proper shutdown
+    // The cleanup service is already running via application scope
+    // We just need to ensure it's stopped when the application stops
+    application.monitor.subscribe(io.ktor.server.application.ApplicationStopped) {
+        runBlocking {
             try {
-                connectionManager.cleanupStaleConnections(config.timeout * 2)
+                cleanupService.stop()
+                logger.info("MCP cleanup service stopped gracefully")
             } catch (e: Exception) {
-                logger.error("Connection cleanup error: ${e.message}")
+                logger.error("Failed to stop MCP cleanup service: ${e.message}", e)
             }
         }
     }
@@ -156,23 +170,30 @@ fun Routing.configureMCP() {
         }
         
         val connStats = connectionManager.getStatistics()
+        val cleanupStatus = cleanupService.getStatus()
         
         call.respond(mapOf(
             "connections" to mapOf(
-                "active" to connStats.activeCount,
-                "totalRequests" to connStats.totalRequests,
-                "totalErrors" to connStats.totalErrors,
+                "active" to connStats.activeCount.toString(),
+                "totalRequests" to connStats.totalRequests.toString(),
+                "totalErrors" to connStats.totalErrors.toString(),
                 "averageLatency" to "${connStats.averageLatency}ms",
                 "maxLatency" to "${connStats.maxLatency}ms",
                 "errorRate" to if (connStats.totalRequests > 0) {
-                    (connStats.totalErrors.toDouble() / connStats.totalRequests * 100).format(2)
-                } else 0.0
+                    "${(connStats.totalErrors.toDouble() / connStats.totalRequests * 100).format(2)}%"
+                } else "0.0%"
+            ),
+            "cleanup" to mapOf(
+                "isRunning" to cleanupStatus.isRunning.toString(),
+                "isActive" to cleanupStatus.isActive.toString(),
+                "consecutiveFailures" to cleanupStatus.consecutiveFailures.toString(),
+                "intervalSeconds" to cleanupStatus.cleanupInterval.inWholeSeconds.toString()
             ),
             "config" to mapOf(
-                "maxConnections" to config.maxConnections,
-                "asyncProcessing" to config.asyncProcessingEnabled,
-                "caching" to config.resourceCacheEnabled,
-                "optimized" to config.isOptimized()
+                "maxConnections" to config.maxConnections.toString(),
+                "asyncProcessing" to config.asyncProcessingEnabled.toString(),
+                "caching" to config.resourceCacheEnabled.toString(),
+                "optimized" to config.isOptimized().toString()
             )
         ))
     }
