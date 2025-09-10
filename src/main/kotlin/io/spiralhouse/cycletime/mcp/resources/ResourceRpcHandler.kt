@@ -1,28 +1,16 @@
 package io.spiralhouse.cycletime.mcp.resources
 
-import io.spiralhouse.cycletime.mcp.resources.rpc.*
 import kotlinx.serialization.json.*
 
 /**
  * Handles JSON-RPC method calls for the Resource Provider Framework
  * 
- * This handler uses the command pattern to organize RPC method implementations,
- * providing a clean and extensible architecture for handling resource operations.
+ * This handler provides direct method implementations for resource operations,
+ * eliminating unnecessary abstraction layers.
  */
 class ResourceRpcHandler(
     private val registry: ResourceRegistry = ResourceRegistry()
 ) {
-    private val commands = mutableMapOf<String, RpcCommand>()
-    
-    init {
-        // Register commands
-        registerCommands()
-    }
-    
-    private fun registerCommands() {
-        commands["resources/list"] = ResourceListCommand(registry)
-        // Other commands will be registered here
-    }
     
     /**
      * Handle incoming JSON-RPC requests
@@ -33,19 +21,12 @@ class ResourceRpcHandler(
         val id = request["id"]?.jsonPrimitive?.int ?: 1
         
         return try {
-            // Try command pattern first
-            val command = commands[method]
-            val result = if (command != null && command.validate(params)) {
-                command.execute(params)
-            } else {
-                // Fall back to legacy handlers for backward compatibility
-                when (method) {
-                    "resources/list" -> handleResourcesList(params)
-                    "resources/read" -> handleResourcesRead(params)
-                    "resources/subscribe" -> handleResourcesSubscribe(params)
-                    "resources/unsubscribe" -> handleResourcesUnsubscribe(params)
-                    else -> throw IllegalArgumentException("Unknown method: $method")
-                }
+            val result = when (method) {
+                "resources/list" -> handleResourcesList(params)
+                "resources/read" -> handleResourcesRead(params)
+                "resources/subscribe" -> handleResourcesSubscribe(params)
+                "resources/unsubscribe" -> handleResourcesUnsubscribe(params)
+                else -> throw IllegalArgumentException("Unknown method: $method")
             }
             
             buildJsonObject {
