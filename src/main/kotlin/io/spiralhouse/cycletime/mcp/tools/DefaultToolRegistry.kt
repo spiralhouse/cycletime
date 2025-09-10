@@ -3,7 +3,6 @@ package io.spiralhouse.cycletime.mcp.tools
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcError
 import io.spiralhouse.cycletime.mcp.tools.exceptions.*
 import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolRegistry
-import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolInvoker
 import io.spiralhouse.cycletime.mcp.tools.validation.JsonSchemaValidator
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
@@ -24,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 open class DefaultToolRegistry(
     private val validator: JsonSchemaValidator = JsonSchemaValidator()
-) : ToolRegistry, ToolInvoker {
+) : ToolRegistry {
     
     private val tools = ConcurrentHashMap<String, Tool>()
     
@@ -86,7 +85,7 @@ open class DefaultToolRegistry(
     
     // ===== ToolInvoker Implementation =====
     
-    override fun invoke(toolName: String, parameters: JsonElement): Result<JsonElement> {
+    fun invoke(toolName: String, parameters: JsonElement): Result<JsonElement> {
         val tool = tools[toolName] 
             ?: return Result.failure(ToolNotFoundException(toolName))
         
@@ -109,7 +108,7 @@ open class DefaultToolRegistry(
         }
     }
     
-    override suspend fun invokeAsync(
+    suspend fun invokeAsync(
         toolName: String, 
         parameters: JsonElement, 
         timeout: Long
