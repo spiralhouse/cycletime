@@ -15,7 +15,6 @@ import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
 import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandlers
 import io.spiralhouse.cycletime.mcp.tools.*
 import io.spiralhouse.cycletime.mcp.tools.providers.*
-import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolInvoker
 import io.spiralhouse.cycletime.mcp.resources.ResourceProviderRegistry
 import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
 import io.spiralhouse.cycletime.mcp.tools.DefaultToolRegistry
@@ -51,9 +50,13 @@ object MCPDependencies {
             ResourceProviderRegistry()
         }
         
-        // Tool Registry
-        provide<ToolRegistry> {
+        // Tool Registry - single instance used for both registry and invocation
+        provide<DefaultToolRegistry> {
             DefaultToolRegistry()
+        }
+        
+        provide<ToolRegistry> {
+            resolve<DefaultToolRegistry>()
         }
         
         // MCP Method Handler
@@ -61,7 +64,7 @@ object MCPDependencies {
             McpMethodHandlers(
                 resourceRegistry = resolve(),
                 toolRegistry = resolve(),
-                toolInvoker = resolve()
+                toolInvoker = resolve<DefaultToolRegistry>()
             )
         }
         
@@ -147,11 +150,6 @@ object MCPDependencies {
             DefaultSessionToolProvider(
                 sessionService = resolve<SessionApplicationService>()
             )
-        }
-        
-        // Tool Invoker
-        provide<ToolInvoker> {
-            DefaultToolInvoker(resolve<ToolRegistry>())
         }
     }
 }

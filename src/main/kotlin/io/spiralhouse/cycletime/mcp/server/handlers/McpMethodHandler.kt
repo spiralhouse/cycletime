@@ -4,7 +4,7 @@ import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
 import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolRegistry
-import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolInvoker
+import io.spiralhouse.cycletime.mcp.tools.DefaultToolRegistry
 import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
 import io.spiralhouse.cycletime.mcp.server.state.ServerState
 import io.spiralhouse.cycletime.mcp.tools.exceptions.*
@@ -59,7 +59,7 @@ interface McpMethodHandler {
 class DefaultMcpMethodHandler(
     private val protocolHandler: JsonRpcProtocolHandler,
     private val toolRegistry: ToolRegistry,
-    private val toolInvoker: ToolInvoker,
+    private val toolInvoker: DefaultToolRegistry,
     private val resourceRegistry: ResourceRegistry,
     private val serverState: ServerState = ServerState()
 ) : McpMethodHandler {
@@ -231,22 +231,21 @@ class DefaultMcpMethodHandler(
             )
         }
         
+        // Handle async tool called synchronously - not supported
+        if (tool.isAsync && !async) {
+            return createInvalidParamsError(
+                request, 
+                "Async tool '$toolName' requires async invocation"
+            )
+        }
+        
         val result = if (tool.isAsync && async) {
             // Invoke async tool with timeout
             val timeout = params["timeout"]?.jsonPrimitive?.longOrNull 
                 ?: 60000L // Default 60 seconds
             toolInvoker.invokeAsync(toolName, arguments, timeout)
-        } else if (tool.isSync && !async) {
-            // Invoke sync tool
-            toolInvoker.invoke(toolName, arguments)
-        } else if (tool.isAsync && !async) {
-            // Async tool called synchronously - not supported
-            return createInvalidParamsError(
-                request, 
-                "Async tool '$toolName' requires async invocation"
-            )
         } else {
-            // Sync tool called async - should work
+            // Invoke sync tool (either sync-sync or sync-async)
             toolInvoker.invoke(toolName, arguments)
         }
         
