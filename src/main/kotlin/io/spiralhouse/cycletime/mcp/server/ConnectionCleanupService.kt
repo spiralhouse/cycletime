@@ -68,7 +68,7 @@ class ConnectionCleanupService(
      * Cancels the cleanup job and waits for it to complete.
      */
     suspend fun stop() {
-        synchronized(this) {
+        val jobToCancel = synchronized(this) {
             if (!isRunning) {
                 logger.debug("ConnectionCleanupService is not running")
                 return
@@ -76,10 +76,11 @@ class ConnectionCleanupService(
             
             logger.info("Stopping ConnectionCleanupService")
             isRunning = false
+            cleanupJob  // Capture reference while synchronized
         }
         
         // Cancel and wait for the job to complete
-        cleanupJob?.let { job ->
+        jobToCancel?.let { job ->
             job.cancelAndJoin()
             logger.info("ConnectionCleanupService stopped")
         }
@@ -90,10 +91,18 @@ class ConnectionCleanupService(
      * Main cleanup loop with proper error handling and recovery.
      */
     private suspend fun runCleanupLoop() {
+        // isFirstRun prevents double-delay after error recovery
+        // Normal flow: delay → cleanup → delay → cleanup
+        // After error: backoff delay → cleanup → delay → cleanup (no initial delay)
+        var isFirstRun = true
+        
         while (isRunning && currentCoroutineContext().isActive) {
             try {
-                // Wait for the cleanup interval
-                delay(cleanupInterval)
+                // Wait for the cleanup interval before cleanup (except after failures with backoff)
+                if (isFirstRun) {
+                    delay(cleanupInterval)
+                    isFirstRun = false
+                }
                 
                 if (!isRunning) break
                 
@@ -104,6 +113,9 @@ class ConnectionCleanupService(
                 
                 // Reset failure counter on success
                 consecutiveFailures = 0
+                
+                // Wait for the cleanup interval before next iteration
+                delay(cleanupInterval)
                 
             } catch (e: CancellationException) {
                 // Coroutine was cancelled, exit gracefully

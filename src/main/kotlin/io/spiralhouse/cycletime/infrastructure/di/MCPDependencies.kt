@@ -14,11 +14,9 @@ import io.spiralhouse.cycletime.mcp.server.MCPServerEngine
 import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
 import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandlers
 import io.spiralhouse.cycletime.mcp.tools.*
-import io.spiralhouse.cycletime.mcp.tools.providers.*
 import io.spiralhouse.cycletime.mcp.resources.ResourceProviderRegistry
 import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
-import io.spiralhouse.cycletime.mcp.tools.DefaultToolRegistry
-import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
 import io.spiralhouse.cycletime.application.services.ProjectApplicationService
 import io.spiralhouse.cycletime.application.services.IssueApplicationService
 import io.spiralhouse.cycletime.application.services.SessionApplicationService
@@ -51,20 +49,16 @@ object MCPDependencies {
         }
         
         // Tool Registry - single instance used for both registry and invocation
-        provide<DefaultToolRegistry> {
-            DefaultToolRegistry()
-        }
-        
         provide<ToolRegistry> {
-            resolve<DefaultToolRegistry>()
+            ToolRegistry()
         }
         
         // MCP Method Handler
         provide<McpMethodHandler> {
             McpMethodHandlers(
                 resourceRegistry = resolve(),
-                toolRegistry = resolve(),
-                toolInvoker = resolve<DefaultToolRegistry>()
+                toolRegistry = resolve<ToolRegistry>(),
+                toolInvoker = resolve<ToolRegistry>()
             )
         }
         
@@ -81,9 +75,9 @@ object MCPDependencies {
                 sessionResourceProvider = resolve<SessionResourceProvider>(),
                 workflowResourceProvider = resolve<WorkflowResourceProvider>(),
                 toolProviders = listOf(
-                    resolve<ProjectToolProvider>(),
-                    resolve<IssueToolProvider>(),
-                    resolve<SessionToolProvider>()
+                    resolve<DefaultProjectToolProvider>(),
+                    resolve<DefaultIssueToolProvider>(),
+                    resolve<DefaultSessionToolProvider>()
                 )
             )
         }
@@ -98,9 +92,9 @@ object MCPDependencies {
                     resolve<WorkflowResourceProvider>()
                 ),
                 toolProviders = listOf(
-                    resolve<ProjectToolProvider>(),
-                    resolve<IssueToolProvider>(),
-                    resolve<SessionToolProvider>()
+                    resolve<DefaultProjectToolProvider>(),
+                    resolve<DefaultIssueToolProvider>(),
+                    resolve<DefaultSessionToolProvider>()
                 )
             )
         }
@@ -134,19 +128,19 @@ object MCPDependencies {
         }
         
         // Tool Providers - connected to application services
-        provide<ProjectToolProvider> { 
+        provide<DefaultProjectToolProvider> { 
             DefaultProjectToolProvider(
                 projectService = resolve<ProjectApplicationService>()
             )
         }
         
-        provide<IssueToolProvider> { 
+        provide<DefaultIssueToolProvider> { 
             DefaultIssueToolProvider(
                 issueService = resolve<IssueApplicationService>()
             )
         }
         
-        provide<SessionToolProvider> { 
+        provide<DefaultSessionToolProvider> { 
             DefaultSessionToolProvider(
                 sessionService = resolve<SessionApplicationService>()
             )
