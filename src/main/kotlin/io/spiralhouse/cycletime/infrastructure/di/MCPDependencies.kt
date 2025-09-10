@@ -14,8 +14,7 @@ import io.spiralhouse.cycletime.mcp.server.MCPServerEngine
 import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
 import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandlers
 import io.spiralhouse.cycletime.mcp.tools.*
-import io.spiralhouse.cycletime.mcp.resources.ResourceProviderRegistry
-import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
+import io.spiralhouse.cycletime.mcp.resources.ResourceRegistry
 import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
 import io.spiralhouse.cycletime.application.services.ProjectApplicationService
 import io.spiralhouse.cycletime.application.services.IssueApplicationService
@@ -45,7 +44,7 @@ object MCPDependencies {
         
         // Resource Registry
         provide<ResourceRegistry> {
-            ResourceProviderRegistry()
+            ResourceRegistry()
         }
         
         // Tool Registry - single instance used for both registry and invocation

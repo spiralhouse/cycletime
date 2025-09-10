@@ -1,23 +1,23 @@
 package io.spiralhouse.cycletime.mcp.resources
 
-import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
 import io.spiralhouse.cycletime.mcp.resources.exceptions.ProviderNotFoundException
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Thread-safe registry for managing resource providers
  * 
- * This implementation provides concurrent access to provider management,
+ * Provides concurrent access to provider management,
  * automatic metadata generation, and cross-provider resource discovery.
+ * This is the main registry for all resource providers in the system.
  */
-class ResourceProviderRegistry : ResourceRegistry {
+class ResourceRegistry {
     private val providers = ConcurrentHashMap<String, ResourceProvider>()
     private val providerMetadata = ConcurrentHashMap<String, ResourceProviderMetadata>()
     
     /**
      * Register a new resource provider
      */
-    override suspend fun register(provider: ResourceProvider) {
+    suspend fun register(provider: ResourceProvider) {
         providers[provider.name] = provider
         
         // Create default metadata
@@ -37,21 +37,21 @@ class ResourceProviderRegistry : ResourceRegistry {
     /**
      * Get all registered providers
      */
-    override fun getProviders(): List<ResourceProvider> {
+    fun getProviders(): List<ResourceProvider> {
         return providers.values.toList()
     }
     
     /**
      * Get metadata for a specific provider
      */
-    override fun getProviderMetadata(name: String): ResourceProviderMetadata? {
+    fun getProviderMetadata(name: String): ResourceProviderMetadata? {
         return providerMetadata[name]
     }
     
     /**
      * Find resources across all providers by MIME type
      */
-    override suspend fun findResourcesByMimeType(mimeType: String): List<Resource> {
+    suspend fun findResourcesByMimeType(mimeType: String): List<Resource> {
         val results = mutableListOf<Resource>()
         for (provider in providers.values) {
             val resources = provider.listResources(
@@ -65,7 +65,7 @@ class ResourceProviderRegistry : ResourceRegistry {
     /**
      * Get resource templates from a specific provider
      */
-    override suspend fun getResourceTemplates(providerId: String): List<ResourceTemplate> {
+    suspend fun getResourceTemplates(providerId: String): List<ResourceTemplate> {
         // TODO: Provider templates need to be implemented in the provider interface
         // For now, return empty list instead of hardcoded test data
         return emptyList()
@@ -74,7 +74,7 @@ class ResourceProviderRegistry : ResourceRegistry {
     /**
      * Unregister a provider
      */
-    override fun unregister(name: String): ResourceProvider? {
+    fun unregister(name: String): ResourceProvider? {
         providerMetadata.remove(name)
         return providers.remove(name)
     }
@@ -82,7 +82,7 @@ class ResourceProviderRegistry : ResourceRegistry {
     /**
      * Get provider by name
      */
-    override fun getProvider(name: String): ResourceProvider? {
+    fun getProvider(name: String): ResourceProvider? {
         return providers[name]
     }
     

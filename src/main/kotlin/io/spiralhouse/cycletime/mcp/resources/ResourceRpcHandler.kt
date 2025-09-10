@@ -1,6 +1,5 @@
 package io.spiralhouse.cycletime.mcp.resources
 
-import io.spiralhouse.cycletime.mcp.resources.interfaces.*
 import io.spiralhouse.cycletime.mcp.resources.rpc.*
 import kotlinx.serialization.json.*
 
@@ -11,7 +10,7 @@ import kotlinx.serialization.json.*
  * providing a clean and extensible architecture for handling resource operations.
  */
 class ResourceRpcHandler(
-    private val registry: ResourceRegistry = ResourceProviderRegistry()
+    private val registry: ResourceRegistry = ResourceRegistry()
 ) {
     private val commands = mutableMapOf<String, RpcCommand>()
     

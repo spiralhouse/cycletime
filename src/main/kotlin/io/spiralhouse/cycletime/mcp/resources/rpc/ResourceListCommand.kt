@@ -1,7 +1,7 @@
 package io.spiralhouse.cycletime.mcp.resources.rpc
 
 import io.spiralhouse.cycletime.mcp.resources.*
-import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
+import io.spiralhouse.cycletime.mcp.resources.ResourceRegistry
 import kotlinx.serialization.json.*
 
 /**
