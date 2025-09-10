@@ -3,7 +3,7 @@ package io.spiralhouse.cycletime.mcp.server.handlers
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
-import io.spiralhouse.cycletime.mcp.tools.DefaultToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
 import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
 import io.spiralhouse.cycletime.mcp.server.state.ServerState
 import io.spiralhouse.cycletime.mcp.tools.exceptions.*
@@ -57,8 +57,8 @@ interface McpMethodHandler {
  */
 class DefaultMcpMethodHandler(
     private val protocolHandler: JsonRpcProtocolHandler,
-    private val toolRegistry: DefaultToolRegistry,
-    private val toolInvoker: DefaultToolRegistry,
+    private val toolRegistry: ToolRegistry,
+    private val toolInvoker: ToolRegistry,
     private val resourceRegistry: ResourceRegistry,
     private val serverState: ServerState = ServerState()
 ) : McpMethodHandler {

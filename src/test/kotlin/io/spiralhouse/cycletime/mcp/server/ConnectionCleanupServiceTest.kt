@@ -87,7 +87,6 @@ class ConnectionCleanupServiceTest : StringSpec({
         testScope.runCurrent()
         
         // Verify no additional cleanup calls after stop
-        val callCount = mockk<Int>()
         coVerify(exactly = 1) { 
             mockConnectionManager.cleanupStaleConnections(any()) 
         }

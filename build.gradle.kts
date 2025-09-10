@@ -299,6 +299,8 @@ val integrationTest by tasks.registering(Test::class) {
     filter {
         includeTestsMatching("io.spiralhouse.cycletime.integration.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*")
+        includeTestsMatching("io.spiralhouse.cycletime.mcp.tools.*")
+        includeTestsMatching("io.spiralhouse.cycletime.mcp.*")
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
         excludeTestsMatching("io.spiralhouse.cycletime.system.*")
         excludeTestsMatching("io.spiralhouse.cycletime.domain.*")

@@ -16,7 +16,7 @@ import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandlers
 import io.spiralhouse.cycletime.mcp.tools.*
 import io.spiralhouse.cycletime.mcp.resources.ResourceProviderRegistry
 import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
-import io.spiralhouse.cycletime.mcp.tools.DefaultToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
 import io.spiralhouse.cycletime.application.services.ProjectApplicationService
 import io.spiralhouse.cycletime.application.services.IssueApplicationService
 import io.spiralhouse.cycletime.application.services.SessionApplicationService
@@ -49,16 +49,16 @@ object MCPDependencies {
         }
         
         // Tool Registry - single instance used for both registry and invocation
-        provide<DefaultToolRegistry> {
-            DefaultToolRegistry()
+        provide<ToolRegistry> {
+            ToolRegistry()
         }
         
         // MCP Method Handler
         provide<McpMethodHandler> {
             McpMethodHandlers(
                 resourceRegistry = resolve(),
-                toolRegistry = resolve<DefaultToolRegistry>(),
-                toolInvoker = resolve<DefaultToolRegistry>()
+                toolRegistry = resolve<ToolRegistry>(),
+                toolInvoker = resolve<ToolRegistry>()
             )
         }
         
@@ -69,7 +69,7 @@ object MCPDependencies {
                 protocolHandler = resolve<ProtocolHandler>(),
                 config = resolve<MCPServerConfig>(), // Resolve from DI
                 resourceRegistry = resolve<ResourceRegistry>(),
-                toolRegistry = resolve<DefaultToolRegistry>(),
+                toolRegistry = resolve<ToolRegistry>(),
                 projectResourceProvider = resolve<ProjectResourceProvider>(),
                 issueResourceProvider = resolve<IssueResourceProvider>(),
                 sessionResourceProvider = resolve<SessionResourceProvider>(),

@@ -41,10 +41,10 @@ import kotlin.time.Duration.Companion.seconds
 class ToolRegistryTest : DescribeSpec({
 
     describe("ToolRegistry") {
-        lateinit var registry: DefaultToolRegistry
+        lateinit var registry: ToolRegistry
 
         beforeEach {
-            registry = DefaultToolRegistry()
+            registry = ToolRegistry()
         }
 
         describe("tool definition and interface") {
@@ -104,7 +104,7 @@ class ToolRegistryTest : DescribeSpec({
                     handler = ToolHandler.Async { params ->
                         val ms = params.jsonObject["milliseconds"]!!.jsonPrimitive.long
                         delay(ms)
-                        Result.success(JsonPrimitive("delayed for \${ms}ms"))
+                        Result.success(JsonPrimitive("delayed for ${ms}ms"))
                     }
                 )
 
@@ -546,7 +546,7 @@ fun createProjectCreateTool(): Tool {
             val name = params.jsonObject["name"]!!.jsonPrimitive.content
             val description = params.jsonObject["description"]?.jsonPrimitive?.content ?: ""
             Result.success(buildJsonObject {
-                put("id", "proj_\${System.currentTimeMillis()}")
+                put("id", "proj_${System.currentTimeMillis()}")
                 put("name", name)
                 put("description", description)
                 put("created", true)
@@ -575,7 +575,7 @@ fun createAsyncDelayTool(): Tool {
         handler = ToolHandler.Async { params ->
             val ms = params.jsonObject["milliseconds"]!!.jsonPrimitive.long
             delay(ms)
-            Result.success(JsonPrimitive("delayed for \${ms}ms"))
+            Result.success(JsonPrimitive("delayed for ${ms}ms"))
         }
     )
 }

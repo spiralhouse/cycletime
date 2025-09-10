@@ -7,10 +7,10 @@ import kotlinx.serialization.json.*
 class ToolRegistryTestMinimal : DescribeSpec({
 
     describe("ToolRegistry") {
-        lateinit var registry: DefaultToolRegistry
+        lateinit var registry: ToolRegistry
 
         beforeEach {
-            registry = DefaultToolRegistry()
+            registry = ToolRegistry()
         }
 
         it("minimal test") {

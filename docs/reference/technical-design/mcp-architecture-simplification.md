@@ -84,7 +84,7 @@ Core (8 files):
 1. `Tool.kt` - Synchronous tool definition
 2. `AsyncTool.kt` - Asynchronous tool definition
 3. `ToolRegistry.kt` - Registry implementation
-4. `DefaultToolRegistry.kt` - Duplicate registry?
+4. `ToolRegistry.kt` - Consolidated registry
 5. `ToolMetadata.kt` - Tool metadata model
 6. `ToolProvider.kt` - Tool provider interface
 7. `DefaultToolInvoker.kt` - Tool invocation logic
@@ -212,7 +212,7 @@ Total: 27 core files + ~8 utility files = ~35 files
 **Rollback**: Simple git revert
 
 1. **Remove Duplicate Files**
-   - `tools/DefaultToolRegistry.kt` (duplicate of ToolRegistry.kt)
+   - `tools/ToolRegistry.kt` (consolidated single registry)
    - `tools/JsonRpcError.kt` (duplicate of protocol/JsonRpcError.kt)
    - `MCPServer.kt` (root level duplicate)
 
@@ -369,7 +369,7 @@ graph TD
 Current DI bindings that need updating:
 ```kotlin
 // Before
-provide<ToolRegistry> { DefaultToolRegistry() }
+provide<ToolRegistry> { ToolRegistry() }
 provide<ToolInvoker> { DefaultToolInvoker(instance()) }
 provide<ConnectionManager> { WebSocketConnectionManager() }
 
@@ -384,7 +384,7 @@ provide<WebSocketManager> { WebSocketManager(instance(), instance()) }
 Files with highest import dependencies (require careful handling):
 1. `MCPWebSocketHandler.kt` - 15+ imports
 2. `JsonRpcProtocolHandler.kt` - 12+ imports
-3. `DefaultToolRegistry.kt` - 10+ imports
+3. `ToolRegistry.kt` - 10+ imports (now consolidated)
 4. `MCPServerEngine.kt` - 10+ imports
 
 ## Risk Assessment

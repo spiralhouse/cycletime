@@ -9,7 +9,7 @@ import kotlinx.serialization.json.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Default thread-safe implementation of ToolRegistry with integrated invocation capabilities.
+ * Thread-safe tool registry with integrated invocation capabilities.
  * 
  * This implementation provides:
  * - Thread-safe concurrent access to tools
@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
  * 
  * @param validator The validator to use for parameter validation (defaults to JsonSchemaValidator)
  */
-open class DefaultToolRegistry(
+open class ToolRegistry(
     private val validator: JsonSchemaValidator = JsonSchemaValidator()
 ) {
     
@@ -74,6 +74,7 @@ open class DefaultToolRegistry(
     fun searchTools(query: String): List<ToolMetadata> {
         val lowerQuery = query.lowercase()
         return getAllToolMetadata().filter { 
+            it.name.lowercase().contains(lowerQuery) || 
             it.description.lowercase().contains(lowerQuery) 
         }
     }
@@ -244,7 +245,7 @@ open class DefaultToolRegistry(
         // Check if tool exists and invoke based on its handler type
         val tool = tools[toolName] ?: return Result.failure(
             JsonRpcException(
-                code = -32601, // Method not found
+                code = -32001, // Custom error code for tool not found
                 message = "Tool not found: $toolName"
             )
         )
