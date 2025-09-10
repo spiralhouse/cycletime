@@ -23,10 +23,21 @@ import java.io.IOException
 import java.net.BindException
 
 /**
- * WebSocket-specific implementation of ConnectionManager.
+ * WebSocket connection manager for the MCP server.
  * 
  * Manages WebSocket server lifecycle, connections, and message routing through
  * a modular architecture with separated concerns.
+ * 
+ * ## Core Interface for Connection Management
+ * This abstraction allows for different transport mechanisms beyond WebSocket
+ * (e.g., TCP sockets, named pipes, HTTP long polling) while maintaining
+ * a consistent connection management API.
+ * 
+ * ## Design Principles
+ * - Transport-agnostic connection management
+ * - Lifecycle management with proper resource cleanup
+ * - Support for multiple concurrent connections
+ * - Integration with protocol handlers for message processing
  * 
  * ## Architecture
  * This class orchestrates several components:
@@ -35,6 +46,12 @@ import java.net.BindException
  * - Message routing through MessageHandler
  * - Heartbeat monitoring through HeartbeatManager
  * - Event notifications through ConnectionEventListener
+ * 
+ * ## Implementation Requirements
+ * - Thread-safe connection tracking
+ * - Graceful shutdown with connection cleanup
+ * - Proper error propagation through exceptions
+ * - Resource lifecycle management
  * 
  * ## Thread Safety
  * - All public methods are thread-safe
@@ -50,7 +67,7 @@ import java.net.BindException
  */
 class WebSocketConnectionManager(
     private val config: WebSocketServerConfig = WebSocketServerConfig()
-) : ConnectionManager {
+) {
     // Core components
     private var server: EmbeddedServer<*, *>? = null
     private val isServerRunning = AtomicBoolean(false)
@@ -59,9 +76,9 @@ class WebSocketConnectionManager(
     
     // Delegated responsibilities
     private var logger: WebSocketLogger = DefaultWebSocketLogger()
-    private var messageHandler: MessageHandler = DefaultMessageHandler(config, logger)
-    private val connectionFactory = DefaultConnectionFactory()
-    private val heartbeatManager = DefaultHeartbeatManager(
+    private var messageHandler: MessageHandler = MessageHandler(config, logger)
+    private val connectionFactory = ConnectionFactory()
+    private val heartbeatManager = HeartbeatManager(
         config, 
         logger,
         connectionProvider = { connections.values }
@@ -77,7 +94,7 @@ class WebSocketConnectionManager(
     private val supervisorJob = SupervisorJob()
     
     /**
-     * Starts the WebSocket server.
+     * Starts the connection manager and begins accepting connections.
      * 
      * This method:
      * 1. Configures the Ktor server with WebSocket support (if embedded mode)
@@ -87,7 +104,7 @@ class WebSocketConnectionManager(
      * 
      * @throws WebSocketServerException if the server fails to start
      */
-    override suspend fun start() {
+    suspend fun start() {
         if (isServerRunning.get()) {
             logger.logInfo("Server is already running on port ${config.port}")
             return
@@ -143,15 +160,21 @@ class WebSocketConnectionManager(
     }
     
     /**
-     * Stops the WebSocket server gracefully.
+     * Stops the connection manager and closes all active connections.
      * 
-     * This method:
+     * This method should:
+     * - Close all active connections gracefully
+     * - Clean up any resources
+     * - Cancel any background jobs
+     * - Be idempotent (safe to call multiple times)
+     * 
+     * Implementation details:
      * 1. Stops heartbeat monitoring
      * 2. Closes all active connections
      * 3. Shuts down the server
      * 4. Cleans up resources
      */
-    override suspend fun stop() {
+    suspend fun stop() {
         if (!isServerRunning.get()) {
             return
         }
@@ -177,24 +200,61 @@ class WebSocketConnectionManager(
         logger.logInfo("WebSocket server stopped")
     }
     
-    override fun isRunning(): Boolean = isServerRunning.get()
+    /**
+     * Checks if the connection manager is currently running.
+     * 
+     * @return true if the manager is accepting connections, false otherwise
+     */
+    fun isRunning(): Boolean = isServerRunning.get()
     
-    override fun getPort(): Int = config.port
+    /**
+     * Gets the port number the server is listening on.
+     * 
+     * @return the configured port number
+     */
+    fun getPort(): Int = config.port
     
-    override fun supportsSSL(): Boolean = config.enableSsl
+    /**
+     * Checks if SSL/TLS is supported by this connection manager.
+     * 
+     * @return true if SSL is enabled, false otherwise
+     */
+    fun supportsSSL(): Boolean = config.enableSsl
     
-    override fun setProtocolHandler(handler: JsonRpcProtocolHandler) {
+    /**
+     * Sets the protocol handler for processing messages.
+     * 
+     * The protocol handler is responsible for:
+     * - Parsing incoming messages
+     * - Routing to appropriate handlers
+     * - Generating responses
+     * - Managing protocol-specific concerns
+     * 
+     * @param handler the protocol handler to use for message processing
+     */
+    fun setProtocolHandler(handler: JsonRpcProtocolHandler) {
         this.protocolHandler = handler
         messageHandler.setProtocolHandler(handler)
     }
     
-    override suspend fun getActiveConnections(): List<WebSocketConnection> {
+    /**
+     * Gets all currently active connections.
+     * 
+     * @return a list of active connection states
+     */
+    suspend fun getActiveConnections(): List<WebSocketConnection> {
         return connectionsMutex.withLock {
             connections.values.map { it.toConnection() }
         }
     }
     
-    override suspend fun getConnectionById(id: String): WebSocketConnection? {
+    /**
+     * Gets a specific connection by its unique identifier.
+     * 
+     * @param id the connection identifier
+     * @return the connection if found, null otherwise
+     */
+    suspend fun getConnectionById(id: String): WebSocketConnection? {
         return connectionsMutex.withLock {
             connections[id]?.toConnection()
         }
@@ -210,9 +270,19 @@ class WebSocketConnectionManager(
         messageHandler.registerMethodHandler(method, handler)
     }
     
-    override fun getMessageQueueSize(): Int = config.messageQueueSize
+    /**
+     * Gets the maximum message queue size for connections.
+     * 
+     * @return the configured message queue size
+     */
+    fun getMessageQueueSize(): Int = config.messageQueueSize
     
-    override fun setLogger(logger: WebSocketLogger) {
+    /**
+     * Sets the logger for connection manager operations.
+     * 
+     * @param logger the logger implementation to use
+     */
+    fun setLogger(logger: WebSocketLogger) {
         this.logger = logger
     }
     

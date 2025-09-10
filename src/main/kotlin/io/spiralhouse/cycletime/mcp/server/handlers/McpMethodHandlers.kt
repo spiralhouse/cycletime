@@ -4,7 +4,8 @@ import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcError
 import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
-import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolInvoker
 import kotlinx.serialization.json.*
 
 /**
@@ -14,7 +15,8 @@ import kotlinx.serialization.json.*
  */
 class McpMethodHandlers(
     private val resourceRegistry: ResourceRegistry,
-    private val toolRegistry: ToolRegistry
+    private val toolRegistry: ToolRegistry,
+    private val toolInvoker: ToolInvoker
 ) : McpMethodHandler {
     
     override suspend fun handleRequest(request: JsonRpcRequest): JsonRpcResponse {
@@ -120,7 +122,7 @@ class McpMethodHandlers(
         val arguments = params["arguments"] ?: JsonObject(emptyMap())
         
         return try {
-            val result = toolRegistry.invoke(toolName, arguments)
+            val result = toolInvoker.invoke(toolName, arguments)
             val resultValue = result.getOrThrow()
             JsonRpcResponse(
                 jsonrpc = "2.0",

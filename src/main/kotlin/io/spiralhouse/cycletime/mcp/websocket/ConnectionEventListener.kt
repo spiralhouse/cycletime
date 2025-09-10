@@ -8,7 +8,7 @@ package io.spiralhouse.cycletime.mcp.websocket
  * 
  * ## Design Pattern
  * This follows the Observer pattern where:
- * - ConnectionManager is the Subject
+ * - WebSocketConnectionManager is the Subject
  * - ConnectionEventListener implementations are Observers
  * - Events are pushed to all registered listeners
  * 

@@ -1,7 +1,6 @@
 package io.spiralhouse.cycletime.mcp.resources.subscription
 
 import io.spiralhouse.cycletime.mcp.resources.ResourceContent
-import io.spiralhouse.cycletime.mcp.resources.interfaces.NotificationService
 import kotlinx.coroutines.*
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -15,7 +14,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * network overhead, token-bucket based rate limiting to prevent overload,
  * and support for both full and delta resource updates.
  */
-class ResourceNotificationService : NotificationService {
+class ResourceNotificationService {
     private val subscriptions = ConcurrentHashMap<String, (ResourceChangeNotification) -> Unit>()
     private val batchSubscriptions = ConcurrentHashMap<String, (List<ResourceChangeNotification>) -> Unit>()
     private val rateLimits = ConcurrentHashMap<String, RateLimit>()
@@ -35,7 +34,7 @@ class ResourceNotificationService : NotificationService {
     /**
      * Add a subscriber for individual notifications
      */
-    override suspend fun addSubscriber(
+    suspend fun addSubscriber(
         uri: String,
         subscriber: TestSubscriber,
         callback: (ResourceChangeNotification) -> Unit
@@ -46,7 +45,7 @@ class ResourceNotificationService : NotificationService {
     /**
      * Add a subscriber for batched notifications
      */
-    override suspend fun addBatchSubscriber(
+    suspend fun addBatchSubscriber(
         subscriber: TestSubscriber,
         callback: (List<ResourceChangeNotification>) -> Unit
     ) {
@@ -57,7 +56,7 @@ class ResourceNotificationService : NotificationService {
     /**
      * Configure batching parameters
      */
-    override fun configureBatching(batchSize: Int, batchTimeout: Duration) {
+    fun configureBatching(batchSize: Int, batchTimeout: Duration) {
         this.batchSize = batchSize
         this.batchTimeout = batchTimeout
     }
@@ -65,7 +64,7 @@ class ResourceNotificationService : NotificationService {
     /**
      * Configure rate limiting for a subscriber
      */
-    override fun configureRateLimit(maxNotificationsPerSecond: Int, subscriber: TestSubscriber) {
+    fun configureRateLimit(maxNotificationsPerSecond: Int, subscriber: TestSubscriber) {
         rateLimits[subscriber.id] = RateLimit(
             maxPerSecond = maxNotificationsPerSecond,
             tokens = maxNotificationsPerSecond,
@@ -76,7 +75,7 @@ class ResourceNotificationService : NotificationService {
     /**
      * Notify subscribers of resource changes
      */
-    override suspend fun notifyResourceChange(
+    suspend fun notifyResourceChange(
         uri: String,
         changeType: ResourceChangeType,
         newContent: ResourceContent?
@@ -114,7 +113,7 @@ class ResourceNotificationService : NotificationService {
     /**
      * Notify subscribers of partial resource updates
      */
-    override suspend fun notifyResourceDelta(uri: String, deltas: List<ResourceDelta>) {
+    suspend fun notifyResourceDelta(uri: String, deltas: List<ResourceDelta>) {
         val notification = ResourceChangeNotification(
             uri = uri,
             changeType = ResourceChangeType.PARTIAL_UPDATE,

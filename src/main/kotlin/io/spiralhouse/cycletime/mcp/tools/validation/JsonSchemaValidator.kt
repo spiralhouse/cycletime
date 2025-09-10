@@ -1,7 +1,7 @@
 package io.spiralhouse.cycletime.mcp.tools.validation
 
-import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolValidator
 import kotlinx.serialization.json.*
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Default JSON Schema validator implementation for tool parameters.
@@ -17,9 +17,9 @@ import kotlinx.serialization.json.*
  * This implementation provides clear error messages with path information
  * to help developers quickly identify validation issues.
  */
-class JsonSchemaValidator : ToolValidator {
+class JsonSchemaValidator {
     
-    override fun validate(data: JsonElement, schema: JsonObject): ValidationResult {
+    fun validate(data: JsonElement, schema: JsonObject): ValidationResult {
         val errors = mutableListOf<String>()
         
         try {

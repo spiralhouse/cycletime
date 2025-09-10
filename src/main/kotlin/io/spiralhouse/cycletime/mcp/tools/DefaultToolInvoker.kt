@@ -1,7 +1,8 @@
 package io.spiralhouse.cycletime.mcp.tools
 
 import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolInvoker
-import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.ToolHandler
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -30,8 +31,10 @@ class DefaultToolInvoker(
                 return Result.failure(IllegalArgumentException("Parameters must be a JSON object"))
             }
             
-            // Execute the tool
-            tool.handler(parameters)
+            // Execute the tool based on handler type
+            val syncHandler = (tool.handler as? ToolHandler.Sync)?.handler
+                ?: return Result.failure(IllegalArgumentException("Tool $toolName is not a synchronous tool"))
+            syncHandler(parameters)
             
         } catch (e: Exception) {
             logger.error("Error invoking tool $toolName", e)
@@ -45,8 +48,8 @@ class DefaultToolInvoker(
         timeout: Long
     ): Result<JsonElement> {
         return try {
-            val asyncTool = toolRegistry.getAsyncTool(toolName)
-                ?: return Result.failure(IllegalArgumentException("Async tool not found: $toolName"))
+            val asyncTool = toolRegistry.getTool(toolName)
+                ?: return Result.failure(IllegalArgumentException("Tool not found: $toolName"))
             
             // Validate parameters
             if (parameters !is JsonObject) {
@@ -54,8 +57,11 @@ class DefaultToolInvoker(
             }
             
             // Execute with timeout
+            val asyncHandler = (asyncTool.handler as? ToolHandler.Async)?.handler
+                ?: return Result.failure(IllegalArgumentException("Tool $toolName is not an asynchronous tool"))
+            
             withTimeout(timeout) {
-                asyncTool.handlerAsync(parameters)
+                asyncHandler(parameters)
             }
             
         } catch (e: Exception) {

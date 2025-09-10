@@ -1,9 +1,9 @@
 package io.spiralhouse.cycletime.mcp.tools
 
+import io.spiralhouse.cycletime.mcp.protocol.JsonRpcError
 import io.spiralhouse.cycletime.mcp.tools.exceptions.*
 import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolRegistry
 import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolInvoker
-import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolValidator
 import io.spiralhouse.cycletime.mcp.tools.validation.JsonSchemaValidator
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
@@ -23,20 +23,15 @@ import java.util.concurrent.ConcurrentHashMap
  * @param validator The validator to use for parameter validation (defaults to JsonSchemaValidator)
  */
 open class DefaultToolRegistry(
-    private val validator: ToolValidator = JsonSchemaValidator()
+    private val validator: JsonSchemaValidator = JsonSchemaValidator()
 ) : ToolRegistry, ToolInvoker {
     
     private val tools = ConcurrentHashMap<String, Tool>()
-    private val asyncTools = ConcurrentHashMap<String, AsyncTool>()
     
     // ===== ToolRegistry Implementation =====
     
     override fun register(tool: Tool): Boolean {
         return tools.putIfAbsent(tool.name, tool) == null
-    }
-    
-    override fun register(tool: AsyncTool): Boolean {
-        return asyncTools.putIfAbsent(tool.name, tool) == null
     }
     
     override fun update(tool: Tool): Boolean {
@@ -48,57 +43,34 @@ open class DefaultToolRegistry(
         }
     }
     
-    override fun update(tool: AsyncTool): Boolean {
-        return if (asyncTools.containsKey(tool.name)) {
-            asyncTools[tool.name] = tool
-            true
-        } else {
-            false
-        }
-    }
-    
     override fun unregister(toolName: String): Boolean {
-        val syncRemoved = tools.remove(toolName) != null
-        val asyncRemoved = asyncTools.remove(toolName) != null
-        return syncRemoved || asyncRemoved
+        return tools.remove(toolName) != null
     }
     
     override fun isRegistered(toolName: String): Boolean {
-        return tools.containsKey(toolName) || asyncTools.containsKey(toolName)
+        return tools.containsKey(toolName)
     }
     
     override fun getTool(toolName: String): Tool? {
         return tools[toolName]
     }
     
-    override fun getAsyncTool(toolName: String): AsyncTool? {
-        return asyncTools[toolName]
-    }
     
     override fun getRegisteredToolNames(): List<String> {
-        return (tools.keys + asyncTools.keys).sorted()
+        return tools.keys.sorted()
     }
     
     override fun getToolMetadata(toolName: String): ToolMetadata? {
         tools[toolName]?.let { tool ->
             return ToolMetadata(tool.name, tool.description, tool.parametersSchema)
         }
-        
-        asyncTools[toolName]?.let { tool ->
-            return ToolMetadata(tool.name, tool.description, tool.parametersSchema)
-        }
-        
         return null
     }
     
     override fun getAllToolMetadata(): List<ToolMetadata> {
-        val syncMetadata = tools.values.map { 
+        return tools.values.map { 
             ToolMetadata(it.name, it.description, it.parametersSchema) 
-        }
-        val asyncMetadata = asyncTools.values.map { 
-            ToolMetadata(it.name, it.description, it.parametersSchema) 
-        }
-        return (syncMetadata + asyncMetadata).sortedBy { it.name }
+        }.sortedBy { it.name }
     }
     
     override fun searchTools(query: String): List<ToolMetadata> {
@@ -118,6 +90,10 @@ open class DefaultToolRegistry(
         val tool = tools[toolName] 
             ?: return Result.failure(ToolNotFoundException(toolName))
         
+        // Check if it's a sync tool
+        val syncHandler = (tool.handler as? ToolHandler.Sync)?.handler
+            ?: return Result.failure(ToolNotFoundException(toolName))
+        
         // Validate parameters
         val validationResult = validator.validate(parameters, tool.parametersSchema)
         if (!validationResult.isValid) {
@@ -127,7 +103,7 @@ open class DefaultToolRegistry(
         }
         
         return try {
-            tool.handler(parameters)
+            syncHandler(parameters)
         } catch (e: Exception) {
             Result.failure(ToolExecutionException(toolName, e))
         }
@@ -138,7 +114,11 @@ open class DefaultToolRegistry(
         parameters: JsonElement, 
         timeout: Long
     ): Result<JsonElement> {
-        val tool = asyncTools[toolName] 
+        val tool = tools[toolName] 
+            ?: return Result.failure(ToolNotFoundException(toolName))
+        
+        // Check if it's an async tool
+        val asyncHandler = (tool.handler as? ToolHandler.Async)?.handler
             ?: return Result.failure(ToolNotFoundException(toolName))
         
         // Validate parameters
@@ -151,7 +131,7 @@ open class DefaultToolRegistry(
         
         return try {
             withTimeout(timeout) {
-                tool.handler(parameters)
+                asyncHandler(parameters)
             }
         } catch (e: TimeoutCancellationException) {
             Result.failure(ToolTimeoutException(toolName, timeout))
@@ -263,14 +243,22 @@ open class DefaultToolRegistry(
         
         val arguments = params["arguments"] ?: JsonObject(emptyMap())
         
-        // Try sync tool first, then async
-        val result = if (tools.containsKey(toolName)) {
+        // Check if tool exists and invoke based on its handler type
+        val tool = tools[toolName] ?: return Result.failure(
+            JsonRpcException(
+                code = -32601, // Method not found
+                message = "Tool not found: $toolName"
+            )
+        )
+        
+        val result = if (tool.isSync) {
             invoke(toolName, arguments)
         } else {
-            return Result.failure(
+            // For JSON-RPC we can't handle async tools directly in this sync context
+            Result.failure(
                 JsonRpcException(
-                    code = -32601, // Method not found
-                    message = "Tool not found: $toolName"
+                    code = -32603, // Internal error
+                    message = "Async tools cannot be invoked via JSON-RPC synchronously"
                 )
             )
         }

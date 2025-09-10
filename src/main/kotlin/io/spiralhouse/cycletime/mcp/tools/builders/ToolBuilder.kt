@@ -1,7 +1,7 @@
 package io.spiralhouse.cycletime.mcp.tools.builders
 
 import io.spiralhouse.cycletime.mcp.tools.Tool
-import io.spiralhouse.cycletime.mcp.tools.AsyncTool
+import io.spiralhouse.cycletime.mcp.tools.ToolHandler
 import kotlinx.serialization.json.*
 
 /**
@@ -109,6 +109,7 @@ class ToolBuilder {
 
 /**
  * Builder for creating AsyncTool instances with a fluent API.
+ * AsyncTool is now just a type alias for Tool with async handler.
  */
 class AsyncToolBuilder {
     private var name: String? = null
@@ -162,11 +163,11 @@ class AsyncToolBuilder {
     }
     
     /**
-     * Build the AsyncTool instance.
+     * Build the Tool instance with async handler.
      * 
      * @throws IllegalStateException if required fields are missing
      */
-    fun build(): AsyncTool {
+    fun build(): Tool {
         val toolName = name ?: error("Tool name is required")
         val toolHandler = handler ?: error("Tool handler is required")
         
@@ -180,11 +181,11 @@ class AsyncToolBuilder {
             }
         }
         
-        return AsyncTool(
+        return Tool(
             name = toolName,
             description = description,
             parametersSchema = schema,
-            handler = toolHandler
+            handler = ToolHandler.Async(toolHandler)
         )
     }
 }

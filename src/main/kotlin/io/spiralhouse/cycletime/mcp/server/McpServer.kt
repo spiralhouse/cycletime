@@ -10,10 +10,10 @@ import io.spiralhouse.cycletime.mcp.server.state.ServerStatus
 import io.spiralhouse.cycletime.mcp.server.exceptions.ServerLifecycleException
 import io.spiralhouse.cycletime.mcp.websocket.WebSocketConnectionManager
 import io.spiralhouse.cycletime.mcp.websocket.WebSocketServerConfig
-import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.DefaultToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolRegistry
 import io.spiralhouse.cycletime.mcp.tools.DefaultToolInvoker
 import io.spiralhouse.cycletime.mcp.tools.Tool
-import io.spiralhouse.cycletime.mcp.tools.AsyncTool
 import io.spiralhouse.cycletime.mcp.resources.ResourceProviderRegistry
 import io.spiralhouse.cycletime.mcp.resources.ResourceProvider
 import kotlinx.serialization.json.*
@@ -96,18 +96,11 @@ interface McpServer {
     // ===== Tool Management =====
     
     /**
-     * Registers a synchronous tool with the server.
+     * Registers a tool with the server (supports both sync and async handlers).
      * @param tool the tool to register
      * @return true if registration succeeded, false if a tool with that name already exists
      */
     fun registerTool(tool: Tool): Boolean
-    
-    /**
-     * Registers an asynchronous tool with the server.
-     * @param tool the async tool to register
-     * @return true if registration succeeded, false if a tool with that name already exists
-     */
-    fun registerAsyncTool(tool: AsyncTool): Boolean
     
     /**
      * Unregisters a tool by name.
@@ -170,7 +163,7 @@ class DefaultMcpServer(
     
     // Core components
     private val protocolHandler = JsonRpcProtocolHandler()
-    private val toolRegistry = ToolRegistry()
+    private val toolRegistry = DefaultToolRegistry()
     private val resourceRegistry = ResourceProviderRegistry()
     private val connectionManager: WebSocketConnectionManager
     private val methodHandler: McpMethodHandler
@@ -264,8 +257,6 @@ class DefaultMcpServer(
     // ===== Tool Management =====
     
     override fun registerTool(tool: Tool): Boolean = toolRegistry.register(tool)
-    
-    override fun registerAsyncTool(tool: AsyncTool): Boolean = toolRegistry.register(tool)
     
     override fun unregisterTool(toolName: String): Boolean = toolRegistry.unregister(toolName)
     
