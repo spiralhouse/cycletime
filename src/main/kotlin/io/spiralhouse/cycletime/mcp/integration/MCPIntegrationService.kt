@@ -10,7 +10,7 @@ import io.spiralhouse.cycletime.mcp.providers.IssueResourceProvider
 import io.spiralhouse.cycletime.mcp.providers.SessionResourceProvider
 import io.spiralhouse.cycletime.mcp.providers.WorkflowResourceProvider
 import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
-import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.DefaultToolRegistry
 import io.spiralhouse.cycletime.mcp.tools.ToolProvider
 import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
@@ -33,7 +33,7 @@ class MCPIntegrationService(
     private val protocolHandler: ProtocolHandler,
     private val config: MCPServerConfig = MCPServerConfig(),
     private val resourceRegistry: ResourceRegistry? = null,
-    private val toolRegistry: ToolRegistry? = null,
+    private val toolRegistry: DefaultToolRegistry? = null,
     private val projectResourceProvider: ProjectResourceProvider? = null,
     private val issueResourceProvider: IssueResourceProvider? = null,
     private val sessionResourceProvider: SessionResourceProvider? = null,

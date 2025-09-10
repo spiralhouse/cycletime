@@ -4,7 +4,6 @@ import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcError
 import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
-import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolRegistry
 import io.spiralhouse.cycletime.mcp.tools.DefaultToolRegistry
 import kotlinx.serialization.json.*
 
@@ -15,7 +14,7 @@ import kotlinx.serialization.json.*
  */
 class McpMethodHandlers(
     private val resourceRegistry: ResourceRegistry,
-    private val toolRegistry: ToolRegistry,
+    private val toolRegistry: DefaultToolRegistry,
     private val toolInvoker: DefaultToolRegistry
 ) : McpMethodHandler {
     

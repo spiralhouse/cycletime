@@ -2,7 +2,6 @@ package io.spiralhouse.cycletime.mcp.tools
 
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcError
 import io.spiralhouse.cycletime.mcp.tools.exceptions.*
-import io.spiralhouse.cycletime.mcp.tools.interfaces.ToolRegistry
 import io.spiralhouse.cycletime.mcp.tools.validation.JsonSchemaValidator
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
@@ -23,17 +22,17 @@ import java.util.concurrent.ConcurrentHashMap
  */
 open class DefaultToolRegistry(
     private val validator: JsonSchemaValidator = JsonSchemaValidator()
-) : ToolRegistry {
+) {
     
     private val tools = ConcurrentHashMap<String, Tool>()
     
-    // ===== ToolRegistry Implementation =====
+    // ===== Tool Registry Methods =====
     
-    override fun register(tool: Tool): Boolean {
+    fun register(tool: Tool): Boolean {
         return tools.putIfAbsent(tool.name, tool) == null
     }
     
-    override fun update(tool: Tool): Boolean {
+    fun update(tool: Tool): Boolean {
         return if (tools.containsKey(tool.name)) {
             tools[tool.name] = tool
             true
@@ -42,44 +41,44 @@ open class DefaultToolRegistry(
         }
     }
     
-    override fun unregister(toolName: String): Boolean {
+    fun unregister(toolName: String): Boolean {
         return tools.remove(toolName) != null
     }
     
-    override fun isRegistered(toolName: String): Boolean {
+    fun isRegistered(toolName: String): Boolean {
         return tools.containsKey(toolName)
     }
     
-    override fun getTool(toolName: String): Tool? {
+    fun getTool(toolName: String): Tool? {
         return tools[toolName]
     }
     
     
-    override fun getRegisteredToolNames(): List<String> {
+    fun getRegisteredToolNames(): List<String> {
         return tools.keys.sorted()
     }
     
-    override fun getToolMetadata(toolName: String): ToolMetadata? {
+    fun getToolMetadata(toolName: String): ToolMetadata? {
         tools[toolName]?.let { tool ->
             return ToolMetadata(tool.name, tool.description, tool.parametersSchema)
         }
         return null
     }
     
-    override fun getAllToolMetadata(): List<ToolMetadata> {
+    fun getAllToolMetadata(): List<ToolMetadata> {
         return tools.values.map { 
             ToolMetadata(it.name, it.description, it.parametersSchema) 
         }.sortedBy { it.name }
     }
     
-    override fun searchTools(query: String): List<ToolMetadata> {
+    fun searchTools(query: String): List<ToolMetadata> {
         val lowerQuery = query.lowercase()
         return getAllToolMetadata().filter { 
             it.description.lowercase().contains(lowerQuery) 
         }
     }
     
-    override fun getParameterSchema(toolName: String): JsonObject? {
+    fun getParameterSchema(toolName: String): JsonObject? {
         return getToolMetadata(toolName)?.parametersSchema
     }
     
