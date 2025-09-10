@@ -10,7 +10,7 @@ import io.spiralhouse.cycletime.mcp.server.state.ServerStatus
 import io.spiralhouse.cycletime.mcp.server.exceptions.ServerLifecycleException
 import io.spiralhouse.cycletime.mcp.websocket.WebSocketConnectionManager
 import io.spiralhouse.cycletime.mcp.websocket.WebSocketServerConfig
-import io.spiralhouse.cycletime.mcp.tools.DefaultToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
 import io.spiralhouse.cycletime.mcp.tools.DefaultToolInvoker
 import io.spiralhouse.cycletime.mcp.tools.Tool
 import io.spiralhouse.cycletime.mcp.tools.AsyncTool
@@ -85,7 +85,7 @@ interface McpServer {
      * Gets the tool registry.
      * @return the tool registry instance
      */
-    fun getToolRegistry(): DefaultToolRegistry
+    fun getToolRegistry(): ToolRegistry
     
     /**
      * Gets the resource provider registry.
@@ -170,7 +170,7 @@ class DefaultMcpServer(
     
     // Core components
     private val protocolHandler = JsonRpcProtocolHandler()
-    private val toolRegistry = DefaultToolRegistry()
+    private val toolRegistry = ToolRegistry()
     private val resourceRegistry = ResourceProviderRegistry()
     private val connectionManager: WebSocketConnectionManager
     private val methodHandler: McpMethodHandler
@@ -257,7 +257,7 @@ class DefaultMcpServer(
     
     override fun getConnectionManager(): WebSocketConnectionManager = connectionManager
     
-    override fun getToolRegistry(): DefaultToolRegistry = toolRegistry
+    override fun getToolRegistry(): ToolRegistry = toolRegistry
     
     override fun getResourceRegistry(): ResourceProviderRegistry = resourceRegistry
     

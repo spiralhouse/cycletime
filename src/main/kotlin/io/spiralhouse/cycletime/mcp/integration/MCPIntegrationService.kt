@@ -5,7 +5,10 @@ import io.spiralhouse.cycletime.mcp.server.MCPConnectionManager
 import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
 import io.spiralhouse.cycletime.mcp.protocol.ProtocolHandler
-import io.spiralhouse.cycletime.mcp.providers.ResourceProvider
+import io.spiralhouse.cycletime.mcp.providers.ProjectResourceProvider
+import io.spiralhouse.cycletime.mcp.providers.IssueResourceProvider  
+import io.spiralhouse.cycletime.mcp.providers.SessionResourceProvider
+import io.spiralhouse.cycletime.mcp.providers.WorkflowResourceProvider
 import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
 import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
 import io.spiralhouse.cycletime.mcp.tools.ToolProvider
@@ -31,7 +34,10 @@ class MCPIntegrationService(
     private val config: MCPServerConfig = MCPServerConfig(),
     private val resourceRegistry: ResourceRegistry? = null,
     private val toolRegistry: ToolRegistry? = null,
-    private val resourceProviders: List<ResourceProvider> = emptyList(),
+    private val projectResourceProvider: ProjectResourceProvider? = null,
+    private val issueResourceProvider: IssueResourceProvider? = null,
+    private val sessionResourceProvider: SessionResourceProvider? = null,
+    private val workflowResourceProvider: WorkflowResourceProvider? = null,
     private val toolProviders: List<ToolProvider> = emptyList()
 ) {
     
@@ -69,9 +75,16 @@ class MCPIntegrationService(
                 val totalStartupTime = System.currentTimeMillis() - serverStartTime
                 startupMetrics["totalStartup"] = totalStartupTime
                 
+                val totalResourceProviders = listOfNotNull(
+                    projectResourceProvider, 
+                    issueResourceProvider, 
+                    sessionResourceProvider, 
+                    workflowResourceProvider
+                ).size
+                
                 logger.info(
                     "MCP integration initialized in ${totalStartupTime}ms " +
-                    "(${resourceProviders.size} resources, ${toolProviders.size} tools, " +
+                    "($totalResourceProviders resources, ${toolProviders.size} tools, " +
                     "optimizations: ${if (configuration.isOptimized()) "enabled" else "disabled"})"
                 )
                 
@@ -139,7 +152,12 @@ class MCPIntegrationService(
             path = config.path,
             activeConnections = connStats.activeCount,
             enableSsl = config.enableSsl,
-            registeredResources = resourceProviders.size,
+            registeredResources = listOfNotNull(
+                projectResourceProvider, 
+                issueResourceProvider, 
+                sessionResourceProvider, 
+                workflowResourceProvider
+            ).size,
             registeredTools = toolProviders.size,
             uptimeMs = if (isRunning.get() && serverStartTime > 0) {
                 System.currentTimeMillis() - serverStartTime
@@ -155,41 +173,117 @@ class MCPIntegrationService(
     /**
      * Register providers with enhanced error handling.
      */
-    private fun registerProviders() {
+    private suspend fun registerProviders() {
         var successfulResources = 0
-        var successfulTools = 0
+        val totalResourceProviders = listOfNotNull(
+            projectResourceProvider, 
+            issueResourceProvider, 
+            sessionResourceProvider, 
+            workflowResourceProvider
+        ).size
         
-        // Register resource providers
-        resourceProviders.forEach { provider ->
-            try {
-                // Registration logic here
-                successfulResources++
-                logger.debug("Registered resource provider: ${provider::class.java.simpleName}")
-            } catch (e: Exception) {
-                logger.error(
-                    "Failed to register resource provider ${provider::class.java.simpleName}: ${e.message}", 
-                    e
-                )
+        // Register resource providers with ResourceRegistry
+        resourceRegistry?.let { registry ->
+            projectResourceProvider?.let { provider ->
+                try {
+                    if (provider is io.spiralhouse.cycletime.mcp.resources.ResourceProvider) {
+                        registry.register(provider)
+                        successfulResources++
+                        logger.debug("Registered project resource provider")
+                    }
+                } catch (e: Exception) {
+                    logger.error("Failed to register project resource provider: ${e.message}", e)
+                }
+            }
+            
+            issueResourceProvider?.let { provider ->
+                try {
+                    if (provider is io.spiralhouse.cycletime.mcp.resources.ResourceProvider) {
+                        registry.register(provider)
+                        successfulResources++
+                        logger.debug("Registered issue resource provider")
+                    }
+                } catch (e: Exception) {
+                    logger.error("Failed to register issue resource provider: ${e.message}", e)
+                }
+            }
+            
+            sessionResourceProvider?.let { provider ->
+                try {
+                    if (provider is io.spiralhouse.cycletime.mcp.resources.ResourceProvider) {
+                        registry.register(provider)
+                        successfulResources++
+                        logger.debug("Registered session resource provider")
+                    }
+                } catch (e: Exception) {
+                    logger.error("Failed to register session resource provider: ${e.message}", e)
+                }
+            }
+            
+            workflowResourceProvider?.let { provider ->
+                try {
+                    if (provider is io.spiralhouse.cycletime.mcp.resources.ResourceProvider) {
+                        registry.register(provider)
+                        successfulResources++
+                        logger.debug("Registered workflow resource provider")
+                    }
+                } catch (e: Exception) {
+                    logger.error("Failed to register workflow resource provider: ${e.message}", e)
+                }
             }
         }
         
         // Register tool providers
-        toolProviders.forEach { provider ->
-            try {
-                // Registration logic here
-                successfulTools++
-                logger.debug("Registered tool provider: ${provider::class.java.simpleName}")
-            } catch (e: Exception) {
-                logger.error(
-                    "Failed to register tool provider ${provider::class.java.simpleName}: ${e.message}", 
-                    e
-                )
+        var successfulTools = 0
+        toolRegistry?.let { registry ->
+            logger.info("Starting tool registration with ${toolProviders.size} providers")
+            toolProviders.forEach { provider ->
+                try {
+                    logger.debug("Processing tool provider: ${provider::class.java.simpleName}")
+                    
+                    // Register all tools from the provider
+                    val syncTools = provider.getTools()
+                    logger.debug("Found ${syncTools.size} sync tools from ${provider::class.java.simpleName}")
+                    syncTools.forEach { tool ->
+                        if (registry.register(tool)) {
+                            successfulTools++
+                            logger.info("Registered sync tool: ${tool.name} from ${provider::class.java.simpleName}")
+                        } else {
+                            logger.warn("Sync tool already registered: ${tool.name}")
+                        }
+                    }
+                    
+                    // Register all async tools from the provider
+                    val asyncTools = provider.getAsyncTools()
+                    logger.debug("Found ${asyncTools.size} async tools from ${provider::class.java.simpleName}")
+                    asyncTools.forEach { tool ->
+                        if (registry.register(tool)) {
+                            successfulTools++
+                            logger.info("Registered async tool: ${tool.name} from ${provider::class.java.simpleName}")
+                        } else {
+                            logger.warn("Async tool already registered: ${tool.name}")
+                        }
+                    }
+                    
+                    logger.info("Completed tool provider: ${provider::class.java.simpleName}")
+                } catch (e: Exception) {
+                    logger.error(
+                        "Failed to register tool provider ${provider::class.java.simpleName}: ${e.message}", 
+                        e
+                    )
+                }
             }
+            
+            // Verify registration worked
+            val registeredTools = registry.getRegisteredToolNames()
+            logger.info("Total tools registered: ${registeredTools.size} - ${registeredTools}")
+        } ?: run {
+            logger.error("ToolRegistry is null - cannot register tools!")
         }
         
         logger.info(
             "Provider registration complete: " +
-            "$successfulResources/${resourceProviders.size} resources, " +
+            "$successfulResources/$totalResourceProviders resources, " +
             "$successfulTools/${toolProviders.size} tools"
         )
     }
