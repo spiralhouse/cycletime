@@ -68,21 +68,25 @@ class MockProjectRepository(
     
     override suspend fun findById(id: ProjectId): Project? {
         findCallCount++
+        findException?.let { throw it }
         return projects[id]
     }
     
     override suspend fun findByStatus(status: ProjectStatus): List<Project> {
         findCallCount++
+        findException?.let { throw it }
         return projectsByStatus[status]?.toList() ?: emptyList()
     }
     
     override suspend fun findAll(): List<Project> {
         findCallCount++
+        findException?.let { throw it }
         return projects.values.toList()
     }
     
     override suspend fun save(project: Project) {
         saveCallCount++
+        saveException?.let { throw it }
         projects[project.id] = project
         
         // Update status index
@@ -96,6 +100,7 @@ class MockProjectRepository(
     
     override suspend fun delete(id: ProjectId) {
         deleteCallCount++
+        deleteException?.let { throw it }
         val project = projects.remove(id)
         
         // Remove from status index
