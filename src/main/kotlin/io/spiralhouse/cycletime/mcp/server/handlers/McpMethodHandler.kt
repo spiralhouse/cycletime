@@ -2,6 +2,7 @@ package io.spiralhouse.cycletime.mcp.server.handlers
 
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
+import io.spiralhouse.cycletime.mcp.protocol.JsonRpcError
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
 import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
 import io.spiralhouse.cycletime.mcp.resources.ResourceRegistry
@@ -11,71 +12,43 @@ import io.spiralhouse.cycletime.mcp.resources.exceptions.*
 import kotlinx.serialization.json.*
 
 /**
- * Interface for handling MCP method calls.
+ * Consolidated MCP method handler for processing JSON-RPC requests.
  * 
- * This interface defines the contract for processing MCP protocol methods,
- * including initialization, tool operations, and resource management.
- * Implementations should follow the Single Responsibility Principle by
- * focusing solely on method routing and delegation.
+ * This class handles all MCP protocol methods including initialization, 
+ * tool operations, and resource management. It combines comprehensive
+ * validation and error handling with efficient request processing.
+ * 
+ * @property protocolHandler Handler for JSON-RPC protocol operations
+ * @property toolRegistry Registry for tool management and invocation
+ * @property resourceRegistry Registry for resource provider management
+ * @property serverState Server state management (optional)
  */
-interface McpMethodHandler {
+class McpMethodHandler(
+    private val protocolHandler: JsonRpcProtocolHandler,
+    private val toolRegistry: ToolRegistry,
+    private val toolInvoker: ToolRegistry,
+    private val resourceRegistry: ResourceRegistry,
+    private val serverState: ServerState = ServerState()
+) {
+    
     /**
      * Handles a synchronous JSON-RPC request.
      * 
      * @param request The JSON-RPC request to handle
      * @return The JSON-RPC response
      */
-    suspend fun handleRequest(request: JsonRpcRequest): JsonRpcResponse
-    
-    /**
-     * Handles an asynchronous JSON-RPC request.
-     * This method supports long-running operations like async tool invocation.
-     * 
-     * @param request The JSON-RPC request to handle
-     * @return The JSON-RPC response
-     */
-    suspend fun handleRequestAsync(request: JsonRpcRequest): JsonRpcResponse
-    
-    /**
-     * Handles a JSON-RPC notification (no response expected).
-     * 
-     * @param request The notification request
-     */
-    suspend fun handleNotification(request: JsonRpcRequest)
-}
-
-/**
- * Default implementation of McpMethodHandler.
- * 
- * This handler processes MCP protocol methods by delegating to appropriate
- * registries and components. It maintains a clean separation between
- * protocol handling, method routing, and actual execution.
- * 
- * @property protocolHandler Handler for JSON-RPC protocol operations
- * @property toolRegistry Registry for tool management and invocation
- * @property resourceRegistry Registry for resource provider management
- */
-class DefaultMcpMethodHandler(
-    private val protocolHandler: JsonRpcProtocolHandler,
-    private val toolRegistry: ToolRegistry,
-    private val toolInvoker: ToolRegistry,
-    private val resourceRegistry: ResourceRegistry,
-    private val serverState: ServerState = ServerState()
-) : McpMethodHandler {
-    
-    override suspend fun handleRequest(request: JsonRpcRequest): JsonRpcResponse {
+    suspend fun handleRequest(request: JsonRpcRequest): JsonRpcResponse {
         // Validate JSON-RPC protocol version
         if (request.jsonrpc != "2.0") {
             return createParseError(request)
         }
         
-        // Ensure server is running
+        // Ensure server is running (except for initialize)
         if (!serverState.isRunning() && request.method != "initialize") {
-            return protocolHandler.createErrorResponse(
-                id = request.id,
+            return createErrorResponse(
+                request = request,
                 code = -32003,
-                message = "Server not initialized",
-                data = null
+                message = "Server not initialized"
             )
         }
         
@@ -97,7 +70,14 @@ class DefaultMcpMethodHandler(
         }
     }
     
-    override suspend fun handleRequestAsync(request: JsonRpcRequest): JsonRpcResponse {
+    /**
+     * Handles an asynchronous JSON-RPC request.
+     * This method supports long-running operations like async tool invocation.
+     * 
+     * @param request The JSON-RPC request to handle
+     * @return The JSON-RPC response
+     */
+    suspend fun handleRequestAsync(request: JsonRpcRequest): JsonRpcResponse {
         return try {
             when (request.method) {
                 "initialize" -> handleInitialize(request)
@@ -116,7 +96,12 @@ class DefaultMcpMethodHandler(
         }
     }
     
-    override suspend fun handleNotification(request: JsonRpcRequest) {
+    /**
+     * Handles a JSON-RPC notification (no response expected).
+     * 
+     * @param request The notification request
+     */
+    suspend fun handleNotification(request: JsonRpcRequest) {
         // Process notifications without generating responses
         when (request.method) {
             "notifications/message" -> handleMessageNotification()
@@ -131,11 +116,10 @@ class DefaultMcpMethodHandler(
     private fun handleInitialize(request: JsonRpcRequest): JsonRpcResponse {
         // Initialize method must have an ID (not a notification)
         if (request.id == null) {
-            return protocolHandler.createErrorResponse(
-                id = null,
+            return createErrorResponse(
+                request = request,
                 code = -32600,
-                message = "initialize method requires request ID",
-                data = null
+                message = "initialize method requires request ID"
             )
         }
         
@@ -177,10 +161,10 @@ class DefaultMcpMethodHandler(
             put("serverInfo", buildServerInfo())
         }
         
-        return protocolHandler.createResponse(request.id, result)
+        return createSuccessResponse(request, result)
     }
     
-    private fun handleToolsList(request: JsonRpcRequest): JsonRpcResponse {
+    private suspend fun handleToolsList(request: JsonRpcRequest): JsonRpcResponse {
         return try {
             val metadata = toolRegistry.getAllToolMetadata()
             val tools = metadata.mapNotNull { tool ->
@@ -200,7 +184,7 @@ class DefaultMcpMethodHandler(
                 put("tools", JsonArray(tools))
             }
             
-            protocolHandler.createResponse(request.id, result)
+            createSuccessResponse(request, result)
         } catch (e: Exception) {
             createInternalError(request, e)
         }
@@ -222,11 +206,10 @@ class DefaultMcpMethodHandler(
         val tool = toolRegistry.getTool(toolName)
         
         if (tool == null) {
-            return protocolHandler.createErrorResponse(
-                id = request.id,
+            return createErrorResponse(
+                request = request,
                 code = -32001,
-                message = "Tool not found: $toolName",
-                data = null
+                message = "Tool not found: $toolName"
             )
         }
         
@@ -251,7 +234,7 @@ class DefaultMcpMethodHandler(
         return result.fold(
             onSuccess = { value ->
                 val responseData = formatToolResponse(value)
-                protocolHandler.createResponse(request.id, responseData)
+                createSuccessResponse(request, responseData)
             },
             onFailure = { error ->
                 createToolError(request, error)
@@ -279,7 +262,7 @@ class DefaultMcpMethodHandler(
                 put("resources", JsonArray(allResources))
             }
             
-            protocolHandler.createResponse(request.id, result)
+            createSuccessResponse(request, result)
         } catch (e: Exception) {
             createInternalError(request, e)
         }
@@ -320,7 +303,7 @@ class DefaultMcpMethodHandler(
                 })
             }
             
-            protocolHandler.createResponse(request.id, result)
+            createSuccessResponse(request, result)
         } catch (e: Exception) {
             createInternalError(request, e)
         }
@@ -350,8 +333,8 @@ class DefaultMcpMethodHandler(
             
             // Resource subscription is not supported in this implementation
             // Future versions may add real-time resource change notifications
-            return protocolHandler.createErrorResponse(
-                id = request.id,
+            return createErrorResponse(
+                request = request,
                 code = -32603,
                 message = "Resource subscription is not supported",
                 data = buildJsonObject {
@@ -360,11 +343,10 @@ class DefaultMcpMethodHandler(
                 }
             )
         } catch (e: ResourceNotFoundException) {
-            return protocolHandler.createErrorResponse(
-                id = request.id,
+            return createErrorResponse(
+                request = request,
                 code = -32002,
-                message = e.message ?: "Resource not found",
-                data = null
+                message = e.message ?: "Resource not found"
             )
         } catch (e: Exception) {
             createInternalError(request, e)
@@ -381,8 +363,8 @@ class DefaultMcpMethodHandler(
         return try {
             // Resource subscription is not supported in this implementation
             // Future versions may add real-time resource change notifications
-            return protocolHandler.createErrorResponse(
-                id = request.id,
+            return createErrorResponse(
+                request = request,
                 code = -32603,
                 message = "Resource subscription is not supported",
                 data = buildJsonObject {
@@ -400,7 +382,7 @@ class DefaultMcpMethodHandler(
             put("pong", true)
         }
         
-        return protocolHandler.createResponse(request.id, result)
+        return createSuccessResponse(request, result)
     }
     
     private fun handleShutdown(request: JsonRpcRequest): JsonRpcResponse {
@@ -414,7 +396,7 @@ class DefaultMcpMethodHandler(
         // Will transition to STOPPED after cleanup
         serverState.transitionTo(io.spiralhouse.cycletime.mcp.server.state.ServerStatus.STOPPED)
         
-        return protocolHandler.createResponse(request.id, result)
+        return createSuccessResponse(request, result)
     }
     
     // ===== Notification Handlers =====
@@ -475,14 +457,40 @@ class DefaultMcpMethodHandler(
         }
     }
     
+    // ===== Response Creation Helpers =====
+    
+    private fun createSuccessResponse(request: JsonRpcRequest, result: JsonElement): JsonRpcResponse {
+        return JsonRpcResponse(
+            jsonrpc = "2.0",
+            result = result,
+            id = request.id ?: JsonPrimitive("null")
+        )
+    }
+    
+    private fun createErrorResponse(
+        request: JsonRpcRequest,
+        code: Int,
+        message: String,
+        data: JsonElement? = null
+    ): JsonRpcResponse {
+        return JsonRpcResponse(
+            jsonrpc = "2.0",
+            error = JsonRpcError(
+                code = code,
+                message = message,
+                data = data
+            ),
+            id = request.id ?: JsonPrimitive("null")
+        )
+    }
+    
     // ===== Error Response Helpers =====
     
     private fun createMethodNotFoundError(request: JsonRpcRequest): JsonRpcResponse {
-        return protocolHandler.createErrorResponse(
-            id = request.id,
+        return createErrorResponse(
+            request = request,
             code = -32601,
-            message = "Method not found: ${request.method}",
-            data = null
+            message = "Method not found: ${request.method}"
         )
     }
     
@@ -490,11 +498,10 @@ class DefaultMcpMethodHandler(
         request: JsonRpcRequest, 
         message: String
     ): JsonRpcResponse {
-        return protocolHandler.createErrorResponse(
-            id = request.id,
+        return createErrorResponse(
+            request = request,
             code = -32602,
-            message = message,
-            data = null
+            message = message
         )
     }
     
@@ -513,8 +520,8 @@ class DefaultMcpMethodHandler(
             else -> error.message ?: "Internal error"
         }
         
-        return protocolHandler.createErrorResponse(
-            id = request.id,
+        return createErrorResponse(
+            request = request,
             code = -32603,
             message = sanitizedMessage,
             data = buildJsonObject {
@@ -530,11 +537,10 @@ class DefaultMcpMethodHandler(
     }
     
     private fun createParseError(request: JsonRpcRequest): JsonRpcResponse {
-        return protocolHandler.createErrorResponse(
-            id = request.id,
+        return createErrorResponse(
+            request = request,
             code = -32700,
-            message = "Parse error",
-            data = null
+            message = "Parse error"
         )
     }
     
@@ -571,8 +577,8 @@ class DefaultMcpMethodHandler(
             }
         }
         
-        return protocolHandler.createErrorResponse(
-            id = request.id,
+        return createErrorResponse(
+            request = request,
             code = code,
             message = message,
             data = data

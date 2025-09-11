@@ -16,9 +16,9 @@ import io.spiralhouse.cycletime.application.services.SessionApplicationService
 import io.spiralhouse.cycletime.domain.entities.Project
 import io.spiralhouse.cycletime.domain.entities.Session
 import io.spiralhouse.cycletime.domain.entities.SessionContext
-import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
-import io.spiralhouse.cycletime.domain.repositories.SessionRepository
-import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
+
+
+
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
 import io.spiralhouse.cycletime.domain.valueobjects.SessionKey
@@ -56,9 +56,9 @@ import kotlin.time.Duration.Companion.minutes
  *
  * ```kotlin
  * class SessionApplicationService(
- *     private val sessionRepository: SessionRepository,
- *     private val projectRepository: ProjectRepository,
- *     private val unitOfWork: UnitOfWork,
+ *     private val sessionRepository: ExposedSessionRepository,
+ *     private val projectRepository: ExposedProjectRepository,
+ *     private val unitOfWork: ExposedUnitOfWork,
  *     private val timeProvider: TimeProvider
  * ) : ApplicationServiceBase() {
  *     suspend fun createSession(command: CreateSessionCommand): SessionDto
@@ -88,12 +88,12 @@ import kotlin.time.Duration.Companion.minutes
 class SessionApplicationServiceTest : StringSpec({
 
     lateinit var database: Database
-    lateinit var sessionRepository: SessionRepository
-    lateinit var projectRepository: ProjectRepository
+    lateinit var sessionRepository: ExposedSessionRepository
+    lateinit var projectRepository: ExposedProjectRepository
     lateinit var mockTimeProvider: MockTimeProvider
 
     lateinit var sessionApplicationService: SessionApplicationService
-    lateinit var unitOfWork: UnitOfWork
+    lateinit var unitOfWork: ExposedUnitOfWork
 
     beforeSpec {
         // Setup H2 in-memory database

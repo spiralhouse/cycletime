@@ -10,9 +10,9 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.spiralhouse.cycletime.domain.entities.Project
 import io.spiralhouse.cycletime.domain.exceptions.DomainException
-import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
-import io.spiralhouse.cycletime.domain.repositories.IssueRepository
-import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
+
+
+
 import io.spiralhouse.cycletime.application.services.ProjectApplicationService
 import io.spiralhouse.cycletime.application.commands.*
 import io.spiralhouse.cycletime.application.exceptions.ProjectNotFoundException
@@ -52,9 +52,9 @@ import kotlin.time.Duration.Companion.minutes
  *
  * ```kotlin
  * class ProjectApplicationService(
- *     private val projectRepository: ProjectRepository,
- *     private val issueRepository: IssueRepository,
- *     private val unitOfWork: UnitOfWork,
+ *     private val projectRepository: ExposedProjectRepository,
+ *     private val issueRepository: ExposedIssueRepository,
+ *     private val unitOfWork: ExposedUnitOfWork,
  *     private val timeProvider: TimeProvider
  * ) {
  *     suspend fun createProject(command: CreateProjectCommand): ProjectDto
@@ -70,12 +70,12 @@ import kotlin.time.Duration.Companion.minutes
 class ProjectApplicationServiceTest : StringSpec({
 
     lateinit var database: Database
-    lateinit var projectRepository: ProjectRepository
-    lateinit var issueRepository: IssueRepository
+    lateinit var projectRepository: ExposedProjectRepository
+    lateinit var issueRepository: ExposedIssueRepository
     lateinit var mockTimeProvider: MockTimeProvider
 
     lateinit var projectApplicationService: ProjectApplicationService
-    lateinit var unitOfWork: UnitOfWork
+    lateinit var unitOfWork: ExposedUnitOfWork
 
     beforeSpec {
         // Setup H2 in-memory database

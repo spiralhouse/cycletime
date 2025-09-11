@@ -6,11 +6,6 @@ import io.spiralhouse.cycletime.application.services.IssueApplicationService
 import io.spiralhouse.cycletime.application.services.ProjectApplicationService
 import io.spiralhouse.cycletime.application.services.SessionApplicationService
 import io.spiralhouse.cycletime.application.services.WorkflowApplicationService
-import io.spiralhouse.cycletime.domain.repositories.IssueRepository
-import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
-import io.spiralhouse.cycletime.domain.repositories.SessionRepository
-import io.spiralhouse.cycletime.domain.repositories.WorkflowRepository
-import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
@@ -20,48 +15,38 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedWorkflowReposi
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import org.jetbrains.exposed.sql.Database
 import org.slf4j.LoggerFactory
+import io.spiralhouse.cycletime.mcp.handlers.DefaultWebSocketHandler
+import io.spiralhouse.cycletime.mcp.handlers.WebSocketHandler
+import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
+import io.spiralhouse.cycletime.mcp.integration.MCPServerConfig
+import io.spiralhouse.cycletime.mcp.integration.MCPProviderRegistry
+import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
+import io.spiralhouse.cycletime.mcp.protocol.ProtocolHandler
+import io.spiralhouse.cycletime.mcp.providers.*
+import io.spiralhouse.cycletime.mcp.server.DefaultMCPServerEngine
+import io.spiralhouse.cycletime.mcp.server.MCPServerEngine
+import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
+import io.spiralhouse.cycletime.mcp.tools.*
+import io.spiralhouse.cycletime.mcp.resources.ResourceRegistry
+import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
 
 /**
  * Dependency injection configuration using Ktor's native DI.
- * 
- * This is a simple, explicit configuration that:
- * - Takes a database as a parameter (no hidden initialization)
- * - Allows optional TimeProvider override for testing
- * - Has ONE way to configure (no profiles, no variations)
- * - Follows the principle: boring is better than clever
- * 
- * ## Thread-Safety and Scoping Strategy
- * 
- * All repositories and services are registered as **SINGLETONS** because:
- * - They are stateless (only immutable dependencies)
- * - Thread-safety is guaranteed at the transaction level
- * - Connection pooling is handled by HikariCP
- * - This minimizes memory overhead and object creation
- * 
- * ### Why Singleton Scope is Correct Here
- * 
- * 1. **Repositories**: Thread-safe via transaction isolation
- *    - Each operation gets its own transaction context
- *    - No mutable state between operations
- *    - Database connections are pooled, not held
- * 
- * 2. **Application Services**: Stateless orchestrators
- *    - Only coordinate between repositories
- *    - Business logic operates on entities, not service state
- *    - Transaction boundaries managed via UnitOfWork
- * 
- * 3. **Infrastructure**: Designed for sharing
- *    - Database instance is thread-safe (HikariCP)
- *    - TimeProvider is immutable
- *    - UnitOfWork creates new transaction contexts
- * 
- * ### Performance Benefits
- * 
- * - No object creation overhead per request
- * - Better CPU cache utilization
- * - Reduced GC pressure
- * - Predictable memory footprint
+ * Simple, explicit configuration with singleton scope for all services.
  */
+
+/**
+ * Helper for standardized error handling in dependency creation.
+ */
+private inline fun <T> safeCreate(serviceName: String, factory: () -> T): T {
+    return try {
+        factory()
+    } catch (e: Exception) {
+        val logger = LoggerFactory.getLogger("DependencyInjection")
+        logger.error("Failed to create $serviceName", e)
+        throw IllegalStateException("$serviceName initialization failed", e)
+    }
+}
 fun Application.configureDependencies(
     database: Database,
     timeProvider: TimeProvider? = null,
@@ -71,142 +56,101 @@ fun Application.configureDependencies(
     val configStartTime = System.currentTimeMillis()
     
     dependencies {
-        // Domain layer - Time provider with optional override for testing
+        // Core dependencies
         provide<TimeProvider> { 
-            try {
-                timeProvider ?: SystemTimeProvider()
-            } catch (e: Exception) {
-                logger.error("Failed to create TimeProvider", e)
-                throw IllegalStateException("TimeProvider initialization failed", e)
-            }
+            safeCreate("TimeProvider") { timeProvider ?: SystemTimeProvider() }
         }
-        
-        // Infrastructure layer - Database passed in explicitly
         provide<Database> { database }
-        
-        // Unit of Work
-        provide<UnitOfWork> { 
-            try {
-                ExposedUnitOfWork(resolve())
-            } catch (e: Exception) {
-                logger.error("Failed to create UnitOfWork", e)
-                throw IllegalStateException("UnitOfWork initialization failed", e)
-            }
+        provide<ExposedUnitOfWork> { 
+            safeCreate("ExposedUnitOfWork") { ExposedUnitOfWork(resolve()) }
         }
         
-        // Repositories - Constructor injection with resolved dependencies
-        provide<ProjectRepository> { 
-            try {
+        // Repositories
+        provide<ExposedProjectRepository> { 
+            safeCreate("ExposedProjectRepository") {
                 ExposedProjectRepository(
                     timeProvider = resolve(),
                     database = resolve()
                 )
-            } catch (e: Exception) {
-                logger.error("Failed to create ProjectRepository", e)
-                throw IllegalStateException("ProjectRepository initialization failed", e)
             }
         }
         
-        provide<IssueRepository> { 
-            try {
+        provide<ExposedIssueRepository> { 
+            safeCreate("ExposedIssueRepository") {
                 ExposedIssueRepository(
                     timeProvider = resolve(),
                     database = resolve()
                 )
-            } catch (e: Exception) {
-                logger.error("Failed to create IssueRepository", e)
-                throw IllegalStateException("IssueRepository initialization failed", e)
             }
         }
         
-        provide<SessionRepository> { 
-            try {
+        provide<ExposedSessionRepository> { 
+            safeCreate("ExposedSessionRepository") {
                 ExposedSessionRepository(
                     timeProvider = resolve(),
                     database = resolve()
                 )
-            } catch (e: Exception) {
-                logger.error("Failed to create SessionRepository", e)
-                throw IllegalStateException("SessionRepository initialization failed", e)
             }
         }
         
-        provide<WorkflowRepository> { 
-            try {
+        provide<ExposedWorkflowRepository> { 
+            safeCreate("ExposedWorkflowRepository") {
                 ExposedWorkflowRepository(
                     timeProvider = resolve(),
                     database = resolve()
                 )
-            } catch (e: Exception) {
-                logger.error("Failed to create WorkflowRepository", e)
-                throw IllegalStateException("WorkflowRepository initialization failed", e)
             }
         }
         
-        // Application Services - Constructor injection with resolved dependencies
+        // Application Services
         provide<ProjectApplicationService> {
-            try {
+            safeCreate("ProjectApplicationService") {
                 ProjectApplicationService(
-                    projectRepository = resolve(),
-                    issueRepository = resolve(),
-                    unitOfWork = resolve(),
+                    projectRepository = resolve<ExposedProjectRepository>(),
+                    issueRepository = resolve<ExposedIssueRepository>(),
+                    unitOfWork = resolve<ExposedUnitOfWork>(),
                     timeProvider = resolve()
                 )
-            } catch (e: Exception) {
-                logger.error("Failed to create ProjectApplicationService", e)
-                throw IllegalStateException("ProjectApplicationService initialization failed", e)
             }
         }
         
         provide<IssueApplicationService> {
-            try {
+            safeCreate("IssueApplicationService") {
                 IssueApplicationService(
-                    issueRepository = resolve(),
-                    projectRepository = resolve(),
-                    unitOfWork = resolve(),
+                    issueRepository = resolve<ExposedIssueRepository>(),
+                    projectRepository = resolve<ExposedProjectRepository>(),
+                    unitOfWork = resolve<ExposedUnitOfWork>(),
                     timeProvider = resolve()
                 )
-            } catch (e: Exception) {
-                logger.error("Failed to create IssueApplicationService", e)
-                throw IllegalStateException("IssueApplicationService initialization failed", e)
             }
         }
         
         provide<SessionApplicationService> {
-            try {
+            safeCreate("SessionApplicationService") {
                 SessionApplicationService(
-                    sessionRepository = resolve(),
-                    projectRepository = resolve(),
-                    unitOfWork = resolve(),
+                    sessionRepository = resolve<ExposedSessionRepository>(),
+                    projectRepository = resolve<ExposedProjectRepository>(),
+                    unitOfWork = resolve<ExposedUnitOfWork>(),
                     timeProvider = resolve()
                 )
-            } catch (e: Exception) {
-                logger.error("Failed to create SessionApplicationService", e)
-                throw IllegalStateException("SessionApplicationService initialization failed", e)
             }
         }
         
         provide<WorkflowApplicationService> {
-            try {
+            safeCreate("WorkflowApplicationService") {
                 WorkflowApplicationService(
-                    workflowRepository = resolve(),
-                    unitOfWork = resolve(),
+                    workflowRepository = resolve<ExposedWorkflowRepository>(),
+                    unitOfWork = resolve<ExposedUnitOfWork>(),
                     timeProvider = resolve()
                 )
-            } catch (e: Exception) {
-                logger.error("Failed to create WorkflowApplicationService", e)
-                throw IllegalStateException("WorkflowApplicationService initialization failed", e)
             }
         }
         
-        // MCP layer - Optional for testing
+        // MCP layer
         if (includeMCP) {
             val mcpStartTime = System.currentTimeMillis()
             try {
-                // Use 'with' to bring MCPDependencies functions into scope while keeping 'this' as DependencyRegistry
-                with(MCPDependencies) {
-                    this@dependencies.configureMCPDependencies()
-                }
+                configureMCPDependencies()
                 val mcpEndTime = System.currentTimeMillis()
                 logger.debug("MCP dependencies configured in ${mcpEndTime - mcpStartTime}ms")
             } catch (e: Exception) {
@@ -223,4 +167,102 @@ fun Application.configureDependencies(
     // Log dependency resolution count (approximation based on configured services)
     val serviceCount = 11 + if (includeMCP) 8 else 0  // Core services + MCP services (added Workflow repo & service)
     logger.info("Configured $serviceCount dependency bindings in ${totalConfigTime}ms")
+}
+
+private fun DependencyRegistry.configureMCPDependencies() {
+    provide<MCPServerConfig> { MCPServerConfig() }
+    provide<ProtocolHandler> { JsonRpcProtocolHandler() }
+    provide<ResourceRegistry> { ResourceRegistry() }
+    provide<ToolRegistry> { ToolRegistry() }
+    provide<MCPProviderRegistry> { 
+        MCPProviderRegistry(
+            resourceRegistry = resolve<ResourceRegistry>(),
+            toolRegistry = resolve<ToolRegistry>()
+        )
+    }
+    
+    provide<McpMethodHandler> {
+        McpMethodHandler(
+            protocolHandler = resolve<ProtocolHandler>() as JsonRpcProtocolHandler,
+            toolRegistry = resolve<ToolRegistry>(),
+            toolInvoker = resolve<ToolRegistry>(),
+            resourceRegistry = resolve<ResourceRegistry>()
+        )
+    }
+    provide<MCPIntegrationService> {
+        MCPIntegrationService(
+            methodHandler = resolve<McpMethodHandler>(),
+            protocolHandler = resolve<ProtocolHandler>(),
+            config = resolve<MCPServerConfig>(),
+            resourceRegistry = resolve<ResourceRegistry>(),
+            toolRegistry = resolve<ToolRegistry>(),
+            projectResourceProvider = resolve<ProjectResourceProvider>(),
+            issueResourceProvider = resolve<IssueResourceProvider>(),
+            sessionResourceProvider = resolve<SessionResourceProvider>(),
+            workflowResourceProvider = resolve<WorkflowResourceProvider>(),
+            toolProviders = listOf(
+                resolve<DefaultProjectToolProvider>(),
+                resolve<DefaultIssueToolProvider>(),
+                resolve<DefaultSessionToolProvider>()
+            )
+        )
+    }
+    
+    provide<MCPServerEngine> { 
+        DefaultMCPServerEngine(
+            resourceProviders = listOf(
+                resolve<ProjectResourceProvider>(),
+                resolve<IssueResourceProvider>(),
+                resolve<SessionResourceProvider>(),
+                resolve<WorkflowResourceProvider>()
+            ),
+            toolProviders = listOf(
+                resolve<DefaultProjectToolProvider>(),
+                resolve<DefaultIssueToolProvider>(),
+                resolve<DefaultSessionToolProvider>()
+            )
+        )
+    }
+    
+    provide<WebSocketHandler> { DefaultWebSocketHandler(resolve()) }
+    
+    // Resource Providers
+    provide<ProjectResourceProvider> { 
+        DefaultProjectResourceProvider(
+            projectService = resolve<ProjectApplicationService>()
+        )
+    }
+    
+    provide<IssueResourceProvider> { 
+        DefaultIssueResourceProvider(
+            issueService = resolve<IssueApplicationService>()
+        )
+    }
+    
+    provide<SessionResourceProvider> { 
+        DefaultSessionResourceProvider(
+            sessionService = resolve<SessionApplicationService>()
+        )
+    }
+    
+    provide<WorkflowResourceProvider> { DefaultWorkflowResourceProvider() }
+    
+    // Tool Providers
+    provide<DefaultProjectToolProvider> { 
+        DefaultProjectToolProvider(
+            projectService = resolve<ProjectApplicationService>()
+        )
+    }
+    
+    provide<DefaultIssueToolProvider> { 
+        DefaultIssueToolProvider(
+            issueService = resolve<IssueApplicationService>()
+        )
+    }
+    
+    provide<DefaultSessionToolProvider> { 
+        DefaultSessionToolProvider(
+            sessionService = resolve<SessionApplicationService>()
+        )
+    }
 }

@@ -1,6 +1,5 @@
 package io.spiralhouse.cycletime.infrastructure.persistence
 
-import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Transaction
@@ -18,9 +17,9 @@ import org.jetbrains.exposed.sql.transactions.transaction
  * Use the execute() method which properly wraps operations in transactions
  * with automatic commit/rollback handling.
  */
-class ExposedUnitOfWork(private val database: Database) : UnitOfWork {
+class ExposedUnitOfWork(private val database: Database) {
     
-    override suspend fun <T> execute(block: suspend () -> T): T {
+    suspend fun <T> execute(block: suspend () -> T): T {
         return newSuspendedTransaction(Dispatchers.IO, database) {
             // Transaction will auto-commit at the end of newSuspendedTransaction
             // Transaction will auto-rollback on exception in newSuspendedTransaction
@@ -28,7 +27,7 @@ class ExposedUnitOfWork(private val database: Database) : UnitOfWork {
         }
     }
 
-    override suspend fun begin() {
+    suspend fun begin() {
         throw UnsupportedOperationException(
             "Manual transaction management is not supported with Exposed ORM. " +
             "Exposed transactions are scoped to code blocks and cannot be manually controlled. " +
@@ -37,7 +36,7 @@ class ExposedUnitOfWork(private val database: Database) : UnitOfWork {
         )
     }
 
-    override suspend fun commit() {
+    suspend fun commit() {
         throw UnsupportedOperationException(
             "Manual transaction management is not supported with Exposed ORM. " +
             "Exposed transactions are scoped to code blocks and cannot be manually controlled. " +
@@ -46,7 +45,7 @@ class ExposedUnitOfWork(private val database: Database) : UnitOfWork {
         )
     }
 
-    override suspend fun rollback() {
+    suspend fun rollback() {
         throw UnsupportedOperationException(
             "Manual transaction management is not supported with Exposed ORM. " +
             "Exposed transactions are scoped to code blocks and cannot be manually controlled. " +

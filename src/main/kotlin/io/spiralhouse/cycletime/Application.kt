@@ -3,10 +3,6 @@ package io.spiralhouse.cycletime
 import io.spiralhouse.cycletime.application.services.IssueApplicationService
 import io.spiralhouse.cycletime.application.services.ProjectApplicationService
 import io.spiralhouse.cycletime.application.services.SessionApplicationService
-import io.spiralhouse.cycletime.domain.repositories.IssueRepository
-import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
-import io.spiralhouse.cycletime.domain.repositories.SessionRepository
-import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.services.BuildInfo
@@ -483,21 +479,10 @@ private fun buildMcpHealthStatus(
             )
             
             val metrics = buildMap {
-                put("mcpConnections", mcpStatus.activeConnections.toString())
+                put("mcpConnections", "0") // Simplified - no active connection tracking
                 put("mcpPort", mcpStatus.port.toString())
                 put("mcpUptime", mcpStatus.uptimeMs.toString())
                 put("mcpStatus", if (mcpStatus.isRunning) "running" else "stopped")
-                
-                // Add performance metrics if available
-                if (mcpStatus.totalRequests > 0) {
-                    put("mcpRequests", mcpStatus.totalRequests.toString())
-                    put("mcpLatency", "${mcpStatus.averageLatency}ms")
-                    put("mcpCacheHitRate", "${(mcpStatus.cacheHitRate * 100).toInt()}%")
-                }
-                
-                if (mcpStatus.optimizationsEnabled) {
-                    put("mcpOptimized", "true")
-                }
             }
             
             HealthStatus(dependencies, metrics)
@@ -584,17 +569,14 @@ private fun logPerformanceSummary(
     
     if (mcpIntegrationService != null) {
         val status = mcpIntegrationService.getStatus()
-        logger.info("  - MCP integration: started (optimized: ${status.optimizationsEnabled})")
+        logger.info("  - MCP integration: started (simplified architecture)")
     }
     logger.info("  - Total startup time: ${totalStartupTime}ms")
     
     // Log performance optimization status
     val mcpEnabled = System.getenv("MCP_ENABLED")?.toBoolean() ?: true
     if (mcpEnabled && mcpIntegrationService != null) {
-        val status = mcpIntegrationService.getStatus()
-        if (status.optimizationsEnabled) {
-            logger.info("Performance optimizations enabled: async processing, resource caching, connection pooling")
-        }
+        logger.info("MCP integration running with simplified architecture (monitoring removed for MVP)")
     }
 }
 

@@ -7,9 +7,9 @@ import io.spiralhouse.cycletime.application.exceptions.ProjectNotFoundException
 import io.spiralhouse.cycletime.application.exceptions.SessionNotFoundException
 import io.spiralhouse.cycletime.domain.entities.Session
 import io.spiralhouse.cycletime.domain.entities.SessionContext
-import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
-import io.spiralhouse.cycletime.domain.repositories.SessionRepository
-import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionRepository
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
 import io.spiralhouse.cycletime.domain.valueobjects.SessionKey
@@ -64,9 +64,9 @@ import kotlin.time.Duration.Companion.days
  * @constructor Creates a new SessionApplicationService with required dependencies
  */
 class SessionApplicationService(
-    private val sessionRepository: SessionRepository,
-    private val projectRepository: ProjectRepository,
-    private val unitOfWork: UnitOfWork,
+    private val sessionRepository: ExposedSessionRepository,
+    private val projectRepository: ExposedProjectRepository,
+    private val unitOfWork: ExposedUnitOfWork,
     private val timeProvider: TimeProvider
 ) : ApplicationServiceBase() {
 
