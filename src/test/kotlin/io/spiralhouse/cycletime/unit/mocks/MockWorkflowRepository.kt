@@ -1,7 +1,9 @@
 package io.spiralhouse.cycletime.unit.mocks
 
 import io.spiralhouse.cycletime.domain.entities.Workflow
+import io.spiralhouse.cycletime.domain.repositories.WorkflowRepository
 import io.spiralhouse.cycletime.domain.services.TimeProvider
+import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
 import org.jetbrains.exposed.sql.Database
 
@@ -35,7 +37,7 @@ import org.jetbrains.exposed.sql.Database
 class MockWorkflowRepository(
     private val timeProvider: TimeProvider? = null,
     private val database: Database? = null
-) {
+) : WorkflowRepository {
     
     // ================================================================================
     // Test Data Storage
@@ -59,34 +61,34 @@ class MockWorkflowRepository(
     // Repository Interface Implementation
     // ================================================================================
     
-    suspend fun save(workflow: Workflow): Workflow {
+    override suspend fun save(workflow: Workflow): Workflow {
         saveCallCount++
         workflows[workflow.id] = workflow
         return workflow
     }
     
-    suspend fun findById(id: WorkflowId): Workflow? {
+    override suspend fun findById(id: WorkflowId): Workflow? {
         findCallCount++
         return workflows[id]
     }
     
-    suspend fun findAll(): List<Workflow> {
+    override suspend fun findAll(): List<Workflow> {
         findCallCount++
         return workflows.values.toList()
     }
     
-    suspend fun update(workflow: Workflow): Workflow {
+    override suspend fun update(workflow: Workflow): Workflow {
         updateCallCount++
         workflows[workflow.id] = workflow
         return workflow
     }
     
-    suspend fun delete(id: WorkflowId): Boolean {
+    override suspend fun delete(id: WorkflowId): Boolean {
         deleteCallCount++
         return workflows.remove(id) != null
     }
     
-    suspend fun existsById(id: WorkflowId): Boolean {
+    override suspend fun existsById(id: WorkflowId): Boolean {
         return workflows.containsKey(id)
     }
     
