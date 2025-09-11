@@ -11,7 +11,7 @@ import io.ktor.server.config.MapApplicationConfig
 import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseFactory
 import io.spiralhouse.cycletime.module
-import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
+
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.exceptions.ExposedSQLException

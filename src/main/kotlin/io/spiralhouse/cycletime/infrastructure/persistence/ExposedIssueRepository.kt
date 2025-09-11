@@ -2,7 +2,6 @@ package io.spiralhouse.cycletime.infrastructure.persistence
 
 import io.spiralhouse.cycletime.domain.entities.Issue
 import io.spiralhouse.cycletime.domain.entities.IssueSnapshot
-import io.spiralhouse.cycletime.domain.repositories.IssueRepository
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.*
@@ -48,9 +47,9 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
  */
 @ThreadSafe // Documenting thread-safety guarantee
 class ExposedIssueRepository(
-    private val timeProvider: TimeProvider = SystemTimeProvider(),
-    private val database: Database? = null
-) : IssueRepository {
+    timeProvider: TimeProvider = SystemTimeProvider(),
+    database: Database? = null
+) : BaseExposedRepository(timeProvider, database) {
 
     /**
      * Finds an issue by its unique identifier.
@@ -62,7 +61,7 @@ class ExposedIssueRepository(
      * @param id The issue ID to search for
      * @return The fully reconstituted Issue entity if found, null otherwise
      */
-    override suspend fun findById(id: IssueId): Issue? = dbQuery {
+    suspend fun findById(id: IssueId): Issue? = dbQuery {
         findIssueRowById(id.value)?.toIssue()
     }
 
@@ -72,7 +71,7 @@ class ExposedIssueRepository(
      * @param projectId The project ID to search for
      * @return List of issues in the project, ordered by creation date
      */
-    override suspend fun findByProject(projectId: ProjectId): List<Issue> = dbQuery {
+    suspend fun findByProject(projectId: ProjectId): List<Issue> = dbQuery {
         findIssuesByCondition { IssuesTable.projectId eq projectId.value }
     }
 
@@ -84,7 +83,7 @@ class ExposedIssueRepository(
      * @param parentId The parent issue ID to search for
      * @return List of child issues
      */
-    override suspend fun findByParent(parentId: IssueId): List<Issue> = dbQuery {
+    suspend fun findByParent(parentId: IssueId): List<Issue> = dbQuery {
         findIssuesByCondition { IssuesTable.parentId eq parentId.value }
     }
 
@@ -94,7 +93,7 @@ class ExposedIssueRepository(
      * @param assigneeId The assignee ID to search for
      * @return List of issues assigned to the user
      */
-    override suspend fun findByAssignee(assigneeId: String): List<Issue> = dbQuery {
+    suspend fun findByAssignee(assigneeId: String): List<Issue> = dbQuery {
         findIssuesByCondition { IssuesTable.assigneeId eq assigneeId }
     }
 
@@ -104,7 +103,7 @@ class ExposedIssueRepository(
      * @param status The issue status to search for
      * @return List of issues with the matching status
      */
-    override suspend fun findByStatus(status: IssueStatus): List<Issue> = dbQuery {
+    suspend fun findByStatus(status: IssueStatus): List<Issue> = dbQuery {
         findIssuesByCondition { IssuesTable.status eq status.name }
     }
 
@@ -114,7 +113,7 @@ class ExposedIssueRepository(
      * @param type The issue type to search for
      * @return List of issues of the specified type
      */
-    override suspend fun findByType(type: IssueType): List<Issue> = dbQuery {
+    suspend fun findByType(type: IssueType): List<Issue> = dbQuery {
         findIssuesByCondition { IssuesTable.type eq type.name }
     }
 
@@ -133,7 +132,7 @@ class ExposedIssueRepository(
      * @param issue The issue to save
      * @throws Exception if database operation fails
      */
-    override suspend fun save(issue: Issue) {
+    suspend fun save(issue: Issue) {
         dbQuery {
             val exists = checkIssueExists(issue.id)
 
@@ -163,7 +162,7 @@ class ExposedIssueRepository(
      * @param issues The list of issues to save
      * @throws Exception if any database operation fails, rolling back all changes
      */
-    override suspend fun saveAll(issues: List<Issue>) {
+    suspend fun saveAll(issues: List<Issue>) {
         if (issues.isEmpty()) return
 
         dbQuery {
@@ -206,7 +205,7 @@ class ExposedIssueRepository(
      *
      * @param id The ID of the issue to delete
      */
-    override suspend fun delete(id: IssueId) {
+    suspend fun delete(id: IssueId) {
         dbQuery {
             // Delete all dependency relationships first to maintain referential integrity
             deleteIssueDependencies(id)
@@ -221,7 +220,7 @@ class ExposedIssueRepository(
      * @param id The issue ID to check
      * @return true if the issue exists, false otherwise
      */
-    override suspend fun exists(id: IssueId): Boolean = dbQuery {
+    suspend fun exists(id: IssueId): Boolean = dbQuery {
         checkIssueExists(id)
     }
 
@@ -439,11 +438,7 @@ class ExposedIssueRepository(
      * @return true if the issue exists, false otherwise
      */
     private fun checkIssueExists(id: IssueId): Boolean {
-        return IssuesTable
-            .select(IssuesTable.id)
-            .where { IssuesTable.id eq id.value }
-            .limit(1)
-            .count() > 0
+        return checkExists(IssuesTable) { IssuesTable.id eq id.value }
     }
 
     // ================== Helper Methods ==================
@@ -458,11 +453,12 @@ class ExposedIssueRepository(
      * @return List of issues matching the condition
      */
     private fun findIssuesByCondition(condition: SqlExpressionBuilder.() -> Op<Boolean>): List<Issue> {
-        return IssuesTable
-            .selectAll()
-            .where(condition)
-            .orderBy(IssuesTable.createdAt to SortOrder.ASC)
-            .map { it.toIssue() }
+        return findByCondition(
+            table = IssuesTable,
+            condition = condition,
+            orderBy = IssuesTable.createdAt to SortOrder.ASC,
+            mapper = { it.toIssue() }
+        )
     }
 
     /**
@@ -478,35 +474,6 @@ class ExposedIssueRepository(
             .singleOrNull()
     }
 
-    /**
-     * Executes a database query with proper transaction management.
-     * 
-     * Thread-safe implementation that:
-     * - Reuses existing transactions when called from UnitOfWork
-     * - Creates new transactions for standalone operations
-     * - Uses the specified database instance if provided
-     * - Properly handles concurrent access through Exposed's transaction management
-     *
-     * @param block The query to execute
-     * @return The query result
-     */
-    private suspend fun <T> dbQuery(block: suspend () -> T): T {
-        // Check if we're already in a transaction (e.g., from UnitOfWork)
-        val currentTransaction = TransactionManager.currentOrNull()
-        
-        return if (currentTransaction != null) {
-            // We're already in a transaction - execute directly without creating a new one
-            // This preserves UnitOfWork behavior and transaction boundaries
-            block()
-        } else {
-            // No transaction - create new transaction (thread-safe)
-            if (database != null) {
-                newSuspendedTransaction(Dispatchers.IO, database) { block() }
-            } else {
-                newSuspendedTransaction(Dispatchers.IO) { block() }
-            }
-        }
-    }
 
     // ================== Data Classes ==================
 

@@ -8,7 +8,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.spiralhouse.cycletime.domain.entities.Workflow
 import io.spiralhouse.cycletime.domain.exceptions.DomainException
-import io.spiralhouse.cycletime.domain.repositories.WorkflowRepository
+
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
@@ -46,7 +46,7 @@ import kotlin.time.Duration.Companion.minutes
 class ExposedWorkflowRepositoryTest : StringSpec({
 
     lateinit var database: Database
-    lateinit var repository: WorkflowRepository
+    lateinit var repository: ExposedWorkflowRepository
     lateinit var mockTimeProvider: MockTimeProvider
 
     /**

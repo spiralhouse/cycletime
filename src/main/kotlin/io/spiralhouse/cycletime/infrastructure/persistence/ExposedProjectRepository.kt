@@ -2,7 +2,6 @@ package io.spiralhouse.cycletime.infrastructure.persistence
 
 import io.spiralhouse.cycletime.domain.entities.Project
 import io.spiralhouse.cycletime.domain.entities.ProjectSnapshot
-import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
@@ -45,9 +44,9 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
  */
 @ThreadSafe // Documenting thread-safety guarantee
 class ExposedProjectRepository(
-    private val timeProvider: TimeProvider = SystemTimeProvider(),
-    private val database: Database? = null
-) : ProjectRepository {
+    timeProvider: TimeProvider = SystemTimeProvider(),
+    database: Database? = null
+) : BaseExposedRepository(timeProvider, database) {
 
     /**
      * Finds a project by its unique identifier.
@@ -55,7 +54,7 @@ class ExposedProjectRepository(
      * @param id The project ID to search for
      * @return The project if found, null otherwise
      */
-    override suspend fun findById(id: ProjectId): Project? = dbQuery {
+    suspend fun findById(id: ProjectId): Project? = dbQuery {
         ProjectsTable
             .selectAll()
             .where { ProjectsTable.id eq id.value }
@@ -70,7 +69,7 @@ class ExposedProjectRepository(
      * @param status The project status to filter by
      * @return List of projects matching the status
      */
-    override suspend fun findByStatus(status: ProjectStatus): List<Project> = dbQuery {
+    suspend fun findByStatus(status: ProjectStatus): List<Project> = dbQuery {
         val projectRows = ProjectsTable
             .selectAll()
             .where { ProjectsTable.status eq status.value }
@@ -94,7 +93,7 @@ class ExposedProjectRepository(
      *
      * @return List of all projects
      */
-    override suspend fun findAll(): List<Project> = dbQuery {
+    suspend fun findAll(): List<Project> = dbQuery {
         val projectRows = ProjectsTable
             .selectAll()
             .toList()
@@ -118,7 +117,7 @@ class ExposedProjectRepository(
      * @param project The project to save
      * @throws Exception if database operation fails
      */
-    override suspend fun save(project: Project) {
+    suspend fun save(project: Project) {
         dbQuery {
             val exists = checkProjectExists(project.id)
 
@@ -171,7 +170,7 @@ class ExposedProjectRepository(
      *
      * @param id The ID of the project to delete
      */
-    override suspend fun delete(id: ProjectId) {
+    suspend fun delete(id: ProjectId) {
         dbQuery {
             // Note: Issue cleanup should be handled by IssueRepository
             // Only delete the project record itself
@@ -185,7 +184,7 @@ class ExposedProjectRepository(
      * @param id The project ID to check
      * @return true if the project exists, false otherwise
      */
-    override suspend fun exists(id: ProjectId): Boolean = dbQuery {
+    suspend fun exists(id: ProjectId): Boolean = dbQuery {
         checkProjectExists(id)
     }
 
@@ -320,39 +319,7 @@ class ExposedProjectRepository(
      * @return true if the project exists, false otherwise
      */
     private fun checkProjectExists(id: ProjectId): Boolean {
-        return ProjectsTable
-            .selectAll()
-            .where { ProjectsTable.id eq id.value }
-            .count() > 0
+        return checkExists(ProjectsTable) { ProjectsTable.id eq id.value }
     }
 
-    /**
-     * Executes a database query with proper transaction management.
-     * 
-     * Thread-safe implementation that:
-     * - Reuses existing transactions when called from UnitOfWork
-     * - Creates new transactions for standalone operations
-     * - Uses the specified database instance if provided
-     * - Properly handles concurrent access through Exposed's transaction management
-     *
-     * @param block The query to execute
-     * @return The query result
-     */
-    private suspend fun <T> dbQuery(block: suspend () -> T): T {
-        // Check if we're already in a transaction (e.g., from UnitOfWork)
-        val currentTransaction = TransactionManager.currentOrNull()
-        
-        return if (currentTransaction != null) {
-            // We're already in a transaction - execute directly without creating a new one
-            // This preserves UnitOfWork behavior and transaction boundaries
-            block()
-        } else {
-            // No transaction - create new transaction (thread-safe)
-            if (database != null) {
-                newSuspendedTransaction(Dispatchers.IO, database) { block() }
-            } else {
-                newSuspendedTransaction(Dispatchers.IO) { block() }
-            }
-        }
-    }
 }

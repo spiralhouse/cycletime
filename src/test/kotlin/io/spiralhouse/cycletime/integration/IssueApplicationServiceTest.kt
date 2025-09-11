@@ -13,9 +13,9 @@ import io.spiralhouse.cycletime.application.exceptions.*
 import io.spiralhouse.cycletime.application.services.IssueApplicationService
 import io.spiralhouse.cycletime.domain.entities.Project
 import io.spiralhouse.cycletime.domain.exceptions.DomainException
-import io.spiralhouse.cycletime.domain.repositories.IssueRepository
-import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
-import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
+
+
+
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.*
 import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
@@ -52,9 +52,9 @@ import kotlin.time.Duration.Companion.minutes
  *
  * ```kotlin
  * class IssueApplicationService(
- *     private val issueRepository: IssueRepository,
- *     private val projectRepository: ProjectRepository,
- *     private val unitOfWork: UnitOfWork,
+ *     private val issueRepository: ExposedIssueRepository,
+ *     private val projectRepository: ExposedProjectRepository,
+ *     private val unitOfWork: ExposedUnitOfWork,
  *     private val timeProvider: TimeProvider
  * ) {
  *     // CRUD Operations
@@ -89,12 +89,12 @@ import kotlin.time.Duration.Companion.minutes
 class IssueApplicationServiceTest : StringSpec({
 
     lateinit var database: Database
-    lateinit var issueRepository: IssueRepository
-    lateinit var projectRepository: ProjectRepository
+    lateinit var issueRepository: ExposedIssueRepository
+    lateinit var projectRepository: ExposedProjectRepository
     lateinit var mockTimeProvider: MockTimeProvider
 
     lateinit var issueApplicationService: IssueApplicationService
-    lateinit var unitOfWork: UnitOfWork
+    lateinit var unitOfWork: ExposedUnitOfWork
 
     beforeSpec {
         // Setup H2 in-memory database

@@ -2,7 +2,6 @@ package io.spiralhouse.cycletime.infrastructure.persistence
 
 import io.spiralhouse.cycletime.domain.entities.Workflow
 import io.spiralhouse.cycletime.domain.entities.WorkflowSnapshot
-import io.spiralhouse.cycletime.domain.repositories.WorkflowRepository
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
@@ -48,9 +47,9 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
  */
 @ThreadSafe // Documenting thread-safety guarantee
 class ExposedWorkflowRepository(
-    private val timeProvider: TimeProvider = SystemTimeProvider(),
-    private val database: Database? = null
-) : WorkflowRepository {
+    timeProvider: TimeProvider = SystemTimeProvider(),
+    database: Database? = null
+) : BaseExposedRepository(timeProvider, database) {
 
     /**
      * JSON serializer for IssueStatus sets with lenient configuration.
@@ -76,11 +75,8 @@ class ExposedWorkflowRepository(
      * @return The saved workflow
      * @throws Exception if database operation fails
      */
-    override suspend fun save(workflow: Workflow): Workflow = dbQuery {
-        val exists = WorkflowsTable
-            .select(WorkflowsTable.id)
-            .where { WorkflowsTable.id eq workflow.id.value }
-            .count() > 0
+    suspend fun save(workflow: Workflow): Workflow = dbQuery {
+        val exists = checkExists(WorkflowsTable) { WorkflowsTable.id eq workflow.id.value }
         
         if (exists) {
             WorkflowsTable.update({ WorkflowsTable.id eq workflow.id.value }) {
@@ -112,7 +108,7 @@ class ExposedWorkflowRepository(
      * @return The workflow if found, null otherwise
      * @throws Exception if database operation fails
      */
-    override suspend fun findById(id: WorkflowId): Workflow? = dbQuery {
+    suspend fun findById(id: WorkflowId): Workflow? = dbQuery {
         WorkflowsTable
             .selectAll()
             .where { WorkflowsTable.id eq id.value }
@@ -127,7 +123,7 @@ class ExposedWorkflowRepository(
      * @return List of all workflows
      * @throws Exception if database operation fails
      */
-    override suspend fun findAll(): List<Workflow> = dbQuery {
+    suspend fun findAll(): List<Workflow> = dbQuery {
         WorkflowsTable
             .selectAll()
             .orderBy(WorkflowsTable.createdAt to SortOrder.ASC)
@@ -143,7 +139,7 @@ class ExposedWorkflowRepository(
      * @throws IllegalArgumentException if workflow doesn't exist
      * @throws Exception if database operation fails
      */
-    override suspend fun update(workflow: Workflow): Workflow = dbQuery {
+    suspend fun update(workflow: Workflow): Workflow = dbQuery {
         val rowsUpdated = WorkflowsTable.update({ WorkflowsTable.id eq workflow.id.value }) {
             it[name] = workflow.name
             it[description] = workflow.description
@@ -167,7 +163,7 @@ class ExposedWorkflowRepository(
      * @return true if the workflow was deleted, false if it didn't exist
      * @throws Exception if database operation fails
      */
-    override suspend fun delete(id: WorkflowId): Boolean = dbQuery {
+    suspend fun delete(id: WorkflowId): Boolean = dbQuery {
         val deletedCount = WorkflowsTable.deleteWhere { WorkflowsTable.id eq id.value }
         deletedCount > 0
     }
@@ -180,11 +176,8 @@ class ExposedWorkflowRepository(
      * @return true if the workflow exists, false otherwise
      * @throws Exception if database operation fails
      */
-    override suspend fun existsById(id: WorkflowId): Boolean = dbQuery {
-        WorkflowsTable
-            .select(WorkflowsTable.id)
-            .where { WorkflowsTable.id eq id.value }
-            .count() > 0
+    suspend fun existsById(id: WorkflowId): Boolean = dbQuery {
+        checkExists(WorkflowsTable) { WorkflowsTable.id eq id.value }
     }
 
 
@@ -246,42 +239,4 @@ class ExposedWorkflowRepository(
         }
     }
 
-    /**
-     * Executes a database query with proper transaction management.
-     * 
-     * ## Transaction Strategy
-     * 
-     * 1. **UnitOfWork Integration**: Reuses existing transactions when present
-     * 2. **Standalone Operations**: Creates new transactions with proper isolation
-     * 3. **Thread Safety**: Each transaction runs in isolated context
-     * 4. **Connection Management**: Leverages Exposed's connection pooling
-     * 
-     * ## Error Handling
-     * 
-     * - Database exceptions are propagated to caller for proper handling
-     * - Transaction rollback is automatic on exceptions
-     * - Logging captures transaction boundaries for debugging
-     *
-     * @param block The query to execute within transaction context
-     * @return The query result
-     * @throws Exception if database operation fails
-     */
-    private suspend fun <T> dbQuery(block: suspend () -> T): T {
-        // Check if we're already in a transaction (e.g., from UnitOfWork)
-        val currentTransaction = TransactionManager.currentOrNull()
-        
-        return if (currentTransaction != null) {
-            // Already in transaction - execute directly to preserve transaction boundaries
-            // This is critical for UnitOfWork pattern to function correctly
-            block()
-        } else {
-            // Create new transaction with proper isolation
-            val db = database ?: TransactionManager.defaultDatabase
-                ?: throw IllegalStateException("No database configured")
-                
-            newSuspendedTransaction(Dispatchers.IO, db) { 
-                block()
-            }
-        }
-    }
 }

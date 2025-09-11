@@ -5,9 +5,9 @@ import io.spiralhouse.cycletime.application.dto.ProjectDto
 import io.spiralhouse.cycletime.application.dto.ProjectListDto
 import io.spiralhouse.cycletime.application.exceptions.ProjectNotFoundException
 import io.spiralhouse.cycletime.domain.entities.Project
-import io.spiralhouse.cycletime.domain.repositories.IssueRepository
-import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
-import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.IssueId
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
@@ -51,9 +51,9 @@ import io.spiralhouse.cycletime.domain.valueobjects.ProjectStatus
  * @constructor Creates a new ProjectApplicationService with required dependencies
  */
 class ProjectApplicationService(
-    private val projectRepository: ProjectRepository,
-    private val issueRepository: IssueRepository,
-    private val unitOfWork: UnitOfWork,
+    private val projectRepository: ExposedProjectRepository,
+    private val issueRepository: ExposedIssueRepository,
+    private val unitOfWork: ExposedUnitOfWork,
     private val timeProvider: TimeProvider
 ) : ApplicationServiceBase() {
 

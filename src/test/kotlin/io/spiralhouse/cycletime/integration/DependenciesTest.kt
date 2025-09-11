@@ -10,10 +10,6 @@ import io.ktor.client.request.*
 import io.spiralhouse.cycletime.application.services.ProjectApplicationService
 import io.spiralhouse.cycletime.application.services.IssueApplicationService
 import io.spiralhouse.cycletime.application.services.SessionApplicationService
-import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
-import io.spiralhouse.cycletime.domain.repositories.IssueRepository
-import io.spiralhouse.cycletime.domain.repositories.SessionRepository
-import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 import io.spiralhouse.cycletime.infrastructure.di.modules.test.FixedTimeProvider
@@ -57,10 +53,10 @@ class DependenciesTest : StringSpec({
             // Verify all dependencies are registered and resolvable
             val timeProvider: TimeProvider by application.dependencies
             val database: Database by application.dependencies
-            val unitOfWork: UnitOfWork by application.dependencies
-            val projectRepo: ProjectRepository by application.dependencies
-            val issueRepo: IssueRepository by application.dependencies
-            val sessionRepo: SessionRepository by application.dependencies
+            val unitOfWork: ExposedUnitOfWork by application.dependencies
+            val projectRepo: ExposedProjectRepository by application.dependencies
+            val issueRepo: ExposedIssueRepository by application.dependencies
+            val sessionRepo: ExposedSessionRepository by application.dependencies
             val projectService: ProjectApplicationService by application.dependencies
             val issueService: IssueApplicationService by application.dependencies
             val sessionService: SessionApplicationService by application.dependencies

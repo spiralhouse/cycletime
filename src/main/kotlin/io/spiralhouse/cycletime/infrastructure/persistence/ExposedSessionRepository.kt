@@ -3,7 +3,6 @@ package io.spiralhouse.cycletime.infrastructure.persistence
 import io.spiralhouse.cycletime.domain.entities.Session
 import io.spiralhouse.cycletime.domain.entities.SessionContext
 import io.spiralhouse.cycletime.domain.entities.SessionSnapshot
-import io.spiralhouse.cycletime.domain.repositories.SessionRepository
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
@@ -59,9 +58,9 @@ import java.util.UUID
  */
 @ThreadSafe // Documenting thread-safety guarantee
 class ExposedSessionRepository(
-    private val timeProvider: TimeProvider = SystemTimeProvider(),
-    private val database: Database? = null
-) : SessionRepository {
+    timeProvider: TimeProvider = SystemTimeProvider(),
+    database: Database? = null
+) : BaseExposedRepository(timeProvider, database) {
 
     private val logger = LoggerFactory.getLogger(ExposedSessionRepository::class.java)
 
@@ -82,7 +81,7 @@ class ExposedSessionRepository(
      * @param sessionKey The session key to search for
      * @return The session if found, null otherwise
      */
-    override suspend fun findByKey(sessionKey: SessionKey): Session? = dbQuery {
+    suspend fun findByKey(sessionKey: SessionKey): Session? = dbQuery {
         findSessionRowByKey(sessionKey.value)?.toSession()
     }
 
@@ -92,7 +91,7 @@ class ExposedSessionRepository(
      * @param projectId The project ID to search for
      * @return List of sessions associated with the project, ordered by creation date
      */
-    override suspend fun findByProject(projectId: ProjectId): List<Session> = dbQuery {
+    suspend fun findByProject(projectId: ProjectId): List<Session> = dbQuery {
         findSessionsByCondition { SessionStatesTable.projectId eq projectId.value }
     }
 
@@ -102,7 +101,7 @@ class ExposedSessionRepository(
      * @param before The cutoff instant - sessions with lastActivity before this are considered expired
      * @return List of expired sessions
      */
-    override suspend fun findExpiredSessions(before: Instant): List<Session> = dbQuery {
+    suspend fun findExpiredSessions(before: Instant): List<Session> = dbQuery {
         findSessionsByCondition { SessionStatesTable.lastActivity less before }
     }
 
@@ -121,7 +120,7 @@ class ExposedSessionRepository(
      * @param session The session to save
      * @throws SerializationException if SessionContext serialization fails
      */
-    override suspend fun save(session: Session) {
+    suspend fun save(session: Session) {
         dbQuery {
             val contextJson = serializeContext(session.currentContext)
             val exists = checkSessionExists(session.sessionKey)
@@ -139,7 +138,7 @@ class ExposedSessionRepository(
      *
      * @param sessionKey The key of the session to delete
      */
-    override suspend fun delete(sessionKey: SessionKey) {
+    suspend fun delete(sessionKey: SessionKey) {
         dbQuery {
             SessionStatesTable.deleteWhere {
                 SessionStatesTable.sessionKey eq sessionKey.value
@@ -156,7 +155,7 @@ class ExposedSessionRepository(
      * @param before The cutoff instant - sessions with lastActivity before this will be deleted
      * @return The number of sessions deleted
      */
-    override suspend fun deleteExpiredSessions(before: Instant): Int = dbQuery {
+    suspend fun deleteExpiredSessions(before: Instant): Int = dbQuery {
         SessionStatesTable.deleteWhere {
             SessionStatesTable.lastActivity less before
         }
@@ -167,7 +166,7 @@ class ExposedSessionRepository(
      *
      * @return List of all sessions ordered by creation date
      */
-    override suspend fun findAll(): List<Session> = dbQuery {
+    suspend fun findAll(): List<Session> = dbQuery {
         findSessionsByCondition { Op.TRUE }
     }
 
@@ -177,7 +176,7 @@ class ExposedSessionRepository(
      * @param since The cutoff instant - sessions updated after this time are returned
      * @return List of recent sessions
      */
-    override suspend fun findRecentSessions(since: Instant): List<Session> = dbQuery {
+    suspend fun findRecentSessions(since: Instant): List<Session> = dbQuery {
         findSessionsByCondition { SessionStatesTable.updatedAt greater since }
     }
 
@@ -186,7 +185,7 @@ class ExposedSessionRepository(
      *
      * @return The total count of sessions
      */
-    override suspend fun count(): Int = dbQuery {
+    suspend fun count(): Int = dbQuery {
         SessionStatesTable.selectAll().count().toInt()
     }
 
@@ -196,7 +195,7 @@ class ExposedSessionRepository(
      * @param sessionKey The session key to check
      * @return true if the session exists, false otherwise
      */
-    override suspend fun exists(sessionKey: SessionKey): Boolean = dbQuery {
+    suspend fun exists(sessionKey: SessionKey): Boolean = dbQuery {
         checkSessionExists(sessionKey)
     }
 
@@ -343,11 +342,7 @@ class ExposedSessionRepository(
      * @return true if the session exists, false otherwise
      */
     private fun checkSessionExists(sessionKey: SessionKey): Boolean {
-        return SessionStatesTable
-            .select(SessionStatesTable.sessionKey)
-            .where { SessionStatesTable.sessionKey eq sessionKey.value }
-            .limit(1)
-            .count() > 0
+        return checkExists(SessionStatesTable) { SessionStatesTable.sessionKey eq sessionKey.value }
     }
 
     /**
@@ -360,11 +355,12 @@ class ExposedSessionRepository(
      * @return List of sessions matching the condition
      */
     private fun findSessionsByCondition(condition: SqlExpressionBuilder.() -> Op<Boolean>): List<Session> {
-        return SessionStatesTable
-            .selectAll()
-            .where(condition)
-            .orderBy(SessionStatesTable.createdAt to SortOrder.ASC)
-            .map { it.toSession() }
+        return findByCondition(
+            table = SessionStatesTable,
+            condition = condition,
+            orderBy = SessionStatesTable.createdAt to SortOrder.ASC,
+            mapper = { it.toSession() }
+        )
     }
 
     /**
@@ -413,35 +409,6 @@ class ExposedSessionRepository(
         return Session.fromSnapshot(snapshot, timeProvider)
     }
 
-    /**
-     * Executes a database query with proper transaction management.
-     * 
-     * Thread-safe implementation that:
-     * - Reuses existing transactions when called from UnitOfWork
-     * - Creates new transactions for standalone operations
-     * - Uses the specified database instance if provided
-     * - Properly handles concurrent access through Exposed's transaction management
-     *
-     * @param block The query to execute
-     * @return The query result
-     */
-    private suspend fun <T> dbQuery(block: suspend () -> T): T {
-        // Check if we're already in a transaction (e.g., from UnitOfWork)
-        val currentTransaction = TransactionManager.currentOrNull()
-        
-        return if (currentTransaction != null) {
-            // We're already in a transaction - execute directly without creating a new one
-            // This preserves UnitOfWork behavior and transaction boundaries
-            block()
-        } else {
-            // No transaction - create new transaction (thread-safe)
-            if (database != null) {
-                newSuspendedTransaction(Dispatchers.IO, database) { block() }
-            } else {
-                newSuspendedTransaction(Dispatchers.IO) { block() }
-            }
-        }
-    }
 }
 
 /**

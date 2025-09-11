@@ -5,9 +5,9 @@ import io.spiralhouse.cycletime.application.dto.*
 import io.spiralhouse.cycletime.application.exceptions.*
 import io.spiralhouse.cycletime.domain.entities.Issue
 import io.spiralhouse.cycletime.domain.exceptions.DomainException
-import io.spiralhouse.cycletime.domain.repositories.IssueRepository
-import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
-import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.*
 import io.spiralhouse.cycletime.infrastructure.persistence.queries.HierarchyQueries
@@ -47,9 +47,9 @@ import io.spiralhouse.cycletime.infrastructure.persistence.queries.HierarchyQuer
  * @constructor Creates a new IssueApplicationService with required dependencies
  */
 class IssueApplicationService(
-    private val issueRepository: IssueRepository,
-    private val projectRepository: ProjectRepository,
-    private val unitOfWork: UnitOfWork,
+    private val issueRepository: ExposedIssueRepository,
+    private val projectRepository: ExposedProjectRepository,
+    private val unitOfWork: ExposedUnitOfWork,
     private val timeProvider: TimeProvider
 ) : ApplicationServiceBase() {
 

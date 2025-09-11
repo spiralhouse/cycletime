@@ -8,9 +8,9 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
-import io.spiralhouse.cycletime.domain.repositories.IssueRepository
-import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
-import io.spiralhouse.cycletime.domain.repositories.SessionRepository
+
+
+
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
@@ -73,9 +73,9 @@ class DependencyInjectionIntegrationTest : StringSpec({
 
             client.get("/health")  // Trigger application initialization
 
-            val projectRepository: ProjectRepository by application.dependencies
-            val issueRepository: IssueRepository by application.dependencies
-            val sessionRepository: SessionRepository by application.dependencies
+            val projectRepository: ExposedProjectRepository by application.dependencies
+            val issueRepository: ExposedIssueRepository by application.dependencies
+            val sessionRepository: ExposedSessionRepository by application.dependencies
 
             // Verify correct implementation types
             projectRepository.shouldBeInstanceOf<ExposedProjectRepository>()
@@ -100,16 +100,16 @@ class DependencyInjectionIntegrationTest : StringSpec({
             client.get("/health")  // Trigger application initialization
 
             // Verify singleton behavior for each repository
-            val projectRepository1: ProjectRepository by application.dependencies
-            val projectRepository2: ProjectRepository by application.dependencies
+            val projectRepository1: ExposedProjectRepository by application.dependencies
+            val projectRepository2: ExposedProjectRepository by application.dependencies
             projectRepository1 shouldBe projectRepository2
 
-            val issueRepository1: IssueRepository by application.dependencies
-            val issueRepository2: IssueRepository by application.dependencies
+            val issueRepository1: ExposedIssueRepository by application.dependencies
+            val issueRepository2: ExposedIssueRepository by application.dependencies
             issueRepository1 shouldBe issueRepository2
 
-            val sessionRepository1: SessionRepository by application.dependencies
-            val sessionRepository2: SessionRepository by application.dependencies
+            val sessionRepository1: ExposedSessionRepository by application.dependencies
+            val sessionRepository2: ExposedSessionRepository by application.dependencies
             sessionRepository1 shouldBe sessionRepository2
         }
     }

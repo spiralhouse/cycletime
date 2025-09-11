@@ -1,5 +1,11 @@
 package io.spiralhouse.cycletime.integration
 
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionRepository
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedWorkflowRepository
+
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContain
@@ -15,8 +21,8 @@ import io.spiralhouse.cycletime.application.exceptions.WorkflowNotFoundException
 import io.spiralhouse.cycletime.application.services.WorkflowApplicationService
 import io.spiralhouse.cycletime.domain.entities.Workflow
 import io.spiralhouse.cycletime.domain.exceptions.DomainException
-import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
-import io.spiralhouse.cycletime.domain.repositories.WorkflowRepository
+
+
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
 import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
@@ -43,8 +49,8 @@ import kotlinx.datetime.Instant
  *
  * ```kotlin
  * class WorkflowApplicationService(
- *     private val workflowRepository: WorkflowRepository,
- *     private val unitOfWork: UnitOfWork,
+ *     private val workflowRepository: ExposedWorkflowRepository,
+ *     private val unitOfWork: ExposedUnitOfWork,
  *     private val timeProvider: TimeProvider
  * ) {
  *     // CRUD Operations
@@ -68,8 +74,8 @@ import kotlinx.datetime.Instant
  */
 class WorkflowApplicationServiceTest : StringSpec({
 
-    lateinit var mockWorkflowRepository: WorkflowRepository
-    lateinit var mockUnitOfWork: UnitOfWork
+    lateinit var mockWorkflowRepository: ExposedWorkflowRepository
+    lateinit var mockUnitOfWork: ExposedUnitOfWork
     lateinit var mockTimeProvider: MockTimeProvider
     lateinit var workflowApplicationService: WorkflowApplicationService
 
