@@ -1,5 +1,6 @@
 package io.spiralhouse.cycletime.unit.mocks
 
+import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
 import org.jetbrains.exposed.sql.Database
 
 /**
@@ -37,7 +38,7 @@ import org.jetbrains.exposed.sql.Database
  */
 class MockUnitOfWork(
     private val database: Database? = null
-) {
+) : UnitOfWork {
     
     // ================================================================================
     // Test Data Tracking
@@ -69,7 +70,7 @@ class MockUnitOfWork(
      * @return The result of executing the block
      * @throws Exception If executeException is configured, throws that exception instead
      */
-    suspend fun <T> execute(block: suspend () -> T): T {
+    override suspend fun <T> execute(block: suspend () -> T): T {
         executeCallCount++
         
         // Simulate exception if configured

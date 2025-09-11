@@ -1,6 +1,7 @@
 package io.spiralhouse.cycletime.unit.mocks
 
 import io.spiralhouse.cycletime.domain.entities.Project
+import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectStatus
@@ -36,7 +37,7 @@ import org.jetbrains.exposed.sql.Database
 class MockProjectRepository(
     private val timeProvider: TimeProvider? = null,
     private val database: Database? = null
-) {
+) : ProjectRepository {
     
     // ================================================================================
     // Test Data Storage
@@ -65,22 +66,22 @@ class MockProjectRepository(
     // Repository Interface Implementation
     // ================================================================================
     
-    suspend fun findById(id: ProjectId): Project? {
+    override suspend fun findById(id: ProjectId): Project? {
         findCallCount++
         return projects[id]
     }
     
-    suspend fun findByStatus(status: ProjectStatus): List<Project> {
+    override suspend fun findByStatus(status: ProjectStatus): List<Project> {
         findCallCount++
         return projectsByStatus[status]?.toList() ?: emptyList()
     }
     
-    suspend fun findAll(): List<Project> {
+    override suspend fun findAll(): List<Project> {
         findCallCount++
         return projects.values.toList()
     }
     
-    suspend fun save(project: Project) {
+    override suspend fun save(project: Project) {
         saveCallCount++
         projects[project.id] = project
         
@@ -93,7 +94,7 @@ class MockProjectRepository(
         }
     }
     
-    suspend fun delete(id: ProjectId) {
+    override suspend fun delete(id: ProjectId) {
         deleteCallCount++
         val project = projects.remove(id)
         
@@ -103,7 +104,7 @@ class MockProjectRepository(
         }
     }
     
-    suspend fun exists(id: ProjectId): Boolean {
+    override suspend fun exists(id: ProjectId): Boolean {
         return projects.containsKey(id)
     }
     

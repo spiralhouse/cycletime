@@ -1,6 +1,7 @@
 package io.spiralhouse.cycletime.unit.mocks
 
 import io.spiralhouse.cycletime.domain.entities.Session
+import io.spiralhouse.cycletime.domain.repositories.SessionRepository
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
 import io.spiralhouse.cycletime.domain.valueobjects.SessionKey
@@ -36,7 +37,7 @@ import org.jetbrains.exposed.sql.Database
 class MockSessionRepository(
     private val timeProvider: TimeProvider? = null,
     private val database: Database? = null
-) {
+) : SessionRepository {
     
     // ================================================================================
     // Test Data Storage
@@ -65,22 +66,22 @@ class MockSessionRepository(
     // Repository Interface Implementation
     // ================================================================================
     
-    suspend fun findByKey(sessionKey: SessionKey): Session? {
+    override suspend fun findByKey(sessionKey: SessionKey): Session? {
         findCallCount++
         return sessions[sessionKey]
     }
     
-    suspend fun findByProject(projectId: ProjectId): List<Session> {
+    override suspend fun findByProject(projectId: ProjectId): List<Session> {
         findCallCount++
         return sessionsByProject[projectId]?.toList() ?: emptyList()
     }
     
-    suspend fun findExpiredSessions(before: Instant): List<Session> {
+    override suspend fun findExpiredSessions(before: Instant): List<Session> {
         findCallCount++
         return sessions.values.filter { it.lastActivity < before }
     }
     
-    suspend fun save(session: Session) {
+    override suspend fun save(session: Session) {
         saveCallCount++
         sessions[session.sessionKey] = session
         
@@ -95,7 +96,7 @@ class MockSessionRepository(
         }
     }
     
-    suspend fun delete(sessionKey: SessionKey) {
+    override suspend fun delete(sessionKey: SessionKey) {
         deleteCallCount++
         val session = sessions.remove(sessionKey)
         
@@ -105,7 +106,7 @@ class MockSessionRepository(
         }
     }
     
-    suspend fun deleteExpiredSessions(before: Instant): Int {
+    override suspend fun deleteExpiredSessions(before: Instant): Int {
         deleteCallCount++
         val expiredSessions = sessions.values.filter { it.lastActivity < before }
         
@@ -121,21 +122,21 @@ class MockSessionRepository(
         return expiredSessions.size
     }
     
-    suspend fun findAll(): List<Session> {
+    override suspend fun findAll(): List<Session> {
         findCallCount++
         return sessions.values.toList()
     }
     
-    suspend fun findRecentSessions(since: Instant): List<Session> {
+    override suspend fun findRecentSessions(since: Instant): List<Session> {
         findCallCount++
         return sessions.values.filter { it.updatedAt > since }
     }
     
-    suspend fun count(): Int {
+    override suspend fun count(): Int {
         return sessions.size
     }
     
-    suspend fun exists(sessionKey: SessionKey): Boolean {
+    override suspend fun exists(sessionKey: SessionKey): Boolean {
         return sessions.containsKey(sessionKey)
     }
     

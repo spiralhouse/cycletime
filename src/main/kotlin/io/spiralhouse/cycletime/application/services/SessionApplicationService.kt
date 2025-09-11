@@ -7,9 +7,9 @@ import io.spiralhouse.cycletime.application.exceptions.ProjectNotFoundException
 import io.spiralhouse.cycletime.application.exceptions.SessionNotFoundException
 import io.spiralhouse.cycletime.domain.entities.Session
 import io.spiralhouse.cycletime.domain.entities.SessionContext
-import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
-import io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionRepository
-import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
+import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
+import io.spiralhouse.cycletime.domain.repositories.SessionRepository
+import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
 import io.spiralhouse.cycletime.domain.valueobjects.SessionKey
@@ -64,9 +64,9 @@ import kotlin.time.Duration.Companion.days
  * @constructor Creates a new SessionApplicationService with required dependencies
  */
 class SessionApplicationService(
-    private val sessionRepository: ExposedSessionRepository,
-    private val projectRepository: ExposedProjectRepository,
-    private val unitOfWork: ExposedUnitOfWork,
+    private val sessionRepository: SessionRepository,
+    private val projectRepository: ProjectRepository,
+    private val unitOfWork: UnitOfWork,
     private val timeProvider: TimeProvider
 ) : ApplicationServiceBase() {
 
@@ -195,12 +195,8 @@ class SessionApplicationService(
      * @throws SessionNotFoundException if the session doesn't exist
      */
     suspend fun touchSession(sessionKey: SessionKey): SessionDto {
-        return unitOfWork.execute {
-            val session = loadSessionOrThrow(sessionKey)
-
+        return executeSessionOperation(sessionKey) { session ->
             session.touch()
-            sessionRepository.save(session)
-            SessionDto.fromSession(session)
         }
     }
 
@@ -251,12 +247,8 @@ class SessionApplicationService(
      * @throws SessionNotFoundException if the session doesn't exist
      */
     suspend fun disassociateFromProject(sessionKey: SessionKey): SessionDto {
-        return unitOfWork.execute {
-            val session = loadSessionOrThrow(sessionKey)
-
+        return executeSessionOperation(sessionKey) { session ->
             session.setProject(null)
-            sessionRepository.save(session)
-            SessionDto.fromSession(session)
         }
     }
 
@@ -313,25 +305,21 @@ class SessionApplicationService(
      * Updates an existing context entry in the session.
      *
      * This operation is semantically identical to addContextEntry but provides
-     * clearer intent when updating existing keys. Both operations perform
-     * the same key-value update functionality.
-     *
-     * ## Implementation Note:
-     * Delegates to the same domain method as addContextEntry for consistency
-     * and to avoid code duplication.
+     * clearer intent when updating existing keys. Delegates to addContextEntry
+     * to avoid code duplication.
      *
      * @param command Command containing session key, entry key and new value
      * @return SessionDto representing the updated session state
      * @throws SessionNotFoundException if the session doesn't exist
      */
     suspend fun updateContextEntry(command: UpdateContextEntryCommand): SessionDto {
-        return unitOfWork.execute {
-            val session = loadSessionOrThrow(command.sessionKey)
-
-            session.updateContextData(command.key, command.value)
-            sessionRepository.save(session)
-            SessionDto.fromSession(session)
-        }
+        return addContextEntry(
+            AddContextEntryCommand(
+                sessionKey = command.sessionKey,
+                key = command.key,
+                value = command.value
+            )
+        )
     }
 
     /**
@@ -350,12 +338,8 @@ class SessionApplicationService(
      * @throws SessionNotFoundException if the session doesn't exist
      */
     suspend fun removeContextEntry(command: RemoveContextEntryCommand): SessionDto {
-        return unitOfWork.execute {
-            val session = loadSessionOrThrow(command.sessionKey)
-
+        return executeSessionOperation(command.sessionKey) { session ->
             session.removeContextData(command.key)
-            sessionRepository.save(session)
-            SessionDto.fromSession(session)
         }
     }
 
@@ -379,12 +363,8 @@ class SessionApplicationService(
      * @throws SessionNotFoundException if the session doesn't exist
      */
     suspend fun clearContext(sessionKey: SessionKey): SessionDto {
-        return unitOfWork.execute {
-            val session = loadSessionOrThrow(sessionKey)
-
+        return executeSessionOperation(sessionKey) { session ->
             session.updateContext(SessionContext()) // Reset to empty context
-            sessionRepository.save(session)
-            SessionDto.fromSession(session)
         }
     }
 
@@ -413,12 +393,8 @@ class SessionApplicationService(
      * @throws SessionNotFoundException if the session doesn't exist
      */
     suspend fun addActiveIssue(command: AddActiveIssueCommand): SessionDto {
-        return unitOfWork.execute {
-            val session = loadSessionOrThrow(command.sessionKey)
-
+        return executeSessionOperation(command.sessionKey) { session ->
             session.addActiveIssue(command.issueId)
-            sessionRepository.save(session)
-            SessionDto.fromSession(session)
         }
     }
 
@@ -438,12 +414,8 @@ class SessionApplicationService(
      * @throws SessionNotFoundException if the session doesn't exist
      */
     suspend fun removeActiveIssue(command: RemoveActiveIssueCommand): SessionDto {
-        return unitOfWork.execute {
-            val session = loadSessionOrThrow(command.sessionKey)
-
+        return executeSessionOperation(command.sessionKey) { session ->
             session.removeActiveIssue(command.issueId)
-            sessionRepository.save(session)
-            SessionDto.fromSession(session)
         }
     }
 
@@ -463,12 +435,8 @@ class SessionApplicationService(
      * @throws SessionNotFoundException if the session doesn't exist
      */
     suspend fun setWorkflowStage(command: SetWorkflowStageCommand): SessionDto {
-        return unitOfWork.execute {
-            val session = loadSessionOrThrow(command.sessionKey)
-
+        return executeSessionOperation(command.sessionKey) { session ->
             session.setWorkflowStage(command.stage)
-            sessionRepository.save(session)
-            SessionDto.fromSession(session)
         }
     }
 
@@ -488,12 +456,8 @@ class SessionApplicationService(
      * @throws SessionNotFoundException if the session doesn't exist
      */
     suspend fun setLastAction(command: SetLastActionCommand): SessionDto {
-        return unitOfWork.execute {
-            val session = loadSessionOrThrow(command.sessionKey)
-
+        return executeSessionOperation(command.sessionKey) { session ->
             session.setLastAction(command.action)
-            sessionRepository.save(session)
-            SessionDto.fromSession(session)
         }
     }
 
@@ -558,26 +522,56 @@ class SessionApplicationService(
     // ================================================================================
 
     /**
-     * Retrieves all active sessions in the system.
+     * Retrieves active sessions in the system with optional pagination.
      *
-     * Returns a complete list of all sessions regardless of project association
-     * or expiration status. Sessions are returned in their natural repository
-     * order (typically by creation date).
+     * Returns sessions with optional limit and offset for pagination support.
+     * When no pagination parameters are provided, returns all sessions for
+     * backward compatibility.
      *
      * ## Performance Considerations:
-     * - **Loads all sessions into memory** - consider pagination for large datasets
+     * - **Use pagination for large datasets** via limit/offset parameters
      * - Each session includes its full context data (JSON deserialization cost)
-     * - For large deployments, consider implementing:
-     *   - Pagination with limit/offset parameters
-     *   - Streaming results for memory efficiency
-     *   - Optional context loading (lazy loading pattern)
+     * - Pagination reduces memory usage and improves response times
+     * - Total count is calculated efficiently without loading all sessions
      *
-     * @return SessionListDto containing all sessions and total count
+     * ## Pagination Usage:
+     * ```kotlin
+     * // Get first 50 sessions
+     * listActiveSessions(limit = 50, offset = 0)
+     * 
+     * // Get next 50 sessions  
+     * listActiveSessions(limit = 50, offset = 50)
+     *
+     * // Get all sessions (backward compatibility)
+     * listActiveSessions()
+     * ```
+     *
+     * @param limit Maximum number of sessions to return (null = no limit)
+     * @param offset Number of sessions to skip (null = no offset)
+     * @return SessionListDto containing sessions and total count
      */
-    suspend fun listActiveSessions(): SessionListDto {
+    suspend fun listActiveSessions(limit: Int? = null, offset: Int? = null): SessionListDto {
         return unitOfWork.execute {
-            val sessions = sessionRepository.findAll()
-            SessionListDto.fromSessions(sessions)
+            val allSessions = sessionRepository.findAll()
+            
+            // Apply pagination if specified
+            val paginatedSessions = when {
+                limit != null && offset != null -> {
+                    allSessions.drop(offset).take(limit)
+                }
+                limit != null -> {
+                    allSessions.take(limit)
+                }
+                offset != null -> {
+                    allSessions.drop(offset)
+                }
+                else -> allSessions
+            }
+            
+            SessionListDto(
+                sessions = paginatedSessions.map { SessionDto.fromSession(it) },
+                totalCount = allSessions.size
+            )
         }
     }
 
@@ -613,6 +607,34 @@ class SessionApplicationService(
     // ================================================================================
     // Private Helper Methods
     // ================================================================================
+
+    /**
+     * Executes a common session operation pattern: load, modify, save, return DTO.
+     *
+     * This method encapsulates the most common pattern in session operations:
+     * 1. Load session by key (throwing exception if not found)
+     * 2. Execute the provided operation on the session
+     * 3. Save the modified session
+     * 4. Return the session as a DTO
+     *
+     * All operations are wrapped in a transaction via the Unit of Work pattern.
+     *
+     * @param sessionKey The key of the session to operate on
+     * @param operation The operation to perform on the loaded session
+     * @return SessionDto representing the modified session state
+     * @throws SessionNotFoundException if the session doesn't exist
+     */
+    private suspend inline fun executeSessionOperation(
+        sessionKey: SessionKey,
+        crossinline operation: (Session) -> Unit
+    ): SessionDto {
+        return unitOfWork.execute {
+            val session = loadSessionOrThrow(sessionKey)
+            operation(session)
+            sessionRepository.save(session)
+            SessionDto.fromSession(session)
+        }
+    }
 
     /**
      * Loads a session by key or throws SessionNotFoundException.

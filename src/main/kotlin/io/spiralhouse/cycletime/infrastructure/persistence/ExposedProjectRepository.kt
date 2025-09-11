@@ -1,6 +1,7 @@
 package io.spiralhouse.cycletime.infrastructure.persistence
 
 import io.spiralhouse.cycletime.domain.entities.Project
+import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
 import io.spiralhouse.cycletime.domain.entities.ProjectSnapshot
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
@@ -46,7 +47,7 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 class ExposedProjectRepository(
     timeProvider: TimeProvider = SystemTimeProvider(),
     database: Database? = null
-) : BaseExposedRepository(timeProvider, database) {
+) : BaseExposedRepository(timeProvider, database), ProjectRepository {
 
     /**
      * Finds a project by its unique identifier.
@@ -54,7 +55,7 @@ class ExposedProjectRepository(
      * @param id The project ID to search for
      * @return The project if found, null otherwise
      */
-    suspend fun findById(id: ProjectId): Project? = dbQuery {
+    override suspend fun findById(id: ProjectId): Project? = dbQuery {
         ProjectsTable
             .selectAll()
             .where { ProjectsTable.id eq id.value }
@@ -69,7 +70,7 @@ class ExposedProjectRepository(
      * @param status The project status to filter by
      * @return List of projects matching the status
      */
-    suspend fun findByStatus(status: ProjectStatus): List<Project> = dbQuery {
+    override suspend fun findByStatus(status: ProjectStatus): List<Project> = dbQuery {
         val projectRows = ProjectsTable
             .selectAll()
             .where { ProjectsTable.status eq status.value }
@@ -93,7 +94,7 @@ class ExposedProjectRepository(
      *
      * @return List of all projects
      */
-    suspend fun findAll(): List<Project> = dbQuery {
+    override suspend fun findAll(): List<Project> = dbQuery {
         val projectRows = ProjectsTable
             .selectAll()
             .toList()
@@ -117,7 +118,7 @@ class ExposedProjectRepository(
      * @param project The project to save
      * @throws Exception if database operation fails
      */
-    suspend fun save(project: Project) {
+    override suspend fun save(project: Project) {
         dbQuery {
             val exists = checkProjectExists(project.id)
 
@@ -170,7 +171,7 @@ class ExposedProjectRepository(
      *
      * @param id The ID of the project to delete
      */
-    suspend fun delete(id: ProjectId) {
+    override suspend fun delete(id: ProjectId) {
         dbQuery {
             // Note: Issue cleanup should be handled by IssueRepository
             // Only delete the project record itself
@@ -184,7 +185,7 @@ class ExposedProjectRepository(
      * @param id The project ID to check
      * @return true if the project exists, false otherwise
      */
-    suspend fun exists(id: ProjectId): Boolean = dbQuery {
+    override suspend fun exists(id: ProjectId): Boolean = dbQuery {
         checkProjectExists(id)
     }
 
