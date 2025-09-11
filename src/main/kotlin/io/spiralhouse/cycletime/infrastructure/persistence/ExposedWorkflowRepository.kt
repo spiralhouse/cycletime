@@ -2,6 +2,7 @@ package io.spiralhouse.cycletime.infrastructure.persistence
 
 import io.spiralhouse.cycletime.domain.entities.Workflow
 import io.spiralhouse.cycletime.domain.entities.WorkflowSnapshot
+import io.spiralhouse.cycletime.domain.repositories.WorkflowRepository
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
@@ -49,7 +50,7 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 class ExposedWorkflowRepository(
     timeProvider: TimeProvider = SystemTimeProvider(),
     database: Database? = null
-) : BaseExposedRepository(timeProvider, database) {
+) : BaseExposedRepository(timeProvider, database), WorkflowRepository {
 
     /**
      * JSON serializer for IssueStatus sets with lenient configuration.
@@ -75,7 +76,7 @@ class ExposedWorkflowRepository(
      * @return The saved workflow
      * @throws Exception if database operation fails
      */
-    suspend fun save(workflow: Workflow): Workflow = dbQuery {
+    override suspend fun save(workflow: Workflow): Workflow = dbQuery {
         val exists = checkExists(WorkflowsTable) { WorkflowsTable.id eq workflow.id.value }
         
         if (exists) {
@@ -108,7 +109,7 @@ class ExposedWorkflowRepository(
      * @return The workflow if found, null otherwise
      * @throws Exception if database operation fails
      */
-    suspend fun findById(id: WorkflowId): Workflow? = dbQuery {
+    override suspend fun findById(id: WorkflowId): Workflow? = dbQuery {
         WorkflowsTable
             .selectAll()
             .where { WorkflowsTable.id eq id.value }
@@ -123,7 +124,7 @@ class ExposedWorkflowRepository(
      * @return List of all workflows
      * @throws Exception if database operation fails
      */
-    suspend fun findAll(): List<Workflow> = dbQuery {
+    override suspend fun findAll(): List<Workflow> = dbQuery {
         WorkflowsTable
             .selectAll()
             .orderBy(WorkflowsTable.createdAt to SortOrder.ASC)
@@ -139,7 +140,7 @@ class ExposedWorkflowRepository(
      * @throws IllegalArgumentException if workflow doesn't exist
      * @throws Exception if database operation fails
      */
-    suspend fun update(workflow: Workflow): Workflow = dbQuery {
+    override suspend fun update(workflow: Workflow): Workflow = dbQuery {
         val rowsUpdated = WorkflowsTable.update({ WorkflowsTable.id eq workflow.id.value }) {
             it[name] = workflow.name
             it[description] = workflow.description
@@ -163,7 +164,7 @@ class ExposedWorkflowRepository(
      * @return true if the workflow was deleted, false if it didn't exist
      * @throws Exception if database operation fails
      */
-    suspend fun delete(id: WorkflowId): Boolean = dbQuery {
+    override suspend fun delete(id: WorkflowId): Boolean = dbQuery {
         val deletedCount = WorkflowsTable.deleteWhere { WorkflowsTable.id eq id.value }
         deletedCount > 0
     }
@@ -176,7 +177,7 @@ class ExposedWorkflowRepository(
      * @return true if the workflow exists, false otherwise
      * @throws Exception if database operation fails
      */
-    suspend fun existsById(id: WorkflowId): Boolean = dbQuery {
+    override suspend fun existsById(id: WorkflowId): Boolean = dbQuery {
         checkExists(WorkflowsTable) { WorkflowsTable.id eq id.value }
     }
 

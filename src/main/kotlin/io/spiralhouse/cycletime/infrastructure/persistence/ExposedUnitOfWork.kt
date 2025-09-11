@@ -1,5 +1,6 @@
 package io.spiralhouse.cycletime.infrastructure.persistence
 
+import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Transaction
@@ -17,9 +18,9 @@ import org.jetbrains.exposed.sql.transactions.transaction
  * Use the execute() method which properly wraps operations in transactions
  * with automatic commit/rollback handling.
  */
-class ExposedUnitOfWork(private val database: Database) {
+class ExposedUnitOfWork(private val database: Database) : UnitOfWork {
     
-    suspend fun <T> execute(block: suspend () -> T): T {
+    override suspend fun <T> execute(block: suspend () -> T): T {
         return newSuspendedTransaction(Dispatchers.IO, database) {
             // Transaction will auto-commit at the end of newSuspendedTransaction
             // Transaction will auto-rollback on exception in newSuspendedTransaction

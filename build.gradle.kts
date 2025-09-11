@@ -209,9 +209,9 @@ tasks.withType<Test> {
 // Separate Test Suite Tasks for SPI-473
 // =============================================================================
 
-// Unit Tests - Domain logic, value objects, business rules
+// Unit Tests - Domain logic, value objects, business rules, application services
 val unitTest by tasks.registering(Test::class) {
-    description = "Runs fast unit tests (domain entities, value objects)"
+    description = "Runs fast unit tests (domain entities, value objects, application services)"
     group = "verification"
     
     testClassesDirs = sourceSets["test"].output.classesDirs
@@ -223,12 +223,13 @@ val unitTest by tasks.registering(Test::class) {
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
     
-    // Filter for unit tests (domain and verification package tests)
+    // Filter for unit tests (domain, verification, and unit packages)
     filter {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*")
         excludeTestsMatching("io.spiralhouse.cycletime.integration.*")
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
     }
@@ -237,10 +238,12 @@ val unitTest by tasks.registering(Test::class) {
     inputs.files(fileTree("src/main/kotlin") {
         include("**/domain/**/*.kt")
         include("**/valueobjects/**/*.kt")
+        include("**/application/services/**/*.kt")
     })
     inputs.files(fileTree("src/test/kotlin") {
         include("**/domain/**/*.kt")
         include("**/verification/**/*.kt")
+        include("**/unit/**/*.kt")
     })
     inputs.file("build.gradle.kts")
     
@@ -441,7 +444,7 @@ val testAll by tasks.registering {
 // Configure the main test task to run unit tests for fast feedback (standard Gradle convention)
 tasks.test {
     // Follow Gradle convention: 'test' runs unit tests for rapid development feedback
-    description = "Runs unit tests (fast domain and verification tests)"
+    description = "Runs unit tests (fast domain, verification, and application service tests)"
     
     // Instead of delegating, configure test to run only unit tests directly
     filter {
@@ -449,6 +452,7 @@ tasks.test {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*")
         excludeTestsMatching("io.spiralhouse.cycletime.integration.*")
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
         excludeTestsMatching("io.spiralhouse.cycletime.api.*")

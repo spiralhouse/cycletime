@@ -2,6 +2,7 @@ package io.spiralhouse.cycletime.infrastructure.persistence
 
 import io.spiralhouse.cycletime.domain.entities.Issue
 import io.spiralhouse.cycletime.domain.entities.IssueSnapshot
+import io.spiralhouse.cycletime.domain.repositories.IssueRepository
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.*
@@ -49,7 +50,7 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 class ExposedIssueRepository(
     timeProvider: TimeProvider = SystemTimeProvider(),
     database: Database? = null
-) : BaseExposedRepository(timeProvider, database) {
+) : BaseExposedRepository(timeProvider, database), IssueRepository {
 
     /**
      * Finds an issue by its unique identifier.
@@ -61,7 +62,7 @@ class ExposedIssueRepository(
      * @param id The issue ID to search for
      * @return The fully reconstituted Issue entity if found, null otherwise
      */
-    suspend fun findById(id: IssueId): Issue? = dbQuery {
+    override suspend fun findById(id: IssueId): Issue? = dbQuery {
         findIssueRowById(id.value)?.toIssue()
     }
 
@@ -71,7 +72,7 @@ class ExposedIssueRepository(
      * @param projectId The project ID to search for
      * @return List of issues in the project, ordered by creation date
      */
-    suspend fun findByProject(projectId: ProjectId): List<Issue> = dbQuery {
+    override suspend fun findByProject(projectId: ProjectId): List<Issue> = dbQuery {
         findIssuesByCondition { IssuesTable.projectId eq projectId.value }
     }
 
@@ -83,7 +84,7 @@ class ExposedIssueRepository(
      * @param parentId The parent issue ID to search for
      * @return List of child issues
      */
-    suspend fun findByParent(parentId: IssueId): List<Issue> = dbQuery {
+    override suspend fun findByParent(parentId: IssueId): List<Issue> = dbQuery {
         findIssuesByCondition { IssuesTable.parentId eq parentId.value }
     }
 
@@ -93,7 +94,7 @@ class ExposedIssueRepository(
      * @param assigneeId The assignee ID to search for
      * @return List of issues assigned to the user
      */
-    suspend fun findByAssignee(assigneeId: String): List<Issue> = dbQuery {
+    override suspend fun findByAssignee(assigneeId: String): List<Issue> = dbQuery {
         findIssuesByCondition { IssuesTable.assigneeId eq assigneeId }
     }
 
@@ -103,7 +104,7 @@ class ExposedIssueRepository(
      * @param status The issue status to search for
      * @return List of issues with the matching status
      */
-    suspend fun findByStatus(status: IssueStatus): List<Issue> = dbQuery {
+    override suspend fun findByStatus(status: IssueStatus): List<Issue> = dbQuery {
         findIssuesByCondition { IssuesTable.status eq status.name }
     }
 
@@ -113,7 +114,7 @@ class ExposedIssueRepository(
      * @param type The issue type to search for
      * @return List of issues of the specified type
      */
-    suspend fun findByType(type: IssueType): List<Issue> = dbQuery {
+    override suspend fun findByType(type: IssueType): List<Issue> = dbQuery {
         findIssuesByCondition { IssuesTable.type eq type.name }
     }
 
@@ -132,7 +133,7 @@ class ExposedIssueRepository(
      * @param issue The issue to save
      * @throws Exception if database operation fails
      */
-    suspend fun save(issue: Issue) {
+    override suspend fun save(issue: Issue) {
         dbQuery {
             val exists = checkIssueExists(issue.id)
 
@@ -162,7 +163,7 @@ class ExposedIssueRepository(
      * @param issues The list of issues to save
      * @throws Exception if any database operation fails, rolling back all changes
      */
-    suspend fun saveAll(issues: List<Issue>) {
+    override suspend fun saveAll(issues: List<Issue>) {
         if (issues.isEmpty()) return
 
         dbQuery {
@@ -205,7 +206,7 @@ class ExposedIssueRepository(
      *
      * @param id The ID of the issue to delete
      */
-    suspend fun delete(id: IssueId) {
+    override suspend fun delete(id: IssueId) {
         dbQuery {
             // Delete all dependency relationships first to maintain referential integrity
             deleteIssueDependencies(id)
@@ -220,7 +221,7 @@ class ExposedIssueRepository(
      * @param id The issue ID to check
      * @return true if the issue exists, false otherwise
      */
-    suspend fun exists(id: IssueId): Boolean = dbQuery {
+    override suspend fun exists(id: IssueId): Boolean = dbQuery {
         checkIssueExists(id)
     }
 

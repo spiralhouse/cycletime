@@ -5,8 +5,8 @@ import io.spiralhouse.cycletime.application.dto.*
 import io.spiralhouse.cycletime.application.exceptions.WorkflowNotFoundException
 import io.spiralhouse.cycletime.domain.entities.Workflow
 import io.spiralhouse.cycletime.domain.exceptions.DomainException
-import io.spiralhouse.cycletime.infrastructure.persistence.ExposedWorkflowRepository
-import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
+import io.spiralhouse.cycletime.domain.repositories.WorkflowRepository
+import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
 import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
@@ -51,8 +51,8 @@ import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
  * @constructor Creates a new WorkflowApplicationService with required dependencies
  */
 class WorkflowApplicationService(
-    private val workflowRepository: ExposedWorkflowRepository,
-    private val unitOfWork: ExposedUnitOfWork,
+    private val workflowRepository: WorkflowRepository,
+    private val unitOfWork: UnitOfWork,
     private val timeProvider: TimeProvider
 ) : ApplicationServiceBase() {
 
