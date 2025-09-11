@@ -5,9 +5,9 @@ import io.spiralhouse.cycletime.application.dto.*
 import io.spiralhouse.cycletime.application.exceptions.*
 import io.spiralhouse.cycletime.domain.entities.Issue
 import io.spiralhouse.cycletime.domain.exceptions.DomainException
-import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
-import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
-import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
+import io.spiralhouse.cycletime.domain.repositories.IssueRepository
+import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
+import io.spiralhouse.cycletime.domain.repositories.UnitOfWork
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.*
 import io.spiralhouse.cycletime.infrastructure.persistence.queries.HierarchyQueries
@@ -47,9 +47,9 @@ import io.spiralhouse.cycletime.infrastructure.persistence.queries.HierarchyQuer
  * @constructor Creates a new IssueApplicationService with required dependencies
  */
 class IssueApplicationService(
-    private val issueRepository: ExposedIssueRepository,
-    private val projectRepository: ExposedProjectRepository,
-    private val unitOfWork: ExposedUnitOfWork,
+    private val issueRepository: IssueRepository,
+    private val projectRepository: ProjectRepository,
+    private val unitOfWork: UnitOfWork,
     private val timeProvider: TimeProvider
 ) : ApplicationServiceBase() {
 
@@ -155,8 +155,7 @@ class IssueApplicationService(
      */
     suspend fun updateIssue(command: UpdateIssueCommand): IssueDto {
         return unitOfWork.execute {
-            val issue = issueRepository.findById(command.id)
-                ?: throw IssueNotFoundException(command.id)
+            val issue = findIssueOrThrow(command.id)
 
             // Apply updates
             command.title?.let { title ->
@@ -193,8 +192,7 @@ class IssueApplicationService(
      */
     suspend fun deleteIssue(issueId: IssueId) {
         return unitOfWork.execute {
-            val issue = issueRepository.findById(issueId)
-                ?: throw IssueNotFoundException(issueId)
+            val issue = findIssueOrThrow(issueId)
 
             issueRepository.delete(issueId)
         }
@@ -224,8 +222,7 @@ class IssueApplicationService(
      */
     suspend fun moveIssue(command: MoveIssueCommand): IssueDto {
         return unitOfWork.execute {
-            val issue = issueRepository.findById(command.issueId)
-                ?: throw IssueNotFoundException(command.issueId)
+            val issue = findIssueOrThrow(command.issueId)
 
             // Determine new parent type and project
             val (newParentType, newProjectId) = when (command.newParentId) {
@@ -297,8 +294,7 @@ class IssueApplicationService(
      */
     suspend fun getIssueHierarchy(issueId: IssueId): IssueHierarchyDto {
         return unitOfWork.execute {
-            val issue = issueRepository.findById(issueId)
-                ?: throw IssueNotFoundException(issueId)
+            val issue = findIssueOrThrow(issueId)
 
             buildHierarchy(issue)
         }
@@ -314,8 +310,7 @@ class IssueApplicationService(
      */
     suspend fun getIssueHierarchyExtended(issueId: IssueId): IssueHierarchyExtendedDto {
         return unitOfWork.execute {
-            val issue = issueRepository.findById(issueId)
-                ?: throw IssueNotFoundException(issueId)
+            val issue = findIssueOrThrow(issueId)
 
             val parent = issue.parentId?.let { parentId ->
                 issueRepository.findById(parentId)
@@ -372,12 +367,10 @@ class IssueApplicationService(
      */
     suspend fun addDependency(command: AddDependencyCommand): IssueDto {
         return unitOfWork.execute {
-            val issue = issueRepository.findById(command.issueId)
-                ?: throw IssueNotFoundException(command.issueId)
+            val issue = findIssueOrThrow(command.issueId)
 
             // Validate dependency exists
-            val dependency = issueRepository.findById(command.dependencyId)
-                ?: throw IssueNotFoundException(command.dependencyId)
+            val dependency = findIssueOrThrow(command.dependencyId)
 
             // Check for circular dependency
             if (hasCircularDependency(command.issueId, command.dependencyId)) {
@@ -399,8 +392,7 @@ class IssueApplicationService(
      */
     suspend fun removeDependency(command: RemoveDependencyCommand): IssueDto {
         return unitOfWork.execute {
-            val issue = issueRepository.findById(command.issueId)
-                ?: throw IssueNotFoundException(command.issueId)
+            val issue = findIssueOrThrow(command.issueId)
 
             issue.removeDependency(command.dependencyId)
             issueRepository.save(issue)
@@ -417,12 +409,10 @@ class IssueApplicationService(
      */
     suspend fun addBlocker(command: AddBlockerCommand): IssueDto {
         return unitOfWork.execute {
-            val issue = issueRepository.findById(command.issueId)
-                ?: throw IssueNotFoundException(command.issueId)
+            val issue = findIssueOrThrow(command.issueId)
 
             // Validate blocker exists
-            val blocker = issueRepository.findById(command.blockerId)
-                ?: throw IssueNotFoundException(command.blockerId)
+            val blocker = findIssueOrThrow(command.blockerId)
 
             issue.addBlockedBy(command.blockerId)
             issueRepository.save(issue)
@@ -439,8 +429,7 @@ class IssueApplicationService(
      */
     suspend fun removeBlocker(command: RemoveBlockerCommand): IssueDto {
         return unitOfWork.execute {
-            val issue = issueRepository.findById(command.issueId)
-                ?: throw IssueNotFoundException(command.issueId)
+            val issue = findIssueOrThrow(command.issueId)
 
             issue.removeBlockedBy(command.blockerId)
             issueRepository.save(issue)
@@ -462,13 +451,12 @@ class IssueApplicationService(
      */
     suspend fun updateStatus(command: UpdateIssueStatusCommand): IssueDto {
         return unitOfWork.execute {
-            val issue = issueRepository.findById(command.issueId)
-                ?: throw IssueNotFoundException(command.issueId)
+            val issue = findIssueOrThrow(command.issueId)
 
             try {
                 issue.updateStatus(command.newStatus)
             } catch (e: DomainException) {
-                throw InvalidStatusTransitionException(issue.status, command.newStatus)
+                throw InvalidStatusTransitionException(issue.status, command.newStatus, e)
             }
 
             issueRepository.save(issue)
@@ -496,16 +484,23 @@ class IssueApplicationService(
     /**
      * Retrieves all issues in the system.
      *
+     * ## Implementation Note:
+     * Uses separate queries by type rather than a single findAll() query to maintain
+     * consistency with repository interface design. Each type query is optimized
+     * separately and the results are combined in memory.
+     *
      * @return IssueListDto containing all issues and total count
      */
     suspend fun listIssues(): IssueListDto {
         return unitOfWork.execute {
-            // For now, get all issues by combining all types
-            val allEpics = issueRepository.findByType(IssueType.EPIC)
-            val allStories = issueRepository.findByType(IssueType.STORY)
-            val allSubtasks = issueRepository.findByType(IssueType.SUBTASK)
-            val issues = allEpics + allStories + allSubtasks
-            IssueListDto.fromIssues(issues)
+            // Query each issue type separately and combine results
+            val allIssues = listOf(
+                issueRepository.findByType(IssueType.EPIC),
+                issueRepository.findByType(IssueType.STORY),
+                issueRepository.findByType(IssueType.SUBTASK)
+            ).flatten()
+            
+            IssueListDto.fromIssues(allIssues)
         }
     }
 
@@ -551,6 +546,19 @@ class IssueApplicationService(
     // ================================================================================
     // Private Helper Methods
     // ================================================================================
+
+    /**
+     * Finds an issue by ID or throws IssueNotFoundException.
+     * Reduces duplication of the common find-or-throw pattern.
+     *
+     * @param issueId The ID of the issue to find
+     * @return The found Issue
+     * @throws IssueNotFoundException if the issue doesn't exist
+     */
+    private suspend fun findIssueOrThrow(issueId: IssueId): Issue {
+        return issueRepository.findById(issueId)
+            ?: throw IssueNotFoundException(issueId)
+    }
 
     /**
      * Validates hierarchy rules between child and parent issue types.

@@ -1,6 +1,7 @@
 package io.spiralhouse.cycletime.unit.mocks
 
 import io.spiralhouse.cycletime.domain.entities.Issue
+import io.spiralhouse.cycletime.domain.repositories.IssueRepository
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.*
 import org.jetbrains.exposed.sql.Database
@@ -35,7 +36,7 @@ import org.jetbrains.exposed.sql.Database
 class MockIssueRepository(
     private val timeProvider: TimeProvider? = null,
     private val database: Database? = null
-) {
+) : IssueRepository {
     
     // ================================================================================
     // Test Data Storage
@@ -76,37 +77,37 @@ class MockIssueRepository(
     // Repository Interface Implementation
     // ================================================================================
     
-    suspend fun findById(id: IssueId): Issue? {
+    override suspend fun findById(id: IssueId): Issue? {
         findCallCount++
         return issues[id]
     }
     
-    suspend fun findByProject(projectId: ProjectId): List<Issue> {
+    override suspend fun findByProject(projectId: ProjectId): List<Issue> {
         findCallCount++
         return issuesByProject[projectId]?.toList() ?: emptyList()
     }
     
-    suspend fun findByParent(parentId: IssueId): List<Issue> {
+    override suspend fun findByParent(parentId: IssueId): List<Issue> {
         findCallCount++
         return issuesByParent[parentId]?.toList() ?: emptyList()
     }
     
-    suspend fun findByAssignee(assigneeId: String): List<Issue> {
+    override suspend fun findByAssignee(assigneeId: String): List<Issue> {
         findCallCount++
         return issuesByAssignee[assigneeId]?.toList() ?: emptyList()
     }
     
-    suspend fun findByStatus(status: IssueStatus): List<Issue> {
+    override suspend fun findByStatus(status: IssueStatus): List<Issue> {
         findCallCount++
         return issues.values.filter { it.status == status }
     }
     
-    suspend fun findByType(type: IssueType): List<Issue> {
+    override suspend fun findByType(type: IssueType): List<Issue> {
         findCallCount++
         return issues.values.filter { it.type == type }
     }
     
-    suspend fun save(issue: Issue) {
+    override suspend fun save(issue: Issue) {
         saveCallCount++
         issues[issue.id] = issue
         
@@ -141,14 +142,14 @@ class MockIssueRepository(
         }
     }
     
-    suspend fun saveAll(issues: List<Issue>) {
+    override suspend fun saveAll(issues: List<Issue>) {
         saveCallCount++
         issues.forEach { issue ->
             save(issue)
         }
     }
     
-    suspend fun delete(id: IssueId) {
+    override suspend fun delete(id: IssueId) {
         deleteCallCount++
         val issue = issues.remove(id)
         
@@ -168,7 +169,7 @@ class MockIssueRepository(
         }
     }
     
-    suspend fun exists(id: IssueId): Boolean {
+    override suspend fun exists(id: IssueId): Boolean {
         return issues.containsKey(id)
     }
     

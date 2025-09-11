@@ -65,6 +65,11 @@ class CircularDependencyException(issueId: IssueId, dependencyId: IssueId) : App
 /**
  * Exception thrown when an invalid status transition is attempted.
  */
-class InvalidStatusTransitionException(fromStatus: IssueStatus, toStatus: IssueStatus) : ApplicationException(
-    "Cannot transition from ${fromStatus.name} to ${toStatus.name}"
+class InvalidStatusTransitionException(
+    fromStatus: IssueStatus, 
+    toStatus: IssueStatus, 
+    cause: Throwable? = null
+) : ApplicationException(
+    "Cannot transition from ${fromStatus.name} to ${toStatus.name}",
+    cause
 )
