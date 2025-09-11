@@ -9,7 +9,7 @@ import io.spiralhouse.cycletime.mcp.providers.ProjectResourceProvider
 import io.spiralhouse.cycletime.mcp.providers.IssueResourceProvider  
 import io.spiralhouse.cycletime.mcp.providers.SessionResourceProvider
 import io.spiralhouse.cycletime.mcp.providers.WorkflowResourceProvider
-import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
+import io.spiralhouse.cycletime.mcp.resources.ResourceRegistry
 import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
 import io.spiralhouse.cycletime.mcp.tools.ToolProvider
 import kotlinx.coroutines.*

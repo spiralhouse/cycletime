@@ -4,7 +4,7 @@ import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
 import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
-import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
+import io.spiralhouse.cycletime.mcp.resources.ResourceRegistry
 import io.spiralhouse.cycletime.mcp.server.state.ServerState
 import io.spiralhouse.cycletime.mcp.tools.exceptions.*
 import io.spiralhouse.cycletime.mcp.resources.exceptions.*

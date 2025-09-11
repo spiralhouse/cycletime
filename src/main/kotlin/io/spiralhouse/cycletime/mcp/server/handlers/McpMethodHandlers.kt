@@ -3,7 +3,7 @@ package io.spiralhouse.cycletime.mcp.server.handlers
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcError
-import io.spiralhouse.cycletime.mcp.resources.interfaces.ResourceRegistry
+import io.spiralhouse.cycletime.mcp.resources.ResourceRegistry
 import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
 import kotlinx.serialization.json.*
 
