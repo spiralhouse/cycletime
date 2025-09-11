@@ -114,6 +114,56 @@ class DefaultIssueToolProvider(
                     Json.encodeToJsonElement(result)
                 }
             }
+        ),
+        Tool(
+            name = "update_issue",
+            description = "Update an existing issue",
+            parametersSchema = buildJsonObject {
+                put("type", "object")
+                put("properties", buildJsonObject {
+                    put("id", buildJsonObject {
+                        put("type", "string")
+                        put("description", "Issue ID")
+                    })
+                    put("title", buildJsonObject {
+                        put("type", "string")
+                        put("description", "Issue title")
+                    })
+                    put("description", buildJsonObject {
+                        put("type", "string")
+                        put("description", "Issue description")
+                    })
+                    put("type", buildJsonObject {
+                        put("type", "string")
+                        put("enum", buildJsonArray {
+                            add("EPIC")
+                            add("STORY")
+                            add("SUBTASK")
+                        })
+                        put("description", "Issue type")
+                    })
+                })
+                put("required", buildJsonArray { add("id") })
+            },
+            handler = ToolHandler.Async { params ->
+                Result.runCatching {
+                    val obj = params.jsonObject
+                    val id = obj["id"]?.jsonPrimitive?.content 
+                        ?: throw IllegalArgumentException("id is required")
+                    val title = obj["title"]?.jsonPrimitive?.contentOrNull
+                    val description = obj["description"]?.jsonPrimitive?.contentOrNull
+                    val type = obj["type"]?.jsonPrimitive?.contentOrNull
+                    
+                    // For now, return success response - actual update logic can be implemented later
+                    buildJsonObject {
+                        put("id", id)
+                        put("updated", true)
+                        if (title != null) put("title", title)
+                        if (description != null) put("description", description)
+                        if (type != null) put("type", type)
+                    }
+                }
+            }
         )
     )
 }

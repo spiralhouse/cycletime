@@ -203,7 +203,8 @@ private fun DependencyRegistry.configureMCPDependencies() {
             toolProviders = listOf(
                 resolve<DefaultProjectToolProvider>(),
                 resolve<DefaultIssueToolProvider>(),
-                resolve<DefaultSessionToolProvider>()
+                resolve<DefaultSessionToolProvider>(),
+                resolve<DefaultWorkflowToolProvider>()
             )
         )
     }
@@ -219,7 +220,8 @@ private fun DependencyRegistry.configureMCPDependencies() {
             toolProviders = listOf(
                 resolve<DefaultProjectToolProvider>(),
                 resolve<DefaultIssueToolProvider>(),
-                resolve<DefaultSessionToolProvider>()
+                resolve<DefaultSessionToolProvider>(),
+                resolve<DefaultWorkflowToolProvider>()
             )
         )
     }
@@ -264,5 +266,9 @@ private fun DependencyRegistry.configureMCPDependencies() {
         DefaultSessionToolProvider(
             sessionService = resolve<SessionApplicationService>()
         )
+    }
+    
+    provide<DefaultWorkflowToolProvider> { 
+        DefaultWorkflowToolProvider()
     }
 }

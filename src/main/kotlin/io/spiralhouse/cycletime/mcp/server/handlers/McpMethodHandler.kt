@@ -206,10 +206,11 @@ class McpMethodHandler(
         val tool = toolRegistry.getTool(toolName)
         
         if (tool == null) {
+            val allToolNames = toolRegistry.getRegisteredToolNames()
             return createErrorResponse(
                 request = request,
                 code = -32001,
-                message = "Tool not found: $toolName"
+                message = "Tool not found: $toolName. Available tools: $allToolNames"
             )
         }
         
@@ -436,7 +437,7 @@ class McpMethodHandler(
     
     private fun buildServerInfo(): JsonObject {
         return buildJsonObject {
-            put("name", "CycleTime MCP Server")
+            put("name", "CycleTime-CE")
             put("version", "1.0.0")
         }
     }
@@ -444,6 +445,15 @@ class McpMethodHandler(
     private fun formatToolResponse(value: JsonElement): JsonObject {
         val textValue = when {
             value is JsonPrimitive && value.isString -> value.content
+            value is JsonPrimitive && value.isString.not() -> value.content
+            value is JsonObject -> {
+                // Handle domain object responses - convert to pretty JSON string
+                Json { prettyPrint = true }.encodeToString(value)
+            }
+            value is JsonArray -> {
+                // Handle array responses - convert to pretty JSON string  
+                Json { prettyPrint = true }.encodeToString(value)
+            }
             else -> value.toString().trim('"')
         }
         

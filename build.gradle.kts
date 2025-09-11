@@ -453,7 +453,9 @@ tasks.test {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
         includeTestsMatching("io.spiralhouse.cycletime.unit.*")
-        excludeTestsMatching("io.spiralhouse.cycletime.integration.*")
+        // ARCHITECTURAL FIX: Include MCP integration tests for SPI-594
+        includeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.integration.*") // Exclude other integration tests
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
         excludeTestsMatching("io.spiralhouse.cycletime.api.*")
     }

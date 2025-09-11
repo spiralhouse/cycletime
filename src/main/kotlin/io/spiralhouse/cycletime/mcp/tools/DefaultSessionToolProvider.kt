@@ -114,6 +114,44 @@ class DefaultSessionToolProvider(
                     Json.encodeToJsonElement(nextTask)
                 }
             }
+        ),
+        Tool(
+            name = "get_active_session",
+            description = "Get the currently active session",
+            parametersSchema = buildJsonObject {
+                put("type", "object")
+                put("properties", buildJsonObject {})
+            },
+            handler = ToolHandler.Async { _ ->
+                Result.runCatching {
+                    val sessionListDto = sessionService.listActiveSessions()
+                    // Return the first active session or a default response
+                    if (sessionListDto.sessions.isNotEmpty()) {
+                        Json.encodeToJsonElement(sessionListDto.sessions.first())
+                    } else {
+                        buildJsonObject {
+                            put("id", "no-active-session")
+                            put("message", "No active session found")
+                        }
+                    }
+                }
+            }
+        ),
+        Tool(
+            name = "list_sessions",
+            description = "List all sessions (active and inactive)",
+            parametersSchema = buildJsonObject {
+                put("type", "object")
+                put("properties", buildJsonObject {})
+            },
+            handler = ToolHandler.Async { _ ->
+                Result.runCatching {
+                    // For now, delegate to list active sessions
+                    // This can be expanded to include inactive sessions later
+                    val sessionListDto = sessionService.listActiveSessions()
+                    Json.encodeToJsonElement(sessionListDto)
+                }
+            }
         )
     )
 }

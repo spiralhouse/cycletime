@@ -56,7 +56,7 @@ class MCPEndToEndTest : StringSpec({
             
             // Both servers should be reported as healthy
             dependencies?.get("database")?.jsonPrimitive?.content shouldBe "connected"
-            dependencies?.get("mcpServer")?.jsonPrimitive?.content shouldBe "running" // Will fail
+            dependencies?.get("mcp")?.jsonPrimitive?.content shouldBe "running" // Should pass after health check fix
 
             // Verify all services are initialized
             dependencies?.get("projectService")?.jsonPrimitive?.content shouldBe "initialized"

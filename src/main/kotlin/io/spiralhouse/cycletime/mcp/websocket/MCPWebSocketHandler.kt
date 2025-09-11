@@ -50,12 +50,25 @@ class MCPWebSocketHandler(
                         val text = frame.readText()
                         connectionId?.let { handleTextMessage(session, it, text) }
                     }
+                    is Frame.Ping -> {
+                        // Respond to ping with pong (WebSocket heartbeat)
+                        if (config.detailedLogging) {
+                            logger.debug("Ping received from $connectionId, sending pong")
+                        }
+                        session.send(Frame.Pong(frame.data))
+                    }
+                    is Frame.Pong -> {
+                        // Log pong receipt (heartbeat acknowledgment)
+                        if (config.detailedLogging) {
+                            logger.debug("Pong received from $connectionId")
+                        }
+                    }
                     is Frame.Close -> {
                         logger.info("WebSocket close frame received for $connectionId")
                         break
                     }
                     else -> {
-                        logger.debug("Ignoring non-text frame from $connectionId")
+                        logger.debug("Ignoring unsupported frame type from $connectionId: ${frame.frameType}")
                     }
                 }
             }

@@ -4,6 +4,7 @@ import io.spiralhouse.cycletime.mcp.protocol.JsonRpcError
 import io.spiralhouse.cycletime.mcp.tools.exceptions.*
 import io.spiralhouse.cycletime.mcp.tools.validation.JsonSchemaValidator
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.*
 import java.util.concurrent.ConcurrentHashMap
@@ -253,13 +254,19 @@ open class ToolRegistry(
         val result = if (tool.isSync) {
             invoke(toolName, arguments)
         } else {
-            // For JSON-RPC we can't handle async tools directly in this sync context
-            Result.failure(
-                JsonRpcException(
-                    code = -32603, // Internal error
-                    message = "Async tools cannot be invoked via JSON-RPC synchronously"
-                )
-            )
+            // Handle async tools with reasonable timeout
+            runBlocking {
+                try {
+                    invokeAsync(toolName, arguments, timeout = 10000L)
+                } catch (e: Exception) {
+                    Result.failure(
+                        JsonRpcException(
+                            code = -32603,
+                            message = "Async tool execution failed: ${e.message}"
+                        )
+                    )
+                }
+            }
         }
         
         return result.fold(
