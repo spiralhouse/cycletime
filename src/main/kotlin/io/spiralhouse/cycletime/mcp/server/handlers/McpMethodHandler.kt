@@ -214,28 +214,23 @@ class McpMethodHandler(
             )
         }
         
-        // Handle async tool called synchronously - not supported
-        if (tool.isAsync && !async) {
-            return createInvalidParamsError(
-                request, 
-                "Async tool '$toolName' requires async invocation"
-            )
-        }
+        // Auto-detect async tools and handle appropriately
+        // Allow async tools to be called from sync endpoint for convenience
         
-        val result = if (tool.isAsync && async) {
-            // Invoke async tool with timeout
+        val result = if (tool.isAsync) {
+            // Invoke async tool with timeout (regardless of endpoint)
             val timeout = params["timeout"]?.jsonPrimitive?.longOrNull 
                 ?: 60000L // Default 60 seconds
             toolInvoker.invokeAsync(toolName, arguments, timeout)
         } else {
-            // Invoke sync tool (either sync-sync or sync-async)
+            // Invoke sync tool
             toolInvoker.invoke(toolName, arguments)
         }
         
         return result.fold(
             onSuccess = { value ->
-                val responseData = formatToolResponse(value)
-                createSuccessResponse(request, responseData)
+                // Tools now return properly formatted MCP responses directly
+                createSuccessResponse(request, value)
             },
             onFailure = { error ->
                 createToolError(request, error)

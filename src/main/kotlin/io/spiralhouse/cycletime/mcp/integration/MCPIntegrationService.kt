@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class MCPIntegrationService(
     private val methodHandler: McpMethodHandler,
     private val protocolHandler: ProtocolHandler,
+    private val connectionManager: MCPConnectionManager,
     private val config: MCPServerConfig = MCPServerConfig(),
     private val resourceRegistry: ResourceRegistry? = null,
     private val toolRegistry: ToolRegistry? = null,
@@ -102,9 +103,10 @@ class MCPIntegrationService(
     fun isRunning(): Boolean = isRunning.get()
     
     /**
-     * Get simplified server status.
+     * Get simplified server status with real connection statistics.
      */
     fun getStatus(): MCPServerStatus {
+        val connectionStats = connectionManager.getStatistics()
         return MCPServerStatus(
             isRunning = isRunning(),
             port = config.port,
@@ -120,7 +122,10 @@ class MCPIntegrationService(
             registeredTools = toolProviders.size,
             uptimeMs = if (isRunning.get() && serverStartTime > 0) {
                 System.currentTimeMillis() - serverStartTime
-            } else 0
+            } else 0,
+            activeConnections = connectionStats.activeCount,
+            totalRequests = connectionStats.totalRequests,
+            totalErrors = connectionStats.totalErrors
         )
     }
     
@@ -142,7 +147,7 @@ data class MCPServerConfig(
 )
 
 /**
- * Simplified status information for MCP server.
+ * Simplified status information for MCP server with connection statistics.
  */
 data class MCPServerStatus(
     val isRunning: Boolean,
@@ -152,7 +157,10 @@ data class MCPServerStatus(
     val enableSsl: Boolean,
     val registeredResources: Int = 0,
     val registeredTools: Int = 0,
-    val uptimeMs: Long = 0
+    val uptimeMs: Long = 0,
+    val activeConnections: Int = 0,
+    val totalRequests: Long = 0,
+    val totalErrors: Long = 0
 )
 
 /**

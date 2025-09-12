@@ -25,6 +25,8 @@ import io.spiralhouse.cycletime.mcp.protocol.ProtocolHandler
 import io.spiralhouse.cycletime.mcp.providers.*
 import io.spiralhouse.cycletime.mcp.server.DefaultMCPServerEngine
 import io.spiralhouse.cycletime.mcp.server.MCPServerEngine
+import io.spiralhouse.cycletime.mcp.server.MCPConnectionManager
+import io.spiralhouse.cycletime.mcp.server.MCPConfiguration
 import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
 import io.spiralhouse.cycletime.mcp.tools.*
 import io.spiralhouse.cycletime.mcp.resources.ResourceRegistry
@@ -171,6 +173,9 @@ fun Application.configureDependencies(
 
 private fun DependencyRegistry.configureMCPDependencies() {
     provide<MCPServerConfig> { MCPServerConfig() }
+    provide<MCPConnectionManager> { 
+        MCPConnectionManager(MCPConfiguration.fromEnvironment())
+    }
     provide<ProtocolHandler> { JsonRpcProtocolHandler() }
     provide<ResourceRegistry> { ResourceRegistry() }
     provide<ToolRegistry> { ToolRegistry() }
@@ -193,6 +198,7 @@ private fun DependencyRegistry.configureMCPDependencies() {
         MCPIntegrationService(
             methodHandler = resolve<McpMethodHandler>(),
             protocolHandler = resolve<ProtocolHandler>(),
+            connectionManager = resolve<MCPConnectionManager>(),
             config = resolve<MCPServerConfig>(),
             resourceRegistry = resolve<ResourceRegistry>(),
             toolRegistry = resolve<ToolRegistry>(),

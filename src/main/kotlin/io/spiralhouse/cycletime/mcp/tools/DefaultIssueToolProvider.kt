@@ -62,7 +62,7 @@ class DefaultIssueToolProvider(
                     val projectId = obj["projectId"]?.jsonPrimitive?.content 
                         ?: throw IllegalArgumentException("projectId is required")
                     val type = obj["type"]?.jsonPrimitive?.contentOrNull?.let {
-                        IssueType.valueOf(it)
+                        IssueType.fromString(it)
                     } ?: IssueType.STORY
                     
                     val command = CreateIssueCommand(
@@ -72,7 +72,18 @@ class DefaultIssueToolProvider(
                         projectId = ProjectId(projectId)
                     )
                     val result = issueService.createIssue(command)
-                    Json.encodeToJsonElement(result)
+                    // Return properly formatted MCP response with content structure
+                    buildJsonObject {
+                        put("content", buildJsonArray {
+                            add(buildJsonObject {
+                                put("type", "text")
+                                put("text", Json.encodeToString(mapOf(
+                                    "id" to result.id.value,
+                                    "title" to result.title
+                                )))
+                            })
+                        })
+                    }
                 }
             }
         ),
@@ -97,7 +108,15 @@ class DefaultIssueToolProvider(
                     
                     val result = issueService.getIssue(IssueId(id))
                         ?: throw IllegalArgumentException("Issue not found: $id")
-                    Json.encodeToJsonElement(result)
+                    // Return properly formatted MCP response with content structure
+                    buildJsonObject {
+                        put("content", buildJsonArray {
+                            add(buildJsonObject {
+                                put("type", "text")
+                                put("text", Json.encodeToString(result))
+                            })
+                        })
+                    }
                 }
             }
         ),
@@ -111,7 +130,15 @@ class DefaultIssueToolProvider(
             handler = ToolHandler.Async { _ ->
                 Result.runCatching {
                     val result = issueService.listIssues()
-                    Json.encodeToJsonElement(result)
+                    // Return properly formatted MCP response with content structure
+                    buildJsonObject {
+                        put("content", buildJsonArray {
+                            add(buildJsonObject {
+                                put("type", "text")
+                                put("text", Json.encodeToString(result))
+                            })
+                        })
+                    }
                 }
             }
         ),

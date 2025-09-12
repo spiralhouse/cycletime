@@ -53,9 +53,32 @@ class MCPWebSocketHandler(
                     is Frame.Ping -> {
                         // Respond to ping with pong (WebSocket heartbeat)
                         if (config.detailedLogging) {
-                            logger.debug("Ping received from $connectionId, sending pong")
+                            logger.debug("Ping received from $connectionId with ${frame.data.size} bytes, sending pong")
                         }
-                        session.send(Frame.Pong(frame.data))
+                        connectionId?.let { connId ->
+                            val success = connectionManager.sendFrame(connId, Frame.Pong(frame.data))
+                            if (!success) {
+                                logger.error("Failed to send pong response to $connId via connection manager")
+                                // Try direct send as fallback
+                                try {
+                                    session.send(Frame.Pong(frame.data))
+                                    logger.debug("Fallback direct pong send successful for $connId")
+                                } catch (e: Exception) {
+                                    logger.error("Both connection manager and direct pong send failed for $connId: ${e.message}")
+                                    throw e
+                                }
+                            }
+                        } ?: run {
+                            logger.error("Cannot send pong: connection not registered")
+                            // Try direct send as emergency fallback
+                            try {
+                                session.send(Frame.Pong(frame.data))
+                                logger.debug("Emergency direct pong send successful")
+                            } catch (e: Exception) {
+                                logger.error("Emergency pong send failed: ${e.message}")
+                                throw e
+                            }
+                        }
                     }
                     is Frame.Pong -> {
                         // Log pong receipt (heartbeat acknowledgment)

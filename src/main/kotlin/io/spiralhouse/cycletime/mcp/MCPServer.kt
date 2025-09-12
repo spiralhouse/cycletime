@@ -53,8 +53,8 @@ fun Routing.configureMCP() {
     val config = MCPConfiguration.fromEnvironment()
     logger.info("MCP Configuration loaded: ${config.serverName} v${config.serverVersion}")
     
-    // Initialize shared components
-    val connectionManager = MCPConnectionManager(config)
+    // Get shared components from DI
+    val connectionManager: MCPConnectionManager by application.dependencies
     val protocolHandler = JsonRpcProtocolHandler() // Reuse single instance
     
     // Initialize and start the cleanup service with proper lifecycle management

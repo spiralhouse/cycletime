@@ -261,22 +261,36 @@ class MockClaudeClient(
     suspend fun ping(data: ByteArray = byteArrayOf(1, 2, 3, 4)): ByteArray = withTimeout(requestTimeout) {
         val session = webSocketSession ?: throw MockClaudeClientException("Not connected")
         
-        session.send(Frame.Ping(data))
-        
-        // Wait for pong response
-        while (true) {
-            when (val frame = session.incoming.receive()) {
-                is Frame.Pong -> {
-                    // Extract data from pong frame if available
-                    return@withTimeout data // Return original data for testing
+        try {
+            session.send(Frame.Ping(data))
+            
+            // Wait for pong response
+            while (true) {
+                when (val frame = session.incoming.receive()) {
+                    is Frame.Pong -> {
+                        // Return actual pong data from server for proper testing
+                        return@withTimeout frame.data
+                    }
+                    is Frame.Text -> {
+                        // Ignore other messages during ping/pong
+                        continue
+                    }
+                    is Frame.Binary -> {
+                        // Ignore binary frames during ping/pong
+                        continue
+                    }
+                    is Frame.Close -> {
+                        throw MockClaudeClientException("Connection closed during ping/pong")
+                    }
+                    else -> continue
                 }
-                is Frame.Text -> {
-                    // Ignore other messages during ping/pong
-                    continue
-                }
-                else -> continue
             }
+        } catch (e: ClosedReceiveChannelException) {
+            throw MockClaudeClientException("Connection closed during ping/pong", e)
+        } catch (e: Exception) {
+            throw MockClaudeClientException("Error during ping/pong: ${e.message}", e)
         }
+        
         @Suppress("UNREACHABLE_CODE")
         data
     }

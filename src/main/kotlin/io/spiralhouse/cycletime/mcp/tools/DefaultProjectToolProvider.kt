@@ -48,8 +48,18 @@ class DefaultProjectToolProvider(
                         description = description
                     )
                     val result = projectService.createProject(command)
-                    // Return just the project ID as expected by the test
-                    JsonPrimitive(result.id.value)
+                    // Return properly formatted MCP response with content structure
+                    buildJsonObject {
+                        put("content", buildJsonArray {
+                            add(buildJsonObject {
+                                put("type", "text")
+                                put("text", Json.encodeToString(mapOf(
+                                    "id" to result.id.value,
+                                    "name" to result.name
+                                )))
+                            })
+                        })
+                    }
                 }
             }
         ),
@@ -74,7 +84,15 @@ class DefaultProjectToolProvider(
                     
                     val result = projectService.getProject(ProjectId(id))
                         ?: throw IllegalArgumentException("Project not found: $id")
-                    Json.encodeToJsonElement(result)
+                    // Return properly formatted MCP response with content structure
+                    buildJsonObject {
+                        put("content", buildJsonArray {
+                            add(buildJsonObject {
+                                put("type", "text")
+                                put("text", Json.encodeToString(result))
+                            })
+                        })
+                    }
                 }
             }
         ),
@@ -88,7 +106,15 @@ class DefaultProjectToolProvider(
             handler = ToolHandler.Async { _ ->
                 Result.runCatching {
                     val result = projectService.listProjects()
-                    Json.encodeToJsonElement(result)
+                    // Return properly formatted MCP response with content structure
+                    buildJsonObject {
+                        put("content", buildJsonArray {
+                            add(buildJsonObject {
+                                put("type", "text")
+                                put("text", Json.encodeToString(result))
+                            })
+                        })
+                    }
                 }
             }
         ),

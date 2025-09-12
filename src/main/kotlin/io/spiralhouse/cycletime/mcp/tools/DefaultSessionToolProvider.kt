@@ -42,7 +42,15 @@ class DefaultSessionToolProvider(
                         projectId = ProjectId(projectId)
                     )
                     val result = sessionService.createSession(command)
-                    Json.encodeToJsonElement(result)
+                    // Return properly formatted MCP response with content structure
+                    buildJsonObject {
+                        put("content", buildJsonArray {
+                            add(buildJsonObject {
+                                put("type", "text")
+                                put("text", "Session created for project ${result.projectId?.value ?: "unknown"} (Key: ${result.sessionKey.value})")
+                            })
+                        })
+                    }
                 }
             }
         ),
@@ -56,7 +64,15 @@ class DefaultSessionToolProvider(
             handler = ToolHandler.Async { _ ->
                 Result.runCatching {
                     val result = sessionService.listActiveSessions()
-                    Json.encodeToJsonElement(result)
+                    // Return properly formatted MCP response with content structure
+                    buildJsonObject {
+                        put("content", buildJsonArray {
+                            add(buildJsonObject {
+                                put("type", "text")
+                                put("text", Json.encodeToString(result))
+                            })
+                        })
+                    }
                 }
             }
         ),
@@ -81,7 +97,15 @@ class DefaultSessionToolProvider(
                     
                     val result = sessionService.getSession(SessionKey(sessionKey))
                         ?: throw IllegalArgumentException("Session not found")
-                    Json.encodeToJsonElement(result)
+                    // Return properly formatted MCP response with content structure
+                    buildJsonObject {
+                        put("content", buildJsonArray {
+                            add(buildJsonObject {
+                                put("type", "text")
+                                put("text", Json.encodeToString(result))
+                            })
+                        })
+                    }
                 }
             }
         ),
@@ -111,7 +135,15 @@ class DefaultSessionToolProvider(
                         put("priority", "high")
                         put("sessionKey", sessionKey?.value ?: "default")
                     }
-                    Json.encodeToJsonElement(nextTask)
+                    // Return properly formatted MCP response with content structure
+                    buildJsonObject {
+                        put("content", buildJsonArray {
+                            add(buildJsonObject {
+                                put("type", "text")
+                                put("text", Json.encodeToString(nextTask))
+                            })
+                        })
+                    }
                 }
             }
         ),
@@ -126,13 +158,22 @@ class DefaultSessionToolProvider(
                 Result.runCatching {
                     val sessionListDto = sessionService.listActiveSessions()
                     // Return the first active session or a default response
-                    if (sessionListDto.sessions.isNotEmpty()) {
-                        Json.encodeToJsonElement(sessionListDto.sessions.first())
+                    val response = if (sessionListDto.sessions.isNotEmpty()) {
+                        Json.encodeToString(sessionListDto.sessions.first())
                     } else {
-                        buildJsonObject {
+                        Json.encodeToString(buildJsonObject {
                             put("id", "no-active-session")
                             put("message", "No active session found")
-                        }
+                        })
+                    }
+                    // Return properly formatted MCP response with content structure
+                    buildJsonObject {
+                        put("content", buildJsonArray {
+                            add(buildJsonObject {
+                                put("type", "text")
+                                put("text", response)
+                            })
+                        })
                     }
                 }
             }
@@ -149,7 +190,15 @@ class DefaultSessionToolProvider(
                     // For now, delegate to list active sessions
                     // This can be expanded to include inactive sessions later
                     val sessionListDto = sessionService.listActiveSessions()
-                    Json.encodeToJsonElement(sessionListDto)
+                    // Return properly formatted MCP response with content structure
+                    buildJsonObject {
+                        put("content", buildJsonArray {
+                            add(buildJsonObject {
+                                put("type", "text")
+                                put("text", Json.encodeToString(sessionListDto))
+                            })
+                        })
+                    }
                 }
             }
         )

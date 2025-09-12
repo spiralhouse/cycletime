@@ -403,7 +403,12 @@ abstract class MCPIntegrationTestBase : StringSpec() {
         // Extract project ID from response
         val result = response.jsonObject["result"]?.jsonObject
         val content = result?.get("content")?.jsonArray?.get(0)?.jsonObject
-        val projectId = content?.get("text")?.jsonPrimitive?.content
+        val responseText = content?.get("text")?.jsonPrimitive?.content
+            ?: throw AssertionError("Failed to extract project data from tool response")
+        
+        // Parse JSON response to extract ID
+        val projectData = json.parseToJsonElement(responseText).jsonObject
+        val projectId = projectData["id"]?.jsonPrimitive?.content
             ?: throw AssertionError("Failed to extract project ID from tool response")
         
         return projectId
@@ -426,10 +431,18 @@ abstract class MCPIntegrationTestBase : StringSpec() {
         // Extract issue ID from response
         val result = response.jsonObject["result"]?.jsonObject
         val content = result?.get("content")?.jsonArray?.get(0)?.jsonObject
-        val issueId = content?.get("text")?.jsonPrimitive?.content
-            ?: throw AssertionError("Failed to extract issue ID from tool response")
+        val responseText = content?.get("text")?.jsonPrimitive?.content
+            ?: throw AssertionError("Failed to extract issue data from tool response. Response: ${response}")
         
-        return issueId
+        // Parse JSON response to extract ID
+        try {
+            val issueData = json.parseToJsonElement(responseText).jsonObject
+            val issueId = issueData["id"]?.jsonPrimitive?.content
+                ?: throw AssertionError("Failed to extract issue ID from tool response. Response text: $responseText")
+            return issueId
+        } catch (e: Exception) {
+            throw AssertionError("Failed to parse issue response as JSON. Response text: $responseText. Error: ${e.message}", e)
+        }
     }
     
     /**
