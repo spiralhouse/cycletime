@@ -16,6 +16,43 @@ class DefaultSessionToolProvider(
 ) : ToolProvider {
     override val namespace: String = "session"
     
+    // Common response formatting helper
+    private fun createMcpTextResponse(content: String): JsonObject = buildJsonObject {
+        put("content", buildJsonArray {
+            add(buildJsonObject {
+                put("type", "text")
+                put("text", content)
+            })
+        })
+    }
+    
+    // Common parameter extraction helper
+    private fun extractRequiredParam(params: JsonElement, key: String): String {
+        return params.jsonObject[key]?.jsonPrimitive?.content
+            ?: throw IllegalArgumentException("$key is required")
+    }
+    
+    // Common optional parameter extraction helper
+    private fun extractOptionalParam(params: JsonElement, key: String): String? {
+        return params.jsonObject[key]?.jsonPrimitive?.contentOrNull
+    }
+    
+    // Common schema building helpers
+    private fun buildRequiredStringParam(description: String): JsonObject = buildJsonObject {
+        put("type", "string")
+        put("description", description)
+    }
+    
+    private fun buildOptionalStringParam(description: String): JsonObject = buildJsonObject {
+        put("type", "string")
+        put("description", description)
+    }
+    
+    private fun buildEmptyPropertiesSchema(): JsonObject = buildJsonObject {
+        put("type", "object")
+        put("properties", buildJsonObject {})
+    }
+    
     override fun getTools(): List<Tool> = emptyList()
     
     override fun getAsyncTools(): List<Tool> = listOf(
@@ -25,54 +62,32 @@ class DefaultSessionToolProvider(
             parametersSchema = buildJsonObject {
                 put("type", "object")
                 put("properties", buildJsonObject {
-                    put("projectId", buildJsonObject {
-                        put("type", "string")
-                        put("description", "Project ID for the session")
-                    })
+                    put("projectId", buildRequiredStringParam("Project ID for the session"))
                 })
                 put("required", buildJsonArray { add("projectId") })
             },
             handler = ToolHandler.Async { params ->
                 Result.runCatching {
-                    val obj = params.jsonObject
-                    val projectId = obj["projectId"]?.jsonPrimitive?.content 
-                        ?: throw IllegalArgumentException("projectId is required")
+                    val projectId = extractRequiredParam(params, "projectId")
                     
                     val command = CreateSessionCommand(
                         projectId = ProjectId(projectId)
                     )
                     val result = sessionService.createSession(command)
-                    // Return properly formatted MCP response with content structure
-                    buildJsonObject {
-                        put("content", buildJsonArray {
-                            add(buildJsonObject {
-                                put("type", "text")
-                                put("text", "Session created for project ${result.projectId?.value ?: "unknown"} (Key: ${result.sessionKey.value})")
-                            })
-                        })
-                    }
+                    
+                    val responseText = "Session created for project ${result.projectId?.value ?: "unknown"} (Key: ${result.sessionKey.value})"
+                    createMcpTextResponse(responseText)
                 }
             }
         ),
         Tool(
             name = "list_active_sessions",
             description = "List active sessions",
-            parametersSchema = buildJsonObject {
-                put("type", "object")
-                put("properties", buildJsonObject {})
-            },
+            parametersSchema = buildEmptyPropertiesSchema(),
             handler = ToolHandler.Async { _ ->
                 Result.runCatching {
                     val result = sessionService.listActiveSessions()
-                    // Return properly formatted MCP response with content structure
-                    buildJsonObject {
-                        put("content", buildJsonArray {
-                            add(buildJsonObject {
-                                put("type", "text")
-                                put("text", Json.encodeToString(result))
-                            })
-                        })
-                    }
+                    createMcpTextResponse(Json.encodeToString(result))
                 }
             }
         ),
@@ -82,30 +97,18 @@ class DefaultSessionToolProvider(
             parametersSchema = buildJsonObject {
                 put("type", "object")
                 put("properties", buildJsonObject {
-                    put("sessionKey", buildJsonObject {
-                        put("type", "string")
-                        put("description", "Session key")
-                    })
+                    put("sessionKey", buildRequiredStringParam("Session key"))
                 })
                 put("required", buildJsonArray { add("sessionKey") })
             },
             handler = ToolHandler.Async { params ->
                 Result.runCatching {
-                    val obj = params.jsonObject
-                    val sessionKey = obj["sessionKey"]?.jsonPrimitive?.content 
-                        ?: throw IllegalArgumentException("sessionKey is required")
+                    val sessionKey = extractRequiredParam(params, "sessionKey")
                     
                     val result = sessionService.getSession(SessionKey(sessionKey))
-                        ?: throw IllegalArgumentException("Session not found")
-                    // Return properly formatted MCP response with content structure
-                    buildJsonObject {
-                        put("content", buildJsonArray {
-                            add(buildJsonObject {
-                                put("type", "text")
-                                put("text", Json.encodeToString(result))
-                            })
-                        })
-                    }
+                        ?: throw IllegalArgumentException("Session not found: $sessionKey")
+                    
+                    createMcpTextResponse(Json.encodeToString(result))
                 }
             }
         ),
@@ -115,18 +118,13 @@ class DefaultSessionToolProvider(
             parametersSchema = buildJsonObject {
                 put("type", "object")
                 put("properties", buildJsonObject {
-                    put("sessionKey", buildJsonObject {
-                        put("type", "string")
-                        put("description", "Session key (optional)")
-                    })
+                    put("sessionKey", buildOptionalStringParam("Session key (optional)"))
                 })
             },
             handler = ToolHandler.Async { params ->
                 Result.runCatching {
-                    val obj = params.jsonObject
-                    val sessionKey = obj["sessionKey"]?.jsonPrimitive?.contentOrNull?.let {
-                        SessionKey(it)
-                    }
+                    val sessionKeyValue = extractOptionalParam(params, "sessionKey")
+                    val sessionKey = sessionKeyValue?.let { SessionKey(it) }
                     
                     // For now, return a placeholder task
                     val nextTask = buildJsonObject {
@@ -135,28 +133,19 @@ class DefaultSessionToolProvider(
                         put("priority", "high")
                         put("sessionKey", sessionKey?.value ?: "default")
                     }
-                    // Return properly formatted MCP response with content structure
-                    buildJsonObject {
-                        put("content", buildJsonArray {
-                            add(buildJsonObject {
-                                put("type", "text")
-                                put("text", Json.encodeToString(nextTask))
-                            })
-                        })
-                    }
+                    
+                    createMcpTextResponse(Json.encodeToString(nextTask))
                 }
             }
         ),
         Tool(
             name = "get_active_session",
             description = "Get the currently active session",
-            parametersSchema = buildJsonObject {
-                put("type", "object")
-                put("properties", buildJsonObject {})
-            },
+            parametersSchema = buildEmptyPropertiesSchema(),
             handler = ToolHandler.Async { _ ->
                 Result.runCatching {
                     val sessionListDto = sessionService.listActiveSessions()
+                    
                     // Return the first active session or a default response
                     val response = if (sessionListDto.sessions.isNotEmpty()) {
                         Json.encodeToString(sessionListDto.sessions.first())
@@ -166,39 +155,21 @@ class DefaultSessionToolProvider(
                             put("message", "No active session found")
                         })
                     }
-                    // Return properly formatted MCP response with content structure
-                    buildJsonObject {
-                        put("content", buildJsonArray {
-                            add(buildJsonObject {
-                                put("type", "text")
-                                put("text", response)
-                            })
-                        })
-                    }
+                    
+                    createMcpTextResponse(response)
                 }
             }
         ),
         Tool(
             name = "list_sessions",
             description = "List all sessions (active and inactive)",
-            parametersSchema = buildJsonObject {
-                put("type", "object")
-                put("properties", buildJsonObject {})
-            },
+            parametersSchema = buildEmptyPropertiesSchema(),
             handler = ToolHandler.Async { _ ->
                 Result.runCatching {
                     // For now, delegate to list active sessions
                     // This can be expanded to include inactive sessions later
                     val sessionListDto = sessionService.listActiveSessions()
-                    // Return properly formatted MCP response with content structure
-                    buildJsonObject {
-                        put("content", buildJsonArray {
-                            add(buildJsonObject {
-                                put("type", "text")
-                                put("text", Json.encodeToString(sessionListDto))
-                            })
-                        })
-                    }
+                    createMcpTextResponse(Json.encodeToString(sessionListDto))
                 }
             }
         )

@@ -63,14 +63,21 @@ class DefaultProjectResourceProvider(
                 mimeType = "application/json"
             )
             else -> {
-                // Check for project ID pattern
-                if (uri.startsWith("cycletime://projects/") && uri.length > "cycletime://projects/".length) {
-                    Resource(
-                        uri = uri,
-                        name = "CycleTime Project",
-                        description = "Individual project resource by ID",
-                        mimeType = "application/json"
-                    )
+                // Check for project ID pattern: cycletime://projects/{id}
+                val projectsPrefix = "cycletime://projects/"
+                if (uri.startsWith(projectsPrefix)) {
+                    val idPart = uri.substring(projectsPrefix.length)
+                    // Must have non-empty ID and no additional path segments
+                    if (idPart.isNotEmpty() && !idPart.contains('/')) {
+                        Resource(
+                            uri = uri,
+                            name = "CycleTime Project",
+                            description = "Individual project resource by ID",
+                            mimeType = "application/json"
+                        )
+                    } else {
+                        null
+                    }
                 } else {
                     null
                 }
@@ -91,6 +98,7 @@ class DefaultProjectResourceProvider(
                     try {
                         val projectId = ProjectId(projectIdString)
                         val project = projectService.getProject(projectId)
+                            ?: throw IllegalArgumentException("Project not found: $projectIdString")
                         Json.encodeToString(project)
                     } catch (e: Exception) {
                         throw IllegalArgumentException("Project not found: $projectIdString", e)
@@ -158,14 +166,21 @@ class DefaultIssueResourceProvider(
                 mimeType = "application/json"
             )
             else -> {
-                // Check for issue ID pattern
-                if (uri.startsWith("cycletime://issues/") && uri.length > "cycletime://issues/".length) {
-                    Resource(
-                        uri = uri,
-                        name = "CycleTime Issue",
-                        description = "Individual issue resource by ID",
-                        mimeType = "application/json"
-                    )
+                // Check for issue ID pattern: cycletime://issues/{id}
+                val issuesPrefix = "cycletime://issues/"
+                if (uri.startsWith(issuesPrefix)) {
+                    val idPart = uri.substring(issuesPrefix.length)
+                    // Must have non-empty ID and no additional path segments
+                    if (idPart.isNotEmpty() && !idPart.contains('/')) {
+                        Resource(
+                            uri = uri,
+                            name = "CycleTime Issue",
+                            description = "Individual issue resource by ID",
+                            mimeType = "application/json"
+                        )
+                    } else {
+                        null
+                    }
                 } else {
                     null
                 }
@@ -186,6 +201,7 @@ class DefaultIssueResourceProvider(
                     try {
                         val issueId = IssueId(issueIdString)
                         val issue = issueService.getIssue(issueId)
+                            ?: throw IllegalArgumentException("Issue not found: $issueIdString")
                         Json.encodeToString(issue)
                     } catch (e: Exception) {
                         throw IllegalArgumentException("Issue not found: $issueIdString", e)
@@ -297,6 +313,7 @@ class DefaultSessionResourceProvider(
                     try {
                         val sessionKey = SessionKey(sessionIdString)
                         val session = sessionService.getSession(sessionKey)
+                            ?: throw IllegalArgumentException("Session not found: $sessionIdString")
                         Json.encodeToString(session)
                     } catch (e: Exception) {
                         throw IllegalArgumentException("Session not found: $sessionIdString", e)
@@ -392,8 +409,8 @@ class DefaultWorkflowResourceProvider : WorkflowResourceProvider, ResourceProvid
     override suspend fun readResource(uri: String): String {
         return when (uri) {
             "cycletime://workflows" -> {
-                // Return empty workflow list for now
-                Json.encodeToString(emptyList<Map<String, Any>>())
+                // Return empty workflow list
+                "[]"
             }
             "cycletime://tasks/next" -> {
                 // Return no next task available for now
