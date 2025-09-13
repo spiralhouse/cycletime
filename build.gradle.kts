@@ -596,10 +596,13 @@ kover {
     // Updated for SPI-595: Include integrationTest for accurate API coverage reporting
     currentProject {
         instrumentation {
-            // Keep systemTest disabled for performance, but enable integrationTest for API coverage
+            // Keep systemTest disabled for performance
             disabledForTestTasks.add("systemTest")
-            disabledForTestTasks.add("test") // Disable the delegation task as well
-            // Note: integrationTest now enabled for SPI-595 API coverage accuracy
+            // Disable test delegation task to prevent CI from running overlapping test tasks
+            disabledForTestTasks.add("test")
+            // Disable integrationTest for coverage to fix CI unit test job running integration tests
+            disabledForTestTasks.add("integrationTest")
+            // Only unitTest will run for coverage collection to fix CI test suite mismatch
         }
     }
     
