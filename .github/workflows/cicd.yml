@@ -403,10 +403,10 @@ jobs:
       - name: Copy CI Gradle properties
         run: cp .github/gradle-ci.properties gradle.properties
 
-      - name: Run integration tests
+      - name: Run integration tests with coverage
         run: |
-          echo "🔗 Running integration tests using pre-compiled artifacts"
-          ./gradlew integrationTest -x compileKotlin -x compileTestKotlin --build-cache --configuration-cache --no-daemon
+          echo "🔗 Running integration tests with coverage using pre-compiled artifacts"
+          ./gradlew integrationTest koverXmlReport -x compileKotlin -x compileTestKotlin --build-cache --configuration-cache --no-daemon
 
       - name: Upload integration test results
         uses: actions/upload-artifact@v4
@@ -417,6 +417,52 @@ jobs:
             build/reports/tests/integrationTest/
             build/test-results/integrationTest/
           retention-days: 7
+
+      - name: Verify coverage report exists
+        run: |
+          echo "🔍 Checking coverage report generation..."
+          if [ -f "./build/reports/kover/report.xml" ]; then
+            echo "✅ Coverage report found: $(ls -lh ./build/reports/kover/report.xml)"
+            echo "📊 Report size: $(wc -c < ./build/reports/kover/report.xml) bytes"
+            echo "📈 First 10 lines of coverage report:"
+            head -10 ./build/reports/kover/report.xml
+          else
+            echo "❌ Coverage report not found at ./build/reports/kover/report.xml"
+            echo "📁 Contents of build/reports/:"
+            find ./build/reports/ -type f -name "*.xml" || echo "No XML files found"
+            exit 1
+          fi
+
+      - name: Upload coverage to Codecov
+        if: success()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./build/reports/kover/report.xml
+          flags: integration
+          name: codecov-umbrella
+          fail_ci_if_error: false
+          verbose: true
+          # Additional configuration for better integration
+          directory: ./build/reports/kover/
+          root_dir: ./
+          working-directory: ./
+
+      - name: Fallback coverage upload (if primary fails)
+        if: failure()
+        run: |
+          echo "⚠️ Primary CodeCov upload failed, attempting direct upload..."
+          if command -v curl &> /dev/null && [ -f "./build/reports/kover/report.xml" ]; then
+            echo "🔄 Using curl to upload coverage report directly..."
+            curl -s https://codecov.io/bash | bash -s -- \
+              -t "${{ secrets.CODECOV_TOKEN }}" \
+              -f "./build/reports/kover/report.xml" \
+              -F "integration" \
+              -n "codecov-fallback" \
+              -v || echo "❌ Fallback upload also failed"
+          else
+            echo "⚠️ Curl not available or coverage report missing, skipping fallback"
+          fi
 
   # System Tests
   system-tests:
