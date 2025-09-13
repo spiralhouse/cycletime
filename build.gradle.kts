@@ -304,6 +304,7 @@ val integrationTest by tasks.registering(Test::class) {
         includeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.tools.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.*")
+        includeTestsMatching("io.spiralhouse.cycletime.api.*") // Include API layer tests (SPI-595)
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
         excludeTestsMatching("io.spiralhouse.cycletime.system.*")
         excludeTestsMatching("io.spiralhouse.cycletime.domain.*")
@@ -315,9 +316,11 @@ val integrationTest by tasks.registering(Test::class) {
         include("**/application/**/*.kt")
         include("**/infrastructure/**/*.kt")
         include("**/persistence/**/*.kt")
+        include("**/api/**/*.kt") // Include API layer for SPI-595
     })
     inputs.files(fileTree("src/test/kotlin") {
         include("**/integration/**/*.kt")
+        include("**/api/**/*.kt") // Include API tests for SPI-595
     })
     inputs.file("build.gradle.kts")
     inputs.property("sqliteVersion", "3.46.1.3") // Track database dependency changes
@@ -589,15 +592,14 @@ detekt {
 
 // Kover configuration
 kover {
-    // Configure Kover to only collect coverage from unitTest task
-    // This prevents integrationTest and systemTest from running during coverage collection
+    // Configure Kover to collect coverage from both unit and integration tests
+    // Updated for SPI-595: Include integrationTest for accurate API coverage reporting
     currentProject {
         instrumentation {
-            // Disable instrumentation for integration and system test tasks
-            // This ensures koverXmlReport only uses data from unitTest
-            disabledForTestTasks.add("integrationTest")
+            // Keep systemTest disabled for performance, but enable integrationTest for API coverage
             disabledForTestTasks.add("systemTest")
             disabledForTestTasks.add("test") // Disable the delegation task as well
+            // Note: integrationTest now enabled for SPI-595 API coverage accuracy
         }
     }
     
