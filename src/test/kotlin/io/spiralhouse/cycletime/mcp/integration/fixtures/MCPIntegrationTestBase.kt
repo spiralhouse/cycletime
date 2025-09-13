@@ -6,6 +6,7 @@ import io.kotest.core.test.TestCase
 import io.kotest.core.test.TestResult
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.server.testing.*
@@ -62,6 +63,7 @@ abstract class MCPIntegrationTestBase : StringSpec() {
     protected lateinit var testApplicationEngine: TestApplicationEngine
     protected var mcpClient: MockClaudeClient? = null
     protected val mcpPort = allocatePort()
+    protected var currentTestHttpClient: HttpClient? = null
     
     // JSON utilities
     protected val json = Json { 
@@ -155,6 +157,12 @@ abstract class MCPIntegrationTestBase : StringSpec() {
                 module()
             }
             
+            // Create a WebSocket-enabled client for MCP testing
+            val webSocketClient = createClient {
+                install(io.ktor.client.plugins.websocket.WebSockets)
+            }
+            currentTestHttpClient = webSocketClient
+            
             // Wait for application to start up
             val healthResponse = client.get("/health")
             healthResponse.status shouldBe io.ktor.http.HttpStatusCode.OK
@@ -166,7 +174,12 @@ abstract class MCPIntegrationTestBase : StringSpec() {
             // This will fail if MCP server health check is not implemented
             dependencies?.get("mcp")?.jsonPrimitive?.content shouldBe "running"
             
-            block.invoke(this)
+            try {
+                block.invoke(this)
+            } finally {
+                webSocketClient.close()
+                currentTestHttpClient = null
+            }
         }
     }
     
@@ -179,18 +192,21 @@ abstract class MCPIntegrationTestBase : StringSpec() {
      * It connects to the WebSocket endpoint on the test application.
      */
     protected suspend fun createConnectedMcpClient(): MockClaudeClient {
-        // Create a simple MCP client that will use standard WebSocket connection
-        // The actual connection will be established when connect() is called
+        val testHttpClient = currentTestHttpClient 
+            ?: throw IllegalStateException("Test HTTP client not available. Must be called within withTestApplication block.")
+        
+        // Create a simple MCP client that will use the test application's HTTP client
         val testClient = MockClaudeClient(
             serverHost = "localhost", 
-            serverPort = 80,  // Default port, will be handled by framework
+            serverPort = 80,  // Not used when connecting to test application
             serverPath = "/mcp",
             connectionTimeout = 5.seconds,
             requestTimeout = 10.seconds
         )
         
         // This will fail if WebSocket server is not running at /mcp
-        testClient.connect()
+        // Use the test application's HTTP client for proper integration testing
+        testClient.connectToTestApplication(testHttpClient)
         mcpClient = testClient
         return testClient
     }
@@ -387,7 +403,12 @@ abstract class MCPIntegrationTestBase : StringSpec() {
         // Extract project ID from response
         val result = response.jsonObject["result"]?.jsonObject
         val content = result?.get("content")?.jsonArray?.get(0)?.jsonObject
-        val projectId = content?.get("text")?.jsonPrimitive?.content
+        val responseText = content?.get("text")?.jsonPrimitive?.content
+            ?: throw AssertionError("Failed to extract project data from tool response")
+        
+        // Parse JSON response to extract ID
+        val projectData = json.parseToJsonElement(responseText).jsonObject
+        val projectId = projectData["id"]?.jsonPrimitive?.content
             ?: throw AssertionError("Failed to extract project ID from tool response")
         
         return projectId
@@ -410,10 +431,18 @@ abstract class MCPIntegrationTestBase : StringSpec() {
         // Extract issue ID from response
         val result = response.jsonObject["result"]?.jsonObject
         val content = result?.get("content")?.jsonArray?.get(0)?.jsonObject
-        val issueId = content?.get("text")?.jsonPrimitive?.content
-            ?: throw AssertionError("Failed to extract issue ID from tool response")
+        val responseText = content?.get("text")?.jsonPrimitive?.content
+            ?: throw AssertionError("Failed to extract issue data from tool response. Response: ${response}")
         
-        return issueId
+        // Parse JSON response to extract ID
+        try {
+            val issueData = json.parseToJsonElement(responseText).jsonObject
+            val issueId = issueData["id"]?.jsonPrimitive?.content
+                ?: throw AssertionError("Failed to extract issue ID from tool response. Response text: $responseText")
+            return issueId
+        } catch (e: Exception) {
+            throw AssertionError("Failed to parse issue response as JSON. Response text: $responseText. Error: ${e.message}", e)
+        }
     }
     
     /**

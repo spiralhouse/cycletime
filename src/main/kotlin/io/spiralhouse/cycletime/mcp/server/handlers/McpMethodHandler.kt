@@ -206,35 +206,31 @@ class McpMethodHandler(
         val tool = toolRegistry.getTool(toolName)
         
         if (tool == null) {
+            val allToolNames = toolRegistry.getRegisteredToolNames()
             return createErrorResponse(
                 request = request,
                 code = -32001,
-                message = "Tool not found: $toolName"
+                message = "Tool not found: $toolName. Available tools: $allToolNames"
             )
         }
         
-        // Handle async tool called synchronously - not supported
-        if (tool.isAsync && !async) {
-            return createInvalidParamsError(
-                request, 
-                "Async tool '$toolName' requires async invocation"
-            )
-        }
+        // Auto-detect async tools and handle appropriately
+        // Allow async tools to be called from sync endpoint for convenience
         
-        val result = if (tool.isAsync && async) {
-            // Invoke async tool with timeout
+        val result = if (tool.isAsync) {
+            // Invoke async tool with timeout (regardless of endpoint)
             val timeout = params["timeout"]?.jsonPrimitive?.longOrNull 
                 ?: 60000L // Default 60 seconds
             toolInvoker.invokeAsync(toolName, arguments, timeout)
         } else {
-            // Invoke sync tool (either sync-sync or sync-async)
+            // Invoke sync tool
             toolInvoker.invoke(toolName, arguments)
         }
         
         return result.fold(
             onSuccess = { value ->
-                val responseData = formatToolResponse(value)
-                createSuccessResponse(request, responseData)
+                // Tools now return properly formatted MCP responses directly
+                createSuccessResponse(request, value)
             },
             onFailure = { error ->
                 createToolError(request, error)
@@ -436,7 +432,7 @@ class McpMethodHandler(
     
     private fun buildServerInfo(): JsonObject {
         return buildJsonObject {
-            put("name", "CycleTime MCP Server")
+            put("name", "CycleTime-CE")
             put("version", "1.0.0")
         }
     }
@@ -444,6 +440,15 @@ class McpMethodHandler(
     private fun formatToolResponse(value: JsonElement): JsonObject {
         val textValue = when {
             value is JsonPrimitive && value.isString -> value.content
+            value is JsonPrimitive && value.isString.not() -> value.content
+            value is JsonObject -> {
+                // Handle domain object responses - convert to pretty JSON string
+                Json { prettyPrint = true }.encodeToString(value)
+            }
+            value is JsonArray -> {
+                // Handle array responses - convert to pretty JSON string  
+                Json { prettyPrint = true }.encodeToString(value)
+            }
             else -> value.toString().trim('"')
         }
         

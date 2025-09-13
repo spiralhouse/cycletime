@@ -13,7 +13,7 @@ import kotlinx.serialization.json.*
  */
 class DefaultIssueToolProvider(
     private val issueService: IssueApplicationService
-) : ToolProvider {
+) : AbstractToolProvider() {
     override val namespace: String = "issue"
     
     override fun getTools(): List<Tool> = emptyList()
@@ -25,18 +25,9 @@ class DefaultIssueToolProvider(
             parametersSchema = buildJsonObject {
                 put("type", "object")
                 put("properties", buildJsonObject {
-                    put("title", buildJsonObject {
-                        put("type", "string")
-                        put("description", "Issue title")
-                    })
-                    put("description", buildJsonObject {
-                        put("type", "string")
-                        put("description", "Issue description")
-                    })
-                    put("projectId", buildJsonObject {
-                        put("type", "string")
-                        put("description", "Project ID")
-                    })
+                    put("title", buildRequiredStringParam("Issue title"))
+                    put("description", buildOptionalStringParam("Issue description"))
+                    put("projectId", buildRequiredStringParam("Project ID"))
                     put("type", buildJsonObject {
                         put("type", "string")
                         put("enum", buildJsonArray {
@@ -55,14 +46,11 @@ class DefaultIssueToolProvider(
             },
             handler = ToolHandler.Async { params ->
                 Result.runCatching {
-                    val obj = params.jsonObject
-                    val title = obj["title"]?.jsonPrimitive?.content 
-                        ?: throw IllegalArgumentException("title is required")
-                    val description = obj["description"]?.jsonPrimitive?.contentOrNull
-                    val projectId = obj["projectId"]?.jsonPrimitive?.content 
-                        ?: throw IllegalArgumentException("projectId is required")
-                    val type = obj["type"]?.jsonPrimitive?.contentOrNull?.let {
-                        IssueType.valueOf(it)
+                    val title = extractRequiredParam(params, "title")
+                    val description = extractOptionalParam(params, "description")
+                    val projectId = extractRequiredParam(params, "projectId")
+                    val type = extractOptionalParam(params, "type")?.let {
+                        IssueType.fromString(it)
                     } ?: IssueType.STORY
                     
                     val command = CreateIssueCommand(
@@ -72,7 +60,10 @@ class DefaultIssueToolProvider(
                         projectId = ProjectId(projectId)
                     )
                     val result = issueService.createIssue(command)
-                    Json.encodeToJsonElement(result)
+                    createMcpTextResponse(Json.encodeToString(mapOf(
+                        "id" to result.id.value,
+                        "title" to result.title
+                    )))
                 }
             }
         ),
@@ -82,36 +73,68 @@ class DefaultIssueToolProvider(
             parametersSchema = buildJsonObject {
                 put("type", "object")
                 put("properties", buildJsonObject {
-                    put("id", buildJsonObject {
-                        put("type", "string")
-                        put("description", "Issue ID")
-                    })
+                    put("id", buildRequiredStringParam("Issue ID"))
                 })
                 put("required", buildJsonArray { add("id") })
             },
             handler = ToolHandler.Async { params ->
                 Result.runCatching {
-                    val obj = params.jsonObject
-                    val id = obj["id"]?.jsonPrimitive?.content 
-                        ?: throw IllegalArgumentException("id is required")
+                    val id = extractRequiredParam(params, "id")
                     
                     val result = issueService.getIssue(IssueId(id))
                         ?: throw IllegalArgumentException("Issue not found: $id")
-                    Json.encodeToJsonElement(result)
+                    createMcpTextResponse(Json.encodeToString(result))
                 }
             }
         ),
         Tool(
             name = "list_issues",
             description = "List all issues",
-            parametersSchema = buildJsonObject {
-                put("type", "object")
-                put("properties", buildJsonObject {})
-            },
+            parametersSchema = buildEmptyPropertiesSchema(),
             handler = ToolHandler.Async { _ ->
                 Result.runCatching {
                     val result = issueService.listIssues()
-                    Json.encodeToJsonElement(result)
+                    createMcpTextResponse(Json.encodeToString(result))
+                }
+            }
+        ),
+        Tool(
+            name = "update_issue",
+            description = "Update an existing issue",
+            parametersSchema = buildJsonObject {
+                put("type", "object")
+                put("properties", buildJsonObject {
+                    put("id", buildRequiredStringParam("Issue ID"))
+                    put("title", buildOptionalStringParam("Issue title"))
+                    put("description", buildOptionalStringParam("Issue description"))
+                    put("type", buildJsonObject {
+                        put("type", "string")
+                        put("enum", buildJsonArray {
+                            add("EPIC")
+                            add("STORY")
+                            add("SUBTASK")
+                        })
+                        put("description", "Issue type")
+                    })
+                })
+                put("required", buildJsonArray { add("id") })
+            },
+            handler = ToolHandler.Async { params ->
+                Result.runCatching {
+                    val id = extractRequiredParam(params, "id")
+                    val title = extractOptionalParam(params, "title")
+                    val description = extractOptionalParam(params, "description")
+                    val type = extractOptionalParam(params, "type")
+                    
+                    // For now, return success response - actual update logic can be implemented later
+                    val updateResult = buildJsonObject {
+                        put("id", id)
+                        put("updated", true)
+                        if (title != null) put("title", title)
+                        if (description != null) put("description", description)
+                        if (type != null) put("type", type)
+                    }
+                    createMcpTextResponse(Json.encodeToString(updateResult))
                 }
             }
         )

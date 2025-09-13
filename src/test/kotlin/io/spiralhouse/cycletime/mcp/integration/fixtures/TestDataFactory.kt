@@ -207,10 +207,10 @@ object TestDataFactory {
         put("params", buildJsonObject {
             put("name", "create_issue")
             put("arguments", buildJsonObject {
-                put("project_id", projectId)
+                put("projectId", projectId)
                 put("title", title)
                 put("description", description)
-                put("type", "task")
+                put("type", "subtask")
                 put("status", "todo")
                 put("priority", "medium")
                 put("estimate", 3)
@@ -525,7 +525,7 @@ object TestDataFactory {
         "project_id" to projectId,
         "title" to title,
         "description" to description,
-        "type" to "task",
+        "type" to "subtask",
         "status" to "todo",
         "priority" to "medium",
         "estimate" to 3,

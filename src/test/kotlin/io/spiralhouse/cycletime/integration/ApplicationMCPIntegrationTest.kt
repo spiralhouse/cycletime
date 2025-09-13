@@ -66,7 +66,7 @@ class ApplicationMCPIntegrationTest : StringSpec({
             val dependencies = healthJson.jsonObject["dependencies"]?.jsonObject
             
             // Health endpoint should include MCP server status
-            dependencies?.get("mcpServer")?.jsonPrimitive?.content shouldBe "running"
+            dependencies?.get("mcp")?.jsonPrimitive?.content shouldBe "running"
             
             val metrics = healthJson.jsonObject["metrics"]?.jsonObject
             metrics?.get("mcpConnections")?.jsonPrimitive?.content shouldBe "0"

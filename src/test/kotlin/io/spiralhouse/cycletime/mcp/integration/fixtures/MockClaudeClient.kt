@@ -261,22 +261,36 @@ class MockClaudeClient(
     suspend fun ping(data: ByteArray = byteArrayOf(1, 2, 3, 4)): ByteArray = withTimeout(requestTimeout) {
         val session = webSocketSession ?: throw MockClaudeClientException("Not connected")
         
-        session.send(Frame.Ping(data))
-        
-        // Wait for pong response
-        while (true) {
-            when (val frame = session.incoming.receive()) {
-                is Frame.Pong -> {
-                    // Extract data from pong frame if available
-                    return@withTimeout data // Return original data for testing
+        try {
+            session.send(Frame.Ping(data))
+            
+            // Wait for pong response
+            while (true) {
+                when (val frame = session.incoming.receive()) {
+                    is Frame.Pong -> {
+                        // Return actual pong data from server for proper testing
+                        return@withTimeout frame.data
+                    }
+                    is Frame.Text -> {
+                        // Ignore other messages during ping/pong
+                        continue
+                    }
+                    is Frame.Binary -> {
+                        // Ignore binary frames during ping/pong
+                        continue
+                    }
+                    is Frame.Close -> {
+                        throw MockClaudeClientException("Connection closed during ping/pong")
+                    }
+                    else -> continue
                 }
-                is Frame.Text -> {
-                    // Ignore other messages during ping/pong
-                    continue
-                }
-                else -> continue
             }
+        } catch (e: ClosedReceiveChannelException) {
+            throw MockClaudeClientException("Connection closed during ping/pong", e)
+        } catch (e: Exception) {
+            throw MockClaudeClientException("Error during ping/pong: ${e.message}", e)
         }
+        
         @Suppress("UNREACHABLE_CODE")
         data
     }
@@ -353,7 +367,46 @@ class MockClaudeClient(
             ?: throw MockClaudeClientException("Expected text frame response")
         
         val responseText = responseFrame.readText()
-        return json.parseToJsonElement(responseText)
+        val response = json.parseToJsonElement(responseText)
+        
+        // DEBUG LOGGING: Add detailed response structure analysis
+        println("=== MCP RESPONSE DEBUG ===")
+        println("Request method: ${request["method"]?.jsonPrimitive?.content}")
+        println("Raw response text: $responseText")
+        println("Parsed response JSON: $response")
+        
+        // Analyze result structure specifically for tool calls
+        if (request["method"]?.jsonPrimitive?.content == "tools/call") {
+            println("=== TOOL CALL RESPONSE ANALYSIS ===")
+            val result = response.jsonObject["result"]
+            println("Result field: $result")
+            
+            if (result != null) {
+                val content = result.jsonObject["content"]
+                println("Content field: $content")
+                println("Content type: ${content?.javaClass?.simpleName}")
+                
+                if (content is JsonArray) {
+                    println("Content is JsonArray with ${content.size} elements")
+                    content.forEachIndexed { index, element ->
+                        println("Content[$index]: $element")
+                        if (element is JsonObject) {
+                            println("Content[$index].type: ${element["type"]}")
+                            println("Content[$index].text: ${element["text"]}")
+                        }
+                    }
+                } else if (content is JsonObject) {
+                    println("Content is JsonObject:")
+                    println("Content.type: ${content["type"]}")
+                    println("Content.text: ${content["text"]}")
+                } else {
+                    println("Content is neither JsonArray nor JsonObject: $content")
+                }
+            }
+        }
+        println("=== END DEBUG ===")
+        
+        return response
     }
     
     private fun generateRequestId(): Int = requestIdGenerator.getAndIncrement()

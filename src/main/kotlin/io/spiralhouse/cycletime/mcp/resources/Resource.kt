@@ -36,7 +36,9 @@ data class Resource(
 
     private fun validateUri(uri: String) {
         try {
-            val parsedUri = URI.create(uri)
+            // Check if this is a template URI with placeholders (e.g., {id})
+            val templateUri = uri.replace(Regex("\\{[^}]+\\}"), "placeholder")
+            val parsedUri = URI.create(templateUri)
             if (parsedUri.scheme == null) {
                 throw InvalidResourceUriException("URI must have a scheme: $uri")
             }

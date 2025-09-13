@@ -50,12 +50,48 @@ class MCPWebSocketHandler(
                         val text = frame.readText()
                         connectionId?.let { handleTextMessage(session, it, text) }
                     }
+                    is Frame.Ping -> {
+                        // Respond to ping with pong (WebSocket heartbeat)
+                        if (config.detailedLogging) {
+                            logger.debug("Ping received from $connectionId with ${frame.data.size} bytes, sending pong")
+                        }
+                        connectionId?.let { connId ->
+                            val success = connectionManager.sendFrame(connId, Frame.Pong(frame.data))
+                            if (!success) {
+                                logger.error("Failed to send pong response to $connId via connection manager")
+                                // Try direct send as fallback
+                                try {
+                                    session.send(Frame.Pong(frame.data))
+                                    logger.debug("Fallback direct pong send successful for $connId")
+                                } catch (e: Exception) {
+                                    logger.error("Both connection manager and direct pong send failed for $connId: ${e.message}")
+                                    throw e
+                                }
+                            }
+                        } ?: run {
+                            logger.error("Cannot send pong: connection not registered")
+                            // Try direct send as emergency fallback
+                            try {
+                                session.send(Frame.Pong(frame.data))
+                                logger.debug("Emergency direct pong send successful")
+                            } catch (e: Exception) {
+                                logger.error("Emergency pong send failed: ${e.message}")
+                                throw e
+                            }
+                        }
+                    }
+                    is Frame.Pong -> {
+                        // Log pong receipt (heartbeat acknowledgment)
+                        if (config.detailedLogging) {
+                            logger.debug("Pong received from $connectionId")
+                        }
+                    }
                     is Frame.Close -> {
                         logger.info("WebSocket close frame received for $connectionId")
                         break
                     }
                     else -> {
-                        logger.debug("Ignoring non-text frame from $connectionId")
+                        logger.debug("Ignoring unsupported frame type from $connectionId: ${frame.frameType}")
                     }
                 }
             }
