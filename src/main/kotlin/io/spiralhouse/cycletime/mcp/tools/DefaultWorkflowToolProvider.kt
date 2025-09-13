@@ -7,7 +7,7 @@ import kotlinx.serialization.json.*
  * 
  * Provides workflow-related tools for MCP operations.
  */
-class DefaultWorkflowToolProvider : ToolProvider {
+class DefaultWorkflowToolProvider : AbstractToolProvider() {
     override val namespace: String = "workflow"
     
     override fun getTools(): List<Tool> = emptyList()
@@ -19,14 +19,8 @@ class DefaultWorkflowToolProvider : ToolProvider {
             parametersSchema = buildJsonObject {
                 put("type", "object")
                 put("properties", buildJsonObject {
-                    put("name", buildJsonObject {
-                        put("type", "string")
-                        put("description", "Workflow name")
-                    })
-                    put("description", buildJsonObject {
-                        put("type", "string")
-                        put("description", "Workflow description")
-                    })
+                    put("name", buildRequiredStringParam("Workflow name"))
+                    put("description", buildOptionalStringParam("Workflow description"))
                     put("stages", buildJsonObject {
                         put("type", "array")
                         put("description", "Workflow stages")
@@ -47,11 +41,9 @@ class DefaultWorkflowToolProvider : ToolProvider {
             },
             handler = ToolHandler.Async { params ->
                 Result.runCatching {
-                    val obj = params.jsonObject
-                    val name = obj["name"]?.jsonPrimitive?.content 
-                        ?: throw IllegalArgumentException("name is required")
-                    val description = obj["description"]?.jsonPrimitive?.contentOrNull
-                    val stages = obj["stages"]?.jsonArray
+                    val name = extractRequiredParam(params, "name")
+                    val description = extractOptionalParam(params, "description")
+                    val stages = params.jsonObject["stages"]?.jsonArray
                     
                     // For now, return success response with workflow ID
                     buildJsonObject {
@@ -67,10 +59,7 @@ class DefaultWorkflowToolProvider : ToolProvider {
         Tool(
             name = "list_workflows",
             description = "List all workflows",
-            parametersSchema = buildJsonObject {
-                put("type", "object")
-                put("properties", buildJsonObject {})
-            },
+            parametersSchema = buildEmptyPropertiesSchema(),
             handler = ToolHandler.Async { _ ->
                 Result.runCatching {
                     // For now, return a placeholder list
@@ -97,14 +86,8 @@ class DefaultWorkflowToolProvider : ToolProvider {
             parametersSchema = buildJsonObject {
                 put("type", "object")
                 put("properties", buildJsonObject {
-                    put("workflowId", buildJsonObject {
-                        put("type", "string")
-                        put("description", "Workflow ID")
-                    })
-                    put("stage", buildJsonObject {
-                        put("type", "string")
-                        put("description", "Stage name to execute")
-                    })
+                    put("workflowId", buildRequiredStringParam("Workflow ID"))
+                    put("stage", buildRequiredStringParam("Stage name to execute"))
                     put("context", buildJsonObject {
                         put("type", "object")
                         put("description", "Execution context")
@@ -117,12 +100,9 @@ class DefaultWorkflowToolProvider : ToolProvider {
             },
             handler = ToolHandler.Async { params ->
                 Result.runCatching {
-                    val obj = params.jsonObject
-                    val workflowId = obj["workflowId"]?.jsonPrimitive?.content 
-                        ?: throw IllegalArgumentException("workflowId is required")
-                    val stage = obj["stage"]?.jsonPrimitive?.content 
-                        ?: throw IllegalArgumentException("stage is required")
-                    val context = obj["context"]?.jsonObject
+                    val workflowId = extractRequiredParam(params, "workflowId")
+                    val stage = extractRequiredParam(params, "stage")
+                    val context = params.jsonObject["context"]?.jsonObject
                     
                     // For now, return success response
                     buildJsonObject {
