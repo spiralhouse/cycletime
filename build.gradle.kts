@@ -600,9 +600,9 @@ kover {
             disabledForTestTasks.add("systemTest")
             // Disable test delegation task to prevent CI from running overlapping test tasks
             disabledForTestTasks.add("test")
-            // Disable integrationTest for coverage to fix CI unit test job running integration tests
-            disabledForTestTasks.add("integrationTest")
-            // Only unitTest will run for coverage collection to fix CI test suite mismatch
+            // Enable integrationTest for coverage to support CI coverage collection (SPI-595)
+            // disabledForTestTasks.add("integrationTest") // Re-enabled for proper coverage collection
+            // Note: CI job separation achieved by running different test tasks, not disabling coverage
         }
     }
     
