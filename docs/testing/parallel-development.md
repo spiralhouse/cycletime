@@ -6,6 +6,8 @@ This document describes how to enable multiple agents to work on independent fea
 
 Parallel development in CycleTime allows multiple features to be developed simultaneously by leveraging Git Worktrees. Each feature can follow any development workflow with Claude-orchestrated specialized agents within its own isolated workspace.
 
+**Integration Note**: This document focuses on Claude CLI agent-based parallel development. For single-feature development and Task tool agent patterns, see [Single Feature Workflow](../development/single-feature-workflow.md) and [Task Tool Workflow](../../.claude/workflows/task-tool-workflow.md).
+
 ### Key Concepts
 
 - **Feature-Level Parallelism**: Multiple independent features developed simultaneously
@@ -57,6 +59,61 @@ Outside of parallel development workflows:
 - Multiple independent features requested
 - User explicitly asks for parallel workflow
 - Features have clear boundaries and minimal overlap
+
+## Agent Type Selection for Parallel Development
+
+### Claude CLI Agents vs Task Tool Agents
+
+Parallel development primarily uses **Claude CLI agents** for their ability to work with real filesystem changes and true parallel execution. However, Task tool agents can be used for planning and coordination phases.
+
+#### Use Claude CLI Agents For:
+- **True parallel execution** across multiple worktrees
+- **Real filesystem changes** and git commits
+- **Background processing** of well-defined tasks
+- **Automated workflow execution** with minimal interaction
+
+#### Use Task Tool Agents For:
+- **Planning phase** before parallel execution
+- **Architecture decisions** affecting multiple features
+- **Coordination** between parallel workstreams
+- **Analysis** of completed parallel work
+
+### Mixed-Mode Parallel Development
+
+```mermaid
+flowchart TD
+    A[Multiple Features Requested] --> B[Task Tool: Planning Phase]
+    B --> C[@agent-software-architect: Design overall approach]
+    C --> D[@agent-tech-lead: Break down into parallel tasks]
+    D --> E[Claude CLI: Parallel Execution Phase]
+    E --> F[Launch multiple Claude CLI agents in parallel]
+    F --> G[Task Tool: Review Phase]
+    G --> H[@agent-code-reviewer: Review all implementations]
+```
+
+#### Example Mixed-Mode Workflow
+
+```bash
+# 1. Planning Phase (Task Tool)
+@agent-software-architect "Design architecture for user management features: authentication, profiles, and permissions that can be developed in parallel"
+
+@agent-tech-lead "Break down the user management epic into 3 parallel features and identify any dependencies or shared components"
+
+# 2. Setup Phase
+git worktree add .worktrees/spi-601-auth -b feat/spi-601-user-authentication
+git worktree add .worktrees/spi-602-profiles -b feat/spi-602-user-profiles
+git worktree add .worktrees/spi-603-permissions -b feat/spi-603-user-permissions
+
+# 3. Parallel Execution Phase (Claude CLI)
+cd .worktrees/spi-601-auth && claude -p "Implement user authentication according to architecture plan" --append-system-prompt "$(cat .claude/prompts/task-agent.txt)" --permission-mode bypassPermissions --output-format stream-json --verbose &
+
+cd .worktrees/spi-602-profiles && claude -p "Implement user profiles according to architecture plan" --append-system-prompt "$(cat .claude/prompts/task-agent.txt)" --permission-mode bypassPermissions --output-format stream-json --verbose &
+
+cd .worktrees/spi-603-permissions && claude -p "Implement user permissions according to architecture plan" --append-system-prompt "$(cat .claude/prompts/task-agent.txt)" --permission-mode bypassPermissions --output-format stream-json --verbose &
+
+# 4. Review Phase (Task Tool after parallel completion)
+@agent-code-reviewer "Review all three user management implementations for consistency, security, and integration compatibility"
+```
 
 ## Claude CLI Agent Execution
 
@@ -159,19 +216,19 @@ When running parallel agents, monitor completion using BashOutput. Completion ti
 ```python
 # Agent 1: user-authentication feature
 Bash(
-    command="cd /Users/[user]/Projects/jcvd/.worktrees/authentication && claude -p 'Implement user authentication system with login, logout, and session management. Create secure, production-ready code following project patterns.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[user]/Projects/cycletime/.worktrees/spi-601-authentication && claude -p 'Implement user authentication system with login, logout, and session management. Create secure, production-ready code following project patterns.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     run_in_background=true  # Returns bash_id like "bash_5"
 )
 
 # Agent 2: user-profile feature
 Bash(
-    command="cd /Users/[user]/Projects/jcvd/.worktrees/user-profile && claude -p 'Implement user profile management with create, read, update operations. Include validation and error handling.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[user]/Projects/cycletime/.worktrees/spi-602-user-profile && claude -p 'Implement user profile management with create, read, update operations. Include validation and error handling.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     run_in_background=true  # Returns bash_id like "bash_6"
 )
 
 # Agent 3: password-reset feature
 Bash(
-    command="cd /Users/[user]/Projects/jcvd/.worktrees/password-reset && claude -p 'Implement secure password reset flow with email verification and token-based reset process.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[user]/Projects/cycletime/.worktrees/spi-603-password-reset && claude -p 'Implement secure password reset flow with email verification and token-based reset process.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     run_in_background=true  # Returns bash_id like "bash_7"
 )
 ```
@@ -206,7 +263,7 @@ BashOutput(bash_id="bash_5", filter="commit|feat:|fix:|ERROR|completed")
 # ONLY after ALL implementation agents show "status": "completed" with "exit_code": 0
 
 Bash(
-    command="cd /Users/[user]/Projects/jcvd/.worktrees/authentication && claude -p 'Add comprehensive validation tests for the implemented authentication system. Focus on security, edge cases, and integration testing.' --append-system-prompt \"$(cat .claude/prompts/test-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[user]/Projects/cycletime/.worktrees/spi-601-authentication && claude -p 'Add comprehensive validation tests for the implemented authentication system. Focus on security, edge cases, and integration testing.' --append-system-prompt \"$(cat .claude/prompts/test-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     run_in_background=true
 )
 
@@ -397,22 +454,23 @@ For specific workflow details, see:
 ### Directory Structure
 
 ```
-jcvd/                          # Main worktree (main branch)
+cycletime/                     # Main worktree (main branch)
 ├── .git/                      # Shared Git database
 ├── src/                       # Main development area
 ├── .worktrees/                # Parallel development area
-│   ├── widget-one/            # Feature: Widget implementation
+│   ├── spi-620-docs-standards/    # Feature: Documentation standardization
 │   │   ├── .claude/prompts/   # Agent prompt files
 │   │   ├── src/               # Feature implementation
+│   │   ├── docs/              # Feature documentation
 │   │   └── tests/             # Feature tests
-│   ├── red-thingy/            # Feature: Red component
+│   ├── spi-587-auth-fix/      # Bug fix: Authentication issue
 │   │   ├── .claude/prompts/   # Agent prompt files
-│   │   ├── src/               # Feature implementation
-│   │   └── tests/             # Feature tests
-│   └── broken-fix/            # Bug fix: Specific issue
+│   │   ├── src/               # Bug fix implementation
+│   │   └── tests/             # Regression tests
+│   └── spi-612-api-redesign/  # Feature: API redesign
 │       ├── .claude/prompts/   # Agent prompt files
-│       ├── src/               # Bug fix implementation
-│       └── tests/             # Regression tests
+│       ├── src/               # Feature implementation
+│       └── tests/             # Feature tests
 └── docs/                      # Shared documentation
 ```
 
@@ -422,10 +480,10 @@ jcvd/                          # Main worktree (main branch)
 
 ```bash
 # Create feature branch and worktree
-git worktree add .worktrees/widget-one -b feat/widget-one
+git worktree add .worktrees/spi-620-docs-standards -b feat/spi-620-documentation-standards
 
 # Navigate to feature workspace
-cd .worktrees/widget-one
+cd .worktrees/spi-620-docs-standards
 
 # Worktree is ready for Claude CLI agent execution
 ```
@@ -434,10 +492,10 @@ cd .worktrees/widget-one
 
 ```bash
 # Create fix branch and worktree
-git worktree add .worktrees/broken-fix -b fix/broken-gets-fixed
+git worktree add .worktrees/spi-587-auth-fix -b fix/spi-587-auth-token-expiry
 
 # Navigate to fix workspace
-cd .worktrees/broken-fix
+cd .worktrees/spi-587-auth-fix
 
 # Worktree is ready for Claude CLI agent execution
 ```
@@ -474,7 +532,7 @@ for bash_id in ["bash_5", "bash_6", "bash_7"]:
 
 # 2. Launch review agents for quality assurance
 Bash(
-    command="cd /Users/[user]/Projects/jcvd/.worktrees/authentication && claude -p 'Review the authentication implementation for code quality, security, performance, and adherence to project standards. Suggest improvements and ensure best practices are followed.' --append-system-prompt \"$(cat .claude/prompts/review-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[user]/Projects/cycletime/.worktrees/spi-601-authentication && claude -p 'Review the authentication implementation for code quality, security, performance, and adherence to project standards. Suggest improvements and ensure best practices are followed.' --append-system-prompt \"$(cat .claude/prompts/review-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     run_in_background=true
 )
 
@@ -698,7 +756,7 @@ which claude
 
 # 2. Verify current directory is main repository
 pwd
-# Should end with: /jcvd (not .worktrees/*)
+# Should end with: /cycletime (not .worktrees/*)
 
 # 3. Verify prompt files exist
 ls -la .claude/prompts/
@@ -709,9 +767,9 @@ ls -la .claude/prompts/
 
 ```bash
 # Create 3 feature worktrees from main repository
-git worktree add .worktrees/red-thingy -b feat/spi-XXX-red-thingy
-git worktree add .worktrees/broken-fix -b fix/spi-XXX-broken-fix  
-git worktree add .worktrees/widget-one -b feat/spi-XXX-widget-enhancement
+git worktree add .worktrees/spi-601-authentication -b feat/spi-601-user-authentication
+git worktree add .worktrees/spi-602-user-profile -b feat/spi-602-user-profile
+git worktree add .worktrees/spi-603-password-reset -b feat/spi-603-password-reset
 
 # Verify worktrees created
 git worktree list
@@ -757,15 +815,15 @@ done
 ```python
 # Launch Task Agent 1: authentication feature
 Bash(
-    command="cd /Users/[USER]/Projects/jcvd/.worktrees/authentication && claude -p 'Implement user authentication system with secure login, logout, and session management. Include proper validation, error handling, and security best practices.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[USER]/Projects/cycletime/.worktrees/spi-601-authentication && claude -p 'Implement user authentication system with secure login, logout, and session management. Include proper validation, error handling, and security best practices.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     description="Launch task agent for authentication feature",
-    run_in_background=true  
+    run_in_background=true
 )
 # Returns bash_id (e.g., "bash_5")
 
-# Launch Task Agent 2: user profile feature  
+# Launch Task Agent 2: user profile feature
 Bash(
-    command="cd /Users/[USER]/Projects/jcvd/.worktrees/user-profile && claude -p 'Implement user profile management with create, read, update operations. Include data validation, error handling, and proper API integration.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[USER]/Projects/cycletime/.worktrees/spi-602-user-profile && claude -p 'Implement user profile management with create, read, update operations. Include data validation, error handling, and proper API integration.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     description="Launch task agent for user profile feature",
     run_in_background=true
 )
@@ -773,7 +831,7 @@ Bash(
 
 # Launch Task Agent 3: password reset feature
 Bash(
-    command="cd /Users/[USER]/Projects/jcvd/.worktrees/password-reset && claude -p 'Implement secure password reset functionality with email verification, token generation, and secure reset process following security best practices.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[USER]/Projects/cycletime/.worktrees/spi-603-password-reset && claude -p 'Implement secure password reset functionality with email verification, token generation, and secure reset process following security best practices.' --append-system-prompt \"$(cat .claude/prompts/task-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     description="Launch task agent for password reset feature",
     run_in_background=true
 )
@@ -807,21 +865,21 @@ BashOutput(bash_id="bash_7", filter="commit|feat:|fix:|completed|ERROR")
 ```python
 # Launch Test Agent 1: authentication validation
 Bash(
-    command="cd /Users/[USER]/Projects/jcvd/.worktrees/authentication && claude -p 'Add comprehensive validation tests for the authentication system. Focus on security testing, edge cases, error conditions, and integration scenarios.' --append-system-prompt \"$(cat .claude/prompts/test-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[USER]/Projects/cycletime/.worktrees/spi-601-authentication && claude -p 'Add comprehensive validation tests for the authentication system. Focus on security testing, edge cases, error conditions, and integration scenarios.' --append-system-prompt \"$(cat .claude/prompts/test-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     description="Launch test agent for authentication validation",
     run_in_background=true
 )
 
 # Launch Test Agent 2: user profile validation
 Bash(
-    command="cd /Users/[USER]/Projects/jcvd/.worktrees/user-profile && claude -p 'Add comprehensive validation tests for user profile functionality. Test CRUD operations, validation logic, and error handling.' --append-system-prompt \"$(cat .claude/prompts/test-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[USER]/Projects/cycletime/.worktrees/spi-602-user-profile && claude -p 'Add comprehensive validation tests for user profile functionality. Test CRUD operations, validation logic, and error handling.' --append-system-prompt \"$(cat .claude/prompts/test-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     description="Launch test agent for user profile validation",
     run_in_background=true
 )
 
 # Launch Test Agent 3: password reset validation
 Bash(
-    command="cd /Users/[USER]/Projects/jcvd/.worktrees/password-reset && claude -p 'Add comprehensive security tests for password reset functionality. Focus on security vulnerabilities, token handling, and edge cases.' --append-system-prompt \"$(cat .claude/prompts/test-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+    command="cd /Users/[USER]/Projects/cycletime/.worktrees/spi-603-password-reset && claude -p 'Add comprehensive security tests for password reset functionality. Focus on security vulnerabilities, token handling, and edge cases.' --append-system-prompt \"$(cat .claude/prompts/test-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
     description="Launch test agent for password reset validation",
     run_in_background=true
 )
@@ -855,9 +913,9 @@ done
 
 ```python
 # Launch Review agents for final quality assurance
-for worktree in ["authentication", "user-profile", "password-reset"]:
+for worktree in ["spi-601-authentication", "spi-602-user-profile", "spi-603-password-reset"]:
     Bash(
-        command=f"cd /Users/[USER]/Projects/jcvd/.worktrees/{worktree} && claude -p 'Perform comprehensive code review of {worktree} implementation. Check code quality, security, performance, and adherence to project standards. Suggest any necessary improvements.' --append-system-prompt \"$(cat .claude/prompts/review-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
+        command=f"cd /Users/[USER]/Projects/cycletime/.worktrees/{worktree} && claude -p 'Perform comprehensive code review of {worktree} implementation. Check code quality, security, performance, and adherence to project standards. Suggest any necessary improvements.' --append-system-prompt \"$(cat .claude/prompts/review-agent.txt)\" --permission-mode bypassPermissions --output-format stream-json --verbose",
         description=f"Launch review agent for {worktree} quality check",
         run_in_background=true
     )
@@ -867,17 +925,17 @@ for worktree in ["authentication", "user-profile", "password-reset"]:
 
 ```bash
 # Create PRs for each feature from their respective worktrees
-cd .worktrees/authentication
-git push -u origin feat/spi-XXX-user-authentication
-gh pr create --title "feat: implement user authentication system" --body "Complete implementation with parallel agent development"
+cd .worktrees/spi-601-authentication
+git push -u origin feat/spi-601-user-authentication
+gh pr create --title "feat: implement user authentication system (SPI-601)" --body "Complete implementation with parallel agent development"
 
-cd ../user-profile  
-git push -u origin feat/spi-XXX-user-profile
-gh pr create --title "feat: implement user profile management" --body "Complete implementation with parallel agent development"
+cd ../spi-602-user-profile
+git push -u origin feat/spi-602-user-profile
+gh pr create --title "feat: implement user profile management (SPI-602)" --body "Complete implementation with parallel agent development"
 
-cd ../password-reset
-git push -u origin feat/spi-XXX-password-reset  
-gh pr create --title "feat: implement password reset functionality" --body "Complete implementation with parallel agent development"
+cd ../spi-603-password-reset
+git push -u origin feat/spi-603-password-reset
+gh pr create --title "feat: implement password reset functionality (SPI-603)" --body "Complete implementation with parallel agent development"
 ```
 
 ### Quality Verification
@@ -914,14 +972,14 @@ done
 
 ```bash
 # After PRs are merged, clean up worktrees
-git worktree remove .worktrees/red-thingy
-git worktree remove .worktrees/broken-fix  
-git worktree remove .worktrees/widget-one
+git worktree remove .worktrees/spi-601-authentication
+git worktree remove .worktrees/spi-602-user-profile
+git worktree remove .worktrees/spi-603-password-reset
 
 # Clean up local branches (if desired)
-git branch -d feat/spi-XXX-user-authentication
-git branch -d feat/spi-XXX-user-profile
-git branch -d feat/spi-XXX-password-reset
+git branch -d feat/spi-601-user-authentication
+git branch -d feat/spi-602-user-profile
+git branch -d feat/spi-603-password-reset
 ```
 
 **This Quick Start enables reproducible parallel development with measurable success criteria and comprehensive error handling.**

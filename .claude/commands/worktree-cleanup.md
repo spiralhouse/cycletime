@@ -13,25 +13,40 @@ space.
 This command provides **analysis and git commands** for cleaning up worktrees,
 but the user executes the cleanup commands manually for safety.
 
+### Worktree Location Support
+
+This tool supports different worktree locations based on project setup:
+
+- **Standard Location**: `.worktrees/` (recommended, under project root)
+- **Legacy Locations**: `.cycletime-ce/worktrees/` or other custom paths
+- **External Locations**: Outside project directory (requires full paths)
+
+The tool automatically detects and adapts to your worktree structure.
+
 ## Process:
 
 ### 1. Discover Worktrees to Clean
 
 ```bash
-# List all git worktrees
+# List all git worktrees (shows all locations)
 git worktree list
 
-# Check contents of .cycletime-ce/worktrees directory
-find .cycletime-ce/worktrees -type d -name ".git" -exec dirname {} \;
+# Auto-detect worktree locations and analyze
+for worktree_dir in .worktrees .cycletime-ce/worktrees; do
+  if [ -d "$worktree_dir" ]; then
+    echo "=== Found worktrees in $worktree_dir ==="
+    find "$worktree_dir" -type d -name ".git" -exec dirname {} \;
 
-# Show age and activity of each worktree
-for dir in .cycletime-ce/worktrees/*/; do
-  if [ -d "$dir" ]; then
-    echo "=== $dir ==="
-    echo "Created: $(stat -c %y "$dir" 2>/dev/null || stat -f %SB "$dir")"
-    echo "Last modified: $(find "$dir" -type f -exec stat -c %y {} \; 2>/dev/null | sort -r | head -1)"
-    cd "$dir" 2>/dev/null && git status --porcelain | wc -l | xargs echo "Uncommitted files:"
-    cd - >/dev/null
+    # Show age and activity of each worktree
+    for dir in "$worktree_dir"/*/; do
+      if [ -d "$dir" ]; then
+        echo "=== $dir ==="
+        echo "Created: $(stat -c %y "$dir" 2>/dev/null || stat -f %SB "$dir")"
+        echo "Last modified: $(find "$dir" -type f -exec stat -c %y {} \; 2>/dev/null | sort -r | head -1)"
+        cd "$dir" 2>/dev/null && git status --porcelain | wc -l | xargs echo "Uncommitted files:"
+        cd - >/dev/null
+      fi
+    done
   fi
 done
 ```
@@ -80,7 +95,7 @@ git log -1 --format="%cr" HEAD
 
 ```bash
 # Remove worktree (safe - branch is merged)
-git worktree remove .cycletime-ce/worktrees/developer-task-123
+git worktree remove .worktrees/developer-task-123
 
 # Clean up merged branch
 git branch -d feature/developer/task-123
@@ -90,10 +105,10 @@ git branch -d feature/developer/task-123
 
 ```bash
 # Backup first (optional but recommended)
-cp -r .cycletime-ce/worktrees/abandoned-task-456 /tmp/backup-abandoned-task-456
+cp -r .worktrees/abandoned-task-456 /tmp/backup-abandoned-task-456
 
 # Force remove worktree
-git worktree remove --force .cycletime-ce/worktrees/abandoned-task-456
+git worktree remove --force .worktrees/abandoned-task-456
 
 # Delete unmerged branch (careful!)
 git branch -D feature/abandoned/task-456
@@ -103,11 +118,11 @@ git branch -D feature/abandoned/task-456
 
 ```bash
 # Create archive of unmerged work
-mkdir -p .cycletime-ce/archives
-tar -czf .cycletime-ce/archives/task-456-$(date +%Y%m%d).tar.gz .cycletime-ce/worktrees/abandoned-task-456
+mkdir -p .worktrees/archives
+tar -czf .worktrees/archives/task-456-$(date +%Y%m%d).tar.gz .worktrees/abandoned-task-456
 
 # Then remove worktree
-git worktree remove .cycletime-ce/worktrees/abandoned-task-456
+git worktree remove .worktrees/abandoned-task-456
 ```
 
 ### 5. Batch Cleanup
@@ -116,7 +131,7 @@ For multiple worktrees:
 
 ```bash
 # Clean all merged worktrees
-for worktree in .cycletime-ce/worktrees/*/; do
+for worktree in .worktrees/*/; do
   branch=$(cd "$worktree" && git branch --show-current)
   if git branch --merged main | grep -q "$branch"; then
     echo "Cleaning merged worktree: $worktree ($branch)"
@@ -170,7 +185,7 @@ done
 
 ```bash
 # Clean merged developer worktree
-git worktree remove .cycletime-ce/worktrees/developer-auth-123
+git worktree remove .worktrees/developer-auth-123
 git branch -d feature/developer/auth-implementation
 ```
 
@@ -178,8 +193,8 @@ git branch -d feature/developer/auth-implementation
 
 ```bash
 # Backup before cleaning qa worktree
-cp -r .cycletime-ce/worktrees/qa-auth-123 /tmp/backup-qa-auth-123
-git worktree remove --force .cycletime-ce/worktrees/qa-auth-123
+cp -r .worktrees/qa-auth-123 /tmp/backup-qa-auth-123
+git worktree remove --force .worktrees/qa-auth-123
 # Branch feature/qa/auth-testing will be preserved
 ```
 

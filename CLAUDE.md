@@ -32,38 +32,63 @@ Currently using SQLite with Exposed ORM, migrating to H2 database in SPI-439.
 - **Dependency Injection**: Ktor native DI with constructor injection and interface-based design
 - **Package Structure**: `io.spiralhouse.cycletime` namespace
 
-## Agents
+## Agent Invocation Methods
 
-Unless otherwise specified, please delegate tasks to the appropriate agent based
-on the task type. Your role is to orchestrate and manage the workflow, not to do
-work directly unless otherwise instructed to.
+CycleTime supports two distinct agent invocation approaches, each optimized for different development scenarios:
 
-1. **Code Review Agent** (@agent-code-reviewer) Code review, feedback, and
-   quality checks
+### Task Tool Agents (Interactive Development)
+
+For most single-feature development, use Task tool agent delegation:
+
+1. **Code Review Agent** (@agent-code-reviewer) Code review, feedback, and quality checks
 2. **Developer Agent** (@agent-developer) Code implementation, unit testing
-3. **Product Manager Agent** (@agent-product-manager) Requirements gathering,
-   stakeholder communication
+3. **Product Manager Agent** (@agent-product-manager) Requirements gathering, stakeholder communication
 4. **QA Agent** (@agent-qa) Test planning, quality assurance
-5. **Software Architect Agent** (@agent-software-architect) System design,
-   architecture decisions
-6. **Tech Lead Agent** (@agent-tech-lead) Task coordination, dependency
-   management
-7. **DevOps Engineer Agent** (@agent-devops-engineer) Build optimization,
-   CI/CD pipelines, developer productivity
+5. **Software Architect Agent** (@agent-software-architect) System design, architecture decisions
+6. **Tech Lead Agent** (@agent-tech-lead) Task coordination, dependency management
+7. **DevOps Engineer Agent** (@agent-devops-engineer) Build optimization, CI/CD pipelines, developer productivity
 
-## Parallel Development Opportunities
+**Best for**: Interactive development, iterative refinement, complex problem-solving, single features
+
+### Claude CLI Agents (Parallel Development)
+
+For parallel development across multiple features, use Claude CLI agents with background execution and real filesystem access.
+
+**Best for**: True parallel execution, automated workflows, multiple independent features
+
+### Agent Selection Guidelines
+
+- **Single Feature**: Use Task tool agents (@agent-*) for interactive development
+- **Multiple Features**: Use Claude CLI agents for parallel execution
+- **Planning Phase**: Use Task tool agents for architecture and coordination
+- **Execution Phase**: Use Claude CLI agents for implementation across worktrees
+
+**See**: [Agent Invocation Patterns](docs/development/agent-invocation-patterns.md) for detailed guidance
+
+## Development Workflows
+
+### Core Workflow Documentation
+
+- **[Branching Strategy](docs/development/branching-strategy.md)** - Standard branch naming and worktree patterns
+- **[Single Feature Workflow](docs/development/single-feature-workflow.md)** - Standard process for individual features
+- **[Agent Invocation Patterns](docs/development/agent-invocation-patterns.md)** - Task tool vs Claude CLI guidance
+- **[Linear Branch Integration](docs/development/linear-branch-integration.md)** - Linear issue to branch mapping
+
+### Specialized Workflows
+
+- **[Parallel Development](docs/testing/parallel-development.md)** - Multi-feature development with Claude CLI agents
+- **[Task Tool Workflow](.claude/workflows/task-tool-workflow.md)** - Interactive development with Task tool agents
+- **[TDD Workflow](.claude/workflows/tdd-workflow.md)** - Test-driven development patterns
+- **[Direct Implementation](.claude/workflows/direct-workflow.md)** - Direct feature implementation
+- **[Bug Fix Workflow](.claude/workflows/bugfix-workflow.md)** - Systematic bug resolution
+
+### Legacy Configuration References
 
 @.claude/shared/parallel-development-detection.md
 
-## Git Branch Naming Conventions
-
 @.claude/shared/git-conventions.md
 
-## Development Commands
-
 @.claude/shared/development-commands.md
-
-## Testing Standards & Architecture
 
 @.claude/shared/testing-standards.md
 
