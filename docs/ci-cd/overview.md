@@ -183,6 +183,7 @@ kotlin-compile-v2-ubuntu-jdk21-{hash}
 - **Parallelization**: Conservative (2 threads for database safety)
 - **Cache Key**: Includes application/infrastructure sources + DB version
 - **Memory**: 1GB max heap
+- **Coverage**: Generates and uploads integration test coverage to Codecov with `flags: integration`
 
 #### System Tests
 **Purpose**: End-to-end scenarios and performance validation
@@ -190,6 +191,134 @@ kotlin-compile-v2-ubuntu-jdk21-{hash}
 - **Parallelization**: Sequential execution (performance sensitive)
 - **Cache Key**: Conservative caching (includes application.conf)
 - **Memory**: 2GB max heap with GC logging
+- **Coverage**: Excluded from coverage collection for performance optimization
+
+### Parallel Coverage Collection Strategy (SPI-595)
+
+CycleTime implements a sophisticated parallel coverage collection approach that maintains fast CI execution while providing comprehensive code coverage insights aligned with local development experience.
+
+#### Coverage Architecture
+
+**Parallel Collection with Codecov Flags**:
+- **Unit Tests**: Generate coverage → Upload with `flags: unittests`
+- **Integration Tests**: Generate coverage → Upload with `flags: integration`  
+- **System Tests**: Skip coverage collection (performance optimization)
+- **Codecov Result**: Automatic merging provides combined total coverage
+
+**Key Benefits**:
+- ✅ **Parallel Execution**: Coverage collection doesn't block test parallelization
+- ✅ **Granular Insights**: Separate unit vs integration coverage metrics available
+- ✅ **CI/Local Alignment**: CI coverage matches local Kover reports (unit + integration)
+- ✅ **Performance Optimized**: System tests excluded to maintain fast feedback
+- ✅ **Industry Standard**: Follows 2024 best practices with Codecov flag-based merging
+
+#### Coverage Workflow
+
+```mermaid
+%%{init: {'theme':'dark', 'themeVariables': { 'primaryColor':'#1f2937', 'primaryTextColor':'#f3f4f6', 'primaryBorderColor':'#4b5563', 'lineColor':'#6b7280', 'secondaryColor':'#374151', 'tertiaryColor':'#1f2937', 'background':'#111827', 'mainBkg':'#1f2937', 'secondBkg':'#374151', 'tertiaryBkg':'#4b5563', 'textColor':'#f3f4f6', 'labelTextColor':'#f3f4f6', 'nodeTextColor':'#f3f4f6', 'edgeLabelBackground':'#1f2937'}}}%%
+graph TD
+    A[Compile Job] --> B[Unit Tests]
+    A --> C[Integration Tests]
+    A --> D[System Tests]
+    
+    B --> E[Generate Coverage]
+    C --> F[Generate Coverage]
+    D --> G[Skip Coverage]
+    
+    E --> H[Upload: flags=unittests]
+    F --> I[Upload: flags=integration]
+    
+    H --> J[Codecov Automatic Merging]
+    I --> J
+    
+    J --> K[Combined Coverage Report]
+    J --> L[Granular Test Type Metrics]
+    
+    style A fill:#1e40af,stroke:#3b82f6,color:#f3f4f6
+    style B fill:#7c3aed,stroke:#a78bfa,color:#f3f4f6
+    style C fill:#7c3aed,stroke:#a78bfa,color:#f3f4f6
+    style D fill:#7c3aed,stroke:#a78bfa,color:#f3f4f6
+    style E fill:#16a34a,stroke:#4ade80,color:#f3f4f6
+    style F fill:#16a34a,stroke:#4ade80,color:#f3f4f6
+    style G fill:#6b7280,stroke:#9ca3af,color:#f3f4f6
+    style H fill:#ca8a04,stroke:#facc15,color:#f3f4f6
+    style I fill:#ca8a04,stroke:#facc15,color:#f3f4f6
+    style J fill:#059669,stroke:#10b981,color:#f3f4f6
+    style K fill:#065f46,stroke:#10b981,color:#f3f4f6
+    style L fill:#065f46,stroke:#10b981,color:#f3f4f6
+```
+
+#### Coverage Implementation Details
+
+**Unit Tests Coverage**:
+```yaml
+- name: Run unit tests with coverage
+  run: ./gradlew unitTest koverXmlReport -x compileKotlin -x compileTestKotlin
+
+- name: Upload coverage to Codecov
+  uses: codecov/codecov-action@v5
+  with:
+    flags: unittests
+    files: ./build/reports/kover/report.xml
+```
+
+**Integration Tests Coverage**:
+```yaml
+- name: Run integration tests with coverage  
+  run: ./gradlew integrationTest koverXmlReport -x compileKotlin -x compileTestKotlin
+
+- name: Upload coverage to Codecov
+  uses: codecov/codecov-action@v5
+  with:
+    flags: integration
+    files: ./build/reports/kover/report.xml
+```
+
+#### Codecov Automatic Merging
+
+Codecov automatically merges coverage reports with different flags to provide:
+
+**Combined Metrics**:
+- Total project coverage (unit + integration combined)
+- Pull request coverage impact analysis  
+- Coverage trends over time
+
+**Granular Insights**:
+- Unit test coverage percentage
+- Integration test coverage percentage
+- Coverage gaps by test type
+- Test type effectiveness analysis
+
+**No Configuration Required**: Codecov handles flag-based merging automatically without special configuration.
+
+#### Local Development Alignment
+
+**Problem Solved**: Previous CI only reported unit test coverage while local Kover included both unit and integration tests, creating confusion.
+
+**Solution**: Parallel collection ensures CI reports match local development:
+
+```bash
+# Local development (includes both test types)
+./gradlew koverXmlReport  # Unit + Integration coverage
+
+# CI (now matches local)
+# Unit job: uploads unit coverage with flags=unittests  
+# Integration job: uploads integration coverage with flags=integration
+# Codecov: automatically merges to match local total
+```
+
+#### Performance Considerations
+
+**System Test Exclusion Rationale**:
+- System tests focus on end-to-end scenarios and performance validation
+- Coverage collection adds ~15-20% execution overhead
+- System test coverage provides limited additional insight beyond integration tests
+- Excluding system tests maintains fast CI feedback loops
+
+**Parallel Execution Maintained**:
+- Coverage generation occurs within existing parallel test jobs
+- No additional pipeline latency introduced
+- Compilation artifacts reused efficiently across coverage-generating jobs
 
 ### 3. Quality Job (Independent)
 
