@@ -166,7 +166,7 @@ flowchart TD
     D -->|Yes| F[Claude CLI Agents - Parallel]
     E -->|Yes| G[Task Tool Agents - Interactive]
     E -->|No| H[Claude CLI Agents - Single]
-    C --> I[@agent-* delegation]
+    C --> I[Task Tool Agent delegation]
     F --> J[Multiple claude CLI commands]
     G --> I
     H --> K[Single claude CLI command]

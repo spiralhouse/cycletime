@@ -83,12 +83,12 @@ Parallel development primarily uses **Claude CLI agents** for their ability to w
 ```mermaid
 flowchart TD
     A[Multiple Features Requested] --> B[Task Tool: Planning Phase]
-    B --> C[@agent-software-architect: Design overall approach]
-    C --> D[@agent-tech-lead: Break down into parallel tasks]
+    B --> C[Software Architect: Design overall approach]
+    C --> D[Tech Lead: Break down into parallel tasks]
     D --> E[Claude CLI: Parallel Execution Phase]
     E --> F[Launch multiple Claude CLI agents in parallel]
     F --> G[Task Tool: Review Phase]
-    G --> H[@agent-code-reviewer: Review all implementations]
+    G --> H[Code Reviewer: Review all implementations]
 ```
 
 #### Example Mixed-Mode Workflow
