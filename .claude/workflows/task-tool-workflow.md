@@ -124,11 +124,11 @@ Task tool agents provide interactive, specialized assistance for development tas
 
 ```mermaid
 flowchart TD
-    A[Requirements] --> B[@agent-product-manager]
-    B --> C[@agent-software-architect]
-    C --> D[@agent-developer]
-    D --> E[@agent-qa]
-    E --> F[@agent-code-reviewer]
+    A[Requirements] --> B[Product Manager]
+    B --> C[Software Architect]
+    C --> D[Developer]
+    D --> E[QA]
+    E --> F[Code Reviewer]
     F --> G{Feedback}
     G -->|Refinement Needed| D
     G -->|Approved| H[Complete]
@@ -250,11 +250,11 @@ git add . && git commit -m "feat: implement user profile management"
 
 ```mermaid
 flowchart LR
-    A[Linear: Todo] --> B[@agent-product-manager]
+    A[Linear: Todo] --> B[Product Manager]
     B --> C[Linear: In Progress]
-    C --> D[@agent-developer]
-    D --> E[@agent-qa]
-    E --> F[@agent-code-reviewer]
+    C --> D[Developer]
+    D --> E[QA]
+    E --> F[Code Reviewer]
     F --> G[Linear: In Review]
     G --> H[PR Creation]
     H --> I[Linear: Done]
