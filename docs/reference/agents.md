@@ -64,9 +64,9 @@ Build, deployment, and infrastructure
 #### Infrastructure Support Agents
 
 **@agent-context-engineer**
-Intelligent documentation curation and context optimization
+Preparation specialist for structured context curation before agent delegation
 ```
-@agent-context-engineer "Curate testing context for @agent-qa working on SPI-XXX authentication feature"
+@agent-context-engineer "Prepare context for SPI-XXX requiring agents: qa, developer, code-reviewer"
 ```
 
 ### Task Tool Agent Capabilities
@@ -105,11 +105,15 @@ Intelligent documentation curation and context optimization
 @agent-developer "Address feedback and refine"
 ```
 
-**Context Curation Phase:**
+**Context Preparation Phase:**
 ```
-@agent-context-engineer "Curate implementation context for @agent-developer working on SPI-XXX"
-@agent-context-engineer "Prepare testing documentation for @agent-qa on authentication feature"
-@agent-context-engineer "Analyze SPI-YYY and provide progressive context layers for parallel development"
+# Claude Code analyzes Linear issue hierarchy then prepares context
+@agent-context-engineer "Prepare context for SPI-XXX requiring agents: qa, developer, code-reviewer"
+
+# Claude Code then uses structured output for targeted delegation:
+@agent-qa "Create comprehensive tests... [with curated QA context]"
+@agent-developer "Implement feature... [with curated developer context]"
+@agent-code-reviewer "Review implementation... [with curated review context]"
 ```
 
 ## Claude CLI Agents

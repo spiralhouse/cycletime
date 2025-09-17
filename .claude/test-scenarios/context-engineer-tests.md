@@ -2,144 +2,270 @@
 
 This document contains comprehensive test scenarios to validate the Context Engineer agent implementation according to SPI-621 acceptance criteria.
 
-## Test Scenario 1: QA Agent Context Curation (TDD RED Phase)
+## Test Scenario 1: Context Preparation for Authentication Feature (TDD Workflow)
 
 ### Test Setup
-**Linear Issue**: SPI-621 (Authentication feature testing)
-**Target Agent**: @agent-qa
-**Workflow Phase**: RED (Test-First)
-**Expected Context Focus**: Testing standards, patterns, security testing
+**Linear Issue**: SPI-621 (Authentication feature development)
+**Claude Code Analysis**: Determines TDD workflow with QA → Developer → Code Reviewer sequence
+**Workflow Phase**: Complete TDD cycle (RED → GREEN → REFACTOR)
+**Expected Workflow**: Context preparation → Sequential agent delegation
 
-### Test Command
+### Test Command (Claude Code invokes Context Engineer)
 ```
-@agent-context-engineer "Curate testing context for @agent-qa working on SPI-621 authentication feature testing"
+@agent-context-engineer "Prepare context for SPI-621 requiring agents: qa, developer, code-reviewer"
 ```
 
 ### Expected Response Structure
 ```
-## Context Analysis for SPI-621
+## Context Preparation for SPI-621
 
-**Issue Summary**: Create Context Engineer Subagent for Documentation Curation
-**Workflow Phase**: RED (Testing Phase)
-**Target Agent**: QA Agent
-**Curation Strategy**: Testing-first progressive curation with security focus
+**Issue Summary**: Implement JWT authentication with role-based access control
+**Workflow Phase**: TDD Complete Cycle (RED → GREEN → REFACTOR)
+**Agents Involved**: qa, developer, code-reviewer
+**Curation Strategy**: Sequential TDD workflow support with security emphasis
 
-### Layer 1: Foundation Context (Score: 95%)
-- CLAUDE.md:1-50 - Project overview and authentication architecture
+---
+
+## GENERAL CONTEXT (For All Agents)
+
+**Project Foundation** (Relevance: 96%):
+- CLAUDE.md:1-50 - Project authentication architecture overview
 - docs/architecture/overview.md:120-180 - Security architecture principles
 
-### Layer 2: QA-Specific Context (Score: 88%)
-- .claude/shared/testing-standards.md:1-100 - TDD methodology and standards
-- docs/reference/technical-design/testing-architecture-tdd.md:75-150 - Testing patterns
+**Issue Context** (Relevance: 98%):
+- Linear Issue Hierarchy: [Epic → Story → Subtask breakdown]
+- Technical Requirements: JWT implementation, role validation, session management
+- Acceptance Criteria: Secure tokens, role-based access, proper expiration
 
-### Layer 3: Task-Specific Context (Score: 92%)
-- [Discovered test files matching authentication patterns]
-- [Security testing examples and validation patterns]
+---
 
-### Layer 4 Available: Edge case testing, security vulnerability patterns, performance testing
+## QA AGENT CONTEXT
 
-**Token Usage**: 65% of estimated budget
-**Relevance Confidence**: 91% overall
-**Progressive Expansion**: Request specific edge cases or security patterns for Layer 4
+**Testing Standards** (Relevance: 93%):
+- .claude/shared/testing-standards.md:14-50 - TDD RED phase methodology
+- docs/reference/technical-design/testing-architecture-tdd.md:75-150 - Authentication test patterns
+
+**Security Testing** (Relevance: 89%):
+- [Discovered security test examples]
+- [Authentication validation patterns]
+
+---
+
+## DEVELOPER AGENT CONTEXT
+
+**Implementation Standards** (Relevance: 91%):
+- .claude/shared/development-commands.md:1-30 - Security coding standards
+- docs/reference/technical-design/domain-entities.md:100-150 - Auth domain patterns
+
+**Implementation Examples** (Relevance: 87%):
+- [JWT implementation patterns]
+- [Security middleware examples]
+
+---
+
+## CODE-REVIEWER AGENT CONTEXT
+
+**Review Standards** (Relevance: 89%):
+- .claude/shared/security-review.md:1-100 - Authentication security checklist
+- docs/reference/security-vulnerabilities.md:45-90 - Common JWT vulnerabilities
+
+---
+
+**Curation Summary**:
+- Total Documents: 12 across 4 categories
+- Average Relevance: 91%
+- Token Efficiency: 68% reduction vs full documentation
+- Ready for Delegation: Each section optimized for sequential TDD workflow
 ```
 
-### Validation Criteria
-- [ ] Correctly identifies TDD RED phase from issue context
-- [ ] Prioritizes testing documentation over implementation docs
-- [ ] Provides file references in `file_path:line_number` format
-- [ ] Maintains >90% relevance score across all layers
-- [ ] Offers progressive expansion options
+### Validation Criteria (Preparation Focus)
+- [ ] Correctly analyzes complete Linear issue hierarchy
+- [ ] Structures output for Claude Code's delegation use
+- [ ] Provides general context usable by all agents
+- [ ] Creates agent-specific sections for targeted delegation
+- [ ] Maintains coherence between general and specific contexts
+- [ ] Enables sequential TDD workflow (RED → GREEN → REFACTOR)
 
-## Test Scenario 2: Developer Agent Context Curation (TDD GREEN Phase)
+### Delegation Testing (Claude Code uses prepared context)
+```
+# Claude Code extracts relevant sections for each delegation:
+
+@agent-qa "Create comprehensive security tests for JWT authentication...
+[General Context + QA Agent Context]"
+
+@agent-developer "Implement JWT authentication following domain patterns...
+[General Context + Developer Agent Context]"
+
+@agent-code-reviewer "Review authentication for security vulnerabilities...
+[General Context + Code-Reviewer Agent Context]"
+```
+
+## Test Scenario 2: Single Agent Preparation Focus (Implementation Phase)
 
 ### Test Setup
-**Linear Issue**: SPI-621 (Implementation phase)
-**Target Agent**: @agent-developer
-**Workflow Phase**: GREEN (Implementation)
-**Expected Context Focus**: Implementation patterns, domain models, coding standards
+**Linear Issue**: SPI-621 (PLF implementation focus)
+**Claude Code Analysis**: Determines single agent implementation needed
+**Workflow Phase**: GREEN (Implementation only)
+**Expected Workflow**: Context preparation → Single developer delegation
 
-### Test Command
+### Test Command (Claude Code focuses on implementation)
 ```
-@agent-context-engineer "Prepare implementation context for @agent-developer working on SPI-621 progressive layering framework"
+@agent-context-engineer "Prepare context for SPI-621 requiring agents: developer"
 ```
 
 ### Expected Response Structure
 ```
-## Context Analysis for SPI-621
+## Context Preparation for SPI-621
 
-**Issue Summary**: Implement Progressive Layering Framework for documentation curation
+**Issue Summary**: Implement Progressive Layering Framework for Context Engineer
 **Workflow Phase**: GREEN (Implementation Phase)
-**Target Agent**: Developer Agent
-**Curation Strategy**: Implementation-focused with domain pattern emphasis
+**Agents Involved**: developer
+**Curation Strategy**: Implementation-focused with architectural patterns emphasis
 
-### Layer 1: Foundation Context (Score: 97%)
-- CLAUDE.md:75-125 - PLF architecture and goals
+---
+
+## GENERAL CONTEXT (For All Agents)
+
+**Project Foundation** (Relevance: 97%):
+- CLAUDE.md:75-125 - PLF architectural goals and requirements
 - docs/architecture/overview.md:200-250 - System design principles
 
-### Layer 2: Developer-Specific Context (Score: 90%)
+**Issue Context** (Relevance: 98%):
+- Technical Requirements: Progressive layering, context curation, agent integration
+- Implementation Scope: Agent definition, documentation discovery, relevance scoring
+- Acceptance Criteria: Structured output, token optimization, delegation support
+
+---
+
+## DEVELOPER AGENT CONTEXT
+
+**Implementation Standards** (Relevance: 94%):
 - .claude/shared/development-commands.md:1-50 - Coding standards and conventions
 - docs/reference/technical-design/domain-entities.md:1-100 - Domain modeling patterns
 
-### Layer 3: Implementation Context (Score: 94%)
-- [Existing agent implementation patterns]
-- [Documentation processing examples]
-- [Context management implementations]
+**Agent Implementation Patterns** (Relevance: 91%):
+- .claude/agents/qa.md:1-70 - Existing agent structure example
+- .claude/agents/tech-lead.md:1-70 - Agent personality and role definition
 
-### Layer 4 Available: Performance optimization, error handling, testing integration
+**Documentation Processing** (Relevance: 89%):
+- [Existing documentation analysis patterns]
+- [Context management implementation examples]
 
-**Token Usage**: 72% of estimated budget
-**Relevance Confidence**: 93% overall
-**Progressive Expansion**: Request performance patterns or error handling for Layer 4
+---
+
+**Curation Summary**:
+- Total Documents: 8 across 3 categories
+- Average Relevance: 93%
+- Token Efficiency: 75% reduction vs full documentation
+- Ready for Delegation: Focused implementation guidance for single agent
 ```
 
-### Validation Criteria
-- [ ] Correctly identifies GREEN phase implementation focus
-- [ ] Prioritizes implementation docs over testing docs
-- [ ] Discovers relevant existing code patterns
-- [ ] Provides specific technical guidance for PLF implementation
-- [ ] Maintains clear separation from testing context
+### Validation Criteria (Single Agent Preparation)
+- [ ] Optimizes for single agent rather than multi-agent workflow
+- [ ] Provides concentrated implementation guidance
+- [ ] Reduces context overhead for focused task
+- [ ] Maintains architectural coherence despite single focus
+- [ ] Enables efficient single-agent delegation
 
-## Test Scenario 3: Parallel Development Context
+### Delegation Testing (Claude Code uses prepared context)
+```
+@agent-developer "Implement Progressive Layering Framework for Context Engineer...
+[General Context + Developer Agent Context - comprehensive implementation guidance]"
+```
+
+## Test Scenario 3: Parallel Development Context Isolation
 
 ### Test Setup
-**Linear Issues**: SPI-621 (Documentation) + SPI-XXX (Database)
-**Target Agents**: @agent-context-engineer for both
-**Workflow Phase**: Mixed (Planning + Implementation)
-**Expected Context Focus**: Separate, non-conflicting context for each feature
+**Linear Issues**: SPI-621 (Context Engineer) + SPI-456 (Database Optimization)
+**Claude Code Analysis**: Determines parallel development feasible with minimal dependencies
+**Workflow Phase**: Mixed (Documentation + Implementation)
+**Expected Workflow**: Single context preparation → Isolated parallel delegation
 
-### Test Command
+### Test Command (Claude Code requests parallel context)
 ```
-@agent-context-engineer "Prepare PLF context for parallel work on SPI-621 (documentation) and SPI-XXX (database patterns)"
+@agent-context-engineer "Prepare context for parallel development: SPI-621 requiring developer, qa and SPI-456 requiring developer, software-architect"
 ```
 
 ### Expected Response Structure
 ```
-## Parallel Development Context Analysis
+## Context Preparation for Parallel Development
 
-**Parallel Features Detected**: 2 independent features
-**Context Isolation Strategy**: Separate progressive paths per feature
-**Coordination Notes**: No context contamination between features
+**Issues**: SPI-621 (Context Engineer) + SPI-456 (Database Optimization)
+**Workflow Strategy**: Isolated parallel execution with context separation
+**Agents Involved**: developer (both), qa (SPI-621), software-architect (SPI-456)
+**Isolation Strategy**: Separate agent contexts to prevent cross-contamination
 
-### SPI-621 Context Path (Documentation Focus):
-**Layer 1**: PLF architecture, agent patterns (3 docs)
-**Layer 2**: Documentation processing, context engineering (5 docs)
-**Layer 3**: Agent definition examples, curation patterns (4 files)
+---
 
-### SPI-XXX Context Path (Database Focus):
-**Layer 1**: Data architecture, repository patterns (3 docs)
-**Layer 2**: Database implementation, ORM patterns (5 docs)
-**Layer 3**: Existing repository implementations (4 files)
+## GENERAL CONTEXT (Shared Foundation)
 
-**Isolation Guarantee**: No shared documentation between feature contexts
-**Progressive Expansion**: Each feature path can expand independently
+**Project Architecture** (Relevance: 94%):
+- CLAUDE.md:1-100 - Overall system design and component boundaries
+- docs/architecture/overview.md:1-50 - Architectural principles
+
+---
+
+## SPI-621 CONTEXT (Context Engineer Feature)
+
+### DEVELOPER AGENT CONTEXT (SPI-621)
+**Agent Implementation** (Relevance: 96%):
+- .claude/agents/qa.md:1-70 - Agent definition patterns
+- docs/reference/technical-design/context-engineering.md:1-150
+
+### QA AGENT CONTEXT (SPI-621)
+**Documentation Testing** (Relevance: 92%):
+- .claude/shared/testing-standards.md:50-120 - Agent testing methodology
+- docs/reference/testing/agent-validation.md:75-150
+
+---
+
+## SPI-456 CONTEXT (Database Optimization Feature)
+
+### DEVELOPER AGENT CONTEXT (SPI-456)
+**Database Patterns** (Relevance: 95%):
+- docs/reference/technical-design/repository-pattern.md:1-150
+- src/main/kotlin/.../ExposedProjectRepository.kt:1-200
+
+### SOFTWARE-ARCHITECT AGENT CONTEXT (SPI-456)
+**Performance Architecture** (Relevance: 93%):
+- docs/architecture/performance-optimization.md:100-200
+- docs/reference/technical-design/data-layer-architecture.md:50-150
+
+---
+
+**Isolation Summary**:
+- Context Separation: Complete isolation between SPI-621 and SPI-456
+- Shared Foundation: Minimal overlap in general context only
+- Agent Specificity: Each agent gets relevant context for their feature only
+- Parallel Safety: No context contamination between parallel executions
 ```
 
-### Validation Criteria
+### Validation Criteria (Parallel Context Isolation)
 - [ ] Correctly identifies parallel development scenario
-- [ ] Maintains context separation between features
-- [ ] Provides distinct progressive paths for each feature
-- [ ] Prevents context contamination
-- [ ] Enables independent expansion for each feature
+- [ ] Maintains complete context separation between features
+- [ ] Provides isolated agent contexts for each feature
+- [ ] Prevents context contamination between parallel work
+- [ ] Enables truly independent parallel execution
+- [ ] Optimizes shared general context without feature bleeding
+
+### Delegation Testing (Claude Code uses isolated contexts)
+```
+# Parallel execution with isolated contexts:
+
+# SPI-621 Context Engineer Development
+@agent-developer "Implement Context Engineer agent definition...
+[General Context + SPI-621 Developer Context]"
+
+@agent-qa "Create validation tests for Context Engineer...
+[General Context + SPI-621 QA Context]"
+
+# SPI-456 Database Optimization (Parallel)
+@agent-developer "Optimize database query performance...
+[General Context + SPI-456 Developer Context]"
+
+@agent-software-architect "Design performance architecture improvements...
+[General Context + SPI-456 Software-Architect Context]"
+```
 
 ## Test Scenario 4: Architecture Agent Context Curation (REFACTOR Phase)
 
