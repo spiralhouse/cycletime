@@ -61,6 +61,14 @@ Build, deployment, and infrastructure
 @agent-devops-engineer "Optimize CI/CD pipeline for parallel testing"
 ```
 
+#### Infrastructure Support Agents
+
+**@agent-context-engineer**
+Intelligent documentation curation and context optimization
+```
+@agent-context-engineer "Curate testing context for @agent-qa working on SPI-XXX authentication feature"
+```
+
 ### Task Tool Agent Capabilities
 
 ✅ **Strengths:**
@@ -95,6 +103,13 @@ Build, deployment, and infrastructure
 ```
 @agent-code-reviewer "Review for quality and security"
 @agent-developer "Address feedback and refine"
+```
+
+**Context Curation Phase:**
+```
+@agent-context-engineer "Curate implementation context for @agent-developer working on SPI-XXX"
+@agent-context-engineer "Prepare testing documentation for @agent-qa on authentication feature"
+@agent-context-engineer "Analyze SPI-YYY and provide progressive context layers for parallel development"
 ```
 
 ## Claude CLI Agents
@@ -201,6 +216,7 @@ flowchart TD
 - **Review/Quality**: @agent-code-reviewer
 - **Coordination**: @agent-tech-lead
 - **Infrastructure**: @agent-devops-engineer
+- **Context Curation**: @agent-context-engineer
 
 ### Quality Gates
 
