@@ -13,42 +13,32 @@ space.
 This command provides **analysis and git commands** for cleaning up worktrees,
 but the user executes the cleanup commands manually for safety.
 
-### Worktree Location Support
-
-This tool supports different worktree locations based on project setup:
-
-- **Standard Location**: `.worktrees/` (recommended, under project root)
-- **Legacy Locations**: `.cycletime-ce/worktrees/` or other custom paths
-- **External Locations**: Outside project directory (requires full paths)
-
-The tool automatically detects and adapts to your worktree structure.
+All worktrees are located in `.worktrees/` under the project root per CycleTime standards.
 
 ## Process:
 
 ### 1. Discover Worktrees to Clean
 
 ```bash
-# List all git worktrees (shows all locations)
+# List all git worktrees
 git worktree list
 
-# Auto-detect worktree locations and analyze
-for worktree_dir in .worktrees .cycletime-ce/worktrees; do
-  if [ -d "$worktree_dir" ]; then
-    echo "=== Found worktrees in $worktree_dir ==="
-    find "$worktree_dir" -type d -name ".git" -exec dirname {} \;
+# Show worktrees in standard location
+if [ -d ".worktrees" ]; then
+  echo "=== Worktrees in .worktrees/ ==="
+  find ".worktrees" -type d -name ".git" -exec dirname {} \;
 
-    # Show age and activity of each worktree
-    for dir in "$worktree_dir"/*/; do
-      if [ -d "$dir" ]; then
-        echo "=== $dir ==="
-        echo "Created: $(stat -c %y "$dir" 2>/dev/null || stat -f %SB "$dir")"
-        echo "Last modified: $(find "$dir" -type f -exec stat -c %y {} \; 2>/dev/null | sort -r | head -1)"
-        cd "$dir" 2>/dev/null && git status --porcelain | wc -l | xargs echo "Uncommitted files:"
-        cd - >/dev/null
-      fi
-    done
-  fi
-done
+  # Show age and activity of each worktree
+  for dir in .worktrees/*/; do
+    if [ -d "$dir" ]; then
+      echo "=== $dir ==="
+      echo "Created: $(stat -c %y "$dir" 2>/dev/null || stat -f %SB "$dir")"
+      echo "Last modified: $(find "$dir" -type f -exec stat -c %y {} \; 2>/dev/null | sort -r | head -1)"
+      cd "$dir" 2>/dev/null && git status --porcelain | wc -l | xargs echo "Uncommitted files:"
+      cd - >/dev/null
+    fi
+  done
+fi
 ```
 
 ### 2. Categorize Worktrees
