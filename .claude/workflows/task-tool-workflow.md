@@ -1,126 +1,16 @@
 # Task Tool Workflow
 
-This document describes how to effectively use Task tool agents for CycleTime development, including patterns, capabilities, and integration with branching and Linear workflows.
+Interactive development patterns using Task tool agents for coordinated development.
 
 ## Overview
 
-Task tool agents provide interactive, specialized assistance for development tasks using Claude Code's built-in agent system. They excel at analysis, planning, and iterative development while working within Claude Code's environment.
+Task tool agents provide interactive, specialized assistance for development tasks. They excel at analysis, planning, iterative development, and coordinated parallel execution (up to 10 concurrent agents) within Claude Code's environment.
 
-## Available Agent Types
+**Agent Reference**: See [Agent Reference](../docs/reference/agents.md) for complete agent capabilities and selection guidelines.
 
-### Core Development Agents
+## Core Workflow Patterns
 
-#### @agent-developer
-**Specialization**: Code implementation and development
-**Best for**: Feature implementation, refactoring, bug fixes
-
-```
-@agent-developer "Implement user authentication system with JWT tokens, including login, logout, and token refresh functionality"
-```
-
-#### @agent-qa
-**Specialization**: Testing and quality assurance
-**Best for**: Test planning, test implementation, quality validation
-
-```
-@agent-qa "Create comprehensive test suite for the authentication system, including unit tests, integration tests, and security testing"
-```
-
-#### @agent-code-reviewer
-**Specialization**: Code review and quality assessment
-**Best for**: Code review, best practices validation, security analysis
-
-```
-@agent-code-reviewer "Review the authentication implementation for security vulnerabilities, code quality, and adherence to project standards"
-```
-
-### Architecture and Planning Agents
-
-#### @agent-software-architect
-**Specialization**: System design and architecture
-**Best for**: Architecture decisions, system design, technical planning
-
-```
-@agent-software-architect "Design the overall architecture for a user management system including authentication, authorization, and profile management"
-```
-
-#### @agent-product-manager
-**Specialization**: Requirements and stakeholder coordination
-**Best for**: Requirements gathering, user story creation, stakeholder communication
-
-```
-@agent-product-manager "Define user stories and acceptance criteria for the user authentication feature based on business requirements"
-```
-
-#### @agent-tech-lead
-**Specialization**: Technical coordination and planning
-**Best for**: Task breakdown, dependency management, technical coordination
-
-```
-@agent-tech-lead "Break down the user management epic into implementable stories and identify dependencies between them"
-```
-
-### Operations Agent
-
-#### @agent-devops-engineer
-**Specialization**: Build, deployment, and infrastructure
-**Best for**: CI/CD optimization, build improvements, deployment automation
-
-```
-@agent-devops-engineer "Optimize the CI/CD pipeline to support parallel testing and deployment of multiple features"
-```
-
-## Task Tool Agent Capabilities
-
-### ✅ What Task Tool Agents Excel At
-
-**Interactive Development**
-- Real-time problem solving
-- Iterative refinement based on feedback
-- Context-aware decision making
-- Complex analysis and reasoning
-
-**Code Understanding**
-- Deep analysis of existing codebase
-- Pattern recognition and consistency checking
-- Architecture assessment
-- Impact analysis for changes
-
-**Planning and Design**
-- Requirements analysis
-- Technical planning
-- Architecture design
-- Risk assessment
-
-**Quality Assurance**
-- Code review and feedback
-- Best practices validation
-- Security analysis
-- Performance assessment
-
-### ❌ Task Tool Agent Limitations
-
-**File System Access**
-- Work in isolated environment
-- Cannot make real filesystem changes
-- Cannot create actual git commits
-- Cannot work with real worktrees
-
-**Parallel Execution**
-- Sequential execution only
-- Cannot run multiple agents simultaneously
-- Limited to single-threaded operations
-
-**Persistence**
-- No state persistence between invocations
-- Cannot access external services directly
-- Limited to single session context
-
-## Task Tool Workflow Patterns
-
-### Pattern 1: Single Feature Development
-
-**Recommended for**: Most development tasks, interactive problem-solving
+### Pattern 1: Standard Feature Development
 
 ```mermaid
 flowchart TD
@@ -134,384 +24,189 @@ flowchart TD
     G -->|Approved| H[Complete]
 ```
 
-**Example Workflow**:
+**Workflow Example:**
 ```
-# 1. Requirements and Planning
-@agent-product-manager "Define requirements for user profile management feature based on SPI-612"
-
-# 2. Architecture Design
-@agent-software-architect "Design the architecture for user profile management including data models, API endpoints, and UI components"
-
-# 3. Implementation
-@agent-developer "Implement the user profile management feature according to the architecture design"
-
-# 4. Testing
-@agent-qa "Create comprehensive tests for user profile management including validation, error handling, and edge cases"
-
-# 5. Review
-@agent-code-reviewer "Review the user profile implementation for code quality, security, and adherence to project standards"
-
-# 6. Refinement (if needed)
-@agent-developer "Address the code review feedback and improve the implementation"
+@agent-product-manager "Define requirements for user profile management (SPI-612)"
+@agent-software-architect "Design architecture for user profile management"
+@agent-developer "Implement user profile management per design"
+@agent-qa "Create comprehensive tests for user profile management"
+@agent-code-reviewer "Review implementation for quality and security"
 ```
 
-### Pattern 2: Research and Analysis
-
-**Recommended for**: Understanding existing code, exploring options, making decisions
+### Pattern 2: Research and Problem Solving
 
 ```
-# Understanding existing patterns
-@agent-software-architect "Analyze the current authentication implementation and identify opportunities for improvement"
+# Investigation
+@agent-developer "Investigate why user sessions expire prematurely"
 
-# Exploring alternatives
-@agent-developer "Research different approaches for implementing real-time notifications and recommend the best option for our architecture"
+# Analysis
+@agent-software-architect "Analyze authentication performance bottlenecks"
 
-# Impact analysis
-@agent-tech-lead "Analyze the impact of migrating from SQLite to H2 database on the existing codebase"
+# Solution Design
+@agent-tech-lead "Design solution for session management issues"
 ```
 
-### Pattern 3: Problem Solving
-
-**Recommended for**: Debugging, troubleshooting, finding solutions
+### Pattern 3: Iterative Refinement
 
 ```
-# Bug investigation
-@agent-developer "Investigate why user sessions are expiring prematurely and identify the root cause"
-
-# Performance analysis
-@agent-software-architect "Analyze performance bottlenecks in the user authentication flow and recommend optimizations"
-
-# Security assessment
-@agent-code-reviewer "Assess the security implications of the current JWT implementation and identify potential vulnerabilities"
+@agent-developer "Implement basic user authentication"
+# Review output, provide feedback
+@agent-developer "Enhance authentication with password validation"
+@agent-qa "Validate enhanced authentication meets requirements"
 ```
 
-### Pattern 4: Iterative Refinement
+## Integration Workflows
 
-**Recommended for**: Complex features requiring multiple iterations
-
-```
-# Initial implementation
-@agent-developer "Implement basic user authentication with username/password"
-
-# User feedback incorporation
-@agent-product-manager "Based on user feedback, what improvements should we make to the authentication flow?"
-
-# Enhanced implementation
-@agent-developer "Enhance the authentication system based on the product manager's recommendations"
-
-# Quality validation
-@agent-qa "Validate that the enhanced authentication meets all requirements and handles edge cases properly"
-```
-
-## Integration with Branching Strategy
-
-### Main Directory Development
-
-Task tool agents work well with main directory development:
+### Standard Development Flow
 
 ```bash
 # 1. Create feature branch
 git checkout -b feat/spi-612-user-profiles
 
-# 2. Use Task tool agents for development
+# 2. Use Task tool agents
 @agent-developer "Implement user profile management for SPI-612"
 
 # 3. Iterative refinement
 @agent-code-reviewer "Review implementation"
 @agent-developer "Address feedback"
 
-# 4. Final validation
-@agent-qa "Validate implementation meets acceptance criteria"
-
-# 5. Commit changes (manually)
+# 4. Commit changes (manually)
 git add . && git commit -m "feat: implement user profile management (SPI-612)"
 ```
 
-### Worktree Integration
-
-Task tool agents can also work with worktrees for analysis and planning:
+### With Worktrees
 
 ```bash
-# 1. Create worktree
 git worktree add .worktrees/spi-612-user-profiles -b feat/spi-612-user-profiles
 cd .worktrees/spi-612-user-profiles
-
-# 2. Use Task tool agents
-@agent-software-architect "Design user profile architecture"
 @agent-developer "Implement according to design"
-
-# 3. Manual commit of changes
-git add . && git commit -m "feat: implement user profile management"
 ```
 
-## Linear Integration
-
-### Status Management with Task Tool Agents
+### Linear Status Updates
 
 ```mermaid
 flowchart LR
-    A[Linear: Todo] --> B[Product Manager]
-    B --> C[Linear: In Progress]
-    C --> D[Developer]
-    D --> E[QA]
-    E --> F[Code Reviewer]
-    F --> G[Linear: In Review]
-    G --> H[PR Creation]
-    H --> I[Linear: Done]
-```
-
-### Example with Linear Updates
-
-```bash
-# Start work on SPI-612
-git checkout -b feat/spi-612-user-profiles
-# Update Linear SPI-612 to "In Progress"
-
-# Development with Task tool agents
-@agent-product-manager "Clarify requirements for SPI-612 user profile management"
-@agent-software-architect "Design architecture for SPI-612"
-@agent-developer "Implement user profile management per SPI-612 requirements"
-@agent-qa "Test implementation against SPI-612 acceptance criteria"
-@agent-code-reviewer "Review SPI-612 implementation for quality and compliance"
-
-# Create PR
-git push -u origin feat/spi-612-user-profiles
-gh pr create --title "feat: implement user profile management (SPI-612)"
-# Update Linear SPI-612 to "In Review"
-
-# After merge
-# Update Linear SPI-612 to "Done"
+    A[Linear: Todo] --> B[In Progress]
+    B --> C[Development]
+    C --> D[In Review]
+    D --> E[Done]
 ```
 
 ## Best Practices
 
-### Task Description Guidelines
+### Task Descriptions
 
-**Be Specific and Clear**
+**Be Specific:**
 ```
-❌ @agent-developer "Fix the auth issue"
-✅ @agent-developer "Fix the JWT token expiration issue where tokens expire after 15 minutes instead of the configured 1 hour, causing users to be logged out prematurely"
-```
-
-**Provide Context**
-```
-❌ @agent-code-reviewer "Review this code"
-✅ @agent-code-reviewer "Review the user authentication implementation for security vulnerabilities, focusing on JWT token handling, password validation, and session management"
+❌ @agent-developer "Fix auth issue"
+✅ @agent-developer "Fix JWT token expiration where tokens expire after 15 minutes instead of configured 1 hour"
 ```
 
-**Include Constraints and Requirements**
+**Provide Context:**
 ```
-❌ @agent-developer "Add user registration"
-✅ @agent-developer "Add user registration with email validation, password strength requirements (minimum 8 characters with uppercase, lowercase, and numbers), and duplicate email prevention"
-```
-
-### Agent Selection Guidelines
-
-**Choose the Right Agent for the Task**
-- **Planning/Requirements**: `@agent-product-manager`
-- **Architecture/Design**: `@agent-software-architect`
-- **Implementation**: `@agent-developer`
-- **Testing**: `@agent-qa`
-- **Review/Quality**: `@agent-code-reviewer`
-- **Coordination**: `@agent-tech-lead`
-- **Infrastructure**: `@agent-devops-engineer`
-
-**Use Multiple Agents for Complex Tasks**
-```
-# Complex feature requiring multiple perspectives
-@agent-product-manager "Define requirements"
-@agent-software-architect "Design architecture"
-@agent-developer "Implement solution"
-@agent-qa "Design test strategy"
-@agent-code-reviewer "Review for quality"
+❌ @agent-code-reviewer "Review code"
+✅ @agent-code-reviewer "Review authentication for security vulnerabilities, focusing on JWT handling and session management"
 ```
 
-### Iteration and Refinement
+### Quality Gates
 
-**Iterate Based on Feedback**
+**Before Use:**
+- [ ] Clear requirements defined
+- [ ] Appropriate agent selected
+- [ ] Specific task description prepared
+
+**After Completion:**
+- [ ] Review implementations created by agents
+- [ ] Test thoroughly
+- [ ] Commit with proper messages
+- [ ] Update Linear status
+
+## Common Workflow Examples
+
+### Feature Implementation
 ```
-@agent-developer "Implement user authentication"
-# Review output, provide feedback
-@agent-developer "Refine the authentication implementation to handle edge cases: empty passwords, SQL injection attempts, and concurrent login sessions"
-```
-
-**Build on Previous Work**
-```
-@agent-software-architect "Design user management architecture"
-# Use architectural output as input for implementation
-@agent-developer "Implement user management according to the architecture design provided above"
-```
-
-## Quality Gates
-
-### Before Using Task Tool Agents
-
-- [ ] Clear understanding of requirements
-- [ ] Appropriate agent selected for task
-- [ ] Specific, actionable task description prepared
-- [ ] Context and constraints identified
-
-### During Agent Interaction
-
-- [ ] Review agent output carefully
-- [ ] Provide specific feedback for improvements
-- [ ] Iterate until requirements are met
-- [ ] Validate recommendations against project standards
-
-### After Agent Completion
-
-- [ ] Implement agent recommendations manually
-- [ ] Test implementations thoroughly
-- [ ] Commit changes with appropriate messages
-- [ ] Update Linear status as needed
-
-## Common Patterns and Examples
-
-### Pattern: Feature Implementation
-
-```
-# 1. Requirements clarification
-@agent-product-manager "Based on SPI-612, define specific user stories for profile management including view profile, edit profile, and profile validation"
-
-# 2. Technical design
-@agent-software-architect "Design the technical implementation for user profile management including database schema, API endpoints, and frontend components"
-
-# 3. Implementation
-@agent-developer "Implement user profile management with the following features: view current profile, edit profile fields (name, email, bio), validate email format, and handle update errors gracefully"
-
-# 4. Testing strategy
-@agent-qa "Create a comprehensive testing strategy for user profile management including unit tests for validation logic, integration tests for API endpoints, and UI tests for profile editing workflow"
-
-# 5. Quality review
-@agent-code-reviewer "Review the user profile implementation focusing on: input validation, error handling, data consistency, UI/UX patterns, and security considerations"
+@agent-product-manager "Define user stories for profile management (SPI-612)"
+@agent-software-architect "Design technical implementation for user profiles"
+@agent-developer "Implement user profile management with view/edit capabilities"
+@agent-qa "Create testing strategy for profile management"
+@agent-code-reviewer "Review implementation for security and quality"
 ```
 
-### Pattern: Bug Investigation and Fix
-
+### Bug Investigation
 ```
-# 1. Problem analysis
-@agent-developer "Investigate the reported issue where user sessions expire immediately after login. Analyze the JWT token generation, storage, and validation logic to identify the root cause"
-
-# 2. Solution design
-@agent-software-architect "Based on the session expiration investigation, design a robust solution that ensures proper JWT token lifecycle management"
-
-# 3. Implementation
-@agent-developer "Implement the fix for session expiration ensuring that JWT tokens have correct expiration times, are properly stored, and validation handles edge cases"
-
-# 4. Testing
-@agent-qa "Design tests to verify the session expiration fix works correctly and add regression tests to prevent similar issues in the future"
-
-# 5. Security review
-@agent-code-reviewer "Review the session management fix for security implications, ensuring no vulnerabilities were introduced and best practices are followed"
+@agent-developer "Investigate session expiration issue - analyze JWT token lifecycle"
+@agent-software-architect "Design robust solution for JWT management"
+@agent-developer "Implement fix ensuring proper token expiration handling"
+@agent-qa "Design tests to verify fix and prevent regression"
 ```
 
-### Pattern: Code Refactoring
-
+### Parallel Development (Multi-Feature)
 ```
-# 1. Analysis
-@agent-software-architect "Analyze the current authentication module and identify areas for refactoring to improve maintainability, testability, and performance"
+# Coordinated Parallel Development
+@agent-tech-lead "Coordinate parallel development of user management: authentication, profiles, permissions"
 
-# 2. Refactoring plan
-@agent-tech-lead "Create a step-by-step refactoring plan that minimizes risk and allows for incremental improvements to the authentication module"
+# This automatically launches multiple concurrent agents:
+# - @agent-developer (authentication) - parallel execution
+# - @agent-developer (user profiles) - parallel execution
+# - @agent-developer (permissions) - parallel execution
+# All with shared context and coordination
+```
 
-# 3. Implementation
-@agent-developer "Refactor the authentication module according to the plan, focusing on separation of concerns, reducing code duplication, and improving error handling"
+### Parallel Development with Review
+```
+# 1. Parallel Implementation Phase
+@agent-tech-lead "Launch parallel development of payment features: processing, validation, reporting"
 
-# 4. Testing validation
-@agent-qa "Ensure all existing functionality still works after refactoring and that the code is more testable than before"
+# 2. Coordinated Review Phase
+@agent-code-reviewer "Review all payment implementations for consistency and security"
+@agent-qa "Design integration tests for payment features"
+```
 
-# 5. Quality assessment
-@agent-code-reviewer "Review the refactored authentication module for code quality improvements, maintainability, and adherence to project standards"
+### Mixed Parallel Workflow
+```
+# Planning and coordination
+@agent-software-architect "Design architecture for parallel API development"
+
+# Parallel implementation with coordination
+@agent-tech-lead "Coordinate parallel API development: users, orders, inventory"
+
+# Cross-feature integration
+@agent-developer "Implement API integration layer connecting all services"
 ```
 
 ## Troubleshooting
 
-### Common Issues
+**Generic Response**: Provide more specific context and requirements
 
-#### Agent Provides Generic Response
-**Problem**: Agent gives vague or generic advice
-**Solution**: Provide more specific context and requirements
+**Codebase Mismatch**: Include existing patterns in task description
 
-```
-❌ @agent-developer "Implement authentication"
-✅ @agent-developer "Implement JWT-based authentication for the CycleTime application using Kotlin/Ktor, including login endpoint that accepts username/password, validates against database, and returns signed JWT token with 1-hour expiration"
-```
+**Requirement Gaps**: Be explicit about constraints and acceptance criteria
 
-#### Agent Doesn't Understand Codebase
-**Problem**: Agent recommendations don't fit project patterns
-**Solution**: Provide more context about existing patterns and conventions
+See [Troubleshooting Guide](../docs/reference/troubleshooting.md) for detailed solutions.
 
-```
-@agent-developer "Implement user registration following the existing repository pattern used in ProjectRepository and IssueRepository, using Exposed ORM for database operations and Ktor routing for API endpoints"
-```
+## Integration
 
-#### Agent Output Doesn't Match Requirements
-**Problem**: Implementation doesn't meet specific requirements
-**Solution**: Be more explicit about requirements and constraints
-
-```
-@agent-developer "Implement user registration with these specific requirements: email must be unique, password must be hashed with bcrypt, user gets verification email, account is inactive until verified, and API returns appropriate error codes for validation failures"
-```
-
-### Recovery Strategies
-
-#### Iterative Refinement
-```
-# If first attempt doesn't meet requirements
-@agent-developer "The previous authentication implementation is missing password strength validation. Please enhance it to require passwords with minimum 8 characters, at least one uppercase letter, one lowercase letter, one number, and one special character"
-```
-
-#### Agent Chain Correction
-```
-# Use different agent type for clarification
-@agent-software-architect "Review the authentication implementation approach and suggest improvements for better security and maintainability"
-
-# Then refine with developer agent
-@agent-developer "Implement the authentication improvements suggested by the software architect"
-```
-
-## Integration with Other Workflows
-
-Task tool workflow integrates with:
-
-- **[Single Feature Workflow](../docs/development/single-feature-workflow.md)**: Primary workflow for single features
-- **[Branching Strategy](../docs/development/branching-strategy.md)**: Works with both main directory and worktree patterns
-- **[Linear Integration](../docs/development/linear-branch-integration.md)**: Supports Linear status updates throughout development
-- **[Parallel Development](../docs/testing/parallel-development.md)**: Can be used for planning parallel work
+Integrates with:
+- [Single Feature Workflow](../docs/development/single-feature-workflow.md) - Primary single feature process
+- [Agent Reference](../docs/reference/agents.md) - Complete agent capabilities
+- [Decision Guide](../docs/reference/decision-guide.md) - When to use Task tool agents
+- [Troubleshooting](../docs/reference/troubleshooting.md) - Common issues and solutions
 
 ## Quick Reference
 
-### Agent Commands
 ```
-# Development
 @agent-developer "specific implementation task"
-
-# Testing
 @agent-qa "specific testing requirements"
-
-# Review
 @agent-code-reviewer "specific review criteria"
-
-# Architecture
 @agent-software-architect "specific design challenge"
-
-# Requirements
 @agent-product-manager "specific requirements question"
-
-# Coordination
-@agent-tech-lead "specific planning or coordination need"
-
-# Operations
-@agent-devops-engineer "specific infrastructure or build task"
+@agent-tech-lead "specific planning need"
+@agent-devops-engineer "specific infrastructure task"
 ```
 
-### Best Practices Summary
-
-1. **Be Specific**: Provide detailed, specific task descriptions
-2. **Choose Right Agent**: Select agent type that matches task requirements
-3. **Iterate**: Use feedback to refine and improve outputs
-4. **Validate**: Review agent recommendations against project standards
-5. **Implement Manually**: Task tool agents provide guidance, you implement changes
-6. **Update Status**: Keep Linear status current throughout development
-
-Task tool agents provide powerful interactive assistance for development while maintaining the flexibility to work with any branching strategy or workflow pattern.
+**Key Principles:**
+1. Be specific in task descriptions
+2. Choose appropriate agent for task type
+3. Iterate based on feedback
+4. Review and test agent implementations
+5. Update Linear status throughout development
