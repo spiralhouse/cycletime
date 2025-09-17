@@ -32,38 +32,54 @@ Currently using SQLite with Exposed ORM, migrating to H2 database in SPI-439.
 - **Dependency Injection**: Ktor native DI with constructor injection and interface-based design
 - **Package Structure**: `io.spiralhouse.cycletime` namespace
 
-## Agents
+## Agent Invocation Methods
 
-Unless otherwise specified, please delegate tasks to the appropriate agent based
-on the task type. Your role is to orchestrate and manage the workflow, not to do
-work directly unless otherwise instructed to.
+CycleTime supports two distinct agent invocation approaches, based on execution model:
 
-1. **Code Review Agent** (@agent-code-reviewer) Code review, feedback, and
-   quality checks
-2. **Developer Agent** (@agent-developer) Code implementation, unit testing
-3. **Product Manager Agent** (@agent-product-manager) Requirements gathering,
-   stakeholder communication
-4. **QA Agent** (@agent-qa) Test planning, quality assurance
-5. **Software Architect Agent** (@agent-software-architect) System design,
-   architecture decisions
-6. **Tech Lead Agent** (@agent-tech-lead) Task coordination, dependency
-   management
-7. **DevOps Engineer Agent** (@agent-devops-engineer) Build optimization,
-   CI/CD pipelines, developer productivity
+### Task Tool Agents (Coordinated Development)
+Specialized assistance with shared context and built-in coordination. Supports parallel execution up to 10 concurrent agents. Best for coordinated development, iterative refinement, and complex problem-solving requiring shared context.
 
-## Parallel Development Opportunities
+### Claude CLI Agents (Autonomous Development)
+Background execution with real filesystem access and independent contexts. Supports unlimited parallel execution with manual coordination. Best for autonomous execution, long-running workflows, and session-independent development.
+
+### Agent Selection Guidelines
+- **Need Coordination**: Use Task tool agents (@agent-*) for coordinated development (single or multiple features)
+- **Need Autonomy**: Use Claude CLI agents for independent execution
+- **Planning Phase**: Use Task tool agents for architecture and cross-feature coordination
+- **Execution Phase**: Choose based on coordination requirements, not feature count
+
+**Complete Reference**: See [Agent Reference](docs/reference/agents.md) for detailed capabilities and selection guidelines
+
+## Development Workflows
+
+### Core Documentation
+
+- **[Branching Strategy](docs/development/branching-strategy.md)** - Standard branch naming and worktree patterns
+- **[Single Feature Workflow](docs/development/single-feature-workflow.md)** - Standard process for individual features
+- **[Linear Branch Integration](docs/development/linear-branch-integration.md)** - Linear issue to branch mapping
+
+### Specialized Workflows
+
+- **[Parallel Development](docs/testing/parallel-development.md)** - Multi-feature development with coordinated or autonomous execution
+- **[Task Tool Workflow](.claude/workflows/task-tool-workflow.md)** - Interactive development with Task tool agents
+- **[TDD Workflow](.claude/workflows/tdd-workflow.md)** - Test-driven development patterns
+- **[Direct Implementation](.claude/workflows/direct-workflow.md)** - Direct feature implementation
+- **[Bug Fix Workflow](.claude/workflows/bugfix-workflow.md)** - Systematic bug resolution
+
+### Reference Documents
+
+- **[Agent Reference](docs/reference/agents.md)** - Unified agent capabilities and selection guidelines
+- **[Worktree Operations](docs/reference/worktree-operations.md)** - Complete worktree command reference
+- **[Decision Guide](docs/reference/decision-guide.md)** - Workflow selection decision trees
+- **[Troubleshooting](docs/reference/troubleshooting.md)** - Common issues and solutions
+
+### Legacy Configuration References
 
 @.claude/shared/parallel-development-detection.md
 
-## Git Branch Naming Conventions
-
 @.claude/shared/git-conventions.md
 
-## Development Commands
-
 @.claude/shared/development-commands.md
-
-## Testing Standards & Architecture
 
 @.claude/shared/testing-standards.md
 
