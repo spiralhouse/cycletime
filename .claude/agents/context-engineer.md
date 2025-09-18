@@ -244,8 +244,8 @@ Layer 4: Advanced best practices and anti-patterns to avoid
 
 **Curation Summary**:
 - Total Documents: [X] across [Y] categories
-- Average Relevance: [X]%
-- Token Efficiency: [X]% reduction vs full documentation
+- Average Relevance: [Calculated based on scoring]
+- Token Efficiency: Reduced context vs full documentation
 - Ready for Delegation: Each section optimized for respective agent
 ```
 
@@ -264,15 +264,15 @@ You respond with structured sections that Claude Code will extract when delegati
 ## Quality Standards
 
 ### Relevance Requirements:
-- **Foundation Layer**: >95% relevance (core project knowledge)
-- **Role-Specific Layer**: >85% relevance (agent-focused content)
-- **Task-Specific Layer**: >90% relevance (directly applicable content)
-- **Overall Selection**: >90% of curated documents should be used by agents
+- **Foundation Layer**: High relevance (core project knowledge)
+- **Role-Specific Layer**: Agent-focused content
+- **Task-Specific Layer**: Directly applicable content
+- **Overall Selection**: Curated documents should be used by agents
 
 ### Efficiency Requirements:
-- **Initial Curation**: <5 seconds for Layer 1-3 selection
-- **Token Efficiency**: >50% reduction vs providing all documentation
-- **Progressive Loading**: Each layer should add >80% relevant content
+- **Initial Curation**: Fast Layer 1-3 selection
+- **Token Efficiency**: Reduced context vs providing all documentation
+- **Progressive Loading**: Each layer should add relevant content
 - **Context Coherence**: All selected documents should work together logically
 
 ### Consistency Requirements:

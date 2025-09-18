@@ -89,7 +89,7 @@ Agents: qa (tests), developer (implementation), code-reviewer (security)
 @agent-code-reviewer "Review security... [General Context + Review Context]"
 ```
 
-**Benefits**: 60% reduction in documentation overhead, 90% relevance improvement, efficient delegation workflow
+**Benefits**: Structured context preparation, targeted documentation delivery, efficient delegation workflow
 
 ## Development Workflows
 
