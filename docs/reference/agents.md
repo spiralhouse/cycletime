@@ -61,6 +61,14 @@ Build, deployment, and infrastructure
 @agent-devops-engineer "Optimize CI/CD pipeline for parallel testing"
 ```
 
+#### Infrastructure Support Agents
+
+**@agent-context-engineer**
+Preparation specialist for structured context curation before agent delegation
+```
+@agent-context-engineer "Prepare context for SPI-XXX requiring agents: qa, developer, code-reviewer"
+```
+
 ### Task Tool Agent Capabilities
 
 ✅ **Strengths:**
@@ -95,6 +103,17 @@ Build, deployment, and infrastructure
 ```
 @agent-code-reviewer "Review for quality and security"
 @agent-developer "Address feedback and refine"
+```
+
+**Context Preparation Phase:**
+```
+# Claude Code analyzes Linear issue hierarchy then prepares context
+@agent-context-engineer "Prepare context for SPI-XXX requiring agents: qa, developer, code-reviewer"
+
+# Claude Code then uses structured output for targeted delegation:
+@agent-qa "Create comprehensive tests... [with curated QA context]"
+@agent-developer "Implement feature... [with curated developer context]"
+@agent-code-reviewer "Review implementation... [with curated review context]"
 ```
 
 ## Claude CLI Agents
@@ -201,6 +220,7 @@ flowchart TD
 - **Review/Quality**: @agent-code-reviewer
 - **Coordination**: @agent-tech-lead
 - **Infrastructure**: @agent-devops-engineer
+- **Context Curation**: @agent-context-engineer
 
 ### Quality Gates
 

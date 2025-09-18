@@ -50,6 +50,47 @@ Background execution with real filesystem access and independent contexts. Suppo
 
 **Complete Reference**: See [Agent Reference](docs/reference/agents.md) for detailed capabilities and selection guidelines
 
+### Context Engineer Integration
+
+**When to Invoke Context Engineer**: Claude Code should proactively invoke the Context Engineer before delegating to specialized agents, especially for:
+
+- **Complex Linear Issues**: Issues with multiple subtasks or technical domains
+- **Multi-Agent Workflows**: When 2+ different agent types will be needed
+- **Parallel Development**: Multiple features being developed simultaneously
+- **Domain-Heavy Features**: Authentication, data layer, architecture changes
+- **Cross-Component Work**: Features touching multiple system areas
+
+**How to Invoke**:
+```
+@agent-context-engineer "Prepare context for SPI-XXX requiring agents: qa, developer, code-reviewer"
+```
+
+**Context Engineer Workflow**:
+1. **Claude Code analyzes** Linear issue hierarchy (Epic → Story → Subtask)
+2. **Claude Code determines** needed agent types based on requirements
+3. **Claude Code invokes** Context Engineer with issue + agent list
+4. **Context Engineer returns** structured sections (General + Agent-specific)
+5. **Claude Code delegates** using curated context for each agent
+
+**Example Integration**:
+```
+# 1. Analyze issue
+Linear Issue: SPI-456 "JWT Authentication Implementation"
+
+# 2. Determine agents needed
+Agents: qa (tests), developer (implementation), code-reviewer (security)
+
+# 3. Prepare context
+@agent-context-engineer "Prepare context for SPI-456 requiring agents: qa, developer, code-reviewer"
+
+# 4. Delegate with curated context
+@agent-qa "Create security tests... [General Context + QA Context]"
+@agent-developer "Implement JWT auth... [General Context + Developer Context]"
+@agent-code-reviewer "Review security... [General Context + Review Context]"
+```
+
+**Benefits**: Structured context preparation, targeted documentation delivery, efficient delegation workflow
+
 ## Development Workflows
 
 ### Core Documentation
