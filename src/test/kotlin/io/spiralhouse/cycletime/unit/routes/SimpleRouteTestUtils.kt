@@ -131,4 +131,43 @@ object SimpleRouteTestUtils {
             children = children,
             totalDescendants = totalDescendants
         )
+
+    /**
+     * Creates a test WorkflowDto with reasonable defaults.
+     */
+    fun createTestWorkflow(
+        id: WorkflowId = WorkflowId.generate(),
+        name: String = "Test Workflow",
+        description: String? = "Test workflow description",
+        initialStatus: IssueStatus = IssueStatus.TODO,
+        allowedStatuses: List<IssueStatus> = listOf(IssueStatus.TODO, IssueStatus.IN_PROGRESS, IssueStatus.DONE)
+    ): WorkflowDto {
+        val timeProvider = createMockTimeProvider()
+        return WorkflowDto(
+            id = id.value.toString(),
+            name = name,
+            description = description,
+            initialStatus = initialStatus.name,
+            allowedStatuses = allowedStatuses.map { it.name }.sorted(),
+            createdAt = timeProvider.now(),
+            updatedAt = timeProvider.now()
+        )
+    }
+
+    /**
+     * Creates a list of test workflows.
+     */
+    fun createTestWorkflows(count: Int): List<WorkflowDto> =
+        (1..count).map { index ->
+            createTestWorkflow(
+                name = "Test Workflow $index",
+                description = "Description for workflow $index"
+            )
+        }
+
+    /**
+     * Creates a ValidationResult for testing.
+     */
+    fun createValidationResult(isValid: Boolean = true, reason: String? = null): ValidationResult =
+        ValidationResult(isValid = isValid, reason = reason)
 }

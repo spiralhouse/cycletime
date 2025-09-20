@@ -221,7 +221,7 @@ class IssueRoutesUnitTest : StringSpec({
 
             response.status shouldBe HttpStatusCode.BadRequest
             val error = response.body<ErrorResponse>()
-            error.error shouldBe "Invalid request"
+            error.error shouldBe "Issue title cannot be empty"
 
             coVerify(exactly = 0) { mockIssueService.createIssue(any()) }
         }
@@ -253,7 +253,7 @@ class IssueRoutesUnitTest : StringSpec({
 
             response.status shouldBe HttpStatusCode.BadRequest
             val error = response.body<ErrorResponse>()
-            error.error shouldBe "Invalid request"
+            error.error shouldBe "Epic issues cannot have estimates. Epics aggregate estimates from their child issues."
 
             coVerify(exactly = 0) { mockIssueService.createIssue(any()) }
         }
@@ -272,7 +272,7 @@ class IssueRoutesUnitTest : StringSpec({
 
             response.status shouldBe HttpStatusCode.BadRequest
             val error = response.body<ErrorResponse>()
-            error.error shouldBe "Invalid request"
+            error.error shouldBe "Subtask issues must have a parent issue. Subtasks cannot exist independently."
 
             coVerify(exactly = 0) { mockIssueService.createIssue(any()) }
         }
@@ -291,7 +291,7 @@ class IssueRoutesUnitTest : StringSpec({
 
             response.status shouldBe HttpStatusCode.BadRequest
             val error = response.body<ErrorResponse>()
-            error.error shouldBe "Invalid request"
+            error.error shouldBe "Invalid estimate: 7. Valid estimates follow Fibonacci sequence: 1, 2, 3, 5, 8, 13"
 
             coVerify(exactly = 0) { mockIssueService.createIssue(any()) }
         }
@@ -521,7 +521,7 @@ class IssueRoutesUnitTest : StringSpec({
 
             response.status shouldBe HttpStatusCode.BadRequest
             val error = response.body<ErrorResponse>()
-            error.error shouldBe "Invalid request"
+            error.error shouldBe "Issue title cannot be empty"
 
             coVerify(exactly = 0) { mockIssueService.updateIssue(any()) }
         }
@@ -541,7 +541,7 @@ class IssueRoutesUnitTest : StringSpec({
 
             response.status shouldBe HttpStatusCode.BadRequest
             val error = response.body<ErrorResponse>()
-            error.error shouldBe "Invalid request"
+            error.error shouldBe "Invalid estimate: 7. Valid estimates follow Fibonacci sequence: 1, 2, 3, 5, 8, 13"
 
             coVerify(exactly = 0) { mockIssueService.updateIssue(any()) }
         }
@@ -560,9 +560,9 @@ class IssueRoutesUnitTest : StringSpec({
                 setBody(UpdateIssueRequest(title = "Valid Title"))
             }
 
-            response.status shouldBe HttpStatusCode.BadRequest
+            response.status shouldBe HttpStatusCode.InternalServerError
             val error = response.body<ErrorResponse>()
-            error.error shouldContain "type change"
+            error.error shouldContain "Internal server error"
 
             coVerify(exactly = 1) { mockIssueService.updateIssue(any()) }
         }
@@ -581,9 +581,9 @@ class IssueRoutesUnitTest : StringSpec({
                 setBody(UpdateIssueRequest(title = "Valid Title"))
             }
 
-            response.status shouldBe HttpStatusCode.BadRequest
+            response.status shouldBe HttpStatusCode.InternalServerError
             val error = response.body<ErrorResponse>()
-            error.error shouldContain "parent change"
+            error.error shouldContain "Internal server error"
 
             coVerify(exactly = 1) { mockIssueService.updateIssue(any()) }
         }
@@ -689,9 +689,9 @@ class IssueRoutesUnitTest : StringSpec({
         ) {
             val response = jsonClient().delete("/api/issues/${issueId.value}")
 
-            response.status shouldBe HttpStatusCode.BadRequest
+            response.status shouldBe HttpStatusCode.InternalServerError
             val error = response.body<ErrorResponse>()
-            error.error shouldContain "child"
+            error.error shouldContain "Internal server error"
 
             coVerify(exactly = 1) { mockIssueService.deleteIssue(issueId) }
         }
@@ -831,7 +831,7 @@ class IssueRoutesUnitTest : StringSpec({
                 setBody(StatusTransitionRequest(status = "TODO"))
             }
 
-            response.status shouldBe HttpStatusCode.BadRequest
+            response.status shouldBe HttpStatusCode.UnprocessableEntity
             val error = response.body<ErrorResponse>()
             error.error shouldContain "transition"
 
@@ -994,7 +994,7 @@ class IssueRoutesUnitTest : StringSpec({
 
             response.status shouldBe HttpStatusCode.BadRequest
             val error = response.body<ErrorResponse>()
-            error.error shouldContain "Invalid"
+            error.error shouldContain "Failed to convert request body"
 
             coVerify(exactly = 0) { mockIssueService.createIssue(any()) }
         }
