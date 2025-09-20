@@ -248,7 +248,8 @@ val unitTest by tasks.registering(Test::class) {
     inputs.file("build.gradle.kts")
     
     // Optimized for speed - unit tests should be fast
-    maxParallelForks = Runtime.getRuntime().availableProcessors()
+    // Reduced for CI stability - QA analysis from SPI-624 CI failures
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
     minHeapSize = "128m"
     maxHeapSize = "512m"
     forkEvery = 200 // Less frequent forking for fast tests
@@ -261,11 +262,28 @@ val unitTest by tasks.registering(Test::class) {
         "-Dfile.encoding=UTF-8"
     )
     
-    // Parallel execution
+    // Parallel execution - reduced for CI stability per QA analysis
     systemProperty("junit.jupiter.execution.parallel.enabled", "true")
-    systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
-    systemProperty("junit.jupiter.execution.parallel.config.strategy", "dynamic")
-    
+    systemProperty("junit.jupiter.execution.parallel.mode.default", "same_thread")
+    systemProperty("junit.jupiter.execution.parallel.config.strategy", "fixed")
+    systemProperty("junit.jupiter.execution.parallel.config.fixed.parallelism", "2")
+
+    // Kotest-specific configuration for stability (SPI-624 CI fixes)
+    systemProperty("kotest.framework.parallelism", "1") // Force sequential for Kotest
+    systemProperty("kotest.framework.timeout", "60000") // 60 second timeout
+    systemProperty("kotest.framework.invocation.timeout", "30000") // 30 second per test
+
+    // CI-specific settings for enhanced stability (SPI-624 CI fixes)
+    val isCI = System.getenv("CI") == "true" || System.getenv("GITHUB_ACTIONS") == "true"
+    if (isCI) {
+        println("🔧 CI environment detected - applying enhanced stability settings")
+        systemProperty("junit.jupiter.execution.parallel.config.fixed.parallelism", "1")
+        systemProperty("kotest.framework.parallelism", "1")
+        // Additional CI stability settings
+        systemProperty("kotest.framework.discovery.jar.scan.enabled", "false")
+        systemProperty("junit.jupiter.execution.timeout.default", "30s")
+    }
+
     testLogging {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
@@ -455,12 +473,13 @@ tasks.test {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
-        includeTestsMatching("io.spiralhouse.cycletime.unit.*")
+        // REMOVED: includeTestsMatching("io.spiralhouse.cycletime.unit.*") - prevents double execution with unitTest task
         // ARCHITECTURAL FIX: Include MCP integration tests for SPI-594
         includeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*")
         excludeTestsMatching("io.spiralhouse.cycletime.integration.*") // Exclude other integration tests
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
         excludeTestsMatching("io.spiralhouse.cycletime.api.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.unit.*") // Explicit exclusion to prevent double execution
     }
 }
 
