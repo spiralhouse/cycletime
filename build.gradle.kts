@@ -473,7 +473,6 @@ tasks.test {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
-        // REMOVED: includeTestsMatching("io.spiralhouse.cycletime.unit.*") - prevents double execution with unitTest task
         // ARCHITECTURAL FIX: Include MCP integration tests for SPI-594
         includeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*")
         excludeTestsMatching("io.spiralhouse.cycletime.integration.*") // Exclude other integration tests
