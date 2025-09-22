@@ -678,9 +678,11 @@ kover {
             disabledForTestTasks.add("systemTest")
             // Disable test delegation task to prevent CI from running overlapping test tasks
             disabledForTestTasks.add("test")
-            // Disable integrationTest for Unit Tests CI job - prevents task dependency execution
-            disabledForTestTasks.add("integrationTest") // Prevents koverXmlReport from triggering integrationTest
-            // Note: Integration Tests CI job runs its own coverage collection separately
+            // Conditionally disable integrationTest for Unit Tests CI job only
+            if (System.getenv("SKIP_INTEGRATION_COVERAGE") == "true") {
+                disabledForTestTasks.add("integrationTest") // Prevents koverXmlReport from triggering integrationTest
+            }
+            // Note: This preserves SPI-595 parallel coverage collection while preventing task dependency issues
         }
     }
     
