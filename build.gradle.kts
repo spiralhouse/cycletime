@@ -533,12 +533,11 @@ tasks.test {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
-        // ARCHITECTURAL FIX: Include MCP integration tests for SPI-594
-        includeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*")
-        excludeTestsMatching("io.spiralhouse.cycletime.integration.*") // Exclude other integration tests
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*") // Include unit tests
+        excludeTestsMatching("io.spiralhouse.cycletime.integration.*") // Exclude ALL integration tests
+        excludeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*") // Exclude MCP integration tests
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
         excludeTestsMatching("io.spiralhouse.cycletime.api.*")
-        excludeTestsMatching("io.spiralhouse.cycletime.unit.*") // Explicit exclusion to prevent double execution
     }
 }
 
