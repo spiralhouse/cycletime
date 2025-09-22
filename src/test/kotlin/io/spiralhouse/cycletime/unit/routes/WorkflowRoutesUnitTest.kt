@@ -164,16 +164,8 @@ class WorkflowRoutesUnitTest : StringSpec({
                     }
                 }
 
-                // Simplified error handling for CI environments
-                install(StatusPages) {
-                    exception<Exception> { call, cause ->
-                        println("Test error: ${cause.message}")
-                        call.respond(
-                            HttpStatusCode.InternalServerError,
-                            mapOf("error" to "Test error", "message" to cause.message)
-                        )
-                    }
-                }
+                // Minimal error handling for performance
+                ErrorHandler.install(this, mockTimeProvider)
 
                 // Minimal content negotiation for CI performance
                 install(ServerContentNegotiation) {

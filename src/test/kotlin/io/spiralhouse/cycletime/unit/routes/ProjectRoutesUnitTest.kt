@@ -131,16 +131,8 @@ class ProjectRoutesUnitTest : StringSpec({
                     }
                 }
 
-                // Simplified error handling for CI environments
-                install(StatusPages) {
-                    exception<Exception> { call, cause ->
-                        println("Test error: ${cause.message}")
-                        call.respond(
-                            HttpStatusCode.InternalServerError,
-                            mapOf("error" to "Test error", "message" to cause.message)
-                        )
-                    }
-                }
+                // Install error handling middleware for proper validation error responses
+                ErrorHandler.install(this, mockTimeProvider)
 
                 // Minimal content negotiation for CI performance
                 install(ServerContentNegotiation) {
