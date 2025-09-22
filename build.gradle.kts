@@ -533,11 +533,12 @@ tasks.test {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
-        includeTestsMatching("io.spiralhouse.cycletime.unit.*") // Include unit tests
-        excludeTestsMatching("io.spiralhouse.cycletime.integration.*") // Exclude ALL integration tests
-        excludeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*") // Exclude MCP integration tests
+        // ARCHITECTURAL FIX: Include MCP integration tests for SPI-594
+        includeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.integration.*") // Exclude other integration tests
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
         excludeTestsMatching("io.spiralhouse.cycletime.api.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.unit.*") // Explicit exclusion to prevent double execution
     }
 }
 
@@ -677,9 +678,9 @@ kover {
             disabledForTestTasks.add("systemTest")
             // Disable test delegation task to prevent CI from running overlapping test tasks
             disabledForTestTasks.add("test")
-            // Enable integrationTest for coverage to support CI coverage collection (SPI-595)
-            // disabledForTestTasks.add("integrationTest") // Re-enabled for proper coverage collection
-            // Note: CI job separation achieved by running different test tasks, not disabling coverage
+            // Disable integrationTest for Unit Tests CI job - prevents task dependency execution
+            disabledForTestTasks.add("integrationTest") // Prevents koverXmlReport from triggering integrationTest
+            // Note: Integration Tests CI job runs its own coverage collection separately
         }
     }
     
