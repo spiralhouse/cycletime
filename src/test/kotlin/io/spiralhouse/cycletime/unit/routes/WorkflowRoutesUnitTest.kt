@@ -114,26 +114,18 @@ import kotlinx.serialization.json.Json
  */
 class WorkflowRoutesUnitTest : StringSpec({
 
-    lateinit var mockWorkflowService: WorkflowApplicationService
-    lateinit var mockTimeProvider: TimeProvider
-
-    beforeEach {
-        mockWorkflowService = mockk<WorkflowApplicationService>()
-        mockTimeProvider = SimpleRouteTestUtils.createMockTimeProvider()
-        clearAllMocks()
-    }
-
-    afterEach {
-        clearAllMocks()
-    }
 
     /**
      * Creates a test application with mocked dependencies - optimized for performance.
      */
     fun testWithMocks(
         workflowServiceConfig: (WorkflowApplicationService) -> Unit = {},
-        test: suspend ApplicationTestBuilder.() -> Unit
+        test: suspend ApplicationTestBuilder.(WorkflowApplicationService) -> Unit
     ) {
+        // Create fresh mocks for THIS test only (thread-safe isolation)
+        val mockWorkflowService = mockk<WorkflowApplicationService>()
+        val mockTimeProvider = SimpleRouteTestUtils.createMockTimeProvider()
+
         // Configure mock services with deterministic setup
         workflowServiceConfig(mockWorkflowService)
 
@@ -163,7 +155,7 @@ class WorkflowRoutesUnitTest : StringSpec({
                     configureWorkflowRoutes()
                 }
             }
-            test()
+            test(mockWorkflowService)
         }
     }
 
@@ -195,7 +187,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.createWorkflow(any()) } returns testWorkflow
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows") {
                 contentType(ContentType.Application.Json)
                 setBody(CreateWorkflowRequest(
@@ -221,7 +213,7 @@ class WorkflowRoutesUnitTest : StringSpec({
     }
 
     "POST /api/workflows should reject empty name" {
-        testWithMocks {
+        testWithMocks { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows") {
                 contentType(ContentType.Application.Json)
                 setBody(CreateWorkflowRequest(
@@ -241,7 +233,7 @@ class WorkflowRoutesUnitTest : StringSpec({
     }
 
     "POST /api/workflows should reject missing required fields" {
-        testWithMocks {
+        testWithMocks { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows") {
                 contentType(ContentType.Application.Json)
                 setBody("""{"description":"Missing name and initial status"}""")
@@ -254,7 +246,7 @@ class WorkflowRoutesUnitTest : StringSpec({
     }
 
     "POST /api/workflows should reject invalid initial status not in allowed statuses" {
-        testWithMocks {
+        testWithMocks { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows") {
                 contentType(ContentType.Application.Json)
                 setBody(CreateWorkflowRequest(
@@ -273,7 +265,7 @@ class WorkflowRoutesUnitTest : StringSpec({
     }
 
     "POST /api/workflows should reject empty allowed statuses" {
-        testWithMocks {
+        testWithMocks { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows") {
                 contentType(ContentType.Application.Json)
                 setBody(CreateWorkflowRequest(
@@ -296,7 +288,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.createWorkflow(any()) } throws RuntimeException("Database constraint violation")
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows") {
                 contentType(ContentType.Application.Json)
                 setBody(CreateWorkflowRequest(
@@ -326,7 +318,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.getWorkflow(workflowId) } returns testWorkflow
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().get("/api/workflows/${workflowId.value}")
 
             response.status shouldBe HttpStatusCode.OK
@@ -345,7 +337,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.getWorkflow(workflowId) } returns null
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().get("/api/workflows/${workflowId.value}")
 
             response.status shouldBe HttpStatusCode.NotFound
@@ -357,7 +349,7 @@ class WorkflowRoutesUnitTest : StringSpec({
     }
 
     "GET /api/workflows/{id} should return 400 for invalid UUID format" {
-        testWithMocks {
+        testWithMocks { mockWorkflowService ->
             val response = jsonClient().get("/api/workflows/invalid-uuid")
 
             response.status shouldBe HttpStatusCode.BadRequest
@@ -376,7 +368,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.getWorkflow(workflowId) } throws RuntimeException("Database timeout")
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().get("/api/workflows/${workflowId.value}")
 
             response.status shouldBe HttpStatusCode.InternalServerError
@@ -403,7 +395,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.updateWorkflow(any()) } returns updatedWorkflow
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().put("/api/workflows/${workflowId.value}") {
                 contentType(ContentType.Application.Json)
                 setBody(UpdateWorkflowRequest(
@@ -434,7 +426,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.updateWorkflow(any()) } throws WorkflowNotFoundException(workflowId)
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().put("/api/workflows/${workflowId.value}") {
                 contentType(ContentType.Application.Json)
                 setBody(UpdateWorkflowRequest(name = "Updated Name"))
@@ -451,7 +443,7 @@ class WorkflowRoutesUnitTest : StringSpec({
     "PUT /api/workflows/{id} should reject empty name" {
         val workflowId = WorkflowId.generate()
 
-        testWithMocks {
+        testWithMocks { mockWorkflowService ->
             val response = jsonClient().put("/api/workflows/${workflowId.value}") {
                 contentType(ContentType.Application.Json)
                 setBody(UpdateWorkflowRequest(name = ""))
@@ -476,7 +468,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.updateWorkflow(any()) } returns updatedWorkflow
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().put("/api/workflows/${workflowId.value}") {
                 contentType(ContentType.Application.Json)
                 setBody(UpdateWorkflowRequest(name = "Only Name Updated"))
@@ -503,7 +495,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.updateWorkflow(any()) } throws RuntimeException("Database constraint error")
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().put("/api/workflows/${workflowId.value}") {
                 contentType(ContentType.Application.Json)
                 setBody(UpdateWorkflowRequest(name = "Valid Name"))
@@ -528,7 +520,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.deleteWorkflow(workflowId) } returns true
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().delete("/api/workflows/${workflowId.value}")
 
             response.status shouldBe HttpStatusCode.NoContent
@@ -544,7 +536,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.deleteWorkflow(workflowId) } returns false
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().delete("/api/workflows/${workflowId.value}")
 
             response.status shouldBe HttpStatusCode.NotFound
@@ -562,7 +554,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.deleteWorkflow(workflowId) } throws RuntimeException("Constraint violation")
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().delete("/api/workflows/${workflowId.value}")
 
             response.status shouldBe HttpStatusCode.InternalServerError
@@ -584,7 +576,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.listWorkflows() } returns testWorkflows
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().get("/api/workflows")
 
             response.status shouldBe HttpStatusCode.OK
@@ -601,7 +593,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.listWorkflows() } returns emptyList()
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().get("/api/workflows")
 
             response.status shouldBe HttpStatusCode.OK
@@ -618,7 +610,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.listWorkflows() } throws RuntimeException("Database connection error")
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().get("/api/workflows")
 
             response.status shouldBe HttpStatusCode.InternalServerError
@@ -641,7 +633,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.getValidTransitions(workflowId, IssueStatus.TODO) } returns transitions
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().get("/api/workflows/${workflowId.value}/transitions?status=TODO")
 
             response.status shouldBe HttpStatusCode.OK
@@ -656,7 +648,7 @@ class WorkflowRoutesUnitTest : StringSpec({
     "GET /api/workflows/{id}/transitions should reject invalid status parameter" {
         val workflowId = WorkflowId.generate()
 
-        testWithMocks {
+        testWithMocks { mockWorkflowService ->
             val response = jsonClient().get("/api/workflows/${workflowId.value}/transitions?status=INVALID_STATUS")
 
             response.status shouldBe HttpStatusCode.BadRequest
@@ -675,7 +667,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.getValidTransitions(workflowId, IssueStatus.TODO) } throws WorkflowNotFoundException(workflowId)
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().get("/api/workflows/${workflowId.value}/transitions?status=TODO")
 
             response.status shouldBe HttpStatusCode.NotFound
@@ -693,7 +685,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.getValidTransitions(workflowId, IssueStatus.DONE) } returns emptyList()
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().get("/api/workflows/${workflowId.value}/transitions?status=DONE")
 
             response.status shouldBe HttpStatusCode.OK
@@ -717,7 +709,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.validateTransition(workflowId, IssueStatus.TODO, IssueStatus.IN_PROGRESS) } returns validationResult
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows/${workflowId.value}/validate-transition") {
                 contentType(ContentType.Application.Json)
                 setBody(ValidateTransitionRequest(
@@ -746,7 +738,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.validateTransition(workflowId, IssueStatus.DONE, IssueStatus.TODO) } returns validationResult
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows/${workflowId.value}/validate-transition") {
                 contentType(ContentType.Application.Json)
                 setBody(ValidateTransitionRequest(
@@ -771,7 +763,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.validateTransition(workflowId, IssueStatus.TODO, IssueStatus.IN_PROGRESS) } throws WorkflowNotFoundException(workflowId)
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows/${workflowId.value}/validate-transition") {
                 contentType(ContentType.Application.Json)
                 setBody(ValidateTransitionRequest(
@@ -791,7 +783,7 @@ class WorkflowRoutesUnitTest : StringSpec({
     "POST /api/workflows/{id}/validate-transition should handle malformed validation request" {
         val workflowId = WorkflowId.generate()
 
-        testWithMocks {
+        testWithMocks { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows/${workflowId.value}/validate-transition") {
                 contentType(ContentType.Application.Json)
                 setBody("""{"fromStatus": "TODO"}""") // Missing toStatus
@@ -820,7 +812,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.createDefaultWorkflow() } returns defaultWorkflow
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows/default")
 
             response.status shouldBe HttpStatusCode.Created
@@ -836,7 +828,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.createDefaultWorkflow() } throws RuntimeException("Template creation failed")
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows/default")
 
             response.status shouldBe HttpStatusCode.InternalServerError
@@ -858,7 +850,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.createDefaultWorkflow() } returns defaultWorkflow
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows/default")
 
             response.status shouldBe HttpStatusCode.Created
@@ -884,7 +876,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.createBugWorkflow() } returns bugWorkflow
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows/bug")
 
             response.status shouldBe HttpStatusCode.Created
@@ -900,7 +892,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.createBugWorkflow() } throws RuntimeException("Bug template creation failed")
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows/bug")
 
             response.status shouldBe HttpStatusCode.InternalServerError
@@ -922,7 +914,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.createBugWorkflow() } returns bugWorkflow
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows/bug")
 
             response.status shouldBe HttpStatusCode.Created
@@ -948,7 +940,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.createFeatureWorkflow() } returns featureWorkflow
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows/feature")
 
             response.status shouldBe HttpStatusCode.Created
@@ -964,7 +956,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.createFeatureWorkflow() } throws RuntimeException("Feature template creation failed")
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows/feature")
 
             response.status shouldBe HttpStatusCode.InternalServerError
@@ -986,7 +978,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.createFeatureWorkflow() } returns featureWorkflow
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/workflows/feature")
 
             response.status shouldBe HttpStatusCode.Created
@@ -1009,7 +1001,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.createWorkflow(any()) } returns testWorkflow
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/v1/workflows") {
                 contentType(ContentType.Application.Json)
                 setBody(CreateWorkflowRequest(
@@ -1035,7 +1027,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.getWorkflow(workflowId) } returns testWorkflow
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().get("/api/v1/workflows/${workflowId.value}")
 
             response.status shouldBe HttpStatusCode.OK
@@ -1054,7 +1046,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.updateWorkflow(any()) } returns updatedWorkflow
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().put("/api/v1/workflows/${workflowId.value}") {
                 contentType(ContentType.Application.Json)
                 setBody(UpdateWorkflowRequest(name = "V1 Updated"))
@@ -1075,7 +1067,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.deleteWorkflow(workflowId) } returns true
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().delete("/api/v1/workflows/${workflowId.value}")
 
             response.status shouldBe HttpStatusCode.NoContent
@@ -1091,7 +1083,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.listWorkflows() } returns testWorkflows
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().get("/api/v1/workflows")
 
             response.status shouldBe HttpStatusCode.OK
@@ -1110,7 +1102,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.getValidTransitions(workflowId, IssueStatus.TODO) } returns transitions
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().get("/api/v1/workflows/${workflowId.value}/transitions?status=TODO")
 
             response.status shouldBe HttpStatusCode.OK
@@ -1129,7 +1121,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.validateTransition(workflowId, IssueStatus.TODO, IssueStatus.IN_PROGRESS) } returns validationResult
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/v1/workflows/${workflowId.value}/validate-transition") {
                 contentType(ContentType.Application.Json)
                 setBody(ValidateTransitionRequest(
@@ -1153,7 +1145,7 @@ class WorkflowRoutesUnitTest : StringSpec({
             workflowServiceConfig = { service ->
                 coEvery { service.createDefaultWorkflow() } returns defaultWorkflow
             }
-        ) {
+        ) { mockWorkflowService ->
             val response = jsonClient().post("/api/v1/workflows/default")
 
             response.status shouldBe HttpStatusCode.Created
@@ -1186,7 +1178,7 @@ class WorkflowRoutesUnitTest : StringSpec({
                     coEvery { service.getWorkflow(workflowId) } returns workflow
                 }
             }
-        ) {
+        ) { mockWorkflowService ->
             val startTime = System.currentTimeMillis()
 
             // Batch request test

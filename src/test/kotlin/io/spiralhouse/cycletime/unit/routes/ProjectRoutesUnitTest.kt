@@ -81,26 +81,17 @@ import kotlinx.serialization.json.Json
  */
 class ProjectRoutesUnitTest : StringSpec({
 
-    lateinit var mockProjectService: ProjectApplicationService
-    lateinit var mockTimeProvider: TimeProvider
-
-    beforeEach {
-        mockProjectService = mockk<ProjectApplicationService>()
-        mockTimeProvider = SimpleRouteTestUtils.createMockTimeProvider()
-        clearAllMocks()
-    }
-
-    afterEach {
-        clearAllMocks()
-    }
-
     /**
      * Creates a test application with mocked dependencies.
      */
     fun testWithMocks(
         serviceConfig: (ProjectApplicationService) -> Unit = {},
-        test: suspend ApplicationTestBuilder.() -> Unit
+        test: suspend ApplicationTestBuilder.(ProjectApplicationService) -> Unit
     ) {
+        // Create fresh mocks for THIS test only (thread-safe isolation)
+        val mockProjectService = mockk<ProjectApplicationService>()
+        val mockTimeProvider = SimpleRouteTestUtils.createMockTimeProvider()
+
         // Configure mock service with deterministic setup
         serviceConfig(mockProjectService)
 
@@ -130,7 +121,7 @@ class ProjectRoutesUnitTest : StringSpec({
                     configureProjectRoutes()
                 }
             }
-            test()
+            test(mockProjectService)
         }
     }
 
@@ -156,7 +147,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.listProjects() } returns SimpleRouteTestUtils.createProjectListDto(emptyList())
             }
-        ) {
+        ) { mockProjectService ->
             val response = jsonClient().get("/api/projects")
 
             response.status shouldBe HttpStatusCode.OK
@@ -175,7 +166,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.listProjects() } returns SimpleRouteTestUtils.createProjectListDto(testProjects)
             }
-        ) {
+        ) { mockProjectService ->
             val response = jsonClient().get("/api/projects")
 
             response.status shouldBe HttpStatusCode.OK
@@ -195,7 +186,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.listProjects() } throws RuntimeException("Database connection failed")
             }
-        ) {
+        ) { mockProjectService ->
             val response = jsonClient().get("/api/projects")
 
             response.status shouldBe HttpStatusCode.InternalServerError
@@ -213,7 +204,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.listProjects() } returns SimpleRouteTestUtils.createProjectListDto(testProjects)
             }
-        ) {
+        ) { mockProjectService ->
             val startTime = System.currentTimeMillis()
 
             repeat(5) {
@@ -242,7 +233,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.createProject(any()) } returns testProject
             }
-        ) {
+        ) { mockProjectService ->
             val response = jsonClient().post("/api/projects") {
                 contentType(ContentType.Application.Json)
                 setBody(CreateProjectRequest(
@@ -266,7 +257,7 @@ class ProjectRoutesUnitTest : StringSpec({
     }
 
     "POST /api/projects should reject empty name" {
-        testWithMocks {
+        testWithMocks { mockProjectService ->
             val response = jsonClient().post("/api/projects") {
                 contentType(ContentType.Application.Json)
                 setBody(CreateProjectRequest(name = "", description = "Valid description"))
@@ -281,7 +272,7 @@ class ProjectRoutesUnitTest : StringSpec({
     }
 
     "POST /api/projects should reject whitespace-only name" {
-        testWithMocks {
+        testWithMocks { mockProjectService ->
             val response = jsonClient().post("/api/projects") {
                 contentType(ContentType.Application.Json)
                 setBody(CreateProjectRequest(name = "   ", description = "Valid description"))
@@ -298,7 +289,7 @@ class ProjectRoutesUnitTest : StringSpec({
     "POST /api/projects should reject name longer than 255 characters" {
         val longName = "a".repeat(256)
 
-        testWithMocks {
+        testWithMocks { mockProjectService ->
             val response = jsonClient().post("/api/projects") {
                 contentType(ContentType.Application.Json)
                 setBody(CreateProjectRequest(name = longName, description = "Valid description"))
@@ -315,7 +306,7 @@ class ProjectRoutesUnitTest : StringSpec({
     "POST /api/projects should reject description longer than 2000 characters" {
         val longDescription = "a".repeat(2001)
 
-        testWithMocks {
+        testWithMocks { mockProjectService ->
             val response = jsonClient().post("/api/projects") {
                 contentType(ContentType.Application.Json)
                 setBody(CreateProjectRequest(name = "Valid Name", description = longDescription))
@@ -330,7 +321,7 @@ class ProjectRoutesUnitTest : StringSpec({
     }
 
     "POST /api/projects should reject request with missing name" {
-        testWithMocks {
+        testWithMocks { mockProjectService ->
             val response = jsonClient().post("/api/projects") {
                 contentType(ContentType.Application.Json)
                 setBody("""{"description":"Valid description"}""")
@@ -347,7 +338,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.createProject(any()) } throws RuntimeException("Database constraint violation")
             }
-        ) {
+        ) { mockProjectService ->
             val response = jsonClient().post("/api/projects") {
                 contentType(ContentType.Application.Json)
                 setBody(CreateProjectRequest(name = "Valid Name", description = "Valid description"))
@@ -362,7 +353,7 @@ class ProjectRoutesUnitTest : StringSpec({
     }
 
     "POST /api/projects should handle malformed JSON gracefully" {
-        testWithMocks {
+        testWithMocks { mockProjectService ->
             val response = jsonClient().post("/api/projects") {
                 contentType(ContentType.Application.Json)
                 setBody("""{"name": "Valid Name", "description": }""") // Malformed JSON
@@ -386,7 +377,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.getProject(projectId) } returns testProject
             }
-        ) {
+        ) { mockProjectService ->
             val response = jsonClient().get("/api/projects/${projectId.value}")
 
             response.status shouldBe HttpStatusCode.OK
@@ -405,7 +396,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.getProject(projectId) } throws ProjectNotFoundException(projectId)
             }
-        ) {
+        ) { mockProjectService ->
             val response = jsonClient().get("/api/projects/${projectId.value}")
 
             response.status shouldBe HttpStatusCode.NotFound
@@ -417,7 +408,7 @@ class ProjectRoutesUnitTest : StringSpec({
     }
 
     "GET /api/projects/{id} should return 400 for invalid UUID format" {
-        testWithMocks {
+        testWithMocks { mockProjectService ->
             val response = jsonClient().get("/api/projects/invalid-uuid")
 
             response.status shouldBe HttpStatusCode.BadRequest
@@ -435,7 +426,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.getProject(projectId) } throws RuntimeException("Database timeout")
             }
-        ) {
+        ) { mockProjectService ->
             val response = jsonClient().get("/api/projects/${projectId.value}")
 
             response.status shouldBe HttpStatusCode.InternalServerError
@@ -462,7 +453,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.updateProject(any()) } returns updatedProject
             }
-        ) {
+        ) { mockProjectService ->
             val response = jsonClient().put("/api/projects/${projectId.value}") {
                 contentType(ContentType.Application.Json)
                 setBody(UpdateProjectRequest(
@@ -493,7 +484,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.updateProject(any()) } throws ProjectNotFoundException(projectId)
             }
-        ) {
+        ) { mockProjectService ->
             val response = jsonClient().put("/api/projects/${projectId.value}") {
                 contentType(ContentType.Application.Json)
                 setBody(UpdateProjectRequest(name = "Updated Name"))
@@ -510,7 +501,7 @@ class ProjectRoutesUnitTest : StringSpec({
     "PUT /api/projects/{id} should reject invalid update data" {
         val projectId = ProjectId.generate()
 
-        testWithMocks {
+        testWithMocks { mockProjectService ->
             val response = jsonClient().put("/api/projects/${projectId.value}") {
                 contentType(ContentType.Application.Json)
                 setBody(UpdateProjectRequest(name = "")) // Empty name
@@ -535,7 +526,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.updateProject(any()) } returns updatedProject
             }
-        ) {
+        ) { mockProjectService ->
             val response = jsonClient().put("/api/projects/${projectId.value}") {
                 contentType(ContentType.Application.Json)
                 setBody(UpdateProjectRequest(name = "Only Name Updated"))
@@ -566,7 +557,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.deleteProject(projectId) } just Runs
             }
-        ) {
+        ) { mockProjectService ->
             val response = jsonClient().delete("/api/projects/${projectId.value}")
 
             response.status shouldBe HttpStatusCode.NoContent
@@ -582,7 +573,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.deleteProject(projectId) } throws ProjectNotFoundException(projectId)
             }
-        ) {
+        ) { mockProjectService ->
             val response = jsonClient().delete("/api/projects/${projectId.value}")
 
             response.status shouldBe HttpStatusCode.NotFound
@@ -600,7 +591,7 @@ class ProjectRoutesUnitTest : StringSpec({
             serviceConfig = { service ->
                 coEvery { service.deleteProject(projectId) } throws RuntimeException("Cannot delete project with active issues")
             }
-        ) {
+        ) { mockProjectService ->
             val response = jsonClient().delete("/api/projects/${projectId.value}")
 
             response.status shouldBe HttpStatusCode.InternalServerError
