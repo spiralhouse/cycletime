@@ -101,34 +101,17 @@ class ProjectRoutesUnitTest : StringSpec({
         serviceConfig: (ProjectApplicationService) -> Unit = {},
         test: suspend ApplicationTestBuilder.() -> Unit
     ) {
-        // Configure mock service with error handling for CI resource constraints
-        try {
-            serviceConfig(mockProjectService)
-        } catch (e: Exception) {
-            // Log but don't fail on mock configuration issues in resource-constrained environments
-            println("Warning: Mock configuration failed: ${e.message}")
-        }
+        // Configure mock service with deterministic setup
+        serviceConfig(mockProjectService)
 
         testApplication {
             application {
-                // Simplified DI setup for CI resource constraints
+                // Deterministic DI setup for consistent CI/local behavior
                 install(DI)
                 dependencies {
-                    // Provide dependencies with fallback for resource-constrained environments
-                    provide<ProjectApplicationService> {
-                        try {
-                            mockProjectService
-                        } catch (e: Exception) {
-                            mockk<ProjectApplicationService>(relaxed = true)
-                        }
-                    }
-                    provide<TimeProvider> {
-                        try {
-                            mockTimeProvider
-                        } catch (e: Exception) {
-                            SimpleRouteTestUtils.createMockTimeProvider()
-                        }
-                    }
+                    // Direct mock provision for deterministic behavior
+                    provide<ProjectApplicationService> { mockProjectService }
+                    provide<TimeProvider> { mockTimeProvider }
                 }
 
                 // Install error handling middleware for proper validation error responses

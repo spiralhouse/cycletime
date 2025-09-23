@@ -134,34 +134,17 @@ class WorkflowRoutesUnitTest : StringSpec({
         workflowServiceConfig: (WorkflowApplicationService) -> Unit = {},
         test: suspend ApplicationTestBuilder.() -> Unit
     ) {
-        // Configure mock services with error handling for CI resource constraints
-        try {
-            workflowServiceConfig(mockWorkflowService)
-        } catch (e: Exception) {
-            // Log but don't fail on mock configuration issues in resource-constrained environments
-            println("Warning: Mock configuration failed: ${e.message}")
-        }
+        // Configure mock services with deterministic setup
+        workflowServiceConfig(mockWorkflowService)
 
         testApplication {
             application {
-                // Simplified DI setup for CI resource constraints
+                // Deterministic DI setup for consistent CI/local behavior
                 install(DI)
                 dependencies {
-                    // Provide dependencies with fallback for resource-constrained environments
-                    provide<WorkflowApplicationService> {
-                        try {
-                            mockWorkflowService
-                        } catch (e: Exception) {
-                            mockk<WorkflowApplicationService>(relaxed = true)
-                        }
-                    }
-                    provide<TimeProvider> {
-                        try {
-                            mockTimeProvider
-                        } catch (e: Exception) {
-                            SimpleRouteTestUtils.createMockTimeProvider()
-                        }
-                    }
+                    // Direct mock provision for deterministic behavior
+                    provide<WorkflowApplicationService> { mockWorkflowService }
+                    provide<TimeProvider> { mockTimeProvider }
                 }
 
                 // Minimal error handling for performance
