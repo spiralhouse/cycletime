@@ -69,7 +69,7 @@ dependencies {
     implementation(libs.exposed.kotlin.datetime)
 
     // Database - Current implementation uses SQLite with HikariCP
-    implementation("org.xerial:sqlite-jdbc:3.46.1.3")  // SQLite JDBC driver
+    implementation("org.xerial:sqlite-jdbc:3.50.3.0")  // SQLite JDBC driver
     implementation(libs.hikaricp)
 
     // H2 database for Phase 2 repository integration (SPI-439)
