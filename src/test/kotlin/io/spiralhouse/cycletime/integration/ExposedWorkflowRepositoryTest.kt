@@ -14,6 +14,7 @@ import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
 import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
 import io.spiralhouse.cycletime.infrastructure.database.WorkflowsTable
+import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseFactory
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedWorkflowRepository
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
@@ -21,6 +22,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -71,10 +73,7 @@ class ExposedWorkflowRepositoryTest : StringSpec({
 
     beforeSpec {
         // Set up H2 in-memory database for integration testing
-        database = Database.connect(
-            url = "jdbc:h2:mem:workflow_test_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
-            driver = "org.h2.Driver"
-        )
+        database = TestDatabaseFactory.createTestDatabase()
 
         // Create schema
         transaction(database) {
@@ -82,8 +81,8 @@ class ExposedWorkflowRepositoryTest : StringSpec({
         }
 
         mockTimeProvider = MockTimeProvider()
-        // RED: This will fail - ExposedWorkflowRepository doesn't exist yet
-        repository = ExposedWorkflowRepository(SystemTimeProvider())
+        // Pass test database instance to repository
+        repository = ExposedWorkflowRepository(SystemTimeProvider(), database)
     }
 
     beforeEach {
@@ -101,6 +100,7 @@ class ExposedWorkflowRepositoryTest : StringSpec({
         transaction(database) {
             SchemaUtils.drop(WorkflowsTable)
         }
+        TransactionManager.closeAndUnregister(database)
     }
 
     // ==========================================

@@ -16,6 +16,7 @@ import io.spiralhouse.cycletime.domain.valueobjects.*
 import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
 import io.spiralhouse.cycletime.infrastructure.database.IssueDependenciesTable
 import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
+import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseFactory
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
 import kotlinx.coroutines.test.runTest
@@ -24,6 +25,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -94,10 +96,7 @@ class ExposedIssueRepositoryTest : DescribeSpec({
 
     beforeSpec {
         // Set up H2 in-memory database for integration testing
-        database = Database.connect(
-            url = "jdbc:h2:mem:test_issues_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-            driver = "org.h2.Driver"
-        )
+        database = TestDatabaseFactory.createTestDatabase()
 
         // Create schema
         transaction(database) {
@@ -105,8 +104,8 @@ class ExposedIssueRepositoryTest : DescribeSpec({
         }
 
         mockTimeProvider = MockTimeProvider()
-        issueRepository = ExposedIssueRepository(SystemTimeProvider())
-        projectRepository = ExposedProjectRepository(SystemTimeProvider())
+        issueRepository = ExposedIssueRepository(SystemTimeProvider(), database)
+        projectRepository = ExposedProjectRepository(SystemTimeProvider(), database)
     }
 
     beforeEach {
@@ -134,6 +133,7 @@ class ExposedIssueRepositoryTest : DescribeSpec({
         transaction(database) {
             SchemaUtils.drop(IssueDependenciesTable, IssuesTable, ProjectsTable)
         }
+        TransactionManager.closeAndUnregister(database)
     }
 
     describe("ExposedIssueRepository Integration Tests") {
