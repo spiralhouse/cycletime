@@ -35,13 +35,15 @@ object TestDatabaseFactory {
     
     /**
      * Create a test database that simulates connection failure.
-     * 
+     * Uses an invalid connection URL that will cause connection failure
+     * without ClassNotFoundException.
+     *
      * @return Database that will fail on connection
      */
     fun createFailingDatabase(): Database {
-        // Invalid URL that will cause connection failure
+        // TCP connection fails immediately - port 65432 is valid range but guaranteed not to exist
         return Database.connect(
-            url = "jdbc:h2:mem:;INVALID_OPTION=true",
+            url = "jdbc:h2:tcp://localhost:65432/test;DATABASE_TO_LOWER=TRUE",
             driver = "org.h2.Driver"
         )
     }

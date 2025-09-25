@@ -110,7 +110,9 @@ class DatabaseConfig(
                 }
 
                 try {
-                    SchemaUtils.create(
+                    // Use createMissingTablesAndColumns to avoid conflicts during tests
+                    // This gracefully handles existing tables and indexes
+                    SchemaUtils.createMissingTablesAndColumns(
                         ProjectsTable,
                         IssuesTable,
                         IssueDependenciesTable,
@@ -260,6 +262,7 @@ object DatabaseFactory {
     private var database: Database? = null
     private var config: DatabaseConfig? = null
 
+    @Synchronized
     fun init(
         jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE;LOCK_TIMEOUT=5000",
         driver: String = "org.h2.Driver",
@@ -273,13 +276,21 @@ object DatabaseFactory {
         }
     }
 
+    @Synchronized
     fun getInstance(): Database {
         return database ?: throw IllegalStateException("Database not initialized. Call DatabaseFactory.init() first.")
     }
 
+    @Synchronized
     fun close() {
         config?.close()
         database = null
         config = null
+    }
+
+    @Synchronized
+    fun reset() {
+        close()
+        database = null  // Force re-initialization for next init() call
     }
 }
