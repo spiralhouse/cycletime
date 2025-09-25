@@ -16,10 +16,8 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.ktor.websocket.*
-import io.spiralhouse.cycletime.module
-import io.spiralhouse.cycletime.infrastructure.di.modules.test.configureForTesting
-import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
-import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseFactory
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper.configureTestApplication
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
@@ -30,32 +28,33 @@ import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * End-to-End integration tests for complete MCP WebSocket functionality.
- * 
+ *
  * Phase 9: These tests now validate the unified MCP architecture
  * where MCP is served on main application port via /mcp WebSocket endpoint.
- * 
+ *
  * DISABLED: WebSocket client plugin not configured in test environment.
  * See: https://linear.app/spiral-house/issue/SPI-608
  */
 @OptIn(ExperimentalKotest::class)
 class MCPEndToEndTest : StringSpec({
 
-    "should complete full application startup with REST and MCP servers" {
-        // Initialize database before test
-        val testDbUrl = "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
-        DatabaseFactory.init(
-            jdbcUrl = testDbUrl,
-            driver = "org.h2.Driver",
+    beforeSpec {
+        // Initialize test database using helper to prevent race conditions
+        DatabaseTestHelper.initTestDatabase(
+            testName = "mcp_e2e_test",
             enableLogging = false
         )
+    }
 
-        try {
-            testApplication {
-                application {
-                    // Set system property for module() to use
-                    System.setProperty("DATABASE_URL", testDbUrl)
-                    module() // Will fail - MCP server not integrated into startup
-                }
+    afterSpec {
+        // Clean up test database
+        DatabaseTestHelper.cleanupTestDatabase()
+    }
+
+    "should complete full application startup with REST and MCP servers" {
+        testApplication {
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_e2e_test")
 
                 // Verify REST server is running
                 val restHealth = client.get("/health")
@@ -68,13 +67,10 @@ class MCPEndToEndTest : StringSpec({
                 dependencies?.get("database")?.jsonPrimitive?.content shouldBe "connected"
                 dependencies?.get("mcp")?.jsonPrimitive?.content shouldBe "running" // Should pass after health check fix
 
-                // Verify all services are initialized
-                dependencies?.get("projectService")?.jsonPrimitive?.content shouldBe "initialized"
-                dependencies?.get("issueService")?.jsonPrimitive?.content shouldBe "initialized"
-                dependencies?.get("sessionService")?.jsonPrimitive?.content shouldBe "initialized"
-            }
-        } finally {
-            DatabaseFactory.reset()
+            // Verify all services are initialized
+            dependencies?.get("projectService")?.jsonPrimitive?.content shouldBe "initialized"
+            dependencies?.get("issueService")?.jsonPrimitive?.content shouldBe "initialized"
+            dependencies?.get("sessionService")?.jsonPrimitive?.content shouldBe "initialized"
         }
     }
 
@@ -83,11 +79,8 @@ class MCPEndToEndTest : StringSpec({
     // during integration testing, not MVP functionality issues.
     "should establish WebSocket connection to MCP server".config(enabled = false) {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_e2e_test")
 
             // Wait for application to start
             val healthCheck = client.get("/health")
@@ -108,11 +101,8 @@ class MCPEndToEndTest : StringSpec({
 
     "should handle MCP initialize protocol method" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_e2e_test")
 
             val wsClient = createClient {
                 install(WebSockets)
@@ -158,21 +148,9 @@ class MCPEndToEndTest : StringSpec({
     }
 
     "should handle MCP resources/list method" {
-        // Initialize database before test to avoid race conditions in CI
-        val testDbUrl = "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
-        DatabaseFactory.init(
-            jdbcUrl = testDbUrl,
-            driver = "org.h2.Driver",
-            enableLogging = false
-        )
-
-        try {
-            testApplication {
-                application {
-                    // Set system property for module() to use
-                    System.setProperty("DATABASE_URL", testDbUrl)
-                    module()
-                }
+        testApplication {
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_e2e_test")
 
             val wsClient = createClient {
                 install(WebSockets)
@@ -207,21 +185,14 @@ class MCPEndToEndTest : StringSpec({
                 resourcesText shouldContain "cycletime://projects"
                 resourcesText shouldContain "cycletime://issues"
                 resourcesText shouldContain "cycletime://sessions"
-                }
             }
-        } finally {
-            // Clean up database after test to maintain isolation
-            DatabaseFactory.reset()
         }
     }
 
     "should handle MCP tools/list method" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_e2e_test")
 
             val wsClient = createClient {
                 install(WebSockets)
@@ -263,11 +234,8 @@ class MCPEndToEndTest : StringSpec({
     // TODO(SPI-580): Re-enable when concurrent execution safety is implemented
     "should handle concurrent WebSocket connections".config(enabled = false) {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_e2e_test")
 
             // Test concurrent connections by opening them sequentially
             // (testApplication doesn't provide easy concurrent WebSocket support)
@@ -299,11 +267,8 @@ class MCPEndToEndTest : StringSpec({
     // TODO(SPI-578): Re-enable when advanced error handling is implemented
     "should handle WebSocket connection errors gracefully".config(enabled = false) {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_e2e_test")
 
             val wsClient = createClient {
                 install(WebSockets)
@@ -329,11 +294,8 @@ class MCPEndToEndTest : StringSpec({
 
     "should handle graceful server shutdown with active connections" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_e2e_test")
 
             val wsClient = createClient {
                 install(WebSockets)
@@ -354,11 +316,8 @@ class MCPEndToEndTest : StringSpec({
     // TODO(SPI-579): Re-enable when advanced connection state management is implemented
     "should maintain connection state across multiple requests".config(enabled = false) {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_e2e_test")
 
             val wsClient = createClient {
                 install(WebSockets)
@@ -389,11 +348,8 @@ class MCPEndToEndTest : StringSpec({
     // TODO(SPI-580): Re-enable when WebSocket heartbeat is implemented
     "should handle WebSocket ping/pong heartbeat".config(enabled = false) {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_e2e_test")
 
             val wsClient = createClient {
                 install(WebSockets)
@@ -418,11 +374,8 @@ class MCPEndToEndTest : StringSpec({
     // TODO(SPI-589): Re-enable when advanced MCP monitoring is implemented
     "should report accurate connection metrics in health endpoint".config(enabled = false) {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_e2e_test")
 
             // Initial state - no connections
             val initialHealth = client.get("/health")

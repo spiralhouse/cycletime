@@ -18,23 +18,12 @@ import io.ktor.server.testing.*
 import io.spiralhouse.cycletime.application.commands.CreateWorkflowCommand
 import io.spiralhouse.cycletime.application.commands.UpdateWorkflowCommand
 import io.spiralhouse.cycletime.application.services.WorkflowApplicationService
-import io.spiralhouse.cycletime.infrastructure.di.modules.test.configureForTesting
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper.configureTestApplication
 import io.spiralhouse.cycletime.api.dto.*
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
 import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
-import io.spiralhouse.cycletime.infrastructure.di.modules.test.createTestDatabase
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.deleteAll
-import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
-import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
-import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
-import io.spiralhouse.cycletime.infrastructure.database.IssueDependenciesTable
-import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
-import io.spiralhouse.cycletime.infrastructure.database.WorkflowsTable
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
@@ -78,7 +67,6 @@ class WorkflowRoutesTest : StringSpec({
 
     val logger = LoggerFactory.getLogger(WorkflowRoutesTest::class.java)
 
-    lateinit var database: Database
     lateinit var mockTimeProvider: MockTimeProvider
 
     /**
@@ -86,9 +74,8 @@ class WorkflowRoutesTest : StringSpec({
      */
     fun configuredTestApplication(test: suspend ApplicationTestBuilder.() -> Unit) {
         testApplication {
-            application {
-                configureForTesting(database, mockTimeProvider)
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "workflow_routes_test")
 
             test()
         }
@@ -108,43 +95,23 @@ class WorkflowRoutesTest : StringSpec({
     }
 
     beforeSpec {
-        database = createTestDatabase()
-
-        // Ensure WorkflowsTable is created (not included in base createTestDatabase)
-        transaction(database) {
-            SchemaUtils.create(WorkflowsTable)
-        }
+        // Initialize test database using helper to prevent race conditions
+        // DatabaseTestHelper handles all table creation including WorkflowsTable
+        DatabaseTestHelper.initTestDatabase(
+            testName = "workflow_routes_test",
+            enableLogging = false
+        )
     }
 
     afterSpec {
-        transaction(database) {
-            // Drop tables in correct order (child tables first, then parent tables)
-            SchemaUtils.drop(
-                IssueDependenciesTable,
-                IssueLabelsTable,
-                SessionStatesTable,
-                IssuesTable,
-                WorkflowsTable,
-                ProjectsTable
-            )
-        }
-        TransactionManager.closeAndUnregister(database)
+        // Clean up test database
+        DatabaseTestHelper.cleanupTestDatabase()
     }
 
     beforeEach {
         mockTimeProvider = MockTimeProvider()
         mockTimeProvider.setTime(Instant.parse("2025-01-15T10:00:00Z"))
-
-        // Clean up all data between tests to ensure test isolation
-        transaction(database) {
-            // Delete all data in reverse dependency order
-            IssueDependenciesTable.deleteAll()
-            IssueLabelsTable.deleteAll()
-            SessionStatesTable.deleteAll()
-            IssuesTable.deleteAll()
-            WorkflowsTable.deleteAll()
-            ProjectsTable.deleteAll()
-        }
+        // Database cleanup is handled by DatabaseTestHelper
     }
 
     // ================================================================================
@@ -1040,11 +1007,12 @@ class WorkflowRoutesTest : StringSpec({
 
     "should handle database connection failures gracefully and return 503 Service Unavailable".config(enabled = false) {
         // This test is disabled until proper error handling is implemented
+        // TODO: Update to use database failure simulation with DatabaseTestHelper pattern
         configuredTestApplication {
             client.get("/health")
 
-            // Simulate database failure by closing connection
-            TransactionManager.closeAndUnregister(database)
+            // TODO: Simulate database failure - need to implement with new pattern
+            // TransactionManager.closeAndUnregister(database)
 
             val request = CreateWorkflowRequest(
                 name = "Test Workflow",

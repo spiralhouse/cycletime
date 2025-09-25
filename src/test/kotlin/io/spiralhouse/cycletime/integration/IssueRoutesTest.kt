@@ -24,17 +24,8 @@ import io.spiralhouse.cycletime.application.services.ProjectApplicationService
 import io.spiralhouse.cycletime.api.dto.*
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.*
-import io.spiralhouse.cycletime.infrastructure.di.modules.test.configureForTesting
-import io.spiralhouse.cycletime.infrastructure.di.modules.test.createTestDatabase
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.transactions.TransactionManager
-import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
-import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
-import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
-import io.spiralhouse.cycletime.infrastructure.database.IssueDependenciesTable
-import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper.configureTestApplication
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -89,7 +80,6 @@ class IssueRoutesTest : StringSpec({
 
     val logger = LoggerFactory.getLogger(IssueRoutesTest::class.java)
 
-    lateinit var database: Database
     lateinit var mockTimeProvider: MockTimeProvider
 
     /**
@@ -97,9 +87,8 @@ class IssueRoutesTest : StringSpec({
      */
     fun configuredTestApplication(test: suspend ApplicationTestBuilder.() -> Unit) {
         testApplication {
-            application {
-                configureForTesting(database, mockTimeProvider)
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "issue_routes_test")
 
             test()
         }
@@ -119,26 +108,22 @@ class IssueRoutesTest : StringSpec({
     }
 
     beforeSpec {
-        database = createTestDatabase()
+        // Initialize test database using helper to prevent race conditions
+        DatabaseTestHelper.initTestDatabase(
+            testName = "issue_routes_test",
+            enableLogging = false
+        )
     }
 
     afterSpec {
-        transaction(database) {
-            // Drop tables in correct order (child tables first, then parent tables)
-            SchemaUtils.drop(
-                IssueDependenciesTable,
-                IssueLabelsTable,
-                SessionStatesTable,
-                IssuesTable,
-                ProjectsTable
-            )
-        }
-        TransactionManager.closeAndUnregister(database)
+        // Clean up test database
+        DatabaseTestHelper.cleanupTestDatabase()
     }
 
     beforeEach {
         mockTimeProvider = MockTimeProvider()
         mockTimeProvider.setTime(Instant.parse("2025-01-15T10:00:00Z"))
+        // Database cleanup is handled by DatabaseTestHelper
     }
 
     // ================================================================================

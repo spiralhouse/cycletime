@@ -14,8 +14,8 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.ktor.server.plugins.di.*
-import io.spiralhouse.cycletime.module
-import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper.configureTestApplication
 import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
 import io.spiralhouse.cycletime.mcp.integration.MCPServerConfig
 import kotlinx.coroutines.delay
@@ -26,20 +26,30 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * Integration tests for MCP WebSocket server integration into Application.kt startup flow.
- * 
+ *
  * Phase 9: These tests validate that the MCP server works end-to-end
  * after the 8-phase extraction from the mega-PR.
  */
 @OptIn(ExperimentalKotest::class)
 class ApplicationMCPIntegrationTest : StringSpec({
 
+    beforeSpec {
+        // Initialize test database using helper to prevent race conditions
+        DatabaseTestHelper.initTestDatabase(
+            testName = "app_mcp_test",
+            enableLogging = false
+        )
+    }
+
+    afterSpec {
+        // Clean up test database
+        DatabaseTestHelper.cleanupTestDatabase()
+    }
+
     "should start application with MCP server enabled by default" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "app_mcp_test")
 
             // Verify REST server is running
             val healthResponse = client.get("/health")
@@ -54,11 +64,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
 
     "should include MCP server status in health endpoint" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "app_mcp_test")
 
             val healthResponse = client.get("/health")
             healthResponse.status shouldBe HttpStatusCode.OK
@@ -80,11 +87,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
     "should start application with MCP server disabled via environment variable" {
         testApplication {
             // TODO: Fix environment configuration
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "app_mcp_test")
 
             val healthResponse = client.get("/health")
             healthResponse.status shouldBe HttpStatusCode.OK
@@ -93,21 +97,9 @@ class ApplicationMCPIntegrationTest : StringSpec({
     */
 
     "should start MCP server on different port than REST server" {
-        // Initialize database before test to avoid race conditions in CI
-        val testDbUrl = "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
-        DatabaseFactory.init(
-            jdbcUrl = testDbUrl,
-            driver = "org.h2.Driver",
-            enableLogging = false
-        )
-
-        try {
-            testApplication {
-                application {
-                    // Set system property for module() to use
-                    System.setProperty("DATABASE_URL", testDbUrl)
-                    module()
-                }
+        testApplication {
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "app_mcp_test")
 
             val healthResponse = client.get("/health")
             healthResponse.status shouldBe HttpStatusCode.OK
@@ -117,10 +109,6 @@ class ApplicationMCPIntegrationTest : StringSpec({
             status.isRunning shouldBe true
             status.port shouldBe 3006 // Default MCP port
             status.port shouldNotBe 8080 // Different from REST port
-            }
-        } finally {
-            // Clean up database after test to maintain isolation
-            DatabaseFactory.reset()
         }
     }
 
@@ -129,11 +117,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
     // during integration testing, not MVP functionality issues.
     "should register all MCP components in DI container".config(enabled = false) {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "app_mcp_test")
 
             // All MCP components should be registered and resolvable
             val mcpService: MCPIntegrationService by application.dependencies
@@ -151,11 +136,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
 
     "should support graceful shutdown of both REST and MCP servers" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "app_mcp_test")
 
             val healthResponse = client.get("/health")
             healthResponse.status shouldBe HttpStatusCode.OK
@@ -171,11 +153,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
     // TODO(SPI-589): Re-enable when advanced MCP monitoring integration is implemented
     "should report MCP server performance metrics in health check".config(enabled = false) {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "app_mcp_test")
 
             val healthResponse = client.get("/health")
             healthResponse.status shouldBe HttpStatusCode.OK
@@ -196,11 +175,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
         // Test for resource cleanup issues
         repeat(3) {
             testApplication {
-                application {
-                    // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-                }
+                // Use helper to ensure proper initialization order
+                configureTestApplication(testName = "app_mcp_test")
 
                 val healthResponse = client.get("/health")
                 healthResponse.status shouldBe HttpStatusCode.OK

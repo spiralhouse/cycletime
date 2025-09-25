@@ -263,38 +263,100 @@ class DatabaseConfig(
 //                Refactor to use Ktor DI for proper dependency injection pattern, eliminating
 //                singleton pattern entirely.
 object DatabaseFactory {
+    @Volatile
     private var database: Database? = null
+    @Volatile
     private var config: DatabaseConfig? = null
 
-    @Synchronized
+    // Use ReentrantLock for better control and debugging capabilities
+    private val initLock = java.util.concurrent.locks.ReentrantLock()
+    private val logger = org.slf4j.LoggerFactory.getLogger(DatabaseFactory::class.java)
+
+    /**
+     * Initialize the database connection. This method is idempotent and thread-safe.
+     *
+     * If already initialized, this is a no-op unless forceReinit is true.
+     * Under high concurrency, only one thread will perform initialization while others wait.
+     */
     fun init(
         jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE;LOCK_TIMEOUT=5000",
         driver: String = "org.h2.Driver",
         maxPoolSize: Int = 10,
         minPoolSize: Int = 2,
-        enableLogging: Boolean = false
+        enableLogging: Boolean = false,
+        forceReinit: Boolean = false
     ) {
-        if (database == null) {
+        // Fast path: already initialized (volatile read)
+        if (!forceReinit && database != null) {
+            logger.trace("Database already initialized, skipping init")
+            return
+        }
+
+        // Slow path: acquire lock for initialization
+        initLock.lock()
+        try {
+            // Double-check within lock (another thread might have initialized)
+            if (!forceReinit && database != null) {
+                logger.trace("Database initialized by another thread during wait")
+                return
+            }
+
+            // Perform actual initialization
+            logger.debug("Initializing database with URL: $jdbcUrl")
+
+            // Close existing connections if force reinit
+            if (forceReinit && config != null) {
+                logger.info("Force re-initialization requested, closing existing connections")
+                config?.close()
+            }
+
             config = DatabaseConfig(jdbcUrl, driver, maxPoolSize, minPoolSize, enableLogging)
             database = config!!.connect()
+
+            logger.info("Database initialization completed successfully")
+        } finally {
+            initLock.unlock()
         }
     }
 
-    @Synchronized
+    /**
+     * Get the database instance. Throws if not initialized.
+     */
     fun getInstance(): Database {
-        return database ?: throw IllegalStateException("Database not initialized. Call DatabaseFactory.init() first.")
+        // Volatile read ensures visibility
+        return database ?: throw IllegalStateException(
+            "Database not initialized. Call DatabaseFactory.init() first."
+        )
     }
 
-    @Synchronized
+    /**
+     * Close database connections and reset to uninitialized state.
+     */
     fun close() {
-        config?.close()
-        database = null
-        config = null
+        initLock.lock()
+        try {
+            config?.close()
+            database = null
+            config = null
+            logger.info("Database connections closed and factory reset")
+        } finally {
+            initLock.unlock()
+        }
     }
 
-    @Synchronized
+    /**
+     * Reset the factory to allow re-initialization.
+     * Alias for close() for backward compatibility.
+     */
     fun reset() {
         close()
-        database = null  // Force re-initialization for next init() call
+    }
+
+    /**
+     * Check if database is currently initialized.
+     * Useful for conditional initialization in tests.
+     */
+    fun isInitialized(): Boolean {
+        return database != null
     }
 }

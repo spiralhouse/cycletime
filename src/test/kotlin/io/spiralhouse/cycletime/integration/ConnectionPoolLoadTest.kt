@@ -7,7 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.spiralhouse.cycletime.domain.entities.Project
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.infrastructure.database.DatabaseConfig
-import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper
 import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
 import kotlinx.coroutines.async
@@ -22,14 +22,14 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * Load Test for Connection Pool Validation
- * 
+ *
  * This test validates that our connection pool configuration can handle
  * concurrent load within the configured limits (10 connections max).
- * 
+ *
  * It specifically addresses the reviewer's concern:
  * "Connection pool sizing: 10 max, 2 min - what happens at 11 concurrent requests?"
- * 
- * Answer: The 11th request waits for up to connectionTimeout (30 seconds) for a 
+ *
+ * Answer: The 11th request waits for up to connectionTimeout (30 seconds) for a
  * connection to become available. If none available, it throws SQLTimeoutException.
  */
 class ConnectionPoolLoadTest : StringSpec({
@@ -40,11 +40,9 @@ class ConnectionPoolLoadTest : StringSpec({
     lateinit var databaseConfig: DatabaseConfig
     
     beforeSpec {
-        // Initialize DatabaseFactory first
-        val testDbUrl = "jdbc:h2:mem:test_load;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;LOCK_TIMEOUT=5000;DB_CLOSE_DELAY=-1"
-        DatabaseFactory.init(
-            jdbcUrl = testDbUrl,
-            driver = "org.h2.Driver",
+        // Initialize test database using helper to prevent race conditions
+        val testDbUrl = DatabaseTestHelper.initTestDatabase(
+            testName = "connection_pool_test",
             enableLogging = false
         )
 
@@ -69,7 +67,8 @@ class ConnectionPoolLoadTest : StringSpec({
     
     afterSpec {
         databaseConfig.close()
-        DatabaseFactory.reset()
+        // Clean up test database
+        DatabaseTestHelper.cleanupTestDatabase()
     }
     
     beforeEach {

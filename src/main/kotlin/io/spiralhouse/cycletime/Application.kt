@@ -179,10 +179,14 @@ fun Application.module() {
     // Setup MCP integration
     val mcpIntegrationService = configureMCPIntegration(database, logger, performanceMetrics)
 
+    // Configure API routes (requires DI to be configured first)
+    val timeProvider: TimeProvider by dependencies
+    ApiConfiguration.configure(this, timeProvider)
+
     // Configure routing
     routing {
         configureHealthEndpoint(mcpIntegrationService, logger)
-        
+
         // MCP Server endpoints
         configureMCP()
     }
