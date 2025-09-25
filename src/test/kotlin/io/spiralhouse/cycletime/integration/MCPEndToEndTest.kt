@@ -41,28 +41,40 @@ import kotlin.time.Duration.Companion.milliseconds
 class MCPEndToEndTest : StringSpec({
 
     "should complete full application startup with REST and MCP servers" {
-        testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module() // Will fail - MCP server not integrated into startup
+        // Initialize database before test
+        val testDbUrl = "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        DatabaseFactory.init(
+            jdbcUrl = testDbUrl,
+            driver = "org.h2.Driver",
+            enableLogging = false
+        )
+
+        try {
+            testApplication {
+                application {
+                    // Set system property for module() to use
+                    System.setProperty("DATABASE_URL", testDbUrl)
+                    module() // Will fail - MCP server not integrated into startup
+                }
+
+                // Verify REST server is running
+                val restHealth = client.get("/health")
+                restHealth.status shouldBe HttpStatusCode.OK
+
+                val healthJson = Json.parseToJsonElement(restHealth.bodyAsText())
+                val dependencies = healthJson.jsonObject["dependencies"]?.jsonObject
+
+                // Both servers should be reported as healthy
+                dependencies?.get("database")?.jsonPrimitive?.content shouldBe "connected"
+                dependencies?.get("mcp")?.jsonPrimitive?.content shouldBe "running" // Should pass after health check fix
+
+                // Verify all services are initialized
+                dependencies?.get("projectService")?.jsonPrimitive?.content shouldBe "initialized"
+                dependencies?.get("issueService")?.jsonPrimitive?.content shouldBe "initialized"
+                dependencies?.get("sessionService")?.jsonPrimitive?.content shouldBe "initialized"
             }
-
-            // Verify REST server is running
-            val restHealth = client.get("/health")
-            restHealth.status shouldBe HttpStatusCode.OK
-
-            val healthJson = Json.parseToJsonElement(restHealth.bodyAsText())
-            val dependencies = healthJson.jsonObject["dependencies"]?.jsonObject
-            
-            // Both servers should be reported as healthy
-            dependencies?.get("database")?.jsonPrimitive?.content shouldBe "connected"
-            dependencies?.get("mcp")?.jsonPrimitive?.content shouldBe "running" // Should pass after health check fix
-
-            // Verify all services are initialized
-            dependencies?.get("projectService")?.jsonPrimitive?.content shouldBe "initialized"
-            dependencies?.get("issueService")?.jsonPrimitive?.content shouldBe "initialized"
-            dependencies?.get("sessionService")?.jsonPrimitive?.content shouldBe "initialized"
+        } finally {
+            DatabaseFactory.reset()
         }
     }
 

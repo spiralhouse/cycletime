@@ -12,6 +12,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.ktor.websocket.*
 import io.spiralhouse.cycletime.module
+import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
 import kotlinx.serialization.json.*
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration.Companion.seconds
@@ -23,30 +24,49 @@ import kotlin.time.Duration.Companion.seconds
 class McpSimpleIntegrationTest : StringSpec({
     
     "should expose MCP info endpoint" {
-        testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
+        // Initialize database before test
+        val testDbUrl = "jdbc:h2:mem:test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        DatabaseFactory.init(
+            jdbcUrl = testDbUrl,
+            driver = "org.h2.Driver",
+            enableLogging = false
+        )
+
+        try {
+            testApplication {
+                application {
+                    System.setProperty("DATABASE_URL", testDbUrl)
+                    module()
+                }
+
+                val response = client.get("/mcp")
+                response.status shouldBe HttpStatusCode.OK
+
+                val body = response.bodyAsText()
+                body shouldContain "cycletime"
+                body shouldContain "version"
+                body shouldContain "capabilities"
             }
-            
-            val response = client.get("/mcp")
-            response.status shouldBe HttpStatusCode.OK
-            
-            val body = response.bodyAsText()
-            body shouldContain "cycletime"
-            body shouldContain "version"
-            body shouldContain "capabilities"
+        } finally {
+            DatabaseFactory.reset()
         }
     }
     
     "should accept WebSocket connections on /mcp endpoint" {
-        testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+        // Initialize database before test
+        val testDbUrl = "jdbc:h2:mem:test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        DatabaseFactory.init(
+            jdbcUrl = testDbUrl,
+            driver = "org.h2.Driver",
+            enableLogging = false
+        )
+
+        try {
+            testApplication {
+                application {
+                    System.setProperty("DATABASE_URL", testDbUrl)
+                    module()
+                }
             
             val client = createClient {
                 install(WebSockets)
@@ -83,20 +103,31 @@ class McpSimpleIntegrationTest : StringSpec({
                 val responseText = response?.readText() ?: ""
                 responseText shouldContain "jsonrpc"
                 responseText shouldContain "2.0"
-                
+
                 // Close connection
                 close(CloseReason(CloseReason.Codes.NORMAL, "Test complete"))
             }
         }
+        } finally {
+            DatabaseFactory.reset()
+        }
     }
     
     "should handle tools/list request via WebSocket" {
-        testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+        // Initialize database before test
+        val testDbUrl = "jdbc:h2:mem:test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        DatabaseFactory.init(
+            jdbcUrl = testDbUrl,
+            driver = "org.h2.Driver",
+            enableLogging = false
+        )
+
+        try {
+            testApplication {
+                application {
+                    System.setProperty("DATABASE_URL", testDbUrl)
+                    module()
+                }
             
             val client = createClient {
                 install(WebSockets)
@@ -148,28 +179,42 @@ class McpSimpleIntegrationTest : StringSpec({
                 responseJson shouldNotBe null
                 responseJson?.get("jsonrpc")?.jsonPrimitive?.content shouldBe "2.0"
                 responseJson?.get("id")?.jsonPrimitive?.int shouldBe 2
-                
+
                 // Close connection
                 close(CloseReason(CloseReason.Codes.NORMAL, "Test complete"))
             }
+        }
+        } finally {
+            DatabaseFactory.reset()
         }
     }
     
     // TODO(SPI-589): Re-enable when advanced MCP monitoring integration is implemented
     "should expose MCP stats endpoint".config(enabled = false) {
-        testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
+        // Initialize database before test
+        val testDbUrl = "jdbc:h2:mem:test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        DatabaseFactory.init(
+            jdbcUrl = testDbUrl,
+            driver = "org.h2.Driver",
+            enableLogging = false
+        )
+
+        try {
+            testApplication {
+                application {
+                    System.setProperty("DATABASE_URL", testDbUrl)
+                    module()
+                }
+
+                val response = client.get("/mcp/stats")
+                response.status shouldBe HttpStatusCode.OK
+
+                val body = response.bodyAsText()
+                body shouldContain "connections"
+                body shouldContain "config"
             }
-            
-            val response = client.get("/mcp/stats")
-            response.status shouldBe HttpStatusCode.OK
-            
-            val body = response.bodyAsText()
-            body shouldContain "connections"
-            body shouldContain "config"
+        } finally {
+            DatabaseFactory.reset()
         }
     }
 })

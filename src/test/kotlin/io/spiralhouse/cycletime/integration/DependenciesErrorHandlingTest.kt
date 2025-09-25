@@ -12,6 +12,7 @@ import io.ktor.server.config.MapApplicationConfig
 import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseFactory
 import io.spiralhouse.cycletime.module
+import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
 
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -58,29 +59,40 @@ class DependenciesErrorHandlingTest : StringSpec({
     }
     
     "should handle null database parameter correctly" {
-        testApplication {
-            environment {
-                config = MapApplicationConfig(
-                    "ktor.deployment.port" to "8080",
-                    "database.url" to "jdbc:h2:mem:test_error_handling;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
-                )
+        // Initialize database before test
+        val testDbUrl = "jdbc:h2:mem:test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        DatabaseFactory.init(
+            jdbcUrl = testDbUrl,
+            driver = "org.h2.Driver",
+            enableLogging = false
+        )
+
+        try {
+            testApplication {
+                environment {
+                    config = MapApplicationConfig(
+                        "ktor.deployment.port" to "8080",
+                        "database.url" to testDbUrl
+                    )
+                }
+                application {
+                    // The DI requires an explicit database parameter
+                    // There's no way to pass null in the type-safe API
+                    // This is by design - the system is more robust
+                    // Test this by using the full module which uses the DI
+                    System.setProperty("DATABASE_URL", testDbUrl)
+                    module()
+                }
+
+                // Trigger application initialization
+                client.get("/health")
+
+                // Should work fine with provided database
+                val database: Database by application.dependencies
+                database shouldNotBe null
             }
-            application {
-                // The DI requires an explicit database parameter
-                // There's no way to pass null in the type-safe API
-                // This is by design - the system is more robust
-                // Test this by using the full module which uses the DI
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
-            
-            // Trigger application initialization
-            client.get("/health")
-            
-            // Should work fine with provided database
-            val database: Database by application.dependencies
-            database shouldNotBe null
+        } finally {
+            DatabaseFactory.reset()
         }
     }
 })

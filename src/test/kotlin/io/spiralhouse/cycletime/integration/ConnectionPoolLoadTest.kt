@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.spiralhouse.cycletime.domain.entities.Project
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.infrastructure.database.DatabaseConfig
+import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
 import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
 import kotlinx.coroutines.async
@@ -39,27 +40,36 @@ class ConnectionPoolLoadTest : StringSpec({
     lateinit var databaseConfig: DatabaseConfig
     
     beforeSpec {
+        // Initialize DatabaseFactory first
+        val testDbUrl = "jdbc:h2:mem:test_load;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;LOCK_TIMEOUT=5000;DB_CLOSE_DELAY=-1"
+        DatabaseFactory.init(
+            jdbcUrl = testDbUrl,
+            driver = "org.h2.Driver",
+            enableLogging = false
+        )
+
         // Create database with production-like connection pool settings
         databaseConfig = DatabaseConfig(
-            jdbcUrl = "jdbc:h2:mem:test_load;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;LOCK_TIMEOUT=5000;DB_CLOSE_DELAY=-1",
+            jdbcUrl = testDbUrl,
             driver = "org.h2.Driver",
             maxPoolSize = 10,  // Production default
             minPoolSize = 2,   // Production default
             enableLogging = false
         )
-        
+
         database = databaseConfig.connect()
-        
+
         transaction(database) {
             SchemaUtils.create(ProjectsTable)
         }
-        
+
         mockTimeProvider = MockTimeProvider()
         repository = ExposedProjectRepository(mockTimeProvider, database)
     }
     
     afterSpec {
         databaseConfig.close()
+        DatabaseFactory.reset()
     }
     
     beforeEach {
