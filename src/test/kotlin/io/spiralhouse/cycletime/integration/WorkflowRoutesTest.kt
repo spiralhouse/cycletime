@@ -23,7 +23,18 @@ import io.spiralhouse.cycletime.api.dto.*
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
 import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
-import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
+import io.spiralhouse.cycletime.infrastructure.di.modules.test.createTestDatabase
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.sql.deleteAll
+import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
+import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
+import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
+import io.spiralhouse.cycletime.infrastructure.database.IssueDependenciesTable
+import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
+import io.spiralhouse.cycletime.infrastructure.database.WorkflowsTable
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
@@ -67,6 +78,7 @@ class WorkflowRoutesTest : StringSpec({
 
     val logger = LoggerFactory.getLogger(WorkflowRoutesTest::class.java)
 
+    lateinit var database: Database
     lateinit var mockTimeProvider: MockTimeProvider
 
     /**
@@ -75,7 +87,6 @@ class WorkflowRoutesTest : StringSpec({
     fun configuredTestApplication(test: suspend ApplicationTestBuilder.() -> Unit) {
         testApplication {
             application {
-                val database = DatabaseFactory.getInstance()
                 configureForTesting(database, mockTimeProvider)
             }
 
@@ -96,20 +107,44 @@ class WorkflowRoutesTest : StringSpec({
         }
     }
 
+    beforeSpec {
+        database = createTestDatabase()
+
+        // Ensure WorkflowsTable is created (not included in base createTestDatabase)
+        transaction(database) {
+            SchemaUtils.create(WorkflowsTable)
+        }
+    }
+
+    afterSpec {
+        transaction(database) {
+            // Drop tables in correct order (child tables first, then parent tables)
+            SchemaUtils.drop(
+                IssueDependenciesTable,
+                IssueLabelsTable,
+                SessionStatesTable,
+                IssuesTable,
+                WorkflowsTable,
+                ProjectsTable
+            )
+        }
+        TransactionManager.closeAndUnregister(database)
+    }
+
     beforeEach {
         mockTimeProvider = MockTimeProvider()
         mockTimeProvider.setTime(Instant.parse("2025-01-15T10:00:00Z"))
 
-        // Initialize H2 in-memory database for each test
-        DatabaseFactory.init(
-            jdbcUrl = "jdbc:h2:mem:workflow_routes_test_${System.nanoTime()};DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
-            driver = "org.h2.Driver",
-            enableLogging = false
-        )
-    }
-
-    afterEach {
-        DatabaseFactory.close()
+        // Clean up all data between tests to ensure test isolation
+        transaction(database) {
+            // Delete all data in reverse dependency order
+            IssueDependenciesTable.deleteAll()
+            IssueLabelsTable.deleteAll()
+            SessionStatesTable.deleteAll()
+            IssuesTable.deleteAll()
+            WorkflowsTable.deleteAll()
+            ProjectsTable.deleteAll()
+        }
     }
 
     // ================================================================================
@@ -1009,7 +1044,7 @@ class WorkflowRoutesTest : StringSpec({
             client.get("/health")
 
             // Simulate database failure by closing connection
-            DatabaseFactory.close()
+            TransactionManager.closeAndUnregister(database)
 
             val request = CreateWorkflowRequest(
                 name = "Test Workflow",

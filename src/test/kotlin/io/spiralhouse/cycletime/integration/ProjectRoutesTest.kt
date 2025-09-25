@@ -30,7 +30,17 @@ import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectStatus
-import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
+import io.spiralhouse.cycletime.infrastructure.di.modules.test.createTestDatabase
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.sql.deleteAll
+import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
+import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
+import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
+import io.spiralhouse.cycletime.infrastructure.database.IssueDependenciesTable
+import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -65,6 +75,7 @@ class ProjectRoutesTest : StringSpec({
 
     val logger = LoggerFactory.getLogger(ProjectRoutesTest::class.java)
 
+    lateinit var database: Database
     lateinit var mockTimeProvider: MockTimeProvider
 
     /**
@@ -73,10 +84,9 @@ class ProjectRoutesTest : StringSpec({
     fun configuredTestApplication(test: suspend ApplicationTestBuilder.() -> Unit) {
         testApplication {
             application {
-                val database = DatabaseFactory.getInstance()
                 configureForTesting(database, mockTimeProvider)
             }
-            
+
             test()
         }
     }
@@ -94,20 +104,37 @@ class ProjectRoutesTest : StringSpec({
         }
     }
 
+    beforeSpec {
+        database = createTestDatabase()
+    }
+
+    afterSpec {
+        transaction(database) {
+            // Drop tables in correct order (child tables first, then parent tables)
+            SchemaUtils.drop(
+                IssueDependenciesTable,
+                IssueLabelsTable,
+                SessionStatesTable,
+                IssuesTable,
+                ProjectsTable
+            )
+        }
+        TransactionManager.closeAndUnregister(database)
+    }
+
     beforeEach {
         mockTimeProvider = MockTimeProvider()
         mockTimeProvider.setTime(Instant.parse("2025-01-15T10:00:00Z"))
 
-        // Initialize H2 in-memory database for each test
-        DatabaseFactory.init(
-            jdbcUrl = "jdbc:h2:mem:project_routes_test_${System.nanoTime()};DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
-            driver = "org.h2.Driver",
-            enableLogging = false
-        )
-    }
-
-    afterEach {
-        DatabaseFactory.close()
+        // Clean up all data between tests to ensure test isolation
+        transaction(database) {
+            // Delete all data in reverse dependency order
+            IssueDependenciesTable.deleteAll()
+            IssueLabelsTable.deleteAll()
+            SessionStatesTable.deleteAll()
+            IssuesTable.deleteAll()
+            ProjectsTable.deleteAll()
+        }
     }
 
     "POST /api/projects should create project and return 201 Created" {
@@ -535,10 +562,8 @@ class ProjectRoutesTest : StringSpec({
     "should handle database connection failures gracefully and return 503 Service Unavailable".config(enabled = false) {
         // This test is disabled until proper error handling is implemented
         configuredTestApplication {
-
-
             // Simulate database failure by closing connection
-            DatabaseFactory.close()
+            TransactionManager.closeAndUnregister(database)
 
             val request = CreateProjectRequest(
                 name = "Test Project",

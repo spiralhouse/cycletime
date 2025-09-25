@@ -21,11 +21,20 @@ import io.spiralhouse.cycletime.application.dto.IssueListDto
 import io.spiralhouse.cycletime.application.dto.IssueHierarchyDto
 import io.spiralhouse.cycletime.application.services.IssueApplicationService
 import io.spiralhouse.cycletime.application.services.ProjectApplicationService
-import io.spiralhouse.cycletime.infrastructure.di.modules.test.configureForTesting
 import io.spiralhouse.cycletime.api.dto.*
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.*
-import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
+import io.spiralhouse.cycletime.infrastructure.di.modules.test.configureForTesting
+import io.spiralhouse.cycletime.infrastructure.di.modules.test.createTestDatabase
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.TransactionManager
+import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
+import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
+import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
+import io.spiralhouse.cycletime.infrastructure.database.IssueDependenciesTable
+import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -80,6 +89,7 @@ class IssueRoutesTest : StringSpec({
 
     val logger = LoggerFactory.getLogger(IssueRoutesTest::class.java)
 
+    lateinit var database: Database
     lateinit var mockTimeProvider: MockTimeProvider
 
     /**
@@ -88,7 +98,6 @@ class IssueRoutesTest : StringSpec({
     fun configuredTestApplication(test: suspend ApplicationTestBuilder.() -> Unit) {
         testApplication {
             application {
-                val database = DatabaseFactory.getInstance()
                 configureForTesting(database, mockTimeProvider)
             }
 
@@ -109,20 +118,27 @@ class IssueRoutesTest : StringSpec({
         }
     }
 
+    beforeSpec {
+        database = createTestDatabase()
+    }
+
+    afterSpec {
+        transaction(database) {
+            // Drop tables in correct order (child tables first, then parent tables)
+            SchemaUtils.drop(
+                IssueDependenciesTable,
+                IssueLabelsTable,
+                SessionStatesTable,
+                IssuesTable,
+                ProjectsTable
+            )
+        }
+        TransactionManager.closeAndUnregister(database)
+    }
+
     beforeEach {
         mockTimeProvider = MockTimeProvider()
         mockTimeProvider.setTime(Instant.parse("2025-01-15T10:00:00Z"))
-
-        // Initialize H2 in-memory database for each test
-        DatabaseFactory.init(
-            jdbcUrl = "jdbc:h2:mem:issue_routes_test_${System.nanoTime()};DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
-            driver = "org.h2.Driver",
-            enableLogging = false
-        )
-    }
-
-    afterEach {
-        DatabaseFactory.close()
     }
 
     // ================================================================================
