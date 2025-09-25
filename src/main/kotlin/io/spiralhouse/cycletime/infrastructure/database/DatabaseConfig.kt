@@ -258,6 +258,10 @@ class DatabaseConfig(
 }
 
 // Singleton database instance for the application
+// TODO(SPI-627): @Synchronized blocks are temporary fix for race conditions but cause issues with
+//                coroutine tests under high concurrency (blocks threads instead of suspending).
+//                Refactor to use Ktor DI for proper dependency injection pattern, eliminating
+//                singleton pattern entirely.
 object DatabaseFactory {
     private var database: Database? = null
     private var config: DatabaseConfig? = null
