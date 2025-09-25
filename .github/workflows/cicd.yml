@@ -294,11 +294,8 @@ jobs:
         run: cp .github/gradle-ci.properties gradle.properties
 
       - name: Run unit tests with coverage
-        env:
-          SKIP_INTEGRATION_COVERAGE: true
         run: |
           echo "🚀 Running unit tests with coverage using pre-compiled artifacts"
-          echo "🔧 Environment: SKIP_INTEGRATION_COVERAGE=true (prevents integration test execution)"
           ./gradlew unitTest koverXmlReport -x compileKotlin -x compileTestKotlin --build-cache --configuration-cache --no-daemon
 
       - name: Upload unit test results
