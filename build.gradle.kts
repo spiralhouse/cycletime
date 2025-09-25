@@ -533,12 +533,13 @@ tasks.test {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
+        // ARCHITECTURAL FIX: Include unit tests for proper Gradle convention compliance (SPI-624 Phase 3)
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*")
         // ARCHITECTURAL FIX: Include MCP integration tests for SPI-594
         includeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*")
         excludeTestsMatching("io.spiralhouse.cycletime.integration.*") // Exclude other integration tests
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
         excludeTestsMatching("io.spiralhouse.cycletime.api.*")
-        excludeTestsMatching("io.spiralhouse.cycletime.unit.*") // Explicit exclusion to prevent double execution
     }
 }
 
