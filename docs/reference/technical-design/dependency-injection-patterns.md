@@ -88,15 +88,15 @@ fun Application.configureDependencies() {
 }
 
 fun Application.module() {
-    // Configure dependencies first
-    configureDependencies()
-    
-    // Initialize database
+    // Initialize database singleton for production
     DatabaseFactory.init(
         jdbcUrl = System.getenv("DATABASE_URL") ?: "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
         enableLogging = System.getenv("DATABASE_LOGGING")?.toBoolean() ?: false
     )
-    
+
+    // Configure dependencies (uses DatabaseFactory singleton internally)
+    configureDependencies()
+
     // Other configuration...
 }
 ```
@@ -143,9 +143,8 @@ fun Application.configureDependencies() {
         
         // Database
         provide<Database> {
-            DatabaseFactory.createDatabase(
-                jdbcUrl = environment.config.property("database.url").getString()
-            )
+            // Database is managed by DatabaseFactory singleton
+            DatabaseFactory.getInstance()
         }
         
         // Repositories (with proper constructor injection)

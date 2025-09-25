@@ -18,6 +18,7 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectReposit
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionRepository
 import io.ktor.server.plugins.di.*
 import io.spiralhouse.cycletime.module
+import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
 
 /**
  * Integration tests for the dependency injection migration from Koin to Ktor native DI.
@@ -29,11 +30,26 @@ import io.spiralhouse.cycletime.module
  */
 class DependencyInjectionIntegrationTest : StringSpec({
 
+    beforeSpec {
+        // Initialize DatabaseFactory once for all tests in this spec
+        // This mimics production initialization but with test database
+        val testDbUrl = "jdbc:h2:mem:di_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        DatabaseFactory.init(
+            jdbcUrl = testDbUrl,
+            driver = "org.h2.Driver",
+            enableLogging = false
+        )
+    }
+
+    afterSpec {
+        // Reset DatabaseFactory to clean state after all tests
+        DatabaseFactory.reset()
+    }
+
     "should initialize Ktor native DI successfully" {
         testApplication {
             application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
+                // DatabaseFactory already initialized in beforeSpec
                 module()
             }
 
@@ -45,8 +61,7 @@ class DependencyInjectionIntegrationTest : StringSpec({
     "should resolve TimeProvider as SystemTimeProvider singleton" {
         testApplication {
             application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
+                // DatabaseFactory already initialized in beforeSpec
                 module()
             }
 
@@ -66,8 +81,7 @@ class DependencyInjectionIntegrationTest : StringSpec({
     "should resolve repository dependencies correctly" {
         testApplication {
             application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
+                // DatabaseFactory already initialized in beforeSpec
                 module()
             }
 
@@ -92,8 +106,7 @@ class DependencyInjectionIntegrationTest : StringSpec({
     "should maintain singleton instances for repositories" {
         testApplication {
             application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
+                // DatabaseFactory already initialized in beforeSpec
                 module()
             }
 
@@ -117,8 +130,7 @@ class DependencyInjectionIntegrationTest : StringSpec({
     "should start application successfully and respond to health check" {
         testApplication {
             application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
+                // DatabaseFactory already initialized in beforeSpec
                 module()
             }
 
@@ -138,8 +150,7 @@ class DependencyInjectionIntegrationTest : StringSpec({
     "should handle application lifecycle correctly" {
         testApplication {
             application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
+                // DatabaseFactory already initialized in beforeSpec
                 module()
             }
 
