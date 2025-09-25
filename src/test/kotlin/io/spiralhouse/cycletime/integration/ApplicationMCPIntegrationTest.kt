@@ -15,6 +15,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.ktor.server.plugins.di.*
 import io.spiralhouse.cycletime.module
+import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
 import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
 import io.spiralhouse.cycletime.mcp.integration.MCPServerConfig
 import kotlinx.coroutines.delay
@@ -92,12 +93,21 @@ class ApplicationMCPIntegrationTest : StringSpec({
     */
 
     "should start MCP server on different port than REST server" {
-        testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+        // Initialize database before test to avoid race conditions in CI
+        val testDbUrl = "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        DatabaseFactory.init(
+            jdbcUrl = testDbUrl,
+            driver = "org.h2.Driver",
+            enableLogging = false
+        )
+
+        try {
+            testApplication {
+                application {
+                    // Set system property for module() to use
+                    System.setProperty("DATABASE_URL", testDbUrl)
+                    module()
+                }
 
             val healthResponse = client.get("/health")
             healthResponse.status shouldBe HttpStatusCode.OK
@@ -107,6 +117,10 @@ class ApplicationMCPIntegrationTest : StringSpec({
             status.isRunning shouldBe true
             status.port shouldBe 3006 // Default MCP port
             status.port shouldNotBe 8080 // Different from REST port
+            }
+        } finally {
+            // Clean up database after test to maintain isolation
+            DatabaseFactory.reset()
         }
     }
 
