@@ -51,15 +51,22 @@ object DatabaseTestHelper {
      *
      * This extension function ensures the database is initialized before
      * calling module(), preventing race conditions.
+     *
+     * IMPORTANT: Integration tests run SEQUENTIALLY (maxParallelForks = 1) to avoid
+     * DatabaseFactory singleton conflicts. Each test still gets a unique database URL
+     * for isolation, but they run one at a time to prevent HikariDataSource errors.
+     * This will be fixed with proper DI refactoring (SPI-627).
      */
     fun ApplicationTestBuilder.configureTestApplication(
         testName: String = "test",
         enableLogging: Boolean = false
     ) {
-        // Generate unique test database URL
+        // Generate unique test database URL for test isolation
+        // Even though tests run sequentially, unique DBs prevent data contamination
         val testDbUrl = "jdbc:h2:mem:${testName}_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
 
         // Set system properties to override Application's buildDatabaseConfig()
+        // Since tests run sequentially, we don't need complex synchronization
         System.setProperty("DATABASE_URL", testDbUrl)
         System.setProperty("DATABASE_DRIVER", "org.h2.Driver")
         System.setProperty("DATABASE_LOGGING", enableLogging.toString())

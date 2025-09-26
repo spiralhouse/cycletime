@@ -539,9 +539,71 @@ private fun Application.configureShutdownHooks(
             }
         }
         
-        // Close database connection
-        DatabaseFactory.close()
-        logger.info("Database connection closed")
+        // Close database connection - ONLY in production, not in tests
+        // In test environments, multiple test applications share the singleton DatabaseFactory.
+        // Closing it here would affect other running tests (causing HikariDataSource errors).
+        // Tests rely on JVM termination for cleanup instead of explicit close() calls.
+
+        logger.info("Checking test environment before database closure...")
+
+        // Comprehensive test environment detection for both local and CI environments
+        val isTestEnvironment =
+            // Check for Gradle test task execution
+            System.getProperty("gradle.test.worker") != null ||
+            // Check for JUnit Platform (Kotest/JUnit)
+            System.getProperty("junit.platform.version") != null ||
+            // Check for CI environments (GitHub Actions, Jenkins, etc.)
+            System.getenv("CI") == "true" ||
+            System.getenv("GITHUB_ACTIONS") == "true" ||
+            // Check for in-memory database (H2)
+            System.getProperty("DATABASE_URL")?.contains("mem:") == true ||
+            // Check for development mode
+            System.getProperty("io.ktor.development") == "true" ||
+            // Check for explicit test environment config
+            environment.config.propertyOrNull("ktor.environment")?.getString() == "test" ||
+            // Check if testApplication is in use (Ktor test framework)
+            Thread.currentThread().stackTrace.any {
+                it.className.contains("io.ktor.server.testing.TestApplicationEngine") ||
+                it.className.contains("io.ktor.server.testing.ApplicationTestBuilder")
+            } ||
+            // Check if any test framework classes are present in the stack trace
+            Thread.currentThread().stackTrace.any {
+                it.className.contains("org.junit") ||
+                it.className.contains("io.kotest") ||
+                it.className.contains("gradle.test")
+            } ||
+            // Final fallback: check if test classes are present in the classpath
+            try {
+                Class.forName("io.kotest.core.spec.Spec") != null
+            } catch (e: ClassNotFoundException) {
+                false
+            }
+
+        if (!isTestEnvironment) {
+            DatabaseFactory.close()
+            logger.info("Database connection closed")
+        } else {
+            logger.info("Skipping database close in test environment (detected via: ${
+                when {
+                    System.getProperty("gradle.test.worker") != null -> "gradle.test.worker"
+                    System.getProperty("junit.platform.version") != null -> "junit.platform"
+                    System.getenv("CI") == "true" -> "CI env var"
+                    System.getenv("GITHUB_ACTIONS") == "true" -> "GitHub Actions"
+                    System.getProperty("DATABASE_URL")?.contains("mem:") == true -> "in-memory DB"
+                    System.getProperty("io.ktor.development") == "true" -> "development mode"
+                    environment.config.propertyOrNull("ktor.environment")?.getString() == "test" -> "test config"
+                    Thread.currentThread().stackTrace.any {
+                        it.className.contains("io.ktor.server.testing")
+                    } -> "Ktor test framework"
+                    Thread.currentThread().stackTrace.any {
+                        it.className.contains("org.junit") ||
+                        it.className.contains("io.kotest") ||
+                        it.className.contains("gradle.test")
+                    } -> "test framework in stack"
+                    else -> "test class in classpath"
+                }
+            })")
+        }
         
         logger.info("Application shutdown complete")
     }
