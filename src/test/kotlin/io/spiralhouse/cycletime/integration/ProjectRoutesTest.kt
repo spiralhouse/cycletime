@@ -92,17 +92,14 @@ class ProjectRoutesTest : StringSpec({
         }
     }
 
-    beforeSpec {
-        // Initialize test database using helper to prevent race conditions
-        DatabaseTestHelper.initTestDatabase(
-            testName = "project_routes_test",
-            enableLogging = false
-        )
-    }
-
     afterSpec {
-        // Clean up test database
+        // Clean up test database (currently a no-op to prevent CI failures)
         DatabaseTestHelper.cleanupTestDatabase()
+
+        // Clear system properties to avoid interference with other tests
+        System.clearProperty("DATABASE_URL")
+        System.clearProperty("DATABASE_DRIVER")
+        System.clearProperty("DATABASE_LOGGING")
     }
 
     beforeEach {

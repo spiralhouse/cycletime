@@ -262,6 +262,11 @@ class DatabaseConfig(
 //                coroutine tests under high concurrency (blocks threads instead of suspending).
 //                Refactor to use Ktor DI for proper dependency injection pattern, eliminating
 //                singleton pattern entirely.
+//
+// IMPORTANT: This singleton pattern causes issues with parallel test execution in CI.
+// When one test suite calls reset(), it closes the HikariDataSource for ALL test suites.
+// Tests currently rely on JVM termination for cleanup rather than explicit reset() calls.
+// Future refactoring should provide test-suite-isolated database instances.
 object DatabaseFactory {
     @Volatile
     private var database: Database? = null
