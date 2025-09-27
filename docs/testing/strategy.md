@@ -98,6 +98,68 @@ class SessionManagerTest : StringSpec({
 - Mock external dependencies
 - Test with real DI container when appropriate
 
+## Error Handling Testing
+
+### HTTP Status Code Verification
+
+When testing API routes, verify proper error handling and HTTP status codes:
+
+#### Expected Status Codes
+- **404 Not Found**: Resource doesn't exist (IssueNotFoundException, ProjectNotFoundException, etc.)
+- **400 Bad Request**: Validation errors, business rule violations
+- **422 Unprocessable Entity**: Invalid state transitions
+- **500 Internal Server Error**: Only for true server errors (database failures, etc.)
+
+#### Testing Error Scenarios
+
+```kotlin
+"GET /api/issues/{id} should return 404 for non-existent issue" {
+    testApplication {
+        configureTestApplication()
+        val response = client.get("/api/issues/non-existent-id")
+        response.status shouldBe HttpStatusCode.NotFound
+
+        val error = response.body<ErrorResponse>()
+        error.error shouldBe "Issue not found"
+        error.timestamp shouldNotBe null
+    }
+}
+```
+
+### Global Error Handler
+
+The application uses a global ErrorHandler that maps exceptions to HTTP status codes:
+
+#### Exception Mappings
+- `IssueNotFoundException` → 404 Not Found
+- `ProjectNotFoundException` → 404 Not Found
+- `WorkflowNotFoundException` → 404 Not Found
+- `SessionNotFoundException` → 404 Not Found
+- `ValidationException` → 400 Bad Request
+- `BusinessRuleViolationException` → 400 Bad Request
+- `HierarchyViolationException` → 400 Bad Request
+- `CircularDependencyException` → 400 Bad Request
+- `InvalidStatusTransitionException` → 422 Unprocessable Entity
+- `Throwable` (catch-all) → 500 Internal Server Error
+
+### Error Response Format
+
+All error responses follow a consistent format:
+
+```json
+{
+  "error": "User-friendly error message",
+  "details": "Specific error details",
+  "timestamp": "2025-09-27T12:00:00Z"
+}
+```
+
+### Security Considerations
+- Never expose stack traces in production
+- Log detailed errors server-side for debugging
+- Use generic messages for 500 errors
+- Include correlation IDs for tracking
+
 ### Time Handling
 ```kotlin
 interface TimeProvider {
