@@ -166,7 +166,9 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
-    
+
+    // Note: ToolRegistryTest.kt is a TDD test with compilation issues that need to be addressed by development team
+
     // Test execution performance optimizations
     maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
     
@@ -239,7 +241,7 @@ val unitTest by tasks.registering(Test::class) {
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
     
-    // Filter for unit tests (domain, verification, and unit packages)
+    // Filter for unit tests (domain, verification, and unit packages only)
     filter {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
@@ -247,21 +249,34 @@ val unitTest by tasks.registering(Test::class) {
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
         includeTestsMatching("io.spiralhouse.cycletime.unit.*")
         excludeTestsMatching("io.spiralhouse.cycletime.integration.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.infrastructure.*") // Infrastructure tests moved to integration
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.api.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.mcp.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.ThreadSafetyQuickTest") // Moved to integration
     }
     
-    // Precise task inputs for smart incremental testing
+    // Optimized task inputs for smart incremental unit testing
     inputs.files(fileTree("src/main/kotlin") {
         include("**/domain/**/*.kt")
         include("**/valueobjects/**/*.kt")
         include("**/application/services/**/*.kt")
+        exclude("**/infrastructure/**/*.kt") // Unit tests don't depend on infrastructure
+        exclude("**/api/**/*.kt") // Unit tests don't depend on API layer
+        exclude("**/mcp/**/*.kt") // Unit tests don't depend on MCP components
     })
     inputs.files(fileTree("src/test/kotlin") {
         include("**/domain/**/*.kt")
         include("**/verification/**/*.kt")
         include("**/unit/**/*.kt")
+        exclude("**/integration/**/*.kt") // Exclude integration tests
+        exclude("**/infrastructure/**/*.kt") // Exclude infrastructure tests
+        exclude("**/api/**/*.kt") // Exclude API tests
+        exclude("**/mcp/**/*.kt") // Exclude MCP tests
+        exclude("**/ThreadSafetyQuickTest.kt") // Exclude concurrency test
     })
     inputs.file("build.gradle.kts")
+    inputs.property("kotlinVersion", libs.versions.kotlin.get()) // Track Kotlin version for compilation
     
     // Optimized for speed - unit tests should be fast
     // Reduced for CI stability - QA analysis from SPI-624 CI failures
@@ -367,32 +382,41 @@ val integrationTest by tasks.registering(Test::class) {
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
     
-    // Filter for integration tests
+    // Filter for integration tests - infrastructure integration, API layer, and MCP components
     filter {
         includeTestsMatching("io.spiralhouse.cycletime.integration.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.tools.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.*")
         includeTestsMatching("io.spiralhouse.cycletime.api.*") // Include API layer tests (SPI-595)
+        includeTestsMatching("io.spiralhouse.cycletime.infrastructure.*") // Infrastructure integration tests
+        includeTestsMatching("io.spiralhouse.cycletime.ThreadSafetyQuickTest") // Concurrency integration test
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
         excludeTestsMatching("io.spiralhouse.cycletime.system.*")
         excludeTestsMatching("io.spiralhouse.cycletime.domain.*")
         excludeTestsMatching("io.spiralhouse.cycletime.verification.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.unit.*") // Explicitly exclude unit tests
     }
     
-    // Precise inputs for integration tests
+    // Optimized inputs for integration tests - track only relevant source changes
     inputs.files(fileTree("src/main/kotlin") {
         include("**/application/**/*.kt")
         include("**/infrastructure/**/*.kt")
         include("**/persistence/**/*.kt")
         include("**/api/**/*.kt") // Include API layer for SPI-595
+        include("**/mcp/**/*.kt") // Include MCP components
     })
     inputs.files(fileTree("src/test/kotlin") {
         include("**/integration/**/*.kt")
         include("**/api/**/*.kt") // Include API tests for SPI-595
+        include("**/infrastructure/**/*.kt") // Infrastructure integration tests
+        include("**/mcp/**/*.kt") // MCP tests
+        include("**/ThreadSafetyQuickTest.kt") // Concurrency test
     })
     inputs.file("build.gradle.kts")
+    inputs.file("src/main/resources/application.conf") // Config changes affect integration
     inputs.property("sqliteVersion", "3.46.1.3") // Track database dependency changes
+    inputs.property("h2Version", libs.versions.h2.get()) // Track H2 dependency for tests
     
     // Integration tests can now run in parallel with the new DI pattern
     // Each test gets its own database provider instance through DI,
@@ -530,19 +554,19 @@ tasks.test {
     // Follow Gradle convention: 'test' runs unit tests for rapid development feedback
     description = "Runs unit tests (fast domain, verification, and application service tests)"
     
-    // Instead of delegating, configure test to run only unit tests directly
+    // Configure main test task to run only unit tests for rapid development feedback
     filter {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
-        // ARCHITECTURAL FIX: Include unit tests for proper Gradle convention compliance (SPI-624 Phase 3)
         includeTestsMatching("io.spiralhouse.cycletime.unit.*")
-        // ARCHITECTURAL FIX: Include MCP integration tests for SPI-594
-        includeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*")
-        excludeTestsMatching("io.spiralhouse.cycletime.integration.*") // Exclude other integration tests
+        excludeTestsMatching("io.spiralhouse.cycletime.integration.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.infrastructure.*") // Infrastructure tests in integration category
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
         excludeTestsMatching("io.spiralhouse.cycletime.api.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.mcp.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.ThreadSafetyQuickTest") // In integration category
     }
 }
 
@@ -556,14 +580,51 @@ val quickTest by tasks.registering {
 
 // CI-optimized test task for parallel execution
 val ciTest by tasks.registering {
-    description = "Runs test suites optimized for CI environments"
+    description = "Runs test suites optimized for CI environments with smart parallelization"
     group = "verification"
-    
+
     dependsOn(unitTest, integrationTest, systemTest)
-    
-    // CI can run integration and system tests in parallel after unit tests pass
+
+    // Smart CI execution: unit tests must pass first, then parallel execution
     integrationTest.get().mustRunAfter(unitTest)
     systemTest.get().mustRunAfter(unitTest)
+    // Integration and system tests can run in parallel after unit tests complete
+
+    doFirst {
+        val ciEnv = System.getenv("CI") ?: "false"
+        val githubActions = System.getenv("GITHUB_ACTIONS") ?: "false"
+        println("🚀 CI Test Execution Plan:")
+        println("   Environment: CI=$ciEnv, GitHub Actions=$githubActions")
+        println("   Strategy: Unit tests → (Integration ∥ System) tests")
+        println("   Expected performance: 40-60% faster with caching")
+    }
+}
+
+// GitHub Actions optimized test execution with matrix support
+val ciUnitOnly by tasks.registering {
+    description = "CI task for unit tests only (for matrix builds)"
+    group = "verification"
+
+    dependsOn(unitTest)
+
+    doFirst {
+        println("🧪 CI Unit Test Matrix Job:")
+        println("   Running fast unit tests for rapid feedback")
+        println("   Expected duration: <30 seconds")
+    }
+}
+
+val ciIntegrationOnly by tasks.registering {
+    description = "CI task for integration tests only (for matrix builds)"
+    group = "verification"
+
+    dependsOn(integrationTest)
+
+    doFirst {
+        println("🔗 CI Integration Test Matrix Job:")
+        println("   Running integration tests with database dependencies")
+        println("   Expected duration: 1-3 minutes")
+    }
 }
 
 // Smart build status reporting (configuration cache compatible)
@@ -587,16 +648,17 @@ val buildStatus by tasks.registering {
         println("  ✅ G1GC Enabled: true")
         println("  ✅ String Deduplication: true")
         
-        println("\n📊 Comprehensive Caching Strategy (SPI-475):")
-        println("  • Gradle Dependencies: Multi-stage caching with precise keys")
-        println("  • Unit tests: Cached by domain/verification sources")
-        println("  • Integration tests: Cached by application/infrastructure + DB version")
-        println("  • System tests: Conservative caching (performance sensitive)")
-        println("  • Kotlin compilation: Incremental + in-process with source tracking")
-        println("  • Test results: Up-to-date when source unchanged")
-        println("  • Build outputs: Cached with precise dependency tracking")
-        println("  • Docker layers: BuildKit with GitHub Actions cache backend")
-        println("  • Security scans: Dependency check database cached")
+        println("\n📊 Advanced Test Categorization & Caching (SPI-623):")
+        println("  • Unit Tests: Domain, verification, unit packages (fast feedback)")
+        println("  • Integration Tests: Infrastructure, API, MCP, concurrency tests")
+        println("  • System Tests: Performance, end-to-end scenarios")
+        println("  • Smart Caching: Test-specific input tracking")
+        println("  • Unit test cache: Domain/verification sources only")
+        println("  • Integration cache: Application/infrastructure + DB versions")
+        println("  • System test cache: Conservative (performance sensitive)")
+        println("  • Incremental compilation: Precise source file tracking")
+        println("  • CI optimization: Matrix builds + parallel execution")
+        println("  • Test parallelism: Dynamic CPU-based optimization")
         
         println("\n⏭️  CI Smart Skipping:")
         println("  • Skips builds for: *.md, docs/*, .claude/*, .gitignore")
@@ -611,11 +673,16 @@ val buildStatus by tasks.registering {
         println("  • Overall CI time: 40-60% reduction (combined optimizations)")
         println("  • Total potential savings: Up to 85% for cached builds")
         
-        println("\n📝 Usage Tips:")
-        println("  • ./gradlew quickTest - Fast unit test feedback")
-        println("  • ./gradlew testAll --build-cache - Full test suite")
-        println("  • ./gradlew build --build-cache - Optimized build")
-        println("  • ./gradlew buildStatus - Show this status")
+        println("\n📝 Optimized Usage Commands:")
+        println("  • ./gradlew quickTest - Fast unit tests only (<30s)")
+        println("  • ./gradlew unitTest - All unit tests with optimization")
+        println("  • ./gradlew integrationTest - Integration tests with DB")
+        println("  • ./gradlew systemTest - Performance and e2e tests")
+        println("  • ./gradlew testAll - All test suites in sequence")
+        println("  • ./gradlew ciTest - CI-optimized with parallelization")
+        println("  • ./gradlew ciUnitOnly - CI matrix: unit tests only")
+        println("  • ./gradlew ciIntegrationOnly - CI matrix: integration only")
+        println("  • ./gradlew buildStatus - Show optimization status")
         println("")
     }
 }
