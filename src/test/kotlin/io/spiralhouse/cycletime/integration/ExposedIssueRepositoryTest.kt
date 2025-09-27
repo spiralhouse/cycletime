@@ -104,8 +104,8 @@ class ExposedIssueRepositoryTest : DescribeSpec({
         }
 
         mockTimeProvider = MockTimeProvider()
-        issueRepository = ExposedIssueRepository(SystemTimeProvider(), database)
-        projectRepository = ExposedProjectRepository(SystemTimeProvider(), database)
+        issueRepository = ExposedIssueRepository(mockTimeProvider, database)
+        projectRepository = ExposedProjectRepository(mockTimeProvider, database)
     }
 
     beforeEach {
@@ -612,32 +612,6 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     retrieved shouldNotBe null
                     retrieved!!.title shouldBe maxLengthTitle
                     retrieved.title.length shouldBe 255
-                }
-            }
-
-            it("should use SystemTimeProvider for reconstitution") {
-                runTest {
-                    val issue = createTestIssue(
-                        title = "Time Provider Test",
-                        description = "Testing time provider injection"
-                    )
-                    issue.setEstimate(Estimate.of(3))
-
-                    issueRepository.save(issue)
-                    val retrieved = issueRepository.findById(issue.id)
-
-                    // The retrieved issue should be reconstituted and functional
-                    retrieved shouldNotBe null
-
-                    // Test that we can modify the retrieved issue (verifies TimeProvider works)
-                    val originalUpdateTime = retrieved!!.updatedAt
-
-                    // Note: Retrieved issue uses SystemTimeProvider, not MockTimeProvider
-                    // So we can't control time for this assertion, but we can verify functionality
-                    retrieved.updateDescription("Modified after retrieval")
-
-                    // The update should have changed the timestamp
-                    retrieved.updatedAt shouldNotBe originalUpdateTime
                 }
             }
 

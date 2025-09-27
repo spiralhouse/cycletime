@@ -1,7 +1,9 @@
 package io.spiralhouse.cycletime.mcp.resources
 
+import io.spiralhouse.cycletime.domain.services.TimeProvider
+import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.mcp.resources.exceptions.InvalidResourceUriException
-import java.time.Instant
+import kotlinx.datetime.Instant
 import java.net.URI
 
 /**
@@ -28,6 +30,9 @@ data class Resource(
     val metadata: ResourceMetadata? = null,
     val permissions: ResourcePermissions? = null
 ) {
+    companion object {
+        var timeProvider: TimeProvider = SystemTimeProvider()
+    }
     init {
         validateUri(uri)
         // Validate content if present
@@ -79,7 +84,7 @@ data class Resource(
      * Check if this resource is newer than the given timestamp
      */
     fun isNewerThan(timestamp: Instant): Boolean {
-        return metadata?.modified?.isAfter(timestamp) ?: false
+        return metadata?.modified?.let { it > timestamp } ?: false
     }
     
     /**
@@ -96,7 +101,7 @@ data class Resource(
         return copy(
             content = newContent,
             metadata = metadata?.copy(
-                modified = Instant.now(),
+                modified = timeProvider.now(),
                 size = when (newContent) {
                     is ResourceContent.Text -> newContent.data.length.toLong()
                     is ResourceContent.Binary -> newContent.data.length.toLong()

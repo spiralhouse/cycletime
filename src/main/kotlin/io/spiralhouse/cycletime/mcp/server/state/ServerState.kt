@@ -1,6 +1,8 @@
 package io.spiralhouse.cycletime.mcp.server.state
 
-import java.time.Instant
+import io.spiralhouse.cycletime.domain.services.TimeProvider
+import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
+import kotlinx.datetime.Instant
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -27,7 +29,9 @@ enum class ServerStatus {
  * This class maintains the current status and metadata about the server's
  * lifecycle, providing thread-safe access to state information.
  */
-class ServerState {
+class ServerState(
+    private val timeProvider: TimeProvider = SystemTimeProvider()
+) {
     private val status = AtomicReference(ServerStatus.CREATED)
     private val startTime = AtomicReference<Instant?>(null)
     private val stopTime = AtomicReference<Instant?>(null)
@@ -62,8 +66,8 @@ class ServerState {
             
             // Update timestamps
             when (newStatus) {
-                ServerStatus.RUNNING -> startTime.set(Instant.now())
-                ServerStatus.STOPPED -> stopTime.set(Instant.now())
+                ServerStatus.RUNNING -> startTime.set(timeProvider.now())
+                ServerStatus.STOPPED -> stopTime.set(timeProvider.now())
                 else -> { /* No timestamp update needed */ }
             }
             
@@ -128,10 +132,10 @@ class ServerState {
     fun getUptimeMillis(): Long {
         val start = startTime.get() ?: return 0
         return if (isRunning()) {
-            Instant.now().toEpochMilli() - start.toEpochMilli()
+            timeProvider.now().toEpochMilliseconds() - start.toEpochMilliseconds()
         } else {
             val stop = stopTime.get() ?: return 0
-            stop.toEpochMilli() - start.toEpochMilli()
+            stop.toEpochMilliseconds() - start.toEpochMilliseconds()
         }
     }
 }

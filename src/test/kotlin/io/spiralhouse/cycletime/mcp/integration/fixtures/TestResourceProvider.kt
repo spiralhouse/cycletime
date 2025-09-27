@@ -2,6 +2,7 @@ package io.spiralhouse.cycletime.mcp.integration.fixtures
 
 import io.spiralhouse.cycletime.mcp.resources.*
 import io.spiralhouse.cycletime.mcp.resources.exceptions.ProviderUnavailableException
+import kotlinx.datetime.Clock
 
 /**
  * Test implementation of ResourceProvider for testing purposes
@@ -98,7 +99,7 @@ class TestResourceProvider(override val name: String) : ResourceProvider {
             val existing = testResources[index]
             testResources[index] = existing.copy(
                 content = content,
-                metadata = existing.metadata?.copy(modified = java.time.Instant.now())
+                metadata = existing.metadata?.copy(modified = Clock.System.now())
             )
             // Notification system removed for Phase 5 simplification
         }
@@ -124,7 +125,7 @@ class TestResourceProvider(override val name: String) : ResourceProvider {
     }
     
     private fun createTestResources(): List<Resource> {
-        val now = java.time.Instant.now()
+        val now = Clock.System.now()
         return listOf(
             Resource(
                 uri = "config://settings/database",

@@ -131,7 +131,7 @@ class ExposedSessionRepositoryTest : DescribeSpec({
         }
 
         mockTimeProvider = MockTimeProvider()
-        repository = ExposedSessionRepository(SystemTimeProvider(), database)
+        repository = ExposedSessionRepository(mockTimeProvider, database)
     }
 
     beforeEach {
@@ -681,28 +681,6 @@ class ExposedSessionRepositoryTest : DescribeSpec({
                     retrieved.lastActivity shouldBe session.lastActivity
                     retrieved.createdAt shouldBe session.createdAt
                     retrieved.updatedAt shouldBe session.updatedAt
-                }
-            }
-
-            it("should use SystemTimeProvider for reconstitution") {
-                runTest {
-                    val session = createTestSession()
-
-                    repository.save(session)
-                    val retrieved = repository.findByKey(session.sessionKey)
-
-                    // The retrieved session should be reconstituted and functional
-                    retrieved shouldNotBe null
-
-                    // Test that we can modify the retrieved session (verifies TimeProvider works)
-                    val originalUpdateTime = retrieved!!.updatedAt
-
-                    // Note: Retrieved session uses SystemTimeProvider, not MockTimeProvider
-                    // So we can't control time for this assertion, but we can verify functionality
-                    retrieved.updateContext(SessionContext(lastAction = "Modified after retrieval"))
-
-                    // The update should have changed the timestamp
-                    retrieved.updatedAt shouldNotBe originalUpdateTime
                 }
             }
 

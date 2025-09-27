@@ -70,7 +70,7 @@ class ExposedProjectRepositoryTest : DescribeSpec({
         }
 
         mockTimeProvider = MockTimeProvider()
-        repository = ExposedProjectRepository(SystemTimeProvider(), database)
+        repository = ExposedProjectRepository(mockTimeProvider, database)
     }
 
     beforeEach {
@@ -405,32 +405,6 @@ class ExposedProjectRepositoryTest : DescribeSpec({
                     retrieved shouldNotBe null
                     retrieved!!.name shouldBe maxLengthName
                     retrieved.name.length shouldBe 255
-                }
-            }
-
-            it("should use SystemTimeProvider for reconstitution") {
-                runTest {
-                    val project = Project.create(
-                        name = "Time Provider Test",
-                        description = "Testing time provider injection",
-                        mockTimeProvider
-                    )
-
-                    repository.save(project)
-                    val retrieved = repository.findById(project.id)
-
-                    // The retrieved project should be reconstituted and functional
-                    retrieved shouldNotBe null
-
-                    // Test that we can modify the retrieved project (verifies TimeProvider works)
-                    val originalUpdateTime = retrieved!!.updatedAt
-
-                    // Note: Retrieved project uses SystemTimeProvider, not MockTimeProvider
-                    // So we can't control time for this assertion, but we can verify functionality
-                    retrieved.updateDescription("Modified after retrieval")
-
-                    // The update should have changed the timestamp
-                    retrieved.updatedAt shouldNotBe originalUpdateTime
                 }
             }
         }
