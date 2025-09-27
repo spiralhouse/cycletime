@@ -35,12 +35,7 @@ open class ToolRegistry(
     }
     
     fun update(tool: Tool): Boolean {
-        return if (tools.containsKey(tool.name)) {
-            tools[tool.name] = tool
-            true
-        } else {
-            false
-        }
+        return tools.replace(tool.name, tool) != null
     }
     
     fun unregister(toolName: String): Boolean {
@@ -196,7 +191,7 @@ open class ToolRegistry(
     /**
      * Handle JSON-RPC method calls for tool operations.
      */
-    fun handleJsonRpcMethod(method: String, params: JsonElement): Result<JsonElement> {
+    suspend fun handleJsonRpcMethod(method: String, params: JsonElement): Result<JsonElement> {
         return when (method) {
             "tools/list" -> handleToolsList()
             "tools/call" -> handleToolsCall(params)
@@ -224,7 +219,7 @@ open class ToolRegistry(
         })
     }
     
-    private fun handleToolsCall(params: JsonElement): Result<JsonElement> {
+    private suspend fun handleToolsCall(params: JsonElement): Result<JsonElement> {
         if (params !is JsonObject) {
             return Result.failure(
                 JsonRpcException(
@@ -255,18 +250,16 @@ open class ToolRegistry(
         val result = if (tool.isSync) {
             invoke(toolName, arguments)
         } else {
-            // Handle async tools with reasonable timeout
-            runBlocking {
-                try {
-                    invokeAsync(toolName, arguments, timeout = 10000L)
-                } catch (e: Exception) {
-                    Result.failure(
-                        JsonRpcException(
-                            code = -32603,
-                            message = "Async tool execution failed: ${e.message}"
-                        )
+            // Handle async tools with configurable timeout
+            try {
+                invokeAsync(toolName, arguments, timeout = 10000L)
+            } catch (e: Exception) {
+                Result.failure(
+                    JsonRpcException(
+                        code = -32603,
+                        message = "Async tool execution failed: ${e.message}"
                     )
-                }
+                )
             }
         }
         
