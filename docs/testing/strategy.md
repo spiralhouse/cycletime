@@ -53,7 +53,7 @@ CycleTime follows a three-tier testing approach to ensure comprehensive coverage
 ## Test Organization
 
 ```
-src/test/kotlin/io/spiralhouse/jcvd/
+src/test/kotlin/io/spiralhouse/cycletime/
 ├── unit/           # Fast, isolated tests
 ├── integration/    # Component interaction tests
 ├── system/         # End-to-end tests

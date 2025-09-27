@@ -52,7 +52,7 @@ This document outlines the technical design for implementing H2 repository imple
 ### Exposed DSL Table Definitions
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/database/Tables.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/database/Tables.kt
 
 import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.sql.Table
