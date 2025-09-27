@@ -299,6 +299,12 @@ open class ToolRegistry(
 
 
 /**
+ * Default implementation of ToolRegistry for backwards compatibility with tests.
+ * This is an alias to the main ToolRegistry class.
+ */
+typealias DefaultToolRegistry = ToolRegistry
+
+/**
  * Exception for JSON-RPC errors.
  */
 class JsonRpcException(
