@@ -197,11 +197,11 @@ The TableRegistry pattern automatically ensures:
 4. **Test Reliability**: All tests automatically include all tables
 5. **Migration Ready**: Simplifies future database migrations
 
-## Future Plans
+## Migration Complete
 
-This pattern is temporary. In SPI-627, we will:
-1. Eliminate `DatabaseFactory` singleton entirely
-2. Use Ktor's native DI for database provisioning
-3. Provide isolated database instances per test automatically
+The migration from DatabaseFactory singleton to Ktor's native DI is now complete:
+1. ✅ `DatabaseFactory` singleton has been eliminated
+2. ✅ Using Ktor's native DI for database provisioning via DatabaseProvider
+3. ✅ Each test gets isolated database instances automatically
 
-Until then, this migration ensures reliable test execution.
+The new DI pattern ensures reliable test execution with full parallel test support.

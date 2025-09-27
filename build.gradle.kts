@@ -394,11 +394,11 @@ val integrationTest by tasks.registering(Test::class) {
     inputs.file("build.gradle.kts")
     inputs.property("sqliteVersion", "3.46.1.3") // Track database dependency changes
     
-    // IMPORTANT: Integration tests MUST run sequentially (not in parallel)
-    // because DatabaseFactory is a singleton that shares HikariDataSource across all tests.
-    // Parallel execution causes "HikariDataSource has been closed" errors when one test's
-    // cleanup affects other running tests. This will be fixed with DI refactoring (SPI-627).
-    maxParallelForks = 1  // Sequential execution to prevent database conflicts
+    // Integration tests can now run in parallel with the new DI pattern
+    // Each test gets its own database provider instance through DI,
+    // eliminating the singleton conflicts from DatabaseFactory.
+    // Fixed with the DI refactoring (SPI-627).
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
     minHeapSize = "256m"
     maxHeapSize = "1024m"
     forkEvery = 50 // More frequent forking due to database connections

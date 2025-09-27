@@ -88,14 +88,16 @@ fun Application.configureDependencies() {
 }
 
 fun Application.module() {
-    // Initialize database singleton for production
-    DatabaseFactory.init(
-        jdbcUrl = System.getenv("DATABASE_URL") ?: "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
-        enableLogging = System.getenv("DATABASE_LOGGING")?.toBoolean() ?: false
-    )
+    // Initialize database using DI pattern
+    val databaseConfig = buildDatabaseConfig()
+    val databaseProvider = DefaultDatabaseProvider(databaseConfig)
+    val database = databaseProvider.getDatabase()
 
-    // Configure dependencies (uses DatabaseFactory singleton internally)
-    configureDependencies()
+    // Configure dependencies with database provider
+    configureDependencies(
+        database = database,
+        databaseProvider = databaseProvider
+    )
 
     // Other configuration...
 }
@@ -133,9 +135,12 @@ import io.spiralhouse.jcvd.infrastructure.database.*
 import org.jetbrains.exposed.sql.Database
 
 /**
- * Enhanced dependency configuration after TDD rebuild (SPI-460)
+ * Enhanced dependency configuration with DI pattern
  */
-fun Application.configureDependencies() {
+fun Application.configureDependencies(
+    database: Database,
+    databaseProvider: DatabaseProvider
+) {
     dependencies {
         // Domain Services
         provide<TimeProvider> { SystemTimeProvider() }
@@ -143,8 +148,12 @@ fun Application.configureDependencies() {
         
         // Database
         provide<Database> {
-            // Database is managed by DatabaseFactory singleton
-            DatabaseFactory.getInstance()
+            // Database is provided via DI parameter
+            database
+        }
+        provide<DatabaseProvider> {
+            // Database provider for lifecycle management
+            databaseProvider
         }
         
         // Repositories (with proper constructor injection)

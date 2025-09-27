@@ -1,97 +1,165 @@
 package io.spiralhouse.cycletime.test.utils
 
-import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
+import io.spiralhouse.cycletime.infrastructure.database.DatabaseProvider
+import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseProvider
+import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseNamingStrategy
+import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 import io.spiralhouse.cycletime.module
 import io.ktor.server.application.*
 import io.ktor.server.testing.*
 import io.ktor.server.plugins.di.*
 import io.spiralhouse.cycletime.domain.services.TimeProvider
+import org.jetbrains.exposed.sql.Database
 
 /**
  * Test helper for managing database initialization in integration tests.
  *
- * This helper ensures that DatabaseFactory is properly initialized before
- * the application module is loaded, preventing race conditions during test execution.
+ * This helper provides test-specific database instances using the new DI pattern,
+ * enabling parallel test execution without singleton conflicts.
  *
  * Design rationale:
- * - Provides a test-specific initialization pattern
- * - Ensures database is initialized exactly once per test spec
- * - Prevents double initialization from test setup and module()
+ * - Each test gets its own isolated database provider
+ * - Enables parallel test execution without conflicts
+ * - Clean separation between test and production database configuration
  */
 object DatabaseTestHelper {
 
     /**
-     * Initialize test database with a unique in-memory instance per test spec.
+     * Create a test database provider with a unique in-memory instance.
      *
-     * @param testName Name of the test spec for unique database naming
+     * @param strategy Naming strategy for the test database
      * @param enableLogging Enable SQL logging for debugging
-     * @return JDBC URL of the initialized test database
+     * @return Test database provider instance
      */
+    fun createTestProvider(
+        strategy: TestDatabaseNamingStrategy = TestDatabaseNamingStrategy.UUID,
+        enableLogging: Boolean = false
+    ): TestDatabaseProvider {
+        return TestDatabaseProvider(strategy, enableLogging)
+    }
+
+    /**
+     * Configure test application with isolated database provider.
+     *
+     * This extension function sets up the application with a test-specific
+     * database provider, enabling parallel test execution without conflicts.
+     *
+     * IMPORTANT: Tests can now run in PARALLEL since each gets its own
+     * database provider instance through DI.
+     */
+    fun ApplicationTestBuilder.configureTestApplication(
+        strategy: TestDatabaseNamingStrategy = TestDatabaseNamingStrategy.UUID,
+        enableLogging: Boolean = false,
+        timeProvider: TimeProvider? = null
+    ) {
+        application {
+            // Create isolated test database provider
+            val testProvider = createTestProvider(strategy, enableLogging)
+            val database = testProvider.getDatabase()
+
+            // Configure DI with test database provider
+            configureDependencies(
+                database = database,
+                databaseProvider = testProvider,
+                timeProvider = timeProvider,
+                includeMCP = false // Usually disabled for unit tests
+            )
+
+            // Now configure the rest of the application
+            // Note: We're not calling module() to avoid duplicate DI configuration
+            // Tests should configure routes and features as needed
+        }
+    }
+
+    /**
+     * Configure test application with standard module but test database.
+     *
+     * Use this when you want the full application module but with a test database.
+     * Tests will run in parallel since each gets its own database instance.
+     */
+    fun ApplicationTestBuilder.configureTestApplicationWithModule(
+        strategy: TestDatabaseNamingStrategy = TestDatabaseNamingStrategy.UUID,
+        enableLogging: Boolean = false
+    ) {
+        // Create unique test database URL for this test instance
+        val testDbUrl = when (strategy) {
+            TestDatabaseNamingStrategy.UUID ->
+                "jdbc:h2:mem:test_${java.util.UUID.randomUUID()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+            TestDatabaseNamingStrategy.SEQUENTIAL ->
+                "jdbc:h2:mem:test_db_seq_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+            TestDatabaseNamingStrategy.FIXED ->
+                "jdbc:h2:mem:test_db_fixed;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        }
+
+        // Set system properties to override Application's buildDatabaseConfig()
+        System.setProperty("DATABASE_URL", testDbUrl)
+        System.setProperty("DATABASE_DRIVER", "org.h2.Driver")
+        System.setProperty("DATABASE_LOGGING", enableLogging.toString())
+
+        application {
+            // Call the standard module which will use our test database URL
+            module()
+        }
+    }
+
+    /**
+     * Legacy compatibility method for existing tests.
+     *
+     * @deprecated Use configureTestApplicationWithModule() with TestDatabaseNamingStrategy instead
+     */
+    @Deprecated("Use configureTestApplicationWithModule() with TestDatabaseNamingStrategy",
+        ReplaceWith("configureTestApplicationWithModule()")
+    )
+    fun ApplicationTestBuilder.configureTestApplication(
+        testName: String = "test",
+        enableLogging: Boolean = false
+    ) {
+        // Convert legacy testName to unique database URL
+        val testDbUrl = "jdbc:h2:mem:${testName}_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+
+        // Set system properties to override Application's buildDatabaseConfig()
+        System.setProperty("DATABASE_URL", testDbUrl)
+        System.setProperty("DATABASE_DRIVER", "org.h2.Driver")
+        System.setProperty("DATABASE_LOGGING", enableLogging.toString())
+
+        application {
+            // Call the standard module which will use our test database URL
+            module()
+        }
+    }
+
+    /**
+     * Legacy compatibility method for database initialization.
+     *
+     * @deprecated Use createTestProvider() instead
+     */
+    @Deprecated("Use createTestProvider() instead",
+        ReplaceWith("createTestProvider(TestDatabaseNamingStrategy.UUID, enableLogging).getDatabase()")
+    )
     fun initTestDatabase(
         testName: String = "test",
         enableLogging: Boolean = false
     ): String {
         val testDbUrl = "jdbc:h2:mem:${testName}_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
 
-        // Initialize if not already initialized
-        if (!DatabaseFactory.isInitialized()) {
-            DatabaseFactory.init(
-                jdbcUrl = testDbUrl,
-                driver = "org.h2.Driver",
-                enableLogging = enableLogging,
-                forceReinit = false
-            )
-        }
+        // Set system properties for the application to use
+        System.setProperty("DATABASE_URL", testDbUrl)
+        System.setProperty("DATABASE_DRIVER", "org.h2.Driver")
+        System.setProperty("DATABASE_LOGGING", enableLogging.toString())
 
         return testDbUrl
     }
 
     /**
-     * Configure test application with pre-initialized database.
+     * Clean up test database provider after test completion.
      *
-     * This extension function ensures the database is initialized before
-     * calling module(), preventing race conditions.
+     * With the new DI pattern, cleanup is handled by the provider's close() method.
+     * Each test has its own provider instance, so cleanup doesn't affect other tests.
      *
-     * IMPORTANT: Integration tests run SEQUENTIALLY (maxParallelForks = 1) to avoid
-     * DatabaseFactory singleton conflicts. Each test still gets a unique database URL
-     * for isolation, but they run one at a time to prevent HikariDataSource errors.
-     * This will be fixed with proper DI refactoring (SPI-627).
+     * @param provider The test database provider to clean up (optional)
      */
-    fun ApplicationTestBuilder.configureTestApplication(
-        testName: String = "test",
-        enableLogging: Boolean = false
-    ) {
-        // Generate unique test database URL for test isolation
-        // Even though tests run sequentially, unique DBs prevent data contamination
-        val testDbUrl = "jdbc:h2:mem:${testName}_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
-
-        // Set system properties to override Application's buildDatabaseConfig()
-        // Since tests run sequentially, we don't need complex synchronization
-        System.setProperty("DATABASE_URL", testDbUrl)
-        System.setProperty("DATABASE_DRIVER", "org.h2.Driver")
-        System.setProperty("DATABASE_LOGGING", enableLogging.toString())
-
-        application {
-            // Now module() will use our test database URL from system properties
-            module()
-        }
-    }
-
-    /**
-     * Clean up test database after test completion.
-     *
-     * IMPORTANT: In CI environments with parallel test execution, calling reset()
-     * can close the HikariDataSource while other test suites are still running.
-     * Since we use in-memory H2 databases that are automatically cleaned up when
-     * the JVM exits, explicit cleanup is not necessary for test isolation.
-     *
-     * This method is now a no-op to prevent CI failures. The JVM will handle
-     * cleanup on process termination.
-     */
-    fun cleanupTestDatabase() {
-        // NO-OP: Removed DatabaseFactory.reset() to prevent closing HikariDataSource
-        // while other parallel test suites are still running in CI.
-        // Each test uses a unique in-memory database (via nanoTime suffix), so
-        // test isolation is maintained without explicit cleanup.
+    fun cleanupTestDatabase(provider: DatabaseProvider? = null) {
+        provider?.close()
+        // No singleton to reset - each test manages its own provider
     }
 }

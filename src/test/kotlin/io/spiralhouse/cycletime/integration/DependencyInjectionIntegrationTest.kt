@@ -18,7 +18,6 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectReposit
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionRepository
 import io.ktor.server.plugins.di.*
 import io.spiralhouse.cycletime.module
-import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
 import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper
 import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper.configureTestApplication
 

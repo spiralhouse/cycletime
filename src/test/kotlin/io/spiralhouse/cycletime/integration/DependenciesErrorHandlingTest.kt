@@ -12,7 +12,6 @@ import io.ktor.server.config.MapApplicationConfig
 import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseFactory
 import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper
 import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper.configureTestApplication
-import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
 
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction

@@ -6,7 +6,9 @@ import io.spiralhouse.cycletime.application.services.SessionApplicationService
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.domain.services.BuildInfo
-import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
+import io.spiralhouse.cycletime.infrastructure.database.DatabaseProvider
+import io.spiralhouse.cycletime.infrastructure.database.DefaultDatabaseProvider
+import io.spiralhouse.cycletime.infrastructure.database.DatabaseConfig as DbConfig
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionRepository
@@ -60,14 +62,6 @@ data class HealthStatus(
     val metrics: Map<String, String>
 )
 
-/**
- * Database configuration data class for clean parameter passing.
- */
-data class DatabaseConfig(
-    val jdbcUrl: String,
-    val driver: String,
-    val enableLogging: Boolean
-)
 
 @Serializable
 data class ErrorResponse(
@@ -94,23 +88,39 @@ fun main() {
  * Build database configuration from environment variables and application config.
  * Single responsibility: configuration building only.
  */
-private fun Application.buildDatabaseConfig(): DatabaseConfig {
+private fun Application.buildDatabaseConfig(): DbConfig {
     val jdbcUrl = environment.config.propertyOrNull("database.url")?.getString()
         ?: System.getProperty("DATABASE_URL")  // Check System property first (for tests)
         ?: System.getenv("DATABASE_URL")       // Then check environment variable
         ?: "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
-    
+
     val driver = environment.config.propertyOrNull("database.driver")?.getString()
         ?: System.getProperty("DATABASE_DRIVER")
         ?: System.getenv("DATABASE_DRIVER")
         ?: "org.h2.Driver"
-    
+
     val enableLogging = environment.config.propertyOrNull("database.logging")?.getString()?.toBoolean()
         ?: System.getProperty("DATABASE_LOGGING")?.toBoolean()
-        ?: System.getenv("DATABASE_LOGGING")?.toBoolean() 
+        ?: System.getenv("DATABASE_LOGGING")?.toBoolean()
         ?: false
 
-    return DatabaseConfig(jdbcUrl, driver, enableLogging)
+    val maxPoolSize = environment.config.propertyOrNull("database.maxPoolSize")?.getString()?.toInt()
+        ?: System.getProperty("DATABASE_MAX_POOL_SIZE")?.toInt()
+        ?: System.getenv("DATABASE_MAX_POOL_SIZE")?.toInt()
+        ?: 10
+
+    val minPoolSize = environment.config.propertyOrNull("database.minPoolSize")?.getString()?.toInt()
+        ?: System.getProperty("DATABASE_MIN_POOL_SIZE")?.toInt()
+        ?: System.getenv("DATABASE_MIN_POOL_SIZE")?.toInt()
+        ?: 2
+
+    return DbConfig(
+        jdbcUrl = jdbcUrl,
+        driver = driver,
+        enableLogging = enableLogging,
+        maxPoolSize = maxPoolSize,
+        minPoolSize = minPoolSize
+    )
 }
 
 /**
@@ -118,34 +128,33 @@ private fun Application.buildDatabaseConfig(): DatabaseConfig {
  * Single responsibility: database initialization only.
  */
 private fun initializeDatabase(
-    config: DatabaseConfig,
+    config: DbConfig,
     logger: org.slf4j.Logger,
     performanceMetrics: MutableMap<String, Long>
-): Database {
+): DatabaseProvider {
     logger.info("Initializing database with URL: ${config.jdbcUrl}")
     val dbStartTime = System.currentTimeMillis()
-    DatabaseFactory.init(jdbcUrl = config.jdbcUrl, driver = config.driver, enableLogging = config.enableLogging)
-    val database = DatabaseFactory.getInstance()
+    val databaseProvider = DefaultDatabaseProvider(config)
     val dbEndTime = System.currentTimeMillis()
     val dbTime = dbEndTime - dbStartTime
     performanceMetrics["database"] = dbTime
     logger.info("Database initialization completed in ${dbTime}ms")
-    return database
+    return databaseProvider
 }
 
 /**
  * Validate database configuration parameters.
  * Single responsibility: validation only (pure function).
  */
-private fun validateDatabaseConfig(config: DatabaseConfig) {
+private fun validateDatabaseConfig(config: DbConfig) {
     require(config.jdbcUrl.isNotBlank()) {
         "Database URL cannot be blank"
     }
-    
+
     require(config.jdbcUrl.startsWith("jdbc:")) {
         "Database URL must start with 'jdbc:'. Got: ${config.jdbcUrl}"
     }
-    
+
     // Validate environment variable overrides don't break expected patterns
     if (System.getenv("DATABASE_URL")?.isNotBlank() == true) {
         val envUrl = System.getenv("DATABASE_URL")!!
@@ -153,15 +162,26 @@ private fun validateDatabaseConfig(config: DatabaseConfig) {
             "Environment variable DATABASE_URL must be a valid JDBC URL. Got: $envUrl"
         }
     }
-    
+
     // Driver validation (basic check)
     require(config.driver.isNotBlank()) {
         "Database driver cannot be blank"
     }
-    
+
     // Validate driver class name format
     require(config.driver.matches(Regex("^[a-zA-Z][a-zA-Z0-9_]*\\.[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*$"))) {
         "Invalid driver class name format: ${config.driver}"
+    }
+
+    // Validate pool sizes
+    require(config.maxPoolSize > 0) {
+        "maxPoolSize must be positive. Got: ${config.maxPoolSize}"
+    }
+    require(config.minPoolSize >= 0) {
+        "minPoolSize cannot be negative. Got: ${config.minPoolSize}"
+    }
+    require(config.minPoolSize <= config.maxPoolSize) {
+        "minPoolSize (${config.minPoolSize}) cannot be greater than maxPoolSize (${config.maxPoolSize})"
     }
 }
 
@@ -170,14 +190,14 @@ fun Application.module() {
     val moduleStartTime = System.currentTimeMillis()
     val performanceMetrics = mutableMapOf<String, Long>()
 
-    // Initialize database
-    val database = configureDatabaseConnection(logger, performanceMetrics)
-    
+    // Initialize database provider
+    val databaseProvider = configureDatabaseConnection(logger, performanceMetrics)
+
     // Install Ktor features
     configureKtorFeatures(logger, performanceMetrics)
-    
-    // Setup MCP integration
-    val mcpIntegrationService = configureMCPIntegration(database, logger, performanceMetrics)
+
+    // Setup MCP integration (passing the database from provider)
+    val mcpIntegrationService = configureMCPIntegration(databaseProvider.getDatabase(), logger, performanceMetrics, databaseProvider)
 
     // Configure API routes (requires DI to be configured first)
     val timeProvider: TimeProvider by dependencies
@@ -237,15 +257,15 @@ private fun validateDatabaseConfiguration(jdbcUrl: String, driver: String) {
 /**
  * Configure database connection with validation and initialization.
  * Orchestrates the database setup using focused single-responsibility functions.
- * 
+ *
  * @param logger Application logger
  * @param performanceMetrics Map to store timing metrics
- * @return Initialized database instance
+ * @return Initialized database provider
  */
 private fun Application.configureDatabaseConnection(
     logger: org.slf4j.Logger,
     performanceMetrics: MutableMap<String, Long>
-): Database {
+): DatabaseProvider {
     // Build configuration from environment/properties
     val config = buildDatabaseConfig()
 
@@ -258,7 +278,7 @@ private fun Application.configureDatabaseConnection(
         throw e
     }
 
-    // Initialize database with timing metrics
+    // Initialize database provider with timing metrics
     return initializeDatabase(config, logger, performanceMetrics)
 }
 
@@ -300,23 +320,26 @@ private fun Application.configureKtorFeatures(
 
 /**
  * Configure MCP integration including dependency injection and service startup.
- * 
+ *
  * @param database Database instance
  * @param logger Application logger
  * @param performanceMetrics Map to store timing metrics
+ * @param databaseProvider Database provider for DI
  * @return MCP integration service instance or null if disabled/failed
  */
 private fun Application.configureMCPIntegration(
     database: Database,
     logger: org.slf4j.Logger,
-    performanceMetrics: MutableMap<String, Long>
+    performanceMetrics: MutableMap<String, Long>,
+    databaseProvider: DatabaseProvider
 ): MCPIntegrationService? {
-    // Configure DI with explicit database - simple and clear
+    // Configure DI with explicit database and provider - clean DI pattern
     val diStartTime = System.currentTimeMillis()
     val mcpEnabled = System.getenv("MCP_ENABLED")?.toBoolean() ?: true
     val diEndTime = try {
         configureDependencies(
             database = database,
+            databaseProvider = databaseProvider,
             timeProvider = null, // Use default SystemTimeProvider
             includeMCP = mcpEnabled
         )
@@ -539,70 +562,16 @@ private fun Application.configureShutdownHooks(
             }
         }
         
-        // Close database connection - ONLY in production, not in tests
-        // In test environments, multiple test applications share the singleton DatabaseFactory.
-        // Closing it here would affect other running tests (causing HikariDataSource errors).
-        // Tests rely on JVM termination for cleanup instead of explicit close() calls.
-
-        logger.info("Checking test environment before database closure...")
-
-        // Comprehensive test environment detection for both local and CI environments
-        val isTestEnvironment =
-            // Check for Gradle test task execution
-            System.getProperty("gradle.test.worker") != null ||
-            // Check for JUnit Platform (Kotest/JUnit)
-            System.getProperty("junit.platform.version") != null ||
-            // Check for CI environments (GitHub Actions, Jenkins, etc.)
-            System.getenv("CI") == "true" ||
-            System.getenv("GITHUB_ACTIONS") == "true" ||
-            // Check for in-memory database (H2)
-            System.getProperty("DATABASE_URL")?.contains("mem:") == true ||
-            // Check for development mode
-            System.getProperty("io.ktor.development") == "true" ||
-            // Check for explicit test environment config
-            environment.config.propertyOrNull("ktor.environment")?.getString() == "test" ||
-            // Check if testApplication is in use (Ktor test framework)
-            Thread.currentThread().stackTrace.any {
-                it.className.contains("io.ktor.server.testing.TestApplicationEngine") ||
-                it.className.contains("io.ktor.server.testing.ApplicationTestBuilder")
-            } ||
-            // Check if any test framework classes are present in the stack trace
-            Thread.currentThread().stackTrace.any {
-                it.className.contains("org.junit") ||
-                it.className.contains("io.kotest") ||
-                it.className.contains("gradle.test")
-            } ||
-            // Final fallback: check if test classes are present in the classpath
-            try {
-                Class.forName("io.kotest.core.spec.Spec") != null
-            } catch (e: ClassNotFoundException) {
-                false
-            }
-
-        if (!isTestEnvironment) {
-            DatabaseFactory.close()
-            logger.info("Database connection closed")
-        } else {
-            logger.info("Skipping database close in test environment (detected via: ${
-                when {
-                    System.getProperty("gradle.test.worker") != null -> "gradle.test.worker"
-                    System.getProperty("junit.platform.version") != null -> "junit.platform"
-                    System.getenv("CI") == "true" -> "CI env var"
-                    System.getenv("GITHUB_ACTIONS") == "true" -> "GitHub Actions"
-                    System.getProperty("DATABASE_URL")?.contains("mem:") == true -> "in-memory DB"
-                    System.getProperty("io.ktor.development") == "true" -> "development mode"
-                    environment.config.propertyOrNull("ktor.environment")?.getString() == "test" -> "test config"
-                    Thread.currentThread().stackTrace.any {
-                        it.className.contains("io.ktor.server.testing")
-                    } -> "Ktor test framework"
-                    Thread.currentThread().stackTrace.any {
-                        it.className.contains("org.junit") ||
-                        it.className.contains("io.kotest") ||
-                        it.className.contains("gradle.test")
-                    } -> "test framework in stack"
-                    else -> "test class in classpath"
-                }
-            })")
+        // Close database connection through provider
+        // Provider handles test environment detection internally
+        try {
+            // Access the DatabaseProvider from DI if available
+            val databaseProvider: DatabaseProvider by dependencies
+            databaseProvider.close()
+            logger.info("Database connection closed through provider")
+        } catch (e: Exception) {
+            // Database provider may not be registered in some test scenarios
+            logger.debug("Database provider not available for shutdown: ${e.message}")
         }
         
         logger.info("Application shutdown complete")

@@ -12,16 +12,12 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.LoggerFactory
 
-// Table imports for schema creation
-import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
-import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
-import io.spiralhouse.cycletime.infrastructure.database.IssueDependenciesTable
-import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
-import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
+// Table registry for centralized table management
+import io.spiralhouse.cycletime.infrastructure.database.TableRegistry
 
 class DatabaseConfig(
-    private val jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE;LOCK_TIMEOUT=5000",
-    private val driver: String = "org.h2.Driver",
+    val jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE;LOCK_TIMEOUT=5000",
+    val driver: String = "org.h2.Driver",
     /**
      * Maximum number of connections in the HikariCP connection pool.
      * 
@@ -53,7 +49,7 @@ class DatabaseConfig(
      * 
      * Current default (10) is suitable for development and small deployments.
      */
-    private val maxPoolSize: Int = 10,
+    val maxPoolSize: Int = 10,
     /**
      * Minimum number of connections in the HikariCP connection pool.
      * 
@@ -62,8 +58,8 @@ class DatabaseConfig(
      * - For production, set to expected baseline load (typically 20-30% of maxPoolSize)
      * - H2 embedded: Can be as low as 1-2 since there's no network overhead
      */
-    private val minPoolSize: Int = 2,
-    private val enableLogging: Boolean = false
+    val minPoolSize: Int = 2,
+    val enableLogging: Boolean = false
 ) {
     private val logger = LoggerFactory.getLogger(DatabaseConfig::class.java)
     private lateinit var dataSource: HikariDataSource
@@ -110,14 +106,14 @@ class DatabaseConfig(
                 }
 
                 try {
+                    // Validate registry first
+                    TableRegistry.validate()
+
                     // Use createMissingTablesAndColumns to avoid conflicts during tests
                     // This gracefully handles existing tables and indexes
+                    // Tables are created in dependency order from the registry
                     SchemaUtils.createMissingTablesAndColumns(
-                        ProjectsTable,
-                        IssuesTable,
-                        IssueDependenciesTable,
-                        IssueLabelsTable,
-                        SessionStatesTable
+                        *TableRegistry.ALL_TABLES.toTypedArray()
                     )
 
                     // Configure foreign keys based on database type
@@ -133,10 +129,7 @@ class DatabaseConfig(
                         e,
                         "Failed to create database schema",
                         mapOf(
-                            "tables" to listOf(
-                                "ProjectsTable", "IssuesTable", "IssueDependenciesTable",
-                                "IssueLabelsTable", "SessionStatesTable"
-                            ),
+                            "tables" to TableRegistry.ALL_TABLES.map { it.tableName },
                             "jdbcUrl" to jdbcUrl
                         )
                     )
@@ -257,111 +250,3 @@ class DatabaseConfig(
         newSuspendedTransaction(Dispatchers.IO) { block() }
 }
 
-// Singleton database instance for the application
-// TODO(SPI-627): @Synchronized blocks are temporary fix for race conditions but cause issues with
-//                coroutine tests under high concurrency (blocks threads instead of suspending).
-//                Refactor to use Ktor DI for proper dependency injection pattern, eliminating
-//                singleton pattern entirely.
-//
-// IMPORTANT: This singleton pattern causes issues with parallel test execution in CI.
-// When one test suite calls reset(), it closes the HikariDataSource for ALL test suites.
-// Tests currently rely on JVM termination for cleanup rather than explicit reset() calls.
-// Future refactoring should provide test-suite-isolated database instances.
-object DatabaseFactory {
-    @Volatile
-    private var database: Database? = null
-    @Volatile
-    private var config: DatabaseConfig? = null
-
-    // Use ReentrantLock for better control and debugging capabilities
-    private val initLock = java.util.concurrent.locks.ReentrantLock()
-    private val logger = org.slf4j.LoggerFactory.getLogger(DatabaseFactory::class.java)
-
-    /**
-     * Initialize the database connection. This method is idempotent and thread-safe.
-     *
-     * If already initialized, this is a no-op unless forceReinit is true.
-     * Under high concurrency, only one thread will perform initialization while others wait.
-     */
-    fun init(
-        jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE;LOCK_TIMEOUT=5000",
-        driver: String = "org.h2.Driver",
-        maxPoolSize: Int = 10,
-        minPoolSize: Int = 2,
-        enableLogging: Boolean = false,
-        forceReinit: Boolean = false
-    ) {
-        // Fast path: already initialized (volatile read)
-        if (!forceReinit && database != null) {
-            logger.trace("Database already initialized, skipping init")
-            return
-        }
-
-        // Slow path: acquire lock for initialization
-        initLock.lock()
-        try {
-            // Double-check within lock (another thread might have initialized)
-            if (!forceReinit && database != null) {
-                logger.trace("Database initialized by another thread during wait")
-                return
-            }
-
-            // Perform actual initialization
-            logger.debug("Initializing database with URL: $jdbcUrl")
-
-            // Close existing connections if force reinit
-            if (forceReinit && config != null) {
-                logger.info("Force re-initialization requested, closing existing connections")
-                config?.close()
-            }
-
-            config = DatabaseConfig(jdbcUrl, driver, maxPoolSize, minPoolSize, enableLogging)
-            database = config!!.connect()
-
-            logger.info("Database initialization completed successfully")
-        } finally {
-            initLock.unlock()
-        }
-    }
-
-    /**
-     * Get the database instance. Throws if not initialized.
-     */
-    fun getInstance(): Database {
-        // Volatile read ensures visibility
-        return database ?: throw IllegalStateException(
-            "Database not initialized. Call DatabaseFactory.init() first."
-        )
-    }
-
-    /**
-     * Close database connections and reset to uninitialized state.
-     */
-    fun close() {
-        initLock.lock()
-        try {
-            config?.close()
-            database = null
-            config = null
-            logger.info("Database connections closed and factory reset")
-        } finally {
-            initLock.unlock()
-        }
-    }
-
-    /**
-     * Reset the factory to allow re-initialization.
-     * Alias for close() for backward compatibility.
-     */
-    fun reset() {
-        close()
-    }
-
-    /**
-     * Check if database is currently initialized.
-     * Useful for conditional initialization in tests.
-     */
-    fun isInitialized(): Boolean {
-        return database != null
-    }
-}
