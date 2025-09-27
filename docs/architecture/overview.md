@@ -16,7 +16,7 @@ CycleTime (Project Orchestration Framework) implements a **simplified data and
 context provider architecture** for Claude Code project management. The system
 enhances Claude Code's existing capabilities by providing structured project
 data, dependency tracking, and cross-session continuity through embedded
-database (currently SQLite, migrating to H2 in SPI-439) and MCP Resource integration.
+database (H2) and MCP Resource integration.
 
 ### Architectural Principles
 
@@ -28,7 +28,7 @@ database (currently SQLite, migrating to H2 in SPI-439) and MCP Resource integra
 
 **Embedded-First Architecture**
 
-- Embedded database as default provider for offline and concurrent operation (currently SQLite, H2 planned)
+- Embedded H2 database as default provider for offline and concurrent operation
 - No external dependencies required for core functionality
 - Optimized for JVM integration with Exposed ORM and connection pooling
 
@@ -84,7 +84,7 @@ class SqliteProjectRepository(  // Current implementation
     private val database: Database,
     private val timeProvider: TimeProvider
 ) : ProjectRepository {
-    // SQLite implementation with Exposed ORM
+    // H2 implementation with Exposed ORM
     // TODO: Migrate to H2ProjectRepository in SPI-439
 }
 
@@ -262,7 +262,7 @@ enum class IssueType {
 
 | Provider            | Status   | Features                                                     | Primary Use Case                                     |
 | ------------------- | -------- | ------------------------------------------------------------ | ---------------------------------------------------- |
-| **SQLite (Current)** | ✅ MVP   | Embedded database, basic CRUD operations                    | Current implementation, stable and proven |
+| **H2 Database** | ✅ MVP   | Embedded database, basic CRUD operations                    | Current implementation, stable and proven |
 | **H2 (Planned)**    | 🚧 SPI-439 | High-performance CRUD, advanced queries, concurrent access  | Future migration target for better JVM integration |
 | **Linear**          | 🔄 V2.0  | Linear API integration, team collaboration                   | Professional development, team coordination          |
 | **GitHub Issues**   | 🔄 V3.0+ | Repository integration, basic workflows                      | OSS projects, GitHub-centric development             |
@@ -290,7 +290,7 @@ enum class IssueType {
 
 ## Data Models and Database Design
 
-### Database Schema (SQLite Current, H2 Future)
+### Database Schema (H2)
 
 The embedded provider uses a database schema designed for optimal
 JVM performance, native Exposed ORM integration, and easy migration to cloud providers:
@@ -715,7 +715,7 @@ suspend fun addDependency(blockerId: String, blockedId: String)
 
 ### 5. Provider Storage Layer
 
-**Purpose**: Simple storage abstraction currently using SQLite, expanding
+**Purpose**: Simple storage abstraction using H2, expanding
 incrementally.
 
 **Key Responsibilities:**
@@ -723,7 +723,7 @@ incrementally.
 - Basic CRUD operations for issues and projects
 - Simple data export/import for provider switching
 - No complex abstraction until multiple providers exist
-- Focus on SQLite stability, then H2 migration in SPI-439
+- Focus on H2 stability and optimization
 
 **Provider Factory Pattern:**
 
@@ -1137,14 +1137,13 @@ provider integration.
 
 ### Embedded Database Strategy
 
-**Current**: Use embedded SQLite database as the default issue tracking
-**Future**: Migrate to H2 database (SPI-439) for enhanced JVM integration
+**Current**: Use embedded H2 database as the default issue tracking
 provider for the Kotlin/JVM implementation.
 
 **Rationale**:
 
 - Zero external dependencies for immediate productivity
-- Better JVM integration and potential performance improvements over SQLite
+- Optimal JVM integration and high performance for analytical queries
 - Native Exposed ORM integration for type-safe database operations
 - Excellent concurrent access support with connection pooling
 - Complete offline operation capability

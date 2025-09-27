@@ -9,6 +9,14 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.spiralhouse.cycletime.api.dto.ErrorResponse
 import io.spiralhouse.cycletime.application.exceptions.ProjectNotFoundException
+import io.spiralhouse.cycletime.application.exceptions.IssueNotFoundException
+import io.spiralhouse.cycletime.application.exceptions.WorkflowNotFoundException
+import io.spiralhouse.cycletime.application.exceptions.SessionNotFoundException
+import io.spiralhouse.cycletime.application.exceptions.ValidationException
+import io.spiralhouse.cycletime.application.exceptions.HierarchyViolationException
+import io.spiralhouse.cycletime.application.exceptions.BusinessRuleViolationException
+import io.spiralhouse.cycletime.application.exceptions.InvalidStatusTransitionException
+import io.spiralhouse.cycletime.application.exceptions.CircularDependencyException
 import io.spiralhouse.cycletime.domain.exceptions.DomainException
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.infrastructure.logging.ExceptionLogger
@@ -17,15 +25,23 @@ import org.slf4j.LoggerFactory
 
 /**
  * Centralized error handling middleware for REST API.
- * 
+ *
  * This handler intercepts exceptions thrown during request processing and
  * converts them into appropriate HTTP responses with structured error messages.
- * 
+ *
  * Exception mapping:
  * - [SerializationException] -> 400 Bad Request
- * - [DomainException] -> 400 Bad Request  
+ * - [ValidationException] -> 400 Bad Request
+ * - [HierarchyViolationException] -> 400 Bad Request
+ * - [BusinessRuleViolationException] -> 400 Bad Request
+ * - [CircularDependencyException] -> 400 Bad Request
+ * - [DomainException] -> 400 Bad Request
  * - [IllegalArgumentException] -> 400 Bad Request
+ * - [InvalidStatusTransitionException] -> 422 Unprocessable Entity
  * - [ProjectNotFoundException] -> 404 Not Found
+ * - [IssueNotFoundException] -> 404 Not Found
+ * - [WorkflowNotFoundException] -> 404 Not Found
+ * - [SessionNotFoundException] -> 404 Not Found
  * - [NotFoundException] -> 404 Not Found
  * - Other exceptions -> 500 Internal Server Error
  */
@@ -113,7 +129,106 @@ class ErrorHandler {
                         )
                     )
                 }
-                
+
+                // Application-specific Not Found exceptions (404)
+                exception<IssueNotFoundException> { call, cause ->
+                    logError(cause, call)
+                    call.respond(
+                        HttpStatusCode.NotFound,
+                        ErrorResponse(
+                            error = "Issue not found",
+                            details = cause.message,
+                            timestamp = timeProvider.now().toString()
+                        )
+                    )
+                }
+
+                exception<WorkflowNotFoundException> { call, cause ->
+                    logError(cause, call)
+                    call.respond(
+                        HttpStatusCode.NotFound,
+                        ErrorResponse(
+                            error = "Workflow not found",
+                            details = cause.message,
+                            timestamp = timeProvider.now().toString()
+                        )
+                    )
+                }
+
+                exception<SessionNotFoundException> { call, cause ->
+                    logError(cause, call)
+                    call.respond(
+                        HttpStatusCode.NotFound,
+                        ErrorResponse(
+                            error = "Session not found",
+                            details = cause.message,
+                            timestamp = timeProvider.now().toString()
+                        )
+                    )
+                }
+
+                // Application-specific Validation exceptions (400)
+                exception<ValidationException> { call, cause ->
+                    logError(cause, call)
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponse(
+                            error = "Validation error",
+                            details = cause.message,
+                            timestamp = timeProvider.now().toString()
+                        )
+                    )
+                }
+
+                exception<HierarchyViolationException> { call, cause ->
+                    logError(cause, call)
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponse(
+                            error = "Hierarchy violation",
+                            details = cause.message,
+                            timestamp = timeProvider.now().toString()
+                        )
+                    )
+                }
+
+                exception<BusinessRuleViolationException> { call, cause ->
+                    logError(cause, call)
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponse(
+                            error = "Business rule violation",
+                            details = cause.message,
+                            timestamp = timeProvider.now().toString()
+                        )
+                    )
+                }
+
+                exception<CircularDependencyException> { call, cause ->
+                    logError(cause, call)
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponse(
+                            error = "Circular dependency detected",
+                            details = cause.message,
+                            timestamp = timeProvider.now().toString()
+                        )
+                    )
+                }
+
+                // Application-specific Status Transition exception (422)
+                exception<InvalidStatusTransitionException> { call, cause ->
+                    logError(cause, call)
+                    call.respond(
+                        HttpStatusCode.UnprocessableEntity,
+                        ErrorResponse(
+                            error = "Invalid status transition",
+                            details = cause.message,
+                            timestamp = timeProvider.now().toString()
+                        )
+                    )
+                }
+
                 exception<Throwable> { call, cause ->
                     // Check if this is a JSON parsing exception based on class name or message
                     val isJsonError = cause::class.simpleName?.contains("Json", ignoreCase = true) == true ||

@@ -18,6 +18,8 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectReposit
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionRepository
 import io.ktor.server.plugins.di.*
 import io.spiralhouse.cycletime.module
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper.configureTestApplication
 
 /**
  * Integration tests for the dependency injection migration from Koin to Ktor native DI.
@@ -29,13 +31,23 @@ import io.spiralhouse.cycletime.module
  */
 class DependencyInjectionIntegrationTest : StringSpec({
 
+    beforeSpec {
+        // Initialize test database using helper to prevent race conditions
+        DatabaseTestHelper.initTestDatabase(
+            testName = "di_test",
+            enableLogging = false
+        )
+    }
+
+    afterSpec {
+        // Clean up test database
+        DatabaseTestHelper.cleanupTestDatabase()
+    }
+
     "should initialize Ktor native DI successfully" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "di_test")
 
             // Test that the application module loads without throwing exceptions
             // This verifies that all DI bindings are correctly configured
@@ -44,11 +56,8 @@ class DependencyInjectionIntegrationTest : StringSpec({
 
     "should resolve TimeProvider as SystemTimeProvider singleton" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "di_test")
 
             client.get("/health")  // Trigger application initialization
 
@@ -65,11 +74,8 @@ class DependencyInjectionIntegrationTest : StringSpec({
 
     "should resolve repository dependencies correctly" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "di_test")
 
             client.get("/health")  // Trigger application initialization
 
@@ -91,11 +97,8 @@ class DependencyInjectionIntegrationTest : StringSpec({
 
     "should maintain singleton instances for repositories" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "di_test")
 
             client.get("/health")  // Trigger application initialization
 
@@ -116,11 +119,8 @@ class DependencyInjectionIntegrationTest : StringSpec({
 
     "should start application successfully and respond to health check" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "di_test")
 
             val response = client.get("/health")
 
@@ -137,11 +137,8 @@ class DependencyInjectionIntegrationTest : StringSpec({
 
     "should handle application lifecycle correctly" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "di_test")
 
             // Verify the application can start and stop without issues
             // This tests the complete lifecycle including database initialization

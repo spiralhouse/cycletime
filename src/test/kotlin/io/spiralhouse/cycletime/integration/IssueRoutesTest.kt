@@ -8,24 +8,28 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.ktor.client.call.*
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.di.*
 import io.ktor.server.testing.*
+import io.ktor.server.application.*
 import io.spiralhouse.cycletime.application.commands.*
 import io.spiralhouse.cycletime.application.dto.IssueDto
 import io.spiralhouse.cycletime.application.dto.IssueListDto
 import io.spiralhouse.cycletime.application.dto.IssueHierarchyDto
 import io.spiralhouse.cycletime.application.services.IssueApplicationService
 import io.spiralhouse.cycletime.application.services.ProjectApplicationService
-import io.spiralhouse.cycletime.infrastructure.di.modules.test.configureForTesting
 import io.spiralhouse.cycletime.api.dto.*
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.*
-import io.spiralhouse.cycletime.infrastructure.database.DatabaseFactory
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper.configureTestApplication
+import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseNamingStrategy
+import io.spiralhouse.cycletime.api.configuration.ApiConfiguration
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -87,9 +91,26 @@ class IssueRoutesTest : StringSpec({
      */
     fun configuredTestApplication(test: suspend ApplicationTestBuilder.() -> Unit) {
         testApplication {
+            // Use non-deprecated method with TimeProvider injection
+            configureTestApplication(
+                strategy = TestDatabaseNamingStrategy.UUID,
+                enableLogging = false,
+                timeProvider = mockTimeProvider  // Pass the mock TimeProvider!
+            )
+
+            // Configure API routes after DI setup
             application {
-                val database = DatabaseFactory.getInstance()
-                configureForTesting(database, mockTimeProvider)
+                // Install ContentNegotiation for JSON handling
+                install(ContentNegotiation) {
+                    json(Json {
+                        prettyPrint = true
+                        isLenient = true
+                        ignoreUnknownKeys = true
+                    })
+                }
+
+                val timeProvider: io.spiralhouse.cycletime.domain.services.TimeProvider by dependencies
+                ApiConfiguration.configure(this, timeProvider)
             }
 
             test()
@@ -100,7 +121,7 @@ class IssueRoutesTest : StringSpec({
      * Create a JSON-enabled HTTP client for test requests
      */
     fun ApplicationTestBuilder.createJsonClient() = createClient {
-        install(ContentNegotiation) {
+        install(ClientContentNegotiation) {
             json(Json {
                 prettyPrint = true
                 isLenient = true
@@ -109,20 +130,23 @@ class IssueRoutesTest : StringSpec({
         }
     }
 
-    beforeEach {
-        mockTimeProvider = MockTimeProvider()
-        mockTimeProvider.setTime(Instant.parse("2025-01-15T10:00:00Z"))
-
-        // Initialize H2 in-memory database for each test
-        DatabaseFactory.init(
-            jdbcUrl = "jdbc:h2:mem:issue_routes_test_${System.nanoTime()};DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
-            driver = "org.h2.Driver",
+    beforeSpec {
+        // Initialize test database using helper to prevent race conditions
+        DatabaseTestHelper.initTestDatabase(
+            testName = "issue_routes_test",
             enableLogging = false
         )
     }
 
-    afterEach {
-        DatabaseFactory.close()
+    afterSpec {
+        // Clean up test database
+        DatabaseTestHelper.cleanupTestDatabase()
+    }
+
+    beforeEach {
+        mockTimeProvider = MockTimeProvider()
+        mockTimeProvider.setTime(Instant.parse("2025-01-15T10:00:00Z"))
+        // Database cleanup is handled by DatabaseTestHelper
     }
 
     // ================================================================================
