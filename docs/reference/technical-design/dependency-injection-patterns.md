@@ -49,8 +49,8 @@ dependencies {
     // Native DI framework
     implementation("io.ktor:ktor-server-di:3.2.3")
     
-    // Database - SQLite implementation (H2 migration planned in SPI-439)
-    implementation("org.xerial:sqlite-jdbc:3.46.1.3")
+    // Database - H2 implementation
+    implementation("com.h2database:h2:2.2.224")
     implementation("com.zaxxer:HikariCP:6.2.1")
     implementation("org.jetbrains.exposed:exposed-core:0.58.0")
     implementation("org.jetbrains.exposed:exposed-dao:0.58.0")
@@ -66,13 +66,13 @@ dependencies {
 ### Current DI Configuration (Implemented in SPI-458)
 
 ```kotlin
-// src/main/kotlin/io/spiralhouse/jcvd/Application.kt
+// src/main/kotlin/io/spiralhouse/cycletime/Application.kt
 
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.*
-import io.spiralhouse.jcvd.domain.services.*
-import io.spiralhouse.jcvd.domain.repositories.*
-import io.spiralhouse.jcvd.infrastructure.persistence.*
+import io.spiralhouse.cycletime.domain.services.*
+import io.spiralhouse.cycletime.domain.repositories.*
+import io.spiralhouse.cycletime.infrastructure.persistence.*
 
 fun Application.configureDependencies() {
     // Using Ktor's native DI plugin

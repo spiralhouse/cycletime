@@ -80,12 +80,11 @@ class ProjectApplicationService(
 }
 
 // Infrastructure Layer - Technical implementations
-class SqliteProjectRepository(  // Current implementation
+class H2ProjectRepository(
     private val database: Database,
     private val timeProvider: TimeProvider
 ) : ProjectRepository {
     // H2 implementation with Exposed ORM
-    // TODO: Migrate to H2ProjectRepository in SPI-439
 }
 
 // MCP Layer - Claude Code integration
@@ -262,8 +261,7 @@ enum class IssueType {
 
 | Provider            | Status   | Features                                                     | Primary Use Case                                     |
 | ------------------- | -------- | ------------------------------------------------------------ | ---------------------------------------------------- |
-| **H2 Database** | ✅ MVP   | Embedded database, basic CRUD operations                    | Current implementation, stable and proven |
-| **H2 (Planned)**    | 🚧 SPI-439 | High-performance CRUD, advanced queries, concurrent access  | Future migration target for better JVM integration |
+| **H2 Database** | ✅ MVP   | Embedded database, high-performance CRUD, concurrent access | Current implementation, stable and proven |
 | **Linear**          | 🔄 V2.0  | Linear API integration, team collaboration                   | Professional development, team coordination          |
 | **GitHub Issues**   | 🔄 V3.0+ | Repository integration, basic workflows                      | OSS projects, GitHub-centric development             |
 | **Jira**            | 🔄 V3.0+ | Enterprise workflows, custom fields                         | Enterprise development, complex organizations        |
@@ -531,9 +529,9 @@ external system integrations.
 
 **Key Components:**
 
-- **Repository Implementations**: `SqliteProjectRepository`,
-  `SqliteIssueRepository` with Exposed ORM integration (migrating to H2 in SPI-439)
-- **Unit of Work Implementation**: `SqliteUnitOfWork` for transaction management
+- **Repository Implementations**: `H2ProjectRepository`,
+  `H2IssueRepository` with Exposed ORM integration
+- **Unit of Work Implementation**: `H2UnitOfWork` for transaction management
 - **Database Migrations**: `MigrationRunner` for schema evolution
 - **External Integrations**: Linear API, GitHub API adapters
 
@@ -542,9 +540,9 @@ external system integrations.
 ```kotlin
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import io.spiralhouse.jcvd.infrastructure.database.Projects
+import io.spiralhouse.cycletime.infrastructure.database.Projects
 
-class SqliteProjectRepository(  // TODO: Migrate to H2ProjectRepository in SPI-439
+class H2ProjectRepository(
     private val database: Database,
     private val timeProvider: TimeProvider
 ) : ProjectRepository {
@@ -609,9 +607,9 @@ Protocol.
 class ProjectResource(
     private val projectService: ProjectApplicationService
 ) : MCPResource {
-    
+
     override fun canHandle(uri: String): Boolean {
-        return uri.startsWith("jcvd://project/")
+        return uri.startsWith("cycletime://project/")
     }
 
     override suspend fun read(uri: String): ResourceContent {
@@ -642,7 +640,7 @@ class ProjectResource(
 
         return projects.map { project ->
             ResourceDescriptor(
-                uri = "jcvd://project/${project.id.value}",
+                uri = "cycletime://project/${project.id.value}",
                 name = project.name,
                 description = project.description,
                 mimeType = "application/json"
@@ -687,15 +685,15 @@ provide project context.
 
 ```kotlin
 // Project context for Claude Code analysis
-@MCPResource("jcvd://project/{projectId}/context")
+@MCPResource("cycletime://project/{projectId}/context")
 suspend fun getProjectContext(projectId: String): ProjectContext
 
 // Unblocked tasks for task identification
-@MCPResource("jcvd://project/{projectId}/unblocked-tasks")
+@MCPResource("cycletime://project/{projectId}/unblocked-tasks")
 suspend fun getUnblockedTasks(projectId: String): List<Issue>
 
 // Dependency graph for relationship understanding
-@MCPResource("jcvd://project/{projectId}/dependencies")
+@MCPResource("cycletime://project/{projectId}/dependencies")
 suspend fun getDependencyGraph(projectId: String): DependencyGraph
 ```
 
@@ -731,8 +729,7 @@ incrementally.
 object ProviderFactory {
     suspend fun createProvider(config: ProviderConfig): IssueProvider {
         return when (config.type) {
-            "sqlite" -> SqliteProvider(config.sqliteConfig)  // Current default
-            "h2" -> H2Provider(config.h2Config)  // Future option in SPI-439
+            "h2" -> H2Provider(config.h2Config)  // Current default
             "linear" -> LinearProvider(config.linearConfig)
             "github" -> GitHubProvider(config.githubConfig)
             "jira" -> JiraProvider(config.jiraConfig)
@@ -923,7 +920,7 @@ export class SessionValidator {
 **Repository Implementation:**
 
 ```kotlin
-class SqliteSessionRepository(  // Current implementation
+class H2SessionRepository(
     private val database: Database,
     private val timeProvider: TimeProvider
 ) : SessionRepository {
