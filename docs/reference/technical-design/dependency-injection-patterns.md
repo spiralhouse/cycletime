@@ -1162,6 +1162,124 @@ dependencies {
 - Changed from `single { }` to `provide<T> { }`
 - Property delegation: `by inject()` → `by application.dependencies`
 
+## TimeProvider Injection Pattern
+
+### Overview
+TimeProvider is a critical cross-cutting concern that enables testable time-dependent logic throughout the application. By injecting time as a dependency, we can control time in tests and eliminate flaky time-dependent test failures.
+
+### Implementation
+
+```kotlin
+// Domain interface
+interface TimeProvider {
+    fun now(): Instant
+}
+
+// Production implementation using kotlinx.datetime
+class SystemTimeProvider : TimeProvider {
+    override fun now(): Instant = Clock.System.now()
+}
+
+// Test implementation with time control
+class MockTimeProvider : TimeProvider {
+    private var currentTime: Instant = Clock.System.now()
+
+    override fun now(): Instant = currentTime
+
+    fun setTime(time: Instant) {
+        currentTime = time
+    }
+
+    fun advance(duration: Duration) {
+        currentTime = currentTime.plus(duration)
+    }
+}
+```
+
+### Dependency Registration
+
+```kotlin
+// In Application.kt configureDependencies()
+dependencies {
+    // Production uses system time
+    provide<TimeProvider> { SystemTimeProvider() }
+}
+```
+
+### Usage in Services
+
+```kotlin
+// Constructor injection for services
+class SessionApplicationService(
+    private val sessionRepository: SessionRepository,
+    private val unitOfWork: UnitOfWork,
+    private val timeProvider: TimeProvider  // Injected time
+) {
+    fun createSession(): Session {
+        val now = timeProvider.now()  // Use injected time
+        // ... session creation logic
+    }
+}
+
+// Constructor injection with default for backward compatibility
+class ServerState(
+    private val timeProvider: TimeProvider = SystemTimeProvider()
+) {
+    fun updateStatus(status: ServerStatus) {
+        when (status) {
+            ServerStatus.RUNNING -> startTime.set(timeProvider.now())
+            ServerStatus.STOPPED -> stopTime.set(timeProvider.now())
+        }
+    }
+}
+```
+
+### Test Usage
+
+```kotlin
+class SessionApplicationServiceTest : StringSpec({
+    lateinit var mockTimeProvider: MockTimeProvider
+    lateinit var service: SessionApplicationService
+
+    beforeEach {
+        mockTimeProvider = MockTimeProvider()
+        service = SessionApplicationService(
+            sessionRepository = mockSessionRepository,
+            unitOfWork = mockUnitOfWork,
+            timeProvider = mockTimeProvider  // Inject mock time
+        )
+    }
+
+    "should expire session after timeout" {
+        // Set initial time
+        mockTimeProvider.setTime(Instant.parse("2024-01-01T00:00:00Z"))
+        val session = service.createSession()
+
+        // Advance time instantly (no real delay)
+        mockTimeProvider.advance(Duration.ofHours(1))
+
+        // Verify expiration
+        service.isExpired(session) shouldBe true
+    }
+})
+```
+
+### Key Benefits
+
+1. **Testability**: Complete control over time in tests
+2. **Speed**: Tests run instantly without real-time delays
+3. **Reliability**: No flaky time-dependent test failures
+4. **Consistency**: Deterministic test results every run
+5. **Maintainability**: Clear separation of concerns
+
+### Best Practices
+
+- ✅ **Always inject TimeProvider** for time-dependent logic
+- ✅ **Use constructor injection** with optional default for backward compatibility
+- ✅ **Create MockTimeProvider once** per test and reuse
+- ✅ **Avoid Instant.now()** in production code - use timeProvider.now()
+- ✅ **Use kotlinx.datetime** consistently (Clock.System.now() not java.time)
+
 ## Common Pitfalls to Avoid
 
 ### ❌ DON'T Create Custom DI Containers
