@@ -134,6 +134,12 @@ After migration, verify your tests:
 - Ensure `configureTestApplication()` is called instead of direct `module()`
 - Check that `beforeSpec` calls `initTestDatabase()`
 
+### "Table not found" SQL Exceptions
+- Verify the table is registered in `TableRegistry.ALL_TABLES` in `Tables.kt`
+- Check that the table import is present in the file
+- Ensure proper dependency ordering (tables with foreign keys come after their dependencies)
+- The TableRegistry pattern prevents this by centralizing all table registration
+
 ### Tests Interfering with Each Other
 - Use unique test names in `initTestDatabase(testName = "unique_name")`
 - Verify `afterSpec` calls `cleanupTestDatabase()`
@@ -141,6 +147,55 @@ After migration, verify your tests:
 ### Slow Test Startup
 - The lock-based initialization adds minimal overhead (<1ms)
 - If tests are slow, check for other bottlenecks
+
+## Adding New Database Tables
+
+When adding a new database table to the system, follow the TableRegistry pattern:
+
+### Step 1: Define the Table
+Create your table object in `src/main/kotlin/io/spiralhouse/cycletime/infrastructure/database/Tables.kt`:
+
+```kotlin
+object MyNewTable : IdTable<String>("my_new_table") {
+    override val id: Column<EntityID<String>> = varchar("id", 100).entityId()
+    val name = varchar("name", 255)
+    // ... other columns
+
+    override val primaryKey = PrimaryKey(id)
+}
+```
+
+### Step 2: Register in TableRegistry
+Add your table to `TableRegistry.ALL_TABLES` in the correct position based on dependencies:
+
+```kotlin
+object TableRegistry {
+    val ALL_TABLES = listOf(
+        // Independent tables (no foreign keys)
+        ProjectsTable,
+        WorkflowsTable,
+        MyNewTable,  // Add here if no foreign keys
+
+        // Tables with dependencies
+        IssuesTable,  // References ProjectsTable
+        // ... etc
+    )
+}
+```
+
+### Step 3: That's It!
+The TableRegistry pattern automatically ensures:
+- Your table is created in DatabaseConfig
+- Your table is available in all tests
+- Compile-time validation prevents omissions
+- Foreign key dependencies are respected
+
+### Benefits of TableRegistry
+1. **Single Source of Truth**: All tables registered in one place
+2. **Compile-Time Safety**: Can't forget to register a table
+3. **Dependency Order**: Tables created in correct order for foreign keys
+4. **Test Reliability**: All tests automatically include all tables
+5. **Migration Ready**: Simplifies future database migrations
 
 ## Future Plans
 
