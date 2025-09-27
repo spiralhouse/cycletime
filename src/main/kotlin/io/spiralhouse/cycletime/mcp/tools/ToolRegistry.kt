@@ -1,6 +1,7 @@
 package io.spiralhouse.cycletime.mcp.tools
 
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcError
+import io.spiralhouse.cycletime.mcp.protocol.JsonRpcErrorCodes
 import io.spiralhouse.cycletime.mcp.tools.exceptions.*
 import io.spiralhouse.cycletime.mcp.tools.validation.JsonSchemaValidator
 import kotlinx.coroutines.TimeoutCancellationException
@@ -246,7 +247,7 @@ open class ToolRegistry(
         // Check if tool exists and invoke based on its handler type
         val tool = tools[toolName] ?: return Result.failure(
             JsonRpcException(
-                code = -32001, // Custom error code for tool not found
+                code = -32601, // Method not found
                 message = "Tool not found: $toolName"
             )
         )
@@ -287,9 +288,9 @@ open class ToolRegistry(
             onFailure = { error ->
                 Result.failure(
                     JsonRpcException(
-                        code = formatErrorForJsonRpc(error).code,
-                        message = formatErrorForJsonRpc(error).message,
-                        data = formatErrorForJsonRpc(error).data
+                        code = JsonRpcErrorCodes.INTERNAL_ERROR,
+                        message = error.message ?: "Tool execution failed",
+                        data = null
                     )
                 )
             }
@@ -304,11 +305,3 @@ open class ToolRegistry(
  */
 typealias DefaultToolRegistry = ToolRegistry
 
-/**
- * Exception for JSON-RPC errors.
- */
-class JsonRpcException(
-    val code: Int,
-    override val message: String,
-    val data: JsonObject? = null
-) : Exception(message)

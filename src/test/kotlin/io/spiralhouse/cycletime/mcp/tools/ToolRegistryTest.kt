@@ -42,12 +42,162 @@ import kotlin.time.Duration.Companion.seconds
  * TEMPORARILY DISABLED: Hotfix for compilation errors blocking CI build.
  * Need to implement missing pieces before re-enabling.
  */
-@Disabled("Temporarily disabled due to compilation errors - hotfix for CI")
 class ToolRegistryTest : DescribeSpec({
-    /*
-    TEMPORARILY COMMENTED OUT FOR COMPILATION HOTFIX
-    This entire test class is commented out to allow the build to succeed.
-    Once the missing implementation pieces are added, uncomment and run tests.
+
+    // Test helper functions for creating example tools
+    fun createMathAddTool(): Tool {
+        return Tool(
+            name = "math.add",
+            description = "Adds two numbers",
+            parametersSchema = buildJsonObject {
+                put("type", "object")
+                putJsonObject("properties") {
+                    putJsonObject("a") {
+                        put("type", "number")
+                        put("description", "First number")
+                    }
+                    putJsonObject("b") {
+                        put("type", "number")
+                        put("description", "Second number")
+                    }
+                }
+                putJsonArray("required") {
+                    add("a")
+                    add("b")
+                }
+            },
+            handler = { params ->
+                val aElement = params.jsonObject["a"]!!.jsonPrimitive
+                val bElement = params.jsonObject["b"]!!.jsonPrimitive
+
+                // Try to parse as int first to preserve integer type
+                val a = aElement.intOrNull ?: aElement.double
+                val b = bElement.intOrNull ?: bElement.double
+
+                val result = a.toDouble() + b.toDouble()
+
+                // Return as int if result is a whole number, otherwise as double
+                if (result == result.toInt().toDouble()) {
+                    Result.success(JsonPrimitive(result.toInt()))
+                } else {
+                    Result.success(JsonPrimitive(result))
+                }
+            }
+        )
+    }
+
+    fun createProjectCreateTool(): Tool {
+        return Tool(
+            name = "project.create",
+            description = "Creates a new project",
+            parametersSchema = buildJsonObject {
+                put("type", "object")
+                putJsonObject("properties") {
+                    putJsonObject("name") {
+                        put("type", "string")
+                        put("description", "Project name")
+                        put("minLength", 1)
+                    }
+                    putJsonObject("description") {
+                        put("type", "string")
+                        put("description", "Project description")
+                    }
+                }
+                putJsonArray("required") {
+                    add("name")
+                }
+            },
+            handler = { params ->
+                val name = params.jsonObject["name"]!!.jsonPrimitive.content
+                val description = params.jsonObject["description"]?.jsonPrimitive?.content ?: ""
+                Result.success(buildJsonObject {
+                    put("id", "proj_${System.currentTimeMillis()}")
+                    put("name", name)
+                    put("description", description)
+                    put("created", true)
+                })
+            }
+        )
+    }
+
+    fun createAsyncDelayTool(): Tool {
+        return Tool(
+            name = "async.delay",
+            description = "Delays execution for specified milliseconds",
+            parametersSchema = buildJsonObject {
+                put("type", "object")
+                putJsonObject("properties") {
+                    putJsonObject("milliseconds") {
+                        put("type", "number")
+                        put("description", "Delay in milliseconds")
+                        put("minimum", 0)
+                    }
+                }
+                putJsonArray("required") {
+                    add("milliseconds")
+                }
+            },
+            handler = ToolHandler.Async { params ->
+                val ms = params.jsonObject["milliseconds"]!!.jsonPrimitive.long
+                delay(ms)
+                Result.success(JsonPrimitive("delayed for ${ms}ms"))
+            }
+        )
+    }
+
+    fun createComplexValidationTool(): Tool {
+        return Tool(
+            name = "validation.complex",
+            description = "Tool with complex parameter validation",
+            parametersSchema = buildJsonObject {
+                put("type", "object")
+                putJsonObject("properties") {
+                    putJsonObject("name") {
+                        put("type", "string")
+                        put("minLength", 3)
+                        put("maxLength", 50)
+                    }
+                    putJsonObject("age") {
+                        put("type", "number")
+                        put("minimum", 0)
+                        put("maximum", 150)
+                    }
+                    putJsonObject("active") {
+                        put("type", "boolean")
+                    }
+                    putJsonObject("address") {
+                        put("type", "object")
+                        putJsonObject("properties") {
+                            putJsonObject("street") {
+                                put("type", "string")
+                            }
+                            putJsonObject("city") {
+                                put("type", "string")
+                            }
+                        }
+                        putJsonArray("required") {
+                            add("street")
+                            add("city")
+                        }
+                    }
+                    putJsonObject("tags") {
+                        put("type", "array")
+                        putJsonObject("items") {
+                            put("type", "string")
+                        }
+                    }
+                }
+                putJsonArray("required") {
+                    add("name")
+                    add("age")
+                    add("active")
+                }
+            },
+            handler = { params ->
+                Result.success(JsonPrimitive("validation passed"))
+            }
+        )
+    }
 
     describe("ToolRegistry") {
         lateinit var registry: DefaultToolRegistry
@@ -693,167 +843,9 @@ class ToolRegistryTest : DescribeSpec({
                 response.isFailure shouldBe true
                 
                 val error = response.exceptionOrNull()
-                error?.shouldBeInstanceOf<JsonRpcException>()
+                error.shouldBeInstanceOf<JsonRpcException>()
                 (error as JsonRpcException).code shouldBe -32601 // Method not found (tool not found)
             }
         }
     }
-})
-
-// Test helper functions for creating example tools
-
-fun createMathAddTool(): Tool {
-    return Tool(
-        name = "math.add",
-        description = "Adds two numbers",
-        parametersSchema = buildJsonObject {
-            put("type", "object")
-            putJsonObject("properties") {
-                putJsonObject("a") {
-                    put("type", "number")
-                    put("description", "First number")
-                }
-                putJsonObject("b") {
-                    put("type", "number")
-                    put("description", "Second number")
-                }
-            }
-            putJsonArray("required") {
-                add("a")
-                add("b")
-            }
-        },
-        handler = { params ->
-            val aElement = params.jsonObject["a"]!!.jsonPrimitive
-            val bElement = params.jsonObject["b"]!!.jsonPrimitive
-            
-            // Try to parse as int first to preserve integer type
-            val a = aElement.intOrNull ?: aElement.double
-            val b = bElement.intOrNull ?: bElement.double
-            
-            val result = a.toDouble() + b.toDouble()
-            
-            // Return as int if result is a whole number, otherwise as double
-            if (result == result.toInt().toDouble()) {
-                Result.success(JsonPrimitive(result.toInt()))
-            } else {
-                Result.success(JsonPrimitive(result))
-            }
-        }
-    )
-}
-
-fun createProjectCreateTool(): Tool {
-    return Tool(
-        name = "project.create",
-        description = "Creates a new project",
-        parametersSchema = buildJsonObject {
-            put("type", "object")
-            putJsonObject("properties") {
-                putJsonObject("name") {
-                    put("type", "string")
-                    put("description", "Project name")
-                    put("minLength", 1)
-                }
-                putJsonObject("description") {
-                    put("type", "string") 
-                    put("description", "Project description")
-                }
-            }
-            putJsonArray("required") {
-                add("name")
-            }
-        },
-        handler = { params ->
-            val name = params.jsonObject["name"]!!.jsonPrimitive.content
-            val description = params.jsonObject["description"]?.jsonPrimitive?.content ?: ""
-            Result.success(buildJsonObject {
-                put("id", "proj_${System.currentTimeMillis()}")
-                put("name", name)
-                put("description", description)
-                put("created", true)
-            })
-        }
-    )
-}
-
-fun createAsyncDelayTool(): Tool {
-    return Tool(
-        name = "async.delay",
-        description = "Delays execution for specified milliseconds",
-        parametersSchema = buildJsonObject {
-            put("type", "object")
-            putJsonObject("properties") {
-                putJsonObject("milliseconds") {
-                    put("type", "number")
-                    put("description", "Delay in milliseconds")
-                    put("minimum", 0)
-                }
-            }
-            putJsonArray("required") {
-                add("milliseconds")
-            }
-        },
-        handler = ToolHandler.Async { params ->
-            val ms = params.jsonObject["milliseconds"]!!.jsonPrimitive.long
-            delay(ms)
-            Result.success(JsonPrimitive("delayed for ${ms}ms"))
-        }
-    )
-}
-
-fun createComplexValidationTool(): Tool {
-    return Tool(
-        name = "validation.complex",
-        description = "Tool with complex parameter validation",
-        parametersSchema = buildJsonObject {
-            put("type", "object")
-            putJsonObject("properties") {
-                putJsonObject("name") {
-                    put("type", "string")
-                    put("minLength", 3)
-                    put("maxLength", 50)
-                }
-                putJsonObject("age") {
-                    put("type", "number")
-                    put("minimum", 0)
-                    put("maximum", 150)
-                }
-                putJsonObject("active") {
-                    put("type", "boolean")
-                }
-                putJsonObject("address") {
-                    put("type", "object")
-                    putJsonObject("properties") {
-                        putJsonObject("street") {
-                            put("type", "string")
-                        }
-                        putJsonObject("city") {
-                            put("type", "string")
-                        }
-                    }
-                    putJsonArray("required") {
-                        add("street")
-                        add("city")
-                    }
-                }
-                putJsonObject("tags") {
-                    put("type", "array")
-                    putJsonObject("items") {
-                        put("type", "string")
-                    }
-                }
-            }
-            putJsonArray("required") {
-                add("name")
-                add("age") 
-                add("active")
-            }
-        },
-        handler = { params ->
-            Result.success(JsonPrimitive("validation passed"))
-        }
-    )
-}
-    */ // End of temporarily commented out section
-})
+}})
