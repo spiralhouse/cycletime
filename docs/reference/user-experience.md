@@ -25,11 +25,11 @@ Users discover CycleTime through:
 - GitHub repository or documentation
 - Developer community recommendations
 
-Installation options (coming soon):
+Installation options:
 
-1. Via Claude Code: Browse MCP servers → Search "CycleTime" → Install
-2. Manual: npm install -g @jcvd/mcp-server (package in development)
-3. Docker: docker run -d jcvd/mcp-server (for advanced users)
+1. **Via Claude Code**: Browse MCP servers → Search "CycleTime" → Install
+2. **Manual Installation**: Build from source using Gradle
+3. **Docker**: docker run -d ghcr.io/spiralhouse/cycletime (for container deployment)
 
 ### First Launch Experience
 

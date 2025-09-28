@@ -11,8 +11,8 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/spiralhouse/jcvd.git
-cd jcvd
+git clone https://github.com/spiralhouse/cycletime.git
+cd cycletime
 
 # Make gradlew executable
 chmod +x gradlew
@@ -36,7 +36,7 @@ The fastest way to develop with instant feedback:
 
 # Features:
 # ✅ Automatic server restart on source changes
-# ✅ Separate development database (jcvd-dev.db) 
+# ✅ Separate development database (cycletime-dev.mv.db) 
 # ✅ Enhanced logging and debugging
 # ✅ Development-optimized JVM settings
 ```
@@ -107,7 +107,7 @@ For the best development experience, use multiple terminals:
 1. Import as Gradle project
 2. Enable continuous build: View → Tool Windows → Gradle → 🔄 button
 3. Set run configuration:
-   - Main class: `io.spiralhouse.jcvd.ApplicationKt`
+   - Main class: `io.spiralhouse.cycletime.ApplicationKt`
    - VM options: `-Dio.ktor.development=true`
    - Environment variables: `KTOR_DEVELOPMENT=true`
 

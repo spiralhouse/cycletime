@@ -284,7 +284,7 @@ const db = new Database(':memory:');
 db.exec('PRAGMA foreign_keys = ON');
 runMigrations(db);
 
-const repository = new SqliteIssueRepository(db);
+const repository = new H2IssueRepository(db);
 
 // Test operations
 const issue = Issue.create('Test', 'Description', 'Story');
@@ -309,8 +309,8 @@ expect(retrieved).not.toBeNull();
 The repository pattern makes it easy to migrate between storage backends:
 
 ```kotlin
-// Current: SQLite
-const repository = new SqliteIssueRepository(sqliteDb);
+// Current: H2
+const repository = new H2IssueRepository(h2Db);
 
 // Future: PostgreSQL
 const repository = new PostgresIssueRepository(pgClient);

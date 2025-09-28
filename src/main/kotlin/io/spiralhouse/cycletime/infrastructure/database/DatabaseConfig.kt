@@ -12,16 +12,12 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.LoggerFactory
 
-// Table imports for schema creation
-import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
-import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
-import io.spiralhouse.cycletime.infrastructure.database.IssueDependenciesTable
-import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
-import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
+// Table registry for centralized table management
+import io.spiralhouse.cycletime.infrastructure.database.TableRegistry
 
 class DatabaseConfig(
-    private val jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE;LOCK_TIMEOUT=5000",
-    private val driver: String = "org.h2.Driver",
+    val jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE;LOCK_TIMEOUT=5000",
+    val driver: String = "org.h2.Driver",
     /**
      * Maximum number of connections in the HikariCP connection pool.
      * 
@@ -53,7 +49,7 @@ class DatabaseConfig(
      * 
      * Current default (10) is suitable for development and small deployments.
      */
-    private val maxPoolSize: Int = 10,
+    val maxPoolSize: Int = 10,
     /**
      * Minimum number of connections in the HikariCP connection pool.
      * 
@@ -62,8 +58,8 @@ class DatabaseConfig(
      * - For production, set to expected baseline load (typically 20-30% of maxPoolSize)
      * - H2 embedded: Can be as low as 1-2 since there's no network overhead
      */
-    private val minPoolSize: Int = 2,
-    private val enableLogging: Boolean = false
+    val minPoolSize: Int = 2,
+    val enableLogging: Boolean = false
 ) {
     private val logger = LoggerFactory.getLogger(DatabaseConfig::class.java)
     private lateinit var dataSource: HikariDataSource
@@ -110,12 +106,14 @@ class DatabaseConfig(
                 }
 
                 try {
-                    SchemaUtils.create(
-                        ProjectsTable,
-                        IssuesTable,
-                        IssueDependenciesTable,
-                        IssueLabelsTable,
-                        SessionStatesTable
+                    // Validate registry first
+                    TableRegistry.validate()
+
+                    // Use createMissingTablesAndColumns to avoid conflicts during tests
+                    // This gracefully handles existing tables and indexes
+                    // Tables are created in dependency order from the registry
+                    SchemaUtils.createMissingTablesAndColumns(
+                        *TableRegistry.ALL_TABLES.toTypedArray()
                     )
 
                     // Configure foreign keys based on database type
@@ -131,10 +129,7 @@ class DatabaseConfig(
                         e,
                         "Failed to create database schema",
                         mapOf(
-                            "tables" to listOf(
-                                "ProjectsTable", "IssuesTable", "IssueDependenciesTable",
-                                "IssueLabelsTable", "SessionStatesTable"
-                            ),
+                            "tables" to TableRegistry.ALL_TABLES.map { it.tableName },
                             "jdbcUrl" to jdbcUrl
                         )
                     )
@@ -255,31 +250,3 @@ class DatabaseConfig(
         newSuspendedTransaction(Dispatchers.IO) { block() }
 }
 
-// Singleton database instance for the application
-object DatabaseFactory {
-    private var database: Database? = null
-    private var config: DatabaseConfig? = null
-
-    fun init(
-        jdbcUrl: String = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE;LOCK_TIMEOUT=5000",
-        driver: String = "org.h2.Driver",
-        maxPoolSize: Int = 10,
-        minPoolSize: Int = 2,
-        enableLogging: Boolean = false
-    ) {
-        if (database == null) {
-            config = DatabaseConfig(jdbcUrl, driver, maxPoolSize, minPoolSize, enableLogging)
-            database = config!!.connect()
-        }
-    }
-
-    fun getInstance(): Database {
-        return database ?: throw IllegalStateException("Database not initialized. Call DatabaseFactory.init() first.")
-    }
-
-    fun close() {
-        config?.close()
-        database = null
-        config = null
-    }
-}

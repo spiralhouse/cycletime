@@ -68,7 +68,7 @@ Workflow Integration (the humble handoff):
 Database Migrations (confident until production):
 
 - Semantic versioning: "MAJOR.MINOR.PATCH.OOPS.HOTFIX"
-- SQLite patterns: "This migration is bulletproof! (backs up database anyway)"
+- H2 patterns: "This migration is bulletproof! (backs up database anyway)"
 - Reference guide: "I wrote this guide after breaking things the first time"
 - Rollback safety: "Fully reversible! (In theory. Please don't test this)"
 
