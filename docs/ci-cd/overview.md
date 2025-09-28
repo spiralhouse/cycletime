@@ -2,17 +2,17 @@
 
 ## Overview
 
-CycleTime employs a comprehensive CI/CD pipeline designed for maximum performance, reliability, and developer experience. The pipeline implements a **compile-first architecture** with intelligent caching, parallel execution, and smart build skipping to minimize feedback time and resource consumption.
+CycleTime employs a CI/CD pipeline with compile-first architecture, caching, parallel execution, and build skipping to reduce feedback time and resource consumption.
 
 ## Pipeline Philosophy
 
 Our CI/CD system is built on several core principles:
 
 1. **Compile-First Architecture**: Separate compilation from execution to enable artifact reuse
-2. **Intelligent Build Skipping**: Skip unnecessary work when only documentation changes
-3. **Comprehensive Caching Strategy**: Multi-layer caching across dependencies, compilation, and test results
-4. **Parallel Execution**: Maximize throughput through strategic job parallelization
-5. **Fail-Fast Strategy**: Quick feedback on critical issues while preserving complete test coverage
+2. **Build Skipping**: Skip unnecessary work when only documentation changes
+3. **Caching Strategy**: Multi-layer caching across dependencies, compilation, and test results
+4. **Parallel Execution**: Job parallelization for throughput
+5. **Fail-Fast Strategy**: Quick feedback on critical issues while preserving test coverage
 
 ## Job Dependency Graph
 
