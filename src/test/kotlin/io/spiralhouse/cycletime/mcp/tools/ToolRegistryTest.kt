@@ -200,10 +200,10 @@ class ToolRegistryTest : DescribeSpec({
     }
 
     describe("ToolRegistry") {
-        lateinit var registry: DefaultToolRegistry
+        lateinit var registry: ToolRegistry
 
         beforeEach {
-            registry = DefaultToolRegistry()
+            registry = ToolRegistry()
         }
 
         describe("tool definition and interface") {
