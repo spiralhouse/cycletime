@@ -30,14 +30,14 @@ In your `Application.kt`:
 
 ```kotlin
 fun Application.module() {
-    val database = DatabaseFactory.init(
+    // Initialize database singleton for production use
+    DatabaseFactory.init(
         jdbcUrl = "jdbc:h2:file:./cycletime;MODE=PostgreSQL",
         enableLogging = false
     )
-    
-    // Configure dependencies with explicit database
+
+    // Configure dependencies (uses DatabaseFactory singleton internally)
     configureDependencies(
-        database = database,
         timeProvider = null, // Use default SystemTimeProvider
         includeMCP = true
     )
@@ -70,18 +70,34 @@ For tests, use the test support utilities:
 testApplication {
     application {
         // Configure with test database and fixed time
-        val testDb = createTestDatabase()
+        val testDb = TestDatabaseFactory.createTestDatabase()
         val testTime = testTimeProvider("2024-01-01T00:00:00Z")
-        
-        configureDependencies(
+
+        configureForTesting(
             database = testDb,
-            timeProvider = testTime,
-            includeMCP = false // Usually disabled for tests
+            timeProvider = testTime
         )
     }
-    
+
     // Access dependencies in test
     val service: ProjectApplicationService by application.dependencies
+}
+```
+
+For integration tests that need to test production DI setup:
+
+```kotlin
+// Special case: DependencyInjectionIntegrationTest only
+beforeSpec {
+    DatabaseFactory.init(
+        jdbcUrl = "jdbc:h2:mem:test_${System.nanoTime()}",
+        driver = "org.h2.Driver",
+        enableLogging = false
+    )
+}
+
+afterSpec {
+    DatabaseFactory.reset()
 }
 ```
 

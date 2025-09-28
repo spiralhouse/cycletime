@@ -56,9 +56,9 @@ Continuous Integration and Deployment.
 Deployment and operational guides.
 
 - [Deployment Guide](operations/deployment-guide.md) - Production deployment
-- [Monitoring](operations/monitoring.md) - Health and metrics (coming soon)
-- [Troubleshooting](operations/troubleshooting.md) - Common issues (coming soon)
-- [Performance Tuning](operations/performance-tuning.md) - Optimization (coming soon)
+- [Health Monitoring](operations/deployment-guide.md#health-monitoring) - Health checks and monitoring
+- [Troubleshooting](operations/deployment-guide.md#troubleshooting) - Common deployment issues
+- [Performance Tuning](performance/caching-strategy.md) - Build and runtime optimization
 
 ### [Performance](performance/)
 Performance optimization and benchmarks.

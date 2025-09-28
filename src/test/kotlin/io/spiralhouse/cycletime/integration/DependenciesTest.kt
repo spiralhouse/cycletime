@@ -3,7 +3,6 @@ package io.spiralhouse.cycletime.integration
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.ktor.server.testing.*
 import io.ktor.server.plugins.di.*
 import io.ktor.client.request.*
@@ -11,23 +10,18 @@ import io.spiralhouse.cycletime.application.services.ProjectApplicationService
 import io.spiralhouse.cycletime.application.services.IssueApplicationService
 import io.spiralhouse.cycletime.application.services.SessionApplicationService
 import io.spiralhouse.cycletime.domain.services.TimeProvider
-import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
-import io.spiralhouse.cycletime.infrastructure.di.modules.test.FixedTimeProvider
-import io.spiralhouse.cycletime.infrastructure.di.modules.test.configureTestDependencies
-import io.spiralhouse.cycletime.infrastructure.di.modules.test.testTimeProvider
-import io.spiralhouse.cycletime.infrastructure.di.modules.test.createTestDatabase
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper.configureTestApplication
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import org.jetbrains.exposed.sql.Database
-import io.spiralhouse.cycletime.module
-import io.spiralhouse.cycletime.infrastructure.di.modules.test.configureForTesting
 
 /**
  * Tests for the dependency injection system.
- * 
+ *
  * These tests verify that the DI configuration:
  * - Properly configures all dependencies
  * - Respects singleton scoping
@@ -35,18 +29,25 @@ import io.spiralhouse.cycletime.infrastructure.di.modules.test.configureForTesti
  * - Works consistently without profiles
  */
 class DependenciesTest : StringSpec({
+
+    beforeSpec {
+        // Initialize test database using helper to prevent race conditions
+        DatabaseTestHelper.initTestDatabase(
+            testName = "dependencies_test",
+            enableLogging = false
+        )
+    }
+
+    afterSpec {
+        // Clean up test database
+        DatabaseTestHelper.cleanupTestDatabase()
+    }
     
     "should configure all dependencies using Ktor's native DI" {
         testApplication {
-            application {
-                // Use the test configuration approach like DependencyInjectionIntegrationTest
-                // This tests the DI without database conflicts
-                configureForTesting(
-                    database = createTestDatabase(),
-                    timeProvider = null // Use default SystemTimeProvider
-                )
-            }
-            
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "dependencies_test")
+
             // Trigger application initialization
             client.get("/health")
             

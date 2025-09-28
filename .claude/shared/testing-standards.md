@@ -218,12 +218,12 @@ interface TimeProvider {
     fun now(): Instant
 }
 
-class RealTimeProvider : TimeProvider {
-    override fun now(): Instant = Instant.now()
+class SystemTimeProvider : TimeProvider {
+    override fun now(): Instant = Clock.System.now()
 }
 
 class MockTimeProvider : TimeProvider {
-    private var currentTime: Instant = Instant.now()
+    private var currentTime: Instant = Clock.System.now()
 
     override fun now(): Instant = currentTime
 

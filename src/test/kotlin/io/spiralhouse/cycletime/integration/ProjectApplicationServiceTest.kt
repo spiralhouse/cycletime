@@ -23,14 +23,19 @@ import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectStatus
 import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
 import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
+import io.spiralhouse.cycletime.infrastructure.di.modules.test.createTestDatabase
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.sql.deleteAll
+import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
+import io.spiralhouse.cycletime.infrastructure.database.IssueDependenciesTable
+import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -78,23 +83,43 @@ class ProjectApplicationServiceTest : StringSpec({
     lateinit var unitOfWork: ExposedUnitOfWork
 
     beforeSpec {
-        // Setup H2 in-memory database
-        database = Database.connect(
-            url = "jdbc:h2:mem:project_app_service_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-            driver = "org.h2.Driver"
-        )
+        database = createTestDatabase()
+    }
 
-        // Create schema
+    afterSpec {
         transaction(database) {
-            SchemaUtils.create(ProjectsTable, IssuesTable)
+            // Drop tables in correct order (child tables first, then parent tables)
+            SchemaUtils.drop(
+                IssueDependenciesTable,
+                IssueLabelsTable,
+                SessionStatesTable,
+                IssuesTable,
+                ProjectsTable
+            )
+        }
+        TransactionManager.closeAndUnregister(database)
+    }
+
+    beforeEach {
+        // Setup time provider
+        mockTimeProvider = MockTimeProvider()
+        mockTimeProvider.setTime(Instant.parse("2025-01-15T10:00:00Z"))
+
+        // Clean up all data between tests to ensure test isolation
+        transaction(database) {
+            // Delete all data in reverse dependency order
+            IssueDependenciesTable.deleteAll()
+            IssueLabelsTable.deleteAll()
+            SessionStatesTable.deleteAll()
+            IssuesTable.deleteAll()
+            ProjectsTable.deleteAll()
         }
 
-        // Setup dependencies with constructor injection
-        mockTimeProvider = MockTimeProvider()
-        projectRepository = ExposedProjectRepository(mockTimeProvider)
-        issueRepository = ExposedIssueRepository(mockTimeProvider)
+        // Setup dependencies with constructor injection using test-owned database
+        projectRepository = ExposedProjectRepository(mockTimeProvider, database)
+        issueRepository = ExposedIssueRepository(mockTimeProvider, database)
 
-        // Create ProjectApplicationService
+        // Create ProjectApplicationService with test-owned database
         unitOfWork = ExposedUnitOfWork(database)
         projectApplicationService = ProjectApplicationService(
             projectRepository = projectRepository,
@@ -102,23 +127,6 @@ class ProjectApplicationServiceTest : StringSpec({
             unitOfWork = unitOfWork,
             timeProvider = mockTimeProvider
         )
-    }
-
-    beforeEach {
-        // Clean database state
-        transaction(database) {
-            IssuesTable.deleteAll()
-            ProjectsTable.deleteAll()
-        }
-
-        // Reset time to deterministic value
-        mockTimeProvider.setTime(Instant.parse("2025-01-15T10:00:00Z"))
-    }
-
-    afterSpec {
-        transaction(database) {
-            SchemaUtils.drop(IssuesTable, ProjectsTable)
-        }
     }
 
     "should create basic project using repository directly (baseline test)" {

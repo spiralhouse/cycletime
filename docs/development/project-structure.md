@@ -5,12 +5,12 @@
 This document defines the repository structure for CycleTime, a **simplified data and
 context provider** for Claude Code project management. The system provides
 structured project data, dependency tracking, and cross-session continuity
-through embedded database (currently SQLite, migrating to H2) and MCP Resource integration.
+through embedded database (H2) and MCP Resource integration.
 
 ## Root Directory Structure
 
 ```
-jcvd/                                    # Root project directory
+cycletime/                               # Root project directory
 ├── README.md                            # Project overview and quick start
 ├── LICENSE                              # MIT License
 ├── CLAUDE.md                            # Claude Code instructions and agent configuration
@@ -24,7 +24,7 @@ jcvd/                                    # Root project directory
 ├── gradlew                              # Gradle wrapper script (Unix)
 ├── gradlew.bat                          # Gradle wrapper script (Windows)
 ├── Dockerfile                           # Docker container definition
-├── cycletime.db                     # SQLite database file (auto-created)
+├── cycletime.mv.db                      # H2 database file (auto-created)
 ├── .gitignore                           # Git ignore patterns
 ├── .editorconfig                        # Editor configuration
 │
@@ -62,41 +62,38 @@ jcvd/                                    # Root project directory
 │
 ├── src/                                 # Source code
 │   ├── main/                          # Main source code
-│   │   ├── kotlin/io/spiralhouse/jcvd/ # Kotlin source files
+│   │   ├── kotlin/io/spiralhouse/cycletime/ # Kotlin source files
 │   │   │   ├── Application.kt         # Main entry point and Ktor server
+│   │   │   ├── api/                   # API layer (REST endpoints)
+│   │   │   │   ├── configuration/   # API configuration
+│   │   │   │   ├── dto/             # API data transfer objects
+│   │   │   │   ├── middleware/      # HTTP middleware (CORS, error handling)
+│   │   │   │   ├── routes/          # HTTP routes (Issues, Projects, Workflows)
+│   │   │   │   └── validation/      # API validation logic
+│   │   │   ├── application/           # Application layer (use cases)
+│   │   │   │   ├── commands/        # Command objects for operations
+│   │   │   │   ├── dto/             # Application data transfer objects
+│   │   │   │   ├── exceptions/      # Application exceptions
+│   │   │   │   └── services/        # Application services
 │   │   │   ├── domain/                # Domain layer (pure business logic)
-│   │   │   │   ├── entities/         # Domain entities
-│   │   │   │   │   ├── Issue.kt
-│   │   │   │   │   ├── Project.kt
-│   │   │   │   │   └── Session.kt
-│   │   │   │   ├── exceptions/       # Domain exceptions
-│   │   │   │   │   └── DomainException.kt
-│   │   │   │   ├── repositories/     # Repository interfaces
-│   │   │   │   │   ├── IssueRepository.kt
-│   │   │   │   │   ├── ProjectRepository.kt
-│   │   │   │   │   ├── SessionRepository.kt
-│   │   │   │   │   └── UnitOfWork.kt
-│   │   │   │   ├── services/         # Domain services
-│   │   │   │   │   └── TimeProvider.kt
-│   │   │   │   └── valueobjects/     # Value objects
-│   │   │   │       ├── IssueId.kt
-│   │   │   │       ├── IssueStatus.kt
-│   │   │   │       ├── IssueType.kt
-│   │   │   │       ├── ProjectId.kt
-│   │   │   │       ├── ProjectStatus.kt
-│   │   │   │       └── SessionKey.kt
+│   │   │   │   ├── entities/        # Domain entities (Issue, Project, Session)
+│   │   │   │   ├── exceptions/      # Domain exceptions
+│   │   │   │   ├── repositories/    # Repository interfaces
+│   │   │   │   ├── services/        # Domain services (TimeProvider)
+│   │   │   │   └── valueobjects/    # Value objects (IDs, statuses, types)
 │   │   │   ├── infrastructure/        # Infrastructure layer
-│   │   │   │   ├── database/         # Database configuration
-│   │   │   │   │   ├── DatabaseConfig.kt
-│   │   │   │   │   └── Tables.kt     # Exposed ORM table definitions
-│   │   │   │   ├── di/               # Dependency injection
-│   │   │   │   │   └── KoinModules.kt
-│   │   │   │   └── persistence/      # Repository implementations
-│   │   │   │       ├── ExposedIssueRepository.kt
-│   │   │   │       ├── ExposedProjectRepository.kt
-│   │   │   │       └── ExposedSessionRepository.kt
+│   │   │   │   ├── database/        # Database configuration and tables
+│   │   │   │   ├── di/              # Dependency injection with Ktor native DI
+│   │   │   │   ├── health/          # Health check implementations
+│   │   │   │   ├── logging/         # Logging configuration
+│   │   │   │   └── persistence/     # Repository implementations with Exposed ORM
 │   │   │   └── mcp/                   # MCP server integration
-│   │   │       └── MCPServer.kt      # MCP protocol implementation
+│   │   │       ├── handlers/        # MCP request handlers
+│   │   │       ├── protocol/        # MCP protocol implementation
+│   │   │       ├── resources/       # MCP resources for Claude Code
+│   │   │       ├── server/          # MCP server core
+│   │   │       ├── tools/           # MCP tools for operations
+│   │   │       └── websocket/       # WebSocket transport
 │   │   └── resources/                 # Resources
 │   │       ├── application.conf       # Ktor configuration
 │   │       └── META-INF/              # Metadata
@@ -106,7 +103,7 @@ jcvd/                                    # Root project directory
 │   │               ├── resource-config.json
 │   │               └── serialization-config.json
 │   └── test/                          # Test source code
-│       ├── kotlin/io/spiralhouse/jcvd/ # Test files
+│       ├── kotlin/io/spiralhouse/cycletime/ # Test files
 │       └── resources/                 # Test resources
 │
 ├── examples/                           # Example configurations
@@ -141,16 +138,17 @@ jcvd/                                    # Root project directory
 - **Kotlin/JVM 21** as primary language
 - **Ktor 3.2.0** for asynchronous web framework
 - **Exposed ORM** for type-safe database operations
-- **SQLite** (current) / **H2** (future) embedded database
-- **Koin 4.0** for dependency injection (migrating to Ktor native DI)
+- **H2** embedded database for high-performance data storage
+- **Ktor native DI** for dependency injection with constructor injection
 - **GraalVM** for native image compilation
 
 ### Core Components
 
 1. **Domain Layer** (`domain/`) - Pure business logic with no external dependencies
-2. **Infrastructure Layer** (`infrastructure/`) - Technical implementations
-3. **MCP Server** (`mcp/`) - Integration with Claude Code via Model Context Protocol
-4. **Application Layer** (future) - Use case orchestration when needed
+2. **Application Layer** (`application/`) - Use case orchestration and command handling
+3. **API Layer** (`api/`) - REST API endpoints and HTTP concerns
+4. **Infrastructure Layer** (`infrastructure/`) - Technical implementations (database, DI, logging)
+5. **MCP Server** (`mcp/`) - Integration with Claude Code via Model Context Protocol
 
 ## Package and File Naming Conventions
 
@@ -158,7 +156,7 @@ jcvd/                                    # Root project directory
 
 - **PascalCase** for classes and interfaces: `Project.kt`, `IssueRepository.kt`
 - **PascalCase** for value objects: `ProjectId.kt`, `IssueStatus.kt`
-- **Package names** in lowercase: `io.spiralhouse.jcvd.domain.entities`
+- **Package names** in lowercase: `io.spiralhouse.cycletime.domain.entities`
 
 ### Configuration Files
 
@@ -168,7 +166,7 @@ jcvd/                                    # Root project directory
 ### Test Files
 
 - **Same as source + Test suffix**: `ProjectTest.kt`, `SessionManagerIntegrationTest.kt`
-- **Package mirrors source**: `io.spiralhouse.jcvd.domain.entities` in test folder
+- **Package mirrors source**: `io.spiralhouse.cycletime.domain.entities` in test folder
 
 ### Documentation Files
 
@@ -186,31 +184,47 @@ jcvd/                                    # Root project directory
 ### 2. Package Structure
 
 ```
-io.spiralhouse.jcvd/
-├── domain/           # Core business logic (no external dependencies)
-│   ├── entities/     # Aggregate roots and entities
-│   ├── valueobjects/ # Immutable value objects
-│   ├── repositories/ # Repository interfaces
-│   ├── services/     # Domain services
-│   └── exceptions/   # Domain-specific exceptions
-├── application/      # Application services (future)
-│   ├── commands/     # Command DTOs
-│   └── services/     # Use case orchestration
-├── infrastructure/   # Technical implementations
-│   ├── database/     # Database configuration
-│   ├── persistence/  # Repository implementations
-│   └── di/          # Dependency injection
-└── mcp/             # MCP server integration
-    ├── resources/    # MCP Resources
-    └── tools/       # MCP Tools
+io.spiralhouse.cycletime/
+├── api/                # API layer (HTTP endpoints)
+│   ├── configuration/ # API configuration and setup
+│   ├── dto/           # API data transfer objects
+│   ├── middleware/    # HTTP middleware (CORS, error handling)
+│   ├── routes/        # HTTP routes (Issues, Projects, Workflows)
+│   └── validation/    # API validation logic
+├── application/        # Application layer (use cases)
+│   ├── commands/      # Command objects for operations
+│   ├── dto/           # Application data transfer objects
+│   ├── exceptions/    # Application-specific exceptions
+│   └── services/      # Application services and use cases
+├── domain/            # Core business logic (no external dependencies)
+│   ├── entities/      # Aggregate roots and entities
+│   ├── valueobjects/  # Immutable value objects
+│   ├── repositories/  # Repository interfaces
+│   ├── services/      # Domain services
+│   └── exceptions/    # Domain-specific exceptions
+├── infrastructure/    # Technical implementations
+│   ├── database/      # Database configuration and table definitions
+│   ├── di/           # Dependency injection with Ktor native DI
+│   ├── health/       # Health check implementations
+│   ├── logging/      # Logging configuration
+│   └── persistence/  # Repository implementations with Exposed ORM
+└── mcp/              # MCP server integration
+    ├── handlers/     # MCP request handlers
+    ├── protocol/     # MCP protocol implementation
+    ├── resources/    # MCP Resources for Claude Code
+    ├── server/       # MCP server core functionality
+    ├── tools/        # MCP Tools for operations
+    └── websocket/    # WebSocket transport layer
 ```
 
 ### 3. Dependency Rules
 
-- **Domain layer** has no dependencies on other layers
-- **Infrastructure layer** depends on domain layer
-- **MCP layer** depends on domain and infrastructure layers
-- **Dependency injection** wires everything together
+- **Domain layer** has no dependencies on other layers (pure business logic)
+- **Application layer** depends on domain layer only
+- **API layer** depends on application and domain layers
+- **Infrastructure layer** depends on domain layer and provides implementations
+- **MCP layer** depends on application, domain, and infrastructure layers
+- **Dependency injection** wires everything together through interfaces
 
 ## Import Strategy
 
@@ -218,13 +232,13 @@ io.spiralhouse.jcvd/
 
 ```kotlin
 // Domain imports
-import io.spiralhouse.jcvd.domain.entities.Project
-import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
-import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
+import io.spiralhouse.cycletime.domain.entities.Project
+import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
 
 // Infrastructure imports
-import io.spiralhouse.jcvd.infrastructure.persistence.ExposedProjectRepository
-import io.spiralhouse.jcvd.infrastructure.database.Tables
+import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
+import io.spiralhouse.cycletime.infrastructure.database.Tables
 
 // Kotlin/Java imports
 import kotlinx.coroutines.runBlocking
@@ -234,13 +248,18 @@ import java.time.Instant
 ### Dependency Injection
 
 ```kotlin
-// Using Koin (current)
-import org.koin.core.module.dsl.singleOf
-import org.koin.dsl.module
-
-// Future Ktor native DI
+// Using Ktor native DI (current)
 import io.ktor.server.application.*
-import io.ktor.server.di.*
+import io.ktor.server.plugins.di.*
+
+// Application configuration
+fun Application.configureDependencies() {
+    dependencies {
+        provide<TimeProvider> { SystemTimeProvider() }
+        provide<DatabaseProvider> { H2DatabaseProvider() }
+        provide<ProjectRepository> { ExposedProjectRepository(instance(), instance()) }
+    }
+}
 ```
 
 ## Development Workflow Integration
@@ -286,17 +305,14 @@ docker run -p 8080:8080 cycletime-kotlin
 
 ## Database Architecture
 
-### Current: SQLite with Exposed ORM
+### Current: H2 with Exposed ORM
 
 - **Embedded database** for zero-dependency operation
 - **Exposed DSL** for type-safe queries
 - **HikariCP** connection pooling
-- **File-based persistence** at `cycletime.db`
-
-### Future: H2 Database (SPI-439)
-
+- **File-based persistence** at `cycletime.mv.db`
 - **Better JVM integration** with native JDBC
-- **Improved performance** for complex queries
+- **High performance** for complex queries
 - **In-memory option** for testing
 - **PostgreSQL compatibility mode** for cloud migration
 
@@ -362,7 +378,7 @@ The migration from TypeScript to Kotlin provides:
 ### Test Organization
 
 ```
-src/test/kotlin/io/spiralhouse/jcvd/
+src/test/kotlin/io/spiralhouse/cycletime/
 ├── unit/           # Fast, isolated unit tests
 ├── integration/    # Integration tests with real components
 ├── system/         # End-to-end system tests
@@ -388,7 +404,7 @@ src/test/kotlin/io/spiralhouse/jcvd/
 
 ### Provider Expansion
 
-- **H2 Database** (SPI-439) for better JVM integration
+- **Cloud providers** for team collaboration
 - **Linear Provider** for team collaboration
 - **GitHub Issues** for OSS projects
 - **Provider interface** for consistent API
