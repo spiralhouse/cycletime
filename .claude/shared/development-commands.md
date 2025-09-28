@@ -17,6 +17,30 @@
 - `./gradlew dependencyCheckAnalyze` - Check for vulnerable dependencies
 - `./gradlew check` - Run all quality checks (test + detekt + kover)
 
+## Test Execution Commands
+
+### Test Task Categories
+- `./gradlew test` - Run unit tests
+- `./gradlew unitTest` - Unit tests (domain, verification, MCP protocol/tools)
+- `./gradlew integrationTest` - Integration tests (infrastructure, database, MCP server)
+- `./gradlew systemTest` - System tests (performance, end-to-end)
+- `./gradlew testAll` - All test categories in sequence
+
+### Development Testing
+- `./gradlew quickTest` - Unit tests only
+- `./gradlew testWatch --continuous` - Auto-run tests on file changes
+
+### CI Testing
+- `./gradlew ciTest` - Parallel test execution (unit → integration ∥ system)
+- `./gradlew ciUnitOnly` - Unit tests (for CI matrix)
+- `./gradlew ciIntegrationOnly` - Integration tests (for CI matrix)
+
+### Development Commands
+- `./gradlew devRun --continuous` - Server with auto-reload
+- `./gradlew devBuild --continuous` - Continuous compilation
+- `./gradlew devWorkflow` - Display development workflow information
+- `./gradlew buildStatus` - Display build configuration information
+
 ## Docker & Deployment
 
 - `docker build -t cycletime-ce .` - Build Docker container
