@@ -101,7 +101,7 @@ graph LR
     
     subgraph "Build Stage"
         G --> N[Build Application]
-        N --> O[jcvd-jar]
+        N --> O[cycletime-jar]
         N --> P[build-artifacts]
     end
     
@@ -342,7 +342,7 @@ Codecov automatically merges coverage reports with different flags to provide:
 - **Verification**: Ensures JAR exists and reports size
 
 **Outputs**:
-- `jcvd-jar`: Production-ready application JAR
+- `cycletime-jar`: Production-ready application JAR
 - `build-artifacts`: Supporting files for deployment
 
 ### 5. Containerization Job (Build Once, Use Everywhere)
@@ -440,20 +440,20 @@ docker run --memory="512m" --cpus="1.0" cycletime:smoke-test
 The pipeline implements a comprehensive multi-tag strategy using `docker/metadata-action` for intelligent tag generation:
 
 #### Production Releases (v1.2.3)
-- `ghcr.io/spiralhouse/jcvd:1.2.3` (immutable exact version)
-- `ghcr.io/spiralhouse/jcvd:1.2` (mutable minor version)
-- `ghcr.io/spiralhouse/jcvd:1` (mutable major version)
-- `ghcr.io/spiralhouse/jcvd:latest` (mutable latest stable)
+- `ghcr.io/spiralhouse/cycletime:1.2.3` (immutable exact version)
+- `ghcr.io/spiralhouse/cycletime:1.2` (mutable minor version)
+- `ghcr.io/spiralhouse/cycletime:1` (mutable major version)
+- `ghcr.io/spiralhouse/cycletime:latest` (mutable latest stable)
 
 #### Pre-releases (v1.2.3-rc.1)
-- `ghcr.io/spiralhouse/jcvd:1.2.3-rc.1` (exact pre-release)
+- `ghcr.io/spiralhouse/cycletime:1.2.3-rc.1` (exact pre-release)
 - No major/minor tags for pre-releases
 - No latest tag update for pre-releases
 
 #### Development Builds (main branch)
-- `ghcr.io/spiralhouse/jcvd:edge` (latest main branch)
-- `ghcr.io/spiralhouse/jcvd:sha-{commit}` (specific commit)
-- `ghcr.io/spiralhouse/jcvd:latest` (development latest)
+- `ghcr.io/spiralhouse/cycletime:edge` (latest main branch)
+- `ghcr.io/spiralhouse/cycletime:sha-{commit}` (specific commit)
+- `ghcr.io/spiralhouse/cycletime:latest` (development latest)
 
 #### Tag Immutability Patterns
 - **Immutable Forever**: Exact versions (`v1.2.3`) and SHA tags (`sha-abc123`)
@@ -461,7 +461,7 @@ The pipeline implements a comprehensive multi-tag strategy using `docker/metadat
 - **Mutable (Rolling)**: `latest`, `edge`
 
 **Registry Details**:
-- **Registry**: `ghcr.io/spiralhouse/jcvd`
+- **Registry**: `ghcr.io/spiralhouse/cycletime`
 - **Authentication**: GitHub token with packages scope
 - **Visibility**: Public registry for container distribution
 - **Metadata**: Comprehensive OCI labels for title, description, source, etc.
@@ -469,17 +469,17 @@ The pipeline implements a comprehensive multi-tag strategy using `docker/metadat
 **Pull Commands**:
 ```bash
 # Production releases
-docker pull ghcr.io/spiralhouse/jcvd:1.2.3    # Immutable exact version
-docker pull ghcr.io/spiralhouse/jcvd:1.2      # Mutable minor version
-docker pull ghcr.io/spiralhouse/jcvd:1        # Mutable major version
-docker pull ghcr.io/spiralhouse/jcvd:latest   # Latest stable
+docker pull ghcr.io/spiralhouse/cycletime:1.2.3    # Immutable exact version
+docker pull ghcr.io/spiralhouse/cycletime:1.2      # Mutable minor version
+docker pull ghcr.io/spiralhouse/cycletime:1        # Mutable major version
+docker pull ghcr.io/spiralhouse/cycletime:latest   # Latest stable
 
 # Pre-releases
-docker pull ghcr.io/spiralhouse/jcvd:1.2.3-rc.1  # Exact pre-release
+docker pull ghcr.io/spiralhouse/cycletime:1.2.3-rc.1  # Exact pre-release
 
 # Development builds
-docker pull ghcr.io/spiralhouse/jcvd:edge         # Latest development
-docker pull ghcr.io/spiralhouse/jcvd:sha-abc123   # Specific commit
+docker pull ghcr.io/spiralhouse/cycletime:edge         # Latest development
+docker pull ghcr.io/spiralhouse/cycletime:sha-abc123   # Specific commit
 ```
 
 ### 8. Security Job (Continuous)
@@ -617,7 +617,7 @@ flowchart TD
 
 **Container Image Artifact Strategy**:
 1. **Single Build**: Container image built once in `containerization` job
-2. **TAR Packaging**: Image saved as compressed tar file (`/tmp/jcvd-image.tar`)
+2. **TAR Packaging**: Image saved as compressed tar file (`/tmp/cycletime-image.tar`)
 3. **Artifact Upload**: TAR uploaded to GitHub Actions with 7-day retention
 4. **Multi-Job Reuse**: Same artifact downloaded and reused in downstream jobs
 5. **Consistent Testing**: Identical image used for smoke tests and publishing
@@ -659,41 +659,41 @@ The container publishing process implements multiple validation gates to ensure 
 
 #### Pull Commands for Published Images
 
-**Production Images** (Published to `ghcr.io/spiralhouse/jcvd`):
+**Production Images** (Published to `ghcr.io/spiralhouse/cycletime`):
 
 ```bash
 # Latest stable version (main branch)
-docker pull ghcr.io/spiralhouse/jcvd:latest
+docker pull ghcr.io/spiralhouse/cycletime:latest
 
 # Dev environment (auto-deployed from main)
-docker pull ghcr.io/spiralhouse/jcvd:dev
+docker pull ghcr.io/spiralhouse/cycletime:dev
 
 # Specific commit (immutable reference)
-docker pull ghcr.io/spiralhouse/jcvd:sha-abc1234
+docker pull ghcr.io/spiralhouse/cycletime:sha-abc1234
 
 # Release version (semantic versioning)
-docker pull ghcr.io/spiralhouse/jcvd:v1.0.0
+docker pull ghcr.io/spiralhouse/cycletime:v1.0.0
 
 # Running the container
-docker run -p 8080:8080 -e DATABASE_URL=jdbc:sqlite:/app/data/cycletime.db ghcr.io/spiralhouse/jcvd:latest
+docker run -p 8080:8080 -e DATABASE_URL=jdbc:h2:file:/app/data/cycletime ghcr.io/spiralhouse/cycletime:latest
 ```
 
 **Development Usage**:
 
 ```bash
 # Quick local testing
-docker run -p 8080:8080 --rm ghcr.io/spiralhouse/jcvd:latest
+docker run -p 8080:8080 --rm ghcr.io/spiralhouse/cycletime:latest
 
 # With persistent data
-docker run -p 8080:8080 -v $(pwd)/data:/app/data ghcr.io/spiralhouse/jcvd:latest
+docker run -p 8080:8080 -v $(pwd)/data:/app/data ghcr.io/spiralhouse/cycletime:latest
 
 # Resource-constrained testing (matches CI smoke tests)
-docker run -p 8080:8080 --memory="512m" --cpus="1.0" ghcr.io/spiralhouse/jcvd:latest
+docker run -p 8080:8080 --memory="512m" --cpus="1.0" ghcr.io/spiralhouse/cycletime:latest
 ```
 
 **Registry Information**:
 - **Registry**: GitHub Container Registry (`ghcr.io`)
-- **Namespace**: `spiralhouse/jcvd`
+- **Namespace**: `spiralhouse/cycletime`
 - **Visibility**: Public (open source project)
 - **Authentication**: Not required for pulling
 - **Architecture**: `linux/amd64`
@@ -905,7 +905,7 @@ export DOCKER_BUILDKIT=1
 docker build -t cycletime:test .
 
 # Check artifact availability
-ls -la build/libs/jcvd-server.jar
+ls -la build/libs/cycletime-server.jar
 ```
 
 #### 4. Cache Issues
@@ -1133,7 +1133,7 @@ labels: |
 
 **External System Responsibilities** (CD System):
 - 👀 Watch for `dev` tag changes in GHCR
-- ⬇️ Pull `ghcr.io/spiralhouse/jcvd:dev` when changed
+- ⬇️ Pull `ghcr.io/spiralhouse/cycletime:dev` when changed
 - 🚀 Deploy to dev environment automatically
 - 🏥 Perform application health checks
 - ✅ Complete deployment verification
@@ -1144,11 +1144,11 @@ labels: |
 
 ```bash
 # Inspect current dev image metadata
-docker pull ghcr.io/spiralhouse/jcvd:dev
-docker inspect ghcr.io/spiralhouse/jcvd:dev --format='{{.Config.Labels}}'
+docker pull ghcr.io/spiralhouse/cycletime:dev
+docker inspect ghcr.io/spiralhouse/cycletime:dev --format='{{.Config.Labels}}'
 
 # Extract deployment information
-docker inspect ghcr.io/spiralhouse/jcvd:dev \
+docker inspect ghcr.io/spiralhouse/cycletime:dev \
   --format='Version: {{index .Config.Labels "deployment.version"}}' \
   --format='Commit: {{index .Config.Labels "deployment.commit"}}' \
   --format='Build: {{index .Config.Labels "deployment.build-timestamp"}}'
@@ -1159,9 +1159,9 @@ docker inspect ghcr.io/spiralhouse/jcvd:dev \
 ```bash
 # Run dev environment locally (matches external deployment)
 docker run -p 8080:8080 --name cycletime-dev \
-  -e DATABASE_URL=jdbc:sqlite:/app/data/cycletime.db \
+  -e DATABASE_URL=jdbc:h2:file:/app/data/cycletime \
   -v $(pwd)/dev-data:/app/data \
-  ghcr.io/spiralhouse/jcvd:dev
+  ghcr.io/spiralhouse/cycletime:dev
 
 # Test health endpoints
 curl http://localhost:8080/health
@@ -1175,12 +1175,12 @@ curl http://localhost:8080/info  # If implemented
 
 ```bash
 # Check for latest dev image
-docker pull ghcr.io/spiralhouse/jcvd:dev && echo "New dev version available"
+docker pull ghcr.io/spiralhouse/cycletime:dev && echo "New dev version available"
 
 # Compare local vs remote dev tag
-LOCAL_SHA=$(docker images ghcr.io/spiralhouse/jcvd:dev --format "{{.ID}}")
-docker pull ghcr.io/spiralhouse/jcvd:dev > /dev/null
-REMOTE_SHA=$(docker images ghcr.io/spiralhouse/jcvd:dev --format "{{.ID}}" | head -1)
+LOCAL_SHA=$(docker images ghcr.io/spiralhouse/cycletime:dev --format "{{.ID}}")
+docker pull ghcr.io/spiralhouse/cycletime:dev > /dev/null
+REMOTE_SHA=$(docker images ghcr.io/spiralhouse/cycletime:dev --format "{{.ID}}" | head -1)
 
 if [ "$LOCAL_SHA" != "$REMOTE_SHA" ]; then
   echo "Dev environment has been updated!"
@@ -1232,15 +1232,15 @@ The pipeline provides comprehensive deployment status in GitHub Actions:
 ## 🚀 Dev Environment Deployment Triggered
 
 ✅ Container successfully pushed to GHCR
-📦 Registry: ghcr.io/spiralhouse/jcvd
+📦 Registry: ghcr.io/spiralhouse/cycletime
 🏷️ Version: 1.2.3-snapshot
-🌟 Dev Tag: ghcr.io/spiralhouse/jcvd:dev
+🌟 Dev Tag: ghcr.io/spiralhouse/cycletime:dev
 📋 Commit: abc1234
 🔗 Branch: main
 
 ## 🔄 External Deployment Process
 1. 👀 External CD system detects new 'dev' tag
-2. ⬇️ Pulls ghcr.io/spiralhouse/jcvd:dev
+2. ⬇️ Pulls ghcr.io/spiralhouse/cycletime:dev
 3. 🚀 Deploys to dev environment automatically
 4. 🏥 Performs automated health checks
 5. ✅ Completes deployment verification
@@ -1259,19 +1259,19 @@ The pipeline provides comprehensive deployment status in GitHub Actions:
 
 **Container Labels**: External system can extract metadata
 ```bash
-DEPLOYMENT_VERSION=$(docker inspect ghcr.io/spiralhouse/jcvd:dev \
+DEPLOYMENT_VERSION=$(docker inspect ghcr.io/spiralhouse/cycletime:dev \
   --format='{{index .Config.Labels "deployment.version"}}')
 ```
 
 **Health Endpoints**: External system validates deployment
 ```bash
-curl -f http://dev-jcvd.example.com/health || deployment_failed
+curl -f http://dev-cycletime.example.com/health || deployment_failed
 ```
 
 **Image Change Detection**: External system watches registry
 ```bash
 # Pseudocode for external CD system
-watch_registry("ghcr.io/spiralhouse/jcvd:dev") {
+watch_registry("ghcr.io/spiralhouse/cycletime:dev") {
   on_change(new_image) {
     deploy_to_dev_environment(new_image)
   }
@@ -1281,7 +1281,7 @@ watch_registry("ghcr.io/spiralhouse/jcvd:dev") {
 ### Dev Environment Characteristics
 
 #### Container Configuration
-- **Registry**: `ghcr.io/spiralhouse/jcvd:dev`
+- **Registry**: `ghcr.io/spiralhouse/cycletime:dev`
 - **Update Frequency**: Every main branch push (multiple times per day)
 - **Rollback Strategy**: External CD system maintains previous image
 - **Health Checks**: Standard endpoints + custom validation
@@ -1325,7 +1325,7 @@ watch_registry("ghcr.io/spiralhouse/jcvd:dev") {
 **1. Dev Tag Not Updated**
 ```bash
 # Diagnosis
-gh api repos/spiralhouse/jcvd/actions/runs \
+gh api repos/spiralhouse/cycletime/actions/runs \
   --jq '.workflow_runs[] | select(.head_branch == "main") | {id, conclusion, created_at}'
 
 # Look for failed CI runs preventing dev tag update
@@ -1334,18 +1334,18 @@ gh api repos/spiralhouse/jcvd/actions/runs \
 **2. External System Not Deploying**
 ```bash
 # Check if dev tag changed
-docker pull ghcr.io/spiralhouse/jcvd:dev
-docker inspect ghcr.io/spiralhouse/jcvd:dev \
+docker pull ghcr.io/spiralhouse/cycletime:dev
+docker inspect ghcr.io/spiralhouse/cycletime:dev \
   --format='Build: {{index .Config.Labels "deployment.build-timestamp"}}'
 
 # Verify external system can access registry
-docker pull ghcr.io/spiralhouse/jcvd:dev  # Should succeed from external system
+docker pull ghcr.io/spiralhouse/cycletime:dev  # Should succeed from external system
 ```
 
 **3. Health Checks Failing**
 ```bash
 # Test container locally
-docker run -p 8080:8080 --rm ghcr.io/spiralhouse/jcvd:dev &
+docker run -p 8080:8080 --rm ghcr.io/spiralhouse/cycletime:dev &
 sleep 30
 curl -f http://localhost:8080/health || echo "Health check failed"
 ```
@@ -1356,7 +1356,7 @@ curl -f http://localhost:8080/health || echo "Health check failed"
 ```bash
 # External CD system should maintain previous working image
 # If manual rollback needed:
-docker pull ghcr.io/spiralhouse/jcvd:sha-<previous-commit>
+docker pull ghcr.io/spiralhouse/cycletime:sha-<previous-commit>
 # Deploy specific commit instead of 'dev' tag
 ```
 
@@ -1373,11 +1373,11 @@ git push origin main
 **Verify Deployment**:
 ```bash
 # Comprehensive dev environment verification
-curl http://dev-jcvd.example.com/health | jq .
-curl http://dev-jcvd.example.com/mcp/resources | jq '.resources | length'
+curl http://dev-cycletime.example.com/health | jq .
+curl http://dev-cycletime.example.com/mcp/resources | jq '.resources | length'
 
 # Check deployment metadata
-docker inspect ghcr.io/spiralhouse/jcvd:dev | jq '.Config.Labels'
+docker inspect ghcr.io/spiralhouse/cycletime:dev | jq '.Config.Labels'
 ```
 
 This dev deployment architecture provides fully automated, reliable, and observable deployments while maintaining clear separation of concerns between the CI/CD pipeline and the external deployment system.

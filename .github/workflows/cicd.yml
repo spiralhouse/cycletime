@@ -248,6 +248,10 @@ jobs:
     timeout-minutes: 10
     needs: compile
     if: needs.compile.result == 'success'
+    # Environment variable to prevent koverXmlReport from running integration tests
+    # This ensures the unit-tests job only runs unit tests, not integration tests
+    env:
+      SKIP_INTEGRATION_COVERAGE: true
 
     steps:
       - name: Checkout

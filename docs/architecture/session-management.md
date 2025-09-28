@@ -58,12 +58,12 @@ The core domain entity managing session state with business logic:
 ```kotlin
 class Session(
     private val sessionKey: SessionKey,
-    private var projectId: String?,
+    private var projectId: ProjectId?,
     private var currentContext: SessionContext,
-    private var lastActivity: LocalDateTime,
-    private val createdAt: LocalDateTime,
-    private var updatedAt: LocalDateTime,
-    private val timeProvider: TimeProvider?
+    private var lastActivity: Instant,
+    private val createdAt: Instant,
+    private var updatedAt: Instant,
+    private val timeProvider: TimeProvider
 ) {
     // Key Methods
     fun updateContext(updates: Map<String, Any>): Unit
@@ -275,13 +275,13 @@ class SessionManager(
 
 ```sql
 CREATE TABLE IF NOT EXISTS session_states (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-  session_key TEXT UNIQUE NOT NULL,
-  project_id TEXT,
+  id VARCHAR(36) PRIMARY KEY DEFAULT RANDOM_UUID(),
+  session_key VARCHAR(36) UNIQUE NOT NULL,
+  project_id VARCHAR(36),
   current_context TEXT,  -- JSON serialized SessionContext
-  last_activity INTEGER NOT NULL DEFAULT (unixepoch()),
-  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  last_activity TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (project_id) REFERENCES projects(id)
 );
 

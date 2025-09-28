@@ -185,9 +185,25 @@ tasks.withType<Test> {
         "-Dfile.encoding=UTF-8"
     )
     
-    // Test execution strategy
+    // Test execution strategy with TestPlan coordination and dynamic parallelism
     systemProperty("junit.jupiter.execution.parallel.enabled", "true")
     systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
+    systemProperty("kotest.framework.discovery.parallel", "false") // Sequential discovery phase
+
+    // Dynamic parallelism configuration for optimal performance across different environments
+    val availableProcessors = Runtime.getRuntime().availableProcessors()
+    val optimalParallelism = when {
+        availableProcessors == 1 -> 1  // Sequential execution on single-core environments
+        availableProcessors == 2 -> 2  // Moderate parallelism on dual-core
+        else -> (availableProcessors / 2).coerceIn(2, 4)  // Balanced parallelism on multi-core (2-4 threads)
+    }
+    systemProperty("junit.jupiter.execution.parallel.config.strategy", "fixed")
+    systemProperty("junit.jupiter.execution.parallel.config.fixed.parallelism", optimalParallelism.toString())
+
+    // Log parallelism configuration for debugging
+    doFirst {
+        println("🧪 Test parallelism: ${optimalParallelism} threads for ${availableProcessors} CPU cores")
+    }
     
     testLogging {
         events("passed", "skipped", "failed")
@@ -248,7 +264,8 @@ val unitTest by tasks.registering(Test::class) {
     inputs.file("build.gradle.kts")
     
     // Optimized for speed - unit tests should be fast
-    maxParallelForks = Runtime.getRuntime().availableProcessors()
+    // Reduced for CI stability - QA analysis from SPI-624 CI failures
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
     minHeapSize = "128m"
     maxHeapSize = "512m"
     forkEvery = 200 // Less frequent forking for fast tests
@@ -261,11 +278,63 @@ val unitTest by tasks.registering(Test::class) {
         "-Dfile.encoding=UTF-8"
     )
     
-    // Parallel execution
+    // ================================================================================
+    // ARCHITECTURAL FIX: TestPlan Registration Coordination (SPI-624)
+    // ================================================================================
+    // Root Cause: Race conditions between multiple Gradle Test Executors during
+    // Kotest TestPlan registration phase. The issue occurs when multiple executors
+    // initialize Kotest engines concurrently, causing TestIdentifier registration
+    // timing mismatches with the JUnit Platform.
+    //
+    // Solution: Coordinate TestExecutor initialization while maintaining parallelism
+    // for actual test execution. This fixes the registration issue without the
+    // performance penalty of disabling all parallelism.
+    // ================================================================================
+
+    // Enable parallel execution within properly coordinated test executors
     systemProperty("junit.jupiter.execution.parallel.enabled", "true")
     systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
     systemProperty("junit.jupiter.execution.parallel.config.strategy", "dynamic")
-    
+
+    // Kotest engine coordination - prevent race conditions during discovery
+    systemProperty("kotest.framework.parallelism", "4") // Allow parallel test execution
+    systemProperty("kotest.framework.discovery.class.scanning.enabled", "true")
+    systemProperty("kotest.framework.classpath.scanning.autoscan.disable", "false") // Controlled scanning
+    systemProperty("kotest.framework.discovery.parallel", "false") // Sequential discovery phase
+    systemProperty("kotest.framework.discovery.timeout", "30000") // 30s discovery timeout
+
+    // TestPlan registration synchronization - prevents TestIdentifier race conditions
+    systemProperty("junit.jupiter.testinstance.lifecycle.default", "per_class")
+    systemProperty("junit.jupiter.execution.parallel.mode.classes.default", "concurrent")
+    systemProperty("junit.jupiter.execution.parallel.mode.methods.default", "concurrent")
+
+    // Test execution timeouts (performance-oriented)
+    systemProperty("kotest.framework.timeout", "60000") // 60 second timeout
+    systemProperty("kotest.framework.invocation.timeout", "30000") // 30 second per test
+    systemProperty("junit.jupiter.execution.timeout.default", "30s")
+
+    // CI-specific optimizations with dynamic parallelism based on CPU cores
+    val isCI = System.getenv("CI") == "true" || System.getenv("GITHUB_ACTIONS") == "true"
+    if (isCI) {
+        val availableProcessors = Runtime.getRuntime().availableProcessors()
+        // Calculate optimal parallelism: single-core = 1, multi-core = cores/2 (min 2, max 4)
+        val optimalParallelism = when {
+            availableProcessors == 1 -> 1  // Sequential execution on single-core
+            availableProcessors == 2 -> 2  // Moderate parallelism on dual-core
+            else -> (availableProcessors / 2).coerceIn(2, 4)  // Balanced parallelism on multi-core
+        }
+
+        println("🔧 CI environment detected - applying TestPlan registration coordination")
+        println("   CPU cores: ${availableProcessors}, optimal test parallelism: ${optimalParallelism}")
+
+        // Coordinate discovery phase to prevent TestPlan registration race conditions
+        systemProperty("kotest.framework.discovery.parallel", "false") // Sequential discovery
+        systemProperty("junit.jupiter.execution.parallel.config.strategy", "fixed")
+        systemProperty("junit.jupiter.execution.parallel.config.fixed.parallelism", optimalParallelism.toString())
+        // Disable problematic classpath scanning that can cause registration conflicts
+        systemProperty("kotest.framework.classpath.scanning.autoscan.disable", "true")
+    }
+
     testLogging {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
@@ -325,7 +394,10 @@ val integrationTest by tasks.registering(Test::class) {
     inputs.file("build.gradle.kts")
     inputs.property("sqliteVersion", "3.46.1.3") // Track database dependency changes
     
-    // Moderate parallelization for database tests
+    // Integration tests can now run in parallel with the new DI pattern
+    // Each test gets its own database provider instance through DI,
+    // eliminating the singleton conflicts from DatabaseFactory.
+    // Fixed with the DI refactoring (SPI-627).
     maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
     minHeapSize = "256m"
     maxHeapSize = "1024m"
@@ -339,11 +411,20 @@ val integrationTest by tasks.registering(Test::class) {
         "-Dfile.encoding=UTF-8"
     )
     
-    // Parallel execution with caution for database tests
+    // Parallel execution with TestPlan coordination and dynamic parallelism for database tests
     systemProperty("junit.jupiter.execution.parallel.enabled", "true")
-    systemProperty("junit.jupiter.execution.parallel.mode.default", "same_thread")
+    systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
+    systemProperty("kotest.framework.discovery.parallel", "false") // Sequential discovery phase
+
+    // Conservative parallelism for database tests (reduce contention)
+    val availableProcessors = Runtime.getRuntime().availableProcessors()
+    val databaseOptimalParallelism = when {
+        availableProcessors == 1 -> 1  // Sequential execution on single-core
+        availableProcessors == 2 -> 1  // Conservative on dual-core to avoid database contention
+        else -> (availableProcessors / 4).coerceIn(1, 2)  // Very conservative on multi-core (1-2 threads)
+    }
     systemProperty("junit.jupiter.execution.parallel.config.strategy", "fixed")
-    systemProperty("junit.jupiter.execution.parallel.config.fixed.parallelism", "2")
+    systemProperty("junit.jupiter.execution.parallel.config.fixed.parallelism", databaseOptimalParallelism.toString())
     
     testLogging {
         events("passed", "skipped", "failed")
@@ -455,9 +536,12 @@ tasks.test {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
+        // ARCHITECTURAL FIX: Include unit tests for proper Gradle convention compliance (SPI-624 Phase 3)
         includeTestsMatching("io.spiralhouse.cycletime.unit.*")
         // ARCHITECTURAL FIX: Include MCP integration tests for SPI-594
         includeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*")
+        // ARCHITECTURAL FIX: Include MCP tools tests for SPI-629
+        includeTestsMatching("io.spiralhouse.cycletime.mcp.tools.*")
         excludeTestsMatching("io.spiralhouse.cycletime.integration.*") // Exclude other integration tests
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
         excludeTestsMatching("io.spiralhouse.cycletime.api.*")
@@ -600,9 +684,11 @@ kover {
             disabledForTestTasks.add("systemTest")
             // Disable test delegation task to prevent CI from running overlapping test tasks
             disabledForTestTasks.add("test")
-            // Enable integrationTest for coverage to support CI coverage collection (SPI-595)
-            // disabledForTestTasks.add("integrationTest") // Re-enabled for proper coverage collection
-            // Note: CI job separation achieved by running different test tasks, not disabling coverage
+            // Conditionally disable integrationTest for Unit Tests CI job only
+            if (System.getenv("SKIP_INTEGRATION_COVERAGE") == "true") {
+                disabledForTestTasks.add("integrationTest") // Prevents koverXmlReport from triggering integrationTest
+            }
+            // Note: This preserves SPI-595 parallel coverage collection while preventing task dependency issues
         }
     }
     

@@ -192,12 +192,15 @@ class MCPServerIntegrationTest : MCPIntegrationTestBase() {
                 eventually(5.seconds) {
                     mcpClient.getConnectionState() shouldBe MockClaudeClient.ConnectionState.CLOSED
                 }
-                
+
                 // Verify connection metrics are updated in health endpoint
-                val healthResponse = testBuilder.client.get("/health")
-                val healthJson = json.parseToJsonElement(healthResponse.bodyAsText())
-                val metrics = healthJson.jsonObject["metrics"]?.jsonObject
-                metrics?.get("mcpConnections")?.jsonPrimitive?.content shouldBe "0"
+                // Use eventually to handle race condition between client disconnect and server cleanup
+                eventually(3.seconds) {
+                    val healthResponse = testBuilder.client.get("/health")
+                    val healthJson = json.parseToJsonElement(healthResponse.bodyAsText())
+                    val metrics = healthJson.jsonObject["metrics"]?.jsonObject
+                    metrics?.get("mcpConnections")?.jsonPrimitive?.content shouldBe "0"
+                }
             }
         }
         

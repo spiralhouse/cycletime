@@ -404,14 +404,34 @@ abstract class MCPIntegrationTestBase : StringSpec() {
         val result = response.jsonObject["result"]?.jsonObject
         val content = result?.get("content")?.jsonArray?.get(0)?.jsonObject
         val responseText = content?.get("text")?.jsonPrimitive?.content
-            ?: throw AssertionError("Failed to extract project data from tool response")
-        
+            ?: throw AssertionError("Failed to extract project data from tool response. Full response: $response")
+
         // Parse JSON response to extract ID
-        val projectData = json.parseToJsonElement(responseText).jsonObject
-        val projectId = projectData["id"]?.jsonPrimitive?.content
-            ?: throw AssertionError("Failed to extract project ID from tool response")
-        
-        return projectId
+        // Note: responseText is now a pretty-printed JSON string due to McpToolHandler enhancements
+        try {
+            // First parse the responseText to see what we actually have
+            val parsedResponse = json.parseToJsonElement(responseText)
+
+            // Check if responseText is the MCP content structure or the actual project JSON
+            val actualProjectJson = if (parsedResponse is JsonObject && parsedResponse.containsKey("content")) {
+                // responseText contains the MCP content structure, extract the text field
+                val content = parsedResponse["content"]?.jsonArray?.get(0)?.jsonObject
+                val actualText = content?.get("text")?.jsonPrimitive?.content
+                    ?: throw AssertionError("Failed to extract text from content structure. Response: $responseText")
+                actualText
+            } else {
+                // responseText is already the project JSON string
+                responseText
+            }
+
+            // Now parse the actual project data
+            val projectData = json.parseToJsonElement(actualProjectJson).jsonObject
+            val projectId = projectData["id"]?.jsonPrimitive?.content
+                ?: throw AssertionError("Failed to extract project ID from project data. Project data: $projectData")
+            return projectId
+        } catch (e: Exception) {
+            throw AssertionError("Failed to parse project response as JSON. Response text: '$responseText'. Error: ${e.message}", e)
+        }
     }
     
     /**
@@ -435,10 +455,27 @@ abstract class MCPIntegrationTestBase : StringSpec() {
             ?: throw AssertionError("Failed to extract issue data from tool response. Response: ${response}")
         
         // Parse JSON response to extract ID
+        // Note: responseText is now a pretty-printed JSON string due to McpToolHandler enhancements
         try {
-            val issueData = json.parseToJsonElement(responseText).jsonObject
+            // First parse the responseText to see what we actually have
+            val parsedResponse = json.parseToJsonElement(responseText)
+
+            // Check if responseText is the MCP content structure or the actual issue JSON
+            val actualIssueJson = if (parsedResponse is JsonObject && parsedResponse.containsKey("content")) {
+                // responseText contains the MCP content structure, extract the text field
+                val content = parsedResponse["content"]?.jsonArray?.get(0)?.jsonObject
+                val actualText = content?.get("text")?.jsonPrimitive?.content
+                    ?: throw AssertionError("Failed to extract text from content structure. Response: $responseText")
+                actualText
+            } else {
+                // responseText is already the issue JSON string
+                responseText
+            }
+
+            // Now parse the actual issue data
+            val issueData = json.parseToJsonElement(actualIssueJson).jsonObject
             val issueId = issueData["id"]?.jsonPrimitive?.content
-                ?: throw AssertionError("Failed to extract issue ID from tool response. Response text: $responseText")
+                ?: throw AssertionError("Failed to extract issue ID from issue data. Issue data: $issueData")
             return issueId
         } catch (e: Exception) {
             throw AssertionError("Failed to parse issue response as JSON. Response text: $responseText. Error: ${e.message}", e)

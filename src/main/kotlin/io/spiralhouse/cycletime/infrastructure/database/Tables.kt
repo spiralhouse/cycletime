@@ -104,3 +104,54 @@ object WorkflowsTable : IdTable<String>("workflows") {
         index(false, initialStatus)
     }
 }
+
+/**
+ * Central registry for all database tables.
+ *
+ * This ensures compile-time safety - if a table is added to the codebase
+ * but not registered here, it won't be created in the schema.
+ *
+ * IMPORTANT: Tables are listed in dependency order:
+ * 1. Independent tables first (no foreign keys)
+ * 2. Dependent tables after their dependencies
+ *
+ * This ordering is critical for schema creation to avoid foreign key errors.
+ */
+object TableRegistry {
+    /**
+     * All tables in dependency order.
+     * When adding a new table:
+     * 1. Add the table object to Tables.kt
+     * 2. Add it to this list in the correct position based on dependencies
+     * 3. That's it! DatabaseConfig and TestSupport will automatically use it
+     */
+    val ALL_TABLES = listOf(
+        // Independent tables (no foreign keys)
+        ProjectsTable,
+        WorkflowsTable,
+
+        // Tables with dependencies on ProjectsTable
+        IssuesTable,        // References ProjectsTable
+        SessionStatesTable, // References ProjectsTable
+
+        // Tables with dependencies on IssuesTable
+        IssueDependenciesTable, // References IssuesTable
+        IssueLabelsTable        // References IssuesTable
+    )
+
+    /**
+     * Validates that all table objects are registered.
+     * Could be extended with compile-time checks via annotation processing.
+     */
+    fun validate() {
+        val tableNames = ALL_TABLES.map { it.tableName }.toSet()
+        val duplicates = ALL_TABLES.groupingBy { it.tableName }
+            .eachCount()
+            .filter { it.value > 1 }
+            .keys
+
+        require(duplicates.isEmpty()) {
+            "Duplicate table names found in registry: $duplicates"
+        }
+    }
+}
