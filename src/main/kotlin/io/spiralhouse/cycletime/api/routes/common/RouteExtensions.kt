@@ -386,7 +386,7 @@ suspend fun ApplicationCall.handleValidationException(e: IllegalArgumentExceptio
 
 /**
  * Process validation error messages for better user experience.
- * 
+ *
  * @param message The original error message
  * @return Pair of (formatted error message, additional details)
  */
@@ -400,6 +400,13 @@ fun processValidationErrorMessage(message: String): Pair<String, String?> {
         }
         message.contains("Issue status is required") -> {
             "Issue status is required" to "Status field must not be empty"
+        }
+        // Project validation errors - return generic "Invalid request" for consistency
+        message.contains("Project name must not be empty") ||
+        message.contains("Project name length exceeds maximum") ||
+        message.contains("Project description length exceeds maximum") ||
+        message.contains("Project name") && message.contains("cannot be empty") -> {
+            "Invalid request" to message
         }
         else -> message to null
     }

@@ -25,6 +25,7 @@ import io.spiralhouse.cycletime.domain.valueobjects.SessionKey
 import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
 import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
 import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
+import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseFactory
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
@@ -97,10 +98,7 @@ class SessionApplicationServiceTest : StringSpec({
 
     beforeSpec {
         // Setup H2 in-memory database
-        database = Database.connect(
-            url = "jdbc:h2:mem:session_app_service_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-            driver = "org.h2.Driver"
-        )
+        database = TestDatabaseFactory.createTestDatabase()
 
         // Create schema
         transaction(database) {
@@ -109,8 +107,8 @@ class SessionApplicationServiceTest : StringSpec({
 
         // Setup dependencies with constructor injection
         mockTimeProvider = MockTimeProvider()
-        sessionRepository = ExposedSessionRepository(mockTimeProvider)
-        projectRepository = ExposedProjectRepository(mockTimeProvider)
+        sessionRepository = ExposedSessionRepository(mockTimeProvider, database)
+        projectRepository = ExposedProjectRepository(mockTimeProvider, database)
 
         // Create SessionApplicationService
         unitOfWork = ExposedUnitOfWork(database)
@@ -138,6 +136,8 @@ class SessionApplicationServiceTest : StringSpec({
         transaction(database) {
             SchemaUtils.drop(SessionStatesTable, IssuesTable, ProjectsTable)
         }
+        // ARCHITECTURAL FIX: Proper database connection cleanup to prevent HikariDataSource closure issues
+        org.jetbrains.exposed.sql.transactions.TransactionManager.closeAndUnregister(database)
     }
 
     "should create basic session using repository directly (baseline test)" {
@@ -338,9 +338,12 @@ class SessionApplicationServiceTest : StringSpec({
 
     "should associate session with project" {
         runTest {
-            // Create project
-            val project = Project.create("Test Project", "Description", mockTimeProvider)
-            projectRepository.save(project)
+            // Create project using UnitOfWork for proper transaction isolation
+            val project = unitOfWork.execute {
+                val project = Project.create("Test Project", "Description", mockTimeProvider)
+                projectRepository.save(project)
+                project
+            }
 
             // Create session without project
             val createCommand = CreateSessionCommand(projectId = null)
@@ -386,9 +389,12 @@ class SessionApplicationServiceTest : StringSpec({
 
     "should throw SessionNotFoundException when associating non-existent session".config(enabled = false) {
         runTest {
-            // Create project
-            val project = Project.create("Test Project", "Description", mockTimeProvider)
-            projectRepository.save(project)
+            // Create project using UnitOfWork for proper transaction isolation
+            val project = unitOfWork.execute {
+                val project = Project.create("Test Project", "Description", mockTimeProvider)
+                projectRepository.save(project)
+                project
+            }
 
             val nonExistentKey = SessionKey.generate()
             val associateCommand = AssociateSessionWithProjectCommand(
@@ -407,9 +413,12 @@ class SessionApplicationServiceTest : StringSpec({
 
     "should disassociate session from project" {
         runTest {
-            // Create project
-            val project = Project.create("Test Project", "Description", mockTimeProvider)
-            projectRepository.save(project)
+            // Create project using UnitOfWork for proper transaction isolation
+            val project = unitOfWork.execute {
+                val project = Project.create("Test Project", "Description", mockTimeProvider)
+                projectRepository.save(project)
+                project
+            }
 
             // Create session with project
             val createCommand = CreateSessionCommand(projectId = project.id)
@@ -442,9 +451,12 @@ class SessionApplicationServiceTest : StringSpec({
 
     "should find sessions by project" {
         runTest {
-            // Create project
-            val project = Project.create("Test Project", "Description", mockTimeProvider)
-            projectRepository.save(project)
+            // Create project using UnitOfWork for proper transaction isolation
+            val project = unitOfWork.execute {
+                val project = Project.create("Test Project", "Description", mockTimeProvider)
+                projectRepository.save(project)
+                project
+            }
 
             // Create sessions - some associated with project, some not
             val session1 = sessionApplicationService.createSession(CreateSessionCommand(projectId = project.id))
@@ -802,9 +814,12 @@ class SessionApplicationServiceTest : StringSpec({
 
     "should demonstrate transactional behavior for complex operations" {
         runTest {
-            // Create project
-            val project = Project.create("Test Project", "Description", mockTimeProvider)
-            projectRepository.save(project)
+            // Create project using UnitOfWork for proper transaction isolation
+            val project = unitOfWork.execute {
+                val project = Project.create("Test Project", "Description", mockTimeProvider)
+                projectRepository.save(project)
+                project
+            }
 
             // Create session and perform multiple operations in a single transaction
             val session = sessionApplicationService.createSession(CreateSessionCommand(projectId = null))

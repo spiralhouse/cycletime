@@ -16,6 +16,7 @@ import io.spiralhouse.cycletime.domain.valueobjects.SessionKey
 import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
 import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
 import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
+import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseFactory
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionRepository
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
@@ -26,6 +27,7 @@ import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -60,7 +62,7 @@ class ExposedSessionRepositoryTest : DescribeSpec({
      * If the project already exists, it won't create a duplicate.
      */
     fun createTestProject(projectId: ProjectId = ProjectId.generate()): ProjectId {
-        transaction {
+        transaction(database) {  // Use the same database instance as the repository
             // Check if project already exists
             val existsCount = ProjectsTable
                 .selectAll()
@@ -121,10 +123,7 @@ class ExposedSessionRepositoryTest : DescribeSpec({
 
     beforeSpec {
         // Set up H2 in-memory database for integration testing
-        database = Database.connect(
-            url = "jdbc:h2:mem:test_session_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-            driver = "org.h2.Driver"
-        )
+        database = TestDatabaseFactory.createTestDatabase()
 
         // Create schema - order matters for foreign key constraints
         transaction(database) {
@@ -132,7 +131,7 @@ class ExposedSessionRepositoryTest : DescribeSpec({
         }
 
         mockTimeProvider = MockTimeProvider()
-        repository = ExposedSessionRepository(SystemTimeProvider())
+        repository = ExposedSessionRepository(mockTimeProvider, database)
     }
 
     beforeEach {
@@ -152,6 +151,7 @@ class ExposedSessionRepositoryTest : DescribeSpec({
         transaction(database) {
             SchemaUtils.drop(SessionStatesTable, IssuesTable, ProjectsTable)
         }
+        TransactionManager.closeAndUnregister(database)
     }
 
     describe("ExposedSessionRepository Integration Tests") {
@@ -681,28 +681,6 @@ class ExposedSessionRepositoryTest : DescribeSpec({
                     retrieved.lastActivity shouldBe session.lastActivity
                     retrieved.createdAt shouldBe session.createdAt
                     retrieved.updatedAt shouldBe session.updatedAt
-                }
-            }
-
-            it("should use SystemTimeProvider for reconstitution") {
-                runTest {
-                    val session = createTestSession()
-
-                    repository.save(session)
-                    val retrieved = repository.findByKey(session.sessionKey)
-
-                    // The retrieved session should be reconstituted and functional
-                    retrieved shouldNotBe null
-
-                    // Test that we can modify the retrieved session (verifies TimeProvider works)
-                    val originalUpdateTime = retrieved!!.updatedAt
-
-                    // Note: Retrieved session uses SystemTimeProvider, not MockTimeProvider
-                    // So we can't control time for this assertion, but we can verify functionality
-                    retrieved.updateContext(SessionContext(lastAction = "Modified after retrieval"))
-
-                    // The update should have changed the timestamp
-                    retrieved.updatedAt shouldNotBe originalUpdateTime
                 }
             }
 

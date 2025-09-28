@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the Application Service layer implementation patterns for CycleTime, integrating Domain-Driven Design (DDD) principles with dependency injection (currently Koin 4.0, migrating to Ktor native DI in SPI-442). The Application Services orchestrate use cases, coordinate between domain and infrastructure layers, and maintain transaction boundaries while leveraging Kotlin coroutines for async operations.
+This document outlines the Application Service layer implementation patterns for CycleTime, integrating Domain-Driven Design (DDD) principles with dependency injection using Ktor native DI. The Application Services orchestrate use cases, coordinate between domain and infrastructure layers, and maintain transaction boundaries while leveraging Kotlin coroutines for async operations.
 
 ## Core Principles
 
@@ -32,7 +32,7 @@ This document outlines the Application Service layer implementation patterns for
 ### Base Application Service Pattern
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/application/services/ApplicationService.kt
+// src/main/kotlin/io/spiralhouse/cycletime/application/services/ApplicationService.kt
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -85,9 +85,9 @@ interface Validatable {
 ### Command and Query Objects
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/application/commands/ProjectCommands.kt
+// src/main/kotlin/io/spiralhouse/cycletime/application/commands/ProjectCommands.kt
 
-import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
 import kotlinx.serialization.Serializable
 
 /**

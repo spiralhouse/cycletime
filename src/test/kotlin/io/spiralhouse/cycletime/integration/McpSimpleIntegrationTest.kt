@@ -11,7 +11,8 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.ktor.websocket.*
-import io.spiralhouse.cycletime.module
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper
+import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper.configureTestApplication
 import kotlinx.serialization.json.*
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration.Companion.seconds
@@ -21,18 +22,28 @@ import kotlin.time.Duration.Companion.seconds
  * Tests the MCP endpoints as integrated within the main application.
  */
 class McpSimpleIntegrationTest : StringSpec({
+
+    beforeSpec {
+        // Initialize test database using helper to prevent race conditions
+        DatabaseTestHelper.initTestDatabase(
+            testName = "mcp_simple_test",
+            enableLogging = false
+        )
+    }
+
+    afterSpec {
+        // Clean up test database
+        DatabaseTestHelper.cleanupTestDatabase()
+    }
     
     "should expose MCP info endpoint" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
-            
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_simple_test")
+
             val response = client.get("/mcp")
             response.status shouldBe HttpStatusCode.OK
-            
+
             val body = response.bodyAsText()
             body shouldContain "cycletime"
             body shouldContain "version"
@@ -42,12 +53,9 @@ class McpSimpleIntegrationTest : StringSpec({
     
     "should accept WebSocket connections on /mcp endpoint" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
-            
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_simple_test")
+
             val client = createClient {
                 install(WebSockets)
             }
@@ -83,7 +91,7 @@ class McpSimpleIntegrationTest : StringSpec({
                 val responseText = response?.readText() ?: ""
                 responseText shouldContain "jsonrpc"
                 responseText shouldContain "2.0"
-                
+
                 // Close connection
                 close(CloseReason(CloseReason.Codes.NORMAL, "Test complete"))
             }
@@ -92,12 +100,9 @@ class McpSimpleIntegrationTest : StringSpec({
     
     "should handle tools/list request via WebSocket" {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
-            
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_simple_test")
+
             val client = createClient {
                 install(WebSockets)
             }
@@ -148,7 +153,7 @@ class McpSimpleIntegrationTest : StringSpec({
                 responseJson shouldNotBe null
                 responseJson?.get("jsonrpc")?.jsonPrimitive?.content shouldBe "2.0"
                 responseJson?.get("id")?.jsonPrimitive?.int shouldBe 2
-                
+
                 // Close connection
                 close(CloseReason(CloseReason.Codes.NORMAL, "Test complete"))
             }
@@ -158,15 +163,12 @@ class McpSimpleIntegrationTest : StringSpec({
     // TODO(SPI-589): Re-enable when advanced MCP monitoring integration is implemented
     "should expose MCP stats endpoint".config(enabled = false) {
         testApplication {
-            application {
-                // Use in-memory database for tests to avoid conflicts
-                System.setProperty("DATABASE_URL", "jdbc:h2:mem:mcp_test_${System.nanoTime()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-                module()
-            }
-            
+            // Use helper to ensure proper initialization order
+            configureTestApplication(testName = "mcp_simple_test")
+
             val response = client.get("/mcp/stats")
             response.status shouldBe HttpStatusCode.OK
-            
+
             val body = response.bodyAsText()
             body shouldContain "connections"
             body shouldContain "config"

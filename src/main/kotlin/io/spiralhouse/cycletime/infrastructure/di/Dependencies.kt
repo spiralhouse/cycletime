@@ -15,6 +15,7 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedWorkflowReposi
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import org.jetbrains.exposed.sql.Database
 import org.slf4j.LoggerFactory
+import io.spiralhouse.cycletime.infrastructure.database.DatabaseProvider
 import io.spiralhouse.cycletime.mcp.handlers.DefaultWebSocketHandler
 import io.spiralhouse.cycletime.mcp.handlers.WebSocketHandler
 import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
@@ -51,6 +52,7 @@ private inline fun <T> safeCreate(serviceName: String, factory: () -> T): T {
 }
 fun Application.configureDependencies(
     database: Database,
+    databaseProvider: DatabaseProvider? = null,
     timeProvider: TimeProvider? = null,
     includeMCP: Boolean = true
 ) {
@@ -59,11 +61,15 @@ fun Application.configureDependencies(
     
     dependencies {
         // Core dependencies
-        provide<TimeProvider> { 
+        provide<TimeProvider> {
             safeCreate("TimeProvider") { timeProvider ?: SystemTimeProvider() }
         }
         provide<Database> { database }
-        provide<ExposedUnitOfWork> { 
+        // Provide DatabaseProvider if supplied (for clean DI pattern)
+        if (databaseProvider != null) {
+            provide<DatabaseProvider> { databaseProvider }
+        }
+        provide<ExposedUnitOfWork> {
             safeCreate("ExposedUnitOfWork") { ExposedUnitOfWork(resolve()) }
         }
         
@@ -179,7 +185,12 @@ private fun DependencyRegistry.configureMCPDependencies() {
     provide<ProtocolHandler> { JsonRpcProtocolHandler() }
     provide<ResourceRegistry> { ResourceRegistry() }
     provide<ToolRegistry> { ToolRegistry() }
-    provide<MCPProviderRegistry> { 
+    provide<McpToolHandler> {
+        DefaultMcpToolHandler(
+            toolRegistry = resolve<ToolRegistry>()
+        )
+    }
+    provide<MCPProviderRegistry> {
         MCPProviderRegistry(
             resourceRegistry = resolve<ResourceRegistry>(),
             toolRegistry = resolve<ToolRegistry>()
@@ -189,8 +200,7 @@ private fun DependencyRegistry.configureMCPDependencies() {
     provide<McpMethodHandler> {
         McpMethodHandler(
             protocolHandler = resolve<ProtocolHandler>() as JsonRpcProtocolHandler,
-            toolRegistry = resolve<ToolRegistry>(),
-            toolInvoker = resolve<ToolRegistry>(),
+            toolHandler = resolve<McpToolHandler>(),
             resourceRegistry = resolve<ResourceRegistry>()
         )
     }

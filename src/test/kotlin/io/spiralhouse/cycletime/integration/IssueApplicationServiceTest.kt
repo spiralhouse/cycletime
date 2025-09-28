@@ -21,6 +21,7 @@ import io.spiralhouse.cycletime.domain.valueobjects.*
 import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
 import io.spiralhouse.cycletime.infrastructure.database.IssueDependenciesTable
 import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
+import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseFactory
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
@@ -98,10 +99,7 @@ class IssueApplicationServiceTest : StringSpec({
 
     beforeSpec {
         // Setup H2 in-memory database
-        database = Database.connect(
-            url = "jdbc:h2:mem:issue_app_service_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-            driver = "org.h2.Driver"
-        )
+        database = TestDatabaseFactory.createTestDatabase()
 
         // Create schema
         transaction(database) {
@@ -110,8 +108,8 @@ class IssueApplicationServiceTest : StringSpec({
 
         // Setup dependencies with constructor injection
         mockTimeProvider = MockTimeProvider()
-        issueRepository = ExposedIssueRepository(mockTimeProvider)
-        projectRepository = ExposedProjectRepository(mockTimeProvider)
+        issueRepository = ExposedIssueRepository(mockTimeProvider, database)
+        projectRepository = ExposedProjectRepository(mockTimeProvider, database)
 
         // Create IssueApplicationService (this will fail until implemented)
         unitOfWork = ExposedUnitOfWork(database)
@@ -139,6 +137,8 @@ class IssueApplicationServiceTest : StringSpec({
         transaction(database) {
             SchemaUtils.drop(IssueDependenciesTable, IssuesTable, ProjectsTable)
         }
+        // ARCHITECTURAL FIX: Proper database connection cleanup to prevent HikariDataSource closure issues
+        org.jetbrains.exposed.sql.transactions.TransactionManager.closeAndUnregister(database)
     }
 
     // ================================================================================

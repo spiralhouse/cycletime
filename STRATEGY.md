@@ -23,7 +23,7 @@ CycleTime enables solo developers and teams to orchestrate entire software proje
   - Cross-session project continuity
   - Professional documentation templates
   - Dashboard for observability
-- **Price**: Free forever, AGPL v3 licensed
+- **Price**: Free forever, MIT licensed
 - **Philosophy**: "Batteries included" - everything works out of the box
 
 ### CycleTime EE (Enterprise Edition)
@@ -94,18 +94,18 @@ CycleTime EE: Same core + provider interface for external integrations
 
 ### Decision 4: Licensing Strategy (2025-08-21)
 
-**Decision**: AGPL v3 for both CE and EE initially.
+**Decision**: MIT for both CE and EE initially.
 
 **Rationale**:
-- Forces competitors to open-source improvements
+- Maximizes adoption with permissive licensing
 - Allows paid SaaS hosting of both editions
 - Enables future dual-licensing for enterprise customers
-- Builds community goodwill
+- Builds community goodwill and corporate acceptance
 
 **Future Options**:
 - Pure open source + paid hosting (current plan)
-- Open core model (AGPL CE + proprietary EE extensions)
-- Dual licensing (AGPL default + commercial license)
+- Open core model (MIT CE + proprietary EE extensions)
+- Dual licensing (MIT default + commercial license)
 
 ## Branding Guidelines
 
@@ -520,7 +520,7 @@ cycletime/               # Renamed from jcvd
 - **2025-08-21**: Consolidated JCVD and CycleTime into CE/EE model
 - **2025-08-21**: Chose monolithic architecture with embedded H2 for CE
 - **2025-08-21**: Decided on gradual migration preserving momentum
-- **2025-08-21**: Selected AGPL v3 licensing for both editions
+- **2025-08-21**: Selected MIT licensing for both editions
 - **2025-08-21**: Created STRATEGY.md as living strategy document
 
 ---
