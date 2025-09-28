@@ -264,7 +264,7 @@ class SessionApplicationService(
 ### File Structure
 
 ```
-src/test/kotlin/io/spiralhouse/jcvd/
+src/test/kotlin/io/spiralhouse/cycletime/
 ├── unit/           # Fast, isolated, no external dependencies
 ├── integration/    # Real components, controlled environment
 ├── system/         # End-to-end, production-like scenarios
@@ -279,11 +279,45 @@ src/test/kotlin/io/spiralhouse/jcvd/
 - System tests: `*SystemTest.kt` in `system` package
 - Test utilities: `*TestUtils.kt` in `utils` package
 
+### MCP Test Categorization
+
+**Unit Tests**:
+- `mcp.protocol.*` - Protocol handlers, message processing
+- `mcp.tools.*` - Tool handlers, tool registry logic
+- No database or network dependencies
+- Target execution time: <10ms per test
+
+**Integration Tests**:
+- `mcp.integration.*` - MCP server integration
+- `mcp.server.*` - Server infrastructure, WebSocket connections
+- Database interactions and resource management
+- Target execution time: <100ms per test
+
 ### Performance Requirements
 
-- Unit tests: < 10ms each, < 1s total suite
-- Integration tests: < 100ms each, < 10s total suite
-- System tests: < 1s each, < 30s total suite
+- Unit tests: < 10ms each, < 30s total suite
+- Integration tests: < 100ms each, < 3min total suite
+- System tests: < 1s each, < 10min total suite
+
+**SPI-623 Implementation**: Test categorization separates MCP protocol/tool tests (unit) from MCP integration/server tests (integration)
+
+## CI Test Configuration (SPI-623)
+
+### Test Categorization
+- **Unit Tests**: Domain logic + MCP protocol/tool logic (no external dependencies)
+- **Integration Tests**: Infrastructure + MCP server integration (database dependencies)
+- **System Tests**: Performance scenarios and end-to-end workflows
+
+### Caching Configuration
+- Unit tests: Track domain/unit/MCP protocol sources
+- Integration tests: Track infrastructure + database versions
+- System tests: Track performance-sensitive sources
+
+### CI Matrix Configuration
+- `ciUnitOnly` - Unit tests (parallel job)
+- `ciIntegrationOnly` - Integration tests (parallel job)
+- Sequential test discovery prevents Kotest race conditions
+- Parallelism configured based on CPU cores
 
 ### Coverage Requirements
 
