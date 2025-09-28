@@ -369,43 +369,7 @@ class MockClaudeClient(
         val responseText = responseFrame.readText()
         val response = json.parseToJsonElement(responseText)
         
-        // DEBUG LOGGING: Add detailed response structure analysis
-        println("=== MCP RESPONSE DEBUG ===")
-        println("Request method: ${request["method"]?.jsonPrimitive?.content}")
-        println("Raw response text: $responseText")
-        println("Parsed response JSON: $response")
-        
-        // Analyze result structure specifically for tool calls
-        if (request["method"]?.jsonPrimitive?.content == "tools/call") {
-            println("=== TOOL CALL RESPONSE ANALYSIS ===")
-            val result = response.jsonObject["result"]
-            println("Result field: $result")
-            
-            if (result != null) {
-                val content = result.jsonObject["content"]
-                println("Content field: $content")
-                println("Content type: ${content?.javaClass?.simpleName}")
-                
-                if (content is JsonArray) {
-                    println("Content is JsonArray with ${content.size} elements")
-                    content.forEachIndexed { index, element ->
-                        println("Content[$index]: $element")
-                        if (element is JsonObject) {
-                            println("Content[$index].type: ${element["type"]}")
-                            println("Content[$index].text: ${element["text"]}")
-                        }
-                    }
-                } else if (content is JsonObject) {
-                    println("Content is JsonObject:")
-                    println("Content.type: ${content["type"]}")
-                    println("Content.text: ${content["text"]}")
-                } else {
-                    println("Content is neither JsonArray nor JsonObject: $content")
-                }
-            }
-        }
-        println("=== END DEBUG ===")
-        
+        // Note: Enhanced JSON response format is now properly handled by test utilities
         return response
     }
     

@@ -185,7 +185,12 @@ private fun DependencyRegistry.configureMCPDependencies() {
     provide<ProtocolHandler> { JsonRpcProtocolHandler() }
     provide<ResourceRegistry> { ResourceRegistry() }
     provide<ToolRegistry> { ToolRegistry() }
-    provide<MCPProviderRegistry> { 
+    provide<McpToolHandler> {
+        DefaultMcpToolHandler(
+            toolRegistry = resolve<ToolRegistry>()
+        )
+    }
+    provide<MCPProviderRegistry> {
         MCPProviderRegistry(
             resourceRegistry = resolve<ResourceRegistry>(),
             toolRegistry = resolve<ToolRegistry>()
@@ -195,8 +200,7 @@ private fun DependencyRegistry.configureMCPDependencies() {
     provide<McpMethodHandler> {
         McpMethodHandler(
             protocolHandler = resolve<ProtocolHandler>() as JsonRpcProtocolHandler,
-            toolRegistry = resolve<ToolRegistry>(),
-            toolInvoker = resolve<ToolRegistry>(),
+            toolHandler = resolve<McpToolHandler>(),
             resourceRegistry = resolve<ResourceRegistry>()
         )
     }
