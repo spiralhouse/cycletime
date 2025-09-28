@@ -61,6 +61,10 @@ dependencies {
     implementation(libs.ktor.server.status.pages)
     implementation("io.ktor:ktor-server-call-id:${libs.versions.ktor.get()}")
 
+    // OpenAPI and Swagger UI - API documentation generation
+    implementation("io.ktor:ktor-server-openapi:${libs.versions.ktor.get()}")
+    implementation("io.ktor:ktor-server-swagger:${libs.versions.ktor.get()}")
+
     // Exposed ORM - Currently used for SQLite database access
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
