@@ -741,21 +741,6 @@ class ToolRegistryTest : DescribeSpec({
                 error.message shouldContain "parameter validation failed"
             }
 
-            it("should format errors for JSON-RPC response") {
-                registry.register(createMathAddTool())
-
-                val invalidParams = buildJsonObject {
-                    put("a", "invalid")
-                }
-
-                val result = registry.invoke("math.add", invalidParams)
-                result.isFailure shouldBe true
-                
-                val jsonRpcError = registry.formatErrorForJsonRpc(result.exceptionOrNull()!!)
-                jsonRpcError.code shouldBe -32602 // Invalid params
-                jsonRpcError.message shouldContain "Invalid method parameter(s)"
-                jsonRpcError.data shouldNotBe null
-            }
 
             it("should provide specific error codes") {
                 // Tool not found
@@ -794,58 +779,5 @@ class ToolRegistryTest : DescribeSpec({
             }
         }
 
-        describe("integration with JSON-RPC protocol") {
-
-            it("should handle tools/list JSON-RPC method") {
-                registry.register(createMathAddTool())
-                registry.register(createProjectCreateTool())
-
-                val response = registry.handleJsonRpcMethod("tools/list", JsonObject(emptyMap()))
-                response.isSuccess shouldBe true
-                
-                val result = response.getOrNull()!!.jsonObject
-                val tools = result["tools"]!!.jsonArray
-                tools shouldHaveSize 2
-                
-                val mathTool = tools.find { 
-                    it.jsonObject["name"]?.jsonPrimitive?.content == "math.add" 
-                }
-                mathTool shouldNotBe null
-            }
-
-            it("should handle tools/call JSON-RPC method") {
-                registry.register(createMathAddTool())
-
-                val params = buildJsonObject {
-                    put("name", "math.add")
-                    putJsonObject("arguments") {
-                        put("a", 5)
-                        put("b", 3)
-                    }
-                }
-
-                val response = registry.handleJsonRpcMethod("tools/call", params)
-                response.isSuccess shouldBe true
-                
-                val result = response.getOrNull()!!.jsonObject
-                result["content"]?.jsonArray?.get(0)?.jsonObject?.get("text")?.jsonPrimitive?.content shouldBe "8"
-            }
-
-            it("should return proper JSON-RPC error responses") {
-                val params = buildJsonObject {
-                    put("name", "nonexistent.tool")
-                    putJsonObject("arguments") {
-                        put("test", "value")
-                    }
-                }
-
-                val response = registry.handleJsonRpcMethod("tools/call", params)
-                response.isFailure shouldBe true
-                
-                val error = response.exceptionOrNull()
-                error.shouldBeInstanceOf<JsonRpcException>()
-                (error as JsonRpcException).code shouldBe -32601 // Method not found (tool not found)
-            }
-        }
     }
 }})

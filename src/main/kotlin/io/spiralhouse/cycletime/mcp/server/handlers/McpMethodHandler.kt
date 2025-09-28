@@ -4,7 +4,7 @@ import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcError
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
-import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
+import io.spiralhouse.cycletime.mcp.tools.McpToolHandler
 import io.spiralhouse.cycletime.mcp.resources.ResourceRegistry
 import io.spiralhouse.cycletime.mcp.server.state.ServerState
 import io.spiralhouse.cycletime.mcp.tools.exceptions.*
@@ -19,14 +19,13 @@ import kotlinx.serialization.json.*
  * validation and error handling with efficient request processing.
  * 
  * @property protocolHandler Handler for JSON-RPC protocol operations
- * @property toolRegistry Registry for tool management and invocation
+ * @property toolHandler Handler for tool-related JSON-RPC operations
  * @property resourceRegistry Registry for resource provider management
  * @property serverState Server state management (optional)
  */
 class McpMethodHandler(
     private val protocolHandler: JsonRpcProtocolHandler,
-    private val toolRegistry: ToolRegistry,
-    private val toolInvoker: ToolRegistry,
+    private val toolHandler: McpToolHandler,
     private val resourceRegistry: ResourceRegistry,
     private val serverState: ServerState = ServerState()
 ) {
@@ -166,76 +165,35 @@ class McpMethodHandler(
     
     private suspend fun handleToolsList(request: JsonRpcRequest): JsonRpcResponse {
         return try {
-            val metadata = toolRegistry.getAllToolMetadata()
-            val tools = metadata.mapNotNull { tool ->
-                try {
-                    buildJsonObject {
-                        put("name", tool.name)
-                        put("description", tool.description)
-                        put("inputSchema", tool.parametersSchema)
-                    }
-                } catch (e: Exception) {
-                    // Skip tools that fail during metadata serialization
-                    null
-                }
-            }
-            
-            val result = buildJsonObject {
-                put("tools", JsonArray(tools))
-            }
-            
-            createSuccessResponse(request, result)
+            val result = toolHandler.handleJsonRpcMethod("tools/list", JsonObject(emptyMap()))
+            result.fold(
+                onSuccess = { value -> createSuccessResponse(request, value) },
+                onFailure = { error -> handleToolHandlerError(request, error) }
+            )
         } catch (e: Exception) {
             createInternalError(request, e)
         }
     }
     
     private suspend fun handleToolsCall(
-        request: JsonRpcRequest, 
+        request: JsonRpcRequest,
         async: Boolean
     ): JsonRpcResponse {
         val params = request.params as? JsonObject
             ?: return createInvalidParamsError(request, "Expected object parameters")
-        
-        val toolName = params["name"]?.jsonPrimitive?.content
-            ?: return createInvalidParamsError(request, "Missing tool name")
-        
-        val arguments = params["arguments"] ?: JsonObject(emptyMap())
-        
-        // Check if tool exists
-        val tool = toolRegistry.getTool(toolName)
-        
-        if (tool == null) {
-            val allToolNames = toolRegistry.getRegisteredToolNames()
-            return createErrorResponse(
-                request = request,
-                code = -32001,
-                message = "Tool not found: $toolName. Available tools: $allToolNames"
+
+        return try {
+            val result = toolHandler.handleJsonRpcMethod("tools/call", params)
+            result.fold(
+                onSuccess = { value ->
+                    // McpToolHandler already returns MCP-formatted response, use it directly
+                    createSuccessResponse(request, value)
+                },
+                onFailure = { error -> handleToolHandlerError(request, error) }
             )
+        } catch (e: Exception) {
+            createInternalError(request, e)
         }
-        
-        // Auto-detect async tools and handle appropriately
-        // Allow async tools to be called from sync endpoint for convenience
-        
-        val result = if (tool.isAsync) {
-            // Invoke async tool with timeout (regardless of endpoint)
-            val timeout = params["timeout"]?.jsonPrimitive?.longOrNull 
-                ?: 60000L // Default 60 seconds
-            toolInvoker.invokeAsync(toolName, arguments, timeout)
-        } else {
-            // Invoke sync tool
-            toolInvoker.invoke(toolName, arguments)
-        }
-        
-        return result.fold(
-            onSuccess = { value ->
-                // Tools now return properly formatted MCP responses directly
-                createSuccessResponse(request, value)
-            },
-            onFailure = { error ->
-                createToolError(request, error)
-            }
-        )
     }
     
     private suspend fun handleResourcesList(request: JsonRpcRequest): JsonRpcResponse {
@@ -413,7 +371,7 @@ class McpMethodHandler(
     }
     
     // ===== Helper Methods =====
-    
+
     private fun buildCapabilities(): JsonObject {
         return buildJsonObject {
             put("tools", buildJsonObject {
@@ -436,32 +394,7 @@ class McpMethodHandler(
             put("version", "1.0.0")
         }
     }
-    
-    private fun formatToolResponse(value: JsonElement): JsonObject {
-        val textValue = when {
-            value is JsonPrimitive && value.isString -> value.content
-            value is JsonPrimitive && value.isString.not() -> value.content
-            value is JsonObject -> {
-                // Handle domain object responses - convert to pretty JSON string
-                Json { prettyPrint = true }.encodeToString(value)
-            }
-            value is JsonArray -> {
-                // Handle array responses - convert to pretty JSON string  
-                Json { prettyPrint = true }.encodeToString(value)
-            }
-            else -> value.toString().trim('"')
-        }
-        
-        return buildJsonObject {
-            put("content", buildJsonArray {
-                add(buildJsonObject {
-                    put("type", "text")
-                    put("text", textValue)
-                })
-            })
-        }
-    }
-    
+
     // ===== Response Creation Helpers =====
     
     private fun createSuccessResponse(request: JsonRpcRequest, result: JsonElement): JsonRpcResponse {
@@ -549,44 +482,66 @@ class McpMethodHandler(
         )
     }
     
-    private fun createToolError(
-        request: JsonRpcRequest, 
+    private fun handleToolHandlerError(
+        request: JsonRpcRequest,
         error: Throwable
     ): JsonRpcResponse {
-        // Map exception types to appropriate JSON-RPC error codes
-        val (code, message, data) = when (error) {
+        return when (error) {
+            is JsonRpcException -> {
+                createErrorResponse(
+                    request = request,
+                    code = error.code,
+                    message = error.message ?: "Tool operation failed",
+                    data = error.data
+                )
+            }
             is ParameterValidationException -> {
-                Triple(-32602, "Parameter validation failed: ${error.message}", null)
+                createErrorResponse(
+                    request = request,
+                    code = -32602,
+                    message = "Parameter validation failed: ${error.message}"
+                )
             }
             is ToolTimeoutException -> {
-                Triple(-32005, "Tool execution timeout: ${error.message}", null)
+                createErrorResponse(
+                    request = request,
+                    code = -32005,
+                    message = "Tool execution timeout: ${error.message}"
+                )
             }
             is ToolExecutionException -> {
-                Triple(-32004, "Tool execution failed: ${error.message}", buildJsonObject {
-                    put("exception", error.javaClass.simpleName)
-                    error.stackTrace.firstOrNull()?.let { frame ->
-                        put("location", "${frame.className}.${frame.methodName}:${frame.lineNumber}")
+                createErrorResponse(
+                    request = request,
+                    code = -32004,
+                    message = "Tool execution failed: ${error.message}",
+                    data = buildJsonObject {
+                        put("exception", error.javaClass.simpleName)
+                        error.stackTrace.firstOrNull()?.let { frame ->
+                            put("location", "${frame.className}.${frame.methodName}:${frame.lineNumber}")
+                        }
                     }
-                })
+                )
             }
             is ToolNotFoundException -> {
-                Triple(-32001, error.message ?: "Tool not found", null)
+                createErrorResponse(
+                    request = request,
+                    code = -32001,
+                    message = error.message ?: "Tool not found"
+                )
             }
             else -> {
-                Triple(-32603, "Internal error: ${error.message ?: "Unknown error"}", buildJsonObject {
-                    put("exception", error.javaClass.simpleName)
-                    error.stackTrace.firstOrNull()?.let { frame ->
-                        put("location", "${frame.className}.${frame.methodName}:${frame.lineNumber}")
+                createErrorResponse(
+                    request = request,
+                    code = -32603,
+                    message = "Internal error: ${error.message ?: "Unknown error"}",
+                    data = buildJsonObject {
+                        put("exception", error.javaClass.simpleName)
+                        error.stackTrace.firstOrNull()?.let { frame ->
+                            put("location", "${frame.className}.${frame.methodName}:${frame.lineNumber}")
+                        }
                     }
-                })
+                )
             }
         }
-        
-        return createErrorResponse(
-            request = request,
-            code = code,
-            message = message,
-            data = data
-        )
     }
 }

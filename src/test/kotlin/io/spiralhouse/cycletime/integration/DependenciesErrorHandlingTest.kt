@@ -10,11 +10,12 @@ import io.ktor.server.plugins.di.*
 import io.ktor.client.request.*
 import io.ktor.server.config.MapApplicationConfig
 import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseFactory
-import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper
-import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper.configureTestApplication
+import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseProvider
+import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 
 /**
@@ -30,17 +31,19 @@ import org.jetbrains.exposed.exceptions.ExposedSQLException
  */
 class DependenciesErrorHandlingTest : StringSpec({
 
+    lateinit var database: Database
+    lateinit var testProvider: TestDatabaseProvider
+
     beforeSpec {
-        // Initialize test database using helper to prevent race conditions
-        DatabaseTestHelper.initTestDatabase(
-            testName = "dependencies_error_test",
-            enableLogging = false
-        )
+        // Create isolated test database using modern pattern
+        database = TestDatabaseFactory.createTestDatabase()
+        testProvider = TestDatabaseProvider()
     }
 
     afterSpec {
-        // Clean up test database
-        DatabaseTestHelper.cleanupTestDatabase()
+        // Clean up test database properly
+        testProvider.close()
+        TransactionManager.closeAndUnregister(database)
     }
     
     "should handle failing database operations" {
@@ -72,15 +75,22 @@ class DependenciesErrorHandlingTest : StringSpec({
     
     "should handle null database parameter correctly" {
         testApplication {
-            // Use helper to ensure proper initialization order
-            configureTestApplication(testName = "dependencies_error_test")
+            application {
+                // Configure DI with isolated test database
+                configureDependencies(
+                    database = database,
+                    databaseProvider = testProvider,
+                    timeProvider = null,
+                    includeMCP = false
+                )
+            }
 
             // Trigger application initialization
             client.get("/health")
 
             // Should work fine with provided database
-            val database: Database by application.dependencies
-            database shouldNotBe null
+            val testDatabase: Database by application.dependencies
+            testDatabase shouldNotBe null
         }
     }
 })
