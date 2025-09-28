@@ -13,7 +13,7 @@ Rather than focusing on individual coding tasks, CycleTime CE serves as a data a
 context provider for Claude Code to make intelligent project management decisions.
 
 **Status**: Kotlin/JVM implementation with Domain-Driven Design architecture.
-Currently using SQLite with Exposed ORM, migrating to H2 database in SPI-439.
+Currently using H2 with Exposed ORM, migrating to H2 database in SPI-439.
 
 ## Technology Stack
 
@@ -21,7 +21,7 @@ Currently using SQLite with Exposed ORM, migrating to H2 database in SPI-439.
 - **Kotlin/JVM 21**: Primary implementation language
 - **Ktor 3.2.3**: Asynchronous web framework for MCP server with native DI
 - **Exposed ORM 0.58.0**: Type-safe SQL DSL for database operations
-- **SQLite**: Current embedded database (H2 migration planned in SPI-439)
+- **H2**: Current embedded database (H2 migration planned in SPI-439)
 - **Ktor Native DI**: Dependency injection using `ktor-server-di` plugin (completed in SPI-458)
 - **GraalVM**: Native image compilation support
 
@@ -134,7 +134,7 @@ Agents: qa (tests), developer (implementation), code-reviewer (security)
 
 **🏗️ Technical Architecture (docs/architecture/overview.md)**
 
-- Multi-provider architecture with embedded SQLite foundation
+- Multi-provider architecture with embedded H2 foundation
 - Database schemas, provider interfaces, and system components
 - Integration patterns with Claude Code MCP framework
 
@@ -153,7 +153,7 @@ Agents: qa (tests), developer (implementation), code-reviewer (security)
 **Implementation Guidelines:**
 
 - Follow the provider-agnostic architecture patterns from docs/architecture/overview.md
-- Use the multi-layer state management approach (embedded SQLite → cloud providers)
+- Use the multi-layer state management approach (embedded H2 → cloud providers)
 - Implement user workflows as specified in docs/reference/user-experience.md
 - Design with the developer experience philosophy from docs/reference/PRD.md
 

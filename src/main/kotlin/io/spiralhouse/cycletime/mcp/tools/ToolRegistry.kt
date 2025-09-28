@@ -1,6 +1,7 @@
 package io.spiralhouse.cycletime.mcp.tools
 
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcError
+import io.spiralhouse.cycletime.mcp.protocol.JsonRpcErrorCodes
 import io.spiralhouse.cycletime.mcp.tools.exceptions.*
 import io.spiralhouse.cycletime.mcp.tools.validation.JsonSchemaValidator
 import kotlinx.coroutines.TimeoutCancellationException
@@ -34,12 +35,7 @@ open class ToolRegistry(
     }
     
     fun update(tool: Tool): Boolean {
-        return if (tools.containsKey(tool.name)) {
-            tools[tool.name] = tool
-            true
-        } else {
-            false
-        }
+        return tools.replace(tool.name, tool) != null
     }
     
     fun unregister(toolName: String): Boolean {
@@ -195,7 +191,7 @@ open class ToolRegistry(
     /**
      * Handle JSON-RPC method calls for tool operations.
      */
-    fun handleJsonRpcMethod(method: String, params: JsonElement): Result<JsonElement> {
+    suspend fun handleJsonRpcMethod(method: String, params: JsonElement): Result<JsonElement> {
         return when (method) {
             "tools/list" -> handleToolsList()
             "tools/call" -> handleToolsCall(params)
@@ -223,7 +219,7 @@ open class ToolRegistry(
         })
     }
     
-    private fun handleToolsCall(params: JsonElement): Result<JsonElement> {
+    private suspend fun handleToolsCall(params: JsonElement): Result<JsonElement> {
         if (params !is JsonObject) {
             return Result.failure(
                 JsonRpcException(
@@ -246,7 +242,7 @@ open class ToolRegistry(
         // Check if tool exists and invoke based on its handler type
         val tool = tools[toolName] ?: return Result.failure(
             JsonRpcException(
-                code = -32001, // Custom error code for tool not found
+                code = -32601, // Method not found
                 message = "Tool not found: $toolName"
             )
         )
@@ -254,18 +250,16 @@ open class ToolRegistry(
         val result = if (tool.isSync) {
             invoke(toolName, arguments)
         } else {
-            // Handle async tools with reasonable timeout
-            runBlocking {
-                try {
-                    invokeAsync(toolName, arguments, timeout = 10000L)
-                } catch (e: Exception) {
-                    Result.failure(
-                        JsonRpcException(
-                            code = -32603,
-                            message = "Async tool execution failed: ${e.message}"
-                        )
+            // Handle async tools with configurable timeout
+            try {
+                invokeAsync(toolName, arguments, timeout = 10000L)
+            } catch (e: Exception) {
+                Result.failure(
+                    JsonRpcException(
+                        code = -32603,
+                        message = "Async tool execution failed: ${e.message}"
                     )
-                }
+                )
             }
         }
         
@@ -287,9 +281,9 @@ open class ToolRegistry(
             onFailure = { error ->
                 Result.failure(
                     JsonRpcException(
-                        code = formatErrorForJsonRpc(error).code,
-                        message = formatErrorForJsonRpc(error).message,
-                        data = formatErrorForJsonRpc(error).data
+                        code = JsonRpcErrorCodes.INTERNAL_ERROR,
+                        message = error.message ?: "Tool execution failed",
+                        data = null
                     )
                 )
             }
@@ -304,11 +298,3 @@ open class ToolRegistry(
  */
 typealias DefaultToolRegistry = ToolRegistry
 
-/**
- * Exception for JSON-RPC errors.
- */
-class JsonRpcException(
-    val code: Int,
-    override val message: String,
-    val data: JsonObject? = null
-) : Exception(message)
