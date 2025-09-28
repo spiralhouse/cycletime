@@ -14,9 +14,8 @@
 
 CycleTime (Project Orchestration Framework) implements a **simplified data and
 context provider architecture** for Claude Code project management. The system
-enhances Claude Code's existing capabilities by providing structured project
-data, dependency tracking, and cross-session continuity through embedded
-database (H2) and MCP Resource integration.
+provides structured project data, dependency tracking, and cross-session
+continuity through embedded database (H2) and MCP Resource integration.
 
 ### Architectural Principles
 
@@ -30,7 +29,7 @@ database (H2) and MCP Resource integration.
 
 - Embedded H2 database as default provider for offline and concurrent operation
 - No external dependencies required for core functionality
-- Optimized for JVM integration with Exposed ORM and connection pooling
+- JVM integration with Exposed ORM and connection pooling
 
 **MCP Server Integration**
 
@@ -40,7 +39,7 @@ database (H2) and MCP Resource integration.
 
 **Context Provision Over Automation**
 
-- Exposes structured project data for Claude Code's intelligent analysis
+- Exposes structured project data for Claude Code analysis
 - Manual workflows with context support rather than automated orchestration
 - Human-driven decisions supported by structured data access
 
@@ -266,25 +265,25 @@ enum class IssueType {
 | **GitHub Issues**   | 🔄 V3.0+ | Repository integration, basic workflows                      | OSS projects, GitHub-centric development             |
 | **Jira**            | 🔄 V3.0+ | Enterprise workflows, custom fields                         | Enterprise development, complex organizations        |
 
-### H2 Database Advantages for Kotlin/JVM
+### H2 Database Implementation Details
 
-**Performance Benefits:**
-- **Potential performance improvements** for complex JOINs and aggregations (to be validated with benchmarks)
-- **Superior concurrent access** with built-in connection pooling and thread safety
-- **JVM-optimized memory management** with efficient caching and buffer management
-- **Advanced query optimizer** with cost-based optimization for complex dependency graphs
+**Performance Characteristics:**
+- Complex JOINs and aggregations (performance to be validated with benchmarks)
+- Built-in connection pooling and thread safety
+- JVM memory management with caching and buffer management
+- Cost-based query optimization for dependency graphs
 
 **Exposed ORM Integration:**
-- **Native H2 support** eliminates JDBC driver overhead and type mapping issues
-- **Compile-time schema validation** through Exposed DSL prevents runtime database errors
-- **Type-safe query construction** with Kotlin's null safety and type system
-- **Simplified repository implementations** with less boilerplate and better maintainability
+- Native H2 support with JDBC driver
+- Compile-time schema validation through Exposed DSL
+- Type-safe query construction with Kotlin's type system
+- Repository implementations with Exposed ORM patterns
 
-**Development Experience:**
-- **Better debugging and profiling tools** for JVM-based database operations
-- **In-memory testing modes** for fast, isolated unit and integration tests
-- **SQL compatibility modes** (PostgreSQL/MySQL) for future cloud migration paths
-- **Team familiarity** aligns with Spring Boot ecosystem experience
+**Development Features:**
+- JVM-based debugging and profiling tools
+- In-memory testing modes
+- SQL compatibility modes (PostgreSQL/MySQL) for migration paths
+- Spring Boot ecosystem patterns
 
 ## Data Models and Database Design
 

@@ -26,22 +26,22 @@ chmod +x gradlew
 
 ## Development Workflows
 
-### 🔥 Hot-Reload Development Server
+### Hot-Reload Development Server
 
-The fastest way to develop with instant feedback:
+Development server with automatic restart:
 
 ```bash
 # Start server with automatic restart on code changes
 ./gradlew devRun --continuous
 
 # Features:
-# ✅ Automatic server restart on source changes
-# ✅ Separate development database (cycletime-dev.mv.db) 
-# ✅ Enhanced logging and debugging
-# ✅ Development-optimized JVM settings
+# - Automatic server restart on source changes
+# - Separate development database (cycletime-dev.mv.db)
+# - Enhanced logging and debugging
+# - Development JVM settings
 ```
 
-### 🧪 Continuous Testing
+### Continuous Testing
 
 Automatically run tests when code changes:
 
@@ -50,28 +50,28 @@ Automatically run tests when code changes:
 ./gradlew testWatch --continuous
 
 # Features:
-# ✅ Fast unit tests only (< 5 seconds)
-# ✅ Instant feedback on test failures
-# ✅ Automatic re-run on source or test changes
+# - Fast unit tests only (< 5 seconds)
+# - Feedback on test failures
+# - Automatic re-run on source or test changes
 ```
 
-### 🛠️ Build Watcher
+### Build Watcher
 
-Keep your build artifacts up-to-date:
+Continuous compilation:
 
 ```bash
 # Continuous compilation without running tests
 ./gradlew devBuild --continuous
 
 # Features:
-# ✅ Incremental compilation
-# ✅ Build cache optimization
-# ✅ Error reporting without running the server
+# - Incremental compilation
+# - Build cache optimization
+# - Error reporting without running the server
 ```
 
 ## Multiple Terminal Workflow
 
-For the best development experience, use multiple terminals:
+For development with multiple terminals:
 
 **Terminal 1: Server with hot-reload**
 ```bash

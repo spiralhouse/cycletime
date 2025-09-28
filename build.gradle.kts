@@ -241,18 +241,23 @@ val unitTest by tasks.registering(Test::class) {
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
     
-    // Filter for unit tests (domain, verification, and unit packages only)
+    // Filter for unit tests (domain, verification, unit packages, and pure MCP logic tests)
     filter {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
         includeTestsMatching("io.spiralhouse.cycletime.unit.*")
+        // Include pure MCP logic tests (protocol handlers, tool handlers)
+        includeTestsMatching("io.spiralhouse.cycletime.mcp.protocol.*")
+        includeTestsMatching("io.spiralhouse.cycletime.mcp.tools.*")
         excludeTestsMatching("io.spiralhouse.cycletime.integration.*")
         excludeTestsMatching("io.spiralhouse.cycletime.infrastructure.*") // Infrastructure tests moved to integration
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
         excludeTestsMatching("io.spiralhouse.cycletime.api.*")
-        excludeTestsMatching("io.spiralhouse.cycletime.mcp.*")
+        // Exclude MCP integration and server tests (infrastructure-related)
+        excludeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.mcp.server.*")
         excludeTestsMatching("io.spiralhouse.cycletime.ThreadSafetyQuickTest") // Moved to integration
     }
     
@@ -261,18 +266,24 @@ val unitTest by tasks.registering(Test::class) {
         include("**/domain/**/*.kt")
         include("**/valueobjects/**/*.kt")
         include("**/application/services/**/*.kt")
+        include("**/mcp/protocol/**/*.kt") // Include MCP protocol logic (unit testable)
+        include("**/mcp/tools/**/*.kt") // Include MCP tools logic (unit testable)
         exclude("**/infrastructure/**/*.kt") // Unit tests don't depend on infrastructure
         exclude("**/api/**/*.kt") // Unit tests don't depend on API layer
-        exclude("**/mcp/**/*.kt") // Unit tests don't depend on MCP components
+        exclude("**/mcp/integration/**/*.kt") // Unit tests don't depend on MCP integration
+        exclude("**/mcp/server/**/*.kt") // Unit tests don't depend on MCP server infrastructure
     })
     inputs.files(fileTree("src/test/kotlin") {
         include("**/domain/**/*.kt")
         include("**/verification/**/*.kt")
         include("**/unit/**/*.kt")
+        include("**/mcp/protocol/**/*.kt") // Include MCP protocol unit tests
+        include("**/mcp/tools/**/*.kt") // Include MCP tools unit tests
         exclude("**/integration/**/*.kt") // Exclude integration tests
         exclude("**/infrastructure/**/*.kt") // Exclude infrastructure tests
         exclude("**/api/**/*.kt") // Exclude API tests
-        exclude("**/mcp/**/*.kt") // Exclude MCP tests
+        exclude("**/mcp/integration/**/*.kt") // Exclude MCP integration tests
+        exclude("**/mcp/server/**/*.kt") // Exclude MCP server tests
         exclude("**/ThreadSafetyQuickTest.kt") // Exclude concurrency test
     })
     inputs.file("build.gradle.kts")
@@ -382,12 +393,11 @@ val integrationTest by tasks.registering(Test::class) {
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
     
-    // Filter for integration tests - infrastructure integration, API layer, and MCP components
+    // Filter for integration tests - infrastructure integration, API layer, and MCP integration/server components only
     filter {
         includeTestsMatching("io.spiralhouse.cycletime.integration.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*")
-        includeTestsMatching("io.spiralhouse.cycletime.mcp.tools.*")
-        includeTestsMatching("io.spiralhouse.cycletime.mcp.*")
+        includeTestsMatching("io.spiralhouse.cycletime.mcp.server.*") // Only MCP server infrastructure tests
         includeTestsMatching("io.spiralhouse.cycletime.api.*") // Include API layer tests (SPI-595)
         includeTestsMatching("io.spiralhouse.cycletime.infrastructure.*") // Infrastructure integration tests
         includeTestsMatching("io.spiralhouse.cycletime.ThreadSafetyQuickTest") // Concurrency integration test
@@ -396,6 +406,9 @@ val integrationTest by tasks.registering(Test::class) {
         excludeTestsMatching("io.spiralhouse.cycletime.domain.*")
         excludeTestsMatching("io.spiralhouse.cycletime.verification.*")
         excludeTestsMatching("io.spiralhouse.cycletime.unit.*") // Explicitly exclude unit tests
+        // Exclude pure MCP logic tests (they belong in unit tests)
+        excludeTestsMatching("io.spiralhouse.cycletime.mcp.protocol.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.mcp.tools.*")
     }
     
     // Optimized inputs for integration tests - track only relevant source changes
@@ -404,13 +417,15 @@ val integrationTest by tasks.registering(Test::class) {
         include("**/infrastructure/**/*.kt")
         include("**/persistence/**/*.kt")
         include("**/api/**/*.kt") // Include API layer for SPI-595
-        include("**/mcp/**/*.kt") // Include MCP components
+        include("**/mcp/integration/**/*.kt") // Include MCP integration components
+        include("**/mcp/server/**/*.kt") // Include MCP server infrastructure
     })
     inputs.files(fileTree("src/test/kotlin") {
         include("**/integration/**/*.kt")
         include("**/api/**/*.kt") // Include API tests for SPI-595
         include("**/infrastructure/**/*.kt") // Infrastructure integration tests
-        include("**/mcp/**/*.kt") // MCP tests
+        include("**/mcp/integration/**/*.kt") // MCP integration tests only
+        include("**/mcp/server/**/*.kt") // MCP server infrastructure tests only
         include("**/ThreadSafetyQuickTest.kt") // Concurrency test
     })
     inputs.file("build.gradle.kts")
@@ -561,11 +576,16 @@ tasks.test {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
         includeTestsMatching("io.spiralhouse.cycletime.unit.*")
+        // Include pure MCP logic tests (protocol handlers, tool handlers)
+        includeTestsMatching("io.spiralhouse.cycletime.mcp.protocol.*")
+        includeTestsMatching("io.spiralhouse.cycletime.mcp.tools.*")
         excludeTestsMatching("io.spiralhouse.cycletime.integration.*")
         excludeTestsMatching("io.spiralhouse.cycletime.infrastructure.*") // Infrastructure tests in integration category
         excludeTestsMatching("io.spiralhouse.cycletime.performance.*")
         excludeTestsMatching("io.spiralhouse.cycletime.api.*")
-        excludeTestsMatching("io.spiralhouse.cycletime.mcp.*")
+        // Exclude MCP integration and server tests (infrastructure-related)
+        excludeTestsMatching("io.spiralhouse.cycletime.mcp.integration.*")
+        excludeTestsMatching("io.spiralhouse.cycletime.mcp.server.*")
         excludeTestsMatching("io.spiralhouse.cycletime.ThreadSafetyQuickTest") // In integration category
     }
 }

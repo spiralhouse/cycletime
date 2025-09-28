@@ -1,6 +1,6 @@
 # Parallel Development Opportunities
 
-**PROACTIVE DETECTION**: Actively monitor for opportunities to suggest parallel development workflows that can significantly accelerate feature delivery.
+**PROACTIVE DETECTION**: Actively monitor for opportunities to suggest parallel development workflows when multiple independent tasks are detected.
 
 ## When to Suggest Parallelization
 
@@ -10,7 +10,7 @@
    - After Linear story breakdown produces 3+ subtasks
    - Subtasks have estimates between 1-5 points each
    - Subtasks modify different files/modules (low coupling)
-   - Combined complexity would benefit from parallel execution
+   - Combined complexity suits parallel execution
    - Example: "Story has 5 subtasks, each 2-3 points, touching different modules"
 
 2. **Multiple Feature/Bug Requests**
@@ -22,7 +22,7 @@
 3. **Post-Estimation Triggers**
    - After completing estimation of subtasks in Linear
    - When total story points exceed 8 across subtasks
-   - When subtasks have similar complexity (good for parallel completion)
+   - When subtasks have similar complexity
    - Example: "Three 3-point subtasks could complete in parallel vs sequentially"
 
 ## How to Suggest Parallelization
@@ -37,10 +37,10 @@ I notice this story has [N] independent subtasks that could be developed in para
 - [Subtask 2]: [Y] points - [brief description]  
 - [Subtask 3]: [Z] points - [brief description]
 
-Using parallel development with specialized agents (see docs/testing/parallel-development.md), we could:
-- Complete all subtasks simultaneously vs sequentially
-- Maintain isolation between features (separate worktrees)
-- Choose the most appropriate workflow for each feature
+Using parallel development with specialized agents (see docs/testing/parallel-development.md):
+- Execute all subtasks simultaneously vs sequentially
+- Use separate worktrees for feature isolation
+- Apply different workflows per feature as needed
 
 Which development workflow would you prefer?
 □ **TDD Workflow** - Test-first development (RED → GREEN → REFACTOR)
@@ -86,4 +86,4 @@ When parallelization is accepted:
 
 ## Key Principle
 
-Be helpful but not pushy. Suggest once per suitable opportunity, explain benefits clearly, and respect if user prefers sequential development. The goal is acceleration without complication.
+Be helpful but not pushy. Suggest once per suitable opportunity, explain the approach clearly, and respect if user prefers sequential development. The goal is to offer parallel execution when appropriate.
