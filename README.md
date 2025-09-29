@@ -1,5 +1,8 @@
 # CycleTime - Context Management for Claude Code
 
+> [!CAUTION]
+> **Development Status**: CycleTime is currently under active development as we work towards our MVP release. While core functionality is operational, features and APIs may change. For detailed information about current capabilities and roadmap, see our [MVP Capability Summary](docs/MVP_CAPABILITY_SUMMARY.md).
+
 *Community Edition*
 
 [![Build Status](https://github.com/spiralhouse/cycletime/actions/workflows/cicd.yml/badge.svg)](https://github.com/spiralhouse/cycletime/actions/workflows/cicd.yml)
