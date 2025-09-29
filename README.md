@@ -1,8 +1,5 @@
 # CycleTime - Context Management for Claude Code
 
-> [!CAUTION]
-> **Development Status**: CycleTime is currently under active development as we work towards our MVP release. While core functionality is operational, features and APIs may change. For detailed information about current capabilities and roadmap, see our [MVP Capability Summary](docs/MVP_CAPABILITY_SUMMARY.md).
-
 *Community Edition*
 
 [![Build Status](https://github.com/spiralhouse/cycletime/actions/workflows/cicd.yml/badge.svg)](https://github.com/spiralhouse/cycletime/actions/workflows/cicd.yml)
@@ -10,6 +7,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Kotlin](https://img.shields.io/badge/kotlin-2.0.21-7F52FF.svg?logo=kotlin)](https://kotlinlang.org/)
 [![Gradle](https://img.shields.io/badge/gradle-9.0-02303A.svg?logo=gradle)](https://gradle.org/)
+
+> [!WARNING]
+> **Development Status**: CycleTime is currently under active development as we work towards our MVP release. While core functionality is operational, features and APIs may change. For detailed information about current capabilities and roadmap, see our [MVP Capability Summary](docs/MVP_CAPABILITY_SUMMARY.md).
 
 CycleTime provides structured context management for Claude Code, solving the fundamental challenge of maintaining project continuity across sessions. It preserves your project state, tracks dependencies, and maintains decision history through an embedded H2 database accessible via MCP (Model Context Protocol), enabling you to resume work exactly where you left off.
 
