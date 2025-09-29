@@ -217,6 +217,11 @@ pnpm-lock.yaml
 generated/
 auto-generated/
 
+# OpenAPI/Swagger generated artifacts
+docs/index.html
+docs/.swagger-codegen/
+docs/.swagger-codegen-ignore
+
 # CycleTime specific
 .cycletime/
 cycletime.db*
