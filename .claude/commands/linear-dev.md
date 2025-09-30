@@ -10,7 +10,7 @@
 
 When this command is invoked with a Linear issue ID (e.g., `/linear-dev SPI-634`), execute the following structured workflow:
 
-### Phase 1: Environment Preparation & Quality Gates
+### Phase 1: Environment Preparation & Baseline Quality Capture
 
 **🔧 CRITICAL SETUP - Execute First**
 
@@ -20,21 +20,74 @@ echo "🔄 Syncing with main branch..."
 git checkout main
 git pull origin main
 
-# 1.2 Run comprehensive quality checks
-echo "✅ Running quality gates..."
-./gradlew check
+# 1.2 Establish TRUE baseline with forced fresh test execution
+echo "✅ Establishing baseline quality metrics..."
+BASELINE_LOG="/tmp/baseline-${1}.log"
+BASELINE_JSON="/tmp/baseline-${1}.json"
 
-# 1.3 Escalate immediately if quality gates fail
-if [ $? -ne 0 ]; then
-    echo "❌ ESCALATION: Quality gates failed - build is broken"
+# Force fresh test execution (bypass cache)
+./gradlew clean check --rerun-tasks > "${BASELINE_LOG}" 2>&1
+BASELINE_EXIT_CODE=$?
+
+# Parse test results from Gradle output (macOS/Linux compatible)
+if [ ${BASELINE_EXIT_CODE} -eq 0 ]; then
+    # Extract test counts from successful build
+    TOTAL_TESTS=$(grep -oE '[0-9]+ tests? completed' "${BASELINE_LOG}" | grep -oE '[0-9]+' | head -1 || echo "0")
+    FAILED_TESTS="0"
+    SKIPPED_TESTS=$(grep -oE '[0-9]+ skipped' "${BASELINE_LOG}" | grep -oE '[0-9]+' | head -1 || echo "0")
+    BASELINE_STATUS="PASS"
+else
+    # Extract test counts from failed build
+    TOTAL_TESTS=$(grep -oE '[0-9]+ tests? completed' "${BASELINE_LOG}" | grep -oE '[0-9]+' | head -1 || echo "0")
+    FAILED_TESTS=$(grep -oE '[0-9]+ failed' "${BASELINE_LOG}" | grep -oE '[0-9]+' | head -1 || echo "0")
+    SKIPPED_TESTS=$(grep -oE '[0-9]+ skipped' "${BASELINE_LOG}" | grep -oE '[0-9]+' | head -1 || echo "0")
+    BASELINE_STATUS="FAIL"
+fi
+
+PASSED_TESTS=$((TOTAL_TESTS - FAILED_TESTS - SKIPPED_TESTS))
+
+# Store baseline metrics as JSON for comparison
+cat > "${BASELINE_JSON}" <<EOF
+{
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "branch": "main",
+  "issue_id": "${1}",
+  "total_tests": ${TOTAL_TESTS},
+  "passed_tests": ${PASSED_TESTS},
+  "failed_tests": ${FAILED_TESTS},
+  "skipped_tests": ${SKIPPED_TESTS},
+  "status": "${BASELINE_STATUS}",
+  "exit_code": ${BASELINE_EXIT_CODE}
+}
+EOF
+
+echo "📊 Baseline Metrics Captured:"
+echo "   Total Tests: ${TOTAL_TESTS}"
+echo "   Passed: ${PASSED_TESTS}"
+echo "   Failed: ${FAILED_TESTS}"
+echo "   Skipped: ${SKIPPED_TESTS}"
+echo "   Status: ${BASELINE_STATUS}"
+echo "   Log: ${BASELINE_LOG}"
+echo "   Metrics: ${BASELINE_JSON}"
+
+# 1.3 Escalate immediately if baseline quality gates fail
+if [ ${BASELINE_EXIT_CODE} -ne 0 ]; then
+    echo "❌ ESCALATION: Baseline quality gates failed - main branch has ${FAILED_TESTS} failing tests"
     echo "🚨 Cannot proceed with development until main branch is fixed"
+    echo "📋 Failing tests must be resolved before starting new work"
     exit 1
 fi
 
-echo "✅ Environment ready - all quality gates passed"
+echo "✅ Baseline established - all ${TOTAL_TESTS} tests passing"
+echo "✅ Environment ready for development"
 ```
 
-**Success Criteria**: Main branch synced, all tests pass, build is clean
+**Success Criteria**:
+- Main branch synced
+- Baseline metrics captured with forced fresh test execution
+- All tests pass OR baseline failures documented with exit code
+- Baseline stored in `/tmp/baseline-${ISSUE_ID}.json` for later comparison
+- No FROM-CACHE false positives
 
 **Escalation Point**: If quality checks fail, STOP and escalate to user immediately
 
@@ -287,49 +340,148 @@ ${TECHNICAL_DOMAINS}
 Success Criteria: Code meets all quality standards and is ready for production"
 ```
 
-**5.2 Final Quality Gates:**
-```bash
-echo "🧪 Running final quality checks..."
-
-# Run comprehensive test suite
-./gradlew test
-
-# Run static analysis
-./gradlew detekt
-
-# Verify build
-./gradlew build
-
-# Check test coverage
-./gradlew koverVerify
-```
-
-**5.3 Quality Gate Failure Handling:**
-```
-IF quality_gates_fail THEN
-    analyze_failure_type()
-
-    IF test_failures THEN
-        re_engage_developer("think harder", test_failure_context)
-    ELSE IF code_quality_issues THEN
-        re_engage_code_reviewer("think harder", quality_issue_context)
-    ELSE IF build_failures THEN
-        escalate_to_user("Build system issues detected")
-    END IF
-
-    retry_quality_gates()
-END IF
-```
-
-**Success Criteria**: All tests pass, code review approved, all quality gates pass
+**Success Criteria**: Code review approved with no blockers identified
 
 ---
 
-### Phase 6: Reporting & Completion
+### Phase 6: Final Quality Gates & Baseline Comparison
+
+**✅ COMPREHENSIVE QUALITY VERIFICATION WITH DELTA REPORTING**
+
+**6.1 Run Final Quality Checks:**
+```bash
+echo "🧪 Running final quality checks..."
+
+# Run comprehensive test suite (fresh, not cached)
+FINAL_LOG="/tmp/final-${1}.log"
+FINAL_JSON="/tmp/final-${1}.json"
+
+./gradlew clean check --rerun-tasks > "${FINAL_LOG}" 2>&1
+FINAL_EXIT_CODE=$?
+
+# Parse final test results (macOS/Linux compatible)
+if [ ${FINAL_EXIT_CODE} -eq 0 ]; then
+    FINAL_TOTAL=$(grep -oE '[0-9]+ tests? completed' "${FINAL_LOG}" | grep -oE '[0-9]+' | head -1 || echo "0")
+    FINAL_FAILED="0"
+    FINAL_SKIPPED=$(grep -oE '[0-9]+ skipped' "${FINAL_LOG}" | grep -oE '[0-9]+' | head -1 || echo "0")
+    FINAL_STATUS="PASS"
+else
+    FINAL_TOTAL=$(grep -oE '[0-9]+ tests? completed' "${FINAL_LOG}" | grep -oE '[0-9]+' | head -1 || echo "0")
+    FINAL_FAILED=$(grep -oE '[0-9]+ failed' "${FINAL_LOG}" | grep -oE '[0-9]+' | head -1 || echo "0")
+    FINAL_SKIPPED=$(grep -oE '[0-9]+ skipped' "${FINAL_LOG}" | grep -oE '[0-9]+' | head -1 || echo "0")
+    FINAL_STATUS="FAIL"
+fi
+
+FINAL_PASSED=$((FINAL_TOTAL - FINAL_FAILED - FINAL_SKIPPED))
+
+# Store final metrics
+cat > "${FINAL_JSON}" <<EOF
+{
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "branch": "${BRANCH_NAME}",
+  "issue_id": "${1}",
+  "total_tests": ${FINAL_TOTAL},
+  "passed_tests": ${FINAL_PASSED},
+  "failed_tests": ${FINAL_FAILED},
+  "skipped_tests": ${FINAL_SKIPPED},
+  "status": "${FINAL_STATUS}",
+  "exit_code": ${FINAL_EXIT_CODE}
+}
+EOF
+```
+
+**6.2 Compare Against Baseline:**
+```bash
+echo "📊 Baseline vs Final Comparison:"
+echo ""
+
+# Load baseline metrics (macOS/Linux compatible)
+BASELINE_JSON="/tmp/baseline-${1}.json"
+if [ -f "${BASELINE_JSON}" ]; then
+    BASELINE_TOTAL=$(grep '"total_tests"' "${BASELINE_JSON}" | grep -oE '[0-9]+' | head -1)
+    BASELINE_PASSED=$(grep '"passed_tests"' "${BASELINE_JSON}" | grep -oE '[0-9]+' | head -1)
+    BASELINE_FAILED=$(grep '"failed_tests"' "${BASELINE_JSON}" | grep -oE '[0-9]+' | head -1)
+
+    # Calculate deltas
+    DELTA_TOTAL=$((FINAL_TOTAL - BASELINE_TOTAL))
+    DELTA_PASSED=$((FINAL_PASSED - BASELINE_PASSED))
+    DELTA_FAILED=$((FINAL_FAILED - BASELINE_FAILED))
+
+    echo "   BASELINE (main):"
+    echo "   • Total: ${BASELINE_TOTAL} | Passed: ${BASELINE_PASSED} | Failed: ${BASELINE_FAILED}"
+    echo ""
+    echo "   FINAL (${BRANCH_NAME}):"
+    echo "   • Total: ${FINAL_TOTAL} | Passed: ${FINAL_PASSED} | Failed: ${FINAL_FAILED}"
+    echo ""
+    echo "   DELTA (Final - Baseline):"
+    echo "   • Total: ${DELTA_TOTAL:+"+"}${DELTA_TOTAL} | Passed: ${DELTA_PASSED:+"+"}${DELTA_PASSED} | Failed: ${DELTA_FAILED:+"+"}${DELTA_FAILED}"
+    echo ""
+
+    # Interpret deltas
+    if [ ${DELTA_TOTAL} -gt 0 ]; then
+        echo "   ✅ ${DELTA_TOTAL} new tests added"
+    fi
+
+    if [ ${DELTA_FAILED} -gt 0 ]; then
+        echo "   ⚠️  ${DELTA_FAILED} NEW test failures introduced"
+        echo "   📋 Analyze if failures are:"
+        echo "      - Expected (testing deprecated endpoints)"
+        echo "      - Bugs requiring fixes"
+        echo "      - Pre-existing issues incorrectly attributed"
+    elif [ ${DELTA_FAILED} -lt 0 ]; then
+        echo "   ✅ ${DELTA_FAILED#-} test failures FIXED"
+    fi
+
+    if [ ${DELTA_PASSED} -gt 0 ]; then
+        echo "   ✅ ${DELTA_PASSED} additional tests passing"
+    fi
+else
+    echo "   ⚠️  No baseline found at ${BASELINE_JSON}"
+    echo "   ⚠️  Cannot perform delta comparison"
+    echo "   ℹ️  This may indicate baseline capture failed in Phase 1"
+fi
+
+echo ""
+echo "📄 Detailed Logs:"
+echo "   Baseline: ${BASELINE_LOG}"
+echo "   Final: ${FINAL_LOG}"
+echo "   Baseline Metrics: ${BASELINE_JSON}"
+echo "   Final Metrics: ${FINAL_JSON}"
+```
+
+**6.3 Quality Gate Decision:**
+```bash
+if [ ${FINAL_EXIT_CODE} -ne 0 ]; then
+    echo "❌ QUALITY GATE FAILED: ${FINAL_FAILED} tests failing"
+    echo "🔍 Review delta comparison above to determine:"
+    echo "   1. Are these NEW failures introduced by your changes?"
+    echo "   2. Are these expected failures (e.g., deprecated endpoint tests)?"
+    echo "   3. Do these failures require fixes or test updates?"
+    echo ""
+    echo "📋 Next Steps:"
+    echo "   - Review failing test logs in ${FINAL_LOG}"
+    echo "   - Compare with baseline metrics in ${BASELINE_JSON}"
+    echo "   - Re-engage agents if fixes needed"
+    exit 1
+else
+    echo "✅ All quality gates PASSED"
+    echo "✅ Ready to proceed with completion steps"
+fi
+```
+
+**Success Criteria**:
+- Final tests run fresh (not FROM-CACHE)
+- Baseline comparison completed with delta analysis
+- Test failures categorized as NEW vs pre-existing
+- Decision made on whether failures are acceptable
+
+---
+
+### Phase 7: Reporting & Completion
 
 **📊 COMPREHENSIVE DEVELOPMENT REPORT**
 
-**6.1 Generate Development Summary:**
+**7.1 Generate Development Summary:**
 ```bash
 echo "📋 Generating development report..."
 ```
@@ -379,7 +531,7 @@ ${FILE_CHANGE_SUMMARY}
 ${AGENT_EFFECTIVENESS_ANALYSIS}
 ```
 
-**6.2 Linear Issue Status Update:**
+**7.2 Linear Issue Status Update:**
 ```bash
 echo "📝 Updating Linear issue status..."
 ```
@@ -393,7 +545,7 @@ mcp__linear__update_issue(
 )
 ```
 
-**6.3 Final Status Check:**
+**7.3 Final Status Check:**
 ```bash
 echo "✅ Development workflow completed successfully!"
 echo "📋 Summary:"
@@ -484,6 +636,20 @@ echo "   • Quality: All gates passed"
 # → QA + Developer + Code Reviewer agents
 # → Advanced think levels (think harder)
 # → Enhanced security review focus
+```
+
+### Baseline Verification Example:
+```bash
+/linear-dev SPI-634
+# Phase 1: Establishes baseline
+#   • Runs: ./gradlew clean check --rerun-tasks
+#   • Captures: 820 tests, 820 passed, 0 failed
+#   • Stores: /tmp/baseline-SPI-634.json
+# Phase 6: Compares final state
+#   • Runs: ./gradlew clean check --rerun-tasks
+#   • Shows delta: +60 total, -28 passed, +88 failed
+#   • Interprets: 60 new tests added, 88 new failures (deprecated endpoints)
+#   • Decision: Categorizes failures as expected vs bugs
 ```
 
 ---
