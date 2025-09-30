@@ -552,7 +552,7 @@ class ProjectIntegrationTest : DescribeSpec({
                 dbInitializer.initialize()
                 
                 // Test API endpoint
-                val response = client.post("/api/projects") {
+                val response = client.post("/api/v1/projects") {
                     contentType(ContentType.Application.Json)
                     setBody("""
                         {
@@ -570,7 +570,7 @@ class ProjectIntegrationTest : DescribeSpec({
                 project.name shouldBe "Integration Test Project"
                 
                 // Verify persistence
-                val getResponse = client.get("/api/projects/${project.id}")
+                val getResponse = client.get("/api/v1/projects/${project.id}")
                 getResponse.status shouldBe HttpStatusCode.OK
             }
         }
