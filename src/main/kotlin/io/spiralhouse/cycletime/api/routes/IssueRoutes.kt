@@ -64,15 +64,15 @@ import io.spiralhouse.cycletime.domain.valueobjects.*
  * @since 1.0.0
  */
 fun Route.configureIssueRoutes() {
-    // Main issue routes under /api/issues
-    route("/api/issues") {
-        configureIssueCrudRoutes()
-        configureIssueSpecializedRoutes()
+    // V1 API - Nested issue routes under project context
+    route("/api/v1/projects/{projectId}/issues") {
+        configureNestedIssueCrudRoutes()
+        configureNestedIssueSpecializedRoutes()
     }
-    
-    // Project-scoped issue routes
-    route("/api/projects/{projectId}/issues") {
-        configureProjectIssuesRoute()
+
+    // Legacy routes - return 404 with migration guidance
+    route("/api/issues") {
+        configureLegacyIssueRoutes()
     }
 }
 
@@ -91,13 +91,40 @@ private fun Route.configureIssueCrudRoutes() {
 
 /**
  * Configures specialized issue routes for advanced operations.
- * 
+ *
  * These routes handle domain-specific operations beyond basic CRUD.
  */
 private fun Route.configureIssueSpecializedRoutes() {
     route("/{id}") {
         statusTransitionRoute()
         hierarchyRoute()
+    }
+}
+
+/**
+ * Configures nested CRUD routes for issues under project context (API v1).
+ *
+ * All routes are scoped to `/api/v1/projects/{projectId}/issues` and enforce
+ * project context validation. The projectId is extracted from the URL path
+ * rather than the request body.
+ */
+private fun Route.configureNestedIssueCrudRoutes() {
+    createNestedIssueRoute()
+    listNestedIssuesRoute()
+}
+
+/**
+ * Configures nested specialized routes for issues under project context (API v1).
+ *
+ * These routes handle individual issue operations with project context validation.
+ */
+private fun Route.configureNestedIssueSpecializedRoutes() {
+    route("/{issueId}") {
+        getNestedIssueRoute()
+        updateNestedIssueRoute()
+        deleteNestedIssueRoute()
+        nestedStatusTransitionRoute()
+        nestedHierarchyRoute()
     }
 }
 
@@ -390,6 +417,398 @@ private fun Route.hierarchyRoute() {
             val service = call.service<IssueApplicationService>()
             val hierarchy = service.getIssueHierarchyExtended(issueId)
             call.respondOk(hierarchy.toResponse())
+        }
+    }
+}
+
+// ================================================================================
+// Nested Issue Routes (API v1) - Project Context Required
+// ================================================================================
+
+/**
+ * Creates a new issue under a specific project context.
+ *
+ * ## URL Structure
+ * `POST /api/v1/projects/{projectId}/issues`
+ *
+ * ## Key Differences from Legacy Endpoint
+ * - ProjectId is extracted from URL path, not request body
+ * - Validates that project exists before creating issue
+ * - Rejects requests where body projectId differs from URL projectId
+ *
+ * ## Request Body
+ * ```json
+ * {
+ *   "title": "Implement user authentication",
+ *   "description": "Add OAuth2 authentication support",
+ *   "type": "STORY",
+ *   "parentId": "123e4567-e89b-12d3-a456-426614174001",
+ *   "estimate": 5,
+ *   "assignee": "john.doe@example.com"
+ * }
+ * ```
+ *
+ * Note: `projectId` should NOT be in the request body.
+ */
+private fun Route.createNestedIssueRoute() {
+    post {
+        call.logApiOperation("CreateNestedIssue", mapOf("projectId" to call.parameters["projectId"]))
+
+        call.executeServiceCall {
+            val projectId = call.extractProjectId()
+
+            // Verify project exists
+            val projectService = call.service<ProjectApplicationService>()
+            val project = projectService.getProject(projectId)
+
+            if (project == null) {
+                call.respondNotFound(
+                    "Project not found",
+                    "No project exists with ID: ${projectId.value}"
+                )
+                return@executeServiceCall
+            }
+
+            call.validateAndProcess<CreateIssueRequest>(
+                validation = { it.validateForCreation() }
+            ) { request ->
+                // Validate that if projectId is in body, it matches the URL
+                if (request.projectId != null && request.projectId != projectId.value) {
+                    call.respondBadRequest(
+                        "projectId in body must match URL",
+                        "URL projectId: ${projectId.value}, Body projectId: ${request.projectId}"
+                    )
+                    return@validateAndProcess
+                }
+
+                val service = call.service<IssueApplicationService>()
+                val command = buildCreateIssueCommand(request.copy(projectId = projectId.value))
+                val created = service.createIssue(command)
+                call.respondCreated(created.toResponse())
+            }
+        }
+    }
+}
+
+/**
+ * Lists all issues within a specific project.
+ *
+ * ## URL Structure
+ * `GET /api/v1/projects/{projectId}/issues`
+ */
+private fun Route.listNestedIssuesRoute() {
+    get {
+        call.logApiOperation("ListNestedIssues", mapOf("projectId" to call.parameters["projectId"]))
+
+        call.executeServiceCall {
+            val projectId = call.extractProjectId()
+
+            // Verify project exists first
+            val projectService = call.service<ProjectApplicationService>()
+            val project = projectService.getProject(projectId)
+
+            if (project == null) {
+                call.respondNotFound(
+                    "Project not found",
+                    "No project exists with ID: ${projectId.value}"
+                )
+                return@executeServiceCall
+            }
+
+            // Get issues for the project
+            val issueService = call.service<IssueApplicationService>()
+            val issues = issueService.getIssuesByProject(projectId)
+            call.respondOk(issues.toIssueListResponse())
+        }
+    }
+}
+
+/**
+ * Retrieves a specific issue within project context.
+ *
+ * ## URL Structure
+ * `GET /api/v1/projects/{projectId}/issues/{issueId}`
+ *
+ * ## Project Context Validation
+ * Returns 404 if the issue exists but doesn't belong to the specified project.
+ */
+private fun Route.getNestedIssueRoute() {
+    get {
+        call.logApiOperation("GetNestedIssue", mapOf(
+            "projectId" to call.parameters["projectId"],
+            "issueId" to call.parameters["issueId"]
+        ))
+
+        call.executeServiceCall {
+            val projectId = call.extractProjectId()
+            val issueId = call.extractIssueId("issueId")
+
+            val service = call.service<IssueApplicationService>()
+            val issue = service.getIssue(issueId)
+
+            if (issue == null) {
+                call.respondNotFound(
+                    "Issue not found",
+                    "No issue exists with ID: ${issueId.value}"
+                )
+                return@executeServiceCall
+            }
+
+            // Validate issue belongs to the project
+            if (issue.projectId?.value != projectId.value) {
+                call.respondNotFound(
+                    "Issue not found in project",
+                    "Issue ${issueId.value} does not belong to project ${projectId.value}"
+                )
+                return@executeServiceCall
+            }
+
+            call.respondOk(issue.toResponse())
+        }
+    }
+}
+
+/**
+ * Updates an issue within project context.
+ *
+ * ## URL Structure
+ * `PUT /api/v1/projects/{projectId}/issues/{issueId}`
+ */
+private fun Route.updateNestedIssueRoute() {
+    put {
+        call.logApiOperation("UpdateNestedIssue", mapOf(
+            "projectId" to call.parameters["projectId"],
+            "issueId" to call.parameters["issueId"]
+        ))
+
+        call.executeServiceCall {
+            val projectId = call.extractProjectId()
+            val issueId = call.extractIssueId("issueId")
+
+            // Verify issue exists and belongs to project
+            val service = call.service<IssueApplicationService>()
+            val existingIssue = service.getIssue(issueId)
+
+            if (existingIssue == null) {
+                call.respondNotFound(
+                    "Issue not found",
+                    "No issue exists with ID: ${issueId.value}"
+                )
+                return@executeServiceCall
+            }
+
+            if (existingIssue.projectId?.value != projectId.value) {
+                call.respondNotFound(
+                    "Issue not found in project",
+                    "Issue ${issueId.value} does not belong to project ${projectId.value}"
+                )
+                return@executeServiceCall
+            }
+
+            call.validateAndProcess<UpdateIssueRequest>(
+                validation = { it.validateForUpdate() }
+            ) { request ->
+                val command = buildUpdateIssueCommand(issueId, request)
+                val updated = service.updateIssue(command)
+                call.respondOk(updated.toResponse())
+            }
+        }
+    }
+}
+
+/**
+ * Deletes an issue within project context.
+ *
+ * ## URL Structure
+ * `DELETE /api/v1/projects/{projectId}/issues/{issueId}`
+ */
+private fun Route.deleteNestedIssueRoute() {
+    delete {
+        call.logApiOperation("DeleteNestedIssue", mapOf(
+            "projectId" to call.parameters["projectId"],
+            "issueId" to call.parameters["issueId"]
+        ))
+
+        call.executeServiceCall {
+            val projectId = call.extractProjectId()
+            val issueId = call.extractIssueId("issueId")
+
+            // Verify issue exists and belongs to project
+            val service = call.service<IssueApplicationService>()
+            val existingIssue = service.getIssue(issueId)
+
+            if (existingIssue == null) {
+                call.respondNotFound(
+                    "Issue not found",
+                    "No issue exists with ID: ${issueId.value}"
+                )
+                return@executeServiceCall
+            }
+
+            if (existingIssue.projectId?.value != projectId.value) {
+                call.respondNotFound(
+                    "Issue not found in project",
+                    "Issue ${issueId.value} does not belong to project ${projectId.value}"
+                )
+                return@executeServiceCall
+            }
+
+            service.deleteIssue(issueId)
+            call.respondNoContent()
+        }
+    }
+}
+
+/**
+ * Transitions issue status within project context.
+ *
+ * ## URL Structure
+ * `POST /api/v1/projects/{projectId}/issues/{issueId}/status`
+ */
+private fun Route.nestedStatusTransitionRoute() {
+    post("/status") {
+        call.logApiOperation("NestedTransitionIssueStatus", mapOf(
+            "projectId" to call.parameters["projectId"],
+            "issueId" to call.parameters["issueId"]
+        ))
+
+        call.executeServiceCall {
+            val projectId = call.extractProjectId()
+            val issueId = call.extractIssueId("issueId")
+
+            // Verify issue exists and belongs to project
+            val service = call.service<IssueApplicationService>()
+            val existingIssue = service.getIssue(issueId)
+
+            if (existingIssue == null) {
+                call.respondNotFound(
+                    "Issue not found",
+                    "No issue exists with ID: ${issueId.value}"
+                )
+                return@executeServiceCall
+            }
+
+            if (existingIssue.projectId?.value != projectId.value) {
+                call.respondNotFound(
+                    "Issue not found in project",
+                    "Issue ${issueId.value} does not belong to project ${projectId.value}"
+                )
+                return@executeServiceCall
+            }
+
+            call.validateAndProcess<StatusTransitionRequest>(
+                validation = { it.validateForStatusTransition() }
+            ) { request ->
+                val newStatus = IssueStatus.fromString(request.status)
+                val command = UpdateIssueStatusCommand(issueId, newStatus)
+                val updated = service.updateStatus(command)
+                call.respondOk(updated.toResponse())
+            }
+        }
+    }
+}
+
+/**
+ * Retrieves issue hierarchy within project context.
+ *
+ * ## URL Structure
+ * `GET /api/v1/projects/{projectId}/issues/{issueId}/hierarchy`
+ */
+private fun Route.nestedHierarchyRoute() {
+    get("/hierarchy") {
+        call.logApiOperation("GetNestedIssueHierarchy", mapOf(
+            "projectId" to call.parameters["projectId"],
+            "issueId" to call.parameters["issueId"]
+        ))
+
+        call.executeServiceCall {
+            val projectId = call.extractProjectId()
+            val issueId = call.extractIssueId("issueId")
+
+            // Verify issue exists and belongs to project
+            val service = call.service<IssueApplicationService>()
+            val existingIssue = service.getIssue(issueId)
+
+            if (existingIssue == null) {
+                call.respondNotFound(
+                    "Issue not found",
+                    "No issue exists with ID: ${issueId.value}"
+                )
+                return@executeServiceCall
+            }
+
+            if (existingIssue.projectId?.value != projectId.value) {
+                call.respondNotFound(
+                    "Issue not found in project",
+                    "Issue ${issueId.value} does not belong to project ${projectId.value}"
+                )
+                return@executeServiceCall
+            }
+
+            val hierarchy = service.getIssueHierarchyExtended(issueId)
+            call.respondOk(hierarchy.toResponse())
+        }
+    }
+}
+
+/**
+ * Configures legacy issue routes to return 404 with migration guidance.
+ *
+ * All legacy `/api/issues` endpoints have been removed in favor of `/api/v1/projects/{projectId}/issues`.
+ */
+private fun Route.configureLegacyIssueRoutes() {
+    // Match all HTTP methods for base routes
+    get {
+        call.respondNotFound(
+            "Legacy endpoint not found",
+            "This endpoint has been removed. Use /api/v1/projects/{projectId}/issues instead. See documentation at /swagger"
+        )
+    }
+
+    post {
+        call.respondNotFound(
+            "Legacy endpoint not found",
+            "This endpoint has been removed. Use /api/v1/projects/{projectId}/issues instead. See documentation at /swagger"
+        )
+    }
+
+    // Individual issue operations
+    route("/{id}") {
+        get {
+            call.respondNotFound(
+                "Legacy endpoint not found",
+                "This endpoint has been removed. Use /api/v1/issues/{id} or nested route instead. See documentation at /swagger"
+            )
+        }
+
+        put {
+            call.respondNotFound(
+                "Legacy endpoint not found",
+                "This endpoint has been removed. Use /api/v1/issues/{id} or nested route instead. See documentation at /swagger"
+            )
+        }
+
+        delete {
+            call.respondNotFound(
+                "Legacy endpoint not found",
+                "This endpoint has been removed. Use /api/v1/issues/{id} or nested route instead. See documentation at /swagger"
+            )
+        }
+
+        // Status transition
+        post("/status") {
+            call.respondNotFound(
+                "Legacy endpoint not found",
+                "This endpoint has been removed. Use /api/v1/issues/{id}/status or nested route instead. See documentation at /swagger"
+            )
+        }
+
+        // Hierarchy
+        get("/hierarchy") {
+            call.respondNotFound(
+                "Legacy endpoint not found",
+                "This endpoint has been removed. Use /api/v1/issues/{id}/hierarchy or nested route instead. See documentation at /swagger"
+            )
         }
     }
 }

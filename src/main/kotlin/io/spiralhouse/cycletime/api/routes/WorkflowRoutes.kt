@@ -60,48 +60,47 @@ import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
 fun Route.configureWorkflowRoutes() {
     // API v1 routes (preferred)
     route("/api/v1/workflows") {
-        configureWorkflowCrudRoutes()
+        configureWorkflowV1Routes()
     }
-    
-    // Legacy routes (for backward compatibility)
+
+    // Legacy routes - return 404 with migration guidance
     route("/api/workflows") {
-        configureWorkflowCrudRoutes()
+        configureLegacyWorkflowRoutes()
     }
 }
 
 /**
- * Configures the core CRUD routes for workflows.
- * 
- * This function groups all workflow management endpoints together,
- * making them reusable across different API versions.
- * 
+ * Configures V1 API routes for workflows with query parameter templates.
+ *
  * ## Route Organization
  * - **CRUD Operations**: Basic workflow management
- * - **Transition Operations**: Status transition validation and queries
- * - **Predefined Templates**: Quick workflow creation for common use cases
+ * - **Transition Operations**: Resource-based transition URLs
+ * - **Template Support**: Query parameter-based templates (template=default|bug|feature)
  */
-private fun Route.configureWorkflowCrudRoutes() {
+private fun Route.configureWorkflowV1Routes() {
     // Core CRUD operations
-    createWorkflowRoute()
+    createWorkflowWithTemplateRoute()
     getWorkflowRoute()
     updateWorkflowRoute()
     deleteWorkflowRoute()
     listWorkflowsRoute()
-    
-    // Transition management
-    getTransitionsRoute()
-    validateTransitionRoute()
-    
-    // Predefined workflow templates
-    createDefaultWorkflowRoute()
-    createBugWorkflowRoute()
-    createFeatureWorkflowRoute()
+
+    // Resource-based transition operations
+    route("/{id}") {
+        getAllTransitionsRoute()
+        route("/transitions") {
+            validateTransitionResourceRoute()
+        }
+    }
 }
 
 /**
- * Creates a new workflow.
- * 
- * ## Request Body
+ * Creates a new workflow with optional template support via query parameter.
+ *
+ * ## Query Parameters
+ * - `template` (optional): Template name (default, bug, feature)
+ *
+ * ## Request Body (required if no template)
  * ```json
  * {
  *   "name": "My Workflow",
@@ -110,30 +109,86 @@ private fun Route.configureWorkflowCrudRoutes() {
  *   "allowedStatuses": ["TODO", "IN_PROGRESS", "DONE"]
  * }
  * ```
- * 
+ *
  * ## Response
- * - `201 Created` - Workflow created successfully with the created resource
- * - `400 Bad Request` - Validation failure
- * 
- * ## Validation Rules
- * - Name is required and must not exceed 255 characters
- * - Initial status must be included in allowed statuses
- * - Allowed statuses cannot be empty
- * - All status values must be valid IssueStatus enum values
+ * - `201 Created` - Workflow created successfully
+ * - `400 Bad Request` - Validation failure or invalid template
+ *
+ * ## Template Support
+ * - `?template=default` - Creates default workflow
+ * - `?template=bug` - Creates bug tracking workflow
+ * - `?template=feature` - Creates feature development workflow
+ * - Template parameter takes precedence over request body
  */
-private fun Route.createWorkflowRoute() {
+private fun Route.createWorkflowWithTemplateRoute() {
     post {
         call.logApiOperation("CreateWorkflow")
-        
-        call.validateAndProcess<CreateWorkflowRequest>(
-            validation = { WorkflowValidation.validateCreateRequest(it) }
-        ) { request ->
-            call.executeServiceCall {
-                val service = call.service<WorkflowApplicationService>()
-                val command = request.toCreateCommand()
-                
-                val created = service.createWorkflow(command)
-                call.respondCreated(WorkflowResponse.fromDto(created))
+
+        call.executeServiceCall {
+            val service = call.service<WorkflowApplicationService>()
+            val templateParam = call.request.queryParameters["template"]?.trim()?.lowercase()
+
+            // Check for multiple template parameters
+            val templateParams = call.request.queryParameters.getAll("template")
+            if (templateParams != null && templateParams.size > 1) {
+                call.respondBadRequest(
+                    "Multiple template parameters not allowed",
+                    "Only one template parameter is allowed. Found: ${templateParams.size}"
+                )
+                return@executeServiceCall
+            }
+
+            when {
+                // Template parameter provided
+                templateParam != null -> {
+                    when {
+                        templateParam.isEmpty() -> {
+                            call.respondBadRequest(
+                                "Invalid template",
+                                "Template parameter cannot be empty. Supported values: default, bug, feature"
+                            )
+                        }
+                        templateParam == "default" -> {
+                            val created = service.createDefaultWorkflow()
+                            call.respondCreated(WorkflowResponse.fromDto(created))
+                        }
+                        templateParam == "bug" -> {
+                            val created = service.createBugWorkflow()
+                            call.respondCreated(WorkflowResponse.fromDto(created))
+                        }
+                        templateParam == "feature" -> {
+                            val created = service.createFeatureWorkflow()
+                            call.respondCreated(WorkflowResponse.fromDto(created))
+                        }
+                        else -> {
+                            call.respondBadRequest(
+                                "Invalid template",
+                                "Invalid template '$templateParam'. Supported values: default, bug, feature"
+                            )
+                        }
+                    }
+                }
+                // No template - expect request body
+                else -> {
+                    try {
+                        val request = call.receive<CreateWorkflowRequest>()
+                        WorkflowValidation.validateCreateRequest(request)
+
+                        val command = request.toCreateCommand()
+                        val created = service.createWorkflow(command)
+                        call.respondCreated(WorkflowResponse.fromDto(created))
+                    } catch (e: IllegalArgumentException) {
+                        call.respondBadRequest(
+                            "Validation failed",
+                            e.message ?: "Invalid request"
+                        )
+                    } catch (e: Exception) {
+                        call.respondBadRequest(
+                            "Missing template parameter or request body required",
+                            "Either provide a template parameter (?template=default) or a request body with workflow details"
+                        )
+                    }
+                }
             }
         }
     }
@@ -280,51 +335,55 @@ private fun Route.listWorkflowsRoute() {
 }
 
 /**
- * Gets valid transitions for a workflow from a specific status.
- * 
- * ## Path Parameters
- * - `id` - The UUID of the workflow
- * 
- * ## Query Parameters
- * - `status` - The status to get transitions for (required)
- * 
+ * Gets all valid transitions for a workflow.
+ *
+ * ## URL Structure
+ * `GET /api/v1/workflows/{id}/transitions`
+ *
  * ## Response
- * - `200 OK` - Valid transitions returned
- * - `400 Bad Request` - Missing or invalid status parameter
- * - `404 Not Found` - Workflow not found
- * 
- * ## Example
- * ```
- * GET /api/workflows/123e4567-e89b-12d3-a456-426614174000/transitions?status=TODO
- * ```
+ * Returns all possible transitions from each status in the workflow.
  */
-private fun Route.getTransitionsRoute() {
-    get("/{id}/transitions") {
-        call.logApiOperation("GetTransitions", mapOf("id" to call.parameters["id"], "status" to call.request.queryParameters["status"]))
-        
+private fun Route.getAllTransitionsRoute() {
+    get("/transitions") {
+        call.logApiOperation("GetAllTransitions", mapOf("id" to call.parameters["id"]))
+
         call.executeServiceCall {
             val workflowId = call.extractWorkflowId("id")
-            val statusParam = call.request.queryParameters["status"]
-                ?: throw IllegalArgumentException("Query parameter 'status' is required")
-            
-            val status = IssueStatus.fromString(statusParam)
             val service = call.service<WorkflowApplicationService>()
-            val transitions = service.getValidTransitions(workflowId, status)
-            
-            call.respondOk(TransitionsResponse(
-                fromStatus = status.name,
-                validTransitions = transitions.map { it.name }
+            val workflow = service.getWorkflow(workflowId)
+
+            if (workflow == null) {
+                call.respondNotFound(
+                    "Workflow not found",
+                    "No workflow exists with ID: ${workflowId.value}"
+                )
+                return@executeServiceCall
+            }
+
+            // Build all transitions for all statuses
+            val allTransitions = workflow.allowedStatuses.map { statusName ->
+                val status = IssueStatus.fromString(statusName)
+                val validTransitions = service.getValidTransitions(workflowId, status)
+                TransitionsResponse(
+                    fromStatus = statusName,
+                    validTransitions = validTransitions.map { it.name }
+                )
+            }
+
+            call.respondOk(AllTransitionsResponse(
+                workflowId = workflow.id,
+                transitions = allTransitions
             ))
         }
     }
 }
 
 /**
- * Validates a status transition for a workflow.
- * 
- * ## Path Parameters
- * - `id` - The UUID of the workflow
- * 
+ * Validates a specific status transition (resource-based URL).
+ *
+ * ## URL Structure
+ * `POST /api/v1/workflows/{id}/transitions/validation`
+ *
  * ## Request Body
  * ```json
  * {
@@ -332,37 +391,35 @@ private fun Route.getTransitionsRoute() {
  *   "toStatus": "IN_PROGRESS"
  * }
  * ```
- * 
- * ## Response
- * - `200 OK` - Validation result returned
- * - `400 Bad Request` - Invalid request body or status values
- * - `404 Not Found` - Workflow not found
- * 
- * ## Response Format
- * ```json
- * {
- *   "isValid": true,
- *   "reason": null
- * }
- * ```
  */
-private fun Route.validateTransitionRoute() {
-    post("/{id}/validate-transition") {
-        call.logApiOperation("ValidateTransition", mapOf("id" to call.parameters["id"]))
-        
-        val workflowId = call.extractWorkflowId("id")
-        
-        call.validateAndProcess<ValidateTransitionRequest>(
-            validation = { WorkflowValidation.validateTransitionValidationRequest(it) }
-        ) { request ->
-            call.executeServiceCall {
-                val service = call.service<WorkflowApplicationService>()
+private fun Route.validateTransitionResourceRoute() {
+    post("/validation") {
+        call.logApiOperation("ValidateTransitionResource", mapOf("id" to call.parameters["id"]))
+
+        call.executeServiceCall {
+            val workflowId = call.extractWorkflowId("id")
+
+            // Verify workflow exists
+            val service = call.service<WorkflowApplicationService>()
+            val workflow = service.getWorkflow(workflowId)
+
+            if (workflow == null) {
+                call.respondNotFound(
+                    "Workflow not found",
+                    "No workflow exists with ID: ${workflowId.value}"
+                )
+                return@executeServiceCall
+            }
+
+            call.validateAndProcess<ValidateTransitionRequest>(
+                validation = { WorkflowValidation.validateTransitionValidationRequest(it) }
+            ) { request ->
                 val result = service.validateTransition(
-                    workflowId, 
+                    workflowId,
                     IssueStatus.fromString(request.fromStatus),
                     IssueStatus.fromString(request.toStatus)
                 )
-                
+
                 call.respondOk(ValidationResponse.fromValidationResult(result))
             }
         }
@@ -370,73 +427,77 @@ private fun Route.validateTransitionRoute() {
 }
 
 /**
- * Creates a default workflow with standard statuses.
- * 
- * ## Response
- * - `201 Created` - Default workflow created successfully
- * 
- * ## Default Configuration
- * - Name: "Default Workflow"
- * - Initial Status: TODO
- * - Allowed Statuses: TODO, IN_PROGRESS, DONE
- * - Transitions: Linear flow from TODO → IN_PROGRESS → DONE
+ * Configures legacy workflow routes to return 404 with migration guidance.
+ *
+ * All legacy `/api/workflows` endpoints have been removed in favor of `/api/v1/workflows`.
  */
-private fun Route.createDefaultWorkflowRoute() {
+private fun Route.configureLegacyWorkflowRoutes() {
+    // Match all HTTP methods for base routes
+    get {
+        call.respondNotFound(
+            "Legacy endpoint not found",
+            "This endpoint has been removed. Use /api/v1/workflows instead. See documentation at /swagger"
+        )
+    }
+
+    post {
+        call.respondNotFound(
+            "Legacy endpoint not found",
+            "This endpoint has been removed. Use /api/v1/workflows instead. See documentation at /swagger"
+        )
+    }
+
+    // Template routes
     post("/default") {
-        call.logApiOperation("CreateDefaultWorkflow")
-        
-        call.executeServiceCall {
-            val service = call.service<WorkflowApplicationService>()
-            val created = service.createDefaultWorkflow()
-            call.respondCreated(WorkflowResponse.fromDto(created))
-        }
+        call.respondNotFound(
+            "Legacy endpoint not found",
+            "This endpoint has been removed. Use /api/v1/workflows?template=default instead. See documentation at /swagger"
+        )
     }
-}
 
-/**
- * Creates a bug workflow optimized for bug tracking.
- * 
- * ## Response
- * - `201 Created` - Bug workflow created successfully
- * 
- * ## Bug Workflow Configuration
- * - Name: "Bug Workflow"
- * - Initial Status: TODO
- * - Optimized for bug tracking with appropriate status transitions
- * - Includes verification and resolution states
- */
-private fun Route.createBugWorkflowRoute() {
     post("/bug") {
-        call.logApiOperation("CreateBugWorkflow")
-        
-        call.executeServiceCall {
-            val service = call.service<WorkflowApplicationService>()
-            val created = service.createBugWorkflow()
-            call.respondCreated(WorkflowResponse.fromDto(created))
-        }
+        call.respondNotFound(
+            "Legacy endpoint not found",
+            "This endpoint has been removed. Use /api/v1/workflows?template=bug instead. See documentation at /swagger"
+        )
     }
-}
 
-/**
- * Creates a feature workflow optimized for feature development.
- * 
- * ## Response
- * - `201 Created` - Feature workflow created successfully
- * 
- * ## Feature Workflow Configuration
- * - Name: "Feature Workflow"
- * - Initial Status: TODO
- * - Optimized for feature development with review states
- * - Supports iterative development cycles
- */
-private fun Route.createFeatureWorkflowRoute() {
     post("/feature") {
-        call.logApiOperation("CreateFeatureWorkflow")
-        
-        call.executeServiceCall {
-            val service = call.service<WorkflowApplicationService>()
-            val created = service.createFeatureWorkflow()
-            call.respondCreated(WorkflowResponse.fromDto(created))
+        call.respondNotFound(
+            "Legacy endpoint not found",
+            "This endpoint has been removed. Use /api/v1/workflows?template=feature instead. See documentation at /swagger"
+        )
+    }
+
+    // Individual workflow operations
+    route("/{id}") {
+        get {
+            call.respondNotFound(
+                "Legacy endpoint not found",
+                "This endpoint has been removed. Use /api/v1/workflows/{id} instead. See documentation at /swagger"
+            )
+        }
+
+        put {
+            call.respondNotFound(
+                "Legacy endpoint not found",
+                "This endpoint has been removed. Use /api/v1/workflows/{id} instead. See documentation at /swagger"
+            )
+        }
+
+        delete {
+            call.respondNotFound(
+                "Legacy endpoint not found",
+                "This endpoint has been removed. Use /api/v1/workflows/{id} instead. See documentation at /swagger"
+            )
+        }
+
+        // Legacy validate-transition endpoint
+        post("/validate-transition") {
+            call.respondNotFound(
+                "Legacy endpoint not found",
+                "This endpoint has been removed. Use /api/v1/workflows/{id}/transitions/validation instead. See documentation at /swagger"
+            )
         }
     }
 }
