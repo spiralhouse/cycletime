@@ -144,7 +144,7 @@ testApplication {
     )
 
     // Each test gets its own database instance
-    val response = client.get("/api/issues")
+    val response = client.get("/api/v1/issues")
     // Test assertions...
 }
 ```
