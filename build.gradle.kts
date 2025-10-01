@@ -16,7 +16,7 @@ plugins {
 group = "io.spiralhouse.cycletime"
 version = semver.version
 
-// Git SemVersioning configuration
+// Git SemVersioning configuration (SPI-570: trigger CI for test result validation)
 semver {
     // Use SNAPSHOT for pre-release (aligns with current development pattern)
     defaultPreRelease = "SNAPSHOT"
