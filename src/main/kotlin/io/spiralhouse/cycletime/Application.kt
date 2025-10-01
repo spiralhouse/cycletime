@@ -212,7 +212,7 @@ fun Application.module() {
     routing {
         configureHealthEndpoint(mcpIntegrationService, logger)
 
-        // OpenAPI specification and Swagger UI (Ktor 3.2.3 compatible)
+        // OpenAPI specification and Swagger UI (Ktor 3.3.0 compatible)
         // Only serve documentation if enabled and specification file exists
         val openApiEnabled = System.getenv("OPENAPI_ENABLED")?.toBoolean() ?:
                             (System.getProperty("openapi.enabled")?.toBoolean() ?: true)
@@ -342,9 +342,8 @@ private fun Application.configureKtorFeatures(
 }
 
 /**
- * Configure OpenAPI and Swagger UI setup for Ktor 3.2.3.
- * Note: Native OpenAPI generation was introduced in Ktor 3.3.0.
- * For 3.2.3, we serve static OpenAPI specifications and Swagger UI.
+ * Configure OpenAPI and Swagger UI setup for Ktor 3.3.0.
+ * We serve static OpenAPI specifications and Swagger UI.
  *
  * @param logger Application logger
  * @param performanceMetrics Map to store timing metrics
@@ -366,7 +365,7 @@ private fun Application.configureOpenAPI(
 
         if (resourceStream != null) {
             resourceStream.close()
-            logger.info("Configuring OpenAPI documentation serving for Ktor 3.2.3")
+            logger.info("Configuring OpenAPI documentation serving for Ktor 3.3.0")
             logger.info("OpenAPI specification validated: $specificationFile")
         } else {
             logger.warn("OpenAPI specification file not found: $specificationFile")
