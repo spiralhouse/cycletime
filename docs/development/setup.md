@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Java 21+
-- Gradle 9.0+ (included via wrapper)
+- Gradle 9.1+ (included via wrapper)
 - Docker (optional)
 - IDE: IntelliJ IDEA or VS Code
 

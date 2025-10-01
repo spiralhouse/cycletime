@@ -6,7 +6,7 @@
 [![codecov](https://codecov.io/gh/spiralhouse/cycletime/graph/badge.svg?token=8mTaC8tX64)](https://codecov.io/gh/spiralhouse/cycletime)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Kotlin](https://img.shields.io/badge/kotlin-2.0.21-7F52FF.svg?logo=kotlin)](https://kotlinlang.org/)
-[![Gradle](https://img.shields.io/badge/gradle-9.0-02303A.svg?logo=gradle)](https://gradle.org/)
+[![Gradle](https://img.shields.io/badge/gradle-9.1-02303A.svg?logo=gradle)](https://gradle.org/)
 
 > [!WARNING]
 > **Development Status**: CycleTime is currently under active development as we work towards our MVP release. While core functionality is operational, features and APIs may change. For detailed information about current capabilities and roadmap, see our [MVP Capability Summary](docs/MVP_CAPABILITY_SUMMARY.md).
@@ -136,7 +136,7 @@ Built with modern JVM technologies for reliability and performance:
 - **Ktor 3.2** - Lightweight asynchronous web framework
 - **Exposed ORM** - Type-safe SQL DSL and database abstraction
 - **H2 Database** - Fast, embedded database with full SQL support
-- **Gradle 9.0** - Build automation and dependency management
+- **Gradle 9.1** - Build automation and dependency management
 - **Docker** - Container deployment options
 - **GitHub Actions** - Automated testing and deployment
 
