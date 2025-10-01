@@ -65,15 +65,14 @@ dependencies {
     implementation("io.ktor:ktor-server-openapi:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-swagger:${libs.versions.ktor.get()}")
 
-    // Exposed ORM - Currently used for SQLite database access
+    // Exposed ORM - Used for H2 database access
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
     implementation(libs.exposed.jdbc)
     implementation(libs.exposed.java.time)
     implementation(libs.exposed.kotlin.datetime)
 
-    // Database - Current implementation uses SQLite with HikariCP
-    implementation("org.xerial:sqlite-jdbc:3.46.1.3")  // SQLite JDBC driver
+    // Database - H2 with HikariCP connection pooling
     implementation(libs.hikaricp)
 
     // H2 database for Phase 2 repository integration (SPI-439)
@@ -434,7 +433,6 @@ val integrationTest by tasks.registering(Test::class) {
     })
     inputs.file("build.gradle.kts")
     inputs.file("src/main/resources/application.conf") // Config changes affect integration
-    inputs.property("sqliteVersion", "3.46.1.3") // Track database dependency changes
     inputs.property("h2Version", libs.versions.h2.get()) // Track H2 dependency for tests
     
     // Integration tests can now run in parallel with the new DI pattern
