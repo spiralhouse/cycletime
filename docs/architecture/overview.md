@@ -664,7 +664,8 @@ class ProjectResource(
 
 - `docs/PRD.md` - Product Requirements Document
 - `docs/ARCHITECTURE.md` - Technical Architecture
-- `docs/API_SPEC.md` - API Documentation
+- `docs/api/quick-start.md` - REST API Quick Start Guide
+- OpenAPI Documentation - Available at `/swagger` endpoint
 - `docs/DEPLOYMENT.md` - Infrastructure and Deployment
 - `docs/ADR/` - Architecture Decision Records
 

@@ -53,7 +53,7 @@ curl http://localhost:8080/health
 
 **Via REST API (optional):**
 ```bash
-curl -X POST http://localhost:8080/api/projects \
+curl -X POST http://localhost:8080/api/v1/projects \
   -H "Content-Type: application/json" \
   -d '{"name": "Mobile App", "description": "iOS/Android app"}'
 ```

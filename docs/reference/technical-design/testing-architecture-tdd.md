@@ -354,7 +354,7 @@ class ProjectApiTest : DescribeSpec({
                         configureRouting()
                     }
                     
-                    val response = client.post("/api/projects") {
+                    val response = client.post("/api/v1/projects") {
                         contentType(ContentType.Application.Json)
                         setBody("""
                             {
@@ -381,7 +381,7 @@ class ProjectApiTest : DescribeSpec({
                         configureRouting()
                     }
                     
-                    val response = client.post("/api/projects") {
+                    val response = client.post("/api/v1/projects") {
                         contentType(ContentType.Application.Json)
                         setBody("""
                             {
@@ -396,12 +396,12 @@ class ProjectApiTest : DescribeSpec({
             }
         }
         
-        describe("GET /api/projects/{id}") {
+        describe("GET /api/v1/projects/{id}") {
             it("should retrieve existing project") {
                 testApplication {
                     // Setup with test data
                     TestFixtures.withProject { projectId ->
-                        val response = client.get("/api/projects/$projectId")
+                        val response = client.get("/api/v1/projects/$projectId")
                         
                         response.status shouldBe HttpStatusCode.OK
                         
@@ -418,8 +418,106 @@ class ProjectApiTest : DescribeSpec({
                         configureRouting()
                     }
                     
-                    val response = client.get("/api/projects/non-existent-id")
+                    val response = client.get("/api/v1/projects/non-existent-id")
                     response.status shouldBe HttpStatusCode.NotFound
+                }
+            }
+        }
+
+        describe("POST /api/v1/projects/{projectId}/issues - Nested Resource Pattern") {
+            it("should create issue within project context") {
+                testApplication {
+                    application {
+                        configureDependencies()
+                        configureRouting()
+                    }
+
+                    // First create a project
+                    val projectResponse = client.post("/api/v1/projects") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""
+                            {
+                                "name": "Test Project",
+                                "description": "Project for nested issues"
+                            }
+                        """.trimIndent())
+                    }
+
+                    val project = Json.decodeFromString<ProjectDto>(projectResponse.bodyAsText())
+
+                    // Create issue within project context
+                    val issueResponse = client.post("/api/v1/projects/${project.id}/issues") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""
+                            {
+                                "title": "Test Issue",
+                                "description": "Issue created in project context",
+                                "type": "STORY"
+                            }
+                        """.trimIndent())
+                    }
+
+                    issueResponse.status shouldBe HttpStatusCode.Created
+
+                    val issue = Json.decodeFromString<IssueDto>(issueResponse.bodyAsText())
+                    issue.projectId shouldBe project.id
+                    issue.title shouldBe "Test Issue"
+                }
+            }
+
+            it("should return 404 when creating issue in non-existent project") {
+                testApplication {
+                    application {
+                        configureDependencies()
+                        configureRouting()
+                    }
+
+                    val response = client.post("/api/v1/projects/non-existent-id/issues") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""
+                            {
+                                "title": "Test Issue",
+                                "description": "Should fail",
+                                "type": "STORY"
+                            }
+                        """.trimIndent())
+                    }
+
+                    response.status shouldBe HttpStatusCode.NotFound
+                }
+            }
+        }
+
+        describe("GET /api/v1/workflows - Query Parameter Pattern") {
+            it("should retrieve workflow template using query parameter") {
+                testApplication {
+                    application {
+                        configureDependencies()
+                        configureRouting()
+                    }
+
+                    val response = client.get("/api/v1/workflows?template=bug")
+
+                    response.status shouldBe HttpStatusCode.OK
+
+                    val workflow = Json.decodeFromString<WorkflowDto>(response.bodyAsText())
+                    workflow.template shouldBe "bug"
+                }
+            }
+
+            it("should default to 'default' template when no parameter provided") {
+                testApplication {
+                    application {
+                        configureDependencies()
+                        configureRouting()
+                    }
+
+                    val response = client.get("/api/v1/workflows")
+
+                    response.status shouldBe HttpStatusCode.OK
+
+                    val workflow = Json.decodeFromString<WorkflowDto>(response.bodyAsText())
+                    workflow.template shouldBe "default"
                 }
             }
         }
@@ -958,7 +1056,7 @@ class ProjectPerformanceTest : DescribeSpec({
                 val times = (1..1000).map {
                     async {
                         measureTimeMillis {
-                            client.get("/api/health")
+                            client.get("/api/v1/health")
                         }
                     }
                 }.awaitAll()

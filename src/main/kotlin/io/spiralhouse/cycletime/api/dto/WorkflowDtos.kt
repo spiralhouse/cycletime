@@ -167,6 +167,19 @@ data class TransitionsResponse(
 )
 
 /**
+ * Response DTO for all transitions in a workflow.
+ *
+ * ## Response Fields
+ * - workflowId: The ID of the workflow
+ * - transitions: List of transitions for each status
+ */
+@Serializable
+data class AllTransitionsResponse(
+    val workflowId: String,
+    val transitions: List<TransitionsResponse>
+)
+
+/**
  * Response DTO for transition validation results.
  * 
  * ## Response Fields
