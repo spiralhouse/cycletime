@@ -5,52 +5,40 @@ Test-Driven Development follows the RED → GREEN → REFACTOR cycle. This workf
 ## TDD Phases
 
 ### 1. RED Phase (Write Failing Tests)
-**Agent**: test-agent.txt (in TDD mode)
-**Objective**: Create comprehensive failing tests that define expected behavior
+
+**Agent**: QA Agent (TDD mode)
+
+**Objective**: Create comprehensive failing tests that define expected behavior before implementation exists.
 
 ```bash
-claude -p "Create failing tests for [feature]. Use TDD mode to write comprehensive tests that initially fail since no implementation exists." \
-  --append-system-prompt "$(cat .claude/prompts/test-agent.txt)" \
-  --permission-mode bypassPermissions --output-format stream-json --verbose
+@agent-qa "Create failing tests for [feature]. Use TDD RED phase approach: write comprehensive tests that initially fail since no implementation exists. Cover happy path, edge cases, and error conditions."
 ```
 
-**Success Criteria**:
-- All tests fail with meaningful error messages
-- Tests cover happy path, edge cases, and error conditions
-- Test names serve as living documentation
-- Tests are isolated and independent
+**Success Criteria**: The RED phase succeeds when all tests fail with clear, meaningful error messages that describe the missing functionality. Test coverage should include happy paths, edge cases, error conditions, and boundary scenarios. Test names must serve as living documentation, clearly expressing the expected behavior. Each test must be isolated and independent, with no shared mutable state between tests.
 
 ### 2. GREEN Phase (Implement Minimal Code)
-**Agent**: implementation-agent.txt (in test-driven mode)
-**Objective**: Implement the minimal code needed to make all tests pass
+
+**Agent**: Developer Agent (test-driven mode)
+
+**Objective**: Implement the minimal code needed to make all failing tests pass.
 
 ```bash
-claude -p "Implement minimal code to make failing tests pass for [feature]. Follow TDD GREEN phase principles - write only enough code to pass the tests." \
-  --append-system-prompt "$(cat .claude/prompts/implementation-agent.txt)" \
-  --permission-mode bypassPermissions --output-format stream-json --verbose
+@agent-developer "Implement minimal code to make failing tests pass for [feature]. Follow TDD GREEN phase principles: write only enough code to pass the tests, no over-engineering or premature optimization."
 ```
 
-**Success Criteria**:
-- All tests transition from failing to passing
-- Implementation is minimal but correct
-- No over-engineering or premature optimization
-- Code follows project patterns and conventions
+**Success Criteria**: The GREEN phase succeeds when all tests transition from failing to passing. Implementation should be minimal but correct, containing only the code necessary to satisfy test requirements. Avoid over-engineering or premature optimization - focus solely on making tests pass. Code must follow established project patterns, conventions, and architectural guidelines while maintaining simplicity.
 
 ### 3. REFACTOR Phase (Improve Code Quality)
-**Agent**: review-agent.txt (focusing on refactoring)
-**Objective**: Improve code structure while maintaining test coverage
+
+**Agent**: Code Reviewer Agent (refactoring focus)
+
+**Objective**: Improve code structure and quality while maintaining all test coverage.
 
 ```bash
-claude -p "Review and refactor [feature] implementation while maintaining all test coverage. Improve code quality, performance, and adherence to project standards without changing behavior." \
-  --append-system-prompt "$(cat .claude/prompts/review-agent.txt)" \
-  --permission-mode bypassPermissions --output-format stream-json --verbose
+@agent-code-reviewer "Review and refactor [feature] implementation while maintaining all test coverage. Improve code quality, performance, and adherence to project standards without changing behavior."
 ```
 
-**Success Criteria**:
-- All tests continue to pass after refactoring
-- Code quality improved (readability, performance, maintainability)
-- No functional changes to behavior
-- Follows architectural patterns and conventions
+**Success Criteria**: The REFACTOR phase succeeds when all tests continue to pass after refactoring, confirming that behavior remains unchanged. Code quality should improve across readability, performance, and maintainability dimensions. The refactored implementation must make no functional changes to behavior - only structural improvements. All code must follow established architectural patterns, design principles, and project conventions.
 
 ## Single Feature TDD
 
@@ -76,11 +64,15 @@ For multiple features, use parallel development mechanics (see PARALLEL_DEVELOPM
 
 ## TDD Benefits
 
-- **Clear requirements**: Tests define expected behavior upfront
-- **Regression protection**: Tests catch breaking changes immediately  
-- **Design improvement**: Writing tests first improves API design
-- **Documentation**: Test names and descriptions serve as living docs
-- **Confidence**: Comprehensive test coverage enables safe refactoring
+Test-Driven Development provides several benefits when applied consistently. Tests written before implementation serve as executable specifications, defining expected behavior with precision. This upfront clarity reduces ambiguity and prevents misunderstandings about requirements.
+
+Comprehensive test suites provide regression protection, catching breaking changes immediately when they occur. This early detection prevents bugs from reaching production and reduces debugging time significantly.
+
+Writing tests first often improves API and interface design. When you consider how code will be tested before implementing it, you naturally create more testable, modular designs with clear boundaries and minimal coupling.
+
+Test names and descriptions serve as living documentation that stays synchronized with code. Unlike traditional documentation, tests cannot become outdated without failing, ensuring accurate representation of system behavior.
+
+Comprehensive test coverage enables confident refactoring. When tests verify all critical behavior, developers can restructure code aggressively, knowing that any behavioral regressions will be caught immediately.
 
 ## When to Use TDD
 
