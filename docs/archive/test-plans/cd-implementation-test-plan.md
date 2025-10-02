@@ -317,7 +317,7 @@ else
 fi
 
 # Test image name format
-image_name="ghcr.io/spiralhouse/jcvd"
+image_name="ghcr.io/spiralhouse/cycletime"
 if [[ "$image_name" =~ ^ghcr\.io/[a-z0-9.-]+/[a-z0-9.-]+$ ]]; then
   echo "✅ Image name format valid"
 else

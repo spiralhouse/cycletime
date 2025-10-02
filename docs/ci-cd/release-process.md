@@ -141,16 +141,16 @@ git revert HEAD && git push
 
 ```bash
 # Deploy specific previous version
-docker pull ghcr.io/spiralhouse/jcvd:0.2.9
-docker tag ghcr.io/spiralhouse/jcvd:0.2.9 ghcr.io/spiralhouse/jcvd:staging
-docker push ghcr.io/spiralhouse/jcvd:staging
+docker pull ghcr.io/spiralhouse/cycletime:0.2.9
+docker tag ghcr.io/spiralhouse/cycletime:0.2.9 ghcr.io/spiralhouse/cycletime:staging
+docker push ghcr.io/spiralhouse/cycletime:staging
 ```
 
 ### Production Environment
 
 ```bash
 # Blue-green switch to previous version
-kubectl set image deployment/jcvd jcvd=ghcr.io/spiralhouse/jcvd:0.2.9
+kubectl set image deployment/jcvd jcvd=ghcr.io/spiralhouse/cycletime:0.2.9
 
 # Or rollback deployment
 kubectl rollout undo deployment/jcvd

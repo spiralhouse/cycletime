@@ -11,7 +11,7 @@ The staging promotion process validates deployment readiness and safely promotes
 ### Promotion Criteria
 
 **Required Conditions:**
-- Version must exist in the container registry (`ghcr.io/spiralhouse/jcvd`)
+- Version must exist in the container registry (`ghcr.io/spiralhouse/cycletime`)
 - Version must have been deployed to dev environment
 - All CI/CD checks must have passed for the version
 - Version should meet minimum dev deployment time (configurable, default: 2 hours)
@@ -27,7 +27,7 @@ The staging promotion process validates deployment readiness and safely promotes
 **Latest Development Version:**
 ```bash
 # Use the most recent version from main branch
-# Check recent versions: https://github.com/spiralhouse/jcvd/pkgs/container/jcvd
+# Check recent versions: https://github.com/spiralhouse/cycletime/pkgs/container/jcvd
 ```
 
 **Specific Feature Version:**
@@ -46,7 +46,7 @@ The staging promotion process validates deployment readiness and safely promotes
 
 ### Step 1: Access the Workflow
 
-1. Go to [GitHub Actions > Environment Promotion](https://github.com/spiralhouse/jcvd/actions/workflows/promote.yml)
+1. Go to [GitHub Actions > Environment Promotion](https://github.com/spiralhouse/cycletime/actions/workflows/promote.yml)
 2. Click "Run workflow" button
 3. Select the correct branch (usually `main`)
 
@@ -74,10 +74,10 @@ The staging promotion process validates deployment readiness and safely promotes
 **Container Verification:**
 ```bash
 # Check staging tag was updated
-docker pull ghcr.io/spiralhouse/jcvd:staging
+docker pull ghcr.io/spiralhouse/cycletime:staging
 
 # Verify it matches the promoted version
-docker inspect ghcr.io/spiralhouse/jcvd:staging
+docker inspect ghcr.io/spiralhouse/cycletime:staging
 ```
 
 **Deployment Verification:**
@@ -100,7 +100,7 @@ The promotion workflow automatically validates these conditions:
 
 ### Post-Promotion Validation
 
-- [ ] **Staging Tag**: `ghcr.io/spiralhouse/jcvd:staging` updated successfully
+- [ ] **Staging Tag**: `ghcr.io/spiralhouse/cycletime:staging` updated successfully
 - [ ] **Timestamped Tag**: Immutable timestamp tag created
 - [ ] **External Trigger**: External deployment system detects new staging tag
 - [ ] **Deployment Status**: Staging environment deploys successfully
@@ -155,30 +155,30 @@ If issues are detected in the running application:
 ### Tag Types
 
 **Mutable Tags** (overwritten on each promotion):
-- `ghcr.io/spiralhouse/jcvd:staging` - Current staging version
+- `ghcr.io/spiralhouse/cycletime:staging` - Current staging version
 
 **Immutable Tags** (permanent historical record):
-- `ghcr.io/spiralhouse/jcvd:1.2.3` - Original version tag
-- `ghcr.io/spiralhouse/jcvd:1.2.3-staging-20240823-143052` - Timestamped staging tag
+- `ghcr.io/spiralhouse/cycletime:1.2.3` - Original version tag
+- `ghcr.io/spiralhouse/cycletime:1.2.3-staging-20240823-143052` - Timestamped staging tag
 
 ### Tag Selection Guide
 
 **For External Deployment Systems:**
 ```bash
 # Use mutable staging tag (recommended)
-docker pull ghcr.io/spiralhouse/jcvd:staging
+docker pull ghcr.io/spiralhouse/cycletime:staging
 
 # External system should pin to specific version after pull
-docker tag ghcr.io/spiralhouse/jcvd:staging app:staging-20240823
+docker tag ghcr.io/spiralhouse/cycletime:staging app:staging-20240823
 ```
 
 **For Manual Verification:**
 ```bash
 # Use specific version for testing
-docker pull ghcr.io/spiralhouse/jcvd:1.2.3
+docker pull ghcr.io/spiralhouse/cycletime:1.2.3
 
 # Use timestamped tag for historical reference
-docker pull ghcr.io/spiralhouse/jcvd:1.2.3-staging-20240823-143052
+docker pull ghcr.io/spiralhouse/cycletime:1.2.3-staging-20240823-143052
 ```
 
 ## Promotion History and Auditing
@@ -186,11 +186,11 @@ docker pull ghcr.io/spiralhouse/jcvd:1.2.3-staging-20240823-143052
 ### Viewing Promotion History
 
 1. **GitHub Actions History**:
-   - Visit [Promotion Workflow Runs](https://github.com/spiralhouse/jcvd/actions/workflows/promote.yml)
+   - Visit [Promotion Workflow Runs](https://github.com/spiralhouse/cycletime/actions/workflows/promote.yml)
    - Each successful run shows version, promoter, and timestamp
 
 2. **Container Registry History**:
-   - Visit [GHCR Package Page](https://github.com/spiralhouse/jcvd/pkgs/container/jcvd)
+   - Visit [GHCR Package Page](https://github.com/spiralhouse/cycletime/pkgs/container/jcvd)
    - View all tags and their creation timestamps
 
 3. **Workflow Summaries**:
