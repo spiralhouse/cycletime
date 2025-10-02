@@ -77,13 +77,13 @@ tasks.test {
 ### Domain Entity Testing
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/domain/entities/ProjectTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/domain/entities/ProjectTest.kt
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.assertions.throwables.shouldThrow
-import io.spiralhouse.jcvd.testing.mocks.MockTimeProvider
+import io.spiralhouse.cycletime.testing.mocks.MockTimeProvider
 import java.time.Instant
 
 class ProjectTest : DescribeSpec({
@@ -190,7 +190,7 @@ class ProjectTest : DescribeSpec({
 ### Value Object Testing
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/domain/valueobjects/ProjectIdTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/domain/valueobjects/ProjectIdTest.kt
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -271,7 +271,7 @@ class ProjectIdTest : DescribeSpec({
 ### Testing with Ktor Native DI
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/infrastructure/di/DIIntegrationTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/infrastructure/di/DIIntegrationTest.kt
 
 import io.ktor.server.testing.*
 import io.ktor.server.plugins.di.*
@@ -329,7 +329,7 @@ class DIIntegrationTest : DescribeSpec({
 ### API Endpoint Testing
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/api/ProjectApiTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/api/ProjectApiTest.kt
 
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -339,7 +339,7 @@ import io.ktor.server.plugins.di.*
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.serialization.json.Json
-import io.spiralhouse.jcvd.testing.fixtures.TestFixtures
+import io.spiralhouse.cycletime.testing.fixtures.TestFixtures
 
 class ProjectApiTest : DescribeSpec({
     
@@ -354,7 +354,7 @@ class ProjectApiTest : DescribeSpec({
                         configureRouting()
                     }
                     
-                    val response = client.post("/api/projects") {
+                    val response = client.post("/api/v1/projects") {
                         contentType(ContentType.Application.Json)
                         setBody("""
                             {
@@ -381,7 +381,7 @@ class ProjectApiTest : DescribeSpec({
                         configureRouting()
                     }
                     
-                    val response = client.post("/api/projects") {
+                    val response = client.post("/api/v1/projects") {
                         contentType(ContentType.Application.Json)
                         setBody("""
                             {
@@ -396,12 +396,12 @@ class ProjectApiTest : DescribeSpec({
             }
         }
         
-        describe("GET /api/projects/{id}") {
+        describe("GET /api/v1/projects/{id}") {
             it("should retrieve existing project") {
                 testApplication {
                     // Setup with test data
                     TestFixtures.withProject { projectId ->
-                        val response = client.get("/api/projects/$projectId")
+                        val response = client.get("/api/v1/projects/$projectId")
                         
                         response.status shouldBe HttpStatusCode.OK
                         
@@ -418,8 +418,106 @@ class ProjectApiTest : DescribeSpec({
                         configureRouting()
                     }
                     
-                    val response = client.get("/api/projects/non-existent-id")
+                    val response = client.get("/api/v1/projects/non-existent-id")
                     response.status shouldBe HttpStatusCode.NotFound
+                }
+            }
+        }
+
+        describe("POST /api/v1/projects/{projectId}/issues - Nested Resource Pattern") {
+            it("should create issue within project context") {
+                testApplication {
+                    application {
+                        configureDependencies()
+                        configureRouting()
+                    }
+
+                    // First create a project
+                    val projectResponse = client.post("/api/v1/projects") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""
+                            {
+                                "name": "Test Project",
+                                "description": "Project for nested issues"
+                            }
+                        """.trimIndent())
+                    }
+
+                    val project = Json.decodeFromString<ProjectDto>(projectResponse.bodyAsText())
+
+                    // Create issue within project context
+                    val issueResponse = client.post("/api/v1/projects/${project.id}/issues") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""
+                            {
+                                "title": "Test Issue",
+                                "description": "Issue created in project context",
+                                "type": "STORY"
+                            }
+                        """.trimIndent())
+                    }
+
+                    issueResponse.status shouldBe HttpStatusCode.Created
+
+                    val issue = Json.decodeFromString<IssueDto>(issueResponse.bodyAsText())
+                    issue.projectId shouldBe project.id
+                    issue.title shouldBe "Test Issue"
+                }
+            }
+
+            it("should return 404 when creating issue in non-existent project") {
+                testApplication {
+                    application {
+                        configureDependencies()
+                        configureRouting()
+                    }
+
+                    val response = client.post("/api/v1/projects/non-existent-id/issues") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""
+                            {
+                                "title": "Test Issue",
+                                "description": "Should fail",
+                                "type": "STORY"
+                            }
+                        """.trimIndent())
+                    }
+
+                    response.status shouldBe HttpStatusCode.NotFound
+                }
+            }
+        }
+
+        describe("GET /api/v1/workflows - Query Parameter Pattern") {
+            it("should retrieve workflow template using query parameter") {
+                testApplication {
+                    application {
+                        configureDependencies()
+                        configureRouting()
+                    }
+
+                    val response = client.get("/api/v1/workflows?template=bug")
+
+                    response.status shouldBe HttpStatusCode.OK
+
+                    val workflow = Json.decodeFromString<WorkflowDto>(response.bodyAsText())
+                    workflow.template shouldBe "bug"
+                }
+            }
+
+            it("should default to 'default' template when no parameter provided") {
+                testApplication {
+                    application {
+                        configureDependencies()
+                        configureRouting()
+                    }
+
+                    val response = client.get("/api/v1/workflows")
+
+                    response.status shouldBe HttpStatusCode.OK
+
+                    val workflow = Json.decodeFromString<WorkflowDto>(response.bodyAsText())
+                    workflow.template shouldBe "default"
                 }
             }
         }
@@ -430,7 +528,7 @@ class ProjectApiTest : DescribeSpec({
 ### WebSocket Testing
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/mcp/MCPWebSocketTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/mcp/MCPWebSocketTest.kt
 
 import io.ktor.client.plugins.websocket.*
 import io.ktor.server.testing.*
@@ -491,7 +589,7 @@ class MCPWebSocketTest : DescribeSpec({
                             put("method", "resources/read")
                             put("id", 2)
                             put("params", buildJsonObject {
-                                put("uri", "jcvd://project/$projectId")
+                                put("uri", "cycletime://project/$projectId")
                             })
                         }
                         
@@ -513,7 +611,7 @@ class MCPWebSocketTest : DescribeSpec({
 ## Repository Testing with Test Containers
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/infrastructure/H2ProjectRepositoryTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/infrastructure/H2ProjectRepositoryTest.kt
 
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.junit.jupiter.Container
@@ -608,12 +706,12 @@ class H2ProjectRepositoryTest : DescribeSpec({
 ### Test Data Builders
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/testing/builders/ProjectBuilder.kt
+// src/test/kotlin/io/spiralhouse/cycletime/testing/builders/ProjectBuilder.kt
 
-import io.spiralhouse.jcvd.domain.entities.Project
-import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
-import io.spiralhouse.jcvd.domain.valueobjects.ProjectStatus
-import io.spiralhouse.jcvd.testing.mocks.MockTimeProvider
+import io.spiralhouse.cycletime.domain.entities.Project
+import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.domain.valueobjects.ProjectStatus
+import io.spiralhouse.cycletime.testing.mocks.MockTimeProvider
 import java.time.Instant
 
 /**
@@ -662,10 +760,10 @@ val testProject = ProjectBuilder()
 ### Test Fixtures
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/testing/fixtures/TestFixtures.kt
+// src/test/kotlin/io/spiralhouse/cycletime/testing/fixtures/TestFixtures.kt
 
 import io.ktor.server.testing.*
-import io.spiralhouse.jcvd.testing.mocks.*
+import io.spiralhouse.cycletime.testing.mocks.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -784,9 +882,9 @@ class IssueHierarchyTest : DescribeSpec({
 ### MockTimeProvider
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/testing/mocks/MockTimeProvider.kt
+// src/test/kotlin/io/spiralhouse/cycletime/testing/mocks/MockTimeProvider.kt
 
-import io.spiralhouse.jcvd.domain.services.TimeProvider
+import io.spiralhouse.cycletime.domain.services.TimeProvider
 import java.time.Duration
 import java.time.Instant
 
@@ -823,11 +921,11 @@ class MockTimeProvider(
 ### MockRepository
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/testing/mocks/MockProjectRepository.kt
+// src/test/kotlin/io/spiralhouse/cycletime/testing/mocks/MockProjectRepository.kt
 
-import io.spiralhouse.jcvd.domain.entities.Project
-import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
-import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.domain.entities.Project
+import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
+import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
 
 class MockProjectRepository : ProjectRepository {
     private val storage = mutableMapOf<ProjectId, Project>()
@@ -877,7 +975,7 @@ class MockProjectRepository : ProjectRepository {
 ### Kotest Configuration
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/testing/ProjectConfig.kt
+// src/test/kotlin/io/spiralhouse/cycletime/testing/ProjectConfig.kt
 
 import io.kotest.core.config.AbstractProjectConfig
 import io.kotest.core.spec.IsolationMode
@@ -928,7 +1026,7 @@ object ProjectConfig : AbstractProjectConfig() {
 ## Performance Testing
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/performance/ProjectPerformanceTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/performance/ProjectPerformanceTest.kt
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.longs.shouldBeLessThan
@@ -958,7 +1056,7 @@ class ProjectPerformanceTest : DescribeSpec({
                 val times = (1..1000).map {
                     async {
                         measureTimeMillis {
-                            client.get("/api/health")
+                            client.get("/api/v1/health")
                         }
                     }
                 }.awaitAll()
@@ -1004,7 +1102,7 @@ tasks.jacocoTestCoverageVerification {
         
         rule {
             element = "CLASS"
-            includes = listOf("io.spiralhouse.jcvd.domain.*")
+            includes = listOf("io.spiralhouse.cycletime.domain.*")
             limit {
                 minimum = "0.95".toBigDecimal() // 95% for domain
             }

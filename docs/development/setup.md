@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Java 21+
-- Gradle 9.0+ (included via wrapper)
+- Gradle 9.1+ (included via wrapper)
 - Docker (optional)
 - IDE: IntelliJ IDEA or VS Code
 
@@ -90,6 +90,8 @@ For development with multiple terminals:
 
 ## Development Tasks Reference
 
+CycleTime provides specialized Gradle tasks optimized for different development scenarios. These tasks streamline common workflows by combining multiple operations and providing continuous feedback during development.
+
 | Task | Description | Best For |
 |------|-------------|----------|
 | `devRun --continuous` | Hot-reload server | Primary development |
@@ -98,7 +100,7 @@ For development with multiple terminals:
 | `devWorkflow` | Show all commands | Getting started |
 | `devSetup` | Setup environment | First-time setup |
 | `devStatus` | Environment health | Troubleshooting |
-| `quickTest` | Fast unit tests | Quick verification |
+| `quickTest` | Unit tests only (< 30s execution) | Rapid feedback during development |
 
 ## IDE Integration
 

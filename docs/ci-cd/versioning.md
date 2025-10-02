@@ -133,8 +133,8 @@ The CI/CD pipeline extracts the version:
 ### Container Tagging
 
 Versions are used for container tags:
-- Version tag: `ghcr.io/spiralhouse/jcvd:0.3.0`
-- With metadata: `ghcr.io/spiralhouse/jcvd:0.3.0+sha.abc123`
+- Version tag: `ghcr.io/spiralhouse/cycletime:0.3.0`
+- With metadata: `ghcr.io/spiralhouse/cycletime:0.3.0+sha.abc123`
 
 ## Examples
 

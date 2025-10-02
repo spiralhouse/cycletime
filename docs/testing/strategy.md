@@ -10,6 +10,8 @@ CycleTime follows a three-tier testing approach to ensure comprehensive coverage
 
 ## Test Categories
 
+The testing strategy uses a three-tier approach where each category serves a distinct purpose in the development workflow. Unit tests provide rapid feedback during development, integration tests validate component interactions, and system tests ensure end-to-end functionality under production-like conditions.
+
 ### Unit Tests
 - **Purpose**: Test business logic in isolation
 - **Speed**: < 10ms per test
@@ -113,15 +115,31 @@ When testing API routes, verify proper error handling and HTTP status codes:
 #### Testing Error Scenarios
 
 ```kotlin
-"GET /api/issues/{id} should return 404 for non-existent issue" {
+"GET /api/v1/issues/{id} should return 404 for non-existent issue" {
     testApplication {
         configureTestApplication()
-        val response = client.get("/api/issues/non-existent-id")
+        val response = client.get("/api/v1/issues/non-existent-id")
         response.status shouldBe HttpStatusCode.NotFound
 
         val error = response.body<ErrorResponse>()
         error.error shouldBe "Issue not found"
         error.timestamp shouldNotBe null
+    }
+}
+
+"GET /api/v1/projects/{projectId}/issues should list issues for project" {
+    testApplication {
+        configureTestApplication()
+        // Create project and issues
+        val projectId = createTestProject()
+        val issueId = createTestIssue(projectId)
+
+        val response = client.get("/api/v1/projects/$projectId/issues")
+        response.status shouldBe HttpStatusCode.OK
+
+        val issues = response.body<List<IssueDto>>()
+        issues.size shouldBe 1
+        issues[0].id shouldBe issueId
     }
 }
 ```

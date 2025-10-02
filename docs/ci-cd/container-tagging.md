@@ -8,7 +8,7 @@ CycleTime uses Git.SemVersioning for automatic version management and a multi-ta
 
 ## Registry
 
-- **Registry**: `ghcr.io/spiralhouse/jcvd`
+- **Registry**: `ghcr.io/spiralhouse/cycletime`
 - **Visibility**: Public
 - **Deployment**: Automatic on push to main branch
 
@@ -16,7 +16,9 @@ CycleTime uses Git.SemVersioning for automatic version management and a multi-ta
 
 ### Main Branch Builds (Every Push)
 
-All pushes to the main branch trigger container builds with the following tags:
+The container tagging strategy serves multiple deployment workflows by creating different tag types for each build. Every push to the main branch triggers container builds that generate semantic version tags for releases, mutable tags for environment tracking, and immutable tags for audit trails.
+
+All pushes to the main branch create the following tags:
 
 1. **Version Tag**: `X.Y.Z` (semantic version from Git.SemVersioning)
 2. **Dev Tag**: `dev` (mutable tag for development environment)
@@ -31,7 +33,7 @@ All pushes to the main branch trigger container builds with the following tags:
 - **Usage**: External CD system watches for changes
 
 ```bash
-docker pull ghcr.io/spiralhouse/jcvd:dev
+docker pull ghcr.io/spiralhouse/cycletime:dev
 ```
 
 #### Version Tags
@@ -40,7 +42,7 @@ docker pull ghcr.io/spiralhouse/jcvd:dev
 - **Usage**: Staging deployments, rollbacks
 
 ```bash
-docker pull ghcr.io/spiralhouse/jcvd:0.3.0
+docker pull ghcr.io/spiralhouse/cycletime:0.3.0
 ```
 
 #### Latest Tag
@@ -49,7 +51,7 @@ docker pull ghcr.io/spiralhouse/jcvd:0.3.0
 - **Usage**: Production deployments
 
 ```bash
-docker pull ghcr.io/spiralhouse/jcvd:latest
+docker pull ghcr.io/spiralhouse/cycletime:latest
 ```
 
 #### SHA Tags
@@ -58,7 +60,7 @@ docker pull ghcr.io/spiralhouse/jcvd:latest
 - **Usage**: Debugging, audit trail
 
 ```bash
-docker pull ghcr.io/spiralhouse/jcvd:sha-abc123d
+docker pull ghcr.io/spiralhouse/cycletime:sha-abc123d
 ```
 
 ## Environment Mapping
@@ -98,7 +100,7 @@ LABEL org.opencontainers.image.title="CycleTime Server"
 LABEL org.opencontainers.image.description="CycleTime project orchestration framework MCP server"
 LABEL org.opencontainers.image.version="$VERSION"
 LABEL org.opencontainers.image.vendor="Spiral House"
-LABEL org.opencontainers.image.source="https://github.com/spiralhouse/jcvd"
+LABEL org.opencontainers.image.source="https://github.com/spiralhouse/cycletime"
 ```
 
 ## Container Labels
@@ -118,28 +120,28 @@ LABEL deployment.build-timestamp="$GITHUB_RUN_ID"
 ### Development Environment
 ```bash
 # Latest development build
-docker pull ghcr.io/spiralhouse/jcvd:dev
+docker pull ghcr.io/spiralhouse/cycletime:dev
 ```
 
 ### Staging Environment
 ```bash
 # Specific version for staging
-docker pull ghcr.io/spiralhouse/jcvd:0.3.0
+docker pull ghcr.io/spiralhouse/cycletime:0.3.0
 ```
 
 ### Production Environment
 ```bash
 # Latest stable release
-docker pull ghcr.io/spiralhouse/jcvd:latest
+docker pull ghcr.io/spiralhouse/cycletime:latest
 
 # Or pin to specific version
-docker pull ghcr.io/spiralhouse/jcvd:0.2.0
+docker pull ghcr.io/spiralhouse/cycletime:0.2.0
 ```
 
 ### Debugging/Rollback
 ```bash
 # Track specific commit
-docker pull ghcr.io/spiralhouse/jcvd:sha-abc123d
+docker pull ghcr.io/spiralhouse/cycletime:sha-abc123d
 ```
 
 ## Caching Strategy
@@ -167,7 +169,7 @@ See [Versioning](versioning.md) for detailed information.
 
 ## Security Notes
 
-- All containers run as non-root user (`jcvd:jcvd`)
+- All containers run as non-root user (`cycletime:cycletime`)
 - Minimal Alpine Linux base image
 - Only production JRE included (no build tools)
 - Health checks included for container orchestration

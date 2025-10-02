@@ -147,6 +147,8 @@ graph LR
 
 ## Job Architecture Details
 
+The CI/CD pipeline uses a compile-first architecture where compilation happens once and artifacts are reused across all subsequent jobs. This approach reduces redundant compilation and enables efficient parallel test execution with shared build outputs.
+
 ### 1. Compile Job (Foundation)
 
 **Purpose**: Compile all source and test code once for reuse across all other jobs
@@ -169,6 +171,8 @@ kotlin-compile-v2-ubuntu-jdk21-{hash}
 - `run_tests`: Boolean flag indicating whether testing should proceed
 
 ### 2. Test Suite Jobs (Parallel Execution)
+
+The test suite runs in parallel using compiled artifacts from the compile job. Each test category is optimized for its specific purpose with tuned parallelization, memory allocation, and caching strategies.
 
 #### Unit Tests
 **Purpose**: Fast validation of business logic and domain models
@@ -938,27 +942,27 @@ ls -la build/libs/cycletime-server.jar
 ./gradlew test -Dorg.gradle.jvmargs="-Xmx2g -XX:+UseG1GC"
 ```
 
-## Performance Metrics
+## Performance Optimization
 
-### Expected Performance Improvements
+### Optimization Strategy
 
-Based on our comprehensive optimization strategy:
+The CI/CD pipeline implements multiple optimization layers targeting different change patterns and workflow phases. Actual performance improvements vary based on change type, cache hit rates, and build complexity.
 
-#### Overall CI Time Reduction
-- **Documentation-only changes**: 70% base reduction + caching benefits
-- **Code changes with cache hits**: 40-60% reduction
-- **Combined optimization**: Up to 85% total time savings
+#### Change-Based Optimization
+- **Documentation-only changes**: Skip compilation and testing through smart change detection
+- **Code changes with cache hits**: Reuse cached dependencies and incremental compilation
+- **Full builds**: Utilize parallel execution and artifact sharing across jobs
 
-#### Specific Improvements
-- **Dependency downloads**: 80-90% reduction with cache hits
-- **Gradle compilation**: 40-60% improvement with incremental + cache
-- **Docker builds**: 60-80% faster with BuildKit layer caching
-- **Test execution**: 30-50% faster with result caching + parallelization
+#### Resource Optimization
+- **Dependency caching**: Reduce network downloads through GitHub Actions cache
+- **Incremental compilation**: Kotlin compiler cache for unchanged source files
+- **Docker layer caching**: BuildKit caching for container builds
+- **Test result caching**: Skip unchanged tests with result reuse
 
-#### Resource Efficiency
-- **Concurrency control**: Prevents waste from outdated runs
-- **Fail-fast strategy**: Early termination saves 50-70% resources on failures
-- **Conditional execution**: Skips unnecessary jobs based on change type
+#### Efficiency Mechanisms
+- **Concurrency control**: Prevent redundant runs from outdated commits
+- **Fail-fast strategy**: Early termination on critical failures
+- **Conditional execution**: Dynamic job execution based on change analysis
 
 ### Monitoring and Metrics
 

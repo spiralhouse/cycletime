@@ -83,7 +83,7 @@ dev → staging → production
 ## Container Registry Structure
 
 ```
-ghcr.io/spiralhouse/jcvd:
+ghcr.io/spiralhouse/cycletime:
 ├── 1.2.3              # Immutable version tag
 ├── 1.2.4-snapshot     # Development snapshot
 ├── latest             # Latest release version
@@ -98,29 +98,29 @@ ghcr.io/spiralhouse/jcvd:
 ### Development
 ```bash
 # Always latest main branch build
-docker pull ghcr.io/spiralhouse/jcvd:dev
-docker run -p 8080:8080 ghcr.io/spiralhouse/jcvd:dev
+docker pull ghcr.io/spiralhouse/cycletime:dev
+docker run -p 8080:8080 ghcr.io/spiralhouse/cycletime:dev
 ```
 
 ### Staging  
 ```bash
 # Latest version promoted to staging
-docker pull ghcr.io/spiralhouse/jcvd:staging
-docker run -p 8080:8080 ghcr.io/spiralhouse/jcvd:staging
+docker pull ghcr.io/spiralhouse/cycletime:staging
+docker run -p 8080:8080 ghcr.io/spiralhouse/cycletime:staging
 ```
 
 ### Production
 ```bash
 # Latest version promoted to production (approved)
-docker pull ghcr.io/spiralhouse/jcvd:production  
-docker run -p 8080:8080 ghcr.io/spiralhouse/jcvd:production
+docker pull ghcr.io/spiralhouse/cycletime:production  
+docker run -p 8080:8080 ghcr.io/spiralhouse/cycletime:production
 ```
 
 ### Specific Version
 ```bash
 # Deploy exact version (for rollbacks)
-docker pull ghcr.io/spiralhouse/jcvd:1.2.3
-docker run -p 8080:8080 ghcr.io/spiralhouse/jcvd:1.2.3
+docker pull ghcr.io/spiralhouse/cycletime:1.2.3
+docker run -p 8080:8080 ghcr.io/spiralhouse/cycletime:1.2.3
 ```
 
 ## Rollback Strategy
@@ -128,7 +128,7 @@ docker run -p 8080:8080 ghcr.io/spiralhouse/jcvd:1.2.3
 ### Quick Rollback (Environment Tag)
 ```bash
 # Find previous production version
-gh api repos/spiralhouse/jcvd/packages/container/jcvd/versions
+gh api repos/spiralhouse/cycletime/packages/container/cycletime/versions
 
 # Promote previous version to production
 gh workflow run promote.yml \
@@ -140,8 +140,8 @@ gh workflow run promote.yml \
 ### Immediate Rollback (Version Tag)
 ```bash
 # Deploy previous version directly
-docker pull ghcr.io/spiralhouse/jcvd:1.2.2
-docker run -p 8080:8080 ghcr.io/spiralhouse/jcvd:1.2.2
+docker pull ghcr.io/spiralhouse/cycletime:1.2.2
+docker run -p 8080:8080 ghcr.io/spiralhouse/cycletime:1.2.2
 
 # Then promote to fix environment tag
 gh workflow run promote.yml \
@@ -155,16 +155,16 @@ gh workflow run promote.yml \
 ### Check Current Environment Versions
 ```bash
 # Check what's currently deployed
-docker inspect ghcr.io/spiralhouse/jcvd:dev --format='{{.Config.Labels}}'
-docker inspect ghcr.io/spiralhouse/jcvd:staging --format='{{.Config.Labels}}'  
-docker inspect ghcr.io/spiralhouse/jcvd:production --format='{{.Config.Labels}}'
+docker inspect ghcr.io/spiralhouse/cycletime:dev --format='{{.Config.Labels}}'
+docker inspect ghcr.io/spiralhouse/cycletime:staging --format='{{.Config.Labels}}'  
+docker inspect ghcr.io/spiralhouse/cycletime:production --format='{{.Config.Labels}}'
 ```
 
 ### Verify Promotion Success
 ```bash
 # Check if tags point to the same image
-docker images ghcr.io/spiralhouse/jcvd:1.2.3
-docker images ghcr.io/spiralhouse/jcvd:production
+docker images ghcr.io/spiralhouse/cycletime:1.2.3
+docker images ghcr.io/spiralhouse/cycletime:production
 # Image IDs should match after successful promotion
 ```
 

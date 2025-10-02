@@ -1,10 +1,10 @@
 # Comprehensive Caching Strategy (SPI-475)
 
-This document outlines the multi-layer caching strategy implemented for the CycleTime project to achieve 40-60% overall CI time reduction and consistent sub-10 minute builds.
+This document outlines the multi-layer caching strategy implemented for the CycleTime project, targeting overall CI time reduction and consistent build performance.
 
 ## Overview
 
-The comprehensive caching strategy consists of six distinct cache layers, each optimized for specific use cases and invalidation patterns:
+The caching strategy includes six distinct cache layers, each optimized for specific use cases and invalidation patterns:
 
 1. **Gradle Dependencies Cache** - Downloaded JAR files and metadata
 2. **Build Output Cache** - Compiled classes and build artifacts
@@ -12,6 +12,42 @@ The comprehensive caching strategy consists of six distinct cache layers, each o
 4. **Kotlin Compilation Cache** - Incremental compilation artifacts
 5. **Docker Layer Cache** - Container image layers via BuildKit
 6. **Quality & Security Cache** - Static analysis and vulnerability scan results
+
+## Multi-Layer Cache Architecture
+
+```mermaid
+graph TB
+    subgraph "CI Build Process"
+        Build[Build Job] --> GradleCache[Gradle Dependencies Cache]
+        Build --> KotlinCache[Kotlin Compilation Cache]
+        Build --> BuildCache[Build Output Cache]
+
+        Test[Test Jobs] --> TestCache[Test Result Cache]
+
+        Docker[Docker Build] --> DockerCache[Docker Layer Cache]
+
+        Quality[Quality Checks] --> QualityCache[Quality & Security Cache]
+    end
+
+    subgraph "GitHub Actions Cache Backend"
+        GradleCache --> Storage[(Cache Storage)]
+        KotlinCache --> Storage
+        BuildCache --> Storage
+        TestCache --> Storage
+        DockerCache --> Storage
+        QualityCache --> Storage
+    end
+
+    subgraph "Cache Invalidation"
+        Storage --> DepsChange{Dependencies<br/>Changed?}
+        Storage --> SrcChange{Source<br/>Changed?}
+        Storage --> ConfigChange{Config<br/>Changed?}
+
+        DepsChange -->|Yes| InvalidateGradle[Invalidate Gradle]
+        SrcChange -->|Yes| InvalidateBuild[Invalidate Build/Test]
+        ConfigChange -->|Yes| InvalidateQuality[Invalidate Quality]
+    end
+```
 
 ## Cache Layer Details
 
@@ -33,7 +69,7 @@ restore-keys: gradle-deps-v1-${{ runner.os }}-
 
 **Invalidation**: Changes to dependency declarations, Gradle version, or build scripts
 
-**Expected Performance**: 80-90% time reduction on dependency resolution
+**Target Performance**: Reduced dependency resolution time through cache reuse
 
 ### 2. Build Output Cache
 
@@ -53,7 +89,7 @@ restore-keys: build-outputs-v2-${{ runner.os }}-
 
 **Invalidation**: Source code changes or build configuration changes
 
-**Expected Performance**: 40-60% improvement in compilation time
+**Target Performance**: Improved compilation time for unchanged sources
 
 ### 3. Test Result Cache
 
@@ -68,12 +104,12 @@ key: unit-test-results-v1-${{ runner.os }}-${{ hashFiles('src/test/**/*.kt', 'sr
 
 **Integration Tests**:
 ```yaml
-key: integration-test-results-v1-${{ runner.os }}-${{ hashFiles('src/test/kotlin/io/spiralhouse/jcvd/integration/**/*.kt', 'src/main/**/*.kt') }}
+key: integration-test-results-v1-${{ runner.os }}-${{ hashFiles('src/test/kotlin/io/spiralhouse/cycletime/integration/**/*.kt', 'src/main/**/*.kt') }}
 ```
 
 **System Tests**:
 ```yaml
-key: system-test-results-v1-${{ runner.os }}-${{ hashFiles('src/test/kotlin/io/spiralhouse/jcvd/performance/**/*.kt', 'src/main/**/*.kt', 'src/main/resources/application.conf') }}
+key: system-test-results-v1-${{ runner.os }}-${{ hashFiles('src/test/kotlin/io/spiralhouse/cycletime/performance/**/*.kt', 'src/main/**/*.kt', 'src/main/resources/application.conf') }}
 ```
 
 **Cached Paths**:
@@ -82,7 +118,7 @@ key: system-test-results-v1-${{ runner.os }}-${{ hashFiles('src/test/kotlin/io/s
 
 **Invalidation**: Changes to test code or production code being tested
 
-**Expected Performance**: 30-50% faster test execution through result reuse
+**Target Performance**: Faster test execution through result reuse when tests and sources are unchanged
 
 ### 4. Kotlin Compilation Cache
 
@@ -108,7 +144,7 @@ kotlin.incremental=true
 
 **Invalidation**: Source file modifications or compiler configuration changes
 
-**Expected Performance**: Significant improvement for partial recompilation scenarios
+**Target Performance**: Incremental compilation support across CI builds
 
 ### 5. Docker Layer Cache
 
@@ -135,7 +171,7 @@ kotlin.incremental=true
 
 **Invalidation**: Changes to Dockerfile, dependencies, or source code
 
-**Expected Performance**: 60-80% faster Docker builds with layer cache hits
+**Target Performance**: Faster Docker builds through layer cache reuse
 
 ### 6. Quality & Security Cache
 
@@ -158,7 +194,7 @@ key: security-scan-v2-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml'
 
 **Invalidation**: Code changes or configuration updates
 
-**Expected Performance**: Faster quality checks through cached analysis results
+**Target Performance**: Faster quality checks through cached analysis results
 
 ## Cache Management
 
@@ -224,17 +260,17 @@ echo "  Kotlin cache: $([ -d build/kotlin ] && echo 'HIT' || echo 'MISS')"
 echo "  Test cache: $([ -d build/test-results/unitTest ] && echo 'HIT' || echo 'MISS')"
 ```
 
-## Expected Performance Improvements
+## Performance Optimization Targets
 
-### CI Pipeline Timing (Conservative Estimates)
+The caching strategy aims to reduce CI pipeline execution time through intelligent cache reuse across different change scenarios. Actual performance improvements will vary based on change patterns, cache hit rates, and build complexity.
 
-| Scenario | Before Caching | After Caching | Improvement |
-|----------|----------------|---------------|-------------|
-| Cold build (no cache) | 15 minutes | 12 minutes | 20% |
-| Warm build (cache hit) | 15 minutes | 6 minutes | 60% |
-| Documentation changes | 15 minutes | 2 minutes | 87% |
-| Dependency-only changes | 15 minutes | 8 minutes | 47% |
-| Source code changes | 15 minutes | 7 minutes | 53% |
+### Target Cache Hit Scenarios
+
+- **Cold build**: No cache available, full build required
+- **Warm build**: Significant cache hits on dependencies and build outputs
+- **Documentation-only changes**: Maximum cache reuse (code unchanged)
+- **Dependency updates**: Gradle cache invalidation, rebuild required
+- **Source code changes**: Incremental compilation and selective test execution
 
 ### Cache Hit Rate Targets
 
@@ -343,4 +379,4 @@ time ./gradlew clean build --build-cache
 docker system df
 ```
 
-This comprehensive caching strategy provides the foundation for achieving the target 40-60% CI time reduction while maintaining build reliability and correctness.
+This caching strategy provides the foundation for CI performance optimization while maintaining build reliability and correctness.

@@ -1,12 +1,12 @@
 [versions]
-kotlin = "2.0.21"
-ktor = "3.2.3"
+kotlin = "2.2.20"
+ktor = "3.3.0"
 exposed = "0.58.0"
 kotlinx-coroutines = "1.9.0"
 kotlinx-serialization = "1.7.3"
-logback = "1.5.12"
+logback = "1.5.18"
 h2 = "2.2.224"
-hikaricp = "6.2.1"
+hikaricp = "7.0.2"
 graalvm = "0.11.0"
 mcp-sdk = "0.1.0"
 kotest = "6.0.3"
@@ -67,7 +67,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-ktor = { id = "io.ktor.plugin", version = "3.2.3" }
+ktor = { id = "io.ktor.plugin", version = "3.3.0" }
 graalvm = { id = "org.graalvm.buildtools.native", version.ref = "graalvm" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

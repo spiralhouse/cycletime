@@ -1,0 +1,1623 @@
+openapi: 3.0.3
+info:
+  title: CycleTime CE API
+  version: 0.2.0-SNAPSHOT
+  description: |
+    CycleTime CE (Community Edition) REST API - A project orchestration framework that extends Claude Code
+    to manage complete software development lifecycles with minimal configuration overhead.
+
+    ## API Version 1.0 Features
+
+    This API follows REST Level 2 principles with proper resource-based URLs, HTTP verbs, and status codes:
+
+    - **Nested Resources**: Issues are now nested under projects (`/api/v1/projects/{projectId}/issues`)
+    - **Query Parameters**: Workflow templates via `?template=` parameter instead of separate endpoints
+    - **Resource-Based URLs**: Transitions at `/transitions/validation` not action-based verbs
+    - **Consistent Versioning**: All endpoints under `/api/v1/` namespace
+    - **API Discovery**: Root endpoint at `/api/v1` provides resource navigation
+
+    ## Core Features
+
+    - **Hierarchical Issue Management**: Support for Epic → Story → Subtask hierarchy
+    - **Workflow Automation**: Flexible status transitions with validation
+    - **Project Organization**: Complete project lifecycle management
+    - **Real-time Health Monitoring**: Comprehensive system health checks
+
+    ## Business Rules
+
+    - **Issue Hierarchy**: Epics cannot have estimates or parent issues
+    - **Subtask Requirements**: Subtasks must have a parent story
+    - **Estimate Rules**: Only leaf issues can have estimates (Fibonacci: 1, 2, 3, 5, 8, 13)
+    - **Status Workflow**: Validates transitions follow defined workflow rules
+    - **Project Context**: Issues must belong to existing projects
+
+    ## Migration from Legacy API
+
+    All legacy endpoints (`/api/projects`, `/api/issues`, `/api/workflows`) have been removed in favor of
+    the v1 API. Legacy endpoints return 404 with migration guidance pointing to this documentation.
+
+  contact:
+    name: CycleTime Development Team
+    url: https://github.com/spiralhouse/cycletime
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: http://production-server:8080
+    description: Production server
+
+tags:
+  - name: API Discovery
+    description: API version and resource discovery
+  - name: System
+    description: System health and monitoring
+  - name: Projects
+    description: Project management operations
+  - name: Issues
+    description: Issue management with project context
+  - name: Workflows
+    description: Workflow configuration and transitions
+
+paths:
+  # ================================================================================
+  # API Discovery
+  # ================================================================================
+  /api/v1:
+    get:
+      tags:
+        - API Discovery
+      summary: Get API information and resource endpoints
+      description: |
+        Returns API version information and available resource endpoints for discovery.
+        This endpoint helps clients navigate the API structure programmatically.
+      operationId: getApiRoot
+      responses:
+        '200':
+          description: API information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiRootResponse'
+              example:
+                version: "v1"
+                service: "CycleTime"
+                description: "CycleTime CE API"
+                endpoints:
+                  projects: "/api/v1/projects"
+                  workflows: "/api/v1/workflows"
+                  issues: "/api/v1/projects/{projectId}/issues"
+                documentation: "/swagger"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ================================================================================
+  # System Health
+  # ================================================================================
+  /health:
+    get:
+      tags:
+        - System
+      summary: System health check
+      description: |
+        Returns comprehensive health status of the application and its dependencies.
+
+        ## Health Check Components
+        - Database connectivity and query performance
+        - Service initialization status
+        - MCP integration status (if enabled)
+        - Performance metrics (project count, session count)
+
+        ## Response Codes
+        - `200 OK` - All systems operational
+        - `503 Service Unavailable` - Critical system failure
+      operationId: getHealth
+      responses:
+        '200':
+          description: System is healthy and operational
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "healthy"
+                service: "CycleTime CE"
+                version: "0.2.0-SNAPSHOT"
+                dependencies:
+                  database: "connected"
+                  projectService: "initialized"
+                  issueService: "initialized"
+                  sessionService: "initialized"
+                  mcp: "running"
+                metrics:
+                  projects: "5"
+                  sessions: "2"
+                  mcpConnections: "1"
+                  mcpUptime: "3600000"
+                timestamp: "1702934400000"
+        '503':
+          description: System is unhealthy or experiencing issues
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthErrorResponse'
+              example:
+                status: "unhealthy"
+                service: "CycleTime CE"
+                version: "0.2.0-SNAPSHOT"
+                error: "Database unavailable"
+                timestamp: "1702934400000"
+
+  # ================================================================================
+  # Project Management
+  # ================================================================================
+  /api/v1/projects:
+    post:
+      tags:
+        - Projects
+      summary: Create a new project
+      description: |
+        Creates a new project with the specified name and optional description.
+
+        ## Validation Rules
+        - Name is required and must not exceed 255 characters
+        - Description is optional but must not exceed 2000 characters if provided
+        - Project names should be unique (not enforced at API level)
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+            example:
+              name: "Q1 Product Launch"
+              description: "New product features for Q1 2024 release"
+      responses:
+        '201':
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          description: Validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Projects
+      summary: List all projects
+      description: |
+        Returns a list of all projects in the system with their issue counts.
+
+        ## Response Details
+        - Projects are returned in creation order
+        - Includes count of issues per project
+        - No pagination currently (future enhancement)
+      operationId: listProjects
+      responses:
+        '200':
+          description: List of projects retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectListResponse'
+              example:
+                projects:
+                  - id: "550e8400-e29b-41d4-a716-446655440001"
+                    name: "Q1 Product Launch"
+                    description: "New product features for Q1 2024 release"
+                    status: "ACTIVE"
+                    issueIds: ["550e8400-e29b-41d4-a716-446655440002"]
+                    createdAt: "2024-01-01T00:00:00Z"
+                    updatedAt: "2024-01-01T00:00:00Z"
+                totalCount: 1
+
+  /api/v1/projects/{id}:
+    get:
+      tags:
+        - Projects
+      summary: Get a project by ID
+      description: |
+        Retrieves detailed information about a specific project.
+
+        ## Path Parameters
+        The project ID must be a valid UUID format.
+      operationId: getProject
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the project to retrieve
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '200':
+          description: Project found and returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          description: Invalid UUID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Projects
+      summary: Update an existing project
+      description: |
+        Updates project details with partial update support.
+
+        ## Update Rules
+        - At least one field must be provided for update
+        - Only provided fields will be updated (null fields are ignored)
+        - Same validation rules apply as creation
+      operationId: updateProject
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the project to update
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectRequest'
+            example:
+              name: "Q1 Product Launch - Updated"
+              description: "Updated description with new requirements"
+      responses:
+        '200':
+          description: Project updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          description: Validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Projects
+      summary: Delete a project
+      description: |
+        Permanently deletes a project from the system.
+
+        ## Cascade Behavior
+        - Projects with existing issues cannot be deleted (must delete issues first)
+        - All project metadata is permanently removed
+        - Returns 204 even if project doesn't exist (idempotency)
+      operationId: deleteProject
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the project to delete
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Project deleted successfully (or did not exist)
+        '400':
+          description: Cannot delete project with existing issues
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ================================================================================
+  # Issue Management (Nested under Projects)
+  # ================================================================================
+  /api/v1/projects/{projectId}/issues:
+    post:
+      tags:
+        - Issues
+      summary: Create a new issue in a project
+      description: |
+        Creates a new issue under the specified project context.
+
+        ## Key Behavior
+        - ProjectId is extracted from URL path, not request body
+        - If projectId is provided in body, it must match the URL projectId
+        - Project must exist or returns 404
+
+        ## Business Rules
+        - Epics cannot have estimates or parent issues
+        - Subtasks must have a parent issue of type STORY
+        - Estimates must follow Fibonacci sequence (1, 2, 3, 5, 8, 13)
+        - Initial status is always TODO
+      operationId: createIssue
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: The UUID of the project
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIssueRequest'
+            example:
+              title: "Implement user authentication"
+              description: "Add OAuth2 authentication support"
+              type: "STORY"
+              parentId: null
+              estimate: 5
+              assignee: "john.doe@example.com"
+      responses:
+        '201':
+          description: Issue created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueResponse'
+        '400':
+          description: Validation failure or business rule violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Issues
+      summary: List all issues in a project
+      description: |
+        Returns all issues belonging to the specified project.
+
+        ## Response Details
+        - Returns all issues regardless of status
+        - Includes issues at all hierarchy levels (epics, stories, subtasks)
+        - Returns empty list if project has no issues
+        - Project must exist or returns 404
+      operationId: listProjectIssues
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: The UUID of the project
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of issues retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueListResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects/{projectId}/issues/{issueId}:
+    get:
+      tags:
+        - Issues
+      summary: Get a specific issue in a project
+      description: |
+        Retrieves detailed information about an issue within project context.
+
+        ## Context Validation
+        - Returns 404 if issue exists but doesn't belong to the specified project
+        - Ensures issues are accessed through their correct project context
+      operationId: getIssue
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: The UUID of the project
+          schema:
+            type: string
+            format: uuid
+        - name: issueId
+          in: path
+          required: true
+          description: The UUID of the issue
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Issue found and returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueResponse'
+        '404':
+          description: Issue not found or doesn't belong to project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Issues
+      summary: Update an issue in a project
+      description: |
+        Updates issue details with partial update support.
+
+        ## Update Rules
+        - Issue type cannot be changed after creation
+        - Parent relationships cannot be modified
+        - Status changes should use the dedicated status transition endpoint
+        - Issue must belong to the specified project
+      operationId: updateIssue
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: The UUID of the project
+          schema:
+            type: string
+            format: uuid
+        - name: issueId
+          in: path
+          required: true
+          description: The UUID of the issue
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIssueRequest'
+            example:
+              title: "Updated title"
+              description: "Updated description"
+              estimate: 8
+              assignee: "jane.doe@example.com"
+      responses:
+        '200':
+          description: Issue updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueResponse'
+        '400':
+          description: Validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Issue not found or doesn't belong to project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Issues
+      summary: Delete an issue from a project
+      description: |
+        Permanently deletes an issue from the project.
+
+        ## Cascade Behavior
+        - Cannot delete issues with child issues (must delete children first)
+        - Dependencies and blockers are automatically cleaned up
+        - Project issue count is automatically updated
+      operationId: deleteIssue
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: The UUID of the project
+          schema:
+            type: string
+            format: uuid
+        - name: issueId
+          in: path
+          required: true
+          description: The UUID of the issue
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Issue deleted successfully
+        '400':
+          description: Cannot delete issue with child issues
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Issue not found or doesn't belong to project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects/{projectId}/issues/{issueId}/status:
+    post:
+      tags:
+        - Issues
+      summary: Transition issue status
+      description: |
+        Updates the status of an issue following workflow rules.
+
+        ## Workflow Rules
+        - TODO → IN_PROGRESS, CANCELED
+        - IN_PROGRESS → IN_REVIEW, TODO, CANCELED
+        - IN_REVIEW → DONE, IN_PROGRESS, CANCELED
+        - DONE → No transitions allowed
+        - CANCELED → TODO (reopen)
+      operationId: transitionIssueStatus
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: The UUID of the project
+          schema:
+            type: string
+            format: uuid
+        - name: issueId
+          in: path
+          required: true
+          description: The UUID of the issue
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusTransitionRequest'
+            example:
+              status: "IN_PROGRESS"
+      responses:
+        '200':
+          description: Status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueResponse'
+        '400':
+          description: Invalid status or transition not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Issue not found or doesn't belong to project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/projects/{projectId}/issues/{issueId}/hierarchy:
+    get:
+      tags:
+        - Issues
+      summary: Get issue hierarchy
+      description: |
+        Retrieves the extended hierarchy information for an issue.
+
+        ## Response Structure
+        Returns a flat structure with:
+        - The issue itself
+        - Parent issue (if exists)
+        - Direct children
+        - Total descendant count
+
+        ## Use Cases
+        - Getting issue context with parent and children
+        - Calculating total work breakdown
+        - Efficient hierarchy information for UI components
+      operationId: getIssueHierarchy
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: The UUID of the project
+          schema:
+            type: string
+            format: uuid
+        - name: issueId
+          in: path
+          required: true
+          description: The UUID of the issue
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Extended hierarchy retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueHierarchyExtendedResponse'
+        '404':
+          description: Issue not found or doesn't belong to project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ================================================================================
+  # Workflow Management
+  # ================================================================================
+  /api/v1/workflows:
+    post:
+      tags:
+        - Workflows
+      summary: Create a new workflow
+      description: |
+        Creates a new workflow with optional template support.
+
+        ## Template Support
+        Use the `template` query parameter to create predefined workflows:
+        - `?template=default` - Basic workflow (TODO → IN_PROGRESS → DONE)
+        - `?template=bug` - Bug tracking workflow with verification states
+        - `?template=feature` - Feature development workflow with review states
+
+        If no template is provided, a custom workflow can be created via request body.
+
+        ## Validation Rules
+        - Name must be non-empty and <= 255 characters
+        - Initial status must be included in allowed statuses
+        - Allowed statuses must contain at least one valid status
+      operationId: createWorkflow
+      parameters:
+        - name: template
+          in: query
+          required: false
+          description: Predefined workflow template to use
+          schema:
+            type: string
+            enum: [default, bug, feature]
+      requestBody:
+        required: false
+        description: Required if no template parameter is provided
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkflowRequest'
+            example:
+              name: "Custom Sprint Workflow"
+              description: "Workflow for sprint development"
+              initialStatus: "TODO"
+              allowedStatuses: ["TODO", "IN_PROGRESS", "IN_REVIEW", "DONE", "CANCELED"]
+      responses:
+        '201':
+          description: Workflow created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '400':
+          description: Validation failure or invalid template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Workflows
+      summary: List all workflows
+      description: |
+        Returns a list of all workflows in the system.
+
+        ## Response Details
+        - Workflows are returned in creation order
+        - Includes all workflow configuration details
+        - No pagination currently (future enhancement)
+      operationId: listWorkflows
+      responses:
+        '200':
+          description: List of workflows retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowListResponse'
+
+  /api/v1/workflows/{id}:
+    get:
+      tags:
+        - Workflows
+      summary: Get a workflow by ID
+      description: |
+        Retrieves detailed information about a specific workflow.
+      operationId: getWorkflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the workflow to retrieve
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Workflow found and returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '400':
+          description: Invalid UUID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Workflows
+      summary: Update an existing workflow
+      description: |
+        Updates workflow metadata.
+
+        ## Update Rules
+        - Only name and description can be updated
+        - Status configuration is immutable after creation
+        - Partial updates are supported (null fields are not updated)
+      operationId: updateWorkflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the workflow to update
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkflowRequest'
+            example:
+              name: "Updated Workflow Name"
+              description: "Updated workflow description"
+      responses:
+        '200':
+          description: Workflow updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '400':
+          description: Validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Workflows
+      summary: Delete a workflow
+      description: |
+        Permanently deletes a workflow from the system.
+
+        ## Notes
+        - All workflow data is permanently removed
+        - Returns 404 if workflow doesn't exist
+      operationId: deleteWorkflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the workflow to delete
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Workflow deleted successfully
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/workflows/{id}/transitions:
+    get:
+      tags:
+        - Workflows
+      summary: Get all valid transitions for a workflow
+      description: |
+        Returns all possible status transitions for each status in the workflow.
+
+        ## Response Structure
+        Returns a list of transitions showing which statuses can transition to which other statuses.
+        This is useful for building UI controls and validating transitions.
+      operationId: getWorkflowTransitions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the workflow
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: All transitions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllTransitionsResponse'
+              example:
+                workflowId: "550e8400-e29b-41d4-a716-446655440000"
+                transitions:
+                  - fromStatus: "TODO"
+                    validTransitions: ["IN_PROGRESS", "CANCELED"]
+                  - fromStatus: "IN_PROGRESS"
+                    validTransitions: ["IN_REVIEW", "TODO", "CANCELED"]
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/workflows/{id}/transitions/validation:
+    post:
+      tags:
+        - Workflows
+      summary: Validate a status transition
+      description: |
+        Validates whether a specific status transition is allowed in this workflow.
+
+        ## Resource-Based URL
+        This endpoint uses a resource-based URL pattern (`/transitions/validation`)
+        rather than an action verb, following REST Level 2 principles.
+      operationId: validateTransition
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the workflow
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateTransitionRequest'
+            example:
+              fromStatus: "TODO"
+              toStatus: "IN_PROGRESS"
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+              example:
+                isValid: true
+                reason: null
+        '400':
+          description: Invalid status values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    # ================================================================================
+    # API Discovery Schemas
+    # ================================================================================
+    ApiRootResponse:
+      type: object
+      required:
+        - version
+        - service
+        - description
+        - endpoints
+        - documentation
+      properties:
+        version:
+          type: string
+          description: API version
+          example: "v1"
+        service:
+          type: string
+          description: Service name
+          example: "CycleTime"
+        description:
+          type: string
+          description: Service description
+          example: "CycleTime CE API"
+        endpoints:
+          $ref: '#/components/schemas/ApiEndpoints'
+        documentation:
+          type: string
+          description: URL to API documentation
+          example: "/swagger"
+
+    ApiEndpoints:
+      type: object
+      required:
+        - projects
+        - workflows
+        - issues
+      properties:
+        projects:
+          type: string
+          description: Projects endpoint
+          example: "/api/v1/projects"
+        workflows:
+          type: string
+          description: Workflows endpoint
+          example: "/api/v1/workflows"
+        issues:
+          type: string
+          description: Issues endpoint (nested under projects)
+          example: "/api/v1/projects/{projectId}/issues"
+
+    # ================================================================================
+    # System Health Schemas
+    # ================================================================================
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+        - version
+        - dependencies
+        - metrics
+        - timestamp
+      properties:
+        status:
+          type: string
+          description: Overall health status
+          example: "healthy"
+        service:
+          type: string
+          description: Service name
+          example: "CycleTime CE"
+        version:
+          type: string
+          description: Service version
+          example: "0.2.0-SNAPSHOT"
+        dependencies:
+          type: object
+          description: Status of service dependencies
+          additionalProperties:
+            type: string
+          example:
+            database: "connected"
+            projectService: "initialized"
+            issueService: "initialized"
+            sessionService: "initialized"
+            mcp: "running"
+        metrics:
+          type: object
+          description: Performance and usage metrics
+          additionalProperties:
+            type: string
+          example:
+            projects: "5"
+            sessions: "2"
+            mcpConnections: "1"
+            mcpUptime: "3600000"
+        timestamp:
+          type: string
+          description: Timestamp of health check (milliseconds since epoch)
+          example: "1702934400000"
+
+    HealthErrorResponse:
+      type: object
+      required:
+        - status
+        - service
+        - version
+        - error
+        - timestamp
+      properties:
+        status:
+          type: string
+          description: Health status (unhealthy)
+          example: "unhealthy"
+        service:
+          type: string
+          description: Service name
+          example: "CycleTime CE"
+        version:
+          type: string
+          description: Service version
+          example: "0.2.0-SNAPSHOT"
+        error:
+          type: string
+          description: Error description
+          example: "Database unavailable"
+        timestamp:
+          type: string
+          description: Timestamp of health check
+          example: "1702934400000"
+
+    # ================================================================================
+    # Project Schemas
+    # ================================================================================
+    CreateProjectRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Project name (max 255 characters)
+          minLength: 1
+          maxLength: 255
+          example: "Q1 Product Launch"
+        description:
+          type: string
+          description: Optional project description (max 2000 characters)
+          maxLength: 2000
+          nullable: true
+          example: "New product features for Q1 2024 release"
+
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Updated project name (max 255 characters)
+          minLength: 1
+          maxLength: 255
+          nullable: true
+          example: "Q1 Product Launch - Updated"
+        description:
+          type: string
+          description: Updated project description (max 2000 characters)
+          maxLength: 2000
+          nullable: true
+          example: "Updated description with new requirements"
+
+    ProjectResponse:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - issueIds
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique project identifier
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        name:
+          type: string
+          description: Project name
+          example: "Q1 Product Launch"
+        description:
+          type: string
+          description: Project description
+          nullable: true
+          example: "New product features for Q1 2024 release"
+        status:
+          type: string
+          description: Project status
+          enum: [ACTIVE, ARCHIVED]
+          example: "ACTIVE"
+        issueIds:
+          type: array
+          description: List of issue IDs belonging to this project
+          items:
+            type: string
+            format: uuid
+          example: ["550e8400-e29b-41d4-a716-446655440002"]
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-01T00:00:00Z"
+
+    ProjectListResponse:
+      type: object
+      required:
+        - projects
+        - totalCount
+      properties:
+        projects:
+          type: array
+          description: List of projects
+          items:
+            $ref: '#/components/schemas/ProjectResponse'
+        totalCount:
+          type: integer
+          description: Total number of projects
+          example: 5
+
+    # ================================================================================
+    # Issue Schemas
+    # ================================================================================
+    CreateIssueRequest:
+      type: object
+      required:
+        - title
+        - type
+      properties:
+        projectId:
+          type: string
+          format: uuid
+          description: Project ID (deprecated - use URL path instead)
+          nullable: true
+          deprecated: true
+        title:
+          type: string
+          description: Issue title (max 255 characters)
+          minLength: 1
+          maxLength: 255
+          example: "Implement user authentication"
+        description:
+          type: string
+          description: Issue description (max 5000 characters)
+          maxLength: 5000
+          nullable: true
+          example: "Add OAuth2 authentication support"
+        type:
+          type: string
+          description: Issue type
+          enum: [EPIC, STORY, SUBTASK]
+          example: "STORY"
+        parentId:
+          type: string
+          format: uuid
+          description: Parent issue ID (required for SUBTASK)
+          nullable: true
+        estimate:
+          type: integer
+          description: Story points estimate (Fibonacci sequence)
+          enum: [1, 2, 3, 5, 8, 13]
+          nullable: true
+          example: 5
+        assignee:
+          type: string
+          description: Assignee email or identifier
+          nullable: true
+          example: "john.doe@example.com"
+
+    UpdateIssueRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Updated issue title (max 255 characters)
+          minLength: 1
+          maxLength: 255
+          nullable: true
+          example: "Updated title"
+        description:
+          type: string
+          description: Updated issue description (max 5000 characters)
+          maxLength: 5000
+          nullable: true
+          example: "Updated description"
+        estimate:
+          type: integer
+          description: Updated story points estimate
+          enum: [1, 2, 3, 5, 8, 13]
+          nullable: true
+          example: 8
+        assignee:
+          type: string
+          description: Updated assignee
+          nullable: true
+          example: "jane.doe@example.com"
+
+    StatusTransitionRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: New issue status
+          enum: [TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED]
+          example: "IN_PROGRESS"
+
+    IssueResponse:
+      type: object
+      required:
+        - id
+        - title
+        - type
+        - status
+        - dependencies
+        - blockedBy
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique issue identifier
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        projectId:
+          type: string
+          format: uuid
+          description: Project this issue belongs to
+          nullable: true
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        title:
+          type: string
+          description: Issue title
+          example: "Implement user authentication"
+        description:
+          type: string
+          description: Issue description
+          nullable: true
+          example: "Add OAuth2 authentication support"
+        type:
+          type: string
+          description: Issue type
+          enum: [EPIC, STORY, SUBTASK]
+          example: "STORY"
+        status:
+          type: string
+          description: Current issue status
+          enum: [TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED]
+          example: "TODO"
+        parentId:
+          type: string
+          format: uuid
+          description: Parent issue ID
+          nullable: true
+        estimate:
+          type: integer
+          description: Story points estimate
+          nullable: true
+          example: 5
+        assignee:
+          type: string
+          description: Assignee identifier
+          nullable: true
+          example: "john.doe@example.com"
+        dependencies:
+          type: array
+          description: Issue IDs this issue depends on
+          items:
+            type: string
+            format: uuid
+          example: []
+        blockedBy:
+          type: array
+          description: Issue IDs blocking this issue
+          items:
+            type: string
+            format: uuid
+          example: []
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-01T00:00:00Z"
+
+    IssueListResponse:
+      type: object
+      required:
+        - issues
+        - totalCount
+      properties:
+        issues:
+          type: array
+          description: List of issues
+          items:
+            $ref: '#/components/schemas/IssueResponse'
+        totalCount:
+          type: integer
+          description: Total number of issues
+          example: 10
+
+    IssueHierarchyExtendedResponse:
+      type: object
+      required:
+        - issue
+        - children
+        - totalDescendants
+      properties:
+        issue:
+          $ref: '#/components/schemas/IssueResponse'
+        parent:
+          $ref: '#/components/schemas/IssueResponse'
+          nullable: true
+          description: Parent issue if exists
+        children:
+          type: array
+          description: Direct child issues
+          items:
+            $ref: '#/components/schemas/IssueResponse'
+        totalDescendants:
+          type: integer
+          description: Total number of all descendants (recursive)
+          example: 5
+
+    # ================================================================================
+    # Workflow Schemas
+    # ================================================================================
+    CreateWorkflowRequest:
+      type: object
+      required:
+        - name
+        - initialStatus
+        - allowedStatuses
+      properties:
+        name:
+          type: string
+          description: Workflow name (max 255 characters)
+          minLength: 1
+          maxLength: 255
+          example: "Custom Sprint Workflow"
+        description:
+          type: string
+          description: Workflow description (max 2000 characters)
+          maxLength: 2000
+          nullable: true
+          example: "Workflow for sprint development"
+        initialStatus:
+          type: string
+          description: Initial status for new issues
+          enum: [TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED]
+          example: "TODO"
+        allowedStatuses:
+          type: array
+          description: List of allowed statuses in this workflow
+          minItems: 1
+          items:
+            type: string
+            enum: [TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED]
+          example: ["TODO", "IN_PROGRESS", "IN_REVIEW", "DONE", "CANCELED"]
+
+    UpdateWorkflowRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Updated workflow name (max 255 characters)
+          minLength: 1
+          maxLength: 255
+          nullable: true
+          example: "Updated Workflow Name"
+        description:
+          type: string
+          description: Updated workflow description (max 2000 characters)
+          maxLength: 2000
+          nullable: true
+          example: "Updated workflow description"
+
+    ValidateTransitionRequest:
+      type: object
+      required:
+        - fromStatus
+        - toStatus
+      properties:
+        fromStatus:
+          type: string
+          description: Current status
+          enum: [TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED]
+          example: "TODO"
+        toStatus:
+          type: string
+          description: Target status
+          enum: [TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELED]
+          example: "IN_PROGRESS"
+
+    WorkflowResponse:
+      type: object
+      required:
+        - id
+        - name
+        - initialStatus
+        - allowedStatuses
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique workflow identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Workflow name
+          example: "Custom Sprint Workflow"
+        description:
+          type: string
+          description: Workflow description
+          nullable: true
+          example: "Workflow for sprint development"
+        initialStatus:
+          type: string
+          description: Initial status for new issues
+          example: "TODO"
+        allowedStatuses:
+          type: array
+          description: List of allowed statuses
+          items:
+            type: string
+          example: ["TODO", "IN_PROGRESS", "IN_REVIEW", "DONE", "CANCELED"]
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-01T00:00:00Z"
+
+    WorkflowListResponse:
+      type: object
+      required:
+        - workflows
+        - totalCount
+      properties:
+        workflows:
+          type: array
+          description: List of workflows
+          items:
+            $ref: '#/components/schemas/WorkflowResponse'
+        totalCount:
+          type: integer
+          description: Total number of workflows
+          example: 3
+
+    TransitionsResponse:
+      type: object
+      required:
+        - fromStatus
+        - validTransitions
+      properties:
+        fromStatus:
+          type: string
+          description: The source status
+          example: "TODO"
+        validTransitions:
+          type: array
+          description: List of valid target statuses
+          items:
+            type: string
+          example: ["IN_PROGRESS", "CANCELED"]
+
+    AllTransitionsResponse:
+      type: object
+      required:
+        - workflowId
+        - transitions
+      properties:
+        workflowId:
+          type: string
+          format: uuid
+          description: The workflow identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        transitions:
+          type: array
+          description: List of transitions for each status
+          items:
+            $ref: '#/components/schemas/TransitionsResponse'
+
+    ValidationResponse:
+      type: object
+      required:
+        - isValid
+      properties:
+        isValid:
+          type: boolean
+          description: Whether the transition is valid
+          example: true
+        reason:
+          type: string
+          description: Explanation if transition is invalid
+          nullable: true
+          example: null
+
+    # ================================================================================
+    # Error Schemas
+    # ================================================================================
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Validation failed"
+        details:
+          type: string
+          description: Detailed error information
+          nullable: true
+          example: "Project name must not be empty"
+        timestamp:
+          type: string
+          description: Error timestamp
+          nullable: true
+          example: "2024-01-01T00:00:00Z"

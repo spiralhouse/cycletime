@@ -32,6 +32,8 @@ import io.ktor.server.engine.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.di.*
 import io.ktor.server.plugins.di.DI
+import io.ktor.server.plugins.openapi.*
+import io.ktor.server.plugins.swagger.*
 import io.ktor.server.websocket.*
 import kotlin.time.Duration.Companion.seconds
 import io.ktor.server.response.*
@@ -196,6 +198,9 @@ fun Application.module() {
     // Install Ktor features
     configureKtorFeatures(logger, performanceMetrics)
 
+    // Configure OpenAPI documentation generation and Swagger UI
+    configureOpenAPI(logger, performanceMetrics)
+
     // Setup MCP integration (passing the database from provider)
     val mcpIntegrationService = configureMCPIntegration(databaseProvider.getDatabase(), logger, performanceMetrics, databaseProvider)
 
@@ -206,6 +211,24 @@ fun Application.module() {
     // Configure routing
     routing {
         configureHealthEndpoint(mcpIntegrationService, logger)
+
+        // OpenAPI specification and Swagger UI (Ktor 3.3.0 compatible)
+        // Only serve documentation if enabled and specification file exists
+        val openApiEnabled = System.getenv("OPENAPI_ENABLED")?.toBoolean() ?:
+                            (System.getProperty("openapi.enabled")?.toBoolean() ?: true)
+
+        if (openApiEnabled) {
+            try {
+                openAPI(path = "openapi", swaggerFile = "openapi/documentation.yaml")
+                swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml")
+                logger.info("OpenAPI documentation available at /swagger")
+            } catch (e: Exception) {
+                logger.warn("Failed to configure OpenAPI documentation: ${e.message}")
+                logger.info("OpenAPI documentation will not be available")
+            }
+        } else {
+            logger.info("OpenAPI documentation disabled by configuration")
+        }
 
         // MCP Server endpoints
         configureMCP()
@@ -316,6 +339,46 @@ private fun Application.configureKtorFeatures(
     val featuresTime = featuresEndTime - featuresStartTime
     performanceMetrics["features"] = featuresTime
     logger.info("Ktor features installation completed in ${featuresTime}ms")
+}
+
+/**
+ * Configure OpenAPI and Swagger UI setup for Ktor 3.3.0.
+ * We serve static OpenAPI specifications and Swagger UI.
+ *
+ * @param logger Application logger
+ * @param performanceMetrics Map to store timing metrics
+ */
+private fun Application.configureOpenAPI(
+    logger: org.slf4j.Logger,
+    performanceMetrics: MutableMap<String, Long>
+) {
+    val openApiStartTime = System.currentTimeMillis()
+
+    // Check if OpenAPI is enabled
+    val openApiEnabled = System.getenv("OPENAPI_ENABLED")?.toBoolean() ?:
+                        (System.getProperty("openapi.enabled")?.toBoolean() ?: true)
+
+    if (openApiEnabled) {
+        // Validate OpenAPI specification file exists
+        val specificationFile = "openapi/documentation.yaml"
+        val resourceStream = this::class.java.classLoader.getResourceAsStream(specificationFile)
+
+        if (resourceStream != null) {
+            resourceStream.close()
+            logger.info("Configuring OpenAPI documentation serving for Ktor 3.3.0")
+            logger.info("OpenAPI specification validated: $specificationFile")
+        } else {
+            logger.warn("OpenAPI specification file not found: $specificationFile")
+            logger.warn("OpenAPI documentation will not be available")
+        }
+    } else {
+        logger.info("OpenAPI documentation disabled by configuration")
+    }
+
+    val openApiEndTime = System.currentTimeMillis()
+    val openApiTime = openApiEndTime - openApiStartTime
+    performanceMetrics["openapi"] = openApiTime
+    logger.info("OpenAPI configuration completed in ${openApiTime}ms")
 }
 
 /**
@@ -600,6 +663,7 @@ private fun logPerformanceSummary(
     logger.info("Startup performance breakdown:")
     performanceMetrics["database"]?.let { logger.info("  - Database initialization: ${it}ms") }
     performanceMetrics["features"]?.let { logger.info("  - Ktor features installation: ${it}ms") }
+    performanceMetrics["openapi"]?.let { logger.info("  - OpenAPI and Swagger UI configuration: ${it}ms") }
     performanceMetrics["di"]?.let { logger.info("  - Dependency injection setup: ${it}ms") }
     
     if (mcpIntegrationService != null) {
