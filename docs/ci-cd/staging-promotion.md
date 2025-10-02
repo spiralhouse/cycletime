@@ -6,6 +6,38 @@ This document explains how to promote releases from dev to staging environment u
 
 The staging promotion process validates deployment readiness and safely promotes container versions between environments. It includes validation checks, deployment history tracking, and automated external deployment triggering.
 
+## Promotion State Flow
+
+```mermaid
+stateDiagram-v2
+    [*] --> DevDeployed: Version built & deployed to dev
+
+    DevDeployed --> ValidationChecks: Trigger staging promotion
+
+    ValidationChecks --> VersionExists: Check registry
+    VersionExists --> CIChecks: Verify version exists
+    CIChecks --> TimeCheck: Verify CI passed
+    TimeCheck --> Approved: Verify min dev time
+
+    ValidationChecks --> Failed: Validation fails
+    Failed --> [*]: Manual intervention required
+
+    Approved --> TagStaging: Re-tag container as 'staging'
+    TagStaging --> DeployStaging: External CD deploys
+    DeployStaging --> HealthChecks: Staging health validation
+    HealthChecks --> StagingActive: Health checks pass
+    HealthChecks --> Rollback: Health checks fail
+
+    Rollback --> PreviousVersion: Restore previous staging
+    PreviousVersion --> [*]: Incident logged
+
+    StagingActive --> ProductionReady: Manual approval
+    StagingActive --> [*]: Continue staging validation
+
+    ProductionReady --> ProductionPromotion: Trigger production deploy
+    ProductionPromotion --> [*]: Production workflow
+```
+
 ## When to Promote to Staging
 
 ### Promotion Criteria
@@ -27,7 +59,7 @@ The staging promotion process validates deployment readiness and safely promotes
 **Latest Development Version:**
 ```bash
 # Use the most recent version from main branch
-# Check recent versions: https://github.com/spiralhouse/cycletime/pkgs/container/jcvd
+# Check recent versions: https://github.com/spiralhouse/cycletime/pkgs/container/cycletime
 ```
 
 **Specific Feature Version:**
@@ -190,7 +222,7 @@ docker pull ghcr.io/spiralhouse/cycletime:1.2.3-staging-20240823-143052
    - Each successful run shows version, promoter, and timestamp
 
 2. **Container Registry History**:
-   - Visit [GHCR Package Page](https://github.com/spiralhouse/cycletime/pkgs/container/jcvd)
+   - Visit [GHCR Package Page](https://github.com/spiralhouse/cycletime/pkgs/container/cycletime)
    - View all tags and their creation timestamps
 
 3. **Workflow Summaries**:

@@ -123,15 +123,15 @@ fun Application.someFunction() {
 ### Enhanced DI Configuration with Application Services
 
 ```kotlin
-// src/main/kotlin/io/spiralhouse/jcvd/Application.kt
+// src/main/kotlin/io/spiralhouse/cycletime/Application.kt
 
 import io.ktor.server.application.*
 import io.ktor.server.plugins.di.*
-import io.spiralhouse.jcvd.domain.repositories.*
-import io.spiralhouse.jcvd.domain.services.*
-import io.spiralhouse.jcvd.application.services.*
-import io.spiralhouse.jcvd.infrastructure.persistence.*
-import io.spiralhouse.jcvd.infrastructure.database.*
+import io.spiralhouse.cycletime.domain.repositories.*
+import io.spiralhouse.cycletime.domain.services.*
+import io.spiralhouse.cycletime.application.services.*
+import io.spiralhouse.cycletime.infrastructure.persistence.*
+import io.spiralhouse.cycletime.infrastructure.database.*
 import org.jetbrains.exposed.sql.Database
 
 /**
@@ -340,15 +340,15 @@ val mcpModule = DIModule("mcp") {
 ### Application Setup with DI
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/Application.kt
+// src/main/kotlin/io/spiralhouse/cycletime/Application.kt
 
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.di.*
-import io.spiralhouse.jcvd.infrastructure.di.configureDependencies
-import io.spiralhouse.jcvd.infrastructure.routing.configureRouting
-import io.spiralhouse.jcvd.infrastructure.mcp.configureMCP
+import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
+import io.spiralhouse.cycletime.infrastructure.routing.configureRouting
+import io.spiralhouse.cycletime.infrastructure.mcp.configureMCP
 
 fun main() {
     embeddedServer(Netty, port = 8080) {
@@ -378,15 +378,15 @@ val Application.dependencies: DI
 ### Integration Test Configuration
 
 ```kotlin
-// src/test/kotlin/io/spiralhouse/jcvd/integration/DependencyInjectionIntegrationTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/integration/DependencyInjectionIntegrationTest.kt
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.server.testing.*
 import io.ktor.server.plugins.di.*
-import io.spiralhouse.jcvd.domain.services.*
-import io.spiralhouse.jcvd.domain.repositories.*
+import io.spiralhouse.cycletime.domain.services.*
+import io.spiralhouse.cycletime.domain.repositories.*
 
 class DependencyInjectionIntegrationTest : StringSpec({
     
@@ -447,14 +447,14 @@ fun ApplicationTestBuilder.configureDIForTest(
 ### Unit Testing with DI
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/application/ProjectApplicationServiceTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/application/ProjectApplicationServiceTest.kt
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.ktor.server.testing.*
-import io.spiralhouse.jcvd.testing.mocks.*
-import io.spiralhouse.jcvd.testing.configureDIForTest
+import io.spiralhouse.cycletime.testing.mocks.*
+import io.spiralhouse.cycletime.testing.configureDIForTest
 import java.time.Instant
 
 class ProjectApplicationServiceTest : DescribeSpec({
@@ -527,7 +527,7 @@ class ProjectApplicationServiceTest : DescribeSpec({
 ### Integration Testing with DI
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/integration/ProjectIntegrationTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/integration/ProjectIntegrationTest.kt
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -535,7 +535,7 @@ import io.ktor.server.testing.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.spiralhouse.jcvd.testing.configureDIForTest
+import io.spiralhouse.cycletime.testing.configureDIForTest
 import kotlinx.serialization.json.Json
 
 class ProjectIntegrationTest : DescribeSpec({
@@ -583,7 +583,7 @@ class ProjectIntegrationTest : DescribeSpec({
 ### Time Provider Pattern
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/domain/services/TimeProvider.kt
+// src/main/kotlin/io/spiralhouse/cycletime/domain/services/TimeProvider.kt
 
 interface TimeProvider {
     fun now(): Instant
@@ -620,7 +620,7 @@ class MockTimeProvider : TimeProvider {
 ### Database Provider Pattern
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/database/DatabaseProvider.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/database/DatabaseProvider.kt
 
 interface DatabaseProvider {
     fun getConnection(): Database
@@ -665,7 +665,7 @@ class TestDatabaseProvider(
 ### Constructor Injection for Services
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/application/services/ProjectApplicationService.kt
+// src/main/kotlin/io/spiralhouse/cycletime/application/services/ProjectApplicationService.kt
 
 class ProjectApplicationService(
     private val projectRepository: ProjectRepository,
@@ -713,7 +713,7 @@ class ProjectApplicationService(
 ### Unit of Work Pattern with DI
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/domain/services/UnitOfWork.kt
+// src/main/kotlin/io/spiralhouse/cycletime/domain/services/UnitOfWork.kt
 
 interface UnitOfWork {
     suspend fun <T> execute(block: suspend () -> T): T
@@ -770,7 +770,7 @@ class TestUnitOfWork : UnitOfWork {
 ### Resource Registration with DI
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/MCPConfiguration.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/MCPConfiguration.kt
 
 fun Application.configureMCP() {
     val mcpServer = dependencies.get<MCPServer>()
@@ -807,7 +807,7 @@ class ProjectResource(
         val projects = projectService.listProjects()
         return projects.map { project ->
             ResourceDescriptor(
-                uri = "jcvd://project/${project.id}",
+                uri = "cycletime://project/${project.id}",
                 name = project.name,
                 description = project.description
             )
@@ -819,7 +819,7 @@ class ProjectResource(
 ### Tool Implementation with DI
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/tools/CreateProjectTool.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/tools/CreateProjectTool.kt
 
 class CreateProjectTool(
     private val projectService: ProjectApplicationService
@@ -895,7 +895,7 @@ class IssueApplicationServiceTest : DescribeSpec({
 ### 2. Use Test Fixtures with DI
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/testing/fixtures/ProjectFixtures.kt
+// src/test/kotlin/io/spiralhouse/cycletime/testing/fixtures/ProjectFixtures.kt
 
 object ProjectFixtures {
     
@@ -934,7 +934,7 @@ class ProjectTest : DescribeSpec({
 ### 3. Test DI Configuration
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/infrastructure/di/DIConfigurationTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/infrastructure/di/DIConfigurationTest.kt
 
 class DIConfigurationTest : DescribeSpec({
     
@@ -980,7 +980,7 @@ class DIConfigurationTest : DescribeSpec({
 ### Environment-Based DI
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/di/EnvironmentModules.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/di/EnvironmentModules.kt
 
 fun Application.configureDependenciesForEnvironment() {
     val env = environment.config.property("ktor.environment").getString()
@@ -1046,7 +1046,7 @@ ktor {
 }
 
 database {
-    url = "jdbc:h2:file:./data/jcvd;AUTO_SERVER=TRUE"
+    url = "jdbc:h2:file:./data/cycletime;AUTO_SERVER=TRUE"
     url = ${?DATABASE_URL}
     
     pool {

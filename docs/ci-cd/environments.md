@@ -21,6 +21,9 @@ graph LR
 - **Rollback**: Automatic on health check failure
 
 ### Characteristics
+
+The development environment prioritizes rapid feedback and debugging capabilities over production-like conditions. This allows developers to quickly validate changes without approval gates or production constraints.
+
 - Latest code from main branch
 - Debug logging enabled
 - Development database
@@ -45,6 +48,9 @@ graph LR
 See [Staging Promotion](staging-promotion.md) for details.
 
 ### Characteristics
+
+Staging mirrors production configuration to validate changes in a production-like environment before customer exposure. It uses a subset of production data to enable realistic testing while protecting sensitive information.
+
 - Production-like configuration
 - Production data subset
 - Performance monitoring enabled
@@ -71,6 +77,9 @@ See [Staging Promotion](staging-promotion.md) for details.
 See [Production Approvals](production-approvals.md) for details.
 
 ### Characteristics
+
+Production requires the highest level of reliability and observability. The environment includes redundancy, comprehensive monitoring, and rollback capabilities to ensure zero-downtime deployments and rapid incident response.
+
 - High availability configuration
 - Full monitoring and alerting
 - Backup and disaster recovery
@@ -112,13 +121,13 @@ Each environment has health monitoring:
 
 ```bash
 # Development
-curl https://dev.jcvd.example.com/health
+curl https://dev.cycletime.example.com/health
 
 # Staging
-curl https://staging.jcvd.example.com/health
+curl https://staging.cycletime.example.com/health
 
 # Production
-curl https://api.jcvd.example.com/health
+curl https://api.cycletime.example.com/health
 ```
 
 ## Rollback Procedures
@@ -141,10 +150,10 @@ docker push ghcr.io/spiralhouse/cycletime:staging
 ### Production
 ```bash
 # Blue-green switch back
-kubectl set image deployment/jcvd jcvd=ghcr.io/spiralhouse/cycletime:1.2.2
+kubectl set image deployment/cycletime cycletime=ghcr.io/spiralhouse/cycletime:1.2.2
 
 # Or use rollback command
-kubectl rollout undo deployment/jcvd
+kubectl rollout undo deployment/cycletime
 ```
 
 ## Monitoring

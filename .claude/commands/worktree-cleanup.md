@@ -72,7 +72,7 @@ Before suggesting cleanup:
 git branch --merged main | grep "feature/developer/task-123"
 
 # Check for uncommitted changes
-cd .jcvd/worktrees/developer-task-123
+cd .cycletime/worktrees/developer-task-123
 git status --porcelain
 
 # Check recent activity

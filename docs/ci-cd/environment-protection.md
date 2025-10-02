@@ -128,7 +128,7 @@ docker run -p 8080:8080 ghcr.io/spiralhouse/cycletime:1.2.3
 ### Quick Rollback (Environment Tag)
 ```bash
 # Find previous production version
-gh api repos/spiralhouse/jcvd/packages/container/jcvd/versions
+gh api repos/spiralhouse/cycletime/packages/container/cycletime/versions
 
 # Promote previous version to production
 gh workflow run promote.yml \

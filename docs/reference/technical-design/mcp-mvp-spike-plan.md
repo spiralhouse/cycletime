@@ -21,7 +21,7 @@
 5. **78 MCP files** - Most are empty shells or interfaces
 
 ### Critical Issues Found
-1. **Namespace Mismatch**: Design doc uses `com.spiralhouse.jcvd`, code uses `io.spiralhouse.cycletime`
+1. **Namespace Mismatch**: Design doc uses `io.spiralhouse.cycletime`, code uses `io.spiralhouse.cycletime`
 2. **Missing Implementation**: JSON-RPC methods not wired to actual handlers
 3. **No Resources/Tools**: Empty provider registries
 4. **Health Check**: Missing "mcp" key in health response

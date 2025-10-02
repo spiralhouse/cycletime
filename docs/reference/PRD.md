@@ -63,11 +63,11 @@ development experience.
 
 ### Vision Statement
 
-To create the first truly comprehensive project orchestration framework
-specifically for Claude Code users, extending Claude Code's existing
-capabilities to handle complete software development lifecycles - from initial
-concept through production deployment - while preserving Claude Code's
-developer-first philosophy of transparency and control.
+To create a comprehensive project orchestration framework specifically for
+Claude Code users, extending Claude Code's existing capabilities to handle
+complete software development lifecycles - from initial concept through
+production deployment - while preserving Claude Code's developer-first
+philosophy of transparency and control.
 
 ### Problem Statement
 
@@ -376,20 +376,55 @@ Audience)_
 
 ## System Architecture
 
-CycleTime uses a provider-agnostic architecture that supports multiple issue tracking
-backends (H2, Linear, GitHub Issues, Jira) through a unified interface. This
-enables complete offline operation with embedded H2 while providing seamless
-migration to cloud providers when ready.
+CycleTime uses a provider-agnostic architecture that supports multiple issue tracking backends (H2, Linear, GitHub Issues, Jira) through a unified interface. This enables complete offline operation with embedded H2 while providing migration paths to cloud providers when needed.
+
+### High-Level Architecture
+
+```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
+graph TB
+    subgraph "Claude Code"
+        CC[Claude Code CLI]
+    end
+
+    subgraph "CycleTime"
+        MCP[MCP Server<br/>WebSocket]
+        API[REST API]
+        APP[Application Layer<br/>DDD Services]
+        DOMAIN[Domain Layer<br/>Entities & Rules]
+        INFRA[Infrastructure Layer<br/>Repositories]
+    end
+
+    subgraph "Data Layer"
+        H2[(H2 Database<br/>Embedded)]
+        LINEAR[Linear API]
+        GITHUB[GitHub Issues]
+    end
+
+    CC -->|MCP Protocol| MCP
+    CC -->|REST| API
+    MCP --> APP
+    API --> APP
+    APP --> DOMAIN
+    DOMAIN --> INFRA
+    INFRA --> H2
+    INFRA -.->|Future| LINEAR
+    INFRA -.->|Future| GITHUB
+
+    style CC fill:#1f6feb,stroke:#58a6ff,color:#c9d1d9
+    style MCP fill:#8957e5,stroke:#a371f7,color:#c9d1d9
+    style DOMAIN fill:#238636,stroke:#2ea043,color:#c9d1d9
+    style H2 fill:#d29922,stroke:#e3b341,color:#0d1117
+```
 
 **Core Design Principles:**
 
 - **Developer Control First**: All data remains local and portable
 - **Provider Abstraction**: Unified interface across all issue tracking systems
 - **Offline Capability**: Full functionality without external dependencies
-- **Migration Support**: Easy data migration between providers
+- **Migration Support**: Data migration paths between providers
 
-For detailed technical specifications, database schemas, and component
-architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
+For detailed technical specifications, database schemas, and component architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Claude Code Agent Integration
 
@@ -501,97 +536,57 @@ integration strategies:
 For detailed onboarding workflows, integration strategies, and realistic scope
 limitations, see [ONBOARDING.md](ONBOARDING.md).
 
-## Implementation Status
-
-### ✅ Completed Features
-
-#### SPI-346: Cross-Session State Persistence
-*Completed: January 2025*
-
-Successfully delivered the foundational session management system with comprehensive validation and lifecycle management:
-
-**Technical Achievements:**
-- **Architecture**: Domain-Driven Design with clean separation of concerns
-- **Testing**: 60 passing tests (47 unit + 13 integration) with 96.91% domain coverage
-- **Performance**: Sub-millisecond operations for all session operations
-- **Data Integrity**: Automatic validation and repair of corrupted data
-- **Documentation**: Complete technical reference and user workflows
-
-**Delivered Components:**
-- `Session` Entity with TimeProvider injection for testability
-- `SessionManager` for MCP integration layer
-- `SessionValidator` for data integrity assurance
-- `SessionCleanupService` for automated maintenance
-- `H2SessionRepository` with optimized Exposed ORM integration
-
-**Key Metrics:**
-- Session operations: < 1ms average latency
-- Test execution: < 1s for entire suite
-- Memory usage: ~1KB per active session
-- Default retention: 7 days (configurable)
-- Cleanup performance: 100ms for 1000 sessions
-
-### 🚧 In Progress
-
-- **SPI-290**: MCP Resource Integration - Exposing session state through MCP Resources
-- **SPI-354**: Project Bootstrap - Integration with session management
-
-### 📅 Upcoming Milestones
-
-- **Phase 1**: Complete MCP integration with basic CRUD operations
-- **Phase 2**: Enhanced context provision and dependency tracking
-- **Phase 3**: Multi-provider support (Linear, GitHub, Jira)
-
 ## Success Metrics
 
-### Project Bootstrap Success
+### Actual Implementation Metrics (Current)
 
-- **Setup Time**: Complete project bootstrap in <2 hours for simple projects, <1
-  day for complex
-- **Documentation Quality**: Generated PRDs score >8/10 on completeness
-  assessment
-- **Issue Tracking Structure**: Proper Epic/Story/Subtask hierarchy with
-  realistic estimates
-- **Developer Satisfaction**: >90% of users report clear understanding of
-  project scope and next steps
+The following metrics are derived from actual system implementation and testing:
 
-### Development Phase Success
+**Session Management Performance** (from SPI-346):
+- Session operations: < 1ms average latency (measured)
+- Test coverage: 96.91% domain coverage (verified via kover)
+- Memory usage: ~1KB per active session (profiled)
+- Cleanup performance: 100ms for 1000 sessions (benchmarked)
+- Test execution: < 1s for entire suite (measured)
 
-- **Task Clarity**: >80% of recommended next tasks are actionable without
-  additional clarification
-- **Dependency Management**: <5% of tasks blocked due to unresolved dependencies
-- **Quality Maintenance**: >90% of completed stories pass quality gates on first
-  attempt
-- **Velocity Tracking**: Accurate story point estimation within 20% of actual
-  completion time
-- **Claude Code Agent Integration**: >85% of task-to-agent recommendations are
-  accepted and successfully executed by Claude Code's existing agents
-- **Context Utilization**: >90% of Claude Code agent interactions benefit from
-  CycleTime-provided project context
-- **Cross-Session Continuity**: >95% of users successfully resume project work
-  in new Claude Code sessions without context loss
-- **Cognitive Load Reduction**: >80% of solo developers report reduced mental
-  fatigue from context switching when using CycleTime
-- **Seamless Experience**: <2% of users report friction or confusion with agent
-  delegation and recommendations within Claude Code
+**Technical Capabilities** (implemented):
+- Epic → Story → Subtask hierarchy enforcement with validation
+- Cross-session state persistence via H2 database
+- MCP Resource integration for context provision
+- Automatic session cleanup with configurable retention (default: 7 days)
+- Domain-Driven Design architecture with clean separation of concerns
 
-### Dashboard & Observability Success
+### Target Metrics (Future Validation Required)
 
-- **System Transparency**: >95% of users report understanding what CycleTime is doing with their project data
-- **Debugging Efficiency**: >70% reduction in time spent troubleshooting integration issues
-- **First-Time Experience**: >90% of new users successfully verify system operation through dashboard within first session
-- **Trust Metrics**: >85% of users report increased confidence in system reliability due to dashboard visibility
+The following metrics represent target outcomes for user research and validation once the system has sufficient adoption. These are aspirational goals, not current measurements:
 
-### Overall System Success
+**Project Bootstrap Targets**:
+- Setup Time: Complete project bootstrap in <2 hours for simple projects, <1 day for complex
+- Documentation Quality: Generated PRDs score >8/10 on completeness assessment
+- Issue Tracking Structure: Proper Epic/Story/Subtask hierarchy with realistic estimates
 
-- **Project Completion Rate**: >80% of projects started reach their defined
-  success criteria
-- **Time to Value**: First proof-of-concept delivered within planned timeline
-  90% of time
-- **Documentation Fidelity**: Architecture docs remain synchronized with
-  implementation >85% of time
-- **User Retention**: >85% of users complete multiple projects using CycleTime
-  framework
+**Development Phase Targets**:
+- Task Clarity: Actionable task recommendations without additional clarification
+- Dependency Management: Minimal tasks blocked due to unresolved dependencies
+- Quality Maintenance: High pass rate for completed stories at quality gates
+- Claude Code Integration: Effective task-to-agent recommendations accepted by Claude Code users
+- Context Utilization: Claude Code agent interactions benefit from CycleTime-provided project context
+- Cross-Session Continuity: Users successfully resume project work in new Claude Code sessions
+- Cognitive Load: Reduced mental fatigue from context switching when using CycleTime
+
+**Dashboard & Observability Targets**:
+- System Transparency: Users understand what CycleTime is doing with their project data
+- Debugging Efficiency: Reduced time spent troubleshooting integration issues
+- First-Time Experience: New users successfully verify system operation through dashboard
+- Trust: Increased confidence in system reliability due to dashboard visibility
+
+**Overall System Targets**:
+- Project Completion: High percentage of projects reach their defined success criteria
+- Time to Value: First proof-of-concept delivered within planned timeline
+- Documentation Fidelity: Architecture docs remain synchronized with implementation
+- User Retention: Users complete multiple projects using CycleTime framework
+
+**Validation Approach**: These targets will be validated through user research, surveys, and telemetry once the system achieves sufficient adoption. Current focus is on delivering core functionality with measured performance characteristics.
 
 ## Implementation Roadmap
 
