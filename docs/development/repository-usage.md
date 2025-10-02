@@ -1,16 +1,58 @@
 # Repository Usage Patterns
 
-This document describes the repository pattern implementation and usage patterns for the CycleTime domain model.
+The repository pattern provides a clean abstraction between domain models and data persistence, enabling testability and future database migration flexibility. This document describes CycleTime's repository implementation using Kotlin, Exposed ORM, and H2 database.
 
-## Overview
+## Architecture Overview
 
-The repository pattern provides a clean abstraction between the domain model and data mapping layers. Each aggregate root (Project, Issue, Workflow) has its own repository interface defined in the domain layer with concrete implementations in the infrastructure layer.
+CycleTime implements the repository pattern with a clear separation between domain interfaces and infrastructure implementations. Each aggregate root (Project, Issue, Workflow) has its own repository interface defined in the domain layer, with concrete implementations in the infrastructure layer using Exposed ORM.
+
+```mermaid
+classDiagram
+    class IssueRepository {
+        <<interface>>
+        +findById(id: IssueId) Issue?
+        +findByProjectId(projectId: ProjectId) List~Issue~
+        +save(issue: Issue)
+        +saveToProject(issue: Issue, projectId: ProjectId)
+    }
+
+    class ExposedIssueRepository {
+        -database: Database
+        -unitOfWork: UnitOfWork
+        +findById(id: IssueId) Issue?
+        +findByProjectId(projectId: ProjectId) List~Issue~
+        +save(issue: Issue)
+        +saveToProject(issue: Issue, projectId: ProjectId)
+    }
+
+    class ProjectRepository {
+        <<interface>>
+        +findById(id: ProjectId) Project?
+        +findAll() List~Project~
+        +save(project: Project)
+        +delete(id: ProjectId) Boolean
+        +exists(id: ProjectId) Boolean
+    }
+
+    class ExposedProjectRepository {
+        -database: Database
+        -unitOfWork: UnitOfWork
+        +findById(id: ProjectId) Project?
+        +findAll() List~Project~
+        +save(project: Project)
+        +delete(id: ProjectId) Boolean
+        +exists(id: ProjectId) Boolean
+    }
+
+    IssueRepository <|.. ExposedIssueRepository
+    ProjectRepository <|.. ExposedProjectRepository
+```
 
 ## Core Repositories
 
 ### IssueRepository
 
-The `IssueRepository` manages persistence and retrieval of Issues.
+The `IssueRepository` manages persistence and retrieval of Issue entities with support for hierarchical relationships and project associations.
 
 ```kotlin
 interface IssueRepository {
@@ -23,38 +65,48 @@ interface IssueRepository {
 
 #### Key Methods
 
-- **`findById`**: Retrieve a single issue by its ID
-- **`findByProjectId`**: Get all issues associated with a project
-- **`save`**: Persist an issue (maintains existing relationships)
-- **`saveToProject`**: Save an issue and associate it with a project atomically
+**`findById`**: Retrieves a single issue by its unique identifier. Returns null if the issue doesn't exist.
+
+**`findByProjectId`**: Retrieves all issues associated with a specific project, including the complete issue hierarchy (epics, stories, subtasks).
+
+**`save`**: Persists an issue while maintaining its existing relationships. Use this method when updating existing issues to preserve project associations and parent-child links.
+
+**`saveToProject`**: Atomically saves an issue and creates its association with a project. This method ensures referential integrity by executing both operations within a single transaction.
 
 #### Usage Examples
 
-Create a new issue and associate with project
+**Create a new issue and associate with project:**
 
 ```kotlin
-val issue = Issue.create("User authentication", "Implement JWT auth", IssueType.Story)
+val issue = Issue.create(
+    title = "Implement user authentication",
+    description = "Add JWT-based authentication system",
+    type = IssueType.Story
+)
 issueRepository.saveToProject(issue, projectId)
 ```
 
-Update an existing issue
+**Update an existing issue:**
 
 ```kotlin
 val existingIssue = issueRepository.findById(issueId)
-existingIssue?.updateStatus(IssueStatus.Todo)
-existingIssue?.updateStatus(IssueStatus.InProgress)
-existingIssue?.let { issueRepository.save(it) }
+existingIssue?.let { issue ->
+    issue.updateStatus(IssueStatus.InProgress)
+    issue.updateDescription("Updated requirements for JWT auth")
+    issueRepository.save(issue)
+}
 ```
 
-Find all project issues
+**Retrieve all project issues:**
 
 ```kotlin
 val projectIssues = issueRepository.findByProjectId(projectId)
+val activeIssues = projectIssues.filter { it.status == IssueStatus.InProgress }
 ```
 
 ### ProjectRepository
 
-The `ProjectRepository` manages Project entities.
+The `ProjectRepository` manages Project entities, providing standard CRUD operations with support for existence checks.
 
 ```kotlin
 interface ProjectRepository {
@@ -68,255 +120,371 @@ interface ProjectRepository {
 
 #### Usage Examples
 
-Create and save a new project
+**Create and save a new project:**
 
 ```kotlin
-val project = Project.create("E-commerce Platform", "Online marketplace")
+val project = Project.create(
+    name = "E-commerce Platform",
+    description = "Online marketplace with payment integration"
+)
 projectRepository.save(project)
 ```
 
-Update project status
+**Update project details:**
 
 ```kotlin
 val project = projectRepository.findById(projectId)
-project?.updateStatus(ProjectStatus.Active)
-project?.updateName("E-commerce Platform v2")
-project?.let { projectRepository.save(it) }
+project?.let {
+    it.updateStatus(ProjectStatus.Active)
+    it.updateName("E-commerce Platform v2")
+    projectRepository.save(it)
+}
 ```
 
-Delete project (cascades to issues via foreign key)
+**Delete project (cascades to associated issues):**
 
 ```kotlin
-projectRepository.delete(projectId)
+val deleted = projectRepository.delete(projectId)
+if (deleted) {
+    println("Project and all associated issues deleted")
+}
+```
+
+**Check project existence before operations:**
+
+```kotlin
+if (projectRepository.exists(projectId)) {
+    // Proceed with project operations
+}
 ```
 
 ### WorkflowRepository
 
-The `WorkflowRepository` manages workflow state for projects.
+The `WorkflowRepository` manages workflow state transitions for projects, supporting both standard and custom workflow definitions.
 
 ```kotlin
 interface WorkflowRepository {
-  findById(id: WorkflowId): Promise<Workflow | null>;
-  findByProjectId(projectId: ProjectId): Promise<Workflow | null>;
-  save(workflow: Workflow): Promise<void>;
-  delete(id: WorkflowId): Promise<void>;
+    suspend fun findById(id: WorkflowId): Workflow?
+    suspend fun findByProjectId(projectId: ProjectId): Workflow?
+    suspend fun save(workflow: Workflow): Unit
+    suspend fun delete(id: WorkflowId): Unit
 }
 ```
 
 #### Usage Examples
 
-Create standard workflow
+**Create standard workflow:**
 
 ```kotlin
-const workflow = Workflow.create('Development Workflow', projectId);
-await workflowRepository.save(workflow);
+val workflow = Workflow.create(
+    name = "Development Workflow",
+    projectId = projectId
+)
+workflowRepository.save(workflow)
 ```
 
-Create custom workflow
+**Create custom workflow with specific stages:**
 
 ```kotlin
-const customStages = ['planning', 'development', 'testing', 'deployment'];
-const workflow = Workflow.createCustom('Sprint Workflow', projectId, customStages);
-await workflowRepository.save(workflow);
+val customStages = listOf("Planning", "Development", "Testing", "Deployment")
+val workflow = Workflow.createCustom(
+    name = "Sprint Workflow",
+    projectId = projectId,
+    stages = customStages
+)
+workflowRepository.save(workflow)
 ```
 
-Progress through stages
+**Progress workflow through stages:**
 
 ```kotlin
-workflow.transitionTo('design');
-workflow.transitionTo('implementation');
-await workflowRepository.save(workflow);
+val workflow = workflowRepository.findByProjectId(projectId)
+workflow?.let {
+    it.transitionTo("Testing")
+    workflowRepository.save(it)
+}
 ```
 
-Reset workflow
+**Reset workflow to initial state:**
 
 ```kotlin
-workflow.reset();
-await workflowRepository.save(workflow);
+workflow?.let {
+    it.reset()
+    workflowRepository.save(it)
+}
 ```
 
 ## Transaction Patterns
 
-All repository operations use database transactions to ensure consistency:
+All repository operations that modify data execute within database transactions to ensure data consistency and referential integrity. The infrastructure layer uses Exposed's transaction DSL to manage transaction boundaries.
 
 ```kotlin
-// Example: Atomic save with relationships
-async saveToProject(issue: Issue, projectId: ProjectId): Promise<void> {
-  const transaction = this.db.transaction(() => {
-    // Save or update issue
-    this.saveIssue(issue);
-    // Create project association
-    this.createProjectAssociation(projectId, issue.id);
-  });
-  transaction();
-}
+// Example: Atomic save with project association
+override suspend fun saveToProject(issue: Issue, projectId: ProjectId) =
+    unitOfWork.executeInTransaction {
+        // Insert or update issue
+        Issues.upsert {
+            it[id] = issue.id.value
+            it[title] = issue.title
+            it[description] = issue.description
+            it[type] = issue.type.name
+            it[status] = issue.status.name
+        }
+
+        // Create project association
+        ProjectIssues.insertIgnore {
+            it[this.projectId] = projectId.value
+            it[issueId] = issue.id.value
+        }
+    }
 ```
+
+This pattern ensures that both the issue save and project association succeed together or fail together, preventing orphaned records or inconsistent state.
 
 ## Issue Hierarchy Management
 
-Issues support parent-child relationships:
+Issues support parent-child relationships enabling epic-story-subtask hierarchies. The repository pattern handles these relationships through foreign key constraints and cascading operations.
 
 ```kotlin
 // Create hierarchy
-const epic = Issue.create('User Management', 'Complete user system', 'Epic');
-const story1 = Issue.create('Login', 'User authentication', 'Story');
-const story2 = Issue.create('Registration', 'User signup', 'Story');
+val epic = Issue.create(
+    title = "User Management System",
+    description = "Complete user authentication and authorization",
+    type = IssueType.Epic
+)
 
-// Set relationships
-epic.addChild(story1.id);
-epic.addChild(story2.id);
-story1.setParent(epic.id);
-story2.setParent(epic.id);
+val story1 = Issue.create(
+    title = "User Login",
+    description = "Implement JWT authentication",
+    type = IssueType.Story
+)
 
-// Save with relationships
-await issueRepository.saveToProject(epic, projectId);
-await issueRepository.saveToProject(story1, projectId);
-await issueRepository.saveToProject(story2, projectId);
+val story2 = Issue.create(
+    title = "User Registration",
+    description = "User signup with email verification",
+    type = IssueType.Story
+)
+
+// Establish parent-child relationships
+story1.setParent(epic.id)
+story2.setParent(epic.id)
+epic.addChild(story1.id)
+epic.addChild(story2.id)
+
+// Save hierarchy (order matters for referential integrity)
+issueRepository.saveToProject(epic, projectId)
+issueRepository.saveToProject(story1, projectId)
+issueRepository.saveToProject(story2, projectId)
 ```
+
+When querying issues by project, the repository automatically loads the complete hierarchy, allowing navigation of parent-child relationships without additional database queries.
 
 ## Issue Dependencies
 
-Issues can have dependencies on other issues:
+Issues can have blocking dependencies on other issues, enabling workflow orchestration and dependency tracking.
 
 ```kotlin
-// Create dependency
-const backend = Issue.create('API endpoint', 'Create REST API', 'Story');
-const frontend = Issue.create('UI component', 'Build React component', 'Story');
+// Create dependent issues
+val backendApi = Issue.create(
+    title = "REST API Endpoint",
+    description = "Create /api/auth/login endpoint",
+    type = IssueType.Story
+)
 
-// Frontend depends on backend
-frontend.addDependency(backend.id);
+val frontendUi = Issue.create(
+    title = "Login UI Component",
+    description = "Build React login form",
+    type = IssueType.Story
+)
 
-await issueRepository.save(backend);
-await issueRepository.save(frontend);
+// Frontend depends on backend completion
+frontendUi.addDependency(backendApi.id)
 
-// Check if blocked
-if (frontend.isBlocked()) {
-  console.log('Frontend is blocked by dependencies');
+issueRepository.save(backendApi)
+issueRepository.save(frontendUi)
+
+// Check if issue is blocked by dependencies
+if (frontendUi.isBlocked()) {
+    println("Frontend UI is blocked by: ${frontendUi.dependencies}")
 }
 ```
 
+The domain layer enforces dependency rules, while the repository layer persists these relationships through a dedicated dependencies table with foreign key constraints.
+
 ## Status Transitions
 
-Issues follow a defined status workflow:
+Issues follow a defined status workflow enforced by the domain layer. The repository pattern persists these transitions while the domain entities validate them.
 
 ```kotlin
 // Valid transitions from Backlog
-issue.updateStatus('Todo');        // ✓ Valid
-issue.updateStatus('InProgress');  // ✗ Invalid - must go through Todo
+val issue = issueRepository.findById(issueId)
+issue?.let {
+    it.updateStatus(IssueStatus.Todo)        // Valid: Backlog → Todo
+    issueRepository.save(it)
 
-// Full transition path
-issue.updateStatus('Todo');
-issue.updateStatus('InProgress');
-issue.updateStatus('InReview');
-issue.updateStatus('Done');
+    // it.updateStatus(IssueStatus.InProgress)  // Invalid: must go through Todo first
+}
+
+// Complete transition sequence
+issue?.let {
+    it.updateStatus(IssueStatus.Todo)
+    it.updateStatus(IssueStatus.InProgress)
+    it.updateStatus(IssueStatus.InReview)
+    it.updateStatus(IssueStatus.Done)
+    issueRepository.save(it)  // Persist final state
+}
 ```
 
-Valid status values:
-- `Backlog` → `Todo`, `Canceled`, `Duplicate`
-- `Todo` → `InProgress`, `Backlog`, `Canceled`, `Duplicate`
-- `InProgress` → `InReview`, `Done`, `Todo`, `Canceled`
-- `InReview` → `Done`, `InProgress`, `Canceled`
-- `Done`, `Canceled`, `Duplicate` → (terminal states)
+**Valid status transitions:**
+- **Backlog** → Todo, Canceled, Duplicate
+- **Todo** → InProgress, Backlog, Canceled, Duplicate
+- **InProgress** → InReview, Done, Todo, Canceled
+- **InReview** → Done, InProgress, Canceled
+- **Done, Canceled, Duplicate** → (terminal states, no further transitions)
 
 ## Performance Considerations
 
 ### Batch Operations
 
-For multiple related operations, batch them when possible:
+When performing multiple related operations, leverage Kotlin's coroutines and Exposed's batch insert capabilities for optimal performance:
 
 ```kotlin
-// Good: Single transaction for multiple saves
-const updates = issues.map(issue => 
-  issueRepository.saveToProject(issue, projectId)
-);
-await Promise.all(updates);
+// Efficient: Batch insert within single transaction
+unitOfWork.executeInTransaction {
+    Issues.batchInsert(issueList) { issue ->
+        this[Issues.id] = issue.id.value
+        this[Issues.title] = issue.title
+        this[Issues.type] = issue.type.name
+        this[Issues.status] = issue.status.name
+    }
+}
 ```
 
 ### Query Optimization
 
-The repositories use prepared statements for performance:
+The repository implementations use Exposed's DSL which generates optimized SQL with proper indexing:
 
 ```kotlin
-// Prepared statements are cached and reused
-private findByIdStmt = db.prepare(`
-  SELECT * FROM issues WHERE id = ?
-`);
+// Indexed query by project ID
+override suspend fun findByProjectId(projectId: ProjectId): List<Issue> =
+    unitOfWork.executeInTransaction {
+        (Issues innerJoin ProjectIssues)
+            .select { ProjectIssues.projectId eq projectId.value }
+            .map { row -> mapToIssue(row) }
+    }
 ```
 
-### Large Datasets
+### Connection Pooling
 
-The repositories handle large datasets efficiently:
+CycleTime uses HikariCP for connection pooling, providing high-performance database access with configurable pool sizes:
 
 ```kotlin
-// Handles 100+ issues efficiently
-const issues = await issueRepository.findByProjectId(projectId);
-
-// Pagination can be added if needed
-const issues = await issueRepository.findByProjectId(
-  projectId, 
-  { limit: 50, offset: 0 }
-);
+Database.connect(
+    url = "jdbc:h2:file:./cycletime;MODE=PostgreSQL",
+    driver = "org.h2.Driver",
+    setupConnection = { connection ->
+        connection.transactionIsolation = Connection.TRANSACTION_READ_COMMITTED
+    }
+).apply {
+    // Configure HikariCP pool
+    hikariConfig.maximumPoolSize = 10
+    hikariConfig.minimumIdle = 2
+}
 ```
 
 ## Error Handling
 
-All repository methods throw `RepositoryError` on failure:
+Repository operations throw domain-specific exceptions that clients can handle appropriately. The infrastructure layer maps database errors to domain exceptions:
 
 ```kotlin
 try {
-  await issueRepository.save(issue);
-} catch (error) {
-  if (error instanceof RepositoryError) {
-    console.error(`Failed to save issue: ${error.message}`);
-    // Handle repository-specific error
-  }
-  throw error;
+    issueRepository.save(issue)
+} catch (e: DomainException) {
+    when (e) {
+        is IssueNotFoundException -> logger.error("Issue not found: ${e.id}")
+        is InvalidStatusTransitionException -> logger.error("Invalid transition: ${e.message}")
+        else -> throw e
+    }
 }
 ```
 
-## Testing
+## Testing Strategies
 
-Repositories can be tested with in-memory databases:
+Repository implementations are tested using in-memory H2 databases, providing fast, isolated test execution without external dependencies.
 
 ```kotlin
-// Test setup
-const db = new Database(':memory:');
-db.exec('PRAGMA foreign_keys = ON');
-runMigrations(db);
+class IssueRepositoryTest : StringSpec({
+    lateinit var database: Database
+    lateinit var repository: IssueRepository
 
-const repository = new H2IssueRepository(db);
+    beforeEach {
+        // Create in-memory H2 database
+        database = Database.connect(
+            "jdbc:h2:mem:test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        )
 
-// Test operations
-const issue = Issue.create('Test', 'Description', 'Story');
-await repository.save(issue);
+        // Run migrations
+        transaction(database) {
+            SchemaUtils.create(Issues, Projects, ProjectIssues)
+        }
 
-const retrieved = await repository.findById(issue.id);
-expect(retrieved).not.toBeNull();
+        repository = ExposedIssueRepository(database, testUnitOfWork)
+    }
+
+    afterEach {
+        TransactionManager.closeAndUnregister(database)
+    }
+
+    "should save and retrieve issue" {
+        val issue = Issue.create("Test Issue", "Description", IssueType.Story)
+        repository.save(issue)
+
+        val retrieved = repository.findById(issue.id)
+        retrieved shouldNotBe null
+        retrieved?.title shouldBe "Test Issue"
+    }
+})
 ```
 
 ## Best Practices
 
-1. **Always use transactions** for operations that modify multiple entities
-2. **Maintain referential integrity** using foreign key constraints
-3. **Use prepared statements** for all database queries
-4. **Handle cleanup properly** in tests and error scenarios
-5. **Follow domain rules** for status transitions and relationships
-6. **Use saveToProject** when creating new issues for a project
-7. **Use save** when updating existing issues (maintains associations)
+Following these repository usage patterns ensures data consistency, performance, and maintainability across the CycleTime codebase.
+
+**Use transactions for multi-entity operations**: When an operation involves multiple entities or relationships, wrap it in a transaction to ensure atomicity. The `saveToProject` method demonstrates this pattern by saving both the issue and its project association in a single transaction.
+
+**Maintain referential integrity through foreign keys**: All entity relationships use database foreign key constraints, ensuring orphaned records cannot exist. The database schema enforces these relationships automatically.
+
+**Leverage Exposed's type-safe DSL**: Use Exposed's query DSL instead of raw SQL to prevent SQL injection and gain compile-time type safety. The DSL provides excellent IDE support and refactoring capabilities.
+
+**Handle cleanup in tests and error scenarios**: Always close database connections and clean up resources in test teardown and error handling paths. Use Kotlin's `use` blocks or try-finally patterns for guaranteed cleanup.
+
+**Follow domain rules for entity operations**: Status transitions, hierarchy rules, and dependency constraints are enforced in the domain layer. Repositories persist these constraints but don't validate them - keep validation in domain entities.
+
+**Prefer `saveToProject` for new issue creation**: When creating issues for a project, use `saveToProject` to atomically establish the project association. This prevents issues from existing without a project relationship.
+
+**Use `save` for updating existing issues**: When modifying existing issues, use the `save` method which preserves established relationships and associations while updating the entity state.
 
 ## Migration Support
 
-The repository pattern makes it easy to migrate between storage backends:
+The repository pattern abstracts the persistence mechanism, making database migration straightforward. All domain logic remains unchanged when switching databases.
 
 ```kotlin
-// Current: H2
-const repository = new H2IssueRepository(h2Db);
+// Current: H2 embedded database
+val repository = ExposedIssueRepository(
+    database = h2Database,
+    unitOfWork = h2UnitOfWork
+)
 
-// Future: PostgreSQL
-const repository = new PostgresIssueRepository(pgClient);
+// Future: PostgreSQL for cloud deployment
+val repository = ExposedIssueRepository(
+    database = postgresDatabase,
+    unitOfWork = postgresUnitOfWork
+)
 
-// Future: MongoDB
-const repository = new MongoIssueRepository(mongoCollection);
+// Future: Different ORM or NoSQL
+val repository = MongoIssueRepository(
+    collection = mongoCollection
+)
 ```
 
-All implement the same `IssueRepository` interface, ensuring domain logic remains unchanged.
+All repository implementations adhere to the same `IssueRepository` interface defined in the domain layer. This ensures that application services and domain logic remain completely unaware of the underlying persistence technology, enabling seamless migration between databases without modifying business logic.
