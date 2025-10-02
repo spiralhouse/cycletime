@@ -388,7 +388,7 @@ Common HTTP status codes:
 
 - Explore the [OpenAPI documentation](http://localhost:8080/swagger) for complete API reference
 - Review [Architecture Overview](/docs/architecture/overview.md) for system design details
-- Check [Domain Model](/docs/architecture/domain-model.md) for business rules and constraints
+- Check [Domain Entities](/docs/reference/technical-design/domain-entities.md) for business rules and constraints
 - Join our community for support and updates
 
 ## Support

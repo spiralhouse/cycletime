@@ -3,9 +3,8 @@
 **Version:** 1.0  
 **Date:** July 30, 2025
 
-**Related Documents:**  
-📋 [PRD.md](PRD.md) | 🏗️ [ARCHITECTURE.md](ARCHITECTURE.md) | 👤
-[USER_EXPERIENCE.md](USER_EXPERIENCE.md) | 🚀 [ONBOARDING.md](ONBOARDING.md)
+**Related Documents:**
+📋 [PRD](../reference/PRD.md) | 🏗️ [Architecture Overview](../architecture/overview.md) | 👤 [User Experience](../reference/user-experience.md)
 
 ---
 
@@ -27,7 +26,7 @@ that includes:
 3. **Issue Tracking Setup**: Epic/Story/Subtask hierarchy creation
 4. **Development Environment**: Complete development toolchain configuration
 
-See [USER_EXPERIENCE.md](USER_EXPERIENCE.md) for detailed new project workflows.
+See [User Experience Guide](../reference/user-experience.md) for detailed new project workflows.
 
 ## Existing Project Integration
 
@@ -393,5 +392,4 @@ Once onboarding is complete, projects transition to full CycleTime orchestration
 5. **Milestone Tracking**: Progress monitoring and phase-based project
    management
 
-See [USER_EXPERIENCE.md](USER_EXPERIENCE.md) for detailed ongoing development
-workflows.
+See [User Experience Guide](../reference/user-experience.md) for detailed ongoing development workflows.

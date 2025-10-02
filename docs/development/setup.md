@@ -200,4 +200,4 @@ JAVA_OPTS="-Xmx1024m -XX:+UseG1GC -XX:+UseStringDeduplication"
 - [Project Structure](project-structure.md)
 - [Repository Usage](repository-usage.md)
 - [Testing Strategy](../testing/strategy.md)
-- [Coding Standards](coding-standards.md)
+- [Single Feature Workflow](single-feature-workflow.md)

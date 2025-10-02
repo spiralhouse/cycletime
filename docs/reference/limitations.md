@@ -4,9 +4,8 @@
 **Date:** August 1, 2025  
 **Authors:** Software Architect Agent, Claude Code
 
-**Related Documents:**  
-📋 [PRD.md](PRD.md) | 🏗️ [ARCHITECTURE.md](ARCHITECTURE.md) | 📚
-[MCP_RESOURCES.md](MCP_RESOURCES.md)
+**Related Documents:**
+📋 [PRD](PRD.md) | 🏗️ [Architecture Overview](../architecture/overview.md) | 📚 [MCP Resources](../api/mcp-resources.md)
 
 ---
 

@@ -6,9 +6,8 @@
 **Date:** July 30, 2025  
 **Authors:** John Burbridge, Claude Code
 
-**Related Documents:**  
-📋 [PRD.md](PRD.md) | 🏗️ [ARCHITECTURE.md](ARCHITECTURE.md) | 👤
-[USER_EXPERIENCE.md](USER_EXPERIENCE.md) | 🚀 [ONBOARDING.md](ONBOARDING.md)
+**Related Documents:**
+🏗️ [Architecture Overview](../architecture/overview.md) | 👤 [User Experience](user-experience.md) | 🚀 [Onboarding Guide](../getting-started/onboarding.md)
 
 ---
 
@@ -424,7 +423,7 @@ graph TB
 - **Offline Capability**: Full functionality without external dependencies
 - **Migration Support**: Data migration paths between providers
 
-For detailed technical specifications, database schemas, and component architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
+For detailed technical specifications, database schemas, and component architecture, see [Architecture Overview](../architecture/overview.md).
 
 ## Claude Code Agent Integration
 
@@ -486,8 +485,7 @@ CycleTime organizes software development into structured phases:
 Each phase has defined entry/exit criteria, key activities, and success metrics
 to ensure structured progression from concept to delivery.
 
-For detailed phase workflows and user experiences, see
-[USER_EXPERIENCE.md](USER_EXPERIENCE.md).
+For detailed phase workflows and user experiences, see [User Experience Guide](user-experience.md).
 
 ## User Experience Overview
 
@@ -511,8 +509,7 @@ This approach ensures that existing Claude Code users can immediately leverage
 CycleTime's project orchestration capabilities without learning new interfaces or
 abandoning their proven development workflows.
 
-For detailed user workflows, setup processes, and daily development experiences,
-see [USER_EXPERIENCE.md](USER_EXPERIENCE.md).
+For detailed user workflows, setup processes, and daily development experiences, see [User Experience Guide](user-experience.md).
 
 ## Project Integration
 
@@ -533,8 +530,7 @@ integration strategies:
 - **Large Projects (200+ issues)**: Conservative pilot approach with gradual
   expansion
 
-For detailed onboarding workflows, integration strategies, and realistic scope
-limitations, see [ONBOARDING.md](ONBOARDING.md).
+For detailed onboarding workflows, integration strategies, and realistic scope limitations, see [Onboarding Guide](../getting-started/onboarding.md).
 
 ## Success Metrics
 
