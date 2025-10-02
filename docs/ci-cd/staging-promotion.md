@@ -59,7 +59,7 @@ stateDiagram-v2
 **Latest Development Version:**
 ```bash
 # Use the most recent version from main branch
-# Check recent versions: https://github.com/spiralhouse/cycletime/pkgs/container/jcvd
+# Check recent versions: https://github.com/spiralhouse/cycletime/pkgs/container/cycletime
 ```
 
 **Specific Feature Version:**
@@ -222,7 +222,7 @@ docker pull ghcr.io/spiralhouse/cycletime:1.2.3-staging-20240823-143052
    - Each successful run shows version, promoter, and timestamp
 
 2. **Container Registry History**:
-   - Visit [GHCR Package Page](https://github.com/spiralhouse/cycletime/pkgs/container/jcvd)
+   - Visit [GHCR Package Page](https://github.com/spiralhouse/cycletime/pkgs/container/cycletime)
    - View all tags and their creation timestamps
 
 3. **Workflow Summaries**:

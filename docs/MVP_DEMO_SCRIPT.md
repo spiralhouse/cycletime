@@ -17,17 +17,17 @@ curl http://localhost:8080/health
 
 ### 1. Opening Statement (30 seconds)
 
-"Today I'm excited to show you CycleTime CE - our project orchestration framework that extends Claude Code to manage complete software development lifecycles. What we thought was 60% complete is actually **90% operational and ready for use today**."
+"This demo shows CycleTime CE - a project orchestration framework that extends Claude Code to manage software development lifecycles. The demo will cover current implementation status and core capabilities based on completed features."
 
 ### 2. Show the Architecture (1 minute)
 
 **Key Points:**
-- Embedded H2 database for zero-config persistence
+- Embedded H2 database for data persistence
 - MCP WebSocket server for Claude Code integration
 - REST APIs for programmatic access
-- Docker container for instant deployment
+- Docker container deployment available
 
-"CycleTime runs as a single container with an embedded database - no complex setup required."
+"CycleTime runs as a single container with an embedded database for straightforward deployment."
 
 ### 3. Claude Code Connection (2 minutes)
 
@@ -37,7 +37,7 @@ curl http://localhost:8080/health
 3. Show successful initialization
 
 **Script:**
-"Watch how Claude Code connects directly to CycleTime through the MCP protocol. This gives us AI-assisted project management right in our development environment."
+"Claude Code connects to CycleTime through the MCP protocol, providing AI-assisted project management integration."
 
 ### 4. Project Creation Flow (3 minutes)
 
@@ -101,27 +101,27 @@ curl -X POST http://localhost:8080/api/v1/projects \
 
 **Show:**
 - CI/CD pipeline (GitHub Actions)
-- Test coverage reports
+- Test coverage reports (96.91% domain coverage)
 - Docker Hub deployment
-- Performance metrics (<100ms responses)
+- Performance metrics (< 1ms session operations, measured from SPI-346)
 
-"The system includes comprehensive testing, automated deployment, and production-grade infrastructure."
+"The system includes comprehensive testing with measured performance characteristics and automated deployment."
 
 ## Key Talking Points
 
-### Discovery Story
-"During our technical debt sprint, we discovered that what Linear showed as 60% complete was actually 90% done. Our engineering team delivered beyond expectations."
+### Current Implementation Status
+"We've completed the foundational session management system (SPI-346) with measured performance characteristics: < 1ms session operations, 96.91% domain coverage, and comprehensive testing (60 tests). MCP integration and project bootstrap features are currently in progress."
 
-### Immediate Value
-"This isn't a prototype - it's a working system you can use today for real project management through Claude Code."
+### Core Capabilities
+"The system provides session management, cross-session persistence, and H2 database integration. Claude Code integration through MCP protocol is under active development."
 
 ### Architecture Benefits
-- **Zero Configuration**: Embedded database, single container
-- **AI-Native**: Built specifically for Claude Code integration
-- **Enterprise Ready**: MIT licensed, self-hosted, secure
+- **Embedded Database**: H2 database with single container deployment
+- **Claude Code Integration**: MCP protocol support for AI-assisted development
+- **Open Source**: MIT licensed, self-hosted deployment model
 
 ### Next Steps
-"We're ready for early adopter feedback. Phase 2 will add observability and enhanced documentation based on user needs."
+"Current development focuses on completing MCP integration and project bootstrap features. Future phases will add enhanced context provision, dependency tracking, and multi-provider support."
 
 ## Q&A Preparation
 
@@ -132,7 +132,7 @@ A: CycleTime is AI-native - designed specifically for Claude Code integration. I
 A: Fully self-hosted with local database. Your data never leaves your infrastructure.
 
 **Q: Scalability?**
-A: Current MVP handles teams of 10-20 developers. Phase 2 will add horizontal scaling.
+A: Current implementation focuses on solo developers and small teams. Future phases will address horizontal scaling requirements based on adoption patterns.
 
 **Q: Integration with existing tools?**
 A: REST APIs enable integration. Future: webhooks and external tool connectors.
@@ -140,18 +140,22 @@ A: REST APIs enable integration. Future: webhooks and external tool connectors.
 **Q: License concerns?**
 A: MIT licensed - fully corporate-friendly, no GPL restrictions.
 
-## Call to Action
+## Next Steps
 
-"We're looking for 5-10 early adopters to pilot CycleTime CE in their development workflows. Who's interested in being first to experience AI-orchestrated project management?"
+Based on current implementation status, we're focusing on:
+1. Completing MCP Resource integration (SPI-290)
+2. Implementing Project Bootstrap functionality (SPI-354)
+3. Validating performance and integration patterns
+4. Gathering feedback on core capabilities for future development priorities
 
 ## Post-Demo
 
-1. Share one-page capability summary
-2. Provide Docker quick-start instructions
-3. Schedule follow-up for interested parties
-4. Gather specific feature requests
-5. Set up Slack channel for early adopters
+1. Share capability summary with current implementation status
+2. Provide Docker quick-start instructions for local testing
+3. Review completed features and roadmap
+4. Gather feedback on core capabilities and feature priorities
+5. Discuss integration approaches and use cases
 
 ---
 
-**Remember**: Focus on the **working system**, not future promises. This is **available today**.
+**Focus**: Demonstrate completed features (session management, H2 integration, testing) and discuss in-progress work (MCP integration, project bootstrap) with realistic timelines.

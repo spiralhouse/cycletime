@@ -169,7 +169,7 @@ See [Versioning](versioning.md) for detailed information.
 
 ## Security Notes
 
-- All containers run as non-root user (`jcvd:jcvd`)
+- All containers run as non-root user (`cycletime:cycletime`)
 - Minimal Alpine Linux base image
 - Only production JRE included (no build tools)
 - Health checks included for container orchestration

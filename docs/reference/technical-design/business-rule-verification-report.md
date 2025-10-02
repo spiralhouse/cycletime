@@ -112,11 +112,11 @@ The `IssueApplicationService` correctly implements all business rules through:
 ## Verification Script Location
 
 The complete verification script can be found at:
-`/src/test/kotlin/io/spiralhouse/jcvd/verification/BusinessRuleVerification.kt`
+`/src/test/kotlin/io/spiralhouse/cycletime/verification/BusinessRuleVerification.kt`
 
 To run the verification:
 ```bash
-./gradlew test --tests "io.spiralhouse.jcvd.verification.BusinessRuleVerification"
+./gradlew test --tests "io.spiralhouse.cycletime.verification.BusinessRuleVerification"
 ```
 
 ## Conclusion

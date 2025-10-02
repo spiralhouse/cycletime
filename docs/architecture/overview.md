@@ -12,255 +12,140 @@
 
 ## Overview
 
-CycleTime (Project Orchestration Framework) implements a **simplified data and
-context provider architecture** for Claude Code project management. The system
-provides structured project data, dependency tracking, and cross-session
-continuity through embedded database (H2) and MCP Resource integration.
+CycleTime (Project Orchestration Framework) implements a data and context provider architecture for Claude Code project management. The system provides structured project data, dependency tracking, and cross-session continuity through an embedded H2 database and MCP Resource integration.
 
 ### Architectural Principles
 
+The CycleTime architecture is guided by four core principles that shape its design and implementation decisions. These principles ensure the system remains focused, maintainable, and well-integrated within the Claude Code ecosystem.
+
 **Simplicity First**
 
-- CycleTime serves as data and context provider, not orchestration manager
-- Claude Code handles agent delegation and complex workflow management
-- Simple dependency graph traversal and basic CRUD operations only
+CycleTime intentionally limits its scope to data and context provision rather than attempting complex orchestration. Claude Code handles agent delegation and workflow management, while CycleTime focuses on dependency graph traversal and basic CRUD operations. This division of responsibility keeps the system maintainable and prevents feature creep.
 
 **Embedded-First Architecture**
 
-- Embedded H2 database as default provider for offline and concurrent operation
-- No external dependencies required for core functionality
-- JVM integration with Exposed ORM and connection pooling
+The embedded H2 database serves as the default provider, enabling offline operation and concurrent access without external dependencies. This JVM-native approach integrates seamlessly with Exposed ORM and built-in connection pooling, providing immediate productivity for developers without configuration overhead.
 
 **MCP Server Integration**
 
-- Built as Claude Code MCP server for native ecosystem integration
-- Provides project context through MCP Resources to Claude Code agents
-- No custom agent coordination - leverages Claude Code's existing capabilities
+Built as a Claude Code MCP server, CycleTime integrates natively with the existing ecosystem. Project context flows to Claude Code agents through MCP Resources, while CycleTime leverages Claude Code's agent coordination capabilities rather than implementing custom orchestration logic.
 
 **Context Provision Over Automation**
 
-- Exposes structured project data for Claude Code analysis
-- Manual workflows with context support rather than automated orchestration
-- Human-driven decisions supported by structured data access
+Rather than automating workflows, CycleTime exposes structured project data for Claude Code analysis. This approach supports manual workflows with rich context, enabling human-driven decisions backed by comprehensive project information and dependency insights.
 
 ## Domain-Driven Design Architecture
 
 ### Layered Architecture Approach
 
-CycleTime follows **Domain-Driven Design** and **Hexagonal Architecture** principles
-with clear separation of concerns:
+CycleTime follows **Domain-Driven Design** and **Hexagonal Architecture** principles with clear separation of concerns:
 
-```kotlin
-// Domain Layer - Core business logic (no external dependencies)
-interface ProjectRepository {
-    suspend fun findById(id: ProjectId): Project?
-    suspend fun findByStatus(status: ProjectStatus): List<Project>
-    suspend fun save(project: Project)
-    suspend fun delete(id: ProjectId): Boolean
-}
+```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
+graph TB
+    subgraph MCP["MCP Layer"]
+        Resources[MCP Resources]
+        Tools[MCP Tools]
+    end
 
-interface IssueRepository {
-    suspend fun findById(id: IssueId): Issue?
-    suspend fun findByProject(projectId: ProjectId): List<Issue>
-    suspend fun save(issue: Issue)
-    suspend fun delete(id: IssueId): Boolean
-}
+    subgraph Application["Application Layer"]
+        AppServices[Application Services]
+        Commands[Commands/DTOs]
+        UnitOfWork[Unit of Work]
+    end
 
-// Application Layer - Use case orchestration
-class ProjectApplicationService(
-    private val projectRepo: ProjectRepository,
-    private val issueRepo: IssueRepository,
-    private val unitOfWork: UnitOfWork,
-    private val domainService: ProjectDomainService
-) {
-    suspend fun createProject(command: CreateProjectCommand): Project
-    suspend fun archiveProject(projectId: ProjectId)
-    suspend fun createIssue(command: CreateIssueCommand): Issue
-}
+    subgraph Domain["Domain Layer"]
+        Entities[Domain Entities]
+        ValueObjects[Value Objects]
+        RepoInterfaces[Repository Interfaces]
+        DomainServices[Domain Services]
+    end
 
-// Infrastructure Layer - Technical implementations
-class H2ProjectRepository(
-    private val database: Database,
-    private val timeProvider: TimeProvider
-) : ProjectRepository {
-    // H2 implementation with Exposed ORM
-}
+    subgraph Infrastructure["Infrastructure Layer"]
+        RepoImpl[Repository Implementations]
+        Database[(H2 Database)]
+        ExternalAPIs[External APIs]
+    end
 
-// MCP Layer - Claude Code integration
-class ProjectResource(
-    private val projectService: ProjectApplicationService
-) : MCPResource {
-    // MCP Resource implementation
-}
+    Resources --> AppServices
+    Tools --> AppServices
+    AppServices --> DomainServices
+    AppServices --> RepoInterfaces
+    AppServices --> UnitOfWork
+    DomainServices --> Entities
+    RepoInterfaces -.implements.-> RepoImpl
+    RepoImpl --> Database
+    RepoImpl --> ExternalAPIs
+
+    style Domain fill:#1f6feb,stroke:#58a6ff,color:#c9d1d9
+    style Application fill:#8957e5,stroke:#a371f7,color:#c9d1d9
+    style Infrastructure fill:#238636,stroke:#2ea043,color:#c9d1d9
+    style MCP fill:#d29922,stroke:#e3b341,color:#0d1117
 ```
+
+**Layer Responsibilities:**
+- **Domain**: Core business logic, entities, repository interfaces
+- **Application**: Use case orchestration, commands, Unit of Work
+- **Infrastructure**: Repository implementations, database, external APIs
+- **MCP**: Claude Code integration via Resources and Tools
 
 ### Domain Model Design
 
-CycleTime implements rich domain entities with business logic and value objects for
-type safety:
+**Rich Domain Entities:**
+- `Project`: Manages project state, issue relationships, archive rules
+- `Issue`: Handles status transitions, hierarchy constraints
+- Entities encapsulate business rules (e.g., "Cannot add issues to archived project")
 
-```kotlin
-// Domain Entities - Rich business logic
-class Project private constructor(
-    val id: ProjectId,
-    private var _name: String,
-    private var _status: ProjectStatus,
-    private val _issues: MutableList<IssueId> = mutableListOf(),
-    private val timeProvider: TimeProvider
-) {
-    val name: String get() = _name
-    val status: ProjectStatus get() = _status
-    val issues: List<IssueId> get() = _issues.toList()
-    
-    companion object {
-        fun create(
-            name: String,
-            description: String,
-            timeProvider: TimeProvider
-        ): Project {
-            return Project(
-                id = ProjectId.generate(),
-                _name = name,
-                _status = ProjectStatus.ACTIVE,
-                timeProvider = timeProvider
-            )
-        }
-    }
+**Value Objects for Type Safety:**
+- `ProjectId`, `IssueId`: UUID-based identifiers with validation
+- `IssueTitle`: String wrapper with length constraints
+- Enums: `ProjectStatus`, `IssueStatus`, `IssueType`, `IssuePriority`
 
-    fun addIssue(issueId: IssueId) {
-        // Business rule enforcement
-        if (_status == ProjectStatus.ARCHIVED) {
-            throw DomainException("Cannot add issues to archived project")
-        }
-        _issues.add(issueId)
-    }
-
-    fun archive() {
-        // Business rule: can only archive if all issues are completed
-        if (_issues.any { !isCompleted(it) }) {
-            throw DomainException("Cannot archive project with incomplete issues")
-        }
-        _status = ProjectStatus.ARCHIVED
-    }
-    
-    private fun isCompleted(issueId: IssueId): Boolean {
-        // Check completion status (would be checked via repository)
-        return true // Simplified for example
-    }
-}
-
-class Issue private constructor(
-    val id: IssueId,
-    val projectId: ProjectId,
-    private var _title: String,
-    private var _description: String,
-    private var _status: IssueStatus = IssueStatus.TODO,
-    private var _priority: IssuePriority = IssuePriority.MEDIUM,
-    private var _estimate: Int? = null,
-    private val timeProvider: TimeProvider
-) {
-    val title: String get() = _title
-    val status: IssueStatus get() = _status
-    val isCompleted: Boolean get() = _status == IssueStatus.DONE
-    
-    companion object {
-        fun create(
-            title: String,
-            description: String,
-            projectId: ProjectId,
-            type: IssueType,
-            timeProvider: TimeProvider
-        ): Issue {
-            return Issue(
-                id = IssueId.generate(),
-                projectId = projectId,
-                _title = title,
-                _description = description,
-                timeProvider = timeProvider
-            )
-        }
-    }
-
-    fun updateStatus(newStatus: IssueStatus) {
-        // Business logic for status transitions
-        if (!_status.canTransitionTo(newStatus)) {
-            throw DomainException(
-                "Cannot transition from $_status to $newStatus"
-            )
-        }
-        _status = newStatus
-    }
-}
-
-// Value Objects - Type safety and validation
-@JvmInline
-value class ProjectId(val value: String) {
-    init {
-        require(value.isNotBlank()) { "ProjectId cannot be empty" }
-    }
-    
-    companion object {
-        fun generate(): ProjectId = ProjectId(UUID.randomUUID().toString())
-    }
-}
-
-@JvmInline
-value class IssueTitle(val value: String) {
-    init {
-        require(value.trim().isNotBlank()) { "Issue title cannot be empty" }
-        require(value.length <= 255) { "Issue title too long" }
-    }
-}
-
-enum class ProjectStatus {
-    ACTIVE,
-    ARCHIVED,
-    COMPLETED;
-    
-    companion object {
-        fun fromString(status: String): ProjectStatus {
-            return valueOf(status.uppercase())
-        }
-    }
-}
-
-// Data Transfer Objects - Infrastructure layer
-data class ProjectData(
-    val id: String,
-    val name: String,
-    val description: String,
-    val status: String,
-    val createdAt: Instant,
-    val updatedAt: Instant
-)
-
-data class IssueData(
-    val id: String,
-    val projectId: String,
-    val parentId: String? = null,
-    val title: String,
-    val description: String? = null,
-    val status: String,
-    val priority: String,
-    val estimate: Int? = null,
-    val issueType: IssueType,
-    val assigneeId: String? = null,
-    val createdAt: Instant,
-    val updatedAt: Instant
-)
-
-enum class IssueType {
-    EPIC,
-    STORY,
-    SUBTASK
-}
-```
+**Data Transfer Objects:**
+- DTOs for serialization at infrastructure boundaries
+- Separate domain models from persistence models
 
 ### Provider Implementation Status
 
+```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
+graph TB
+    subgraph Core["Core Interfaces"]
+        IssueProvider[IssueProvider Interface]
+        ProjectProvider[ProjectProvider Interface]
+    end
+
+    subgraph Implementations["Provider Implementations"]
+        H2[H2 Database Provider]
+        Linear[Linear API Provider]
+        GitHub[GitHub Issues Provider]
+        Jira[Jira Provider]
+    end
+
+    IssueProvider -.implements.-> H2
+    IssueProvider -.implements.-> Linear
+    IssueProvider -.implements.-> GitHub
+    IssueProvider -.implements.-> Jira
+
+    ProjectProvider -.implements.-> H2
+    ProjectProvider -.implements.-> Linear
+    ProjectProvider -.implements.-> GitHub
+    ProjectProvider -.implements.-> Jira
+
+    H2 --> H2DB[(H2 Database)]
+    Linear --> LinearAPI[Linear API]
+    GitHub --> GitHubAPI[GitHub API]
+    Jira --> JiraAPI[Jira API]
+
+    style H2 fill:#238636,stroke:#2ea043,color:#c9d1d9
+    style Linear fill:#6e7681,stroke:#8b949e,color:#c9d1d9
+    style GitHub fill:#6e7681,stroke:#8b949e,color:#c9d1d9
+    style Jira fill:#6e7681,stroke:#8b949e,color:#c9d1d9
+```
+
 | Provider            | Status   | Features                                                     | Primary Use Case                                     |
 | ------------------- | -------- | ------------------------------------------------------------ | ---------------------------------------------------- |
-| **H2 Database** | ✅ MVP   | Embedded database, high-performance CRUD, concurrent access | Current implementation, stable and proven |
+| **H2 Database** | ✅ Current   | Embedded database, high-performance CRUD, concurrent access | Default provider (implemented in SPI-439, August 2025) |
 | **Linear**          | 🔄 V2.0  | Linear API integration, team collaboration                   | Professional development, team coordination          |
 | **GitHub Issues**   | 🔄 V3.0+ | Repository integration, basic workflows                      | OSS projects, GitHub-centric development             |
 | **Jira**            | 🔄 V3.0+ | Enterprise workflows, custom fields                         | Enterprise development, complex organizations        |
@@ -268,10 +153,10 @@ enum class IssueType {
 ### H2 Database Implementation Details
 
 **Performance Characteristics:**
-- Complex JOINs and aggregations (performance to be validated with benchmarks)
+- Supports complex JOINs and aggregations for dependency analysis
 - Built-in connection pooling and thread safety
-- JVM memory management with caching and buffer management
-- Cost-based query optimization for dependency graphs
+- JVM-native memory management with caching and buffer management
+- Cost-based query optimizer for dependency graph queries
 
 **Exposed ORM Integration:**
 - Native H2 support with JDBC driver
@@ -289,365 +174,142 @@ enum class IssueType {
 
 ### Database Schema (H2)
 
-The embedded provider uses a database schema designed for optimal
-JVM performance, native Exposed ORM integration, and easy migration to cloud providers:
+The H2 database uses a schema designed for JVM integration, Exposed ORM compatibility, and straightforward migration to cloud providers:
 
-```sql
--- Project management with Linear-inspired structure
-CREATE TABLE projects (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  description TEXT,
-  key TEXT UNIQUE,              -- Short project identifier (e.g., 'PROJ')
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
+erDiagram
+    PROJECTS ||--o{ ISSUES : "contains"
+    PROJECTS ||--o{ WORKFLOW_STATES : "defines"
+    PROJECTS ||--o{ LABELS : "organizes"
 
--- Workflow states supporting standard issue tracking patterns
-CREATE TABLE workflow_states (
-  id TEXT PRIMARY KEY,
-  project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,           -- Human-readable name
-  type TEXT NOT NULL,           -- Semantic type for processing
-  position INTEGER DEFAULT 0,   -- Display ordering
-  color TEXT DEFAULT '#000000', -- UI color representation
+    ISSUES ||--o{ ISSUES : "parent-child hierarchy"
+    ISSUES ||--o{ ISSUE_DEPENDENCIES : "blocks/blocked by"
+    ISSUES }o--|| WORKFLOW_STATES : "has current state"
+    ISSUES }o--o{ LABELS : "tagged with"
+    ISSUES ||--o{ ISSUE_COMMENTS : "discussed in"
 
-  UNIQUE(project_id, name)
-);
+    PROJECTS {
+        text id PK
+        text name
+        text description
+        text key "unique short identifier"
+        datetime created_at
+        datetime updated_at
+    }
 
--- Core issues table with strict hierarchy enforcement
-CREATE TABLE issues (
-  id TEXT PRIMARY KEY,
-  project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
-  parent_id TEXT REFERENCES issues(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  description TEXT,
-  state_id TEXT REFERENCES workflow_states(id),
-  priority INTEGER DEFAULT 0,   -- Linear-compatible priority scale
-  estimate INTEGER,            -- Story points for planning
-  issue_type TEXT NOT NULL CHECK (issue_type IN ('epic', 'story', 'subtask')),
-  assignee_id TEXT,           -- User identifier (provider-specific)
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    WORKFLOW_STATES {
+        text id PK
+        text project_id FK
+        text name
+        text type "semantic type"
+        int position "display ordering"
+        text color
+    }
 
-  -- Enforce proper hierarchy constraints
-  CHECK (
-    (issue_type = 'epic' AND parent_id IS NULL) OR
-    (issue_type = 'story' AND parent_id IS NOT NULL) OR
-    (issue_type = 'subtask' AND parent_id IS NOT NULL)
-  )
-);
+    ISSUES {
+        text id PK
+        text project_id FK
+        text parent_id FK "nullable for hierarchy"
+        text title
+        text description
+        text state_id FK
+        int priority "Linear-compatible scale"
+        int estimate "story points"
+        text issue_type "epic, story, subtask"
+        text assignee_id
+        datetime created_at
+        datetime updated_at
+    }
 
--- Dependency graph for task orchestration
-CREATE TABLE issue_dependencies (
-  id TEXT PRIMARY KEY,
-  blocker_id TEXT REFERENCES issues(id) ON DELETE CASCADE,
-  blocked_id TEXT REFERENCES issues(id) ON DELETE CASCADE,
-  dependency_type TEXT DEFAULT 'blocks',
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ISSUE_DEPENDENCIES {
+        text id PK
+        text blocker_id FK
+        text blocked_id FK
+        text dependency_type
+        datetime created_at
+    }
 
-  -- Prevent duplicate dependencies and self-references
-  UNIQUE(blocker_id, blocked_id),
-  CHECK(blocker_id != blocked_id)
-);
+    LABELS {
+        text id PK
+        text project_id FK
+        text name
+        text color
+        text description
+    }
 
--- Flexible labeling system
-CREATE TABLE labels (
-  id TEXT PRIMARY KEY,
-  project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  color TEXT DEFAULT '#000000',
-  description TEXT,
+    ISSUE_LABELS {
+        text issue_id FK
+        text label_id FK
+    }
 
-  UNIQUE(project_id, name)
-);
-
-CREATE TABLE issue_labels (
-  issue_id TEXT REFERENCES issues(id) ON DELETE CASCADE,
-  label_id TEXT REFERENCES labels(id) ON DELETE CASCADE,
-  PRIMARY KEY (issue_id, label_id)
-);
-
--- Activity tracking and comments
-CREATE TABLE issue_comments (
-  id TEXT PRIMARY KEY,
-  issue_id TEXT REFERENCES issues(id) ON DELETE CASCADE,
-  body TEXT NOT NULL,
-  author_id TEXT,             -- User identifier
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- Performance optimization indexes
-CREATE INDEX idx_issues_project_id ON issues(project_id);
-CREATE INDEX idx_issues_parent_id ON issues(parent_id);
-CREATE INDEX idx_issues_state_id ON issues(state_id);
-CREATE INDEX idx_issues_type ON issues(issue_type);
-CREATE INDEX idx_issues_assignee ON issues(assignee_id);
-CREATE INDEX idx_dependencies_blocker ON issue_dependencies(blocker_id);
-CREATE INDEX idx_dependencies_blocked ON issue_dependencies(blocked_id);
-CREATE INDEX idx_workflow_states_project ON workflow_states(project_id);
-CREATE INDEX idx_labels_project ON labels(project_id);
-
--- Optimized compound indexes for common queries
-CREATE INDEX idx_issues_project_type_state ON issues(project_id, issue_type, state_id);
-CREATE INDEX idx_issues_parent_type ON issues(parent_id, issue_type);
+    ISSUE_COMMENTS {
+        text id PK
+        text issue_id FK
+        text body
+        text author_id
+        datetime created_at
+    }
 ```
 
-### Data Migration Schema
+**Key Schema Decisions:**
 
-For seamless provider switching, CycleTime implements a standardized export/import
-format:
+- **Hierarchy Enforcement**: Three-tier structure (Epic → Story → Subtask) enforced via CHECK constraints on `issue_type` and `parent_id` relationships
+- **Flexible State Management**: Project-specific workflow states (`workflow_states`) enable custom processes while maintaining semantic types for orchestration logic
+- **Dependency Graph**: Bidirectional relationships via `issue_dependencies` support complex task orchestration with cycle prevention through uniqueness constraints
+- **Linear-Inspired Design**: Schema structure matches Linear's proven patterns, enabling straightforward data migration and familiar developer workflows
 
-```kotlin
-data class ExportData(
-    val version: String,
-    val exportedAt: Instant,
-    val sourceProvider: String,
-    
-    val projects: List<Project>,
-    val issues: List<Issue>,
-    val dependencies: List<Dependency>,
-    val workflowStates: List<WorkflowState>,
-    val labels: List<Label>,
-    val comments: List<Comment>,
-    
-    // Metadata for validation and migration tracking
-    val metadata: ExportMetadata
-)
+### Data Migration Strategy
 
-data class ExportMetadata(
-    val totalIssues: Int,
-    val issueHierarchyValid: Boolean,
-    val dependencyGraphValid: Boolean,
-    val checksums: Map<String, String>
-)
-```
+Standardized export/import format supports provider switching:
+- JSON-based export with version metadata
+- Validation checksums for data integrity
+- Hierarchy and dependency graph validation
+- Incremental migration support
 
 ## Layered Architecture Components
 
 ### 1. Domain Layer
 
-**Purpose**: Contains core business logic, entities, and domain services with no
-external dependencies.
+**Purpose**: Core business logic with no external dependencies.
 
 **Key Components:**
-
-- **Entities**: `Project`, `Issue` with rich business logic and invariants
-- **Value Objects**: `ProjectId`, `ProjectStatus`, `IssueTitle` for type safety
-- **Repository Interfaces**: `ProjectRepository`, `IssueRepository` as ports
-- **Domain Services**: Complex business logic spanning multiple entities
-
-**Domain Entity Example:**
-
-```kotlin
-class Project private constructor(
-    val id: ProjectId,
-    private var _name: String,
-    private var _status: ProjectStatus,
-    private val _issues: MutableList<IssueId> = mutableListOf()
-) {
-    fun addIssue(issueId: IssueId) {
-        // Business rule enforcement at domain level
-        if (_status == ProjectStatus.ARCHIVED) {
-            throw DomainException("Cannot add issues to archived project")
-        }
-        _issues.add(issueId)
-    }
-
-    fun getUnblockedIssues(allIssues: List<Issue>): List<Issue> {
-        return allIssues.filter { issue -> 
-            _issues.contains(issue.id) && issue.hasNoBlockingDependencies()
-        }
-    }
-}
-```
+- **Entities**: `Project`, `Issue` - encapsulate business rules and invariants
+- **Value Objects**: `ProjectId`, `IssueTitle` - type safety and validation
+- **Repository Interfaces**: `ProjectRepository`, `IssueRepository` - ports for data access
+- **Domain Services**: Complex logic spanning multiple entities
 
 ### 2. Application Layer
 
-**Purpose**: Orchestrates use cases and coordinates between domain and
-infrastructure layers.
+**Purpose**: Orchestrates use cases, coordinates domain and infrastructure.
 
 **Key Components:**
-
 - **Application Services**: `ProjectApplicationService` - use case orchestration
-- **Commands**: `CreateProjectCommand`, `CreateIssueCommand` - input contracts
-- **Unit of Work**: Transaction coordination across repositories
-- **Domain Event Handlers**: Cross-aggregate coordination
+- **Commands/DTOs**: Type-safe input contracts
+- **Unit of Work**: Transaction coordination
+- **Event Handlers**: Cross-aggregate coordination
 
-**Application Service Example:**
-
-```kotlin
-class ProjectApplicationService(
-    private val projectRepo: ProjectRepository,
-    private val issueRepo: IssueRepository,
-    private val unitOfWork: UnitOfWork,
-    private val domainService: ProjectDomainService
-) {
-    suspend fun createIssue(command: CreateIssueCommand): Issue {
-        return unitOfWork.execute {
-            // Load aggregate
-            val project = projectRepo.findById(command.projectId)
-      if (!project) {
-        throw new NotFoundError(`Project ${command.projectId.value} not found`);
-      }
-
-                ?: throw NotFoundException("Project not found")
-            
-            // Domain logic through aggregate
-            val issue = Issue.create(
-                title = command.title,
-                description = command.description,
-                projectId = command.projectId,
-                type = command.type,
-                timeProvider = timeProvider
-            )
-            project.addIssue(issue.id)
-
-            // Persist changes
-            projectRepo.save(project)
-            issueRepo.save(issue)
-
-            issue
-        }
-    }
-
-    suspend fun getProjectContext(projectId: ProjectId): ProjectContext? {
-        val project = projectRepo.findById(projectId) ?: return null
-        val issues = issueRepo.findByProject(projectId)
-        val unblockedIssues = project.getUnblockedIssues(issues)
-        
-        return ProjectContext(project, issues, unblockedIssues)
-    }
-}
-```
+**Interaction Pattern:**
+MCP Tool → Application Service → Domain Entity → Repository → Database
 
 ### 3. Infrastructure Layer
 
-**Purpose**: Provides technical implementations of domain interfaces and
-external system integrations.
+**Purpose**: Technical implementations and external integrations.
 
 **Key Components:**
+- **Repository Implementations**: `H2ProjectRepository`, `H2IssueRepository` using Exposed ORM
+- **Unit of Work**: `H2UnitOfWork` for transaction management
+- **Migrations**: Schema evolution via `MigrationRunner`
+- **External Integrations**: Linear, GitHub API adapters
 
-- **Repository Implementations**: `H2ProjectRepository`,
-  `H2IssueRepository` with Exposed ORM integration
-- **Unit of Work Implementation**: `H2UnitOfWork` for transaction management
-- **Database Migrations**: `MigrationRunner` for schema evolution
-- **External Integrations**: Linear API, GitHub API adapters
+### 4. MCP Layer
 
-**Repository Implementation Example:**
-
-```kotlin
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.transactions.transaction
-import io.spiralhouse.cycletime.infrastructure.database.Projects
-
-class H2ProjectRepository(
-    private val database: Database,
-    private val timeProvider: TimeProvider
-) : ProjectRepository {
-    
-    override suspend fun findById(id: ProjectId): Project? = transaction(database) {
-        Projects.select { Projects.id eq id.value }
-            .singleOrNull()
-            ?.let { toDomainEntity(it) }
-    }
-
-    override suspend fun save(project: Project) = transaction(database) {
-        val exists = Projects.select { Projects.id eq project.id.value }.count() > 0
-        
-        if (exists) {
-            Projects.update({ Projects.id eq project.id.value }) {
-                it[name] = project.name
-                it[description] = project.description
-                it[status] = project.status.name
-                it[updatedAt] = timeProvider.now()
-            }
-        } else {
-            Projects.insert {
-                it[id] = project.id.value
-                it[name] = project.name
-                it[description] = project.description
-                it[status] = project.status.name
-                it[createdAt] = timeProvider.now()
-                it[updatedAt] = timeProvider.now()
-            }
-        }
-    }
-
-    private fun toDomainEntity(row: ResultRow): Project {
-        return Project.fromSnapshot(
-            id = ProjectId(row[Projects.id]),
-            name = row[Projects.name],
-            description = row[Projects.description],
-            status = ProjectStatus.fromString(row[Projects.status]),
-            timeProvider = timeProvider
-        )
-    }
-}
-```
-
-### 4. MCP Layer (Presentation/Interface)
-
-**Purpose**: Exposes domain functionality to Claude Code through Model Context
-Protocol.
+**Purpose**: Claude Code integration via Model Context Protocol.
 
 **Key Components:**
-
-- **Resource Registry**: Discovery and routing for MCP Resources
-- **Resource Implementations**: `ProjectResource`, `IssueResource` - read-only
-  data access
-- **Tool Registry**: MCP Tool discovery and validation
-- **Tool Implementations**: `CreateIssueTool`, `UpdateIssueTool` - write
-  operations
-
-**MCP Resource Implementation:**
-
-```kotlin
-class ProjectResource(
-    private val projectService: ProjectApplicationService
-) : MCPResource {
-
-    override fun canHandle(uri: String): Boolean {
-        return uri.startsWith("cycletime://project/")
-    }
-
-    override suspend fun read(uri: String): ResourceContent {
-        val projectIdString = parseProjectUri(uri)
-        val projectId = ProjectId(projectIdString)
-
-        // Use Application Service - no direct repository access
-        val project = projectService.getProjectDetails(projectId)
-            ?: throw ResourceNotFoundException("Project ${projectId.value} not found")
-
-        return ResourceContent(
-            uri = uri,
-            mimeType = "application/json",
-            text = Json.encodeToString(
-                mapOf(
-                    "id" to project.id.value,
-                    "name" to project.name,
-                    "status" to project.status.toString(),
-                    "issueCount" to project.getActiveIssueCount(),
-                    "unblockedTasks" to project.getUnblockedIssues().size
-                )
-            )
-        )
-    }
-
-    override suspend fun list(): List<ResourceDescriptor> {
-        val projects = projectService.listActiveProjects()
-
-        return projects.map { project ->
-            ResourceDescriptor(
-                uri = "cycletime://project/${project.id.value}",
-                name = project.name,
-                description = project.description,
-                mimeType = "application/json"
-            )
-        }
-    }
-}
-```
+- **Resources**: `ProjectResource`, `IssueResource` - read-only context provision
+- **Tools**: `CreateIssueTool`, `UpdateIssueTool` - write operations
+- **Registries**: Discovery and routing for resources and tools
 
 ### 3. Documentation Templates
 
@@ -662,12 +324,12 @@ class ProjectResource(
 
 **Document Templates:**
 
-- `docs/PRD.md` - Product Requirements Document
-- `docs/ARCHITECTURE.md` - Technical Architecture
-- `docs/api/quick-start.md` - REST API Quick Start Guide
-- OpenAPI Documentation - Available at `/swagger` endpoint
-- `docs/DEPLOYMENT.md` - Infrastructure and Deployment
-- `docs/ADR/` - Architecture Decision Records
+- [PRD.md](../reference/PRD.md) - Product Requirements Document
+- [overview.md](overview.md) - Technical Architecture (this document)
+- [rest-endpoints.md](../api/rest-endpoints.md) - REST API Documentation
+- OpenAPI Documentation - Available at `/swagger` endpoint when server is running
+- [deployment-guide.md](../operations/deployment-guide.md) - Infrastructure and Deployment
+- [ADR Directory](decisions/) - Architecture Decision Records
 
 ### 4. MCP Server Integration
 
@@ -711,406 +373,57 @@ suspend fun updateIssueStatus(issueId: String, status: String): Issue
 suspend fun addDependency(blockerId: String, blockedId: String)
 ```
 
-### 5. Provider Storage Layer
+### 5. Provider Storage
 
-**Purpose**: Simple storage abstraction using H2, expanding
-incrementally.
+**Purpose**: Storage abstraction supporting multiple backends.
 
-**Key Responsibilities:**
+**Current Implementation:**
+- H2 database (default, implemented)
+- Basic CRUD operations
+- Export/import for provider switching
 
-- Basic CRUD operations for issues and projects
-- Simple data export/import for provider switching
-- No complex abstraction until multiple providers exist
-- Focus on H2 stability and optimization
+**Future Providers:**
+- Linear, GitHub Issues, Jira (planned)
 
-**Provider Factory Pattern:**
+### 6. Session Management
 
-```kotlin
-object ProviderFactory {
-    suspend fun createProvider(config: ProviderConfig): IssueProvider {
-        return when (config.type) {
-            "h2" -> H2Provider(config.h2Config)  // Current default
-            "linear" -> LinearProvider(config.linearConfig)
-            "github" -> GitHubProvider(config.githubConfig)
-            "jira" -> JiraProvider(config.jiraConfig)
-            else -> throw IllegalArgumentException("Unsupported provider type: ${config.type}")
-        }
-    }
-}
-```
+**Purpose**: Cross-session state persistence for Claude Code interactions.
 
-### 5. Session Management Architecture
+See [Session Management](session-management.md) for complete technical reference.
 
-**Purpose**: Provides cross-session state persistence and continuity for Claude Code interactions with comprehensive validation and lifecycle management.
+**Key Features:**
+- Domain-Driven Design with validation and auto-repair
+- TimeProvider pattern for testable time operations
+- Sub-millisecond performance with H2
+- Automatic cleanup of expired/corrupted sessions
 
-**Design Principles:**
-- **Domain-Driven Design**: Rich domain model with business logic encapsulation
-- **Dependency Injection**: TimeProvider pattern for testable time-dependent operations
-- **Data Integrity**: Automatic validation and repair of session state
-- **Performance**: Fast operations with embedded database optimization
+### 7. Development Workflow Integration
 
-#### Domain Model
+**Purpose**: Structured development practice support.
 
-**Core Entities and Value Objects:**
-
-```kotlin
-// Session Entity - Core domain model with time provider injection
-class Session(
-    private val _sessionKey: SessionKey,
-    private var _projectId: String? = null,
-    private var _currentContext: SessionContext,
-    private var _lastActivity: Instant,
-    private val timeProvider: TimeProvider
-) {
-    fun updateContext(updates: Map<String, Any?>) {
-        _currentContext = _currentContext.copy(contextData = updates)
-        touch() // Updates lastActivity using timeProvider
-    }
-
-    fun isExpired(maxAge: Duration): Boolean {
-        val now = timeProvider.now()
-        return Duration.between(_lastActivity, now) >= maxAge
-  }
-}
-
-// SessionKey Value Object - Type-safe identifier
-export class SessionKey {
-  constructor(public readonly value: string) {
-    if (!this.isValidFormat(value)) {
-      throw new InvalidSessionKeyError(value);
-    }
-  }
-
-  static generate(): SessionKey {
-    return new SessionKey(crypto.randomUUID());
-  }
-}
-
-// SessionContext - Structured session data
-export interface SessionContext {
-  activeIssues?: string[];
-  workflowStage?: string;
-  lastAction?: string;
-  contextData?: Record<string, unknown>;
-}
-```
-
-#### Service Layers
-
-**SessionManager - MCP Integration Layer:**
-
-```typescript
-export class SessionManager implements SessionManagerInterface {
-  constructor(
-    private readonly sessionService: SessionApplicationService,
-    private readonly timeProvider: TimeProvider,
-    private readonly validator: SessionValidator,
-    private readonly cleanupService: SessionCleanupService,
-    config: SessionConfig = {}
-  ) {
-    this.config = {
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days default
-      autoCleanup: true,
-      cleanupInterval: 60 * 60 * 1000, // 1 hour
-      ...config
-    };
-  }
-
-  async getSession(sessionKey: string): Promise<SessionState | null> {
-    const session = await this.sessionService.getSession(sessionKey);
-    
-    // Validate and auto-repair if needed
-    const validation = this.validator.validateSessionState(session);
-    if (!validation.isValid) {
-      const repaired = this.validator.repairSession(session);
-      if (repaired.success) {
-        await this.sessionService.updateSession(repaired.session);
-        return repaired.session;
-      }
-      // Delete corrupted sessions that can't be repaired
-      await this.sessionService.deleteSession(sessionKey);
-      return null;
-    }
-
-    // Check expiration
-    if (this.isSessionExpired(session)) {
-      await this.sessionService.deleteSession(sessionKey);
-      return null;
-    }
-
-    return session;
-  }
-
-  async getSessionInfo(sessionKey: string): Promise<SessionInfo | null> {
-    const session = await this.sessionService.getSession(sessionKey);
-    if (!session) return null;
-
-    return {
-      ...session,
-      metadata: this.calculateMetadata(session),
-      isExpired: this.isSessionExpired(session),
-      expiresAt: this.calculateExpirationTime(session)
-    };
-  }
-}
-```
-
-**SessionValidator - Data Integrity Service:**
-
-```typescript
-export class SessionValidator {
-  validateSessionState(session: SessionStateDto): ValidationResult {
-    const errors: ValidationError[] = [];
-    const warnings: ValidationWarning[] = [];
-
-    // Validate session key format
-    if (!this.isValidSessionKey(session.sessionKey)) {
-      errors.push({
-        field: 'sessionKey',
-        message: 'Invalid session key format',
-        severity: 'critical'
-      });
-    }
-
-    // Validate timestamps
-    const timestampValidation = this.validateTimestamps(session);
-    errors.push(...timestampValidation.errors);
-
-    // Validate context
-    const contextValidation = this.validateContext(session.currentContext);
-    errors.push(...contextValidation.errors);
-    warnings.push(...contextValidation.warnings);
-
-    // Check for corruption
-    if (this.hasCorruption(session)) {
-      errors.push({
-        field: 'data',
-        message: 'Session data corrupted',
-        severity: 'critical'
-      });
-    }
-
-    return { isValid: errors.length === 0, errors, warnings };
-  }
-
-  repairSession(session: SessionStateDto): RepairResult {
-    const repaired = { ...session };
-
-    // Repair timestamps
-    if (repaired.updatedAt < repaired.createdAt) {
-      repaired.updatedAt = repaired.createdAt;
-    }
-
-    // Clean context data
-    if (repaired.currentContext?.activeIssues) {
-      repaired.currentContext.activeIssues = 
-        this.removeDuplicates(repaired.currentContext.activeIssues);
-    }
-
-    // Remove null bytes and control characters
-    repaired.currentContext = this.sanitizeContext(repaired.currentContext);
-
-    return { success: true, session: repaired };
-  }
-}
-```
-
-#### Persistence Layer
-
-**Repository Implementation:**
-
-```kotlin
-class H2SessionRepository(
-    private val database: Database,
-    private val timeProvider: TimeProvider
-) : SessionRepository {
-    
-    override suspend fun findByKey(sessionKey: SessionKey): Session? = transaction {
-        val row = SessionStates.select { SessionStates.sessionKey eq sessionKey.value }
-            .singleOrNull() ?: return@transaction null
-        
-        rowToSession(row)
-    }
-
-    override suspend fun save(session: Session): Unit = transaction {
-        SessionStates.upsert {
-            it[sessionKey] = session.sessionKey.value
-            it[projectId] = session.projectId
-            it[currentContext] = Json.encodeToString(session.currentContext)
-            it[lastActivity] = session.lastActivity
-            it[createdAt] = session.createdAt
-            it[updatedAt] = session.updatedAt
-        }
-    }
-
-    private fun rowToSession(row: ResultRow): Session {
-        return Session.fromSnapshot(
-            sessionKey = SessionKey(row[SessionStates.sessionKey]),
-            projectId = row[SessionStates.projectId],
-            currentContext = Json.decodeFromString(row[SessionStates.currentContext]),
-            lastActivity = row[SessionStates.lastActivity],
-            createdAt = row[SessionStates.createdAt],
-            updatedAt = row[SessionStates.updatedAt],
-            timeProvider = timeProvider
-        )
-    }
-}
-```
-
-#### Database Schema
-
-```sql
--- Session state persistence table
-CREATE TABLE IF NOT EXISTS session_states (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-  session_key TEXT UNIQUE NOT NULL,
-  project_id TEXT,
-  current_context TEXT,
-  last_activity INTEGER NOT NULL DEFAULT (unixepoch()),
-  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
-  FOREIGN KEY (project_id) REFERENCES projects(id)
-);
-
--- Performance indexes
-CREATE INDEX idx_session_states_key ON session_states(session_key);
-CREATE INDEX idx_session_states_activity ON session_states(last_activity);
-CREATE INDEX idx_session_states_project ON session_states(project_id);
-```
-
-#### Session Lifecycle
-
-1. **Creation**: New session with unique SessionKey and initial context
-2. **Updates**: Context modifications with automatic touch() for activity tracking
-3. **Validation**: Automatic validation on retrieval with repair attempts
-4. **Expiration**: Configurable max age (default 7 days) with automatic cleanup
-5. **Cleanup**: Hourly background process removing expired/corrupted sessions
-
-#### Performance Characteristics
-
-- **Session Creation**: < 1ms
-- **Session Retrieval**: < 1ms with validation
-- **Context Update**: < 1ms
-- **Bulk Cleanup**: < 100ms for 1000 sessions
-- **Memory Footprint**: ~1KB per session in memory
-
-### 6. Development Methodology Framework
-
-**Purpose**: Integrates structured development practices into workflow
-automation.
-
-**Key Responsibilities:**
-
-- TDD workflow orchestration with automated test generation
-- Quality gate enforcement through state transition validation
-- Continuous integration pipeline setup and configuration
-- Code quality metrics tracking and reporting
-
-**TDD Integration Pattern:**
-
-```typescript
-data class TDDWorkflowState(
-    val currentPhase: TDDPhase,
-    val testsCoverage: Double,
-    val qualityGates: List<QualityGate>,
-    val nextAction: String
-)
-
-enum class TDDPhase {
-    RED, GREEN, REFACTOR, COMPLETE
-}
-
-class TDDOrchestrator {
-    suspend fun validateTestFirst(issueId: String): Boolean
-    suspend fun validateImplementation(issueId: String): ValidationResult
-    suspend fun validateRefactoring(issueId: String): RefactorResult
-    suspend fun completeStory(issueId: String): CompletionResult
-}
-```
+**Features:**
+- TDD workflow orchestration (RED → GREEN → REFACTOR)
+- Quality gate enforcement
+- CI/CD pipeline integration
+- Code quality metrics tracking
 
 ## Integration Patterns
 
-### Claude Code MCP Server Architecture
+### MCP Server Integration
 
-CycleTime integrates with Claude Code through the Model Context Protocol (MCP) server
-framework:
+**Integration via Model Context Protocol:**
+- **Resources**: Expose project context to Claude Code (read-only)
+- **Tools**: Provide CRUD operations and workflow actions
+- **Registry**: Dynamic discovery and routing
 
-```kotlin
-class CycleTimeMCPServer(
-    private val resources: List<MCPResource>,
-    private val tools: List<MCPTool>
-) {
-    // Project orchestration tools
-    @MCPTool("cycletime_create_project")
-    suspend fun createProject(requirements: ProjectRequirements): Project
+### State Management
 
-    @MCPTool("cycletime_get_next_task")
-    suspend fun getNextTask(projectId: String): TaskRecommendation
+**Multi-Layer State Architecture:**
+- **In-Memory**: Session context, caches, conversation state
+- **Repository Documentation**: Version-controlled specs and ADRs
+- **Issue Provider**: Authoritative project structure and progress
 
-    @MCPTool("cycletime_update_issue")
-    suspend fun updateIssue(issueId: String, updates: IssueUpdate): Issue
-
-    @MCPTool("cycletime_analyze_dependencies")
-    suspend fun analyzeDependencies(projectId: String): DependencyAnalysis
-
-    // Documentation management
-    @MCPTool("cycletime_generate_docs")
-    suspend fun generateDocumentation(projectId: String, docType: DocumentType): Document
-
-    @MCPTool("cycletime_sync_docs")
-    suspend fun syncDocumentation(projectId: String): SyncResult
-}
-```
-
-### State Management Architecture
-
-CycleTime implements multi-layer state management for comprehensive project tracking:
-
-**Layer 1: In-Memory State**
-
-- Current session context and temporary data
-- LLM conversation state and user preferences
-- Performance caches for frequently accessed data
-
-**Layer 2: Repository Documentation**
-
-- Persistent documentation in standardized `docs/` structure
-- Version-controlled architectural decisions and specifications
-- Cross-reference linking between requirements and implementation
-
-**Layer 3: Issue Tracking Provider**
-
-- Authoritative source for project structure and progress
-- Complete issue lifecycle and dependency relationships
-- Cross-session continuity and team collaboration state
-
-**State Synchronization Strategy:**
-
-```kotlin
-class StateManager(
-    private val provider: IssueProvider,
-    private val cache: StateCache
-) {
-    suspend fun syncState(projectId: String): SyncResult {
-        // Pull latest from provider
-        val providerState = provider.getProject(projectId)
-
-        // Validate documentation currency
-        val docsState = validateDocumentation(projectId)
-
-        // Reconcile any conflicts
-        val conflicts = detectConflicts(providerState, docsState)
-        if (conflicts.isNotEmpty()) {
-            return resolveConflicts(conflicts)
-        }
-
-        // Update in-memory cache
-        cache.update(projectId, providerState)
-
-        return SyncResult(status = "success", conflicts = emptyList())
-    }
-}
-```
+**Synchronization:** Pull from provider → Validate docs → Resolve conflicts → Update cache
 
 ## Technical Decision Rationale
 
@@ -1134,19 +447,17 @@ provider integration.
 
 ### Embedded Database Strategy
 
-**Current**: Use embedded H2 database as the default issue tracking
-provider for the Kotlin/JVM implementation.
+**Current**: H2 database serves as the default issue tracking provider for the Kotlin/JVM implementation (implemented in SPI-439, August 2025).
 
 **Rationale**:
 
 - Zero external dependencies for immediate productivity
-- Optimal JVM integration and high performance for analytical queries
-- Native Exposed ORM integration for type-safe database operations
-- Excellent concurrent access support with connection pooling
-- Complete offline operation capability
-- JVM-optimized memory management and query execution
-- Linear-inspired schema enables easy migration to cloud providers
-- No account setup or authentication friction
+- Native JVM integration with Exposed ORM for type-safe database operations
+- Concurrent access support with built-in connection pooling
+- Supports offline operation without external services
+- JVM-native memory management and query execution
+- Linear-inspired schema design enables migration to cloud providers
+- No account setup or authentication requirements
 
 **Trade-offs**:
 
@@ -1190,50 +501,18 @@ terminology.
 - Requires transformation for providers with different paradigms
 - Potential feature gaps for providers with unique capabilities
 
-## Performance Considerations
+## Performance & Security
 
-### Database Optimization
+### Performance Targets
+- Support for 10,000+ issues per project
+- Comprehensive indexing for dependency graph queries
+- Configurable caching (LRU) and lazy loading
 
-**Query Performance**:
-
-- Comprehensive indexing strategy for common access patterns
-- Compound indexes for multi-column queries
-- Foreign key constraints for data integrity without performance penalty
-
-**Scalability Targets**:
-
-- Support for 10,000+ issues per project with sub-100ms query response
-- Dependency graph analysis for projects with 1,000+ interconnected issues
-- Real-time state synchronization across multiple concurrent sessions
-
-### Memory Management
-
-**Caching Strategy**:
-
-- LRU cache for frequently accessed issues and dependency graphs
-- Lazy loading for large dependency trees and historical data
-- Batch operations for bulk issue updates and migrations
-
-**Resource Limits**:
-
-- Maximum 100MB memory footprint for typical project sizes
-- Configurable cache sizes based on available system resources
-- Graceful degradation for resource-constrained environments
-
-## Security and Data Protection
-
-### Data Encryption
-
-**At Rest**: Database files encrypted using system keychain integration
-**In Transit**: All provider API communications use TLS 1.3 minimum **API
-Keys**: Secure storage using platform-appropriate credential management
-
-### Access Control
-
-**Local Mode**: File system permissions protect project database and
-configuration **Provider Integration**: Respect provider-specific access
-controls and team permissions **Audit Trail**: Complete activity logging for all
-project state modifications
+### Security
+- Database encryption at rest (system keychain)
+- TLS 1.3 for external APIs
+- Platform-appropriate credential storage
+- Activity audit trail
 
 ## Cross-References
 

@@ -15,7 +15,11 @@ CycleTime supports two distinct agent invocation methods:
 
 ### Available Agents
 
+CycleTime provides specialized agents for different aspects of software development. Each agent brings domain expertise and follows specific workflows tailored to their role. Choose agents based on the task requirements and coordination needs - use Task tool agents for coordinated development with shared context, or Claude CLI agents for autonomous execution with independent contexts.
+
 #### Core Development Agents
+
+These agents handle the primary implementation, testing, and quality assurance workflows. They work together to deliver production-ready code with comprehensive test coverage and security validation.
 
 **@agent-developer**
 Code implementation and development
@@ -36,6 +40,8 @@ Code review and quality assessment
 ```
 
 #### Architecture and Planning Agents
+
+These agents focus on system design, requirements analysis, and technical coordination. Use them during planning phases to establish solid architectural foundations and break down complex features into implementable work items.
 
 **@agent-software-architect**
 System design and architecture
@@ -62,6 +68,8 @@ Build, deployment, and infrastructure
 ```
 
 #### Infrastructure Support Agents
+
+These agents provide specialized support for context preparation, technical writing, and infrastructure operations. The Context Engineer is particularly valuable for complex multi-agent workflows requiring curated documentation and context distribution.
 
 **@agent-context-engineer**
 Preparation specialist for structured context curation before agent delegation

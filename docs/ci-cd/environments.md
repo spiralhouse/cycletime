@@ -121,13 +121,13 @@ Each environment has health monitoring:
 
 ```bash
 # Development
-curl https://dev.jcvd.example.com/health
+curl https://dev.cycletime.example.com/health
 
 # Staging
-curl https://staging.jcvd.example.com/health
+curl https://staging.cycletime.example.com/health
 
 # Production
-curl https://api.jcvd.example.com/health
+curl https://api.cycletime.example.com/health
 ```
 
 ## Rollback Procedures
