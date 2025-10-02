@@ -67,6 +67,7 @@ Validates and repairs session data integrity with configurable rules (max contex
 **Validation Flow:**
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 flowchart TD
     Start([Retrieve Session]) --> ValidateKey{Valid Session Key?}
     ValidateKey -->|No| DeleteSession[Delete Invalid Session]
@@ -92,9 +93,9 @@ flowchart TD
     DeleteSession --> ReturnNull([Return null])
     ReturnSession --> End([Return Session])
 
-    style ReturnSession fill:#4CAF50
-    style DeleteSession fill:#F44336
-    style AttemptRepair fill:#FFC107
+    style ReturnSession fill:#238636,stroke:#2ea043,color:#c9d1d9
+    style DeleteSession fill:#da3633,stroke:#f85149,color:#c9d1d9
+    style AttemptRepair fill:#d29922,stroke:#e3b341,color:#0d1117
 ```
 
 **Validation Checks:**
@@ -178,6 +179,7 @@ See implementation code for detailed API signatures.
 **State Machine:**
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 stateDiagram-v2
     [*] --> Created: createSession()
 

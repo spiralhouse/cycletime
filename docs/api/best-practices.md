@@ -9,12 +9,13 @@ This guide documents the RESTful design principles and best practices used in th
 The CycleTime API implements **Richardson Maturity Model Level 2** through the following design choices:
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 graph TD
     A[Level 0: The Swamp of POX] --> B[Level 1: Resources]
     B --> C[Level 2: HTTP Verbs]
     C --> D[Level 3: Hypermedia Controls]
 
-    style C fill:#4CAF50,stroke:#333,stroke-width:2px
+    style C fill:#238636,stroke:#2ea043,stroke-width:2px,color:#c9d1d9
 
     E[CycleTime API] --> C
 ```
@@ -37,6 +38,7 @@ graph TD
 Resources are organized in a logical hierarchy reflecting real-world relationships:
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 graph TB
     API["/api/v1"] --> Projects["/projects"]
     Projects --> ProjectId["/projects/{projectId}"]
@@ -105,6 +107,7 @@ PUT /api/v1/projects/{id}
 ### Success Codes
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 flowchart LR
     GET --> 200[200 OK]
     POST --> 201[201 Created]
@@ -121,6 +124,7 @@ flowchart LR
 ### Error Codes
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 flowchart TD
     Error --> Client[4xx Client Errors]
     Error --> Server[5xx Server Errors]
@@ -217,16 +221,17 @@ All API endpoints include version in the path:
 ### Version Lifecycle
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 graph LR
     A[v1 Beta] --> B[v1 Stable]
     B --> C[v2 Beta]
     C --> D[v2 Stable]
     B -.->|Deprecated| E[v1 Sunset]
 
-    style A fill:#FFD700
-    style B fill:#4CAF50
-    style C fill:#FFD700
-    style E fill:#FF6B6B
+    style A fill:#d29922,stroke:#e3b341,color:#0d1117
+    style B fill:#238636,stroke:#2ea043,color:#c9d1d9
+    style C fill:#d29922,stroke:#e3b341,color:#0d1117
+    style E fill:#da3633,stroke:#f85149,color:#c9d1d9
 ```
 
 **Versioning Rules**:
@@ -256,6 +261,7 @@ graph LR
 **Validation Layers**:
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 flowchart TD
     A[Request] --> B{Syntax Valid?}
     B -->|No| C[400 Bad Request]
@@ -313,6 +319,7 @@ PUT /api/v1/projects/{id}
 ### Hierarchy Rules
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 graph TD
     A[Business Rules] --> B[Epic Rules]
     A --> C[Story Rules]
@@ -416,6 +423,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 ### Deprecation Process
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d', 'actorBkg':'#161b22', 'actorBorder':'#30363d', 'actorTextColor':'#c9d1d9', 'actorLineColor':'#58a6ff', 'signalColor':'#58a6ff', 'signalTextColor':'#c9d1d9'}}}%%
 sequenceDiagram
     participant Client
     participant API

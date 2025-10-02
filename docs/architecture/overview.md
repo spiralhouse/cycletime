@@ -41,6 +41,7 @@ Rather than automating workflows, CycleTime exposes structured project data for 
 CycleTime follows **Domain-Driven Design** and **Hexagonal Architecture** principles with clear separation of concerns:
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 graph TB
     subgraph MCP["MCP Layer"]
         Resources[MCP Resources]
@@ -76,10 +77,10 @@ graph TB
     RepoImpl --> Database
     RepoImpl --> ExternalAPIs
 
-    style Domain fill:#E3F2FD
-    style Application fill:#F3E5F5
-    style Infrastructure fill:#E8F5E9
-    style MCP fill:#FFF3E0
+    style Domain fill:#1f6feb,stroke:#58a6ff,color:#c9d1d9
+    style Application fill:#8957e5,stroke:#a371f7,color:#c9d1d9
+    style Infrastructure fill:#238636,stroke:#2ea043,color:#c9d1d9
+    style MCP fill:#d29922,stroke:#e3b341,color:#0d1117
 ```
 
 **Layer Responsibilities:**
@@ -107,6 +108,7 @@ graph TB
 ### Provider Implementation Status
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 graph TB
     subgraph Core["Core Interfaces"]
         IssueProvider[IssueProvider Interface]
@@ -135,10 +137,10 @@ graph TB
     GitHub --> GitHubAPI[GitHub API]
     Jira --> JiraAPI[Jira API]
 
-    style H2 fill:#4CAF50
-    style Linear fill:#E0E0E0
-    style GitHub fill:#E0E0E0
-    style Jira fill:#E0E0E0
+    style H2 fill:#238636,stroke:#2ea043,color:#c9d1d9
+    style Linear fill:#6e7681,stroke:#8b949e,color:#c9d1d9
+    style GitHub fill:#6e7681,stroke:#8b949e,color:#c9d1d9
+    style Jira fill:#6e7681,stroke:#8b949e,color:#c9d1d9
 ```
 
 | Provider            | Status   | Features                                                     | Primary Use Case                                     |
@@ -175,6 +177,7 @@ graph TB
 The H2 database uses a schema designed for JVM integration, Exposed ORM compatibility, and straightforward migration to cloud providers:
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 erDiagram
     PROJECTS ||--o{ ISSUES : "contains"
     PROJECTS ||--o{ WORKFLOW_STATES : "defines"
