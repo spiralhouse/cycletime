@@ -1,0 +1,795 @@
+{
+  "metadata": {
+    "total_files": 93,
+    "total_domains": 5,
+    "hub_docs_count": 7,
+    "cross_domain_links_count": 95,
+    "domain_distribution": {
+      "reference": 42,
+      "development": 13,
+      "architecture": 13,
+      "archive": 6,
+      "testing": 18
+    }
+  },
+  "hub_docs": {
+    "docs/testing/parallel-development.md": "testing",
+    "docs/reference/worktree-operations.md": "reference",
+    "docs/development/single-feature-workflow.md": "development",
+    "docs/ci-cd/overview.md": "testing",
+    "docs/reference/decision-guide.md": "reference",
+    "docs/development/linear-branch-integration.md": "development",
+    "CLAUDE.md": "coordination-required"
+  },
+  "domain_assignments": {
+    "reference": [
+      ".claude/README.md",
+      ".claude/agents/code-reviewer.md",
+      ".claude/agents/context-engineer.md",
+      ".claude/agents/developer.md",
+      ".claude/agents/devops-engineer.md",
+      ".claude/agents/product-manager.md",
+      ".claude/agents/qa.md",
+      ".claude/agents/software-architect.md",
+      ".claude/agents/tech-lead.md",
+      ".claude/agents/tech-writer.md",
+      ".claude/shared/development-commands.md",
+      ".claude/shared/git-conventions.md",
+      ".claude/shared/linear-reference.md",
+      ".claude/shared/parallel-development-detection.md",
+      ".claude/shared/testing-standards.md",
+      ".claude/test-scenarios/context-engineer-tests.md",
+      "docs/FOUNDATION_REVIEW_REPORT.md",
+      "docs/MVP_CAPABILITY_SUMMARY.md",
+      "docs/MVP_DEMO_SCRIPT.md",
+      "docs/README.md",
+      "docs/getting-started/configuration.md",
+      "docs/getting-started/installation.md",
+      "docs/getting-started/onboarding.md",
+      "docs/getting-started/quick-start.md",
+      "docs/reference/PRD.md",
+      "docs/reference/agents.md",
+      "docs/reference/decision-guide.md",
+      "docs/reference/limitations.md",
+      "docs/reference/technical-design/application-service-patterns.md",
+      "docs/reference/technical-design/business-rule-verification-report.md",
+      "docs/reference/technical-design/configuration-management.md",
+      "docs/reference/technical-design/database-di-migration.md",
+      "docs/reference/technical-design/dependency-injection-patterns.md",
+      "docs/reference/technical-design/domain-entities.md",
+      "docs/reference/technical-design/mcp-architecture-simplification.md",
+      "docs/reference/technical-design/mcp-integration-patterns.md",
+      "docs/reference/technical-design/mcp-mvp-spike-plan.md",
+      "docs/reference/technical-design/repository-pattern.md",
+      "docs/reference/technical-design/testing-architecture-tdd.md",
+      "docs/reference/troubleshooting.md",
+      "docs/reference/user-experience.md",
+      "docs/reference/worktree-operations.md"
+    ],
+    "development": [
+      ".claude/commands/hello.md",
+      ".claude/commands/linear-dev.md",
+      ".claude/commands/worktree-cleanup.md",
+      ".claude/workflows/bugfix-workflow.md",
+      ".claude/workflows/direct-workflow.md",
+      ".claude/workflows/task-tool-workflow.md",
+      ".claude/workflows/tdd-workflow.md",
+      "docs/development/branching-strategy.md",
+      "docs/development/linear-branch-integration.md",
+      "docs/development/project-structure.md",
+      "docs/development/repository-usage.md",
+      "docs/development/setup.md",
+      "docs/development/single-feature-workflow.md"
+    ],
+    "architecture": [
+      "docs/adr/0001-exposed-orm-transaction-pattern.md",
+      "docs/api/best-practices.md",
+      "docs/api/mcp-resources.md",
+      "docs/api/migration-guide.md",
+      "docs/api/quick-start.md",
+      "docs/api/rest-api-reference.md",
+      "docs/api/rest-endpoints.md",
+      "docs/architecture/decisions/ADR-005-database-initialization-pattern.md",
+      "docs/architecture/decisions/ADR-006-lifecycle-managed-cleanup.md",
+      "docs/architecture/decisions/ADR-007-repository-issue-persistence.md",
+      "docs/architecture/decisions/ADR-007-repository-singleton-thread-safety.md",
+      "docs/architecture/overview.md",
+      "docs/architecture/session-management.md"
+    ],
+    "archive": [
+      "docs/archive/refactoring-notes/spi-467-summary.md",
+      "docs/archive/refactoring-notes/spi-468-notes.md",
+      "docs/archive/sessions/2025-07-session.md",
+      "docs/archive/test-plans/cd-implementation-test-plan.md",
+      "docs/archive/test-plans/parallel-tdd-test-plan.md",
+      "docs/migration/profile-configuration-migration.md"
+    ],
+    "testing": [
+      "docs/ci-cd/concurrency-control.md",
+      "docs/ci-cd/container-tagging.md",
+      "docs/ci-cd/environment-protection.md",
+      "docs/ci-cd/environments.md",
+      "docs/ci-cd/overview.md",
+      "docs/ci-cd/production-approvals.md",
+      "docs/ci-cd/release-process.md",
+      "docs/ci-cd/staging-promotion.md",
+      "docs/ci-cd/versioning.md",
+      "docs/operations/deployment-guide.md",
+      "docs/performance/baseline-results.md",
+      "docs/performance/caching-strategy.md",
+      "docs/testing/database-test-migration-guide.md",
+      "docs/testing/local-testing.md",
+      "docs/testing/parallel-development.md",
+      "docs/testing/strategy.md",
+      "docs/testing/tdd-workflow.md",
+      "docs/testing/test-suites.md"
+    ]
+  },
+  "cross_domain_links": [
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": ".claude/shared/parallel-development-detection.md",
+      "to_domain": "reference",
+      "note": "requires coordination - cross-domain hub link"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": ".claude/shared/git-conventions.md",
+      "to_domain": "reference",
+      "note": "requires coordination - cross-domain hub link"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": ".claude/shared/development-commands.md",
+      "to_domain": "reference",
+      "note": "requires coordination - cross-domain hub link"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": ".claude/shared/testing-standards.md",
+      "to_domain": "reference",
+      "note": "requires coordination - cross-domain hub link"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": ".claude/shared/linear-reference.md",
+      "to_domain": "reference",
+      "note": "requires coordination - cross-domain hub link"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": "docs/reference/agents.md",
+      "to_domain": "reference",
+      "note": "requires coordination - cross-domain hub link"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": "docs/development/branching-strategy.md",
+      "to_domain": "development",
+      "note": "requires coordination - cross-domain hub link"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": "docs/development/single-feature-workflow.md",
+      "to_domain": "development",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": "docs/development/linear-branch-integration.md",
+      "to_domain": "development",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": "docs/testing/parallel-development.md",
+      "to_domain": "testing",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": ".claude/workflows/task-tool-workflow.md",
+      "to_domain": "development",
+      "note": "requires coordination - cross-domain hub link"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": ".claude/workflows/tdd-workflow.md",
+      "to_domain": "development",
+      "note": "requires coordination - cross-domain hub link"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": ".claude/workflows/direct-workflow.md",
+      "to_domain": "development",
+      "note": "requires coordination - cross-domain hub link"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": ".claude/workflows/bugfix-workflow.md",
+      "to_domain": "development",
+      "note": "requires coordination - cross-domain hub link"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": "docs/reference/agents.md",
+      "to_domain": "reference",
+      "note": "requires coordination - cross-domain hub link"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": "docs/reference/worktree-operations.md",
+      "to_domain": "reference",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": "docs/reference/decision-guide.md",
+      "to_domain": "reference",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "CLAUDE.md",
+      "from_domain": "coordination",
+      "to": "docs/reference/troubleshooting.md",
+      "to_domain": "reference",
+      "note": "requires coordination - cross-domain hub link"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/development/setup.md",
+      "to_domain": "development",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/development/project-structure.md",
+      "to_domain": "development",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/development/repository-usage.md",
+      "to_domain": "development",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/architecture/overview.md",
+      "to_domain": "architecture",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/architecture/session-management.md",
+      "to_domain": "architecture",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/testing/strategy.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/testing/tdd-workflow.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/testing/parallel-development.md",
+      "to_domain": "testing",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/testing/local-testing.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/testing/test-suites.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/api/rest-endpoints.md",
+      "to_domain": "architecture",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/api/mcp-resources.md",
+      "to_domain": "architecture",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/ci-cd/overview.md",
+      "to_domain": "testing",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/ci-cd/environments.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/ci-cd/release-process.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/ci-cd/versioning.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/ci-cd/container-tagging.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/ci-cd/staging-promotion.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/ci-cd/production-approvals.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/ci-cd/environment-protection.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/operations/deployment-guide.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/operations/deployment-guide.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/operations/deployment-guide.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/performance/caching-strategy.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/performance/caching-strategy.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/performance/baseline-results.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/development/setup.md",
+      "to_domain": "development",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/testing/strategy.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/api/rest-endpoints.md",
+      "to_domain": "architecture",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/operations/deployment-guide.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/ci-cd/overview.md",
+      "to_domain": "testing",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/ci-cd/environments.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/performance/caching-strategy.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/architecture/overview.md",
+      "to_domain": "architecture",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/README.md",
+      "from_domain": "reference",
+      "to": "docs/ci-cd/release-process.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/development/branching-strategy.md",
+      "from_domain": "development",
+      "to": "docs/reference/decision-guide.md",
+      "to_domain": "reference",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/development/branching-strategy.md",
+      "from_domain": "development",
+      "to": "docs/reference/worktree-operations.md",
+      "to_domain": "reference",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/development/branching-strategy.md",
+      "from_domain": "development",
+      "to": "docs/reference/troubleshooting.md",
+      "to_domain": "reference",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/development/branching-strategy.md",
+      "from_domain": "development",
+      "to": "docs/testing/parallel-development.md",
+      "to_domain": "testing",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/development/linear-branch-integration.md",
+      "from_domain": "development",
+      "to": "docs/testing/parallel-development.md",
+      "to_domain": "testing",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/development/setup.md",
+      "from_domain": "development",
+      "to": "docs/testing/strategy.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "from_domain": "development",
+      "to": "docs/reference/decision-guide.md",
+      "to_domain": "reference",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "from_domain": "development",
+      "to": "docs/reference/worktree-operations.md",
+      "to_domain": "reference",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "from_domain": "development",
+      "to": "docs/reference/agents.md",
+      "to_domain": "reference",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "from_domain": "development",
+      "to": "docs/reference/troubleshooting.md",
+      "to_domain": "reference",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "from_domain": "development",
+      "to": "docs/reference/agents.md",
+      "to_domain": "reference",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "from_domain": "development",
+      "to": "docs/testing/parallel-development.md",
+      "to_domain": "testing",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/getting-started/configuration.md",
+      "from_domain": "reference",
+      "to": "docs/operations/deployment-guide.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/getting-started/installation.md",
+      "from_domain": "reference",
+      "to": "docs/development/setup.md",
+      "to_domain": "development",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/getting-started/quick-start.md",
+      "from_domain": "reference",
+      "to": "docs/api/rest-endpoints.md",
+      "to_domain": "architecture",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/getting-started/quick-start.md",
+      "from_domain": "reference",
+      "to": "docs/development/setup.md",
+      "to_domain": "development",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/getting-started/quick-start.md",
+      "from_domain": "reference",
+      "to": "docs/testing/strategy.md",
+      "to_domain": "testing",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/operations/deployment-guide.md",
+      "from_domain": "testing",
+      "to": "docs/getting-started/configuration.md",
+      "to_domain": "reference",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/reference/agents.md",
+      "from_domain": "reference",
+      "to": "docs/development/single-feature-workflow.md",
+      "to_domain": "development",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/reference/agents.md",
+      "from_domain": "reference",
+      "to": "docs/testing/parallel-development.md",
+      "to_domain": "testing",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/reference/decision-guide.md",
+      "from_domain": "reference",
+      "to": "docs/development/single-feature-workflow.md",
+      "to_domain": "development",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/reference/decision-guide.md",
+      "from_domain": "reference",
+      "to": "docs/testing/parallel-development.md",
+      "to_domain": "testing",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/reference/decision-guide.md",
+      "from_domain": "reference",
+      "to": "docs/development/linear-branch-integration.md",
+      "to_domain": "development",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/reference/worktree-operations.md",
+      "from_domain": "reference",
+      "to": "docs/development/single-feature-workflow.md",
+      "to_domain": "development",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/reference/worktree-operations.md",
+      "from_domain": "reference",
+      "to": "docs/testing/parallel-development.md",
+      "to_domain": "testing",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/reference/worktree-operations.md",
+      "from_domain": "reference",
+      "to": "docs/development/branching-strategy.md",
+      "to_domain": "development",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/reference/worktree-operations.md",
+      "from_domain": "reference",
+      "to": "docs/development/linear-branch-integration.md",
+      "to_domain": "development",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "from_domain": "testing",
+      "to": "docs/reference/agents.md",
+      "to_domain": "reference",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "from_domain": "testing",
+      "to": "docs/reference/worktree-operations.md",
+      "to_domain": "reference",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "from_domain": "testing",
+      "to": "docs/reference/decision-guide.md",
+      "to_domain": "reference",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "from_domain": "testing",
+      "to": "docs/reference/agents.md",
+      "to_domain": "reference",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "from_domain": "testing",
+      "to": ".claude/workflows/tdd-workflow.md",
+      "to_domain": "development",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "from_domain": "testing",
+      "to": "docs/reference/troubleshooting.md",
+      "to_domain": "reference",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "from_domain": "testing",
+      "to": "docs/reference/worktree-operations.md",
+      "to_domain": "reference",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "from_domain": "testing",
+      "to": "docs/reference/agents.md",
+      "to_domain": "reference",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "from_domain": "testing",
+      "to": "docs/reference/troubleshooting.md",
+      "to_domain": "reference",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "from_domain": "testing",
+      "to": "docs/reference/decision-guide.md",
+      "to_domain": "reference",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "from_domain": "testing",
+      "to": "docs/development/single-feature-workflow.md",
+      "to_domain": "development",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "from_domain": "testing",
+      "to": "docs/development/linear-branch-integration.md",
+      "to_domain": "development",
+      "note": "requires coordination - hub document target"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "from_domain": "testing",
+      "to": ".claude/workflows/task-tool-workflow.md",
+      "to_domain": "development",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/testing/strategy.md",
+      "from_domain": "testing",
+      "to": ".claude/shared/testing-standards.md",
+      "to_domain": "reference",
+      "note": "monitor for link breakage during parallel edits"
+    },
+    {
+      "from": "docs/testing/strategy.md",
+      "from_domain": "testing",
+      "to": "docs/development/setup.md",
+      "to_domain": "development",
+      "note": "monitor for link breakage during parallel edits"
+    }
+  ]
+}

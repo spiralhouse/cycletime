@@ -33,6 +33,30 @@ See [USER_EXPERIENCE.md](USER_EXPERIENCE.md) for detailed new project workflows.
 
 ### Onboarding Assistant Flow
 
+The Onboarding Assistant uses a simple question-based approach to recommend the optimal integration strategy based on project size, documentation status, and team activity level.
+
+#### Integration Decision Flow
+
+```mermaid
+flowchart TD
+    A[Existing Project] --> B{Project Size?}
+    B -->|10-50 issues| C[Full Integration<br/>Complete CycleTime benefits]
+    B -->|50-200 issues| D[Hybrid Approach<br/>New work focus]
+    B -->|200+ issues| E[Conservative Pilot<br/>Limited scope]
+
+    C --> F[2-4 hour setup]
+    D --> G[Gradual over 2-4 weeks]
+    E --> H[1-2 month evaluation]
+
+    F --> I[Complete Documentation<br/>Issue Organization<br/>CycleTime Activation]
+    G --> J[New Work Integration<br/>Selective Migration<br/>Phased Adoption]
+    H --> K[Pilot Scope Definition<br/>Evaluation Metrics<br/>Expand if Successful]
+
+    style C fill:#d4edda
+    style D fill:#fff3cd
+    style E fill:#f8d7da
+```
+
 #### Initial Assessment Through Questions
 
 ```
@@ -109,22 +133,22 @@ Claude: "Excellent! Small projects are perfect for full CycleTime integration:
 
 Your project size (10-50 issues) is ideal for comprehensive CycleTime onboarding:
 
-### **Quick Integration Plan (2-4 hours total)**
+### **Quick Integration Plan**
 
-**Step 1: Documentation Foundation (1-2 hours)**
+**Step 1: Documentation Foundation**
 - Create basic PRD.md based on existing project goals
-- I'll guide you through essential project documentation
+- Guided documentation creation for essential project artifacts
 - Add simple architecture overview
 
-**Step 2: Issue Organization Review (30 minutes)**
-- Quick review of current issue structure
-- Simple recommendations for Epic/Story/Subtask organization
-- Optional: guided cleanup of any structural issues
+**Step 2: Issue Organization Review**
+- Review current issue structure
+- Recommendations for Epic/Story/Subtask organization
+- Optional: guided cleanup of structural issues
 
-**Step 3: CycleTime Activation (30 minutes)**
+**Step 3: CycleTime Activation**
 - Connect CycleTime to your project
-- Set up intelligent task orchestration
-- Ready for full CycleTime workflow management
+- Set up task orchestration
+- Enable CycleTime workflow management
 
 **Why Full Integration Works for Your Project:**
 ✅ Small scope makes comprehensive review manageable
@@ -241,7 +265,7 @@ data class SimpleHealthCheck(
 4. **Consider adding ARCHITECTURE.md** for technical overview and system design
 5. **Review Epic structure** - one subtask bypasses Story level (should be Epic → Story → Subtask)
 
-**Estimated remediation time:** 2-3 hours
+**Remediation approach:** Guided documentation creation and issue organization
 **CycleTime can help with:** All documentation creation and issue organization
 ```
 
@@ -309,24 +333,24 @@ assistance:
 
 **Small Projects (10-50 issues):**
 
-- Complete integration within 2-4 hours
-- Immediate comprehensive CycleTime benefits
+- Complete integration approach recommended
+- Comprehensive CycleTime benefits from day one
 - Strong foundation for future growth
-- High success rate (>90%)
+- Manageable scope for full review and organization
 
 **Medium Projects (50-200 issues):**
 
-- Gradual integration over 2-4 weeks
+- Gradual integration approach recommended
 - Hybrid approach with new work focus
 - Selective existing work integration
-- Good success rate (>80%)
+- Phased adoption over multiple weeks
 
 **Large Projects (200+ issues):**
 
-- Conservative pilot approach over 1-2 months
+- Conservative pilot approach recommended
 - Limited scope with careful evaluation
 - Flexible expansion based on demonstrated value
-- Moderate success rate (>70%), varies by team adoption
+- Phased adoption over multiple months, varies by team needs
 
 ### Common Integration Challenges
 

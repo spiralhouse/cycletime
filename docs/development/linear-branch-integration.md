@@ -292,31 +292,53 @@ Handle dependencies through:
 2. **Mocking**: Mock dependencies during parallel development
 3. **Integration branches**: Merge dependencies for testing
 
-## Linear API Integration
+## Linear MCP Integration
+
+CycleTime integrates with Linear through MCP (Model Context Protocol) tools, enabling Claude Code to read and update Linear issues programmatically. These tools provide type-safe access to Linear's API without requiring separate CLI installation.
 
 ### Reading Issue Data
 
+Claude Code can access Linear issue details using MCP tools:
+
 ```bash
-# Get issue details
-linear issue SPI-620
+# Get issue details with MCP tool
+# Claude Code automatically invokes: mcp__linear__get_issue
+"Get details for Linear issue SPI-620"
 
-# List team issues
-linear issues --team "Spiral House"
-
-# Filter by status
-linear issues --status "In Progress"
+# List team issues with filtering
+# Claude Code automatically invokes: mcp__linear__list_issues
+"Show all issues for team Spiral House"
+"Show issues with status In Progress"
 ```
+
+**MCP Tool Reference:**
+- `mcp__linear__get_issue` - Retrieve detailed information about a specific issue
+- `mcp__linear__list_issues` - Query issues with filters (team, status, assignee, project)
+- `mcp__linear__list_comments` - Get comments for an issue
 
 ### Updating Issue Status
 
+Claude Code updates Linear status through MCP tools during workflow transitions:
+
 ```bash
-# Update status programmatically
-linear issue update SPI-620 --status "In Progress"
-linear issue update SPI-620 --status "In Review"
-linear issue update SPI-620 --status "Done"
+# Update status when starting work
+# Claude Code uses: mcp__linear__update_issue
+"Update SPI-620 status to In Progress"
+
+# Update status when creating PR
+"Update SPI-620 status to In Review"
+
+# Update status after merge
+"Update SPI-620 status to Done"
 ```
 
+**MCP Tool Reference:**
+- `mcp__linear__update_issue` - Update issue status, assignee, priority, labels, etc.
+- `mcp__linear__create_comment` - Add progress updates or notes
+
 ### Automated Status Updates (Future)
+
+Git hooks can trigger Claude Code to update Linear status automatically:
 
 ```bash
 # Git hook example (.git/hooks/post-checkout)
@@ -324,7 +346,8 @@ linear issue update SPI-620 --status "Done"
 BRANCH=$(git branch --show-current)
 if [[ $BRANCH =~ ^(feat|fix|chore)/spi-([0-9]+) ]]; then
     ISSUE_ID="SPI-${BASH_REMATCH[2]}"
-    linear issue update $ISSUE_ID --status "In Progress"
+    # Invoke Claude Code with MCP tool
+    claude "Update ${ISSUE_ID} status to In Progress"
 fi
 ```
 
@@ -433,80 +456,130 @@ cd .worktrees/spi-638-export && claude -p "Implement dashboard export"
 
 ### Linear Issue Management
 
-1. **One Issue, One Branch**: Each branch addresses exactly one Linear issue
-2. **Clear Acceptance Criteria**: Every issue has measurable success criteria
-3. **Appropriate Sizing**: Issues are sized appropriately for development cycles
-4. **Status Accuracy**: Linear status reflects actual development state
-5. **Dependency Tracking**: Related issues are linked appropriately
+Effective Linear issue management starts with the principle of one issue per branch. Each Git branch should address exactly one Linear issue to maintain clear traceability and simplify code review. This one-to-one mapping ensures that pull requests have focused scope and that Linear status accurately reflects branch state.
+
+Every Linear issue must include clear, measurable acceptance criteria before development begins. Well-defined acceptance criteria serve as both implementation guidance and verification checkpoints, preventing scope creep and ensuring deliverables meet requirements. Issues should be sized appropriately for development cycles - typically 1-5 story points for subtasks - enabling predictable sprint planning and progress tracking.
+
+Maintain Linear status accuracy throughout development. The issue status should always reflect the actual state of work, not aspirational progress. When starting a branch, immediately update the issue to "In Progress". When creating a PR, transition to "In Review". This real-time status tracking provides accurate project visibility and prevents stakeholder confusion.
+
+Track dependencies explicitly by linking related issues in Linear. When one issue blocks another, document this relationship in both issues using Linear's dependency features. This enables proper sequencing in sprint planning and alerts developers to prerequisite work.
 
 ### Branch Management
 
-1. **Consistent Naming**: Always include Linear issue ID in branch name
-2. **Descriptive Names**: Branch names clearly indicate purpose
-3. **Clean History**: Maintain clean, logical commit history
-4. **Regular Sync**: Keep branches synced with main
-5. **Prompt Cleanup**: Delete branches after successful merge
+Branch naming consistency is non-negotiable. Every branch name must include the Linear issue ID (lowercase) following the pattern `<type>/spi-<number>-<description>`. This convention enables automated tooling to associate branches with issues and provides immediate context when reviewing branch lists.
+
+Choose descriptive branch names that clearly communicate purpose. While the Linear issue ID provides traceability, the description portion should summarize what the branch accomplishes. Compare `feat/spi-620-documentation-standards` (clear) versus `feat/spi-620-updates` (vague). Descriptive names reduce cognitive overhead when switching between branches or reviewing pull requests.
+
+Maintain clean commit history through logical, atomic commits. Each commit should represent a coherent change, and the commit messages should explain why the change was made. Avoid "WIP" or "fix" commits in final history - use interactive rebase to clean up before creating pull requests.
+
+Keep branches synced regularly with the main branch to minimize merge conflicts and integration issues. Rebase or merge from main at least daily when working on long-running branches. This practice catches integration problems early when they're easier to resolve.
+
+Delete branches promptly after successful merge. Merged branches clutter the repository and create confusion about active work. Set up automated branch deletion in your PR workflow, or manually delete immediately after merge confirmation. Clean repository state improves developer experience and repository maintainability.
 
 ### Workflow Integration
 
-1. **Status Updates**: Keep Linear status current throughout development
-2. **Clear PRs**: PR descriptions clearly link to Linear issues
-3. **Complete Testing**: Validate all acceptance criteria before merge
-4. **Documentation**: Update documentation as needed
-5. **Communication**: Communicate blockers and status changes
+Status synchronization between Linear and Git is essential for accurate project tracking. Update Linear status at every workflow transition: starting work (In Progress), creating PR (In Review), and completing merge (Done). These updates provide real-time visibility to stakeholders and enable accurate sprint burndown tracking.
+
+Pull request descriptions must clearly link to Linear issues using the "Fixes SPI-XXX" notation. Include the Linear issue URL in the PR body and copy the acceptance criteria from Linear to the PR checklist. This creates bidirectional traceability and ensures reviewers understand the requirements context.
+
+Complete testing validates all acceptance criteria before requesting PR review. Each acceptance criterion from the Linear issue should map to specific tests or verification steps. Don't mark a PR ready for review until every criterion passes - incomplete work wastes reviewer time and delays delivery.
+
+Update documentation concurrently with implementation rather than as an afterthought. When code changes affect architecture, APIs, or workflows, update relevant documentation in the same PR. This keeps documentation synchronized with code and prevents knowledge gaps from accumulating.
+
+Communicate blockers and status changes proactively. When dependencies block progress, update the Linear issue with blocker details and notify relevant team members. When scope changes emerge during implementation, document them in Linear and seek stakeholder input before proceeding. Transparent communication prevents surprises and enables timely course correction.
 
 ## Troubleshooting
 
 ### Common Issues
 
 #### Linear Issue Not Found
-```bash
-# Verify issue exists
-linear issue SPI-620
 
-# Check issue number and project
-# Ensure you have access to the Linear workspace
+When an issue ID appears invalid or inaccessible, verify the issue exists and you have appropriate workspace permissions. Ask Claude Code to retrieve the issue using MCP tools:
+
+```bash
+# Ask Claude Code to verify issue exists
+"Get details for Linear issue SPI-620"
+
+# This invokes mcp__linear__get_issue which will return:
+# - Issue details if it exists and you have access
+# - Error message if issue doesn't exist or lacks permissions
 ```
 
+Check that the issue number is correct and that you're in the right Linear workspace. MCP tools automatically handle authentication if Linear integration is properly configured in Claude Code.
+
 #### Branch Name Conflicts
+
+When creating a branch for a Linear issue, check whether a branch for that issue already exists to avoid duplicate work or naming conflicts:
+
 ```bash
-# Check existing branches
+# Check existing branches for issue
 git branch -a | grep spi-620
 
-# Use alternative naming if needed
+# If conflict exists, verify if previous branch is stale
+git branch -v | grep spi-620
+
+# Use alternative naming if legitimately needed
 git checkout -b feat/spi-620-documentation-standards-v2
 ```
 
+This situation often indicates parallel work on the same issue. Coordinate with team members to determine if branches should be consolidated or if the work genuinely requires multiple branches.
+
 #### Status Update Failures
+
+When Linear status updates fail through MCP tools, first verify connectivity and permissions, then fall back to manual updates if necessary:
+
 ```bash
-# Verify Linear CLI setup
-linear auth
+# Ask Claude Code to update status
+"Update SPI-620 status to In Progress"
 
-# Check issue exists and you have permissions
-linear issue SPI-620
+# If MCP tool fails, check Linear workspace access
+# Ensure Linear integration is configured in Claude Code settings
 
-# Update manually via Linear web interface if CLI fails
+# Fallback: Update manually via Linear web interface
+# Navigate to: https://linear.app/spiral-house/issue/SPI-620
 ```
+
+MCP tool failures typically indicate authentication issues or workspace permission changes. Reconfigure Linear integration in Claude Code settings if errors persist.
 
 ### Recovery Procedures
 
 #### Orphaned Branches
+
+Identify and clean up branches that reference non-existent or closed Linear issues. This prevents workspace clutter and confusion:
+
 ```bash
-# Find branches without Linear issues
+# Find branches without valid Linear issues
 git branch | grep -v main | while read branch; do
   if [[ $branch =~ spi-([0-9]+) ]]; then
     issue_id="SPI-${BASH_REMATCH[1]}"
-    linear issue $issue_id 2>/dev/null || echo "Orphaned branch: $branch"
+    # Ask Claude: "Check if ${issue_id} exists and is open"
+    # Delete branch if issue doesn't exist or is closed
   fi
 done
 ```
 
+Orphaned branches often result from issues being deleted or marked as duplicates in Linear. Verify with the team before deleting branches to ensure no valuable work is lost.
+
 #### Status Mismatches
+
+When Git branch state doesn't align with Linear issue status, audit and reconcile the differences to maintain accurate project tracking:
+
 ```bash
-# Audit Linear status vs Git state
-# Create script to compare branch status with Linear status
-# Manually reconcile any mismatches
+# Compare Git state with Linear state
+# For each branch matching spi-XXX pattern:
+# 1. Ask Claude: "Get status for Linear issue SPI-XXX"
+# 2. Compare with branch presence/merge status
+# 3. Update Linear or Git to match actual state
+
+# Example reconciliation
+git branch -a | grep "spi-" | while read branch; do
+  if [[ $branch =~ spi-([0-9]+) ]]; then
+    echo "Branch: $branch - Ask Claude to check SPI-${BASH_REMATCH[1]} status"
+  fi
+done
 ```
+
+Status mismatches occur when manual updates bypass automation or when workflows are interrupted. Regular audits prevent accumulation of inconsistencies.
 
 ## Integration with Other Workflows
 

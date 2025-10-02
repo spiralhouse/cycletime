@@ -1,17 +1,15 @@
 # CycleTime CE - MVP Capability Summary
 
-**Status: Production-Ready MVP** | **Completion: 90%** | **Available: NOW**
-
 ## Executive Summary
 
-CycleTime CE is a **fully operational** project orchestration framework that extends Claude Code to manage software development lifecycles. Originally estimated at 60% complete, technical validation revealed the MVP is **90% complete and ready for immediate use**.
+CycleTime CE is a project orchestration framework that extends Claude Code to manage software development lifecycles through structured project data and cross-session persistence.
 
 ## Core Capabilities (Available Today)
 
 ### 1. Claude Code Integration ✅
-- **MCP WebSocket Server**: Connect Claude Code directly to CycleTime
-- **10+ Operational Tools**: Project, issue, workflow, and session management
-- **Resource Providers**: Full context access for AI-assisted development
+- **MCP WebSocket Server**: Claude Code integration via MCP protocol
+- **Operational Tools**: Project, issue, workflow, and session management capabilities
+- **Resource Providers**: Context access for AI-assisted development
 - **Cross-Session Persistence**: H2 database maintains state between sessions
 
 ### 2. Project Management ✅
@@ -54,9 +52,9 @@ docker run -p 8080:8080 ghcr.io/spiralhouse/cycletime:latest
 ## Key Benefits
 
 **For Developers**
-- Seamless Claude Code integration for AI-assisted development
+- Claude Code integration through MCP protocol for AI-assisted development
 - Persistent project context across coding sessions
-- Structured workflow management without leaving the IDE
+- Structured workflow management through familiar Claude Code interface
 
 **For Teams**
 - Consistent project structure and tracking
@@ -71,16 +69,28 @@ docker run -p 8080:8080 ghcr.io/spiralhouse/cycletime:latest
 ## Technical Highlights
 
 - **Architecture**: Domain-Driven Design with clean separation of concerns
-- **Performance**: Sub-100ms response times for all operations
+- **Performance**: Session operations < 1ms average latency (measured from SPI-346)
+- **Testing**: 96.91% domain coverage with 60 passing tests (47 unit + 13 integration)
 - **Reliability**: Comprehensive test coverage and error handling
-- **Scalability**: Efficient resource usage, supports concurrent connections
-- **Extensibility**: Plugin architecture for custom tools and workflows
+- **Extensibility**: MCP protocol integration for custom tools and workflows
 
-## Immediate Next Steps
+## Current Status
 
-1. **Demo Available**: Live demonstration ready for stakeholders
-2. **Early Access**: Production MVP available for pilot users
-3. **Feedback Loop**: Gather user input for Phase 2 enhancements
+**Completed Features** (SPI-346):
+- Session management with cross-session persistence
+- Domain-Driven Design architecture implementation
+- H2 database integration with Exposed ORM
+- Comprehensive testing suite (60 tests, 96.91% coverage)
+- Performance validation (< 1ms session operations)
+
+**In Progress**:
+- MCP Resource integration (SPI-290)
+- Project Bootstrap functionality (SPI-354)
+
+**Next Steps**:
+- Complete Phase 1 MCP integration
+- Enhanced context provision and dependency tracking
+- Multi-provider support (Linear, GitHub, Jira)
 
 ## Phase 2 Roadmap (Prioritized)
 

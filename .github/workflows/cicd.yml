@@ -363,6 +363,17 @@ jobs:
             echo "⚠️ Curl not available or coverage report missing, skipping fallback"
           fi
 
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./build/test-results/unitTest/*.xml
+          flags: unit-tests
+          name: unit-test-results
+          fail_ci_if_error: false
+          verbose: true
+
   # Integration Tests
   integration-tests:
     name: Integration Tests
@@ -473,6 +484,17 @@ jobs:
             echo "⚠️ Curl not available or coverage report missing, skipping fallback"
           fi
 
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./build/test-results/integrationTest/*.xml
+          flags: integration-tests
+          name: integration-test-results
+          fail_ci_if_error: false
+          verbose: true
+
   # System Tests
   system-tests:
     name: System Tests
@@ -536,6 +558,17 @@ jobs:
             build/reports/tests/systemTest/
             build/test-results/systemTest/
           retention-days: 7
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./build/test-results/systemTest/*.xml
+          flags: system-tests
+          name: system-test-results
+          fail_ci_if_error: false
+          verbose: true
 
   # Code quality checks - runs on all changes
   quality:

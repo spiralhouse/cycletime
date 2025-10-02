@@ -128,16 +128,16 @@ object IssueDependencies : Table("issue_dependencies") {
 ### 1. H2ProjectRepository
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/persistence/H2ProjectRepository.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/persistence/H2ProjectRepository.kt
 
-import io.spiralhouse.jcvd.domain.entities.Project
-import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
-import io.spiralhouse.jcvd.domain.valueobjects.IssueId
-import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
-import io.spiralhouse.jcvd.domain.services.TimeProvider
-import io.spiralhouse.jcvd.domain.exceptions.RepositoryException
-import io.spiralhouse.jcvd.infrastructure.database.Projects
-import io.spiralhouse.jcvd.infrastructure.database.ProjectIssues
+import io.spiralhouse.cycletime.domain.entities.Project
+import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.domain.valueobjects.IssueId
+import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
+import io.spiralhouse.cycletime.domain.services.TimeProvider
+import io.spiralhouse.cycletime.domain.exceptions.RepositoryException
+import io.spiralhouse.cycletime.infrastructure.database.Projects
+import io.spiralhouse.cycletime.infrastructure.database.ProjectIssues
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDateTime
@@ -249,15 +249,15 @@ class H2ProjectRepository(
 ### 2. H2IssueRepository
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/persistence/H2IssueRepository.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/persistence/H2IssueRepository.kt
 
-import io.spiralhouse.jcvd.domain.entities.Issue
-import io.spiralhouse.jcvd.domain.valueobjects.IssueId
-import io.spiralhouse.jcvd.domain.repositories.IssueRepository
-import io.spiralhouse.jcvd.domain.services.TimeProvider
-import io.spiralhouse.jcvd.domain.exceptions.RepositoryException
-import io.spiralhouse.jcvd.infrastructure.database.Issues
-import io.spiralhouse.jcvd.infrastructure.database.IssueDependencies
+import io.spiralhouse.cycletime.domain.entities.Issue
+import io.spiralhouse.cycletime.domain.valueobjects.IssueId
+import io.spiralhouse.cycletime.domain.repositories.IssueRepository
+import io.spiralhouse.cycletime.domain.services.TimeProvider
+import io.spiralhouse.cycletime.domain.exceptions.RepositoryException
+import io.spiralhouse.cycletime.infrastructure.database.Issues
+import io.spiralhouse.cycletime.infrastructure.database.IssueDependencies
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
@@ -356,15 +356,15 @@ class H2IssueRepository(
 ### 3. H2WorkflowRepository
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/persistence/H2WorkflowRepository.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/persistence/H2WorkflowRepository.kt
 
-import io.spiralhouse.jcvd.domain.entities.Workflow
-import io.spiralhouse.jcvd.domain.valueobjects.WorkflowId
-import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
-import io.spiralhouse.jcvd.domain.repositories.WorkflowRepository
-import io.spiralhouse.jcvd.domain.services.TimeProvider
-import io.spiralhouse.jcvd.domain.exceptions.RepositoryException
-import io.spiralhouse.jcvd.infrastructure.database.Workflows
+import io.spiralhouse.cycletime.domain.entities.Workflow
+import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
+import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.domain.repositories.WorkflowRepository
+import io.spiralhouse.cycletime.domain.services.TimeProvider
+import io.spiralhouse.cycletime.domain.exceptions.RepositoryException
+import io.spiralhouse.cycletime.infrastructure.database.Workflows
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import kotlinx.serialization.json.Json
@@ -459,7 +459,7 @@ class H2WorkflowRepository(
 ### Repository Exception Class
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/domain/exceptions/RepositoryException.kt
+// src/main/kotlin/io/spiralhouse/cycletime/domain/exceptions/RepositoryException.kt
 
 class RepositoryException(
     message: String,
@@ -472,12 +472,12 @@ class RepositoryException(
 ### 1. Unit Tests (TDD - Write First)
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/infrastructure/persistence/H2ProjectRepositoryTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/infrastructure/persistence/H2ProjectRepositoryTest.kt
 
-import io.spiralhouse.jcvd.domain.entities.Project
-import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
-import io.spiralhouse.jcvd.domain.services.TimeProvider
-import io.spiralhouse.jcvd.infrastructure.persistence.H2ProjectRepository
+import io.spiralhouse.cycletime.domain.entities.Project
+import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.domain.services.TimeProvider
+import io.spiralhouse.cycletime.infrastructure.persistence.H2ProjectRepository
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -547,13 +547,13 @@ class H2ProjectRepositoryTest : DescribeSpec({
 ### 2. Integration Tests (Write After Implementation)
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/infrastructure/persistence/H2ProjectRepositoryIntegrationTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/infrastructure/persistence/H2ProjectRepositoryIntegrationTest.kt
 
-import io.spiralhouse.jcvd.domain.entities.Project
-import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
-import io.spiralhouse.jcvd.domain.services.RealTimeProvider
-import io.spiralhouse.jcvd.infrastructure.persistence.H2ProjectRepository
-import io.spiralhouse.jcvd.infrastructure.database.Projects
+import io.spiralhouse.cycletime.domain.entities.Project
+import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.domain.services.RealTimeProvider
+import io.spiralhouse.cycletime.infrastructure.persistence.H2ProjectRepository
+import io.spiralhouse.cycletime.infrastructure.database.Projects
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction

@@ -51,10 +51,10 @@ fun Route.configureProjectRoutes() {
     route("/api/v1/projects") {
         configureProjectCrudRoutes()
     }
-    
-    // Legacy routes (for backward compatibility)
+
+    // Legacy routes - return 404 with migration guidance
     route("/api/projects") {
-        configureProjectCrudRoutes()
+        configureLegacyProjectRoutes()
     }
 }
 
@@ -225,10 +225,10 @@ private fun Route.deleteProjectRoute() {
 
 /**
  * Lists all projects.
- * 
+ *
  * ## Response
  * - `200 OK` - List of projects (may be empty)
- * 
+ *
  * ## Response Format
  * ```json
  * {
@@ -236,12 +236,12 @@ private fun Route.deleteProjectRoute() {
  *   "totalCount": 10
  * }
  * ```
- * 
+ *
  * ## Notes
  * - Returns all projects (no pagination currently)
  * - Projects are returned in creation order
  * - Includes issue count for each project
- * 
+ *
  * ## Future Enhancements
  * - Pagination support
  * - Sorting options (name, created date, issue count)
@@ -250,11 +250,56 @@ private fun Route.deleteProjectRoute() {
 private fun Route.listProjectsRoute() {
     get {
         call.logApiOperation("ListProjects")
-        
+
         call.executeServiceCall {
             val service = call.service<ProjectApplicationService>()
             val projectList = service.listProjects()
             call.respondOk(projectList.projects.toProjectListResponse())
+        }
+    }
+}
+
+/**
+ * Configures legacy project routes to return 404 with migration guidance.
+ *
+ * All legacy `/api/projects` endpoints have been removed in favor of `/api/v1/projects`.
+ */
+private fun Route.configureLegacyProjectRoutes() {
+    // Match all HTTP methods and paths
+    get {
+        call.respondNotFound(
+            "Legacy endpoint not found",
+            "This endpoint has been removed. Use /api/v1/projects instead. See documentation at /swagger"
+        )
+    }
+
+    post {
+        call.respondNotFound(
+            "Legacy endpoint not found",
+            "This endpoint has been removed. Use /api/v1/projects instead. See documentation at /swagger"
+        )
+    }
+
+    route("/{id}") {
+        get {
+            call.respondNotFound(
+                "Legacy endpoint not found",
+                "This endpoint has been removed. Use /api/v1/projects/{id} instead. See documentation at /swagger"
+            )
+        }
+
+        put {
+            call.respondNotFound(
+                "Legacy endpoint not found",
+                "This endpoint has been removed. Use /api/v1/projects/{id} instead. See documentation at /swagger"
+            )
+        }
+
+        delete {
+            call.respondNotFound(
+                "Legacy endpoint not found",
+                "This endpoint has been removed. Use /api/v1/projects/{id} instead. See documentation at /swagger"
+            )
         }
     }
 }
