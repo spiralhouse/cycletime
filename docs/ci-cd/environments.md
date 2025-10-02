@@ -16,7 +16,7 @@ graph LR
 
 ### Deployment
 - **Trigger**: Every push to main branch
-- **Container Tag**: `ghcr.io/spiralhouse/jcvd:dev`
+- **Container Tag**: `ghcr.io/spiralhouse/cycletime:dev`
 - **Deployment**: Automatic via external CD system
 - **Rollback**: Automatic on health check failure
 
@@ -30,7 +30,7 @@ graph LR
 
 ### Deployment
 - **Trigger**: Manual promotion from dev
-- **Container Tag**: `ghcr.io/spiralhouse/jcvd:staging`
+- **Container Tag**: `ghcr.io/spiralhouse/cycletime:staging`
 - **Deployment**: Automatic after promotion
 - **Rollback**: Manual or automatic on failure
 
@@ -54,7 +54,7 @@ See [Staging Promotion](staging-promotion.md) for details.
 
 ### Deployment
 - **Trigger**: Manual approval after staging
-- **Container Tag**: `ghcr.io/spiralhouse/jcvd:latest`
+- **Container Tag**: `ghcr.io/spiralhouse/cycletime:latest`
 - **Deployment**: Blue-green with manual switch
 - **Rollback**: Immediate rollback capability
 
@@ -96,14 +96,14 @@ All environments use GitHub Container Registry (GHCR):
 
 ```bash
 # Development (mutable tag)
-ghcr.io/spiralhouse/jcvd:dev
+ghcr.io/spiralhouse/cycletime:dev
 
 # Staging (mutable tag)
-ghcr.io/spiralhouse/jcvd:staging
+ghcr.io/spiralhouse/cycletime:staging
 
 # Production (immutable versions)
-ghcr.io/spiralhouse/jcvd:latest
-ghcr.io/spiralhouse/jcvd:1.2.3
+ghcr.io/spiralhouse/cycletime:latest
+ghcr.io/spiralhouse/cycletime:1.2.3
 ```
 
 ## Health Checks
@@ -133,15 +133,15 @@ git revert HEAD && git push
 ### Staging
 ```bash
 # Re-tag previous version
-docker pull ghcr.io/spiralhouse/jcvd:1.2.2
-docker tag ghcr.io/spiralhouse/jcvd:1.2.2 ghcr.io/spiralhouse/jcvd:staging
-docker push ghcr.io/spiralhouse/jcvd:staging
+docker pull ghcr.io/spiralhouse/cycletime:1.2.2
+docker tag ghcr.io/spiralhouse/cycletime:1.2.2 ghcr.io/spiralhouse/cycletime:staging
+docker push ghcr.io/spiralhouse/cycletime:staging
 ```
 
 ### Production
 ```bash
 # Blue-green switch back
-kubectl set image deployment/jcvd jcvd=ghcr.io/spiralhouse/jcvd:1.2.2
+kubectl set image deployment/jcvd jcvd=ghcr.io/spiralhouse/cycletime:1.2.2
 
 # Or use rollback command
 kubectl rollout undo deployment/jcvd

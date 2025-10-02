@@ -8,7 +8,7 @@ CycleTime uses Git.SemVersioning for automatic version management and a multi-ta
 
 ## Registry
 
-- **Registry**: `ghcr.io/spiralhouse/jcvd`
+- **Registry**: `ghcr.io/spiralhouse/cycletime`
 - **Visibility**: Public
 - **Deployment**: Automatic on push to main branch
 
@@ -31,7 +31,7 @@ All pushes to the main branch trigger container builds with the following tags:
 - **Usage**: External CD system watches for changes
 
 ```bash
-docker pull ghcr.io/spiralhouse/jcvd:dev
+docker pull ghcr.io/spiralhouse/cycletime:dev
 ```
 
 #### Version Tags
@@ -40,7 +40,7 @@ docker pull ghcr.io/spiralhouse/jcvd:dev
 - **Usage**: Staging deployments, rollbacks
 
 ```bash
-docker pull ghcr.io/spiralhouse/jcvd:0.3.0
+docker pull ghcr.io/spiralhouse/cycletime:0.3.0
 ```
 
 #### Latest Tag
@@ -49,7 +49,7 @@ docker pull ghcr.io/spiralhouse/jcvd:0.3.0
 - **Usage**: Production deployments
 
 ```bash
-docker pull ghcr.io/spiralhouse/jcvd:latest
+docker pull ghcr.io/spiralhouse/cycletime:latest
 ```
 
 #### SHA Tags
@@ -58,7 +58,7 @@ docker pull ghcr.io/spiralhouse/jcvd:latest
 - **Usage**: Debugging, audit trail
 
 ```bash
-docker pull ghcr.io/spiralhouse/jcvd:sha-abc123d
+docker pull ghcr.io/spiralhouse/cycletime:sha-abc123d
 ```
 
 ## Environment Mapping
@@ -118,28 +118,28 @@ LABEL deployment.build-timestamp="$GITHUB_RUN_ID"
 ### Development Environment
 ```bash
 # Latest development build
-docker pull ghcr.io/spiralhouse/jcvd:dev
+docker pull ghcr.io/spiralhouse/cycletime:dev
 ```
 
 ### Staging Environment
 ```bash
 # Specific version for staging
-docker pull ghcr.io/spiralhouse/jcvd:0.3.0
+docker pull ghcr.io/spiralhouse/cycletime:0.3.0
 ```
 
 ### Production Environment
 ```bash
 # Latest stable release
-docker pull ghcr.io/spiralhouse/jcvd:latest
+docker pull ghcr.io/spiralhouse/cycletime:latest
 
 # Or pin to specific version
-docker pull ghcr.io/spiralhouse/jcvd:0.2.0
+docker pull ghcr.io/spiralhouse/cycletime:0.2.0
 ```
 
 ### Debugging/Rollback
 ```bash
 # Track specific commit
-docker pull ghcr.io/spiralhouse/jcvd:sha-abc123d
+docker pull ghcr.io/spiralhouse/cycletime:sha-abc123d
 ```
 
 ## Caching Strategy

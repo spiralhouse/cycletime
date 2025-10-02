@@ -67,7 +67,7 @@ LOG_LEVEL=INFO
 version: '3.8'
 services:
   jcvd:
-    image: ghcr.io/spiralhouse/jcvd:latest
+    image: ghcr.io/spiralhouse/cycletime:latest
     env_file: .env
     ports:
       - "8080:8080"
