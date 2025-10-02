@@ -6,24 +6,25 @@ This guide documents the RESTful design principles and best practices used in th
 
 ## REST Maturity Model
 
-The CycleTime API achieves **Richardson Maturity Model Level 2**:
+The CycleTime API implements **Richardson Maturity Model Level 2** through the following design choices:
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 graph TD
     A[Level 0: The Swamp of POX] --> B[Level 1: Resources]
     B --> C[Level 2: HTTP Verbs]
     C --> D[Level 3: Hypermedia Controls]
 
-    style C fill:#4CAF50,stroke:#333,stroke-width:2px
+    style C fill:#238636,stroke:#2ea043,stroke-width:2px,color:#c9d1d9
 
     E[CycleTime API] --> C
 ```
 
-### Level 2 Characteristics
+### Level 2 Implementation
 - **Resource-Based URLs**: `/api/v1/projects/{id}/issues`
 - **HTTP Verbs**: GET, POST, PUT, DELETE with proper semantics
-- **Status Codes**: Meaningful HTTP status codes for all responses
-- **Stateless**: Each request contains all information needed
+- **Status Codes**: Meaningful HTTP status codes for all responses (200, 201, 204, 400, 404, 500)
+- **Stateless Operations**: Each request is self-contained
 
 ### Future Level 3 Considerations
 - HATEOAS links for resource navigation
@@ -37,6 +38,7 @@ graph TD
 Resources are organized in a logical hierarchy reflecting real-world relationships:
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 graph TB
     API["/api/v1"] --> Projects["/projects"]
     Projects --> ProjectId["/projects/{projectId}"]
@@ -105,6 +107,7 @@ PUT /api/v1/projects/{id}
 ### Success Codes
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 flowchart LR
     GET --> 200[200 OK]
     POST --> 201[201 Created]
@@ -121,6 +124,7 @@ flowchart LR
 ### Error Codes
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 flowchart TD
     Error --> Client[4xx Client Errors]
     Error --> Server[5xx Server Errors]
@@ -217,16 +221,17 @@ All API endpoints include version in the path:
 ### Version Lifecycle
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 graph LR
     A[v1 Beta] --> B[v1 Stable]
     B --> C[v2 Beta]
     C --> D[v2 Stable]
     B -.->|Deprecated| E[v1 Sunset]
 
-    style A fill:#FFD700
-    style B fill:#4CAF50
-    style C fill:#FFD700
-    style E fill:#FF6B6B
+    style A fill:#d29922,stroke:#e3b341,color:#0d1117
+    style B fill:#238636,stroke:#2ea043,color:#c9d1d9
+    style C fill:#d29922,stroke:#e3b341,color:#0d1117
+    style E fill:#da3633,stroke:#f85149,color:#c9d1d9
 ```
 
 **Versioning Rules**:
@@ -256,6 +261,7 @@ graph LR
 **Validation Layers**:
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 flowchart TD
     A[Request] --> B{Syntax Valid?}
     B -->|No| C[400 Bad Request]
@@ -313,6 +319,7 @@ PUT /api/v1/projects/{id}
 ### Hierarchy Rules
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d'}}}%%
 graph TD
     A[Business Rules] --> B[Epic Rules]
     A --> C[Story Rules]
@@ -416,6 +423,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 ### Deprecation Process
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'darkMode':true, 'background':'#0d1117', 'mainBkg':'#161b22', 'secondBkg':'#21262d', 'lineColor':'#58a6ff', 'primaryColor':'#58a6ff', 'primaryTextColor':'#c9d1d9', 'primaryBorderColor':'#30363d', 'actorBkg':'#161b22', 'actorBorder':'#30363d', 'actorTextColor':'#c9d1d9', 'actorLineColor':'#58a6ff', 'signalColor':'#58a6ff', 'signalTextColor':'#c9d1d9'}}}%%
 sequenceDiagram
     participant Client
     participant API
@@ -536,75 +544,80 @@ Use this for:
 ### From Legacy to v1
 
 **Step 1**: Parallel Implementation
-```javascript
+```kotlin
 // Support both during transition
-const projectUrl = useV1
-  ? '/api/v1/projects'
-  : '/api/projects';
+val projectUrl = if (useV1) {
+    "/api/v1/projects"
+} else {
+    "/api/projects"
+}
 ```
 
 **Step 2**: Gradual Migration
-```javascript
+```kotlin
 // Migrate endpoint by endpoint
-async function getProject(id) {
-  try {
-    return await fetch(`/api/v1/projects/${id}`);
-  } catch (e) {
-    // Fallback to legacy
-    return await fetch(`/api/projects/${id}`);
-  }
+suspend fun getProject(id: String): Response {
+    return try {
+        client.get("/api/v1/projects/$id")
+    } catch (e: Exception) {
+        // Fallback to legacy
+        client.get("/api/projects/$id")
+    }
 }
 ```
 
 **Step 3**: Clean Cutover
-```javascript
+```kotlin
 // Remove legacy support
-const baseUrl = '/api/v1';
+val baseUrl = "/api/v1"
 ```
 
 ## API Client Best Practices
 
 ### Retry Logic
 
-```javascript
-async function apiCall(url, options, maxRetries = 3) {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      const response = await fetch(url, options);
+```kotlin
+suspend fun apiCall(url: String, options: RequestOptions, maxRetries: Int = 3): HttpResponse {
+    repeat(maxRetries) { i ->
+        try {
+            val response = client.request(url) {
+                // Apply options
+            }
 
-      // Don't retry client errors
-      if (response.status >= 400 && response.status < 500) {
-        throw new Error(`Client error: ${response.status}`);
-      }
+            // Don't retry client errors
+            if (response.status.value in 400..499) {
+                error("Client error: ${response.status.value}")
+            }
 
-      // Retry server errors
-      if (response.status >= 500) {
-        if (i === maxRetries - 1) throw new Error('Server error');
-        await sleep(Math.pow(2, i) * 1000); // Exponential backoff
-        continue;
-      }
+            // Retry server errors
+            if (response.status.value >= 500) {
+                if (i == maxRetries - 1) error("Server error")
+                delay(2.0.pow(i).toLong() * 1000) // Exponential backoff
+                return@repeat
+            }
 
-      return response;
-    } catch (error) {
-      if (i === maxRetries - 1) throw error;
+            return response
+        } catch (error: Exception) {
+            if (i == maxRetries - 1) throw error
+        }
     }
-  }
+    error("Max retries exceeded")
 }
 ```
 
 ### Error Handling
 
-```javascript
-async function handleApiResponse(response) {
-  if (!response.ok) {
-    const error = await response.json();
-    throw new ApiError(
-      response.status,
-      error.error,
-      error.details
-    );
-  }
-  return response.json();
+```kotlin
+suspend fun handleApiResponse(response: HttpResponse): ApiResult {
+    if (!response.status.isSuccess()) {
+        val error = response.body<ErrorResponse>()
+        throw ApiError(
+            status = response.status.value,
+            error = error.error,
+            details = error.details
+        )
+    }
+    return response.body()
 }
 ```
 

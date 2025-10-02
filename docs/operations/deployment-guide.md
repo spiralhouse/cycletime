@@ -48,6 +48,51 @@ docker run -d --name cycletime -p 8080:8080 cycletime:custom
 
 ## Kubernetes Deployment
 
+### Architecture Overview
+
+```mermaid
+graph TB
+    subgraph "Kubernetes Cluster"
+        subgraph "Ingress Layer"
+            Ingress[Ingress Controller] --> Service
+        end
+
+        subgraph "Service Layer"
+            Service[ClusterIP Service<br/>Port 80] --> Pod1
+            Service --> Pod2
+            Service --> Pod3
+        end
+
+        subgraph "Pod Layer"
+            Pod1[Pod: cycletime-1<br/>Container Port 8080]
+            Pod2[Pod: cycletime-2<br/>Container Port 8080]
+            Pod3[Pod: cycletime-3<br/>Container Port 8080]
+        end
+
+        subgraph "Storage Layer"
+            Pod1 -.-> PVC1[PVC: cycletime-data-1]
+            Pod2 -.-> PVC2[PVC: cycletime-data-2]
+            Pod3 -.-> PVC3[PVC: cycletime-data-3]
+
+            PVC1 --> PV[(Persistent Volume)]
+            PVC2 --> PV
+            PVC3 --> PV
+        end
+
+        subgraph "Configuration"
+            Pod1 -.-> ConfigMap[ConfigMap: cycletime-config]
+            Pod2 -.-> ConfigMap
+            Pod3 -.-> ConfigMap
+
+            Pod1 -.-> Secret[Secret: cycletime-secrets]
+            Pod2 -.-> Secret
+            Pod3 -.-> Secret
+        end
+    end
+
+    Internet[Internet Traffic] --> Ingress
+```
+
 ### Basic Deployment
 
 ```yaml
@@ -205,7 +250,11 @@ docker-compose -f docker-compose.prod.yml down
 
 ## Environment Configuration
 
+The application is configured through environment variables that control server behavior, database connections, and operational features. Required variables must be set for the application to start, while optional variables provide additional control over performance and debugging.
+
 ### Required Environment Variables
+
+These variables must be configured in all deployment environments:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
@@ -215,6 +264,8 @@ docker-compose -f docker-compose.prod.yml down
 | `LOG_LEVEL` | Logging level | `INFO` |
 
 ### Optional Configuration
+
+These variables provide additional control over application behavior with sensible defaults:
 
 | Variable | Description | Default |
 |----------|-------------|---------|

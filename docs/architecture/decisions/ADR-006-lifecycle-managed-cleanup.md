@@ -22,7 +22,7 @@ Replace GlobalScope with a properly lifecycle-managed `ConnectionCleanupService`
 
 ## Implementation
 
-### Before (Production Killer)
+### Before: GlobalScope Implementation
 ```kotlin
 GlobalScope.launch {
     while (isActive) {
@@ -36,7 +36,7 @@ GlobalScope.launch {
 }
 ```
 
-### After (Production-Grade)
+### After: Lifecycle-Managed Service
 ```kotlin
 val cleanupService = ConnectionCleanupService(
     connectionManager = connectionManager,

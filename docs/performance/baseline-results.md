@@ -187,6 +187,6 @@ The performance baseline test successfully identified critical N+1 query issues 
 ## Test File Location
 
 The complete performance test implementation is available at:
-`/src/test/kotlin/io/spiralhouse/jcvd/performance/PerformanceBaselineTest.kt`
+`/src/test/kotlin/io/spiralhouse/cycletime/performance/PerformanceBaselineTest.kt`
 
 This test should be run regularly to track performance improvements and detect regressions.
