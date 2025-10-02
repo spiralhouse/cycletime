@@ -198,7 +198,11 @@ class LinkValidator:
 
 
 if __name__ == '__main__':
-    validator = LinkValidator('/Users/jburbridge/Projects/cycletime')
+    # Get project root (parent directory of scripts/)
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+
+    validator = LinkValidator(str(project_root))
     validator.validate_all()
     report = validator.generate_report()
     print(report)
