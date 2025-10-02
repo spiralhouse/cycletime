@@ -10,8 +10,8 @@ Ensure you have Java 21+ installed. See [Installation Guide](installation.md) fo
 
 ```bash
 # Clone repository
-git clone https://github.com/spiralhouse/jcvd.git
-cd jcvd
+git clone https://github.com/spiralhouse/cycletime.git
+cd cycletime
 
 # Build project
 ./gradlew build

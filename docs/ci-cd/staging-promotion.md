@@ -27,7 +27,7 @@ The staging promotion process validates deployment readiness and safely promotes
 **Latest Development Version:**
 ```bash
 # Use the most recent version from main branch
-# Check recent versions: https://github.com/spiralhouse/jcvd/pkgs/container/jcvd
+# Check recent versions: https://github.com/spiralhouse/cycletime/pkgs/container/jcvd
 ```
 
 **Specific Feature Version:**
@@ -46,7 +46,7 @@ The staging promotion process validates deployment readiness and safely promotes
 
 ### Step 1: Access the Workflow
 
-1. Go to [GitHub Actions > Environment Promotion](https://github.com/spiralhouse/jcvd/actions/workflows/promote.yml)
+1. Go to [GitHub Actions > Environment Promotion](https://github.com/spiralhouse/cycletime/actions/workflows/promote.yml)
 2. Click "Run workflow" button
 3. Select the correct branch (usually `main`)
 
@@ -186,11 +186,11 @@ docker pull ghcr.io/spiralhouse/cycletime:1.2.3-staging-20240823-143052
 ### Viewing Promotion History
 
 1. **GitHub Actions History**:
-   - Visit [Promotion Workflow Runs](https://github.com/spiralhouse/jcvd/actions/workflows/promote.yml)
+   - Visit [Promotion Workflow Runs](https://github.com/spiralhouse/cycletime/actions/workflows/promote.yml)
    - Each successful run shows version, promoter, and timestamp
 
 2. **Container Registry History**:
-   - Visit [GHCR Package Page](https://github.com/spiralhouse/jcvd/pkgs/container/jcvd)
+   - Visit [GHCR Package Page](https://github.com/spiralhouse/cycletime/pkgs/container/jcvd)
    - View all tags and their creation timestamps
 
 3. **Workflow Summaries**:

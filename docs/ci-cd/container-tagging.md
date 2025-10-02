@@ -98,7 +98,7 @@ LABEL org.opencontainers.image.title="CycleTime Server"
 LABEL org.opencontainers.image.description="CycleTime project orchestration framework MCP server"
 LABEL org.opencontainers.image.version="$VERSION"
 LABEL org.opencontainers.image.vendor="Spiral House"
-LABEL org.opencontainers.image.source="https://github.com/spiralhouse/jcvd"
+LABEL org.opencontainers.image.source="https://github.com/spiralhouse/cycletime"
 ```
 
 ## Container Labels
