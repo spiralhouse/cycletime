@@ -174,106 +174,87 @@ graph TB
 
 The H2 database uses a schema designed for JVM integration, Exposed ORM compatibility, and straightforward migration to cloud providers:
 
-```sql
--- Project management with Linear-inspired structure
-CREATE TABLE projects (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  description TEXT,
-  key TEXT UNIQUE,              -- Short project identifier (e.g., 'PROJ')
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+```mermaid
+erDiagram
+    PROJECTS ||--o{ ISSUES : "contains"
+    PROJECTS ||--o{ WORKFLOW_STATES : "defines"
+    PROJECTS ||--o{ LABELS : "organizes"
 
--- Workflow states supporting standard issue tracking patterns
-CREATE TABLE workflow_states (
-  id TEXT PRIMARY KEY,
-  project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,           -- Human-readable name
-  type TEXT NOT NULL,           -- Semantic type for processing
-  position INTEGER DEFAULT 0,   -- Display ordering
-  color TEXT DEFAULT '#000000', -- UI color representation
+    ISSUES ||--o{ ISSUES : "parent-child hierarchy"
+    ISSUES ||--o{ ISSUE_DEPENDENCIES : "blocks/blocked by"
+    ISSUES }o--|| WORKFLOW_STATES : "has current state"
+    ISSUES }o--o{ LABELS : "tagged with"
+    ISSUES ||--o{ ISSUE_COMMENTS : "discussed in"
 
-  UNIQUE(project_id, name)
-);
+    PROJECTS {
+        text id PK
+        text name
+        text description
+        text key "unique short identifier"
+        datetime created_at
+        datetime updated_at
+    }
 
--- Core issues table with strict hierarchy enforcement
-CREATE TABLE issues (
-  id TEXT PRIMARY KEY,
-  project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
-  parent_id TEXT REFERENCES issues(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  description TEXT,
-  state_id TEXT REFERENCES workflow_states(id),
-  priority INTEGER DEFAULT 0,   -- Linear-compatible priority scale
-  estimate INTEGER,            -- Story points for planning
-  issue_type TEXT NOT NULL CHECK (issue_type IN ('epic', 'story', 'subtask')),
-  assignee_id TEXT,           -- User identifier (provider-specific)
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    WORKFLOW_STATES {
+        text id PK
+        text project_id FK
+        text name
+        text type "semantic type"
+        int position "display ordering"
+        text color
+    }
 
-  -- Enforce proper hierarchy constraints
-  CHECK (
-    (issue_type = 'epic' AND parent_id IS NULL) OR
-    (issue_type = 'story' AND parent_id IS NOT NULL) OR
-    (issue_type = 'subtask' AND parent_id IS NOT NULL)
-  )
-);
+    ISSUES {
+        text id PK
+        text project_id FK
+        text parent_id FK "nullable for hierarchy"
+        text title
+        text description
+        text state_id FK
+        int priority "Linear-compatible scale"
+        int estimate "story points"
+        text issue_type "epic, story, subtask"
+        text assignee_id
+        datetime created_at
+        datetime updated_at
+    }
 
--- Dependency graph for task orchestration
-CREATE TABLE issue_dependencies (
-  id TEXT PRIMARY KEY,
-  blocker_id TEXT REFERENCES issues(id) ON DELETE CASCADE,
-  blocked_id TEXT REFERENCES issues(id) ON DELETE CASCADE,
-  dependency_type TEXT DEFAULT 'blocks',
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ISSUE_DEPENDENCIES {
+        text id PK
+        text blocker_id FK
+        text blocked_id FK
+        text dependency_type
+        datetime created_at
+    }
 
-  -- Prevent duplicate dependencies and self-references
-  UNIQUE(blocker_id, blocked_id),
-  CHECK(blocker_id != blocked_id)
-);
+    LABELS {
+        text id PK
+        text project_id FK
+        text name
+        text color
+        text description
+    }
 
--- Flexible labeling system
-CREATE TABLE labels (
-  id TEXT PRIMARY KEY,
-  project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  color TEXT DEFAULT '#000000',
-  description TEXT,
+    ISSUE_LABELS {
+        text issue_id FK
+        text label_id FK
+    }
 
-  UNIQUE(project_id, name)
-);
-
-CREATE TABLE issue_labels (
-  issue_id TEXT REFERENCES issues(id) ON DELETE CASCADE,
-  label_id TEXT REFERENCES labels(id) ON DELETE CASCADE,
-  PRIMARY KEY (issue_id, label_id)
-);
-
--- Activity tracking and comments
-CREATE TABLE issue_comments (
-  id TEXT PRIMARY KEY,
-  issue_id TEXT REFERENCES issues(id) ON DELETE CASCADE,
-  body TEXT NOT NULL,
-  author_id TEXT,             -- User identifier
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- Performance optimization indexes
-CREATE INDEX idx_issues_project_id ON issues(project_id);
-CREATE INDEX idx_issues_parent_id ON issues(parent_id);
-CREATE INDEX idx_issues_state_id ON issues(state_id);
-CREATE INDEX idx_issues_type ON issues(issue_type);
-CREATE INDEX idx_issues_assignee ON issues(assignee_id);
-CREATE INDEX idx_dependencies_blocker ON issue_dependencies(blocker_id);
-CREATE INDEX idx_dependencies_blocked ON issue_dependencies(blocked_id);
-CREATE INDEX idx_workflow_states_project ON workflow_states(project_id);
-CREATE INDEX idx_labels_project ON labels(project_id);
-
--- Optimized compound indexes for common queries
-CREATE INDEX idx_issues_project_type_state ON issues(project_id, issue_type, state_id);
-CREATE INDEX idx_issues_parent_type ON issues(parent_id, issue_type);
+    ISSUE_COMMENTS {
+        text id PK
+        text issue_id FK
+        text body
+        text author_id
+        datetime created_at
+    }
 ```
+
+**Key Schema Decisions:**
+
+- **Hierarchy Enforcement**: Three-tier structure (Epic → Story → Subtask) enforced via CHECK constraints on `issue_type` and `parent_id` relationships
+- **Flexible State Management**: Project-specific workflow states (`workflow_states`) enable custom processes while maintaining semantic types for orchestration logic
+- **Dependency Graph**: Bidirectional relationships via `issue_dependencies` support complex task orchestration with cycle prevention through uniqueness constraints
+- **Linear-Inspired Design**: Schema structure matches Linear's proven patterns, enabling straightforward data migration and familiar developer workflows
 
 ### Data Migration Strategy
 
@@ -340,12 +321,12 @@ MCP Tool → Application Service → Domain Entity → Repository → Database
 
 **Document Templates:**
 
-- `docs/PRD.md` - Product Requirements Document
-- `docs/ARCHITECTURE.md` - Technical Architecture
-- `docs/api/quick-start.md` - REST API Quick Start Guide
-- OpenAPI Documentation - Available at `/swagger` endpoint
-- `docs/DEPLOYMENT.md` - Infrastructure and Deployment
-- `docs/ADR/` - Architecture Decision Records
+- [PRD.md](../reference/PRD.md) - Product Requirements Document
+- [overview.md](overview.md) - Technical Architecture (this document)
+- [rest-endpoints.md](../api/rest-endpoints.md) - REST API Documentation
+- OpenAPI Documentation - Available at `/swagger` endpoint when server is running
+- [deployment-guide.md](../operations/deployment-guide.md) - Infrastructure and Deployment
+- [ADR Directory](decisions/) - Architecture Decision Records
 
 ### 4. MCP Server Integration
 

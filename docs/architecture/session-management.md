@@ -25,27 +25,14 @@ The CycleTime Session Management system provides cross-session state persistence
 
 ### Layer Architecture
 
-```
-┌─────────────────────────────────────┐
-│         MCP Integration             │
-│         (SessionManager)            │
-├─────────────────────────────────────┤
-│      Application Services           │
-│   (SessionApplicationService)       │
-├─────────────────────────────────────┤
-│        Domain Services              │
-│ (SessionValidator, CleanupService)  │
-├─────────────────────────────────────┤
-│        Domain Entities              │
-│    (Session, SessionKey)            │
-├─────────────────────────────────────┤
-│      Infrastructure Layer           │
-│   (H2SessionRepository)             │
-├─────────────────────────────────────┤
-│         Database Layer              │
-│      (H2 with Indexes)              │
-└─────────────────────────────────────┘
-```
+| Layer | Component(s) | Responsibility |
+|-------|-------------|----------------|
+| **MCP Integration** | `SessionManager` | Claude Code integration via MCP protocol |
+| **Application Services** | `SessionApplicationService` | Use case orchestration with Unit of Work |
+| **Domain Services** | `SessionValidator`, `SessionCleanupService` | Validation rules and lifecycle management |
+| **Domain Entities** | `Session`, `SessionKey`, `SessionContext` | Core business logic and invariants |
+| **Infrastructure** | `H2SessionRepository` | Database persistence implementation |
+| **Database** | H2 with indexes | Physical data storage layer |
 
 ## Core Components
 
