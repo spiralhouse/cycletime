@@ -12,43 +12,75 @@
 
 ## Overview
 
-CycleTime (Project Orchestration Framework) implements a **simplified data and
-context provider architecture** for Claude Code project management. The system
-provides structured project data, dependency tracking, and cross-session
-continuity through embedded database (H2) and MCP Resource integration.
+CycleTime (Project Orchestration Framework) implements a data and context provider architecture for Claude Code project management. The system provides structured project data, dependency tracking, and cross-session continuity through an embedded H2 database and MCP Resource integration.
 
 ### Architectural Principles
 
+The CycleTime architecture is guided by four core principles that shape its design and implementation decisions. These principles ensure the system remains focused, maintainable, and well-integrated within the Claude Code ecosystem.
+
 **Simplicity First**
 
-- CycleTime serves as data and context provider, not orchestration manager
-- Claude Code handles agent delegation and complex workflow management
-- Simple dependency graph traversal and basic CRUD operations only
+CycleTime intentionally limits its scope to data and context provision rather than attempting complex orchestration. Claude Code handles agent delegation and workflow management, while CycleTime focuses on dependency graph traversal and basic CRUD operations. This division of responsibility keeps the system maintainable and prevents feature creep.
 
 **Embedded-First Architecture**
 
-- Embedded H2 database as default provider for offline and concurrent operation
-- No external dependencies required for core functionality
-- JVM integration with Exposed ORM and connection pooling
+The embedded H2 database serves as the default provider, enabling offline operation and concurrent access without external dependencies. This JVM-native approach integrates seamlessly with Exposed ORM and built-in connection pooling, providing immediate productivity for developers without configuration overhead.
 
 **MCP Server Integration**
 
-- Built as Claude Code MCP server for native ecosystem integration
-- Provides project context through MCP Resources to Claude Code agents
-- No custom agent coordination - leverages Claude Code's existing capabilities
+Built as a Claude Code MCP server, CycleTime integrates natively with the existing ecosystem. Project context flows to Claude Code agents through MCP Resources, while CycleTime leverages Claude Code's agent coordination capabilities rather than implementing custom orchestration logic.
 
 **Context Provision Over Automation**
 
-- Exposes structured project data for Claude Code analysis
-- Manual workflows with context support rather than automated orchestration
-- Human-driven decisions supported by structured data access
+Rather than automating workflows, CycleTime exposes structured project data for Claude Code analysis. This approach supports manual workflows with rich context, enabling human-driven decisions backed by comprehensive project information and dependency insights.
 
 ## Domain-Driven Design Architecture
 
 ### Layered Architecture Approach
 
-CycleTime follows **Domain-Driven Design** and **Hexagonal Architecture** principles
-with clear separation of concerns:
+CycleTime follows **Domain-Driven Design** and **Hexagonal Architecture** principles with clear separation of concerns:
+
+```mermaid
+graph TB
+    subgraph MCP["MCP Layer"]
+        Resources[MCP Resources]
+        Tools[MCP Tools]
+    end
+
+    subgraph Application["Application Layer"]
+        AppServices[Application Services]
+        Commands[Commands/DTOs]
+        UnitOfWork[Unit of Work]
+    end
+
+    subgraph Domain["Domain Layer"]
+        Entities[Domain Entities]
+        ValueObjects[Value Objects]
+        RepoInterfaces[Repository Interfaces]
+        DomainServices[Domain Services]
+    end
+
+    subgraph Infrastructure["Infrastructure Layer"]
+        RepoImpl[Repository Implementations]
+        Database[(H2 Database)]
+        ExternalAPIs[External APIs]
+    end
+
+    Resources --> AppServices
+    Tools --> AppServices
+    AppServices --> DomainServices
+    AppServices --> RepoInterfaces
+    AppServices --> UnitOfWork
+    DomainServices --> Entities
+    RepoInterfaces -.implements.-> RepoImpl
+    RepoImpl --> Database
+    RepoImpl --> ExternalAPIs
+
+    style Domain fill:#E3F2FD
+    style Application fill:#F3E5F5
+    style Infrastructure fill:#E8F5E9
+    style MCP fill:#FFF3E0
+```
 
 ```kotlin
 // Domain Layer - Core business logic (no external dependencies)
@@ -258,9 +290,44 @@ enum class IssueType {
 
 ### Provider Implementation Status
 
+```mermaid
+graph TB
+    subgraph Core["Core Interfaces"]
+        IssueProvider[IssueProvider Interface]
+        ProjectProvider[ProjectProvider Interface]
+    end
+
+    subgraph Implementations["Provider Implementations"]
+        H2[H2 Database Provider]
+        Linear[Linear API Provider]
+        GitHub[GitHub Issues Provider]
+        Jira[Jira Provider]
+    end
+
+    IssueProvider -.implements.-> H2
+    IssueProvider -.implements.-> Linear
+    IssueProvider -.implements.-> GitHub
+    IssueProvider -.implements.-> Jira
+
+    ProjectProvider -.implements.-> H2
+    ProjectProvider -.implements.-> Linear
+    ProjectProvider -.implements.-> GitHub
+    ProjectProvider -.implements.-> Jira
+
+    H2 --> H2DB[(H2 Database)]
+    Linear --> LinearAPI[Linear API]
+    GitHub --> GitHubAPI[GitHub API]
+    Jira --> JiraAPI[Jira API]
+
+    style H2 fill:#4CAF50
+    style Linear fill:#E0E0E0
+    style GitHub fill:#E0E0E0
+    style Jira fill:#E0E0E0
+```
+
 | Provider            | Status   | Features                                                     | Primary Use Case                                     |
 | ------------------- | -------- | ------------------------------------------------------------ | ---------------------------------------------------- |
-| **H2 Database** | ✅ MVP   | Embedded database, high-performance CRUD, concurrent access | Current implementation, stable and proven |
+| **H2 Database** | ✅ Current   | Embedded database, high-performance CRUD, concurrent access | Default provider (implemented in SPI-439, August 2025) |
 | **Linear**          | 🔄 V2.0  | Linear API integration, team collaboration                   | Professional development, team coordination          |
 | **GitHub Issues**   | 🔄 V3.0+ | Repository integration, basic workflows                      | OSS projects, GitHub-centric development             |
 | **Jira**            | 🔄 V3.0+ | Enterprise workflows, custom fields                         | Enterprise development, complex organizations        |
@@ -268,10 +335,10 @@ enum class IssueType {
 ### H2 Database Implementation Details
 
 **Performance Characteristics:**
-- Complex JOINs and aggregations (performance to be validated with benchmarks)
+- Supports complex JOINs and aggregations for dependency analysis
 - Built-in connection pooling and thread safety
-- JVM memory management with caching and buffer management
-- Cost-based query optimization for dependency graphs
+- JVM-native memory management with caching and buffer management
+- Cost-based query optimizer for dependency graph queries
 
 **Exposed ORM Integration:**
 - Native H2 support with JDBC driver
@@ -289,8 +356,7 @@ enum class IssueType {
 
 ### Database Schema (H2)
 
-The embedded provider uses a database schema designed for optimal
-JVM performance, native Exposed ORM integration, and easy migration to cloud providers:
+The H2 database uses a schema designed for JVM integration, Exposed ORM compatibility, and straightforward migration to cloud providers:
 
 ```sql
 -- Project management with Linear-inspired structure
@@ -427,8 +493,9 @@ data class ExportMetadata(
 
 ### 1. Domain Layer
 
-**Purpose**: Contains core business logic, entities, and domain services with no
-external dependencies.
+**Purpose**: Contains core business logic, entities, and domain services with no external dependencies.
+
+The domain layer implements the core business logic using Domain-Driven Design patterns. Entities like `Project` and `Issue` encapsulate business rules and invariants, while value objects such as `ProjectId` and `IssueTitle` provide type safety and validation. Repository interfaces define ports for data access without coupling to specific implementations. Domain services handle complex business logic that spans multiple entities, maintaining the separation between business rules and infrastructure concerns.
 
 **Key Components:**
 
@@ -464,8 +531,9 @@ class Project private constructor(
 
 ### 2. Application Layer
 
-**Purpose**: Orchestrates use cases and coordinates between domain and
-infrastructure layers.
+**Purpose**: Orchestrates use cases and coordinates between domain and infrastructure layers.
+
+The application layer serves as the coordinator between the presentation layer (MCP) and the domain layer. Application services like `ProjectApplicationService` orchestrate use cases by loading domain entities, invoking business logic, and persisting changes through repositories. Commands provide type-safe input contracts, while the Unit of Work pattern ensures transactional consistency across multiple repository operations. This layer translates external requests into domain operations without containing business logic itself.
 
 **Key Components:**
 
@@ -473,6 +541,42 @@ infrastructure layers.
 - **Commands**: `CreateProjectCommand`, `CreateIssueCommand` - input contracts
 - **Unit of Work**: Transaction coordination across repositories
 - **Domain Event Handlers**: Cross-aggregate coordination
+
+**Layer Interaction Flow:**
+
+```mermaid
+sequenceDiagram
+    participant MCP as MCP Tool
+    participant App as Application Service
+    participant Domain as Domain Entity
+    participant Repo as Repository
+    participant DB as H2 Database
+
+    MCP->>+App: createIssue(command)
+    App->>+Repo: findById(projectId)
+    Repo->>+DB: SELECT project
+    DB-->>-Repo: project data
+    Repo-->>-App: Project entity
+
+    App->>+Domain: Issue.create(...)
+    Domain->>Domain: validate business rules
+    Domain-->>-App: Issue entity
+
+    App->>Domain: project.addIssue(issueId)
+    Domain->>Domain: enforce constraints
+
+    App->>+Repo: save(project)
+    Repo->>+DB: UPDATE project
+    DB-->>-Repo: success
+    Repo-->>-App: void
+
+    App->>+Repo: save(issue)
+    Repo->>+DB: INSERT issue
+    DB-->>-Repo: success
+    Repo-->>-App: void
+
+    App-->>-MCP: Issue DTO
+```
 
 **Application Service Example:**
 
@@ -523,13 +627,13 @@ class ProjectApplicationService(
 
 ### 3. Infrastructure Layer
 
-**Purpose**: Provides technical implementations of domain interfaces and
-external system integrations.
+**Purpose**: Provides technical implementations of domain interfaces and external system integrations.
+
+The infrastructure layer implements the technical details that support the domain and application layers. Repository implementations like `H2ProjectRepository` use Exposed ORM to persist domain entities to the H2 database. The `H2UnitOfWork` implementation manages database transactions, ensuring consistency across multiple repository operations. Database migrations handle schema evolution over time, while external integration adapters connect to services like Linear and GitHub when configured.
 
 **Key Components:**
 
-- **Repository Implementations**: `H2ProjectRepository`,
-  `H2IssueRepository` with Exposed ORM integration
+- **Repository Implementations**: `H2ProjectRepository`, `H2IssueRepository` with Exposed ORM integration
 - **Unit of Work Implementation**: `H2UnitOfWork` for transaction management
 - **Database Migrations**: `MigrationRunner` for schema evolution
 - **External Integrations**: Linear API, GitHub API adapters
@@ -1134,19 +1238,17 @@ provider integration.
 
 ### Embedded Database Strategy
 
-**Current**: Use embedded H2 database as the default issue tracking
-provider for the Kotlin/JVM implementation.
+**Current**: H2 database serves as the default issue tracking provider for the Kotlin/JVM implementation (implemented in SPI-439, August 2025).
 
 **Rationale**:
 
 - Zero external dependencies for immediate productivity
-- Optimal JVM integration and high performance for analytical queries
-- Native Exposed ORM integration for type-safe database operations
-- Excellent concurrent access support with connection pooling
-- Complete offline operation capability
-- JVM-optimized memory management and query execution
-- Linear-inspired schema enables easy migration to cloud providers
-- No account setup or authentication friction
+- Native JVM integration with Exposed ORM for type-safe database operations
+- Concurrent access support with built-in connection pooling
+- Supports offline operation without external services
+- JVM-native memory management and query execution
+- Linear-inspired schema design enables migration to cloud providers
+- No account setup or authentication requirements
 
 **Trade-offs**:
 
@@ -1200,11 +1302,11 @@ terminology.
 - Compound indexes for multi-column queries
 - Foreign key constraints for data integrity without performance penalty
 
-**Scalability Targets**:
+**Scalability Design Goals**:
 
-- Support for 10,000+ issues per project with sub-100ms query response
-- Dependency graph analysis for projects with 1,000+ interconnected issues
-- Real-time state synchronization across multiple concurrent sessions
+- Designed to support projects with 10,000+ issues
+- Dependency graph analysis capabilities for interconnected issue networks
+- Concurrent session support with real-time state synchronization
 
 ### Memory Management
 

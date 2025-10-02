@@ -78,9 +78,13 @@ We will maintain **singleton scope** for all repository implementations with exp
 - GC pressure: Significant with high traffic
 - Thread contention: None (isolated instances)
 
-### Benchmark Results (1000 concurrent requests)
-- Singleton: 95th percentile: 12ms, Memory: 150MB
-- Request Scope: 95th percentile: 18ms, Memory: 280MB
+### Comparative Analysis (Development Testing)
+
+During development testing with 1000 simulated concurrent requests, singleton scope demonstrated lower memory overhead and comparable response times:
+- Singleton scope: Lower memory usage, minimal GC pressure
+- Request scope: Higher allocation rate, increased GC overhead
+
+Note: Production performance will vary based on workload patterns and hardware.
 
 ## Validation
 

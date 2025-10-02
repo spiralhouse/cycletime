@@ -11,7 +11,7 @@
 
 ## Overview
 
-The CycleTime Session Management system provides robust cross-session state persistence for Claude Code interactions, implementing Domain-Driven Design patterns with comprehensive validation, automatic repair, and lifecycle management. This document serves as the technical reference for developers working with or extending the session management capabilities.
+The CycleTime Session Management system provides cross-session state persistence for Claude Code interactions, implementing Domain-Driven Design patterns with validation, automatic repair, and lifecycle management. This document serves as the technical reference for developers working with or extending the session management capabilities.
 
 ## Architecture Overview
 
@@ -21,7 +21,7 @@ The CycleTime Session Management system provides robust cross-session state pers
 2. **Dependency Injection**: TimeProvider pattern for testable time operations
 3. **Data Integrity First**: Automatic validation and repair of corrupted data
 4. **Performance Optimized**: Sub-millisecond operations with H2
-5. **Test-Driven Development**: 96.91% domain layer coverage with zero flaky tests
+5. **Test-Driven Development**: High test coverage with time-mocked tests for reliability
 
 ### Layer Architecture
 
@@ -149,7 +149,7 @@ class SessionValidator(
     fun validateSessionState(session: SessionStateDto): ValidationResult
     fun repairSession(session: SessionStateDto): RepairResult
     fun detectSessionConflicts(sessions: List<SessionStateDto>): ConflictResult
-    
+
     // Validation Rules
     data class ValidationRules(
         val maxContextSize: Int = 1024 * 1024,        // Default: 1MB
@@ -159,6 +159,39 @@ class SessionValidator(
         val requireProjectId: Boolean = false          // Default: false
     )
 }
+```
+
+**Validation Flow:**
+
+```mermaid
+flowchart TD
+    Start([Retrieve Session]) --> ValidateKey{Valid Session Key?}
+    ValidateKey -->|No| DeleteSession[Delete Invalid Session]
+    ValidateKey -->|Yes| ValidateTimestamps{Valid Timestamps?}
+
+    ValidateTimestamps -->|No| AttemptRepair[Attempt Auto-Repair]
+    ValidateTimestamps -->|Yes| ValidateContext{Valid Context?}
+
+    ValidateContext -->|No| AttemptRepair
+    ValidateContext -->|Yes| CheckCorruption{Corruption Detected?}
+
+    CheckCorruption -->|Yes| AttemptRepair
+    CheckCorruption -->|No| CheckExpiration{Session Expired?}
+
+    AttemptRepair --> RepairSuccess{Repair Successful?}
+    RepairSuccess -->|No| DeleteSession
+    RepairSuccess -->|Yes| SaveRepaired[Save Repaired Session]
+
+    SaveRepaired --> ReturnSession[Return Session]
+    CheckExpiration -->|Yes| DeleteSession
+    CheckExpiration -->|No| ReturnSession
+
+    DeleteSession --> ReturnNull([Return null])
+    ReturnSession --> End([Return Session])
+
+    style ReturnSession fill:#4CAF50
+    style DeleteSession fill:#F44336
+    style AttemptRepair fill:#FFC107
 ```
 
 **Validation Checks:**
@@ -377,6 +410,57 @@ await sessionManager.updateSession(sessionKey, {
 
 ### Session Lifecycle
 
+**State Machine:**
+
+```mermaid
+stateDiagram-v2
+    [*] --> Created: createSession()
+
+    Created --> Active: updateContext()
+    Active --> Active: updateContext()
+    Active --> Validated: getSession()
+
+    Validated --> Active: validation passes
+    Validated --> Repairing: validation fails
+
+    Repairing --> Active: repair succeeds
+    Repairing --> Deleted: repair fails
+
+    Active --> Expired: maxAge exceeded
+    Expired --> Deleted: cleanup
+
+    Active --> Orphaned: project deleted
+    Orphaned --> Deleted: cleanup
+
+    Active --> Corrupted: data corruption
+    Corrupted --> Repairing: auto-repair
+
+    Active --> Deleted: deleteSession()
+    Deleted --> [*]
+
+    note right of Created
+        Fresh session with
+        initial context
+    end note
+
+    note right of Active
+        Normal operation,
+        context updates
+    end note
+
+    note right of Validated
+        Automatic validation
+        on retrieval
+    end note
+
+    note right of Deleted
+        Permanent removal
+        from database
+    end note
+```
+
+**Lifecycle Operations:**
+
 ```typescript
 // Manual expiration check
 const isExpired = session.createdAt < Date.now() - config.maxAge;
@@ -536,30 +620,31 @@ describe('SessionManager Integration Tests', () => {
 
 ## Performance Characteristics
 
-### Operation Benchmarks
+### Observed Operation Performance
 
-| Operation | Average Time | 95th Percentile | Max Time |
-|-----------|-------------|-----------------|----------|
-| Create Session | < 1ms | 1ms | 2ms |
-| Get Session (with validation) | < 1ms | 1ms | 3ms |
-| Update Context | < 1ms | 1ms | 2ms |
-| Delete Session | < 1ms | 1ms | 2ms |
-| Bulk Cleanup (1000 sessions) | 50ms | 80ms | 100ms |
-| Validation & Repair | < 1ms | 2ms | 5ms |
+The following performance characteristics were observed during development testing with H2 in-memory database. Actual performance will vary based on hardware, database mode, and workload patterns.
 
-### Memory Usage
+| Operation | Typical Range |
+|-----------|--------------|
+| Create Session | Sub-millisecond |
+| Get Session (with validation) | Sub-millisecond |
+| Update Context | Sub-millisecond |
+| Delete Session | Sub-millisecond |
+| Bulk Cleanup (1000 sessions) | 50-100ms |
+| Validation & Repair | 1-5ms |
+
+### Memory Usage Estimates
 
 - **Per Session in Memory**: ~1KB
 - **Repository Statement Cache**: ~10KB
 - **Validator Rules Cache**: ~2KB
 - **Total Overhead**: ~15KB + (1KB × active sessions)
 
-### Database Performance
+### Database Optimization
 
-- **Index Usage**: All queries use indexes (no table scans)
-- **Write Performance**: ~1000 sessions/second
-- **Read Performance**: ~5000 sessions/second
-- **Cleanup Performance**: ~10000 sessions/second
+- **Index Coverage**: All queries utilize indexes to avoid full table scans
+- **Query Optimization**: Prepared statements and connection pooling enabled
+- **Scalability**: Designed to handle thousands of concurrent sessions
 
 ## Error Handling
 
@@ -792,6 +877,6 @@ The architecture provides clear extension points for future enhancements:
 
 ## Conclusion
 
-The CycleTime Session Management system provides a robust, performant, and maintainable solution for cross-session state persistence. With comprehensive validation, automatic repair, and a clean domain-driven architecture, it ensures reliable session continuity for Claude Code interactions while maintaining data integrity and system health.
+The CycleTime Session Management system implements cross-session state persistence using Domain-Driven Design principles. The architecture includes validation, automatic repair capabilities, and lifecycle management to support session continuity for Claude Code interactions.
 
 For questions or contributions, refer to the main project documentation or submit issues through the project's issue tracking system.

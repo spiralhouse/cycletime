@@ -6,7 +6,7 @@ This guide documents the RESTful design principles and best practices used in th
 
 ## REST Maturity Model
 
-The CycleTime API achieves **Richardson Maturity Model Level 2**:
+The CycleTime API implements **Richardson Maturity Model Level 2** through the following design choices:
 
 ```mermaid
 graph TD
@@ -19,11 +19,11 @@ graph TD
     E[CycleTime API] --> C
 ```
 
-### Level 2 Characteristics
+### Level 2 Implementation
 - **Resource-Based URLs**: `/api/v1/projects/{id}/issues`
 - **HTTP Verbs**: GET, POST, PUT, DELETE with proper semantics
-- **Status Codes**: Meaningful HTTP status codes for all responses
-- **Stateless**: Each request contains all information needed
+- **Status Codes**: Meaningful HTTP status codes for all responses (200, 201, 204, 400, 404, 500)
+- **Stateless Operations**: Each request is self-contained
 
 ### Future Level 3 Considerations
 - HATEOAS links for resource navigation
