@@ -136,7 +136,7 @@ cycletime/                               # Root project directory
 ### Technology Stack
 
 - **Kotlin/JVM 21** as primary language
-- **Ktor 3.2.0** for asynchronous web framework
+- **Ktor 3.3.0** for asynchronous web framework
 - **Exposed ORM** for type-safe database operations
 - **H2** embedded database for high-performance data storage
 - **Ktor native DI** for dependency injection with constructor injection

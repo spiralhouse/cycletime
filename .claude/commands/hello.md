@@ -10,8 +10,7 @@ Hello from CycleTime! This is a test slash command.
 
 ## Test Message
 
-🚀 CycleTime slash command is working! This demonstrates that we can create custom
-commands for workflow orchestration.
+Test command demonstrating slash command functionality for workflow operations.
 
 This could be extended to:
 

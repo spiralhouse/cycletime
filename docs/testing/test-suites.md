@@ -8,20 +8,24 @@ The CycleTime project now uses three distinct test suites optimized for differen
 
 ### 1. Unit Tests (`unitTest`)
 - **Purpose**: Fast feedback on business logic and domain rules
-- **Scope**: Domain entities, value objects, business rule verification
+- **Scope**: Domain entities, value objects, business rule verification, MCP protocol and tool tests
 - **Performance Target**: < 1 second total execution
 - **Parallelization**: Maximum parallel forks (all CPU cores)
 - **Memory**: 128m-512m (optimized for speed)
 - **Usage**: `./gradlew unitTest`
 
+**MCP Test Coverage**: Includes MCP protocol handlers and tool logic tests with no external dependencies (see `.claude/shared/testing-standards.md` for complete categorization)
+
 ### 2. Integration Tests (`integrationTest`)
 - **Purpose**: Database interactions and service integration
-- **Scope**: Repository tests, application service tests, dependency injection
+- **Scope**: Repository tests, application service tests, dependency injection, MCP server integration
 - **Performance Target**: < 10 seconds total execution
 - **Parallelization**: Conservative (CPU cores / 2) - enabled by Database DI pattern
 - **Memory**: 256m-1024m (moderate for database operations)
 - **Database Isolation**: Each test gets its own H2 in-memory database instance
 - **Usage**: `./gradlew integrationTest`
+
+**MCP Test Coverage**: Includes MCP server infrastructure, WebSocket connections, and resource management tests (see `.claude/shared/testing-standards.md` for complete categorization)
 
 ### 3. System Tests (`systemTest`)
 - **Purpose**: End-to-end scenarios and performance validation
@@ -30,6 +34,39 @@ The CycleTime project now uses three distinct test suites optimized for differen
 - **Parallelization**: Sequential (1 fork) for consistent performance measurements
 - **Memory**: 512m-2048m (generous for performance testing)
 - **Usage**: `./gradlew systemTest`
+
+## Parallel Test Execution Flow
+
+```mermaid
+sequenceDiagram
+    participant CI as CI Trigger
+    participant Unit as Unit Test Job
+    participant Integ as Integration Test Job
+    participant Sys as System Test Job
+    participant Cov as Coverage Job
+
+    CI->>Unit: Start (parallel)
+    CI->>Integ: Start (parallel)
+    CI->>Sys: Start (parallel)
+
+    Note over Unit: Fast execution<br/>All CPU cores<br/>~1 second
+
+    Unit->>Unit: Execute domain tests
+    Unit->>Cov: Upload coverage (flags: unittests)
+
+    Note over Integ: Moderate execution<br/>CPU/2 cores<br/>~10 seconds
+
+    Integ->>Integ: Execute repository tests
+    Integ->>Cov: Upload coverage (flags: integration)
+
+    Note over Sys: Sequential execution<br/>1 core<br/>~30 seconds
+
+    Sys->>Sys: Execute performance tests
+    Note over Sys: No coverage upload
+
+    Cov->>Cov: Aggregate coverage reports
+    Cov->>CI: Final coverage result
+```
 
 ## Available Commands
 
@@ -70,7 +107,7 @@ The GitHub Actions workflow now runs test suites in parallel for faster feedback
 4. **Test Coverage** - Aggregated coverage report generation
 
 ### Parallel Execution Benefits
-- **60% faster overall test execution** through parallel suite execution
+- **Faster overall test execution** through parallel suite execution (vs sequential)
 - **Fail-fast feedback** - unit tests complete first for rapid developer feedback
 - **Independent test isolation** - each suite runs in its own environment
 - **Optimized resource usage** - memory and parallelization tuned per test type
@@ -144,7 +181,7 @@ testApplication {
     )
 
     // Each test gets its own database instance
-    val response = client.get("/api/issues")
+    val response = client.get("/api/v1/issues")
     // Test assertions...
 }
 ```

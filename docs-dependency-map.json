@@ -1,0 +1,1219 @@
+{
+  "files": [
+    ".claude/README.md",
+    ".claude/agents/code-reviewer.md",
+    ".claude/agents/context-engineer.md",
+    ".claude/agents/developer.md",
+    ".claude/agents/devops-engineer.md",
+    ".claude/agents/product-manager.md",
+    ".claude/agents/qa.md",
+    ".claude/agents/software-architect.md",
+    ".claude/agents/tech-lead.md",
+    ".claude/agents/tech-writer.md",
+    ".claude/commands/hello.md",
+    ".claude/commands/linear-dev.md",
+    ".claude/commands/worktree-cleanup.md",
+    ".claude/shared/development-commands.md",
+    ".claude/shared/git-conventions.md",
+    ".claude/shared/linear-reference.md",
+    ".claude/shared/parallel-development-detection.md",
+    ".claude/shared/testing-standards.md",
+    ".claude/test-scenarios/context-engineer-tests.md",
+    ".claude/workflows/bugfix-workflow.md",
+    ".claude/workflows/direct-workflow.md",
+    ".claude/workflows/task-tool-workflow.md",
+    ".claude/workflows/tdd-workflow.md",
+    "CLAUDE.md",
+    "docs/FOUNDATION_REVIEW_REPORT.md",
+    "docs/MVP_CAPABILITY_SUMMARY.md",
+    "docs/MVP_DEMO_SCRIPT.md",
+    "docs/README.md",
+    "docs/adr/0001-exposed-orm-transaction-pattern.md",
+    "docs/api/best-practices.md",
+    "docs/api/mcp-resources.md",
+    "docs/api/migration-guide.md",
+    "docs/api/quick-start.md",
+    "docs/api/rest-api-reference.md",
+    "docs/api/rest-endpoints.md",
+    "docs/architecture/decisions/ADR-005-database-initialization-pattern.md",
+    "docs/architecture/decisions/ADR-006-lifecycle-managed-cleanup.md",
+    "docs/architecture/decisions/ADR-007-repository-issue-persistence.md",
+    "docs/architecture/decisions/ADR-007-repository-singleton-thread-safety.md",
+    "docs/architecture/overview.md",
+    "docs/architecture/session-management.md",
+    "docs/archive/refactoring-notes/spi-467-summary.md",
+    "docs/archive/refactoring-notes/spi-468-notes.md",
+    "docs/archive/sessions/2025-07-session.md",
+    "docs/archive/test-plans/cd-implementation-test-plan.md",
+    "docs/archive/test-plans/parallel-tdd-test-plan.md",
+    "docs/ci-cd/concurrency-control.md",
+    "docs/ci-cd/container-tagging.md",
+    "docs/ci-cd/environment-protection.md",
+    "docs/ci-cd/environments.md",
+    "docs/ci-cd/overview.md",
+    "docs/ci-cd/production-approvals.md",
+    "docs/ci-cd/release-process.md",
+    "docs/ci-cd/staging-promotion.md",
+    "docs/ci-cd/versioning.md",
+    "docs/development/branching-strategy.md",
+    "docs/development/linear-branch-integration.md",
+    "docs/development/project-structure.md",
+    "docs/development/repository-usage.md",
+    "docs/development/setup.md",
+    "docs/development/single-feature-workflow.md",
+    "docs/getting-started/configuration.md",
+    "docs/getting-started/installation.md",
+    "docs/getting-started/onboarding.md",
+    "docs/getting-started/quick-start.md",
+    "docs/migration/profile-configuration-migration.md",
+    "docs/operations/deployment-guide.md",
+    "docs/performance/baseline-results.md",
+    "docs/performance/caching-strategy.md",
+    "docs/reference/PRD.md",
+    "docs/reference/agents.md",
+    "docs/reference/decision-guide.md",
+    "docs/reference/limitations.md",
+    "docs/reference/technical-design/application-service-patterns.md",
+    "docs/reference/technical-design/business-rule-verification-report.md",
+    "docs/reference/technical-design/configuration-management.md",
+    "docs/reference/technical-design/database-di-migration.md",
+    "docs/reference/technical-design/dependency-injection-patterns.md",
+    "docs/reference/technical-design/domain-entities.md",
+    "docs/reference/technical-design/mcp-architecture-simplification.md",
+    "docs/reference/technical-design/mcp-integration-patterns.md",
+    "docs/reference/technical-design/mcp-mvp-spike-plan.md",
+    "docs/reference/technical-design/repository-pattern.md",
+    "docs/reference/technical-design/testing-architecture-tdd.md",
+    "docs/reference/troubleshooting.md",
+    "docs/reference/user-experience.md",
+    "docs/reference/worktree-operations.md",
+    "docs/testing/database-test-migration-guide.md",
+    "docs/testing/local-testing.md",
+    "docs/testing/parallel-development.md",
+    "docs/testing/strategy.md",
+    "docs/testing/tdd-workflow.md",
+    "docs/testing/test-suites.md"
+  ],
+  "links": [
+    {
+      "from": ".claude/README.md",
+      "to": ".claude/shared/linear-reference.md"
+    },
+    {
+      "from": ".claude/workflows/task-tool-workflow.md",
+      "to": ".claude/docs/reference/agents.md"
+    },
+    {
+      "from": ".claude/workflows/task-tool-workflow.md",
+      "to": ".claude/docs/reference/troubleshooting.md"
+    },
+    {
+      "from": ".claude/workflows/task-tool-workflow.md",
+      "to": ".claude/docs/development/single-feature-workflow.md"
+    },
+    {
+      "from": ".claude/workflows/task-tool-workflow.md",
+      "to": ".claude/docs/reference/agents.md"
+    },
+    {
+      "from": ".claude/workflows/task-tool-workflow.md",
+      "to": ".claude/docs/reference/decision-guide.md"
+    },
+    {
+      "from": ".claude/workflows/task-tool-workflow.md",
+      "to": ".claude/docs/reference/troubleshooting.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": ".claude/shared/parallel-development-detection.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": ".claude/shared/git-conventions.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": ".claude/shared/development-commands.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": ".claude/shared/testing-standards.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": ".claude/shared/linear-reference.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": "docs/reference/agents.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": "docs/development/branching-strategy.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": "docs/development/single-feature-workflow.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": "docs/development/linear-branch-integration.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": "docs/testing/parallel-development.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": ".claude/workflows/task-tool-workflow.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": ".claude/workflows/tdd-workflow.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": ".claude/workflows/direct-workflow.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": ".claude/workflows/bugfix-workflow.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": "docs/reference/agents.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": "docs/reference/worktree-operations.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": "docs/reference/decision-guide.md"
+    },
+    {
+      "from": "CLAUDE.md",
+      "to": "docs/reference/troubleshooting.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/getting-started/installation.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/getting-started/quick-start.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/getting-started/configuration.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/getting-started/onboarding.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/development/setup.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/development/project-structure.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/development/repository-usage.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/architecture/overview.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/architecture/session-management.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/testing/strategy.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/testing/tdd-workflow.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/testing/parallel-development.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/testing/local-testing.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/testing/test-suites.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/api/rest-endpoints.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/api/mcp-resources.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/ci-cd/overview.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/ci-cd/environments.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/ci-cd/release-process.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/ci-cd/versioning.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/ci-cd/container-tagging.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/ci-cd/staging-promotion.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/ci-cd/production-approvals.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/ci-cd/environment-protection.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/operations/deployment-guide.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/operations/deployment-guide.md",
+      "anchor": "health-monitoring"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/operations/deployment-guide.md",
+      "anchor": "troubleshooting"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/performance/caching-strategy.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/performance/caching-strategy.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/performance/baseline-results.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/reference/PRD.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/reference/user-experience.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/reference/limitations.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/getting-started/quick-start.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/development/setup.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/testing/strategy.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/api/rest-endpoints.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/operations/deployment-guide.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/ci-cd/overview.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/ci-cd/environments.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/performance/caching-strategy.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/architecture/overview.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/reference/PRD.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/reference/limitations.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/reference/PRD.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/reference/user-experience.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/ci-cd/release-process.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/getting-started/onboarding.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "CONTRIBUTING.md"
+    },
+    {
+      "from": "docs/README.md",
+      "to": "docs/getting-started/quick-start.md"
+    },
+    {
+      "from": "docs/api/mcp-resources.md",
+      "to": "docs/api/PRD.md"
+    },
+    {
+      "from": "docs/api/mcp-resources.md",
+      "to": "docs/api/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/api/mcp-resources.md",
+      "to": "docs/api/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/api/mcp-resources.md",
+      "to": "docs/api/ONBOARDING.md"
+    },
+    {
+      "from": "docs/api/quick-start.md",
+      "to": "docs/architecture/overview.md"
+    },
+    {
+      "from": "docs/api/quick-start.md",
+      "to": "docs/architecture/domain-model.md"
+    },
+    {
+      "from": "docs/api/rest-endpoints.md",
+      "to": "docs/api/mcp-resources.md"
+    },
+    {
+      "from": "docs/api/rest-endpoints.md",
+      "to": "docs/api/mcp-protocol.md"
+    },
+    {
+      "from": "docs/api/rest-endpoints.md",
+      "to": "docs/api/authentication.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/PRD.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/ONBOARDING.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/PRD.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/API_SPEC.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/DEPLOYMENT.md"
+    },
+    {
+      "from": "docs/architecture/session-management.md",
+      "to": "docs/architecture/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/architecture/session-management.md",
+      "to": "docs/architecture/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/architecture/session-management.md",
+      "to": "docs/CLAUDE.md",
+      "anchor": "testing-standards--architecture"
+    },
+    {
+      "from": "docs/ci-cd/concurrency-control.md",
+      "to": "docs/ci-cd/overview.md"
+    },
+    {
+      "from": "docs/ci-cd/concurrency-control.md",
+      "to": "docs/ci-cd/release-process.md"
+    },
+    {
+      "from": "docs/ci-cd/container-tagging.md",
+      "to": "docs/ci-cd/versioning.md"
+    },
+    {
+      "from": "docs/ci-cd/container-tagging.md",
+      "to": "docs/ci-cd/overview.md"
+    },
+    {
+      "from": "docs/ci-cd/container-tagging.md",
+      "to": "docs/ci-cd/environments.md"
+    },
+    {
+      "from": "docs/ci-cd/container-tagging.md",
+      "to": "docs/ci-cd/release-process.md"
+    },
+    {
+      "from": "docs/ci-cd/container-tagging.md",
+      "to": "docs/ci-cd/versioning.md"
+    },
+    {
+      "from": "docs/ci-cd/environments.md",
+      "to": "docs/ci-cd/staging-promotion.md"
+    },
+    {
+      "from": "docs/ci-cd/environments.md",
+      "to": "docs/ci-cd/production-approvals.md"
+    },
+    {
+      "from": "docs/ci-cd/environments.md",
+      "to": "docs/ci-cd/environment-protection.md"
+    },
+    {
+      "from": "docs/ci-cd/environments.md",
+      "to": "docs/ci-cd/overview.md"
+    },
+    {
+      "from": "docs/ci-cd/environments.md",
+      "to": "docs/ci-cd/release-process.md"
+    },
+    {
+      "from": "docs/ci-cd/environments.md",
+      "to": "docs/ci-cd/release-token-setup.md"
+    },
+    {
+      "from": "docs/ci-cd/release-process.md",
+      "to": "docs/ci-cd/container-tagging.md"
+    },
+    {
+      "from": "docs/ci-cd/release-process.md",
+      "to": "docs/ci-cd/overview.md"
+    },
+    {
+      "from": "docs/ci-cd/release-process.md",
+      "to": "docs/ci-cd/container-tagging.md"
+    },
+    {
+      "from": "docs/ci-cd/release-process.md",
+      "to": "docs/ci-cd/environments.md"
+    },
+    {
+      "from": "docs/ci-cd/release-process.md",
+      "to": "docs/ci-cd/versioning.md"
+    },
+    {
+      "from": "docs/ci-cd/versioning.md",
+      "to": "docs/ci-cd/release-process.md"
+    },
+    {
+      "from": "docs/ci-cd/versioning.md",
+      "to": "docs/ci-cd/container-tagging.md"
+    },
+    {
+      "from": "docs/ci-cd/versioning.md",
+      "to": "docs/ci-cd/overview.md"
+    },
+    {
+      "from": "docs/development/branching-strategy.md",
+      "to": "docs/reference/decision-guide.md"
+    },
+    {
+      "from": "docs/development/branching-strategy.md",
+      "to": "docs/reference/worktree-operations.md"
+    },
+    {
+      "from": "docs/development/branching-strategy.md",
+      "to": "docs/development/linear-branch-integration.md"
+    },
+    {
+      "from": "docs/development/branching-strategy.md",
+      "to": "docs/reference/troubleshooting.md"
+    },
+    {
+      "from": "docs/development/branching-strategy.md",
+      "to": "docs/development/single-feature-workflow.md"
+    },
+    {
+      "from": "docs/development/branching-strategy.md",
+      "to": "docs/testing/parallel-development.md"
+    },
+    {
+      "from": "docs/development/branching-strategy.md",
+      "to": ".claude/workflows/task-tool-workflow.md"
+    },
+    {
+      "from": "docs/development/linear-branch-integration.md",
+      "to": "docs/development/branching-strategy.md"
+    },
+    {
+      "from": "docs/development/linear-branch-integration.md",
+      "to": "docs/development/single-feature-workflow.md"
+    },
+    {
+      "from": "docs/development/linear-branch-integration.md",
+      "to": "docs/testing/parallel-development.md"
+    },
+    {
+      "from": "docs/development/linear-branch-integration.md",
+      "to": "docs/development/agent-invocation-patterns.md"
+    },
+    {
+      "from": "docs/development/setup.md",
+      "to": "docs/development/project-structure.md"
+    },
+    {
+      "from": "docs/development/setup.md",
+      "to": "docs/development/repository-usage.md"
+    },
+    {
+      "from": "docs/development/setup.md",
+      "to": "docs/testing/strategy.md"
+    },
+    {
+      "from": "docs/development/setup.md",
+      "to": "docs/development/coding-standards.md"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "to": "docs/reference/decision-guide.md"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "to": "docs/reference/worktree-operations.md"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "to": "docs/reference/agents.md"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "to": "docs/development/linear-branch-integration.md"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "to": "docs/reference/troubleshooting.md"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "to": "docs/development/branching-strategy.md"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "to": "docs/reference/agents.md"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "to": "docs/development/linear-branch-integration.md"
+    },
+    {
+      "from": "docs/development/single-feature-workflow.md",
+      "to": "docs/testing/parallel-development.md"
+    },
+    {
+      "from": "docs/getting-started/configuration.md",
+      "to": "docs/operations/deployment-guide.md"
+    },
+    {
+      "from": "docs/getting-started/installation.md",
+      "to": "docs/getting-started/quick-start.md"
+    },
+    {
+      "from": "docs/getting-started/installation.md",
+      "to": "docs/getting-started/configuration.md"
+    },
+    {
+      "from": "docs/getting-started/installation.md",
+      "to": "docs/development/setup.md"
+    },
+    {
+      "from": "docs/getting-started/onboarding.md",
+      "to": "docs/getting-started/PRD.md"
+    },
+    {
+      "from": "docs/getting-started/onboarding.md",
+      "to": "docs/getting-started/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/getting-started/onboarding.md",
+      "to": "docs/getting-started/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/getting-started/onboarding.md",
+      "to": "docs/getting-started/ONBOARDING.md"
+    },
+    {
+      "from": "docs/getting-started/onboarding.md",
+      "to": "docs/getting-started/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/getting-started/onboarding.md",
+      "to": "docs/getting-started/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/getting-started/quick-start.md",
+      "to": "docs/getting-started/installation.md"
+    },
+    {
+      "from": "docs/getting-started/quick-start.md",
+      "to": "docs/getting-started/configuration.md"
+    },
+    {
+      "from": "docs/getting-started/quick-start.md",
+      "to": "docs/api/rest-endpoints.md"
+    },
+    {
+      "from": "docs/getting-started/quick-start.md",
+      "to": "docs/development/setup.md"
+    },
+    {
+      "from": "docs/getting-started/quick-start.md",
+      "to": "docs/testing/strategy.md"
+    },
+    {
+      "from": "docs/operations/deployment-guide.md",
+      "to": "docs/getting-started/configuration.md"
+    },
+    {
+      "from": "docs/operations/deployment-guide.md",
+      "to": "docs/ci-cd/environments.md"
+    },
+    {
+      "from": "docs/operations/deployment-guide.md",
+      "to": "docs/operations/monitoring.md"
+    },
+    {
+      "from": "docs/operations/deployment-guide.md",
+      "to": "docs/operations/troubleshooting.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/PRD.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/ONBOARDING.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/ONBOARDING.md"
+    },
+    {
+      "from": "docs/reference/agents.md",
+      "to": "docs/reference/troubleshooting.md"
+    },
+    {
+      "from": "docs/reference/agents.md",
+      "to": "docs/development/single-feature-workflow.md"
+    },
+    {
+      "from": "docs/reference/agents.md",
+      "to": "docs/testing/parallel-development.md"
+    },
+    {
+      "from": "docs/reference/agents.md",
+      "to": "docs/reference/worktree-operations.md"
+    },
+    {
+      "from": "docs/reference/agents.md",
+      "to": "docs/reference/decision-guide.md"
+    },
+    {
+      "from": "docs/reference/decision-guide.md",
+      "to": "docs/reference/agents.md"
+    },
+    {
+      "from": "docs/reference/decision-guide.md",
+      "to": "docs/reference/worktree-operations.md"
+    },
+    {
+      "from": "docs/reference/decision-guide.md",
+      "to": "docs/development/single-feature-workflow.md"
+    },
+    {
+      "from": "docs/reference/decision-guide.md",
+      "to": "docs/testing/parallel-development.md"
+    },
+    {
+      "from": "docs/reference/decision-guide.md",
+      "to": "docs/development/linear-branch-integration.md"
+    },
+    {
+      "from": "docs/reference/limitations.md",
+      "to": "docs/reference/PRD.md"
+    },
+    {
+      "from": "docs/reference/limitations.md",
+      "to": "docs/reference/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/reference/limitations.md",
+      "to": "docs/reference/MCP_RESOURCES.md"
+    },
+    {
+      "from": "docs/reference/troubleshooting.md",
+      "to": "docs/reference/agents.md"
+    },
+    {
+      "from": "docs/reference/troubleshooting.md",
+      "to": "docs/reference/worktree-operations.md"
+    },
+    {
+      "from": "docs/reference/troubleshooting.md",
+      "to": "docs/reference/decision-guide.md"
+    },
+    {
+      "from": "docs/reference/user-experience.md",
+      "to": "docs/reference/PRD.md"
+    },
+    {
+      "from": "docs/reference/user-experience.md",
+      "to": "docs/reference/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/reference/user-experience.md",
+      "to": "docs/reference/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/reference/user-experience.md",
+      "to": "docs/reference/ONBOARDING.md"
+    },
+    {
+      "from": "docs/reference/worktree-operations.md",
+      "to": "docs/development/single-feature-workflow.md"
+    },
+    {
+      "from": "docs/reference/worktree-operations.md",
+      "to": "docs/testing/parallel-development.md"
+    },
+    {
+      "from": "docs/reference/worktree-operations.md",
+      "to": "docs/development/branching-strategy.md"
+    },
+    {
+      "from": "docs/reference/worktree-operations.md",
+      "to": "docs/development/linear-branch-integration.md"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "to": "docs/reference/agents.md"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "to": "docs/reference/worktree-operations.md"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "to": "docs/reference/decision-guide.md"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "to": "docs/reference/agents.md"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "to": ".claude/workflows/tdd-workflow.md"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "to": "docs/reference/troubleshooting.md"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "to": "docs/reference/worktree-operations.md"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "to": "docs/reference/agents.md"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "to": "docs/reference/troubleshooting.md"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "to": "docs/reference/decision-guide.md"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "to": "docs/development/single-feature-workflow.md"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "to": "docs/development/linear-branch-integration.md"
+    },
+    {
+      "from": "docs/testing/parallel-development.md",
+      "to": ".claude/workflows/task-tool-workflow.md"
+    },
+    {
+      "from": "docs/testing/strategy.md",
+      "to": "docs/testing/tdd-workflow.md"
+    },
+    {
+      "from": "docs/testing/strategy.md",
+      "to": "docs/testing/parallel-development.md"
+    },
+    {
+      "from": "docs/testing/strategy.md",
+      "to": "docs/testing/local-testing.md"
+    },
+    {
+      "from": "docs/testing/strategy.md",
+      "to": "docs/testing/test-suites.md"
+    },
+    {
+      "from": "docs/testing/strategy.md",
+      "to": ".claude/shared/testing-standards.md"
+    },
+    {
+      "from": "docs/testing/strategy.md",
+      "to": "docs/development/setup.md"
+    },
+    {
+      "from": "docs/testing/strategy.md",
+      "to": "docs/ci-cd/overview.md"
+    }
+  ],
+  "hub_docs": [
+    {
+      "file": "docs/testing/parallel-development.md",
+      "incoming_refs": 9
+    },
+    {
+      "file": "docs/reference/worktree-operations.md",
+      "incoming_refs": 7
+    },
+    {
+      "file": "docs/development/single-feature-workflow.md",
+      "incoming_refs": 7
+    },
+    {
+      "file": "docs/ci-cd/overview.md",
+      "incoming_refs": 7
+    },
+    {
+      "file": "docs/reference/decision-guide.md",
+      "incoming_refs": 6
+    },
+    {
+      "file": "docs/development/linear-branch-integration.md",
+      "incoming_refs": 6
+    }
+  ],
+  "leaf_docs": [
+    ".claude/README.md",
+    ".claude/agents/code-reviewer.md",
+    ".claude/agents/context-engineer.md",
+    ".claude/agents/developer.md",
+    ".claude/agents/devops-engineer.md",
+    ".claude/agents/product-manager.md",
+    ".claude/agents/qa.md",
+    ".claude/agents/software-architect.md",
+    ".claude/agents/tech-lead.md",
+    ".claude/agents/tech-writer.md",
+    ".claude/commands/hello.md",
+    ".claude/commands/linear-dev.md",
+    ".claude/commands/worktree-cleanup.md",
+    ".claude/shared/development-commands.md",
+    ".claude/shared/git-conventions.md",
+    ".claude/shared/parallel-development-detection.md",
+    ".claude/test-scenarios/context-engineer-tests.md",
+    ".claude/workflows/bugfix-workflow.md",
+    ".claude/workflows/direct-workflow.md",
+    "CLAUDE.md",
+    "docs/FOUNDATION_REVIEW_REPORT.md",
+    "docs/MVP_CAPABILITY_SUMMARY.md",
+    "docs/MVP_DEMO_SCRIPT.md",
+    "docs/README.md",
+    "docs/adr/0001-exposed-orm-transaction-pattern.md",
+    "docs/api/best-practices.md",
+    "docs/api/migration-guide.md",
+    "docs/api/quick-start.md",
+    "docs/api/rest-api-reference.md",
+    "docs/architecture/decisions/ADR-005-database-initialization-pattern.md",
+    "docs/architecture/decisions/ADR-006-lifecycle-managed-cleanup.md",
+    "docs/architecture/decisions/ADR-007-repository-issue-persistence.md",
+    "docs/architecture/decisions/ADR-007-repository-singleton-thread-safety.md",
+    "docs/architecture/session-management.md",
+    "docs/archive/refactoring-notes/spi-467-summary.md",
+    "docs/archive/refactoring-notes/spi-468-notes.md",
+    "docs/archive/sessions/2025-07-session.md",
+    "docs/archive/test-plans/cd-implementation-test-plan.md",
+    "docs/archive/test-plans/parallel-tdd-test-plan.md",
+    "docs/ci-cd/concurrency-control.md",
+    "docs/getting-started/onboarding.md",
+    "docs/migration/profile-configuration-migration.md",
+    "docs/performance/baseline-results.md",
+    "docs/performance/caching-strategy.md",
+    "docs/reference/limitations.md",
+    "docs/reference/technical-design/application-service-patterns.md",
+    "docs/reference/technical-design/business-rule-verification-report.md",
+    "docs/reference/technical-design/configuration-management.md",
+    "docs/reference/technical-design/database-di-migration.md",
+    "docs/reference/technical-design/dependency-injection-patterns.md",
+    "docs/reference/technical-design/domain-entities.md",
+    "docs/reference/technical-design/mcp-architecture-simplification.md",
+    "docs/reference/technical-design/mcp-integration-patterns.md",
+    "docs/reference/technical-design/mcp-mvp-spike-plan.md",
+    "docs/reference/technical-design/repository-pattern.md",
+    "docs/reference/technical-design/testing-architecture-tdd.md",
+    "docs/reference/user-experience.md",
+    "docs/testing/database-test-migration-guide.md"
+  ],
+  "broken_links": [
+    {
+      "from": ".claude/workflows/task-tool-workflow.md",
+      "to": ".claude/docs/reference/agents.md"
+    },
+    {
+      "from": ".claude/workflows/task-tool-workflow.md",
+      "to": ".claude/docs/reference/troubleshooting.md"
+    },
+    {
+      "from": ".claude/workflows/task-tool-workflow.md",
+      "to": ".claude/docs/development/single-feature-workflow.md"
+    },
+    {
+      "from": ".claude/workflows/task-tool-workflow.md",
+      "to": ".claude/docs/reference/agents.md"
+    },
+    {
+      "from": ".claude/workflows/task-tool-workflow.md",
+      "to": ".claude/docs/reference/decision-guide.md"
+    },
+    {
+      "from": ".claude/workflows/task-tool-workflow.md",
+      "to": ".claude/docs/reference/troubleshooting.md"
+    },
+    {
+      "from": "docs/api/mcp-resources.md",
+      "to": "docs/api/PRD.md"
+    },
+    {
+      "from": "docs/api/mcp-resources.md",
+      "to": "docs/api/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/api/mcp-resources.md",
+      "to": "docs/api/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/api/mcp-resources.md",
+      "to": "docs/api/ONBOARDING.md"
+    },
+    {
+      "from": "docs/api/quick-start.md",
+      "to": "docs/architecture/domain-model.md"
+    },
+    {
+      "from": "docs/api/rest-endpoints.md",
+      "to": "docs/api/mcp-protocol.md"
+    },
+    {
+      "from": "docs/api/rest-endpoints.md",
+      "to": "docs/api/authentication.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/PRD.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/ONBOARDING.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/PRD.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/API_SPEC.md"
+    },
+    {
+      "from": "docs/architecture/overview.md",
+      "to": "docs/architecture/DEPLOYMENT.md"
+    },
+    {
+      "from": "docs/architecture/session-management.md",
+      "to": "docs/architecture/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/architecture/session-management.md",
+      "to": "docs/architecture/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/architecture/session-management.md",
+      "to": "docs/CLAUDE.md",
+      "anchor": "testing-standards--architecture"
+    },
+    {
+      "from": "docs/ci-cd/environments.md",
+      "to": "docs/ci-cd/release-token-setup.md"
+    },
+    {
+      "from": "docs/development/linear-branch-integration.md",
+      "to": "docs/development/agent-invocation-patterns.md"
+    },
+    {
+      "from": "docs/development/setup.md",
+      "to": "docs/development/coding-standards.md"
+    },
+    {
+      "from": "docs/getting-started/onboarding.md",
+      "to": "docs/getting-started/PRD.md"
+    },
+    {
+      "from": "docs/getting-started/onboarding.md",
+      "to": "docs/getting-started/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/getting-started/onboarding.md",
+      "to": "docs/getting-started/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/getting-started/onboarding.md",
+      "to": "docs/getting-started/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/getting-started/onboarding.md",
+      "to": "docs/getting-started/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/operations/deployment-guide.md",
+      "to": "docs/operations/monitoring.md"
+    },
+    {
+      "from": "docs/operations/deployment-guide.md",
+      "to": "docs/operations/troubleshooting.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/ONBOARDING.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/reference/PRD.md",
+      "to": "docs/reference/ONBOARDING.md"
+    },
+    {
+      "from": "docs/reference/limitations.md",
+      "to": "docs/reference/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/reference/limitations.md",
+      "to": "docs/reference/MCP_RESOURCES.md"
+    },
+    {
+      "from": "docs/reference/user-experience.md",
+      "to": "docs/reference/ARCHITECTURE.md"
+    },
+    {
+      "from": "docs/reference/user-experience.md",
+      "to": "docs/reference/USER_EXPERIENCE.md"
+    },
+    {
+      "from": "docs/reference/user-experience.md",
+      "to": "docs/reference/ONBOARDING.md"
+    }
+  ]
+}

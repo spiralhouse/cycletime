@@ -63,9 +63,12 @@ While the `ProjectRepository` manages issue associations, it creates only minima
 - `/src/test/kotlin/io/spiralhouse/cycletime/integration/H2DatabaseDriverTest.kt`
   - Fixed H2 version check to use regex pattern matching
 
-### Performance Improvements:
-- **Before**: 101 queries for 100 projects with issues (1 + 100)
-- **After**: 2 queries for any number of projects (1 for projects + 1 for all issues)
+### Query Optimization:
+Batch loading pattern reduces the N+1 query problem:
+- **Before**: 1 + N queries (one per project with issues)
+- **After**: 2 queries total (projects + batch issue loading)
+
+This approach scales independently of project count, improving performance for large datasets.
 
 ## Future Considerations
 When implementing the full `IssueRepository`:

@@ -52,9 +52,9 @@ ktor {
     
     application {
         modules = [ 
-            io.spiralhouse.jcvd.ApplicationKt.module,
-            io.spiralhouse.jcvd.infrastructure.di.DIConfigurationKt.configureDependencies,
-            io.spiralhouse.jcvd.infrastructure.mcp.MCPConfigurationKt.configureMCP
+            io.spiralhouse.cycletime.ApplicationKt.module,
+            io.spiralhouse.cycletime.infrastructure.di.DIConfigurationKt.configureDependencies,
+            io.spiralhouse.cycletime.infrastructure.mcp.MCPConfigurationKt.configureMCP
         ]
     }
     
@@ -62,7 +62,7 @@ ktor {
     environment = ${?KTOR_ENV}
 }
 
-jcvd {
+cycletime {
     server {
         name = "CycleTime MCP Server"
         version = "1.0.0"
@@ -84,7 +84,7 @@ jcvd {
         type = "h2"
         
         h2 {
-            url = "jdbc:h2:file:./data/jcvd;AUTO_SERVER=TRUE"
+            url = "jdbc:h2:file:./data/cycletime;AUTO_SERVER=TRUE"
             url = ${?DATABASE_URL}
             
             driver = "org.h2.Driver"
@@ -146,7 +146,7 @@ jcvd {
         level = ${?LOG_LEVEL}
         
         loggers {
-            "io.spiralhouse.jcvd" = DEBUG
+            "io.spiralhouse.cycletime" = DEBUG
             "org.jetbrains.exposed" = WARN
             "io.ktor" = INFO
             "com.zaxxer.hikari" = WARN
@@ -156,7 +156,7 @@ jcvd {
             console = true
             file {
                 enabled = false
-                path = "./logs/jcvd.log"
+                path = "./logs/cycletime.log"
                 maxSize = "10MB"
                 maxHistory = 30
             }
@@ -184,7 +184,7 @@ jcvd {
             opentelemetry {
                 endpoint = "http://localhost:4317"
                 endpoint = ${?OTEL_EXPORTER_OTLP_ENDPOINT}
-                serviceName = "jcvd"
+                serviceName = "cycletime"
             }
         }
     }
@@ -230,7 +230,7 @@ ktor {
     }
 }
 
-jcvd {
+cycletime {
     database {
         h2 {
             url = "jdbc:h2:file:./data/dev;AUTO_SERVER=TRUE;TRACE_LEVEL_FILE=4"
@@ -241,7 +241,7 @@ jcvd {
         level = DEBUG
         
         loggers {
-            "io.spiralhouse.jcvd" = TRACE
+            "io.spiralhouse.cycletime" = TRACE
             "org.jetbrains.exposed.sql" = DEBUG
         }
         
@@ -279,7 +279,7 @@ ktor {
     environment = test
 }
 
-jcvd {
+cycletime {
     database {
         h2 {
             url = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1"
@@ -313,7 +313,7 @@ jcvd {
         level = WARN
         
         loggers {
-            "io.spiralhouse.jcvd.test" = DEBUG
+            "io.spiralhouse.cycletime.test" = DEBUG
         }
         
         output {
@@ -344,7 +344,7 @@ ktor {
     environment = production
 }
 
-jcvd {
+cycletime {
     server {
         cors {
             hosts = [${CORS_ALLOWED_HOSTS}]
@@ -375,7 +375,7 @@ jcvd {
         level = WARN
         
         loggers {
-            "io.spiralhouse.jcvd" = INFO
+            "io.spiralhouse.cycletime" = INFO
             "org.jetbrains.exposed" = ERROR
         }
         
@@ -383,7 +383,7 @@ jcvd {
             console = false
             file {
                 enabled = true
-                path = "/var/log/jcvd/app.log"
+                path = "/var/log/cycletime/app.log"
                 maxSize = "100MB"
                 maxHistory = 90
             }
@@ -411,7 +411,7 @@ jcvd {
 ### Configuration Data Classes
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/config/ConfigModels.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/config/ConfigModels.kt
 
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
@@ -515,7 +515,7 @@ data class FeaturesConfig(
 ### Configuration Service
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/config/ConfigurationService.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/config/ConfigurationService.kt
 
 import io.ktor.server.application.*
 import io.ktor.server.config.*
@@ -529,7 +529,7 @@ class ConfigurationService(
     private val environment: ApplicationEnvironment
 ) {
     private val config: Config = ConfigFactory.load()
-    private var jcvdConfig: CycleTimeConfig = loadConfiguration()
+    private var cycletimeConfig: CycleTimeConfig = loadConfiguration()
     private val listeners = mutableListOf<ConfigurationListener>()
     
     /**
@@ -552,20 +552,20 @@ class ConfigurationService(
     /**
      * Get current configuration
      */
-    fun getConfig(): CycleTimeConfig = jcvdConfig
+    fun getConfig(): CycleTimeConfig = cycletimeConfig
     
     /**
      * Get specific configuration section
      */
     inline fun <reified T> getSection(): T {
         return when (T::class) {
-            ServerConfig::class -> jcvdConfig.server as T
-            DatabaseConfig::class -> jcvdConfig.database as T
-            MCPConfig::class -> jcvdConfig.mcp as T
-            SessionConfig::class -> jcvdConfig.session as T
-            LoggingConfig::class -> jcvdConfig.logging as T
-            MonitoringConfig::class -> jcvdConfig.monitoring as T
-            FeaturesConfig::class -> jcvdConfig.features as T
+            ServerConfig::class -> cycletimeConfig.server as T
+            DatabaseConfig::class -> cycletimeConfig.database as T
+            MCPConfig::class -> cycletimeConfig.mcp as T
+            SessionConfig::class -> cycletimeConfig.session as T
+            LoggingConfig::class -> cycletimeConfig.logging as T
+            MonitoringConfig::class -> cycletimeConfig.monitoring as T
+            FeaturesConfig::class -> cycletimeConfig.features as T
             else -> throw IllegalArgumentException("Unknown config type: ${T::class}")
         }
     }
@@ -575,13 +575,13 @@ class ConfigurationService(
      */
     fun updateConfig(updates: Map<String, Any>) {
         // Apply updates
-        val updatedConfig = applyUpdates(jcvdConfig, updates)
+        val updatedConfig = applyUpdates(cycletimeConfig, updates)
         
         // Validate new configuration
         validateConfiguration(updatedConfig)
         
         // Store and notify
-        jcvdConfig = updatedConfig
+        cycletimeConfig = updatedConfig
         notifyListeners(updatedConfig)
     }
     
@@ -628,48 +628,48 @@ class ConfigurationService(
      */
     private fun loadServerConfig(config: ApplicationConfig): ServerConfig {
         return ServerConfig(
-            name = config.property("jcvd.server.name").getString(),
-            version = config.property("jcvd.server.version").getString(),
+            name = config.property("cycletime.server.name").getString(),
+            version = config.property("cycletime.server.version").getString(),
             cors = CorsConfig(
-                enabled = config.propertyOrNull("jcvd.server.cors.enabled")?.getString()?.toBoolean() ?: true,
-                hosts = config.propertyOrNull("jcvd.server.cors.hosts")?.getList() ?: emptyList(),
-                headers = config.propertyOrNull("jcvd.server.cors.headers")?.getList() ?: emptyList()
+                enabled = config.propertyOrNull("cycletime.server.cors.enabled")?.getString()?.toBoolean() ?: true,
+                hosts = config.propertyOrNull("cycletime.server.cors.hosts")?.getList() ?: emptyList(),
+                headers = config.propertyOrNull("cycletime.server.cors.headers")?.getList() ?: emptyList()
             ),
             rateLimit = RateLimitConfig(
-                enabled = config.propertyOrNull("jcvd.server.rateLimit.enabled")?.getString()?.toBoolean() ?: true,
-                requestsPerMinute = config.propertyOrNull("jcvd.server.rateLimit.requestsPerMinute")?.getString()?.toInt() ?: 60
+                enabled = config.propertyOrNull("cycletime.server.rateLimit.enabled")?.getString()?.toBoolean() ?: true,
+                requestsPerMinute = config.propertyOrNull("cycletime.server.rateLimit.requestsPerMinute")?.getString()?.toInt() ?: 60
             )
         )
     }
     
     private fun loadDatabaseConfig(config: ApplicationConfig): DatabaseConfig {
-        val type = config.property("jcvd.database.type").getString()
+        val type = config.property("cycletime.database.type").getString()
         
         return DatabaseConfig(
             type = type,
             h2 = if (type == "h2") {
                 H2Config(
-                    url = config.property("jcvd.database.h2.url").getString(),
-                    driver = config.property("jcvd.database.h2.driver").getString(),
+                    url = config.property("cycletime.database.h2.url").getString(),
+                    driver = config.property("cycletime.database.h2.driver").getString(),
                     pool = PoolConfig(
-                        maxSize = config.property("jcvd.database.h2.pool.maxSize").getString().toInt(),
-                        minIdle = config.property("jcvd.database.h2.pool.minIdle").getString().toInt(),
-                        connectionTimeout = config.property("jcvd.database.h2.pool.connectionTimeout").getString().toLong(),
-                        idleTimeout = config.property("jcvd.database.h2.pool.idleTimeout").getString().toLong(),
-                        maxLifetime = config.property("jcvd.database.h2.pool.maxLifetime").getString().toLong()
+                        maxSize = config.property("cycletime.database.h2.pool.maxSize").getString().toInt(),
+                        minIdle = config.property("cycletime.database.h2.pool.minIdle").getString().toInt(),
+                        connectionTimeout = config.property("cycletime.database.h2.pool.connectionTimeout").getString().toLong(),
+                        idleTimeout = config.property("cycletime.database.h2.pool.idleTimeout").getString().toLong(),
+                        maxLifetime = config.property("cycletime.database.h2.pool.maxLifetime").getString().toLong()
                     ),
                     options = H2Options(
-                        autoCommit = config.propertyOrNull("jcvd.database.h2.options.autoCommit")?.getString()?.toBoolean() ?: false,
-                        transactionIsolation = config.propertyOrNull("jcvd.database.h2.options.transactionIsolation")?.getString() ?: "TRANSACTION_READ_COMMITTED",
-                        cacheSize = config.propertyOrNull("jcvd.database.h2.options.cacheSize")?.getString()?.toInt() ?: 10240,
-                        lockTimeout = config.propertyOrNull("jcvd.database.h2.options.lockTimeout")?.getString()?.toInt() ?: 5000
+                        autoCommit = config.propertyOrNull("cycletime.database.h2.options.autoCommit")?.getString()?.toBoolean() ?: false,
+                        transactionIsolation = config.propertyOrNull("cycletime.database.h2.options.transactionIsolation")?.getString() ?: "TRANSACTION_READ_COMMITTED",
+                        cacheSize = config.propertyOrNull("cycletime.database.h2.options.cacheSize")?.getString()?.toInt() ?: 10240,
+                        lockTimeout = config.propertyOrNull("cycletime.database.h2.options.lockTimeout")?.getString()?.toInt() ?: 5000
                     )
                 )
             } else null,
             migrations = MigrationConfig(
-                enabled = config.propertyOrNull("jcvd.database.migrations.enabled")?.getString()?.toBoolean() ?: true,
-                location = config.propertyOrNull("jcvd.database.migrations.location")?.getString() ?: "db/migrations",
-                validateOnMigrate = config.propertyOrNull("jcvd.database.migrations.validateOnMigrate")?.getString()?.toBoolean() ?: true
+                enabled = config.propertyOrNull("cycletime.database.migrations.enabled")?.getString()?.toBoolean() ?: true,
+                location = config.propertyOrNull("cycletime.database.migrations.location")?.getString() ?: "db/migrations",
+                validateOnMigrate = config.propertyOrNull("cycletime.database.migrations.validateOnMigrate")?.getString()?.toBoolean() ?: true
             )
         )
     }
@@ -686,7 +686,7 @@ interface ConfigurationListener {
 ### DI Module for Configuration
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/di/ConfigurationModule.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/di/ConfigurationModule.kt
 
 import io.ktor.server.application.*
 import io.ktor.server.di.*
@@ -764,7 +764,7 @@ val databaseModule = DIModule("database") {
 ### Environment Variable Provider
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/config/SecretProvider.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/config/SecretProvider.kt
 
 /**
  * Provider for secure secret management
@@ -860,7 +860,7 @@ class FileSecretProvider(
 ### Configuration API
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/api/ConfigurationController.kt
+// src/main/kotlin/io/spiralhouse/cycletime/api/ConfigurationController.kt
 
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -953,7 +953,7 @@ private fun sanitizeFeaturesConfig(config: FeaturesConfig): FeaturesConfig {
 ### MCP Configuration Tool
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/tools/ConfigurationTool.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/tools/ConfigurationTool.kt
 
 /**
  * MCP tool for configuration management
@@ -1032,7 +1032,7 @@ class ConfigurationTool(
 ## Configuration Validation
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/config/ConfigurationValidator.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/config/ConfigurationValidator.kt
 
 /**
  * Validator for configuration values
@@ -1159,7 +1159,7 @@ data class ValidationError(
 ## Testing Configuration
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/config/ConfigurationServiceTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/config/ConfigurationServiceTest.kt
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -1278,7 +1278,7 @@ export HEALTH_DETAILED=false
 export TRACING_ENABLED=true
 
 # Start application
-java -jar jcvd.jar
+java -jar cycletime.jar
 ```
 
 ## Best Practices

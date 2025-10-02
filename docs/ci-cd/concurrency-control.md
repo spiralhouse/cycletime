@@ -4,6 +4,34 @@
 
 All GitHub Actions workflows in CycleTime are configured with concurrency controls to prevent duplicate runs, save CI resources, and ensure clean deployment paths. This document explains the concurrency strategy for each workflow.
 
+## Concurrency Decision Flow
+
+```mermaid
+flowchart TD
+    Start[Workflow Triggered] --> CheckType{Workflow Type?}
+
+    CheckType -->|CI/CD or Claude| CheckEvent{Event Type?}
+    CheckType -->|Promotion| PromotionGroup[Group by Environment]
+
+    CheckEvent -->|Pull Request| PRGroup[Group by PR Number]
+    CheckEvent -->|Push| BranchGroup[Group by Branch Ref]
+    CheckEvent -->|Issue Comment| IssueGroup[Group by Issue + Event]
+
+    PRGroup --> CheckInProgress{In-Progress Run?}
+    BranchGroup --> CheckInProgress
+    IssueGroup --> CheckInProgress
+    PromotionGroup --> QueuePromotion[Queue if Running]
+
+    CheckInProgress -->|Yes| Cancel[Cancel Previous Run]
+    CheckInProgress -->|No| StartNew[Start New Run]
+    Cancel --> StartNew
+
+    QueuePromotion --> WaitComplete[Wait for Completion]
+    WaitComplete --> StartNew
+
+    StartNew --> Execute[Execute Workflow]
+```
+
 ## Concurrency Configuration by Workflow
 
 ### 1. CI/CD Pipeline (`cicd.yml`)

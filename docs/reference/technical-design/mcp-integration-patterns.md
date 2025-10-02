@@ -61,7 +61,7 @@ dependencies {
 ### Core MCP Server Implementation
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/CycleTimeMCPServer.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/CycleTimeMCPServer.kt
 
 import io.ktor.server.application.*
 import io.ktor.server.websocket.*
@@ -348,7 +348,7 @@ data class MCPSession(
 ### JSON-RPC Data Models
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/models/JsonRpcModels.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/models/JsonRpcModels.kt
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -382,7 +382,7 @@ data class JsonRpcError(
 ### Base Resource Interface
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/resources/MCPResource.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/resources/MCPResource.kt
 
 /**
  * Base interface for MCP resources
@@ -423,10 +423,10 @@ data class ResourceContent(
 ### Project Resource
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/resources/ProjectResource.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/resources/ProjectResource.kt
 
-import io.spiralhouse.jcvd.application.services.ProjectApplicationService
-import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.application.services.ProjectApplicationService
+import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -438,7 +438,7 @@ class ProjectResource(
 ) : MCPResource {
     
     override fun canHandle(uri: String): Boolean {
-        return uri.startsWith("jcvd://project/")
+        return uri.startsWith("cycletime://project/")
     }
     
     override suspend fun list(): List<ResourceDescriptor> {
@@ -446,14 +446,14 @@ class ProjectResource(
         
         return projects.map { project ->
             ResourceDescriptor(
-                uri = "jcvd://project/${project.id}",
+                uri = "cycletime://project/${project.id}",
                 name = project.name,
                 description = project.description,
                 mimeType = "application/json"
             )
         } + listOf(
             ResourceDescriptor(
-                uri = "jcvd://projects",
+                uri = "cycletime://projects",
                 name = "All Projects",
                 description = "List of all projects",
                 mimeType = "application/json"
@@ -463,7 +463,7 @@ class ProjectResource(
     
     override suspend fun read(uri: String): ResourceContent {
         return when {
-            uri == "jcvd://projects" -> {
+            uri == "cycletime://projects" -> {
                 val projects = projectService.listProjects()
                 ResourceContent(
                     uri = uri,
@@ -471,8 +471,8 @@ class ProjectResource(
                     text = Json.encodeToString(projects)
                 )
             }
-            uri.startsWith("jcvd://project/") -> {
-                val projectId = uri.substringAfter("jcvd://project/").substringBefore("/")
+            uri.startsWith("cycletime://project/") -> {
+                val projectId = uri.substringAfter("cycletime://project/").substringBefore("/")
                 val project = projectService.getProject(ProjectId(projectId))
                     ?: throw ResourceNotFoundException("Project not found: $projectId")
                 
@@ -519,7 +519,7 @@ class ProjectResource(
 ### Issue Resource
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/resources/IssueResource.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/resources/IssueResource.kt
 
 /**
  * MCP Resource for issue data access
@@ -529,7 +529,7 @@ class IssueResource(
 ) : MCPResource {
     
     override fun canHandle(uri: String): Boolean {
-        return uri.startsWith("jcvd://issue/")
+        return uri.startsWith("cycletime://issue/")
     }
     
     override suspend fun list(): List<ResourceDescriptor> {
@@ -538,7 +538,7 @@ class IssueResource(
     }
     
     override suspend fun read(uri: String): ResourceContent {
-        val issueId = uri.substringAfter("jcvd://issue/").substringBefore("/")
+        val issueId = uri.substringAfter("cycletime://issue/").substringBefore("/")
         
         return when {
             uri.endsWith("/context") -> {
@@ -577,7 +577,7 @@ class IssueResource(
 ### Workflow Resource
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/resources/WorkflowResource.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/resources/WorkflowResource.kt
 
 /**
  * MCP Resource for workflow state access
@@ -587,7 +587,7 @@ class WorkflowResource(
 ) : MCPResource {
     
     override fun canHandle(uri: String): Boolean {
-        return uri.startsWith("jcvd://workflow/")
+        return uri.startsWith("cycletime://workflow/")
     }
     
     override suspend fun list(): List<ResourceDescriptor> {
@@ -595,7 +595,7 @@ class WorkflowResource(
     }
     
     override suspend fun read(uri: String): ResourceContent {
-        val workflowId = uri.substringAfter("jcvd://workflow/")
+        val workflowId = uri.substringAfter("cycletime://workflow/")
         val workflow = workflowService.getWorkflow(WorkflowId(workflowId))
             ?: throw ResourceNotFoundException("Workflow not found: $workflowId")
         
@@ -623,7 +623,7 @@ class WorkflowResource(
 ### Base Tool Interface
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/tools/MCPTool.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/tools/MCPTool.kt
 
 import kotlinx.serialization.json.JsonObject
 
@@ -645,7 +645,7 @@ interface MCPTool {
 ### Create Project Tool
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/tools/CreateProjectTool.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/tools/CreateProjectTool.kt
 
 /**
  * Tool for creating new projects
@@ -701,7 +701,7 @@ class CreateProjectTool(
 ### Create Issue Tool
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/tools/CreateIssueTool.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/tools/CreateIssueTool.kt
 
 /**
  * Tool for creating issues
@@ -799,7 +799,7 @@ class CreateIssueTool(
 ### Update Issue Status Tool
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/tools/UpdateIssueStatusTool.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/tools/UpdateIssueStatusTool.kt
 
 /**
  * Tool for updating issue status
@@ -866,7 +866,7 @@ class UpdateIssueStatusTool(
 ## MCP Prompts Implementation
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/prompts/MCPPrompt.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/prompts/MCPPrompt.kt
 
 /**
  * Base interface for MCP prompts
@@ -926,7 +926,7 @@ class ProjectSetupPrompt : MCPPrompt {
 ## DI Configuration for MCP
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/di/MCPModule.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/di/MCPModule.kt
 
 import io.ktor.server.application.*
 import io.ktor.server.di.*
@@ -1005,7 +1005,7 @@ fun Application.configureMCP() {
 ### WebSocket Testing
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/mcp/MCPServerTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/mcp/MCPServerTest.kt
 
 import io.ktor.client.plugins.websocket.*
 import io.ktor.server.testing.*
@@ -1078,7 +1078,7 @@ class MCPServerTest : DescribeSpec({
                             
                             resources?.size shouldBeGreaterThan 0
                             resources?.any { 
-                                it.jsonObject["uri"]?.jsonPrimitive?.content == "jcvd://project/$projectId"
+                                it.jsonObject["uri"]?.jsonPrimitive?.content == "cycletime://project/$projectId"
                             } shouldBe true
                         }
                     }
@@ -1131,7 +1131,7 @@ class MCPServerTest : DescribeSpec({
 ### Mock MCP Client
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/testing/mocks/MockMCPClient.kt
+// src/test/kotlin/io/spiralhouse/cycletime/testing/mocks/MockMCPClient.kt
 
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.Channel
@@ -1180,7 +1180,7 @@ class MockMCPClient {
         // Mock response
         return listOf(
             ResourceDescriptor(
-                uri = "jcvd://projects",
+                uri = "cycletime://projects",
                 name = "All Projects",
                 description = "List of all projects"
             )
@@ -1207,7 +1207,7 @@ class MockMCPClient {
 ## Error Handling
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/exceptions/MCPExceptions.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/exceptions/MCPExceptions.kt
 
 /**
  * Base exception for MCP errors
@@ -1250,7 +1250,7 @@ class MethodNotFoundException(
 ## Performance Monitoring
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/infrastructure/mcp/monitoring/MCPMetrics.kt
+// src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/monitoring/MCPMetrics.kt
 
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
