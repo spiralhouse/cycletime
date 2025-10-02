@@ -149,21 +149,21 @@ data class ProjectSearchQuery(
 ### ProjectApplicationService
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/application/services/ProjectApplicationService.kt
+// src/main/kotlin/io/spiralhouse/cycletime/application/services/ProjectApplicationService.kt
 
-import io.spiralhouse.jcvd.domain.entities.Project
-import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
-import io.spiralhouse.jcvd.domain.repositories.IssueRepository
-import io.spiralhouse.jcvd.domain.services.ProjectDomainService
-import io.spiralhouse.jcvd.domain.services.TimeProvider
-import io.spiralhouse.jcvd.domain.services.UnitOfWork
-import io.spiralhouse.jcvd.domain.valueobjects.ProjectId
-import io.spiralhouse.jcvd.domain.valueobjects.ProjectStatus
-import io.spiralhouse.jcvd.domain.exceptions.NotFoundException
-import io.spiralhouse.jcvd.domain.exceptions.DomainException
-import io.spiralhouse.jcvd.application.commands.*
-import io.spiralhouse.jcvd.application.queries.*
-import io.spiralhouse.jcvd.application.dto.*
+import io.spiralhouse.cycletime.domain.entities.Project
+import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
+import io.spiralhouse.cycletime.domain.repositories.IssueRepository
+import io.spiralhouse.cycletime.domain.services.ProjectDomainService
+import io.spiralhouse.cycletime.domain.services.TimeProvider
+import io.spiralhouse.cycletime.domain.services.UnitOfWork
+import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.domain.valueobjects.ProjectStatus
+import io.spiralhouse.cycletime.domain.exceptions.NotFoundException
+import io.spiralhouse.cycletime.domain.exceptions.DomainException
+import io.spiralhouse.cycletime.application.commands.*
+import io.spiralhouse.cycletime.application.queries.*
+import io.spiralhouse.cycletime.application.dto.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -347,15 +347,15 @@ private fun Project.toDto(): ProjectDto = ProjectDto(
 ### IssueApplicationService
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/application/services/IssueApplicationService.kt
+// src/main/kotlin/io/spiralhouse/cycletime/application/services/IssueApplicationService.kt
 
-import io.spiralhouse.jcvd.domain.entities.Issue
-import io.spiralhouse.jcvd.domain.repositories.IssueRepository
-import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
-import io.spiralhouse.jcvd.domain.services.IssueDomainService
-import io.spiralhouse.jcvd.domain.services.TimeProvider
-import io.spiralhouse.jcvd.domain.services.UnitOfWork
-import io.spiralhouse.jcvd.domain.valueobjects.*
+import io.spiralhouse.cycletime.domain.entities.Issue
+import io.spiralhouse.cycletime.domain.repositories.IssueRepository
+import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
+import io.spiralhouse.cycletime.domain.services.IssueDomainService
+import io.spiralhouse.cycletime.domain.services.TimeProvider
+import io.spiralhouse.cycletime.domain.services.UnitOfWork
+import io.spiralhouse.cycletime.domain.valueobjects.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
@@ -569,14 +569,14 @@ private fun Issue.toDto(): IssueDto = IssueDto(
 ### WorkflowApplicationService
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/application/services/WorkflowApplicationService.kt
+// src/main/kotlin/io/spiralhouse/cycletime/application/services/WorkflowApplicationService.kt
 
-import io.spiralhouse.jcvd.domain.entities.Workflow
-import io.spiralhouse.jcvd.domain.repositories.WorkflowRepository
-import io.spiralhouse.jcvd.domain.repositories.ProjectRepository
-import io.spiralhouse.jcvd.domain.services.TimeProvider
-import io.spiralhouse.jcvd.domain.services.UnitOfWork
-import io.spiralhouse.jcvd.domain.valueobjects.*
+import io.spiralhouse.cycletime.domain.entities.Workflow
+import io.spiralhouse.cycletime.domain.repositories.WorkflowRepository
+import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
+import io.spiralhouse.cycletime.domain.services.TimeProvider
+import io.spiralhouse.cycletime.domain.services.UnitOfWork
+import io.spiralhouse.cycletime.domain.valueobjects.*
 
 /**
  * Application service for workflow management
@@ -677,13 +677,13 @@ private fun Workflow.toDto(): WorkflowDto = WorkflowDto(
 ### SessionApplicationService
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/application/services/SessionApplicationService.kt
+// src/main/kotlin/io/spiralhouse/cycletime/application/services/SessionApplicationService.kt
 
-import io.spiralhouse.jcvd.domain.entities.Session
-import io.spiralhouse.jcvd.domain.repositories.SessionRepository
-import io.spiralhouse.jcvd.domain.services.TimeProvider
-import io.spiralhouse.jcvd.domain.services.UnitOfWork
-import io.spiralhouse.jcvd.domain.valueobjects.SessionKey
+import io.spiralhouse.cycletime.domain.entities.Session
+import io.spiralhouse.cycletime.domain.repositories.SessionRepository
+import io.spiralhouse.cycletime.domain.services.TimeProvider
+import io.spiralhouse.cycletime.domain.services.UnitOfWork
+import io.spiralhouse.cycletime.domain.valueobjects.SessionKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.time.Duration
@@ -797,7 +797,7 @@ private fun Session.toDto(): SessionDto = SessionDto(
 ## DTOs and Response Objects
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/application/dto/ProjectDtos.kt
+// src/main/kotlin/io/spiralhouse/cycletime/application/dto/ProjectDtos.kt
 
 import kotlinx.serialization.Serializable
 import java.time.Instant
@@ -856,7 +856,7 @@ data class IssueContextDto(
 ## Error Handling Patterns
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/application/exceptions/ApplicationExceptions.kt
+// src/main/kotlin/io/spiralhouse/cycletime/application/exceptions/ApplicationExceptions.kt
 
 /**
  * Base exception for application layer
@@ -939,7 +939,7 @@ class ProjectApplicationService(
 ### Unit Testing with Mocks
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/application/services/ProjectApplicationServiceTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/application/services/ProjectApplicationServiceTest.kt
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -1041,7 +1041,7 @@ class ProjectApplicationServiceTest : DescribeSpec({
 ### Integration Testing
 
 ```kotlin
-// src/test/kotlin/com/spiralhouse/jcvd/application/services/ProjectApplicationServiceIntegrationTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/application/services/ProjectApplicationServiceIntegrationTest.kt
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -1115,7 +1115,7 @@ class ProjectApplicationServiceIntegrationTest : DescribeSpec({
 ### Caching Strategy
 
 ```kotlin
-// src/main/kotlin/com/spiralhouse/jcvd/application/services/CachedProjectApplicationService.kt
+// src/main/kotlin/io/spiralhouse/cycletime/application/services/CachedProjectApplicationService.kt
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache

@@ -10,6 +10,8 @@ CycleTime follows a three-tier testing approach to ensure comprehensive coverage
 
 ## Test Categories
 
+The testing strategy uses a three-tier approach where each category serves a distinct purpose in the development workflow. Unit tests provide rapid feedback during development, integration tests validate component interactions, and system tests ensure end-to-end functionality under production-like conditions.
+
 ### Unit Tests
 - **Purpose**: Test business logic in isolation
 - **Speed**: < 10ms per test

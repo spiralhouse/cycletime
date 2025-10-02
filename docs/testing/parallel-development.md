@@ -4,10 +4,10 @@ Parallel development enables multiple independent features to be developed simul
 
 ## Overview
 
-Parallel development accelerates delivery by leveraging isolation and coordination:
+Parallel development enables simultaneous feature execution through isolation and coordination:
 
 - **Feature-Level Parallelism**: Multiple independent features developed simultaneously
-- **Claude Orchestration**: Claude coordinates all agents and phase transitions
+- **Claude Orchestration**: Claude coordinates agent execution and phase transitions
 - **Isolated Workspaces**: Each feature gets its own worktree to prevent conflicts
 - **Flexible Workflows**: Support for TDD, direct implementation, bug fixes, and custom workflows
 
@@ -65,7 +65,7 @@ flowchart TD
     B --> D[Autonomous Approach<br/>Claude CLI Agents]
     B --> E[Hybrid Approach<br/>Mixed Agent Types]
 
-    C --> F[Task Tool: Planning, Execution & Review<br/>Up to 10 parallel agents with coordination]
+    C --> F[Task Tool: Planning, Execution & Review<br/>Parallel agents with built-in coordination]
     D --> G[Claude CLI: Independent parallel execution<br/>Unlimited agents with manual coordination]
     E --> H[Task Tool: Planning & Coordination<br/>Claude CLI: Autonomous Execution<br/>Task Tool: Integration Review]
 ```
@@ -73,8 +73,8 @@ flowchart TD
 ### Agent Selection Guidelines
 
 **Use Task Tool Agents For Parallel Development**:
-- Coordinated parallel execution (up to 10 concurrent agents)
-- Cross-feature coordination requiring shared context
+- Coordinated parallel execution with shared context
+- Cross-feature coordination requiring agent communication
 - Interactive refinement during parallel development
 - Architecture decisions affecting multiple features
 - Complex parallel workflows requiring built-in coordination
@@ -82,7 +82,7 @@ flowchart TD
 **Use Claude CLI Agents For Parallel Development**:
 - Autonomous parallel execution across multiple worktrees
 - Session-independent background processing
-- Unlimited parallel execution scenarios (>10 agents)
+- Scalable parallel execution scenarios
 - Long-running automated workflows
 - Independent feature development with manual coordination
 
