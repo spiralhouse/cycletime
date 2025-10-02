@@ -165,15 +165,15 @@ CREATE INDEX idx_session_states_project ON session_states(project_id);
 
 Sessions are managed through the migration system:
 
-```typescript
+```kotlin
 // Migration 002: Add session state tracking
-export const migrations: Migration[] = [
-  {
-    version: '002',
-    description: 'Add session state tracking',
-    sql: CREATE_SESSION_STATES_SQL
-  }
-];
+val migrations = listOf(
+    Migration(
+        version = "002",
+        description = "Add session state tracking",
+        sql = CREATE_SESSION_STATES_SQL
+    )
+)
 ```
 
 ## API Operations
@@ -299,37 +299,31 @@ The following performance characteristics were observed during development testi
 
 ### Error Types
 
-```typescript
+```kotlin
 // Domain Errors
-export class InvalidSessionKeyError extends Error;
-export class InvalidSessionDataError extends Error;
-export class SessionNotFoundError extends Error;
-export class SessionExpiredError extends Error;
+class InvalidSessionKeyError(message: String) : Exception(message)
+class InvalidSessionDataError(message: String) : Exception(message)
+class SessionNotFoundError(message: String) : Exception(message)
+class SessionExpiredError(message: String) : Exception(message)
 
 // Validation Errors
-export class SessionValidationError extends Error {
-  constructor(
-    message: string,
-    public readonly errors: ValidationError[]
-  );
-}
+class SessionValidationError(
+    message: String,
+    val errors: List<ValidationError>
+) : Exception(message)
 
 // Corruption Errors
-export class SessionCorruptionError extends Error {
-  constructor(
-    message: string,
-    public readonly sessionKey: string,
-    public readonly corruptionType: string
-  );
-}
+class SessionCorruptionError(
+    message: String,
+    val sessionKey: String,
+    val corruptionType: String
+) : Exception(message)
 
 // Storage Errors
-export class SessionStorageError extends Error {
-  constructor(
-    operation: string,
-    cause: Error
-  );
-}
+class SessionStorageError(
+    val operation: String,
+    cause: Throwable
+) : Exception("Storage error during $operation", cause)
 ```
 
 ### Error Recovery Strategies
@@ -364,42 +358,44 @@ export class SessionStorageError extends Error {
 
 #### Session Not Persisting
 
-**Symptom**: Session lost after restart  
-**Cause**: Database not properly initialized or migrations not run  
+**Symptom**: Session lost after restart
+**Cause**: Database not properly initialized or migrations not run
 **Solution**: Ensure migrations are run on startup
 
-```typescript
-const db = new Database(dbPath);
-await runMigrations(db); // Required!
+```kotlin
+val db = Database.connect(dbPath)
+runMigrations(db) // Required!
 ```
 
 #### Session Validation Failures
 
-**Symptom**: Sessions being deleted unexpectedly  
-**Cause**: Corruption or invalid data  
+**Symptom**: Sessions being deleted unexpectedly
+**Cause**: Corruption or invalid data
 **Solution**: Enable auto-repair or relax validation rules
 
-```typescript
-const sessionManager = new SessionManager(
-  sessionService,
-  timeProvider,
-  undefined,
-  { maxContextSize: 2 * 1024 * 1024 } // Increase limit
-);
+```kotlin
+val sessionManager = SessionManager(
+    sessionService = sessionService,
+    timeProvider = timeProvider,
+    databaseProvider = null,
+    config = SessionConfig(
+        maxContextSize = 2 * 1024 * 1024 // Increase limit
+    )
+)
 ```
 
 #### Performance Degradation
 
-**Symptom**: Slow session operations  
-**Cause**: Too many sessions, missing indexes  
+**Symptom**: Slow session operations
+**Cause**: Too many sessions, missing indexes
 **Solution**: Enable aggressive cleanup, verify indexes
 
-```typescript
+```kotlin
 // Check indexes
 // H2 schema introspection for indexes
 
 // Aggressive cleanup
-const cleanupResult = await sessionManager.cleanupSessions();
+val cleanupResult = sessionManager.cleanupSessions()
 ```
 
 ## Future Enhancements

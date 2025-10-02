@@ -536,75 +536,80 @@ Use this for:
 ### From Legacy to v1
 
 **Step 1**: Parallel Implementation
-```javascript
+```kotlin
 // Support both during transition
-const projectUrl = useV1
-  ? '/api/v1/projects'
-  : '/api/projects';
+val projectUrl = if (useV1) {
+    "/api/v1/projects"
+} else {
+    "/api/projects"
+}
 ```
 
 **Step 2**: Gradual Migration
-```javascript
+```kotlin
 // Migrate endpoint by endpoint
-async function getProject(id) {
-  try {
-    return await fetch(`/api/v1/projects/${id}`);
-  } catch (e) {
-    // Fallback to legacy
-    return await fetch(`/api/projects/${id}`);
-  }
+suspend fun getProject(id: String): Response {
+    return try {
+        client.get("/api/v1/projects/$id")
+    } catch (e: Exception) {
+        // Fallback to legacy
+        client.get("/api/projects/$id")
+    }
 }
 ```
 
 **Step 3**: Clean Cutover
-```javascript
+```kotlin
 // Remove legacy support
-const baseUrl = '/api/v1';
+val baseUrl = "/api/v1"
 ```
 
 ## API Client Best Practices
 
 ### Retry Logic
 
-```javascript
-async function apiCall(url, options, maxRetries = 3) {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      const response = await fetch(url, options);
+```kotlin
+suspend fun apiCall(url: String, options: RequestOptions, maxRetries: Int = 3): HttpResponse {
+    repeat(maxRetries) { i ->
+        try {
+            val response = client.request(url) {
+                // Apply options
+            }
 
-      // Don't retry client errors
-      if (response.status >= 400 && response.status < 500) {
-        throw new Error(`Client error: ${response.status}`);
-      }
+            // Don't retry client errors
+            if (response.status.value in 400..499) {
+                error("Client error: ${response.status.value}")
+            }
 
-      // Retry server errors
-      if (response.status >= 500) {
-        if (i === maxRetries - 1) throw new Error('Server error');
-        await sleep(Math.pow(2, i) * 1000); // Exponential backoff
-        continue;
-      }
+            // Retry server errors
+            if (response.status.value >= 500) {
+                if (i == maxRetries - 1) error("Server error")
+                delay(2.0.pow(i).toLong() * 1000) // Exponential backoff
+                return@repeat
+            }
 
-      return response;
-    } catch (error) {
-      if (i === maxRetries - 1) throw error;
+            return response
+        } catch (error: Exception) {
+            if (i == maxRetries - 1) throw error
+        }
     }
-  }
+    error("Max retries exceeded")
 }
 ```
 
 ### Error Handling
 
-```javascript
-async function handleApiResponse(response) {
-  if (!response.ok) {
-    const error = await response.json();
-    throw new ApiError(
-      response.status,
-      error.error,
-      error.details
-    );
-  }
-  return response.json();
+```kotlin
+suspend fun handleApiResponse(response: HttpResponse): ApiResult {
+    if (!response.status.isSuccess()) {
+        val error = response.body<ErrorResponse>()
+        throw ApiError(
+            status = response.status.value,
+            error = error.error,
+            details = error.details
+        )
+    }
+    return response.body()
 }
 ```
 
