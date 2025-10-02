@@ -4,9 +4,8 @@
 **Date:** August 1, 2025  
 **Authors:** Software Architect Agent, Claude Code
 
-**Related Documents:**  
-📋 [PRD.md](PRD.md) | 🏗️ [ARCHITECTURE.md](ARCHITECTURE.md) | 👤
-[USER_EXPERIENCE.md](USER_EXPERIENCE.md) | 🚀 [ONBOARDING.md](ONBOARDING.md)
+**Related Documents:**
+📋 [PRD](../reference/PRD.md) | 🏗️ [Architecture Overview](../architecture/overview.md) | 👤 [User Experience](../reference/user-experience.md) | 🚀 [Onboarding Guide](../getting-started/onboarding.md)
 
 ---
 

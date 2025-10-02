@@ -193,5 +193,5 @@ No rate limiting is currently implemented. Production deployments should add:
 ## Related Documentation
 
 - [MCP Resources](mcp-resources.md)
-- [MCP Protocol](mcp-protocol.md)
-- [Authentication](authentication.md)
+- [MCP Integration Patterns](../reference/technical-design/mcp-integration-patterns.md)
+- [REST API Reference](rest-api-reference.md)

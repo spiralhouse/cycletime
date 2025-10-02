@@ -3,9 +3,8 @@
 **Version:** 1.0  
 **Date:** July 30, 2025
 
-**Related Documents:**  
-📋 [PRD.md](PRD.md) | 🏗️ [ARCHITECTURE.md](ARCHITECTURE.md) | 👤
-[USER_EXPERIENCE.md](USER_EXPERIENCE.md) | 🚀 [ONBOARDING.md](ONBOARDING.md)
+**Related Documents:**
+📋 [PRD](PRD.md) | 🏗️ [Architecture Overview](../architecture/overview.md) | 🚀 [Onboarding Guide](../getting-started/onboarding.md)
 
 ---
 

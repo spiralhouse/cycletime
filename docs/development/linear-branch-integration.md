@@ -179,7 +179,7 @@ Fixes SPI-620: https://linear.app/spiral-house/issue/SPI-620/standardize-branchi
 
 ## Changes Made
 - Created docs/development/branching-strategy.md
-- Created docs/development/agent-invocation-patterns.md
+- Created docs/reference/agents.md (unified agent reference)
 - Updated existing documentation for consistency
 
 ## Acceptance Criteria
@@ -588,7 +588,7 @@ This Linear integration works with:
 - **[Branching Strategy](branching-strategy.md)**: Provides the branch naming conventions
 - **[Single Feature Workflow](single-feature-workflow.md)**: Integrates status updates throughout development
 - **[Parallel Development](../testing/parallel-development.md)**: Supports multiple Linear issues in parallel
-- **[Agent Invocation Patterns](agent-invocation-patterns.md)**: Works with both Task tool and Claude CLI agents
+- **[Agent Reference](../reference/agents.md)**: Works with both Task tool and Claude CLI agents
 
 ## Quick Reference
 

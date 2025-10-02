@@ -174,4 +174,4 @@ kubectl rollout undo deployment/cycletime
 
 - [CI/CD Overview](overview.md)
 - [Release Process](release-process.md)
-- [Release Token Setup](release-token-setup.md)
+- [Environment Protection](environment-protection.md)

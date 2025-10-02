@@ -377,5 +377,5 @@ docker exec cycletime-prod java -cp /app/lib/h2*.jar org.h2.tools.Shell -url "jd
 
 - [Configuration Guide](../getting-started/configuration.md)
 - [Environment Management](../ci-cd/environments.md)
-- [Monitoring](monitoring.md)
-- [Troubleshooting](troubleshooting.md)
+- [Installation Guide](../getting-started/installation.md)
+- [Troubleshooting Reference](../reference/troubleshooting.md)
