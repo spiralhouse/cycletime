@@ -2,7 +2,7 @@
 
 ## Environment Variables
 
-CycleTime uses environment variables for configuration. All settings have sensible defaults for development.
+CycleTime uses environment variables for configuration, following the twelve-factor app methodology for deployment flexibility. All settings have sensible defaults optimized for local development, allowing you to run the application immediately without any configuration. Customize these settings only when deploying to different environments or when you need to override defaults for specific use cases.
 
 ### Core Settings
 
@@ -36,7 +36,7 @@ ktor {
         port = ${?PORT}
     }
     application {
-        modules = [ io.spiralhouse.jcvd.ApplicationKt.module ]
+        modules = [ io.spiralhouse.cycletime.ApplicationKt.module ]
     }
 }
 ```
@@ -66,7 +66,7 @@ LOG_LEVEL=INFO
 ```yaml
 version: '3.8'
 services:
-  jcvd:
+  cycletime:
     image: ghcr.io/spiralhouse/cycletime:latest
     env_file: .env
     ports:

@@ -104,12 +104,12 @@ key: unit-test-results-v1-${{ runner.os }}-${{ hashFiles('src/test/**/*.kt', 'sr
 
 **Integration Tests**:
 ```yaml
-key: integration-test-results-v1-${{ runner.os }}-${{ hashFiles('src/test/kotlin/io/spiralhouse/jcvd/integration/**/*.kt', 'src/main/**/*.kt') }}
+key: integration-test-results-v1-${{ runner.os }}-${{ hashFiles('src/test/kotlin/io/spiralhouse/cycletime/integration/**/*.kt', 'src/main/**/*.kt') }}
 ```
 
 **System Tests**:
 ```yaml
-key: system-test-results-v1-${{ runner.os }}-${{ hashFiles('src/test/kotlin/io/spiralhouse/jcvd/performance/**/*.kt', 'src/main/**/*.kt', 'src/main/resources/application.conf') }}
+key: system-test-results-v1-${{ runner.os }}-${{ hashFiles('src/test/kotlin/io/spiralhouse/cycletime/performance/**/*.kt', 'src/main/**/*.kt', 'src/main/resources/application.conf') }}
 ```
 
 **Cached Paths**:

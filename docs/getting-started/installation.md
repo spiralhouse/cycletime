@@ -1,5 +1,32 @@
 # Installation Guide
 
+This guide walks through installing CycleTime for local development. Choose between traditional JVM installation with Java 21 or containerized deployment with Docker.
+
+## Installation Process
+
+```mermaid
+flowchart LR
+    A[Choose Installation Method] --> B{Method?}
+    B -->|JVM| C[Install Java 21]
+    B -->|Docker| D[Install Docker]
+
+    C --> E[Clone Repository]
+    D --> F[Pull/Build Image]
+
+    E --> G[Run devSetup]
+    F --> H[Run Container]
+
+    G --> I[Build Project]
+    H --> J[Verify Health]
+    I --> J
+
+    J --> K[Ready for Development]
+
+    style C fill:#d4edda
+    style D fill:#cfe2ff
+    style K fill:#d1ecf1
+```
+
 ## Prerequisites
 
 ### Java 21
