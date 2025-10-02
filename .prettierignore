@@ -1,9 +1,0 @@
-# Build outputs
-dist/
-coverage/
-
-# Dependencies
-node_modules/
-
-# Claude Code agent configurations
-.claude/
