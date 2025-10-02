@@ -16,7 +16,9 @@ CycleTime uses Git.SemVersioning for automatic version management and a multi-ta
 
 ### Main Branch Builds (Every Push)
 
-All pushes to the main branch trigger container builds with the following tags:
+The container tagging strategy serves multiple deployment workflows by creating different tag types for each build. Every push to the main branch triggers container builds that generate semantic version tags for releases, mutable tags for environment tracking, and immutable tags for audit trails.
+
+All pushes to the main branch create the following tags:
 
 1. **Version Tag**: `X.Y.Z` (semantic version from Git.SemVersioning)
 2. **Dev Tag**: `dev` (mutable tag for development environment)
