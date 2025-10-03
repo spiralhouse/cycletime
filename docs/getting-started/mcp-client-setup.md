@@ -1,0 +1,518 @@
+# MCP Client Setup
+
+This guide walks through connecting Claude Code to CycleTime's MCP (Model Context Protocol) server to enable project orchestration capabilities directly within Claude Code.
+
+## Prerequisites
+
+Before configuring the MCP client connection, ensure you have:
+
+- CycleTime server running (see [Installation Guide](installation.md))
+- Claude Code installed and configured
+- Network access to localhost:8080 (default MCP server port)
+
+## Connection Overview
+
+CycleTime exposes an MCP server over WebSocket that Claude Code connects to for real-time project data access and tool execution.
+
+```mermaid
+sequenceDiagram
+    participant CC as Claude Code
+    participant WS as WebSocket Server
+    participant MCP as MCP Server
+    participant DB as Project Database
+
+    CC->>WS: Connect ws://localhost:8080/mcp
+    WS->>MCP: Initialize Connection
+    MCP->>DB: Load Project Context
+    DB-->>MCP: Project Data
+    MCP-->>CC: Connection Ready
+
+    CC->>MCP: Request Resources/Tools
+    MCP->>DB: Query Data
+    DB-->>MCP: Results
+    MCP-->>CC: Response
+```
+
+## MCP Server Configuration
+
+CycleTime's MCP server uses WebSocket transport with JSON-RPC 2.0 protocol.
+
+### Default Configuration
+
+| Setting | Default Value | Description |
+|---------|--------------|-------------|
+| **Protocol Version** | `2024-11-05` | MCP protocol version |
+| **Transport** | WebSocket | Communication protocol |
+| **Host** | `0.0.0.0` | Server bind address |
+| **Port** | `8080` | Server port |
+| **Path** | `/mcp` | WebSocket endpoint path |
+| **WebSocket URL** | `ws://localhost:8080/mcp` | Full connection URL |
+
+### Server Capabilities
+
+CycleTime MCP server provides:
+
+- **Resources**: Access to project structure, issues, and session state
+- **Tools**: Project management operations (create issues, update status, etc.)
+- **Prompts**: Not currently supported
+
+### Custom Server Configuration
+
+Override default settings using environment variables:
+
+```bash
+# Custom port
+MCP_PORT=3006 ./gradlew run
+
+# Localhost-only binding
+MCP_HOST=127.0.0.1 ./gradlew run
+
+# Enable detailed logging
+MCP_DETAILED_LOGGING=true ./gradlew run
+
+# Combined custom configuration
+MCP_PORT=3006 MCP_HOST=127.0.0.1 MCP_DETAILED_LOGGING=true ./gradlew run
+```
+
+### Available Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MCP_HOST` | `0.0.0.0` | Server bind address |
+| `MCP_PORT` | `8080` | Server port |
+| `MCP_PATH` | `/mcp` | WebSocket endpoint path |
+| `MCP_ENABLED` | `true` | Enable/disable MCP server |
+| `MCP_PING_PERIOD` | `30000` | WebSocket ping interval (ms) |
+| `MCP_TIMEOUT` | `15000` | Connection timeout (ms) |
+| `MCP_MAX_FRAME_SIZE` | `10485760` | Max WebSocket frame size (10MB) |
+| `MCP_MAX_CONNECTIONS` | `100` | Maximum concurrent connections |
+| `MCP_DETAILED_LOGGING` | `false` | Enable debug-level logging |
+| `MCP_METRICS_ENABLED` | `true` | Enable metrics collection |
+
+## Claude Code Configuration
+
+Configure Claude Code to connect to CycleTime's MCP server by adding the server configuration to your Claude Code settings.
+
+### Configuration File Location
+
+Claude Code stores MCP server configurations in:
+
+- **macOS/Linux**: `~/.config/claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+### Basic Configuration
+
+Add the following configuration to connect to CycleTime:
+
+```json
+{
+  "mcpServers": {
+    "cycletime": {
+      "command": "websocket",
+      "url": "ws://localhost:8080/mcp"
+    }
+  }
+}
+```
+
+### Multiple Server Configuration
+
+If you have other MCP servers configured:
+
+```json
+{
+  "mcpServers": {
+    "cycletime": {
+      "command": "websocket",
+      "url": "ws://localhost:8080/mcp"
+    },
+    "other-server": {
+      "command": "node",
+      "args": ["/path/to/server.js"]
+    }
+  }
+}
+```
+
+### Custom Port Configuration
+
+If you changed the MCP server port, update the URL accordingly:
+
+```json
+{
+  "mcpServers": {
+    "cycletime": {
+      "command": "websocket",
+      "url": "ws://localhost:3006/mcp"
+    }
+  }
+}
+```
+
+## Connection Verification
+
+After configuring Claude Code, verify the connection is working correctly.
+
+### Step 1: Start CycleTime Server
+
+```bash
+# From CycleTime project directory
+./gradlew run
+
+# Wait for startup message
+# [main] INFO  Application - Responding at http://0.0.0.0:8080
+# [main] INFO  MCPRouting - MCP routing configured in XXXms
+```
+
+### Step 2: Verify Server Health
+
+Check the MCP server is responding:
+
+```bash
+# Test HTTP health endpoint
+curl http://localhost:8080/mcp
+
+# Expected response:
+{
+  "name": "cycletime",
+  "version": "0.1.0",
+  "description": "CycleTime Project Orchestration MCP Server (Kotlin)",
+  "capabilities": {
+    "resources": true,
+    "tools": true,
+    "prompts": false
+  },
+  "activeConnections": 0,
+  "totalRequests": 0
+}
+```
+
+### Step 3: Restart Claude Code
+
+After adding the configuration:
+
+1. Completely quit Claude Code
+2. Restart Claude Code
+3. Open a new conversation
+
+### Step 4: Verify Connection in Claude Code
+
+In a Claude Code conversation, the MCP server connection status appears in the interface:
+
+- **Connected**: Green indicator showing "cycletime" server connected
+- **Disconnected**: Red indicator or missing server entry
+
+You can also verify by asking Claude Code to list available resources:
+
+```
+Can you show me the available CycleTime project resources?
+```
+
+Claude Code should be able to access CycleTime resources and tools.
+
+### Step 5: Check Server Statistics
+
+Monitor active connections and requests:
+
+```bash
+# View detailed statistics
+curl http://localhost:8080/mcp/stats
+
+# Expected response includes:
+{
+  "connections": {
+    "active": "1",
+    "totalRequests": "10",
+    "totalErrors": "0",
+    "averageLatency": "25ms",
+    "errorRate": "0.00%"
+  },
+  "config": {
+    "maxConnections": "100",
+    "asyncProcessing": "true",
+    "caching": "true",
+    "optimized": "true"
+  }
+}
+```
+
+## Configuration Troubleshooting
+
+Common issues and solutions when connecting Claude Code to CycleTime.
+
+### Connection Refused
+
+**Symptom**: Claude Code shows "Connection refused" or red disconnected indicator
+
+**Cause**: CycleTime server is not running or not accessible
+
+**Solution**:
+```bash
+# Verify server is running
+./gradlew run
+
+# Check server is listening on port 8080
+lsof -i :8080
+# or on Windows
+netstat -ano | findstr :8080
+
+# If port is in use by another application, change MCP port
+MCP_PORT=3006 ./gradlew run
+
+# Update Claude Code configuration to match
+# url: "ws://localhost:3006/mcp"
+```
+
+### WebSocket Handshake Failed
+
+**Symptom**: Connection attempts fail with handshake error
+
+**Cause**: Incorrect WebSocket path or protocol mismatch
+
+**Solution**:
+```json
+// Verify configuration uses correct WebSocket URL format
+{
+  "mcpServers": {
+    "cycletime": {
+      "command": "websocket",
+      "url": "ws://localhost:8080/mcp"  // Not "http://" or missing "/mcp"
+    }
+  }
+}
+```
+
+### Connection Times Out
+
+**Symptom**: Connection attempts hang or timeout
+
+**Cause**: Firewall blocking localhost connections or server not responding
+
+**Solution**:
+```bash
+# Test direct HTTP connection first
+curl http://localhost:8080/mcp
+
+# If this fails, check firewall settings
+# On macOS
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
+
+# Verify WebSocket endpoint is accessible
+wscat -c ws://localhost:8080/mcp
+# (Install wscat: npm install -g wscat)
+
+# Enable detailed logging to diagnose
+MCP_DETAILED_LOGGING=true ./gradlew run
+```
+
+### Server Not Listed in Claude Code
+
+**Symptom**: "cycletime" server doesn't appear in Claude Code MCP servers list
+
+**Cause**: Configuration file syntax error or incorrect file location
+
+**Solution**:
+```bash
+# Verify configuration file exists and has correct syntax
+cat ~/.config/claude/claude_desktop_config.json | jq .
+
+# If jq fails, there's a JSON syntax error
+# Common issues:
+# - Missing comma between server entries
+# - Trailing comma in last entry
+# - Unclosed quotes or brackets
+
+# Valid configuration example:
+{
+  "mcpServers": {
+    "cycletime": {
+      "command": "websocket",
+      "url": "ws://localhost:8080/mcp"
+    }
+  }
+}
+```
+
+### Resources/Tools Not Available
+
+**Symptom**: Claude Code connects but can't access CycleTime resources or tools
+
+**Cause**: Server capabilities not properly initialized or database not accessible
+
+**Solution**:
+```bash
+# Check server health and capabilities
+curl http://localhost:8080/mcp | jq .
+
+# Verify capabilities show:
+# "capabilities": { "resources": true, "tools": true, "prompts": false }
+
+# Check server logs for errors
+./gradlew run
+# Look for initialization errors or database connection issues
+
+# Verify database file exists and is accessible
+ls -lh cycletime.db
+
+# Check database permissions
+chmod 644 cycletime.db
+```
+
+### High Latency or Slow Responses
+
+**Symptom**: Requests to CycleTime server are slow
+
+**Cause**: Resource caching disabled or suboptimal configuration
+
+**Solution**:
+```bash
+# Enable performance optimizations
+MCP_CACHE_ENABLED=true \
+MCP_ASYNC_ENABLED=true \
+MCP_BUFFER_SIZE=8192 \
+./gradlew run
+
+# Monitor performance metrics
+curl http://localhost:8080/mcp/stats | jq '.connections'
+
+# Check if optimizations are enabled
+curl http://localhost:8080/mcp/stats | jq '.config.optimized'
+# Should return: "true"
+```
+
+### Multiple Connection Issues
+
+**Symptom**: Cannot establish second connection from different client
+
+**Cause**: Server reached max connection limit
+
+**Solution**:
+```bash
+# Increase max connections
+MCP_MAX_CONNECTIONS=500 ./gradlew run
+
+# Monitor active connections
+curl http://localhost:8080/mcp/stats | jq '.connections.active'
+
+# Check for stale connections
+curl http://localhost:8080/mcp | jq '.activeConnections'
+```
+
+## Advanced Configuration
+
+### Development Mode with Auto-Reload
+
+For development workflows, run the server with continuous build:
+
+```bash
+# Terminal 1: Run server with auto-reload
+./gradlew devRun --continuous
+
+# Terminal 2: Make code changes
+# Server automatically restarts on changes
+```
+
+Claude Code will automatically reconnect when the server restarts.
+
+### Multiple Environment Configuration
+
+Run different CycleTime instances for different projects:
+
+```bash
+# Project A - Port 8080
+MCP_PORT=8080 DATABASE_URL=jdbc:h2:file:./projectA ./gradlew run
+
+# Project B - Port 8081
+MCP_PORT=8081 DATABASE_URL=jdbc:h2:file:./projectB ./gradlew run
+```
+
+Configure multiple servers in Claude Code:
+
+```json
+{
+  "mcpServers": {
+    "cycletime-projectA": {
+      "command": "websocket",
+      "url": "ws://localhost:8080/mcp"
+    },
+    "cycletime-projectB": {
+      "command": "websocket",
+      "url": "ws://localhost:8081/mcp"
+    }
+  }
+}
+```
+
+### SSL/TLS Configuration
+
+For secure WebSocket connections (wss://):
+
+```bash
+# Configure SSL in application.conf
+# (Requires SSL certificate setup - see deployment guide)
+
+# Update Claude Code configuration
+{
+  "mcpServers": {
+    "cycletime": {
+      "command": "websocket",
+      "url": "wss://localhost:8443/mcp"
+    }
+  }
+}
+```
+
+## Next Steps
+
+With Claude Code connected to CycleTime:
+
+- [Quick Start Guide](quick-start.md) - Begin using CycleTime features
+- [Configuration Guide](configuration.md) - Advanced server configuration
+- [API Reference](../reference/api-reference.md) - Available MCP tools and resources
+- [Troubleshooting Guide](../reference/troubleshooting.md) - Common issues and solutions
+
+## Connection Flow Reference
+
+Complete connection and communication flow:
+
+```mermaid
+flowchart TB
+    Start([Start Claude Code]) --> LoadConfig[Load MCP Configuration]
+    LoadConfig --> ParseConfig{Valid Config?}
+
+    ParseConfig -->|No| Error1[Show Configuration Error]
+    ParseConfig -->|Yes| StartServer{Server Running?}
+
+    StartServer -->|No| Error2[Show Connection Refused]
+    StartServer -->|Yes| WSConnect[WebSocket Connect]
+
+    WSConnect --> Handshake{Handshake OK?}
+    Handshake -->|No| Error3[Show Handshake Failed]
+    Handshake -->|Yes| InitProtocol[Initialize MCP Protocol]
+
+    InitProtocol --> GetCapabilities[Request Server Capabilities]
+    GetCapabilities --> ShowConnected[Show Connected Status]
+
+    ShowConnected --> Ready([Ready for Use])
+
+    Ready --> UserRequest[User Requests Resource/Tool]
+    UserRequest --> MCPRequest[Send JSON-RPC Request]
+    MCPRequest --> ServerProcess[Server Processes Request]
+    ServerProcess --> MCPResponse[Receive JSON-RPC Response]
+    MCPResponse --> DisplayResult[Display Result to User]
+    DisplayResult --> Ready
+
+    Error1 --> Fix1[Fix Configuration File]
+    Error2 --> Fix2[Start CycleTime Server]
+    Error3 --> Fix3[Check WebSocket URL]
+
+    Fix1 --> LoadConfig
+    Fix2 --> StartServer
+    Fix3 --> WSConnect
+
+    style Start fill:#d4edda
+    style Ready fill:#d1ecf1
+    style Error1 fill:#f8d7da
+    style Error2 fill:#f8d7da
+    style Error3 fill:#f8d7da
+```
