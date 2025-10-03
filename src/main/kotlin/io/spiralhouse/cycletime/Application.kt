@@ -219,9 +219,9 @@ fun Application.module() {
 
         if (openApiEnabled) {
             try {
-                openAPI(path = "openapi", swaggerFile = "openapi/documentation.yaml")
-                swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml")
-                logger.info("OpenAPI documentation available at /swagger")
+                openAPI(path = "openapi", swaggerFile = "openapi/generated.json")
+                swaggerUI(path = "swagger", swaggerFile = "openapi/generated.json")
+                logger.info("OpenAPI documentation available at /swagger and /openapi")
             } catch (e: Exception) {
                 logger.warn("Failed to configure OpenAPI documentation: ${e.message}")
                 logger.info("OpenAPI documentation will not be available")
@@ -316,7 +316,7 @@ private fun Application.configureKtorFeatures(
     performanceMetrics: MutableMap<String, Long>
 ) {
     val featuresStartTime = System.currentTimeMillis()
-    
+
     install(ContentNegotiation) {
         json(Json {
             prettyPrint = true
@@ -360,7 +360,7 @@ private fun Application.configureOpenAPI(
 
     if (openApiEnabled) {
         // Validate OpenAPI specification file exists
-        val specificationFile = "openapi/documentation.yaml"
+        val specificationFile = "openapi/generated.json"
         val resourceStream = this::class.java.classLoader.getResourceAsStream(specificationFile)
 
         if (resourceStream != null) {
