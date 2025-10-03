@@ -97,8 +97,13 @@ Configure Claude Code to connect to CycleTime's MCP server by adding the server 
 
 Claude Code stores MCP server configurations in:
 
-- **macOS/Linux**: `~/.config/claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+**User-Level Configuration (Recommended)**:
+- **All Platforms**: `~/.claude.json` (in your home directory)
+
+**Project-Level Configuration** (for team sharing):
+- Create `.mcp.json` in your project root directory
+
+**Note**: The user-level `~/.claude.json` provides the most consistent behavior across Claude Code versions and is recommended for personal MCP server configurations.
 
 ### Basic Configuration
 
@@ -351,11 +356,16 @@ curl http://localhost:8080/mcp | jq .
 ./gradlew run
 # Look for initialization errors or database connection issues
 
-# Verify database file exists and is accessible
-ls -lh cycletime.db
+# Verify database files exist and are accessible
+# H2 creates multiple files: .mv.db (main), .trace.db (logs)
+ls -lh cycletime*.db
 
 # Check database permissions
-chmod 644 cycletime.db
+chmod 644 cycletime*.db
+
+# Note: H2 database creates multiple files:
+# - cycletime.mv.db (main database file)
+# - cycletime.trace.db (trace/log file, if logging enabled)
 ```
 
 ### High Latency or Slow Responses
@@ -468,7 +478,7 @@ With Claude Code connected to CycleTime:
 
 - [Quick Start Guide](quick-start.md) - Begin using CycleTime features
 - [Configuration Guide](configuration.md) - Advanced server configuration
-- [API Reference](../reference/api-reference.md) - Available MCP tools and resources
+- [API Reference](../api/rest-api-reference.md) - Available MCP tools and resources
 - [Troubleshooting Guide](../reference/troubleshooting.md) - Common issues and solutions
 
 ## Connection Flow Reference
