@@ -4,8 +4,8 @@
 **Date:** January 2025  
 **Implementation:** SPI-346 Cross-Session State Persistence
 
-**Related Documents:**  
-🏗️ [ARCHITECTURE.md](ARCHITECTURE.md) | 👤 [USER_EXPERIENCE.md](USER_EXPERIENCE.md) | 🧪 [CLAUDE.md](../CLAUDE.md#testing-standards--architecture)
+**Related Documents:**
+🏗️ [Architecture Overview](overview.md) | 👤 [User Experience](../reference/user-experience.md) | 🧪 [Testing Standards](../../.claude/shared/testing-standards.md)
 
 ---
 

@@ -6,7 +6,7 @@ Interactive development patterns using Task tool agents for coordinated developm
 
 Task tool agents provide interactive, specialized assistance for development tasks. They excel at analysis, planning, iterative development, and coordinated parallel execution (up to 10 concurrent agents) within Claude Code's environment.
 
-**Agent Reference**: See [Agent Reference](../docs/reference/agents.md) for complete agent capabilities and selection guidelines.
+**Agent Reference**: See [Agent Reference](../../docs/reference/agents.md) for complete agent capabilities and selection guidelines.
 
 ## Core Workflow Patterns
 
@@ -182,15 +182,15 @@ flowchart LR
 
 **Requirement Gaps**: Be explicit about constraints and acceptance criteria
 
-See [Troubleshooting Guide](../docs/reference/troubleshooting.md) for detailed solutions.
+See [Troubleshooting Guide](../../docs/reference/troubleshooting.md) for detailed solutions.
 
 ## Integration
 
 Integrates with:
-- [Single Feature Workflow](../docs/development/single-feature-workflow.md) - Primary single feature process
-- [Agent Reference](../docs/reference/agents.md) - Complete agent capabilities
-- [Decision Guide](../docs/reference/decision-guide.md) - When to use Task tool agents
-- [Troubleshooting](../docs/reference/troubleshooting.md) - Common issues and solutions
+- [Single Feature Workflow](../../docs/development/single-feature-workflow.md) - Primary single feature process
+- [Agent Reference](../../docs/reference/agents.md) - Complete agent capabilities
+- [Decision Guide](../../docs/reference/decision-guide.md) - When to use Task tool agents
+- [Troubleshooting](../../docs/reference/troubleshooting.md) - Common issues and solutions
 
 ## Quick Reference
 

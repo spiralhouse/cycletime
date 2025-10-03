@@ -4,9 +4,8 @@
 **Date:** July 30, 2025  
 **Authors:** Software Architect Agent, Claude Code
 
-**Related Documents:**  
-📋 [PRD.md](PRD.md) | 🏗️ [ARCHITECTURE.md](ARCHITECTURE.md) | 👤
-[USER_EXPERIENCE.md](USER_EXPERIENCE.md) | 🚀 [ONBOARDING.md](ONBOARDING.md)
+**Related Documents:**
+📋 [PRD](../reference/PRD.md) | 👤 [User Experience](../reference/user-experience.md) | 🚀 [Onboarding Guide](../getting-started/onboarding.md)
 
 ---
 
@@ -516,14 +515,10 @@ terminology.
 
 ## Cross-References
 
-- **Business Requirements**: See [PRD.md](./PRD.md) for functional requirements
-  and success criteria
-- **User Workflows**: See [USER_EXPERIENCE.md](./USER_EXPERIENCE.md) for
-  detailed user interaction patterns
-- **API Documentation**: See [API_SPEC.md](./API_SPEC.md) for detailed MCP
-  server interface specifications
-- **Deployment Guide**: See [DEPLOYMENT.md](./DEPLOYMENT.md) for installation
-  and configuration instructions
+- **Business Requirements**: See [PRD](../reference/PRD.md) for functional requirements and success criteria
+- **User Workflows**: See [User Experience](../reference/user-experience.md) for detailed user interaction patterns
+- **API Documentation**: See [MCP Resources](../api/mcp-resources.md) for detailed MCP server interface specifications
+- **Deployment Guide**: See [Deployment Guide](../operations/deployment-guide.md) for installation and configuration instructions
 
 ---
 

@@ -214,6 +214,6 @@ Tests run automatically in the CI/CD pipeline:
 
 ## Related Documentation
 
-- [Testing Standards](.claude/shared/testing-standards.md)
+- [Testing Standards](../../.claude/shared/testing-standards.md)
 - [Development Setup](../development/setup.md)
 - [CI/CD Pipeline](../ci-cd/overview.md)

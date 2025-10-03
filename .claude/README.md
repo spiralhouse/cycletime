@@ -29,7 +29,7 @@ The `shared/` directory contains reusable content that can be imported into CLAU
 **In CLAUDE.md (✅ Supported):**
 ```markdown
 ## Linear Reference
-@.claude/shared/linear-reference.md
+@shared/linear-reference.md
 ```
 
 **In Agent Prompt Files (❌ Not Supported):**
