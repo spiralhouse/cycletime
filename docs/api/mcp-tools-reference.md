@@ -128,15 +128,15 @@ Create a new CycleTime project.
 
 **Example Usage:**
 
-```javascript
+```kotlin
 // Create a new project
-const response = await mcpClient.callTool('create_project', {
-  name: 'DevLog Application',
-  description: 'Developer logging and tracking system'
-});
+val response = mcpClient.callTool("create_project", buildJsonObject {
+    put("name", "DevLog Application")
+    put("description", "Developer logging and tracking system")
+})
 
-const project = JSON.parse(response.content[0].text);
-console.log(`Created project: ${project.id}`);
+val project = Json.decodeFromString<JsonObject>(response.content[0].text)
+println("Created project: ${project["id"]?.jsonPrimitive?.content}")
 ```
 
 ---
@@ -849,14 +849,17 @@ Create a new workflow with stages.
   "jsonrpc": "2.0",
   "id": 15,
   "result": {
-    "id": "workflow-abc123",
-    "name": "TDD Workflow",
-    "description": "Test-driven development workflow",
-    "created": true,
-    "stageCount": 3
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"id\":\"workflow-abc123\",\"name\":\"TDD Workflow\",\"description\":\"Test-driven development workflow\",\"created\":true,\"stageCount\":3}"
+      }
+    ]
   }
 }
 ```
+
+**Note:** Current implementation (SPI-663) returns unwrapped JSON. This will be fixed to match the wrapped format shown above.
 
 ---
 
@@ -888,16 +891,18 @@ List all available workflows.
 {
   "jsonrpc": "2.0",
   "id": 16,
-  "result": [
-    {
-      "id": "workflow-1",
-      "name": "Standard Development Workflow",
-      "description": "Default workflow for development tasks",
-      "stages": ["analysis", "implementation", "testing", "review"]
-    }
-  ]
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "[{\"id\":\"workflow-1\",\"name\":\"Standard Development Workflow\",\"description\":\"Default workflow for development tasks\",\"stages\":[\"analysis\",\"implementation\",\"testing\",\"review\"]}]"
+      }
+    ]
+  }
 }
 ```
+
+**Note:** Current implementation (SPI-663) returns unwrapped JSON array. This will be fixed to match the wrapped format shown above.
 
 ---
 
@@ -1337,123 +1342,123 @@ Note: Currently returns placeholder message. Will provide actual task recommenda
 
 ### Pattern 1: Project Initialization
 
-```javascript
+```kotlin
 // 1. Create a new project
-const createResponse = await mcpClient.callTool('create_project', {
-  name: 'New Application',
-  description: 'My new application project'
-});
+val createResponse = mcpClient.callTool("create_project", buildJsonObject {
+    put("name", "New Application")
+    put("description", "My new application project")
+})
 
-const project = JSON.parse(createResponse.content[0].text);
-const projectId = project.id;
+val project = Json.decodeFromString<JsonObject>(createResponse.content[0].text)
+val projectId = project["id"]?.jsonPrimitive?.content ?: error("No project ID")
 
 // 2. Create initial issues
-await mcpClient.callTool('create_issue', {
-  title: 'Setup project structure',
-  description: 'Initialize project files and dependencies',
-  projectId: projectId,
-  type: 'STORY'
-});
+mcpClient.callTool("create_issue", buildJsonObject {
+    put("title", "Setup project structure")
+    put("description", "Initialize project files and dependencies")
+    put("projectId", projectId)
+    put("type", "STORY")
+})
 
 // 3. Create a work session
-await mcpClient.callTool('create_session', {
-  projectId: projectId
-});
+mcpClient.callTool("create_session", buildJsonObject {
+    put("projectId", projectId)
+})
 
 // 4. Read project context
-const projectData = await mcpClient.readResource(`cycletime://projects/${projectId}`);
+val projectData = mcpClient.readResource("cycletime://projects/$projectId")
 ```
 
 ### Pattern 2: Issue Management Workflow
 
-```javascript
+```kotlin
 // 1. List all issues
-const issuesResponse = await mcpClient.readResource('cycletime://issues');
-const issues = JSON.parse(issuesResponse.contents[0].text);
+val issuesResponse = mcpClient.readResource("cycletime://issues")
+val issues = Json.decodeFromString<JsonArray>(issuesResponse.contents[0].text)
 
 // 2. Create a new story
-const storyResponse = await mcpClient.callTool('create_issue', {
-  title: 'User authentication',
-  description: 'Implement JWT authentication',
-  projectId: 'proj_abc123',
-  type: 'STORY'
-});
+val storyResponse = mcpClient.callTool("create_issue", buildJsonObject {
+    put("title", "User authentication")
+    put("description", "Implement JWT authentication")
+    put("projectId", "proj_abc123")
+    put("type", "STORY")
+})
 
-const story = JSON.parse(storyResponse.content[0].text);
+val story = Json.decodeFromString<JsonObject>(storyResponse.content[0].text)
 
 // 3. Create subtasks
-await mcpClient.callTool('create_issue', {
-  title: 'Create login endpoint',
-  description: 'POST /api/auth/login',
-  projectId: 'proj_abc123',
-  type: 'SUBTASK'
-});
+mcpClient.callTool("create_issue", buildJsonObject {
+    put("title", "Create login endpoint")
+    put("description", "POST /api/auth/login")
+    put("projectId", "proj_abc123")
+    put("type", "SUBTASK")
+})
 
-await mcpClient.callTool('create_issue', {
-  title: 'Create logout endpoint',
-  description: 'POST /api/auth/logout',
-  projectId: 'proj_abc123',
-  type: 'SUBTASK'
-});
+mcpClient.callTool("create_issue", buildJsonObject {
+    put("title", "Create logout endpoint")
+    put("description", "POST /api/auth/logout")
+    put("projectId", "proj_abc123")
+    put("type", "SUBTASK")
+})
 
 // 4. Update issue details
-await mcpClient.callTool('update_issue', {
-  id: story.id,
-  description: 'Implement JWT authentication with refresh tokens'
-});
+mcpClient.callTool("update_issue", buildJsonObject {
+    put("id", story["id"]?.jsonPrimitive?.content)
+    put("description", "Implement JWT authentication with refresh tokens")
+})
 ```
 
 ### Pattern 3: Session-Based Development
 
-```javascript
+```kotlin
 // 1. Create or get active session
-let sessionResponse = await mcpClient.callTool('get_active_session', {});
-let sessionData = JSON.parse(sessionResponse.content[0].text);
+var sessionResponse = mcpClient.callTool("get_active_session", buildJsonObject {})
+var sessionData = Json.decodeFromString<JsonObject>(sessionResponse.content[0].text)
 
-if (sessionData.id === 'no-active-session') {
-  // Create new session
-  sessionResponse = await mcpClient.callTool('create_session', {
-    projectId: 'proj_abc123'
-  });
+if (sessionData["id"]?.jsonPrimitive?.content == "no-active-session") {
+    // Create new session
+    sessionResponse = mcpClient.callTool("create_session", buildJsonObject {
+        put("projectId", "proj_abc123")
+    })
 }
 
 // 2. Get next task
-const nextTaskResponse = await mcpClient.callTool('get_next_task', {
-  sessionKey: sessionData.sessionKey
-});
+val nextTaskResponse = mcpClient.callTool("get_next_task", buildJsonObject {
+    put("sessionKey", sessionData["sessionKey"]?.jsonPrimitive?.content)
+})
 
-const nextTask = JSON.parse(nextTaskResponse.content[0].text);
-console.log(`Working on: ${nextTask.title}`);
+val nextTask = Json.decodeFromString<JsonObject>(nextTaskResponse.content[0].text)
+println("Working on: ${nextTask["title"]?.jsonPrimitive?.content}")
 
 // 3. Work on task...
 // 4. Update task status...
 
 // 5. List all sessions for review
-const sessionsData = await mcpClient.readResource('cycletime://sessions');
+val sessionsData = mcpClient.readResource("cycletime://sessions")
 ```
 
 ### Pattern 4: Cross-Session Context Recovery
 
-```javascript
+```kotlin
 // In a new Claude Code session, recover project context
 
 // 1. List all projects
-const projectsData = await mcpClient.readResource('cycletime://projects');
-const projects = JSON.parse(projectsData.contents[0].text);
+val projectsData = mcpClient.readResource("cycletime://projects")
+val projects = Json.decodeFromString<JsonArray>(projectsData.contents[0].text)
 
 // 2. Get active sessions
-const activeSessionsData = await mcpClient.readResource('cycletime://sessions/active');
-const activeSessions = JSON.parse(activeSessionsData.contents[0].text);
+val activeSessionsData = mcpClient.readResource("cycletime://sessions/active")
+val activeSessions = Json.decodeFromString<JsonObject>(activeSessionsData.contents[0].text)
 
 // 3. Read specific project details
-if (projects.length > 0) {
-  const projectId = projects[0].id;
-  const projectData = await mcpClient.readResource(`cycletime://projects/${projectId}`);
+if (projects.size > 0) {
+    val projectId = projects[0].jsonObject["id"]?.jsonPrimitive?.content
+    val projectData = mcpClient.readResource("cycletime://projects/$projectId")
 
-  // 4. List issues for context
-  const issuesData = await mcpClient.readResource('cycletime://issues');
+    // 4. List issues for context
+    val issuesData = mcpClient.readResource("cycletime://issues")
 
-  // Context is now fully recovered - continue work
+    // Context is now fully recovered - continue work
 }
 ```
 
@@ -1496,23 +1501,32 @@ if (projects.length > 0) {
 | "Resource not found: {uri}" | Invalid resource URI | Check URI pattern against documentation |
 | "{param} is required" | Missing required parameter | Add required parameter to request |
 
+### Edge Case Errors
+
+| Error Message | Cause | Solution |
+|---------------|-------|----------|
+| "Project not found: {projectId}" when calling create_issue | Invalid or non-existent projectId parameter | Verify project exists using `get_project` or `list_projects` before creating issue |
+| "Invalid issue type: {type}" | Malformed type enum value (not EPIC, STORY, or SUBTASK) | Use valid enum value: "EPIC", "STORY", or "SUBTASK" (case-sensitive) |
+| Returns null resource | Resource URI contains multiple path segments (e.g., `cycletime://projects/foo/bar`) | Use single-segment URIs: `cycletime://projects/{id}` not `cycletime://projects/{id}/extra` |
+| "Invalid resource URI format" | Malformed URI pattern | Follow documented patterns: `cycletime://` prefix with valid resource type |
+
 ### Error Response Handling
 
-```javascript
+```kotlin
 try {
-  const response = await mcpClient.callTool('get_project', {
-    id: 'invalid_id'
-  });
+    val response = mcpClient.callTool("get_project", buildJsonObject {
+        put("id", "invalid_id")
+    })
 
-  if (response.error) {
-    console.error(`Error: ${response.error.message}`);
-    // Handle error appropriately
-  } else {
-    // Process successful response
-    const project = JSON.parse(response.content[0].text);
-  }
-} catch (error) {
-  console.error('Request failed:', error);
+    if (response.error != null) {
+        println("Error: ${response.error.message}")
+        // Handle error appropriately
+    } else {
+        // Process successful response
+        val project = Json.decodeFromString<JsonObject>(response.content[0].text)
+    }
+} catch (e: Exception) {
+    println("Request failed: ${e.message}")
 }
 ```
 
