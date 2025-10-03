@@ -9,7 +9,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.comparables.shouldBeLessThan
-import io.kotest.assertions.timing.eventually
+import io.kotest.assertions.nondeterministic.eventually
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.spiralhouse.cycletime.mcp.integration.fixtures.MCPIntegrationTestBase

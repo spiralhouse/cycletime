@@ -1,14 +1,14 @@
 package io.spiralhouse.cycletime.mcp.integration
 
 import io.kotest.core.annotation.Ignored
-import io.kotest.core.annotation.DoNotParallelize
+import io.kotest.core.annotation.Isolate
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.assertions.timing.eventually
+import io.kotest.assertions.nondeterministic.eventually
 import io.spiralhouse.cycletime.mcp.integration.fixtures.MCPIntegrationTestBase
 import io.spiralhouse.cycletime.mcp.integration.fixtures.TestDataFactory
 import io.spiralhouse.cycletime.mcp.integration.fixtures.MockClaudeClient
