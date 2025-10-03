@@ -1,6 +1,6 @@
-# CycleTime - Context Management for Claude Code
+# CycleTime
 
-*Community Edition*
+*Context Management for Claude Code*
 
 [![Build Status](https://github.com/spiralhouse/cycletime/actions/workflows/cicd.yml/badge.svg)](https://github.com/spiralhouse/cycletime/actions/workflows/cicd.yml)
 [![codecov](https://codecov.io/gh/spiralhouse/cycletime/graph/badge.svg?token=8mTaC8tX64)](https://codecov.io/gh/spiralhouse/cycletime)
