@@ -7,7 +7,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.comparables.shouldBeLessThan
-import io.kotest.assertions.timing.eventually
+import io.kotest.assertions.nondeterministic.eventually
 import io.spiralhouse.cycletime.mcp.integration.fixtures.MCPIntegrationTestBase
 import io.spiralhouse.cycletime.mcp.integration.fixtures.TestDataFactory
 import kotlinx.coroutines.async

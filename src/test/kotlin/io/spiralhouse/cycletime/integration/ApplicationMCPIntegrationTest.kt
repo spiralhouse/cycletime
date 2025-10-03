@@ -7,7 +7,7 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.assertions.timing.eventually
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.common.ExperimentalKotest
 import io.ktor.client.request.*
 import io.ktor.client.statement.*

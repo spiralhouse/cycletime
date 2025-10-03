@@ -3,7 +3,7 @@ package io.spiralhouse.cycletime.mcp.integration.fixtures
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase
-import io.kotest.core.test.TestResult
+import io.kotest.engine.test.TestResult
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.ktor.client.*
@@ -88,9 +88,9 @@ abstract class MCPIntegrationTestBase : StringSpec() {
         // Note: super.beforeEach() removed - same Kotlin synthetic accessor issue
         TestDataFactory.resetRequestIdCounter()
     }
-    
+
     override suspend fun afterEach(testCase: TestCase, result: TestResult) {
-        // Note: super.afterEach() removed - same Kotlin synthetic accessor issue
+        // Note: super.afterEach() removed - Kotest 6.0 moved TestResult to io.kotest.engine.test package
         cleanupMcpClient()
     }
     
