@@ -721,6 +721,9 @@ tasks.register("generateOpenApiSpec") {
     group = "documentation"
     description = "Generate OpenAPI specification for CycleTime API"
 
+    // Capture version at configuration time
+    val apiVersion = project.version.toString()
+
     doLast {
         val openApiSpec = """
 {
@@ -728,7 +731,7 @@ tasks.register("generateOpenApiSpec") {
   "info": {
     "title": "CycleTime API",
     "description": "Project orchestration framework REST API for Claude Code integration",
-    "version": "${semver.version}",
+    "version": "$apiVersion",
     "contact": {
       "name": "CycleTime Development Team",
       "email": "support@spiralhouse.io"
@@ -742,7 +745,11 @@ tasks.register("generateOpenApiSpec") {
   "servers": [
     {
       "url": "http://localhost:8080",
-      "description": "Development"
+      "description": "Development (localhost)"
+    },
+    {
+      "url": "http://johns-mac-mini.main.spiral.house:8080",
+      "description": "Development (network)"
     },
     {
       "url": "https://api.cycletime.io",
@@ -1766,6 +1773,14 @@ tasks.register("generateOpenApiSpec") {
         openApiFile.writeText(openApiSpec)
 
         println("✓ Generated OpenAPI spec at: ${openApiFile.absolutePath}")
+    }
+}
+
+// Configure processResources to include the generated OpenAPI spec
+tasks.named<ProcessResources>("processResources") {
+    dependsOn("generateOpenApiSpec")
+    from("openapi") {
+        into("openapi")
     }
 }
 

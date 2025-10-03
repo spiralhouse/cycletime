@@ -17,7 +17,11 @@
   "servers": [
     {
       "url": "http://localhost:8080",
-      "description": "Development"
+      "description": "Development (localhost)"
+    },
+    {
+      "url": "http://johns-mac-mini.main.spiral.house:8080",
+      "description": "Development (network)"
     },
     {
       "url": "https://api.cycletime.io",
