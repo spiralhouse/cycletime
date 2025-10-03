@@ -51,6 +51,8 @@ object CorsConfiguration {
                 allowHost("127.0.0.1:3001")
                 allowHost("127.0.0.1:5173")
                 allowHost("127.0.0.1:8080")
+                // Allow network hostname for local network access
+                allowHost("johns-mac-mini.main.spiral.house:8080", schemes = listOf("http", "https"))
             } else {
                 // In production, configure specific allowed origins from environment
                 val allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS")
