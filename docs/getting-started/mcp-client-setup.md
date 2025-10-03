@@ -319,7 +319,7 @@ MCP_DETAILED_LOGGING=true ./gradlew run
 **Solution**:
 ```bash
 # Verify configuration file exists and has correct syntax
-cat ~/.config/claude/claude_desktop_config.json | jq .
+cat ~/.claude.json | jq .
 
 # If jq fails, there's a JSON syntax error
 # Common issues:
