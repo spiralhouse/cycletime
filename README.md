@@ -132,8 +132,8 @@ git checkout -b feat/your-feature
 
 Built with modern JVM technologies for reliability and performance:
 
-- **Kotlin 2.0** - Primary implementation language with coroutines support
-- **Ktor 3.2** - Lightweight asynchronous web framework
+- **Kotlin 2.2** - Primary implementation language with coroutines support
+- **Ktor 3.3** - Lightweight asynchronous web framework
 - **Exposed ORM** - Type-safe SQL DSL and database abstraction
 - **H2 Database** - Fast, embedded database with full SQL support
 - **Gradle 9.1** - Build automation and dependency management
