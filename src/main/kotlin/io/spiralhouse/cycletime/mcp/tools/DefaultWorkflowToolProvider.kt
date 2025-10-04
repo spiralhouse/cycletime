@@ -44,7 +44,7 @@ class DefaultWorkflowToolProvider : AbstractToolProvider() {
                     val name = extractRequiredParam(params, "name")
                     val description = extractOptionalParam(params, "description")
                     val stages = params.jsonObject["stages"]?.jsonArray
-                    
+
                     // For now, return success response with workflow ID
                     buildJsonObject {
                         put("id", "workflow-${java.util.UUID.randomUUID()}")
@@ -63,7 +63,7 @@ class DefaultWorkflowToolProvider : AbstractToolProvider() {
             handler = ToolHandler.Async { _ ->
                 Result.runCatching {
                     // For now, return a placeholder list
-                    val workflows = buildJsonArray {
+                    buildJsonArray {
                         add(buildJsonObject {
                             put("id", "workflow-1")
                             put("name", "Standard Development Workflow")
@@ -76,7 +76,6 @@ class DefaultWorkflowToolProvider : AbstractToolProvider() {
                             })
                         })
                     }
-                    workflows
                 }
             }
         ),
@@ -103,7 +102,7 @@ class DefaultWorkflowToolProvider : AbstractToolProvider() {
                     val workflowId = extractRequiredParam(params, "workflowId")
                     val stage = extractRequiredParam(params, "stage")
                     val context = params.jsonObject["context"]?.jsonObject
-                    
+
                     // For now, return success response
                     buildJsonObject {
                         put("workflowId", workflowId)
