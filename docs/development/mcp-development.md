@@ -87,16 +87,37 @@ The server uses development-optimized settings from `application.conf`:
 ```hocon
 ktor {
     deployment {
+        port = 8080
+        port = ${?PORT}  # Optional environment variable override
+
         development = true
+        development = ${?KTOR_DEVELOPMENT}
+
         autoreload = true
-        watch = [
+        autoreload = ${?KTOR_AUTORELOAD}
+
+        watch = []
+        watch = ${?KTOR_WATCH_PATHS}
+    }
+
+    development {
+        watchPaths = [
             "build/classes/kotlin/main",
             "src/main/kotlin",
             "src/main/resources"
         ]
+        watchPaths = ${?KTOR_DEV_WATCH_PATHS}
     }
 }
+
+database {
+    url = "jdbc:h2:file:./cycletime;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
+    url = ${?DATABASE_URL}
+    driver = "org.h2.Driver"
+}
 ```
+
+**Environment Variable Pattern**: Configuration uses HOCON's `${?VAR}` syntax for optional environment variable substitution. The pattern `value = default` followed by `value = ${?ENV_VAR}` means "use default unless ENV_VAR is set".
 
 ## Connecting Test Clients
 
@@ -462,12 +483,16 @@ override fun getTools(): List<Tool> = listOf(
         parametersSchema = buildEmptyPropertiesSchema(),
         handler = ToolHandler.Sync {
             Result.runCatching {
+                // BuildInfo is generated at build time by Gradle buildconfig plugin
+                // Generated class: build/generated/source/buildconfig/main/io/spiralhouse/cycletime/BuildInfo.kt
                 createMcpTextResponse(BuildInfo.version)
             }
         }
     )
 )
 ```
+
+**Note**: `BuildInfo` is automatically generated during the build process by the Gradle `buildconfig` plugin. It provides compile-time constants like `version`, `buildTime`, and `gitCommit`. The generated class appears in `build/generated/source/buildconfig/` and is available after running `./gradlew build`.
 
 ### Adding an Async Tool
 
@@ -709,28 +734,37 @@ class ProjectToolProviderTest : StringSpec({
 
 ### Integration Testing MCP Server
 
-Test WebSocket connections and request handling:
+Test WebSocket connections and request handling using `MCPIntegrationTestBase`:
 
 ```kotlin
-class MCPServerIntegrationTest : StringSpec({
-    "should accept WebSocket connection" {
-        testApplication {
-            application {
-                configureMCP()
-            }
+class MCPServerIntegrationTest : MCPIntegrationTestBase() {
+    init {
+        "should accept WebSocket connection and perform handshake" {
+            withTestApplication {
+                // Create and initialize MCP client (handles connection internally)
+                val client = createInitializedMcpClient(
+                    clientName = "Test-Client",
+                    protocolVersion = "2024-11-05"
+                )
 
-            val client = createClient {
-                install(WebSockets)
-            }
+                // Verify server responded with correct protocol
+                val initResponse = client.getInitializationResponse()
+                initResponse shouldNotBe null
 
-            client.webSocket("/mcp") {
-                val greeting = incoming.receive() as Frame.Text
-                greeting.readText() shouldContain "cycletime"
+                val serverInfo = initResponse!!.jsonObject["result"]
+                    ?.jsonObject?.get("serverInfo")?.jsonObject
+                serverInfo?.get("name")?.jsonPrimitive?.content shouldBe "CycleTime-CE"
             }
         }
     }
-})
+}
 ```
+
+**Key Testing Patterns**:
+- Extend `MCPIntegrationTestBase` for automatic test infrastructure setup
+- Use `withTestApplication {}` which calls `module()` to configure full app including MCP routes
+- Use `createConnectedMcpClient()` or `createInitializedMcpClient()` for WebSocket connections
+- MCPIntegrationTestBase provides validation helpers: `validateJsonRpcResponse()`, `validateToolsList()`, etc.
 
 ### Manual Testing Checklist
 
