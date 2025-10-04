@@ -2259,8 +2259,23 @@ cat src/main/resources/application.conf
 
 ## Related Documentation
 
-- [MCP Protocol Specification](https://modelcontextprotocol.io/)
-- [CycleTime Architecture Overview](../architecture/overview.md)
-- [MCP Tools Reference](../api/mcp-tools-reference.md)
-- [MCP Resources Reference](../api/mcp-resources.md)
-- [General Troubleshooting](troubleshooting.md)
+### MCP Protocol & Standards
+- [MCP Protocol Specification](https://modelcontextprotocol.io/) - Official MCP protocol documentation
+- [MCP Tools Reference](../api/mcp-tools-reference.md) - Complete MCP tools catalog
+- [MCP Resources Reference](../api/mcp-resources.md) - MCP resource URI patterns
+
+### Getting Started with MCP
+- [MCP Client Setup](../getting-started/mcp-client-setup.md) - Configure Claude Code for MCP
+- [MCP Connection Testing](../getting-started/mcp-testing.md) - Verify MCP server connectivity
+
+### Development Guides
+- [MCP Development Workflow](../development/mcp-development.md) - Development patterns and testing
+- [REST API Reference](../api/rest-api-reference.md) - HTTP endpoints including MCP server info
+
+### Architecture & Design
+- [CycleTime Architecture Overview](../architecture/overview.md) - System architecture
+- [MCP Integration Patterns](technical-design/mcp-integration-patterns.md) - Integration design patterns
+
+### Troubleshooting
+- [General Troubleshooting](troubleshooting.md) - Common CycleTime issues
+- [Worktree Operations](worktree-operations.md) - Git worktree troubleshooting
