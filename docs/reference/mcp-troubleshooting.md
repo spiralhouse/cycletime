@@ -46,7 +46,7 @@ Understanding default configuration helps diagnose issues quickly:
 **Performance Settings**:
 - Request timeout: `60000ms` (60 seconds)
 - Slow request threshold: `100ms`
-- Metrics enabled: `false` (by default)
+- Metrics enabled: `true` (by default)
 
 **Environment Variables**:
 ```bash
@@ -57,7 +57,7 @@ MCP_PATH=/mcp             # WebSocket path
 MCP_TIMEOUT=15000         # WebSocket timeout (ms)
 MCP_REQUEST_TIMEOUT=60000 # Request timeout (ms)
 MCP_SLOW_REQUEST_MS=100   # Slow request threshold
-MCP_METRICS_ENABLED=false # Enable metrics
+MCP_METRICS_ENABLED=true  # Enable metrics (default: true)
 DATABASE_LOGGING=false    # Enable SQL logging
 ```
 
