@@ -483,8 +483,10 @@ override fun getTools(): List<Tool> = listOf(
         parametersSchema = buildEmptyPropertiesSchema(),
         handler = ToolHandler.Sync {
             Result.runCatching {
-                // BuildInfo is generated at build time by Gradle buildconfig plugin
-                // Generated class: build/generated/source/buildconfig/main/io/spiralhouse/cycletime/BuildInfo.kt
+                // BuildInfo.version resolves at runtime from:
+                // 1. CYCLETIME_VERSION env var (highest priority)
+                // 2. cycletime.version system property (set by Gradle)
+                // 3. Fallback: "0.1.0-SNAPSHOT-dev"
                 createMcpTextResponse(BuildInfo.version)
             }
         }
@@ -492,7 +494,7 @@ override fun getTools(): List<Tool> = listOf(
 )
 ```
 
-**Note**: `BuildInfo` is automatically generated during the build process by the Gradle `buildconfig` plugin. It provides compile-time constants like `version`, `buildTime`, and `gitCommit`. The generated class appears in `build/generated/source/buildconfig/` and is available after running `./gradlew build`.
+**Note**: `BuildInfo` is a manually written object at `src/main/kotlin/io/spiralhouse/cycletime/domain/services/BuildInfo.kt` that resolves version information at runtime from environment variables or system properties. It is **not** code-generated.
 
 ### Adding an Async Tool
 
