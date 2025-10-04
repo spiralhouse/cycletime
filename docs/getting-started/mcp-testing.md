@@ -253,7 +253,7 @@ websocat ws://localhost:8080/mcp
 }
 ```
 
-**Expected Response**:
+**Expected Response** (17 tools total):
 ```json
 {
   "jsonrpc": "2.0",
@@ -261,31 +261,8 @@ websocat ws://localhost:8080/mcp
   "result": {
     "tools": [
       {
-        "name": "list_projects",
-        "description": "List all projects in the system",
-        "inputSchema": {
-          "type": "object",
-          "properties": {},
-          "required": []
-        }
-      },
-      {
-        "name": "get_project",
-        "description": "Get details of a specific project",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "id": {
-              "type": "string",
-              "description": "Project ID"
-            }
-          },
-          "required": ["id"]
-        }
-      },
-      {
         "name": "create_project",
-        "description": "Create a new project",
+        "description": "Create a new CycleTime project",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -302,17 +279,252 @@ websocat ws://localhost:8080/mcp
         }
       },
       {
+        "name": "get_project",
+        "description": "Get a project by ID",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Project ID"
+            }
+          },
+          "required": ["id"]
+        }
+      },
+      {
+        "name": "list_projects",
+        "description": "List all projects",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "update_project",
+        "description": "Update an existing project",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Project ID"
+            },
+            "name": {
+              "type": "string",
+              "description": "Project name"
+            },
+            "description": {
+              "type": "string",
+              "description": "Project description"
+            }
+          },
+          "required": ["id"]
+        }
+      },
+      {
+        "name": "create_issue",
+        "description": "Create a new issue",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Issue title"
+            },
+            "description": {
+              "type": "string",
+              "description": "Issue description"
+            },
+            "projectId": {
+              "type": "string",
+              "description": "Project ID"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["EPIC", "STORY", "SUBTASK"],
+              "description": "Issue type",
+              "default": "STORY"
+            }
+          },
+          "required": ["title", "projectId"]
+        }
+      },
+      {
+        "name": "get_issue",
+        "description": "Get an issue by ID",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Issue ID"
+            }
+          },
+          "required": ["id"]
+        }
+      },
+      {
         "name": "list_issues",
-        "description": "List all issues, optionally filtered by project",
+        "description": "List all issues",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "update_issue",
+        "description": "Update an existing issue",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Issue ID"
+            },
+            "title": {
+              "type": "string",
+              "description": "Issue title"
+            },
+            "description": {
+              "type": "string",
+              "description": "Issue description"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["EPIC", "STORY", "SUBTASK"],
+              "description": "Issue type"
+            }
+          },
+          "required": ["id"]
+        }
+      },
+      {
+        "name": "create_session",
+        "description": "Create a new work session",
         "inputSchema": {
           "type": "object",
           "properties": {
             "projectId": {
               "type": "string",
-              "description": "Optional project ID to filter issues"
+              "description": "Project ID for the session"
             }
           },
-          "required": []
+          "required": ["projectId"]
+        }
+      },
+      {
+        "name": "list_active_sessions",
+        "description": "List active sessions",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "get_session",
+        "description": "Get session by key",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "sessionKey": {
+              "type": "string",
+              "description": "Session key"
+            }
+          },
+          "required": ["sessionKey"]
+        }
+      },
+      {
+        "name": "get_next_task",
+        "description": "Get the next task for the current session",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "sessionKey": {
+              "type": "string",
+              "description": "Session key (optional)"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_active_session",
+        "description": "Get the currently active session",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "list_sessions",
+        "description": "List all sessions (active and inactive)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "create_workflow",
+        "description": "Create a new workflow",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Workflow name"
+            },
+            "description": {
+              "type": "string",
+              "description": "Workflow description"
+            },
+            "stages": {
+              "type": "array",
+              "description": "Workflow stages",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": ["name"]
+        }
+      },
+      {
+        "name": "list_workflows",
+        "description": "List all workflows",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "execute_workflow_stage",
+        "description": "Execute a specific workflow stage",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "workflowId": {
+              "type": "string",
+              "description": "Workflow ID"
+            },
+            "stage": {
+              "type": "string",
+              "description": "Stage name to execute"
+            },
+            "context": {
+              "type": "object",
+              "description": "Execution context"
+            }
+          },
+          "required": ["workflowId", "stage"]
         }
       }
     ]
@@ -321,10 +533,11 @@ websocat ws://localhost:8080/mcp
 ```
 
 **Verification Checklist**:
-- [ ] Response contains `tools` array
+- [ ] Response contains `tools` array with 17 tools
 - [ ] Each tool has name, description, inputSchema
-- [ ] Input schemas define required parameters
+- [ ] Input schemas define required parameters correctly
 - [ ] Tool names match expected functionality
+- [ ] All 4 domains covered: Projects (4), Issues (4), Sessions (6), Workflows (3)
 
 ### 6. List Resources Request
 
