@@ -1,10 +1,29 @@
 # MCP Troubleshooting Guide
 
+**Last Updated**: October 03, 2025
+
 Comprehensive troubleshooting reference for Model Context Protocol (MCP) server and client issues in CycleTime.
 
 ## Overview
 
 This guide addresses the top 10 common MCP issues encountered during development and deployment. Each issue includes symptoms, root causes, concrete solutions, and prevention tips.
+
+## Quick Reference
+
+| Issue | Problem | Jump To |
+|-------|---------|---------|
+| #1 | Connection Refused | [→](#issue-1-connection-refused) |
+| #2 | WebSocket Handshake Failed | [→](#issue-2-websocket-handshake-failed) |
+| #3 | Connection Timeout | [→](#issue-3-connection-timeout) |
+| #4 | Invalid JSON-RPC Request | [→](#issue-4-invalid-json-rpc-request) |
+| #5 | Tool Not Found | [→](#issue-5-tool-not-found) |
+| #6 | Resource Not Found | [→](#issue-6-resource-not-found) |
+| #7 | Slow Response Times | [→](#issue-7-slow-response-times) |
+| #8 | Request Timeout | [→](#issue-8-request-timeout) |
+| #9 | MCP Server Disabled | [→](#issue-9-mcp-server-disabled) |
+| #10 | Port Already in Use | [→](#issue-10-port-already-in-use) |
+
+**Additional Resources**: [Diagnostic Tools](#diagnostic-tools) • [Error Codes](#common-error-codes) • [Recovery Checklist](#recovery-checklist) • [Getting Help](#getting-help)
 
 ## MCP Architecture Context
 
@@ -2085,6 +2104,7 @@ cat src/main/resources/application.conf
 ## Related Documentation
 
 - [MCP Protocol Specification](https://modelcontextprotocol.io/)
-- [CycleTime MCP Implementation](../architecture/mcp-integration.md)
-- [API Reference](../api/mcp-endpoints.md)
+- [CycleTime Architecture Overview](../architecture/overview.md)
+- [MCP Tools Reference](../api/mcp-tools-reference.md)
+- [MCP Resources Reference](../api/mcp-resources.md)
 - [General Troubleshooting](troubleshooting.md)
