@@ -3,7 +3,6 @@ package io.spiralhouse.cycletime.mcp.tools
 import io.spiralhouse.cycletime.application.commands.*
 import io.spiralhouse.cycletime.application.services.*
 import io.spiralhouse.cycletime.domain.valueobjects.*
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 
 /**
@@ -60,10 +59,10 @@ class DefaultIssueToolProvider(
                         projectId = ProjectId(projectId)
                     )
                     val result = issueService.createIssue(command)
-                    createMcpTextResponse(Json.encodeToString(mapOf(
-                        "id" to result.id.value,
-                        "title" to result.title
-                    )))
+                    buildJsonObject {
+                        put("id", result.id.value)
+                        put("title", result.title)
+                    }
                 }
             }
         ),
@@ -81,9 +80,9 @@ class DefaultIssueToolProvider(
                 Result.runCatching {
                     val id = extractRequiredParam(params, "id")
                     
-                    val result = issueService.getIssue(IssueId(id))
+                    val issue = issueService.getIssue(IssueId(id))
                         ?: throw IllegalArgumentException("Issue not found: $id")
-                    createMcpTextResponse(Json.encodeToString(result))
+                    Json.encodeToJsonElement(issue)
                 }
             }
         ),
@@ -93,8 +92,8 @@ class DefaultIssueToolProvider(
             parametersSchema = buildEmptyPropertiesSchema(),
             handler = ToolHandler.Async { _ ->
                 Result.runCatching {
-                    val result = issueService.listIssues()
-                    createMcpTextResponse(Json.encodeToString(result))
+                    val issues = issueService.listIssues()
+                    Json.encodeToJsonElement(issues)
                 }
             }
         ),
@@ -127,14 +126,13 @@ class DefaultIssueToolProvider(
                     val type = extractOptionalParam(params, "type")
                     
                     // For now, return success response - actual update logic can be implemented later
-                    val updateResult = buildJsonObject {
+                    buildJsonObject {
                         put("id", id)
                         put("updated", true)
                         if (title != null) put("title", title)
                         if (description != null) put("description", description)
                         if (type != null) put("type", type)
                     }
-                    createMcpTextResponse(Json.encodeToString(updateResult))
                 }
             }
         )

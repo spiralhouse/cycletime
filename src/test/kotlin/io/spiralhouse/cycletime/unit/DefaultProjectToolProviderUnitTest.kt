@@ -59,11 +59,12 @@ class DefaultProjectToolProviderUnitTest : StringSpec({
         syncTools shouldHaveSize 0
     }
 
-    // TDD Cycle 2: MCP Response Format Tests
-    "create_project should return MCP content array format" {
+    // TDD Cycle 2: Raw Data Response Format Tests (SPI-664)
+    "create_project should return raw project data JSON" {
         runTest {
+            val projectId = UUID.randomUUID().toString()
             val mockProjectDto = ProjectDto(
-                id = ProjectId(UUID.randomUUID().toString()),
+                id = ProjectId(projectId),
                 name = "Test Project",
                 description = "Test Description",
                 status = ProjectStatus.ACTIVE,
@@ -87,20 +88,20 @@ class DefaultProjectToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure
+            // Should return raw JSON data (wrapping happens in McpToolHandler, not provider)
+            // create_project only returns id and name (not full DTO)
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            content[0].jsonObject["text"].shouldNotBe(null)
+            result["id"].shouldNotBe(null)
+            result["id"]!!.jsonPrimitive.content shouldBe projectId
+            result["name"]!!.jsonPrimitive.content shouldBe "Test Project"
         }
     }
 
-    "get_project should return MCP content array format" {
+    "get_project should return raw project data JSON" {
         runTest {
+            val projectId = UUID.randomUUID().toString()
             val mockProjectDto = ProjectDto(
-                id = ProjectId(UUID.randomUUID().toString()),
+                id = ProjectId(projectId),
                 name = "Test Project",
                 description = "Test Description",
                 status = ProjectStatus.ACTIVE,
@@ -113,7 +114,7 @@ class DefaultProjectToolProviderUnitTest : StringSpec({
 
             val getTool = toolProvider.getAsyncTools().first { it.name == "get_project" }
             val params = buildJsonObject {
-                put("id", UUID.randomUUID().toString())
+                put("id", projectId)
             }
 
             val result = getTool.handler.let { handler ->
@@ -123,22 +124,24 @@ class DefaultProjectToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure
+            // Should return raw JSON data from serialized DTO (wrapping happens in McpToolHandler, not provider)
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            content[0].jsonObject["text"].shouldNotBe(null)
+            // ProjectId serializes as {"_value": "uuid"}
+            result["id"].shouldNotBe(null)
+            result["id"]!!.jsonObject["_value"]!!.jsonPrimitive.content shouldBe projectId
+            result["name"]!!.jsonPrimitive.content shouldBe "Test Project"
+            result["description"]!!.jsonPrimitive.content shouldBe "Test Description"
+            result["status"]!!.jsonPrimitive.content shouldBe "ACTIVE"
         }
     }
 
-    "list_projects should return MCP content array format" {
+    "list_projects should return raw project list data JSON" {
         runTest {
+            val projectId = UUID.randomUUID().toString()
             val mockProjectsList = ProjectListDto(
                 projects = listOf(
                     ProjectDto(
-                        id = ProjectId(UUID.randomUUID().toString()),
+                        id = ProjectId(projectId),
                         name = "Project 1",
                         description = "Description 1",
                         status = ProjectStatus.ACTIVE,
@@ -162,21 +165,36 @@ class DefaultProjectToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure
+            // Should return raw JSON data from serialized DTO (wrapping happens in McpToolHandler, not provider)
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            content[0].jsonObject["text"].shouldNotBe(null)
+            result["projects"].shouldNotBe(null)
+            result["totalCount"]!!.jsonPrimitive.int shouldBe 1
+            val projects = result["projects"]!!.jsonArray
+            projects shouldHaveSize 1
+            // ProjectId serializes as {"_value": "uuid"}
+            projects[0].jsonObject["id"]!!.jsonObject["_value"]!!.jsonPrimitive.content shouldBe projectId
+            projects[0].jsonObject["name"]!!.jsonPrimitive.content shouldBe "Project 1"
         }
     }
 
-    "update_project should return MCP content array format" {
+    "update_project should return raw project data JSON" {
         runTest {
+            val projectId = UUID.randomUUID().toString()
+            val mockProjectDto = ProjectDto(
+                id = ProjectId(projectId),
+                name = "Updated Project",
+                description = "Test Description",
+                status = ProjectStatus.ACTIVE,
+                issues = emptyList(),
+                issueCount = 0,
+                createdAt = Clock.System.now(),
+                updatedAt = Clock.System.now()
+            )
+            coEvery { mockProjectService.updateProject(any()) } returns mockProjectDto
+
             val updateTool = toolProvider.getAsyncTools().first { it.name == "update_project" }
             val params = buildJsonObject {
-                put("id", UUID.randomUUID().toString())
+                put("id", projectId)
                 put("name", "Updated Project")
             }
 
@@ -187,13 +205,12 @@ class DefaultProjectToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure - THIS CURRENTLY FAILS
+            // Should return raw JSON data (wrapping happens in McpToolHandler, not provider)
+            // update_project returns id, updated flag, and updated fields
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            content[0].jsonObject["text"].shouldNotBe(null)
+            result["id"]!!.jsonPrimitive.content shouldBe projectId
+            result["updated"]!!.jsonPrimitive.boolean shouldBe true
+            result["name"]!!.jsonPrimitive.content shouldBe "Updated Project"
         }
     }
 

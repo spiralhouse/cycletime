@@ -64,12 +64,14 @@ class DefaultSessionToolProviderUnitTest : StringSpec({
         syncTools shouldHaveSize 0
     }
 
-    // TDD Cycle 2: MCP Response Format Tests
-    "create_session should return MCP content array format" {
+    // TDD Cycle 2: Raw Data Response Format Tests (SPI-664)
+    "create_session should return raw session creation response JSON" {
         runTest {
+            val sessionKey = "12345678-1234-1234-1234-123456789abc"
+            val projectId = "87654321-4321-4321-4321-210987654321"
             val mockSessionDto = SessionDto(
-                sessionKey = SessionKey("12345678-1234-1234-1234-123456789abc"),
-                projectId = ProjectId("87654321-4321-4321-4321-210987654321"),
+                sessionKey = SessionKey(sessionKey),
+                projectId = ProjectId(projectId),
                 currentContext = SessionContext(),
                 lastActivity = Clock.System.now(),
                 createdAt = Clock.System.now(),
@@ -79,7 +81,7 @@ class DefaultSessionToolProviderUnitTest : StringSpec({
 
             val createTool = toolProvider.getAsyncTools().first { it.name == "create_session" }
             val params = buildJsonObject {
-                put("projectId", "87654321-4321-4321-4321-210987654321")
+                put("projectId", projectId)
             }
 
             val result = createTool.handler.let { handler ->
@@ -89,22 +91,21 @@ class DefaultSessionToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure
+            // Should return raw JSON data (wrapping happens in McpToolHandler, not provider)
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            content[0].jsonObject["text"].shouldNotBe(null)
+            result["message"].shouldNotBe(null)
+            result["sessionKey"]!!.jsonPrimitive.content shouldBe sessionKey
+            result["projectId"]!!.jsonPrimitive.content shouldBe projectId
         }
     }
 
-    "list_active_sessions should return MCP content array format" {
+    "list_active_sessions should return raw session list data JSON" {
         runTest {
+            val sessionKey = "12345678-1234-1234-1234-123456789abc"
             val mockSessionsList = SessionListDto(
                 sessions = listOf(
                     SessionDto(
-                        sessionKey = SessionKey("12345678-1234-1234-1234-123456789abc"),
+                        sessionKey = SessionKey(sessionKey),
                         projectId = ProjectId("87654321-4321-4321-4321-210987654321"),
                         currentContext = SessionContext(),
                         lastActivity = Clock.System.now(),
@@ -126,32 +127,34 @@ class DefaultSessionToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure
+            // Should return raw JSON data from serialized DTO (wrapping happens in McpToolHandler, not provider)
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            content[0].jsonObject["text"].shouldNotBe(null)
+            result["sessions"].shouldNotBe(null)
+            result["totalCount"]!!.jsonPrimitive.int shouldBe 1
+            val sessions = result["sessions"]!!.jsonArray
+            sessions shouldHaveSize 1
+            // SessionKey is a value class and serializes as a primitive string
+            sessions[0].jsonObject["sessionKey"]!!.jsonPrimitive.content shouldBe sessionKey
         }
     }
 
-    "get_session should return MCP content array format" {
+    "get_session should return raw session data JSON" {
         runTest {
+            val sessionKey = "12345678-1234-1234-1234-123456789abc"
             val mockSessionDto = SessionDto(
-                sessionKey = SessionKey("12345678-1234-1234-1234-123456789abc"),
+                sessionKey = SessionKey(sessionKey),
                 projectId = ProjectId("87654321-4321-4321-4321-210987654321"),
                 currentContext = SessionContext(),
                 lastActivity = Clock.System.now(),
                 createdAt = Clock.System.now(),
                 updatedAt = Clock.System.now()
             )
-            val validSessionKey = SessionKey("12345678-1234-1234-1234-123456789abc")
+            val validSessionKey = SessionKey(sessionKey)
             coEvery { mockSessionService.getSession(validSessionKey) } returns mockSessionDto
 
             val getTool = toolProvider.getAsyncTools().first { it.name == "get_session" }
             val params = buildJsonObject {
-                put("sessionKey", "12345678-1234-1234-1234-123456789abc")
+                put("sessionKey", sessionKey)
             }
 
             val result = getTool.handler.let { handler ->
@@ -161,21 +164,20 @@ class DefaultSessionToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure
+            // Should return raw JSON data from serialized DTO (wrapping happens in McpToolHandler, not provider)
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            content[0].jsonObject["text"].shouldNotBe(null)
+            // SessionKey is a value class and serializes as a primitive string
+            result["sessionKey"].shouldNotBe(null)
+            result["sessionKey"]!!.jsonPrimitive.content shouldBe sessionKey
         }
     }
 
-    "get_next_task should return MCP content array format" {
+    "get_next_task should return raw task data JSON" {
         runTest {
+            val sessionKey = "12345678-1234-1234-1234-123456789abc"
             val getNextTaskTool = toolProvider.getAsyncTools().first { it.name == "get_next_task" }
             val params = buildJsonObject {
-                put("sessionKey", "12345678-1234-1234-1234-123456789abc")
+                put("sessionKey", sessionKey)
             }
 
             val result = getNextTaskTool.handler.let { handler ->
@@ -185,22 +187,22 @@ class DefaultSessionToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure
+            // Should return raw JSON data (wrapping happens in McpToolHandler, not provider)
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            content[0].jsonObject["text"].shouldNotBe(null)
+            result["id"]!!.jsonPrimitive.content shouldBe "task-1"
+            result["title"]!!.jsonPrimitive.content shouldBe "Continue development on current feature"
+            result["priority"]!!.jsonPrimitive.content shouldBe "high"
+            result["sessionKey"]!!.jsonPrimitive.content shouldBe sessionKey
         }
     }
 
-    "get_active_session should return MCP content array format" {
+    "get_active_session should return raw session data JSON" {
         runTest {
+            val sessionKey = "12345678-1234-1234-1234-123456789abc"
             val mockSessionsList = SessionListDto(
                 sessions = listOf(
                     SessionDto(
-                        sessionKey = SessionKey("12345678-1234-1234-1234-123456789abc"),
+                        sessionKey = SessionKey(sessionKey),
                         projectId = ProjectId("87654321-4321-4321-4321-210987654321"),
                         currentContext = SessionContext(),
                         lastActivity = Clock.System.now(),
@@ -222,22 +224,21 @@ class DefaultSessionToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure
+            // Should return raw JSON data from serialized DTO (wrapping happens in McpToolHandler, not provider)
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            content[0].jsonObject["text"].shouldNotBe(null)
+            // SessionKey is a value class and serializes as a primitive string
+            result["sessionKey"].shouldNotBe(null)
+            result["sessionKey"]!!.jsonPrimitive.content shouldBe sessionKey
         }
     }
 
-    "list_sessions should return MCP content array format" {
+    "list_sessions should return raw session list data JSON" {
         runTest {
+            val sessionKey = "12345678-1234-1234-1234-123456789abc"
             val mockSessionsList = SessionListDto(
                 sessions = listOf(
                     SessionDto(
-                        sessionKey = SessionKey("12345678-1234-1234-1234-123456789abc"),
+                        sessionKey = SessionKey(sessionKey),
                         projectId = ProjectId("87654321-4321-4321-4321-210987654321"),
                         currentContext = SessionContext(),
                         lastActivity = Clock.System.now(),
@@ -259,13 +260,14 @@ class DefaultSessionToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure
+            // Should return raw JSON data from serialized DTO (wrapping happens in McpToolHandler, not provider)
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            content[0].jsonObject["text"].shouldNotBe(null)
+            result["sessions"].shouldNotBe(null)
+            result["totalCount"]!!.jsonPrimitive.int shouldBe 1
+            val sessions = result["sessions"]!!.jsonArray
+            sessions shouldHaveSize 1
+            // SessionKey is a value class and serializes as a primitive string
+            sessions[0].jsonObject["sessionKey"]!!.jsonPrimitive.content shouldBe sessionKey
         }
     }
 
@@ -429,9 +431,10 @@ class DefaultSessionToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should not throw an exception and return proper format
+            // Should not throw an exception and return raw task data
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
+            result["id"]!!.jsonPrimitive.content shouldBe "task-1"
+            result["sessionKey"]!!.jsonPrimitive.content shouldBe "default"
         }
     }
 
@@ -450,14 +453,10 @@ class DefaultSessionToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure with no-active-session message
+            // Should return raw JSON with no-active-session message
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            val textContent = content[0].jsonObject["text"]!!.jsonPrimitive.content
-            textContent shouldContain "no-active-session"
+            result["id"]!!.jsonPrimitive.content shouldBe "no-active-session"
+            result["message"]!!.jsonPrimitive.content shouldBe "No active session found"
         }
     }
 })
