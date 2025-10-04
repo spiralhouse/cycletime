@@ -1,27 +1,31 @@
 package io.spiralhouse.cycletime.mcp.tools
 
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 
 /**
  * Abstract base class for tool providers that provides common helper methods
  * for MCP operations.
- * 
+ *
  * This class extracts the proven patterns from DefaultSessionToolProvider to eliminate
  * code duplication across all tool provider implementations.
  */
 abstract class AbstractToolProvider : ToolProvider {
-    
+
     /**
      * Creates a properly formatted MCP text response.
-     * 
-     * @param content The text content to include in the response
+     *
+     * Serializes the provided data to JSON and wraps it in the standard MCP content structure.
+     * This ensures single-level content wrapping per MCP protocol specification.
+     *
+     * @param data The data to serialize and include in the response
      * @return JsonObject with the standard MCP response structure
      */
-    protected fun createMcpTextResponse(content: String): JsonObject = buildJsonObject {
+    protected inline fun <reified T> createMcpTextResponse(data: T): JsonObject = buildJsonObject {
         put("content", buildJsonArray {
             add(buildJsonObject {
                 put("type", "text")
-                put("text", content)
+                put("text", Json.encodeToString(data))
             })
         })
     }

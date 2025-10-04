@@ -3,7 +3,6 @@ package io.spiralhouse.cycletime.mcp.tools
 import io.spiralhouse.cycletime.application.commands.*
 import io.spiralhouse.cycletime.application.services.*
 import io.spiralhouse.cycletime.domain.valueobjects.*
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 
 /**
@@ -40,10 +39,10 @@ class DefaultProjectToolProvider(
                         description = description
                     )
                     val result = projectService.createProject(command)
-                    createMcpTextResponse(Json.encodeToString(mapOf(
-                        "id" to result.id.value,
-                        "name" to result.name
-                    )))
+                    buildJsonObject {
+                        put("id", result.id.value)
+                        put("name", result.name)
+                    }
                 }
             }
         ),
@@ -61,9 +60,9 @@ class DefaultProjectToolProvider(
                 Result.runCatching {
                     val id = extractRequiredParam(params, "id")
                     
-                    val result = projectService.getProject(ProjectId(id))
+                    val project = projectService.getProject(ProjectId(id))
                         ?: throw IllegalArgumentException("Project not found: $id")
-                    createMcpTextResponse(Json.encodeToString(result))
+                    Json.encodeToJsonElement(project)
                 }
             }
         ),
@@ -73,8 +72,8 @@ class DefaultProjectToolProvider(
             parametersSchema = buildEmptyPropertiesSchema(),
             handler = ToolHandler.Async { _ ->
                 Result.runCatching {
-                    val result = projectService.listProjects()
-                    createMcpTextResponse(Json.encodeToString(result))
+                    val projects = projectService.listProjects()
+                    Json.encodeToJsonElement(projects)
                 }
             }
         ),
@@ -97,13 +96,12 @@ class DefaultProjectToolProvider(
                     val description = extractOptionalParam(params, "description")
                     
                     // For now, return success response - actual update logic can be implemented later
-                    val updateResult = buildJsonObject {
+                    buildJsonObject {
                         put("id", id)
                         put("updated", true)
                         if (name != null) put("name", name)
                         if (description != null) put("description", description)
                     }
-                    createMcpTextResponse(Json.encodeToString(updateResult))
                 }
             }
         )

@@ -60,11 +60,12 @@ class DefaultIssueToolProviderUnitTest : StringSpec({
         syncTools shouldHaveSize 0
     }
 
-    // TDD Cycle 2: MCP Response Format Tests
-    "create_issue should return MCP content array format" {
+    // TDD Cycle 2: Raw Data Response Format Tests (SPI-664)
+    "create_issue should return raw issue data JSON" {
         runTest {
+            val issueId = UUID.randomUUID().toString()
             val mockIssueDto = IssueDto(
-                id = IssueId(UUID.randomUUID().toString()),
+                id = IssueId(issueId),
                 title = "Test Issue",
                 description = null,
                 type = IssueType.STORY,
@@ -94,20 +95,20 @@ class DefaultIssueToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure
+            // Should return raw JSON data (wrapping happens in McpToolHandler, not provider)
+            // create_issue only returns id and title (not full DTO)
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            content[0].jsonObject["text"].shouldNotBe(null)
+            result["id"].shouldNotBe(null)
+            result["id"]!!.jsonPrimitive.content shouldBe issueId
+            result["title"]!!.jsonPrimitive.content shouldBe "Test Issue"
         }
     }
 
-    "get_issue should return MCP content array format" {
+    "get_issue should return raw issue data JSON" {
         runTest {
+            val issueId = UUID.randomUUID().toString()
             val mockIssueDto = IssueDto(
-                id = IssueId(UUID.randomUUID().toString()),
+                id = IssueId(issueId),
                 title = "Test Issue",
                 description = "Test Description",
                 type = IssueType.STORY,
@@ -125,7 +126,7 @@ class DefaultIssueToolProviderUnitTest : StringSpec({
 
             val getTool = toolProvider.getAsyncTools().first { it.name == "get_issue" }
             val params = buildJsonObject {
-                put("id", UUID.randomUUID().toString())
+                put("id", issueId)
             }
 
             val result = getTool.handler.let { handler ->
@@ -135,22 +136,23 @@ class DefaultIssueToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure
+            // Should return raw JSON data from serialized DTO (wrapping happens in McpToolHandler, not provider)
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            content[0].jsonObject["text"].shouldNotBe(null)
+            // IssueId serializes as {"_value": "uuid"}
+            result["id"].shouldNotBe(null)
+            result["id"]!!.jsonObject["_value"]!!.jsonPrimitive.content shouldBe issueId
+            result["title"]!!.jsonPrimitive.content shouldBe "Test Issue"
+            result["description"]!!.jsonPrimitive.content shouldBe "Test Description"
         }
     }
 
-    "list_issues should return MCP content array format" {
+    "list_issues should return raw issue list data JSON" {
         runTest {
+            val issueId = UUID.randomUUID().toString()
             val mockIssuesList = IssueListDto(
                 issues = listOf(
                     IssueDto(
-                        id = IssueId(UUID.randomUUID().toString()),
+                        id = IssueId(issueId),
                         title = "Title 1",
                         description = null,
                         type = IssueType.STORY,
@@ -179,21 +181,24 @@ class DefaultIssueToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure
+            // Should return raw JSON data from serialized DTO (wrapping happens in McpToolHandler, not provider)
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            content[0].jsonObject["text"].shouldNotBe(null)
+            result["issues"].shouldNotBe(null)
+            result["totalCount"]!!.jsonPrimitive.int shouldBe 1
+            val issues = result["issues"]!!.jsonArray
+            issues shouldHaveSize 1
+            // IssueId serializes as {"_value": "uuid"}
+            issues[0].jsonObject["id"]!!.jsonObject["_value"]!!.jsonPrimitive.content shouldBe issueId
+            issues[0].jsonObject["title"]!!.jsonPrimitive.content shouldBe "Title 1"
         }
     }
 
-    "update_issue should return MCP content array format" {
+    "update_issue should return raw update response JSON" {
         runTest {
+            val issueId = UUID.randomUUID().toString()
             val updateTool = toolProvider.getAsyncTools().first { it.name == "update_issue" }
             val params = buildJsonObject {
-                put("id", UUID.randomUUID().toString())
+                put("id", issueId)
                 put("title", "Updated Title")
             }
 
@@ -204,13 +209,12 @@ class DefaultIssueToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return MCP content array structure - THIS CURRENTLY FAILS
+            // Should return raw JSON data (wrapping happens in McpToolHandler, not provider)
+            // update_issue returns id, updated flag, and updated fields
             result.shouldBeInstanceOf<JsonObject>()
-            result["content"].shouldNotBe(null)
-            val content = result["content"]!!.jsonArray
-            content shouldHaveSize 1
-            content[0].jsonObject["type"]!!.jsonPrimitive.content shouldBe "text"
-            content[0].jsonObject["text"].shouldNotBe(null)
+            result["id"]!!.jsonPrimitive.content shouldBe issueId
+            result["updated"]!!.jsonPrimitive.boolean shouldBe true
+            result["title"]!!.jsonPrimitive.content shouldBe "Updated Title"
         }
     }
 
