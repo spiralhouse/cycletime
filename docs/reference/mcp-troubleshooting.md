@@ -318,14 +318,18 @@ curl -i -N \
   ```
 
 - **Client configuration validation**: Validate URLs before connection
-  ```javascript
-  // Validate WebSocket URL
-  const url = new URL(wsUrl);
-  if (url.protocol !== 'ws:' && url.protocol !== 'wss:') {
-    throw new Error('Invalid WebSocket protocol');
-  }
-  if (!url.pathname.startsWith('/mcp')) {
-    throw new Error('Invalid MCP path');
+  ```kotlin
+  // Validate WebSocket URL (Ktor client)
+  import io.ktor.http.*
+
+  fun validateMcpUrl(wsUrl: String) {
+      val url = Url(wsUrl)
+      require(url.protocol == URLProtocol.WS || url.protocol == URLProtocol.WSS) {
+          "Invalid WebSocket protocol: ${url.protocol.name}"
+      }
+      require(url.encodedPath.startsWith("/mcp")) {
+          "Invalid MCP path: ${url.encodedPath}"
+      }
   }
   ```
 
@@ -398,11 +402,22 @@ wscat -c ws://localhost:8080/mcp
 # Increase timeout in client configuration
 # Example with wscat
 wscat -c ws://localhost:8080/mcp --timeout 30000
+```
 
-# Example with custom client
-const ws = new WebSocket('ws://localhost:8080/mcp', {
-  handshakeTimeout: 30000  // 30 seconds
-});
+```kotlin
+// Example with Ktor WebSocket client
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.websocket.*
+
+val client = HttpClient(CIO) {
+    install(WebSockets) {
+        pingInterval = 30_000  // 30 seconds
+    }
+    engine {
+        requestTimeout = 30_000  // 30 seconds
+    }
+}
 ```
 
 **Solution 3: Increase server timeout configuration**
@@ -465,9 +480,18 @@ pkill -f gradle
   ```bash
   # Server
   MCP_TIMEOUT=30000
+  ```
 
-  # Client
-  const ws = new WebSocket(url, { handshakeTimeout: 30000 });
+  ```kotlin
+  // Ktor client timeout configuration
+  val client = HttpClient(CIO) {
+      install(WebSockets) {
+          pingInterval = 30_000
+      }
+      engine {
+          requestTimeout = 30_000
+      }
+  }
   ```
 
 - **Monitor startup performance**: Track initialization time
@@ -476,18 +500,27 @@ pkill -f gradle
   ```
 
 - **Use connection retry logic**: Implement exponential backoff
-  ```javascript
-  async function connectWithRetry(url, maxRetries = 5) {
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        const ws = new WebSocket(url);
-        await waitForOpen(ws);
-        return ws;
-      } catch (error) {
-        if (i === maxRetries - 1) throw error;
-        await sleep(Math.pow(2, i) * 1000);  // Exponential backoff
+  ```kotlin
+  import io.ktor.client.*
+  import io.ktor.client.plugins.websocket.*
+  import kotlinx.coroutines.delay
+  import kotlin.math.pow
+
+  suspend fun connectWithRetry(
+      client: HttpClient,
+      url: String,
+      maxRetries: Int = 5
+  ): DefaultClientWebSocketSession {
+      repeat(maxRetries) { attempt ->
+          try {
+              return client.webSocketSession(url)
+          } catch (e: Exception) {
+              if (attempt == maxRetries - 1) throw e
+              val backoffMs = 2.0.pow(attempt).toLong() * 1000
+              delay(backoffMs)  // Exponential backoff
+          }
       }
-    }
+      error("Failed to connect after $maxRetries attempts")
   }
   ```
 
@@ -580,33 +613,36 @@ pkill -f gradle
 
 **Solution 2: Validate JSON before sending**
 
-```javascript
-// Client-side validation
-function createJsonRpcRequest(method, params, id = 1) {
-  const request = {
-    jsonrpc: "2.0",
-    id: id,
-    method: method,
-    params: params || {}
-  };
+```kotlin
+// Client-side validation with Ktor and kotlinx.serialization
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
 
-  // Validate
-  if (request.jsonrpc !== "2.0") {
-    throw new Error("Invalid JSON-RPC version");
-  }
-  if (!request.method) {
-    throw new Error("Method is required");
-  }
-  if (request.id === undefined) {
-    throw new Error("ID is required");
-  }
+@Serializable
+data class JsonRpcRequest(
+    val jsonrpc: String = "2.0",
+    val id: Int,
+    val method: String,
+    val params: JsonObject = JsonObject(emptyMap())
+)
 
-  return JSON.stringify(request);
+fun createJsonRpcRequest(method: String, params: JsonObject = JsonObject(emptyMap()), id: Int = 1): String {
+    require(method.isNotBlank()) { "Method is required" }
+
+    val request = JsonRpcRequest(
+        id = id,
+        method = method,
+        params = params
+    )
+
+    return Json.encodeToString(request)
 }
 
-// Usage
-const request = createJsonRpcRequest("tools/list", {});
-ws.send(request);
+// Usage with WebSocket session
+suspend fun DefaultClientWebSocketSession.sendJsonRpcRequest(method: String, params: JsonObject = JsonObject(emptyMap())) {
+    val request = createJsonRpcRequest(method, params)
+    send(Frame.Text(request))
+}
 ```
 
 **Solution 3: Test with known-good requests**
@@ -633,81 +669,123 @@ wscat -c ws://localhost:8080/mcp
 
 **Solution 4: Handle JSON parsing errors**
 
-```javascript
-// Client error handling
-ws.on('message', (data) => {
-  try {
-    const response = JSON.parse(data);
+```kotlin
+// Client error handling with Ktor WebSocket
+import io.ktor.websocket.*
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
 
-    if (response.error) {
-      console.error('JSON-RPC Error:', response.error);
-      // Handle specific error codes
-      switch (response.error.code) {
-        case -32600:
-          console.error('Invalid Request - check JSON-RPC format');
-          break;
-        case -32601:
-          console.error('Method not found');
-          break;
-        case -32602:
-          console.error('Invalid params');
-          break;
-      }
-    } else {
-      console.log('Success:', response.result);
+@Serializable
+data class JsonRpcError(
+    val code: Int,
+    val message: String
+)
+
+@Serializable
+data class JsonRpcResponse(
+    val jsonrpc: String,
+    val id: Int? = null,
+    val result: JsonElement? = null,
+    val error: JsonRpcError? = null
+)
+
+suspend fun handleWebSocketMessages(session: DefaultClientWebSocketSession) {
+    for (frame in session.incoming) {
+        if (frame is Frame.Text) {
+            try {
+                val text = frame.readText()
+                val response = Json.decodeFromString<JsonRpcResponse>(text)
+
+                if (response.error != null) {
+                    println("JSON-RPC Error: ${response.error}")
+                    // Handle specific error codes
+                    when (response.error.code) {
+                        -32600 -> println("Invalid Request - check JSON-RPC format")
+                        -32601 -> println("Method not found")
+                        -32602 -> println("Invalid params")
+                    }
+                } else {
+                    println("Success: ${response.result}")
+                }
+            } catch (e: SerializationException) {
+                println("Failed to parse response: ${e.message}")
+            }
+        }
     }
-  } catch (error) {
-    console.error('Failed to parse response:', error);
-  }
-});
+}
 ```
 
 ### Prevention Tips
 
 - **Use JSON-RPC client libraries**: Avoid manual formatting
-  ```javascript
-  import { JsonRpcClient } from '@example/jsonrpc-client';
+  ```kotlin
+  // Create a reusable JSON-RPC client with Ktor
+  import io.ktor.client.*
+  import io.ktor.client.plugins.websocket.*
+  import kotlinx.serialization.json.*
 
-  const client = new JsonRpcClient('ws://localhost:8080/mcp');
-  await client.call('tools/list', {});
+  class JsonRpcClient(private val url: String) {
+      private val client = HttpClient(CIO) {
+          install(WebSockets)
+      }
+
+      suspend fun call(method: String, params: JsonObject = JsonObject(emptyMap())): JsonElement? {
+          return client.webSocketSession(url).use { session ->
+              val request = createJsonRpcRequest(method, params, id = 1)
+              session.send(Frame.Text(request))
+
+              val frame = session.incoming.receive() as Frame.Text
+              val response = Json.decodeFromString<JsonRpcResponse>(frame.readText())
+              response.result
+          }
+      }
+  }
+
+  // Usage
+  val client = JsonRpcClient("ws://localhost:8080/mcp")
+  client.call("tools/list")
   ```
 
 - **Schema validation**: Validate requests against JSON-RPC schema
-  ```javascript
-  const Ajv = require('ajv');
-  const ajv = new Ajv();
+  ```kotlin
+  // Using kotlinx.serialization for compile-time validation
+  @Serializable
+  data class JsonRpcRequest(
+      val jsonrpc: String = "2.0",
+      val id: Int,
+      val method: String,
+      val params: JsonObject = JsonObject(emptyMap())
+  ) {
+      init {
+          require(jsonrpc == "2.0") { "Invalid JSON-RPC version: $jsonrpc" }
+          require(method.isNotBlank()) { "Method is required" }
+      }
+  }
 
-  const schema = {
-    type: 'object',
-    required: ['jsonrpc', 'method', 'id'],
-    properties: {
-      jsonrpc: { const: '2.0' },
-      method: { type: 'string' },
-      id: { type: ['string', 'number'] },
-      params: { type: 'object' }
-    }
-  };
-
-  const validate = ajv.compile(schema);
-  if (!validate(request)) {
-    console.error('Invalid request:', validate.errors);
+  fun validateRequest(request: JsonRpcRequest): Result<Unit> = runCatching {
+      require(request.jsonrpc == "2.0") { "Invalid JSON-RPC version" }
+      require(request.method.isNotBlank()) { "Method is required" }
   }
   ```
 
 - **Request logging**: Log all requests for debugging
-  ```javascript
-  ws.on('send', (message) => {
-    console.log('[SEND]', JSON.stringify(JSON.parse(message), null, 2));
-  });
+  ```kotlin
+  // Log WebSocket messages
+  suspend fun DefaultClientWebSocketSession.sendWithLogging(message: String) {
+      val formatted = Json.parseToJsonElement(message).toString()
+      println("[SEND] $formatted")
+      send(Frame.Text(message))
+  }
   ```
 
 - **Error response handling**: Always handle error responses
-  ```javascript
-  function handleResponse(response) {
-    if (response.error) {
-      throw new Error(`${response.error.code}: ${response.error.message}`);
-    }
-    return response.result;
+  ```kotlin
+  // Extension function for response handling
+  fun JsonRpcResponse.resultOrThrow(): JsonElement {
+      error?.let { err ->
+          throw Exception("JSON-RPC Error ${err.code}: ${err.message}")
+      }
+      return result ?: throw Exception("No result in response")
   }
   ```
 
@@ -859,35 +937,74 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
   ```
 
 - **Tool discovery on connect**: List tools after connection
-  ```javascript
-  async function discoverTools(ws) {
-    const response = await sendRequest(ws, 'tools/list', {});
-    const toolNames = response.result.tools.map(t => t.name);
-    console.log('Available tools:', toolNames);
-    return toolNames;
+  ```kotlin
+  // Discover available tools
+  @Serializable
+  data class ToolInfo(val name: String, val description: String)
+
+  @Serializable
+  data class ToolsResult(val tools: List<ToolInfo>)
+
+  suspend fun discoverTools(session: DefaultClientWebSocketSession): List<String> {
+      val request = createJsonRpcRequest("tools/list", JsonObject(emptyMap()), id = 1)
+      session.send(Frame.Text(request))
+
+      val frame = session.incoming.receive() as Frame.Text
+      val response = Json.decodeFromString<JsonRpcResponse>(frame.readText())
+      val toolsResult = Json.decodeFromJsonElement<ToolsResult>(response.resultOrThrow())
+
+      val toolNames = toolsResult.tools.map { it.name }
+      println("Available tools: $toolNames")
+      return toolNames
   }
   ```
 
 - **Client-side tool validation**: Check tool exists before calling
-  ```javascript
-  const availableTools = await discoverTools(ws);
+  ```kotlin
+  // Tool validation before calling
+  class ValidatedToolClient(private val session: DefaultClientWebSocketSession) {
+      private lateinit var availableTools: List<String>
 
-  function callTool(name, arguments) {
-    if (!availableTools.includes(name)) {
-      throw new Error(`Tool not found: ${name}. Available: ${availableTools.join(', ')}`);
-    }
-    return sendRequest(ws, 'tools/call', { name, arguments });
+      suspend fun initialize() {
+          availableTools = discoverTools(session)
+      }
+
+      suspend fun callTool(name: String, arguments: JsonObject): JsonElement {
+          require(name in availableTools) {
+              "Tool not found: $name. Available: ${availableTools.joinToString()}"
+          }
+
+          val params = buildJsonObject {
+              put("name", name)
+              put("arguments", arguments)
+          }
+          val request = createJsonRpcRequest("tools/call", params, id = 1)
+          session.send(Frame.Text(request))
+
+          val frame = session.incoming.receive() as Frame.Text
+          val response = Json.decodeFromString<JsonRpcResponse>(frame.readText())
+          return response.resultOrThrow()
+      }
   }
   ```
 
 - **Generate tool clients**: Create type-safe tool wrappers
-  ```typescript
-  // Generated from schema
+  ```kotlin
+  // Type-safe tool client interface
+  @Serializable
+  data class CreateProjectArgs(val name: String, val description: String)
+
+  @Serializable
+  data class GetProjectArgs(val id: String)
+
+  @Serializable
+  data class Project(val id: String, val name: String, val description: String)
+
   interface ProjectTools {
-    create_project(args: CreateProjectArgs): Promise<Project>;
-    get_project(args: GetProjectArgs): Promise<Project>;
-    list_projects(args: ListProjectsArgs): Promise<Project[]>;
-    update_project(args: UpdateProjectArgs): Promise<Project>;
+      suspend fun createProject(args: CreateProjectArgs): Project
+      suspend fun getProject(args: GetProjectArgs): Project
+      suspend fun listProjects(): List<Project>
+      suspend fun updateProject(id: String, args: CreateProjectArgs): Project
   }
   ```
 
@@ -1068,41 +1185,67 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
   ```
 
 - **URI validation**: Validate URIs client-side
-  ```javascript
-  function validateResourceUri(uri) {
-    const pattern = /^cycletime:\/\/[a-z_]+(?:\/[a-zA-Z0-9_-]+)?$/;
-    if (!pattern.test(uri)) {
-      throw new Error(`Invalid resource URI: ${uri}`);
-    }
-    return uri;
+  ```kotlin
+  // Resource URI validation
+  fun validateResourceUri(uri: String): String {
+      val pattern = Regex("^cycletime://[a-z_]+(?:/[a-zA-Z0-9_-]+)?\$")
+      require(pattern.matches(uri)) {
+          "Invalid resource URI: $uri"
+      }
+      return uri
   }
   ```
 
 - **Resource discovery**: List resources on startup
-  ```javascript
-  async function discoverResources(ws) {
-    const response = await sendRequest(ws, 'resources/list', {});
-    const resources = response.result.resources;
-    console.log('Available resources:', resources.map(r => r.uri));
-    return resources;
+  ```kotlin
+  // Discover available resources
+  @Serializable
+  data class ResourceInfo(val uri: String, val name: String, val description: String, val mimeType: String)
+
+  @Serializable
+  data class ResourcesResult(val resources: List<ResourceInfo>)
+
+  suspend fun discoverResources(session: DefaultClientWebSocketSession): List<ResourceInfo> {
+      val request = createJsonRpcRequest("resources/list", JsonObject(emptyMap()), id = 1)
+      session.send(Frame.Text(request))
+
+      val frame = session.incoming.receive() as Frame.Text
+      val response = Json.decodeFromString<JsonRpcResponse>(frame.readText())
+      val resourcesResult = Json.decodeFromJsonElement<ResourcesResult>(response.resultOrThrow())
+
+      println("Available resources: ${resourcesResult.resources.map { it.uri }}")
+      return resourcesResult.resources
   }
   ```
 
 - **Generate resource clients**: Create type-safe resource accessors
-  ```typescript
-  // Generated from schema
-  class ResourceClient {
-    async getProjects(): Promise<Project[]> {
-      return this.read('cycletime://projects');
-    }
+  ```kotlin
+  // Type-safe resource client
+  @Serializable
+  data class Session(val id: String, val projectId: String, val active: Boolean)
 
-    async getProject(id: string): Promise<Project> {
-      return this.read(`cycletime://projects/${id}`);
-    }
+  class ResourceClient(private val session: DefaultClientWebSocketSession) {
+      suspend fun getProjects(): List<Project> {
+          return read("cycletime://projects")
+      }
 
-    async getActiveSession(): Promise<Session> {
-      return this.read('cycletime://sessions/active');
-    }
+      suspend fun getProject(id: String): Project {
+          return read("cycletime://projects/$id")
+      }
+
+      suspend fun getActiveSession(): Session {
+          return read("cycletime://sessions/active")
+      }
+
+      private suspend inline fun <reified T> read(uri: String): T {
+          val params = buildJsonObject { put("uri", uri) }
+          val request = createJsonRpcRequest("resources/read", params, id = 1)
+          session.send(Frame.Text(request))
+
+          val frame = this.session.incoming.receive() as Frame.Text
+          val response = Json.decodeFromString<JsonRpcResponse>(frame.readText())
+          return Json.decodeFromJsonElement(response.resultOrThrow())
+      }
   }
   ```
 
@@ -1516,22 +1659,35 @@ DATABASE_LOGGING=true MCP_REQUEST_TIMEOUT=120000 ./gradlew run
   ```
 
 - **Client timeout matching**: Client timeout > server timeout
-  ```javascript
+  ```kotlin
   // Server timeout: 60s
   // Client timeout: 65s (5s buffer)
-  const ws = new WebSocket(url, {
-    handshakeTimeout: 65000
-  });
+  val client = HttpClient(CIO) {
+      install(WebSockets) {
+          pingInterval = 30_000
+      }
+      engine {
+          requestTimeout = 65_000  // 5s buffer over server timeout
+      }
+  }
   ```
 
 - **Progress feedback**: Provide progress updates for long operations
   ```kotlin
+  // Progress reporting for long operations
+  import kotlinx.coroutines.delay
+
   suspend fun longOperation(onProgress: (Int) -> Unit) {
-    for (i in 1..100) {
-      processChunk(i)
-      onProgress(i)
-      delay(100)
-    }
+      for (i in 1..100) {
+          processChunk(i)
+          onProgress(i)
+          delay(100)
+      }
+  }
+
+  // Usage
+  longOperation { progress ->
+      println("Progress: $progress%")
   }
   ```
 
