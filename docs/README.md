@@ -12,18 +12,34 @@ Quick guides to get you up and running with CycleTime.
 - [Configuration](getting-started/configuration.md) - Environment variables and settings
 - [Onboarding](getting-started/onboarding.md) - New project integration
 
+**MCP Integration:**
+- [MCP Client Setup](getting-started/mcp-client-setup.md) - Configure Claude Code for MCP
+- [MCP Connection Testing](getting-started/mcp-testing.md) - Verify MCP server connectivity
+
 ### [Development](development/)
 Everything you need for developing with CycleTime.
 
 - [Development Setup](development/setup.md) - IDE configuration and workflows
 - [Project Structure](development/project-structure.md) - Code organization
 - [Repository Usage](development/repository-usage.md) - Git workflows
+- [Branching Strategy](development/branching-strategy.md) - Standard branch naming and worktree patterns
+- [Single Feature Workflow](development/single-feature-workflow.md) - Standard process for individual features
+- [Linear Branch Integration](development/linear-branch-integration.md) - Linear issue to branch mapping
+
+**MCP Development:**
+- [MCP Development Workflow](development/mcp-development.md) - MCP server development patterns
 
 ### [Architecture](architecture/)
 System design and architectural decisions.
 
 - [System Overview](architecture/overview.md) - High-level architecture
 - [Session Management](architecture/session-management.md) - State persistence
+
+**Architecture Decision Records:**
+- [ADR-005: Database Initialization Pattern](architecture/decisions/ADR-005-database-initialization-pattern.md)
+- [ADR-006: Lifecycle Managed Cleanup](architecture/decisions/ADR-006-lifecycle-managed-cleanup.md)
+- [ADR-007: Repository Issue Persistence](architecture/decisions/ADR-007-repository-issue-persistence.md)
+- [ADR-007: Repository Singleton Thread Safety](architecture/decisions/ADR-007-repository-singleton-thread-safety.md)
 
 ### [Testing](testing/)
 Testing strategies and guides.
@@ -33,11 +49,20 @@ Testing strategies and guides.
 - [Parallel Development](testing/parallel-development.md) - Multi-feature testing
 - [Local Testing](testing/local-testing.md) - Development environment testing
 - [Test Suites](testing/test-suites.md) - Test configurations
+- [Database Test Migration Guide](testing/database-test-migration-guide.md) - Migrating database tests
 
 ### [API](api/)
 API documentation and references.
 
-- [REST Endpoints](api/rest-endpoints.md) - HTTP API reference
+**REST API:**
+- [REST API Reference](api/rest-api-reference.md) - Complete REST API documentation
+- [REST Endpoints](api/rest-endpoints.md) - HTTP endpoint quick reference
+- [API Quick Start](api/quick-start.md) - Getting started with the API
+- [Best Practices](api/best-practices.md) - API usage best practices
+- [Migration Guide](api/migration-guide.md) - API migration guide
+
+**MCP Protocol:**
+- [MCP Tools Reference](api/mcp-tools-reference.md) - Complete MCP tools catalog
 - [MCP Resources](api/mcp-resources.md) - MCP protocol resources
 
 ### [CI/CD](ci-cd/)
@@ -51,6 +76,7 @@ Continuous Integration and Deployment.
 - [Staging Promotion](ci-cd/staging-promotion.md) - Promotion workflows
 - [Production Approvals](ci-cd/production-approvals.md) - Deployment approvals
 - [Environment Protection](ci-cd/environment-protection.md) - Security settings
+- [Concurrency Control](ci-cd/concurrency-control.md) - Pipeline concurrency management
 
 ### [Operations](operations/)
 Deployment and operational guides.
@@ -72,7 +98,26 @@ Detailed technical references.
 - [Product Requirements](reference/PRD.md) - Product vision and requirements
 - [User Experience](reference/user-experience.md) - UX design
 - [Limitations](reference/limitations.md) - Known limitations
-- [Technical Design](reference/technical-design/) - Detailed design docs
+- [Agents Reference](reference/agents.md) - Agent capabilities and selection guide
+- [Decision Guide](reference/decision-guide.md) - Workflow selection decision trees
+- [Worktree Operations](reference/worktree-operations.md) - Complete worktree command reference
+
+**Troubleshooting:**
+- [General Troubleshooting](reference/troubleshooting.md) - Common issues and solutions
+- [MCP Troubleshooting](reference/mcp-troubleshooting.md) - MCP-specific troubleshooting guide
+
+**Technical Design:**
+- [Application Service Patterns](reference/technical-design/application-service-patterns.md)
+- [Configuration Management](reference/technical-design/configuration-management.md)
+- [Database DI Migration](reference/technical-design/database-di-migration.md)
+- [Dependency Injection Patterns](reference/technical-design/dependency-injection-patterns.md)
+- [Domain Entities](reference/technical-design/domain-entities.md)
+- [MCP Architecture Simplification](reference/technical-design/mcp-architecture-simplification.md)
+- [MCP Integration Patterns](reference/technical-design/mcp-integration-patterns.md)
+- [MCP MVP Spike Plan](reference/technical-design/mcp-mvp-spike-plan.md)
+- [Repository Pattern](reference/technical-design/repository-pattern.md)
+- [Testing Architecture (TDD)](reference/technical-design/testing-architecture-tdd.md)
+- [Business Rule Verification Report](reference/technical-design/business-rule-verification-report.md)
 
 ### [Archive](archive/)
 Historical documentation for reference.
