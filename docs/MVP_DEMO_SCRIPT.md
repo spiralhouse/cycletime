@@ -15,37 +15,97 @@ docker run -d -p 8080:8080 --name cycletime-demo ghcr.io/spiralhouse/cycletime:l
 curl http://localhost:8080/health
 ```
 
+> **Note**: The CycleTime repository includes a pre-configured `.mcp.json` file at the project root for easy Claude Code integration. This makes setup straightforward for demos and early adopters.
+
 ### 2. Configure Claude Code MCP Connection
 
-**Edit Claude Code MCP Configuration:**
+**Project-Local Configuration (Recommended for Demos):**
 
-```bash
-# macOS/Linux
-code ~/.config/claude/mcp.json
+CycleTime includes a project-local `.mcp.json` file at the repository root, making MCP configuration portable and version-controlled. This approach is ideal for demos and early adopter onboarding.
 
-# Windows
-code %APPDATA%\Claude\mcp.json
+```mermaid
+graph LR
+    A[Clone Repository] --> B[.mcp.json Included]
+    B --> C[Restart Claude Code]
+    C --> D[Approve MCP Server]
+    D --> E[Connected!]
+    
+    style B fill:#d4edda
+    style E fill:#d1ecf1
 ```
 
-**Add CycleTime Server Configuration:**
+**If `.mcp.json` already exists in your project**, add the CycleTime server to the existing configuration:
+
+```bash
+# Edit project-local MCP configuration
+code .mcp.json
+```
+
+**Add CycleTime server to the `mcpServers` object:**
 
 ```json
 {
   "mcpServers": {
     "cycletime": {
-      "url": "ws://localhost:8080/mcp",
-      "transport": "websocket"
+      "type": "websocket",
+      "url": "ws://localhost:8080/mcp"
     }
+    // ... other MCP servers you may have configured
   }
 }
 ```
 
+**If `.mcp.json` doesn't exist**, create it in the project root:
+
+```bash
+# Create new project-local configuration
+cat > .mcp.json << 'EOF'
+{
+  "mcpServers": {
+    "cycletime": {
+      "type": "websocket",
+      "url": "ws://localhost:8080/mcp"
+    }
+  }
+}
+EOF
+```
+
+**Alternative: User-Level Configuration**
+
+If you prefer to configure CycleTime globally (across all projects):
+
+```bash
+# macOS/Linux
+code ~/.claude.json
+
+# Windows
+code %APPDATA%\Claude\claude.json
+```
+
+Use the same server configuration format shown above.
+
 **Restart Claude Code** to load the new configuration.
+
+> **Security Note**: When using project-scoped MCP servers, Claude Code will prompt for approval before connecting. This is a security feature to prevent unauthorized server access. Click "Allow" when prompted for the CycleTime server.
 
 **Verify Connection:**
 - Open Claude Code
 - Check for "cycletime" in available MCP servers list
-- Connection indicator should show connected status
+- Connection indicator should show connected status (green dot)
+- If prompted for security approval, click "Allow" to authorize the project-scoped MCP server
+
+**Testing the Connection:**
+```bash
+# In Claude Code, ask:
+"Can you list the available CycleTime tools?"
+
+# Expected: Claude Code should display MCP tools including:
+# - create_project, list_projects, get_project
+# - create_issue, list_issues, update_issue
+# - create_session, list_sessions
+# - create_workflow, execute_workflow_stage
+```
 
 > **Troubleshooting**: If connection fails, see [MCP Troubleshooting Guide](./reference/mcp-troubleshooting.md) for detailed diagnostics and common issues.
 
@@ -68,18 +128,27 @@ code %APPDATA%\Claude\mcp.json
 ### 3. Claude Code Connection (2 minutes)
 
 **Demonstrate:**
-1. Show the MCP configuration file (`~/.config/claude/mcp.json`) with CycleTime server entry
-2. Point out the WebSocket URL: `ws://localhost:8080/mcp`
-3. Show Claude Code successfully connected to CycleTime (connection indicator shows active)
-4. Demonstrate MCP server availability in Claude Code's server list
+1. Show the project-local `.mcp.json` file in the repository root with CycleTime server entry
+2. Highlight that this configuration is version-controlled and portable with the project
+3. Point out the WebSocket URL: `ws://localhost:8080/mcp`
+4. Show Claude Code successfully connected to CycleTime (connection indicator shows active)
+5. If first-time connection, demonstrate the security approval prompt and click "Allow"
+6. Display MCP server availability in Claude Code's server list
 
 **Script:**
-"Claude Code connects to CycleTime through the MCP protocol using a WebSocket connection. The configuration we set up in Pre-Demo Setup tells Claude Code where to find our CycleTime server. This MCP integration provides AI-assisted project management capabilities directly in your development workflow."
+"Claude Code connects to CycleTime through the MCP protocol using a WebSocket connection. Notice that the configuration lives right here in our project repository - it's version-controlled and portable. This means anyone cloning the repository gets the same MCP setup automatically. The configuration tells Claude Code where to find our CycleTime server, providing AI-assisted project management capabilities directly in your development workflow."
 
 **Show in Claude Code:**
+- Project-local `.mcp.json` file in VS Code file explorer
 - MCP server list displaying "cycletime" server
-- Connected status indicator
+- Connected status indicator (green)
 - Available tools and resources from CycleTime
+
+**Key Benefits to Emphasize:**
+- Configuration travels with the project (no manual setup for team members)
+- Version-controlled alongside codebase
+- Early adopters can clone and immediately connect
+- Security controls prevent unauthorized server access
 
 ### 4. Project Creation Flow (3 minutes)
 
@@ -152,10 +221,10 @@ curl -X POST http://localhost:8080/api/v1/projects \
 ## Key Talking Points
 
 ### Current Implementation Status
-"We've completed the foundational session management system (SPI-346) with measured performance characteristics: < 1ms session operations, 96.91% domain coverage, and comprehensive testing (60 tests). MCP integration and project bootstrap features are currently in progress."
+"We've completed the foundational components including session management, MCP protocol integration, and database persistence with H2. The system includes comprehensive testing with high domain coverage and measured performance characteristics. Project orchestration features continue to evolve based on real-world usage patterns."
 
 ### Core Capabilities
-"The system provides session management, cross-session persistence, and H2 database integration. Claude Code integration through MCP protocol is under active development."
+"The system provides session management, cross-session persistence, H2 database integration, and Claude Code connectivity through the MCP protocol. The MCP server exposes project resources and tools directly to Claude Code for AI-assisted development workflows."
 
 ### Architecture Benefits
 - **Embedded Database**: H2 database with single container deployment
@@ -163,12 +232,15 @@ curl -X POST http://localhost:8080/api/v1/projects \
 - **Open Source**: MIT licensed, self-hosted deployment model
 
 ### Next Steps
-"Current development focuses on completing MCP integration and project bootstrap features. Future phases will add enhanced context provision, dependency tracking, and multi-provider support."
+"With core MCP integration complete, development focuses on expanding project orchestration capabilities, workflow automation features, and enhanced context provision for AI-assisted development. Future phases will add advanced dependency tracking and multi-provider support based on community feedback."
 
 ## Q&A Preparation
 
 **Q: How does this compare to Jira/Linear?**
 A: CycleTime is AI-native - designed specifically for Claude Code integration. It's not replacing traditional tools but augmenting AI-assisted development workflows.
+
+**Q: How do team members connect to CycleTime?**
+A: MCP configuration is stored in the project's `.mcp.json` file, which is version-controlled. Team members simply clone the repository and approve the MCP server connection in Claude Code - no manual configuration needed.
 
 **Q: What about data security?**
 A: Fully self-hosted with local database. Your data never leaves your infrastructure.
@@ -184,19 +256,35 @@ A: MIT licensed - fully corporate-friendly, no GPL restrictions.
 
 ## Next Steps
 
-Based on current implementation status, we're focusing on:
-1. Completing MCP Resource integration (SPI-290)
-2. Implementing Project Bootstrap functionality (SPI-354)
-3. Validating performance and integration patterns
-4. Gathering feedback on core capabilities for future development priorities
+Based on current implementation status and community feedback, we're focusing on:
+1. Expanding project orchestration workflows and automation capabilities
+2. Enhancing MCP resource provisioning for richer context
+3. Improving developer experience with streamlined onboarding
+4. Gathering feedback on core capabilities to guide feature priorities
+5. Building community around AI-native development workflows
 
 ## Post-Demo
 
 1. Share capability summary with current implementation status
 2. Provide Docker quick-start instructions for local testing
-3. Review completed features and roadmap
-4. Gather feedback on core capabilities and feature priorities
-5. Discuss integration approaches and use cases
+3. **Highlight the `.mcp.json` configuration** - emphasize that early adopters can clone the repository and the MCP setup is already configured
+4. Review completed features and roadmap
+5. Gather feedback on core capabilities and feature priorities
+6. Discuss integration approaches and use cases
+
+**Quick Start for Early Adopters:**
+```bash
+# 1. Clone the repository
+git clone https://github.com/spiralhouse/cycletime.git
+cd cycletime
+
+# 2. Start the server (Docker)
+docker run -d -p 8080:8080 ghcr.io/spiralhouse/cycletime:latest
+
+# 3. The .mcp.json is already configured in the project root
+# 4. Restart Claude Code and approve the CycleTime MCP server
+# 5. Start using CycleTime directly in Claude Code!
+```
 
 ---
 
