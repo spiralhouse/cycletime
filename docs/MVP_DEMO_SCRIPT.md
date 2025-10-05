@@ -4,6 +4,8 @@
 
 ## Pre-Demo Setup
 
+### 1. Start CycleTime Server
+
 ```bash
 # Ensure Docker is running
 docker pull ghcr.io/spiralhouse/cycletime:latest
@@ -12,6 +14,40 @@ docker run -d -p 8080:8080 --name cycletime-demo ghcr.io/spiralhouse/cycletime:l
 # Verify health
 curl http://localhost:8080/health
 ```
+
+### 2. Configure Claude Code MCP Connection
+
+**Edit Claude Code MCP Configuration:**
+
+```bash
+# macOS/Linux
+code ~/.config/claude/mcp.json
+
+# Windows
+code %APPDATA%\Claude\mcp.json
+```
+
+**Add CycleTime Server Configuration:**
+
+```json
+{
+  "mcpServers": {
+    "cycletime": {
+      "url": "ws://localhost:8080/mcp",
+      "transport": "websocket"
+    }
+  }
+}
+```
+
+**Restart Claude Code** to load the new configuration.
+
+**Verify Connection:**
+- Open Claude Code
+- Check for "cycletime" in available MCP servers list
+- Connection indicator should show connected status
+
+> **Troubleshooting**: If connection fails, see [MCP Troubleshooting Guide](./reference/mcp-troubleshooting.md) for detailed diagnostics and common issues.
 
 ## Demo Flow
 
@@ -32,12 +68,18 @@ curl http://localhost:8080/health
 ### 3. Claude Code Connection (2 minutes)
 
 **Demonstrate:**
-1. Show MCP configuration in Claude Code
-2. Connect to CycleTime server
-3. Show successful initialization
+1. Show the MCP configuration file (`~/.config/claude/mcp.json`) with CycleTime server entry
+2. Point out the WebSocket URL: `ws://localhost:8080/mcp`
+3. Show Claude Code successfully connected to CycleTime (connection indicator shows active)
+4. Demonstrate MCP server availability in Claude Code's server list
 
 **Script:**
-"Claude Code connects to CycleTime through the MCP protocol, providing AI-assisted project management integration."
+"Claude Code connects to CycleTime through the MCP protocol using a WebSocket connection. The configuration we set up in Pre-Demo Setup tells Claude Code where to find our CycleTime server. This MCP integration provides AI-assisted project management capabilities directly in your development workflow."
+
+**Show in Claude Code:**
+- MCP server list displaying "cycletime" server
+- Connected status indicator
+- Available tools and resources from CycleTime
 
 ### 4. Project Creation Flow (3 minutes)
 
