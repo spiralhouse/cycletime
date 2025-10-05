@@ -24,14 +24,29 @@ curl http://localhost:8080/health
 CycleTime includes a project-local `.mcp.json` file at the repository root, making MCP configuration portable and version-controlled. This approach is ideal for demos and early adopter onboarding.
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'darkMode': true,
+    'background': '#0d1117',
+    'primaryColor': '#21262d',
+    'primaryTextColor': '#c9d1d9',
+    'primaryBorderColor': '#30363d',
+    'lineColor': '#8b949e',
+    'secondaryColor': '#1f6feb',
+    'tertiaryColor': '#2ea043',
+    'fontSize': '16px',
+    'fontFamily': 'ui-monospace, monospace'
+  }
+}}%%
 graph LR
     A[Clone Repository] --> B[.mcp.json Included]
     B --> C[Restart Claude Code]
     C --> D[Approve MCP Server]
     D --> E[Connected!]
     
-    style B fill:#d4edda
-    style E fill:#d1ecf1
+    style B fill:#2ea043,stroke:#3fb950,color:#ffffff
+    style E fill:#1f6feb,stroke:#58a6ff,color:#ffffff
 ```
 
 **If `.mcp.json` already exists in your project**, add the CycleTime server to the existing configuration:
