@@ -510,7 +510,7 @@ pkill -f gradle
       client: HttpClient,
       url: String,
       maxRetries: Int = 5
-  ): DefaultClientWebSocketSession {
+  ): DefaultWebSocketSession {
       repeat(maxRetries) { attempt ->
           try {
               return client.webSocketSession(url)
@@ -639,7 +639,7 @@ fun createJsonRpcRequest(method: String, params: JsonObject = JsonObject(emptyMa
 }
 
 // Usage with WebSocket session
-suspend fun DefaultClientWebSocketSession.sendJsonRpcRequest(method: String, params: JsonObject = JsonObject(emptyMap())) {
+suspend fun DefaultWebSocketSession.sendJsonRpcRequest(method: String, params: JsonObject = JsonObject(emptyMap())) {
     val request = createJsonRpcRequest(method, params)
     send(Frame.Text(request))
 }
@@ -689,7 +689,7 @@ data class JsonRpcResponse(
     val error: JsonRpcError? = null
 )
 
-suspend fun handleWebSocketMessages(session: DefaultClientWebSocketSession) {
+suspend fun handleWebSocketMessages(session: DefaultWebSocketSession) {
     for (frame in session.incoming) {
         if (frame is Frame.Text) {
             try {
@@ -748,6 +748,7 @@ suspend fun handleWebSocketMessages(session: DefaultClientWebSocketSession) {
 
 - **Schema validation**: Validate requests against JSON-RPC schema
   ```kotlin
+  import kotlinx.serialization.json.*
   // Using kotlinx.serialization for compile-time validation
   @Serializable
   data class JsonRpcRequest(
@@ -771,7 +772,7 @@ suspend fun handleWebSocketMessages(session: DefaultClientWebSocketSession) {
 - **Request logging**: Log all requests for debugging
   ```kotlin
   // Log WebSocket messages
-  suspend fun DefaultClientWebSocketSession.sendWithLogging(message: String) {
+  suspend fun DefaultWebSocketSession.sendWithLogging(message: String) {
       val formatted = Json.parseToJsonElement(message).toString()
       println("[SEND] $formatted")
       send(Frame.Text(message))
@@ -938,6 +939,7 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
 
 - **Tool discovery on connect**: List tools after connection
   ```kotlin
+  import kotlinx.serialization.json.*
   // Discover available tools
   @Serializable
   data class ToolInfo(val name: String, val description: String)
@@ -945,7 +947,7 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
   @Serializable
   data class ToolsResult(val tools: List<ToolInfo>)
 
-  suspend fun discoverTools(session: DefaultClientWebSocketSession): List<String> {
+  suspend fun discoverTools(session: DefaultWebSocketSession): List<String> {
       val request = createJsonRpcRequest("tools/list", JsonObject(emptyMap()), id = 1)
       session.send(Frame.Text(request))
 
@@ -962,7 +964,8 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
 - **Client-side tool validation**: Check tool exists before calling
   ```kotlin
   // Tool validation before calling
-  class ValidatedToolClient(private val session: DefaultClientWebSocketSession) {
+  import kotlinx.serialization.json.*
+  class ValidatedToolClient(private val session: DefaultWebSocketSession) {
       private lateinit var availableTools: List<String>
 
       suspend fun initialize() {
@@ -1198,6 +1201,7 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
 
 - **Resource discovery**: List resources on startup
   ```kotlin
+  import kotlinx.serialization.json.*
   // Discover available resources
   @Serializable
   data class ResourceInfo(val uri: String, val name: String, val description: String, val mimeType: String)
@@ -1205,7 +1209,7 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
   @Serializable
   data class ResourcesResult(val resources: List<ResourceInfo>)
 
-  suspend fun discoverResources(session: DefaultClientWebSocketSession): List<ResourceInfo> {
+  suspend fun discoverResources(session: DefaultWebSocketSession): List<ResourceInfo> {
       val request = createJsonRpcRequest("resources/list", JsonObject(emptyMap()), id = 1)
       session.send(Frame.Text(request))
 
@@ -1221,10 +1225,11 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
 - **Generate resource clients**: Create type-safe resource accessors
   ```kotlin
   // Type-safe resource client
+  import kotlinx.serialization.json.*
   @Serializable
   data class Session(val id: String, val projectId: String, val active: Boolean)
 
-  class ResourceClient(private val session: DefaultClientWebSocketSession) {
+  class ResourceClient(private val session: DefaultWebSocketSession) {
       suspend fun getProjects(): List<Project> {
           return read("cycletime://projects")
       }
