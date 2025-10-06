@@ -32,17 +32,25 @@ import org.jetbrains.exposed.sql.Database
 class HealthEndpointTest : StringSpec({
     
     "should return healthy status when all services are operational" {
-        testApplication {
-            application {
-                module()
+        // Use in-memory test database to avoid file locks
+        val testDbUrl = "jdbc:h2:mem:test_health_${java.util.UUID.randomUUID()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        System.setProperty("DATABASE_URL", testDbUrl)
+
+        try {
+            testApplication {
+                application {
+                    module()
+                }
+
+                val response = client.get("/health")
+                response.status shouldBe HttpStatusCode.OK
+
+                val body = response.bodyAsText()
+                body shouldContain "healthy"
+                body shouldContain "cycletime-kotlin"
             }
-            
-            val response = client.get("/health")
-            response.status shouldBe HttpStatusCode.OK
-            
-            val body = response.bodyAsText()
-            body shouldContain "healthy"
-            body shouldContain "cycletime-kotlin"
+        } finally {
+            System.clearProperty("DATABASE_URL")
         }
     }
     
@@ -87,36 +95,50 @@ class HealthEndpointTest : StringSpec({
     }
     
     "should not leak sensitive information in error responses" {
-        testApplication {
-            application {
-                // Use regular module() and rely on health endpoint's error handling
-                module()
+        // Use in-memory test database to avoid file locks
+        val testDbUrl = "jdbc:h2:mem:test_health_${java.util.UUID.randomUUID()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        System.setProperty("DATABASE_URL", testDbUrl)
+
+        try {
+            testApplication {
+                application {
+                    module()
+                }
+
+                val response = client.get("/health")
+                // With regular module, should be healthy
+                response.status shouldBe HttpStatusCode.OK
+
+                val body = response.bodyAsText()
+                // Should NOT contain sensitive information
+                body.contains("password") shouldBe false
+                body.contains("secret") shouldBe false
+                body.contains("API_KEY") shouldBe false
+                body.contains("TOKEN") shouldBe false
+                body.contains("user:pass") shouldBe false
             }
-            
-            val response = client.get("/health")
-            // With regular module, should be healthy
-            response.status shouldBe HttpStatusCode.OK
-            
-            val body = response.bodyAsText()
-            // Should NOT contain sensitive information
-            body.contains("password") shouldBe false
-            body.contains("secret") shouldBe false
-            body.contains("API_KEY") shouldBe false
-            body.contains("TOKEN") shouldBe false
-            body.contains("user:pass") shouldBe false
+        } finally {
+            System.clearProperty("DATABASE_URL")
         }
     }
     
     "should handle timeout scenarios gracefully" {
-        testApplication {
-            application {
-                // Just use the normal module() for timeout test
-                module()
+        // Use in-memory test database to avoid file locks
+        val testDbUrl = "jdbc:h2:mem:test_health_${java.util.UUID.randomUUID()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        System.setProperty("DATABASE_URL", testDbUrl)
+
+        try {
+            testApplication {
+                application {
+                    module()
+                }
+
+                val response = client.get("/health")
+                // Should still complete
+                response.status shouldBe HttpStatusCode.OK
             }
-            
-            val response = client.get("/health")
-            // Should still complete
-            response.status shouldBe HttpStatusCode.OK
+        } finally {
+            System.clearProperty("DATABASE_URL")
         }
     }
     
@@ -161,18 +183,25 @@ class HealthEndpointTest : StringSpec({
     }
     
     "should handle partial service failures" {
-        testApplication {
-            application {
-                // Use the regular module for simplicity
-                module()
+        // Use in-memory test database to avoid file locks
+        val testDbUrl = "jdbc:h2:mem:test_health_${java.util.UUID.randomUUID()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1"
+        System.setProperty("DATABASE_URL", testDbUrl)
+
+        try {
+            testApplication {
+                application {
+                    module()
+                }
+
+                val response = client.get("/health")
+                // With working services, should be healthy
+                response.status shouldBe HttpStatusCode.OK
+
+                val body = response.bodyAsText()
+                body shouldContain "healthy"
             }
-            
-            val response = client.get("/health")
-            // With working services, should be healthy
-            response.status shouldBe HttpStatusCode.OK
-            
-            val body = response.bodyAsText()
-            body shouldContain "healthy"
+        } finally {
+            System.clearProperty("DATABASE_URL")
         }
     }
 })
