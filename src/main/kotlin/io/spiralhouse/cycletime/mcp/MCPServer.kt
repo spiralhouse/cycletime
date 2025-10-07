@@ -10,6 +10,11 @@ import io.spiralhouse.cycletime.mcp.server.MCPConfiguration
 import io.spiralhouse.cycletime.mcp.server.MCPConnectionManager
 import io.spiralhouse.cycletime.mcp.server.ConnectionCleanupService
 import io.spiralhouse.cycletime.mcp.websocket.MCPWebSocketHandler
+import io.spiralhouse.cycletime.mcp.sse.mcpSSEEndpoint
+import io.spiralhouse.cycletime.mcp.http.mcpPostEndpoint
+import io.spiralhouse.cycletime.mcp.session.MCPSessionManager
+import io.spiralhouse.cycletime.mcp.correlation.EventBus
+import io.spiralhouse.cycletime.mcp.correlation.MessageCorrelator
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
@@ -68,7 +73,23 @@ fun Routing.configureMCP() {
     // Start cleanup service using the application's coroutine scope
     // This ensures it's properly cancelled when the application shuts down
     cleanupService.start(application)
-    
+
+    // Get SSE transport components from DI (SPI-665)
+    val sessionManager: MCPSessionManager by application.dependencies
+    val eventBus: EventBus by application.dependencies
+    val correlator: MessageCorrelator by application.dependencies
+    val methodHandler: McpMethodHandler by application.dependencies
+
+    // SSE endpoint for server-to-client events (SPI-665)
+    route("") {
+        mcpSSEEndpoint(sessionManager, eventBus)
+    }
+
+    // POST endpoint for client-to-server requests (SPI-665)
+    route("") {
+        mcpPostEndpoint(sessionManager, eventBus, correlator, methodHandler)
+    }
+
     // WebSocket endpoint for MCP protocol communication
     webSocket("/mcp") {
         val connectionStartTime = System.currentTimeMillis()
@@ -141,26 +162,8 @@ fun Routing.configureMCP() {
         call.respond(response)
     }
 
-    // SSE endpoint for MCP communication (legacy support with monitoring)
-    sse("/mcp/events") {
-        val sseConnectionId = "sse-${System.currentTimeMillis()}"
-        
-        send("data: {\"type\":\"connected\",\"message\":\"Connected to ${config.serverName} v${config.serverVersion}\"}\n\n")
-        
-        // Enhanced heartbeat with stats
-        while (true) {
-            delay(30_000) // 30 seconds
-            
-            val stats = connectionManager.getStatistics()
-            val heartbeat = if (config.metricsEnabled) {
-                """{"type":"heartbeat","connections":${stats.activeCount},"requests":${stats.totalRequests}}"""
-            } else {
-                """{"type":"heartbeat"}"""
-            }
-            
-            send("data: $heartbeat\n\n")
-        }
-    }
+    // Legacy SSE endpoint removed - replaced by new SSE transport implementation (SPI-665)
+    // See MCPSSEHandler.kt for the new implementation
 
     // Monitoring endpoint for connection statistics
     get("/mcp/stats") {
