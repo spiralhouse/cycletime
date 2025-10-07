@@ -1,6 +1,7 @@
 package io.spiralhouse.cycletime.mcp.sse
 
-import io.ktor.server.sse.*
+import io.ktor.http.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.spiralhouse.cycletime.mcp.session.MCPSessionManager
 import io.spiralhouse.cycletime.mcp.correlation.EventBus
@@ -16,6 +17,10 @@ private val logger = LoggerFactory.getLogger("MCPSSEHandler")
  * and server events to MCP clients. Each connection is associated with a
  * session ID provided via the Mcp-Session-Id header.
  *
+ * SECURITY FIX (SPI-676): Header validation is performed BEFORE establishing
+ * the SSE connection to properly reject invalid requests with 400 Bad Request.
+ * Previously, missing headers would result in 200 OK (security issue).
+ *
  * @param sessionManager Session manager for tracking active sessions
  * @param eventBus Event bus for subscribing to session events
  */
@@ -23,12 +28,15 @@ fun Route.mcpSSEEndpoint(
     sessionManager: MCPSessionManager,
     eventBus: EventBus
 ) {
-    sse("/mcp/events") {
+    get("/mcp/events") {
+        // CRITICAL: Validate session header BEFORE establishing SSE connection
+        // This prevents unauthorized connections (matches POST endpoint pattern)
         val sessionId = call.request.headers["Mcp-Session-Id"]
 
         if (sessionId.isNullOrBlank()) {
+            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Mcp-Session-Id header required"))
             logger.warn("SSE connection attempt without Mcp-Session-Id header")
-            return@sse
+            return@get
         }
 
         try {
@@ -36,26 +44,43 @@ fun Route.mcpSSEEndpoint(
             val session = sessionManager.getOrCreateSession(sessionId)
             logger.info("SSE connection established for session: $sessionId")
 
-            // Stream events from EventBus to SSE client
-            eventBus.subscribe(sessionId)
-                .catch { e ->
-                    logger.error("Error streaming events for session $sessionId", e)
-                }
-                .collect { event ->
-                    // Format and send SSE event to client
-                    val formattedEvent = formatSSEEvent(event)
-                    send(formattedEvent)
+            // Set SSE headers
+            call.response.headers.append(HttpHeaders.CacheControl, "no-cache")
+            call.response.headers.append(HttpHeaders.Connection, "keep-alive")
+            call.response.headers.append("X-Accel-Buffering", "no")
 
-                    // Update session activity
-                    sessionManager.updateActivity(sessionId)
+            // Establish SSE connection using respondTextWriter
+            call.respondTextWriter(contentType = ContentType.Text.EventStream) {
+                try {
+                    // Send initial comment to establish connection and flush headers
+                    write(": SSE connection established\n\n")
+                    flush()
+
+                    // Stream events from EventBus to SSE client
+                    eventBus.subscribe(sessionId)
+                        .catch { e ->
+                            logger.error("Error streaming events for session $sessionId", e)
+                        }
+                        .collect { event ->
+                            // Format and send SSE event to client
+                            val formattedEvent = formatSSEEvent(event)
+                            write(formattedEvent)
+                            flush()
+
+                            // Update session activity
+                            sessionManager.updateActivity(sessionId)
+                        }
+                } finally {
+                    logger.info("SSE connection closed for session: $sessionId")
+                    eventBus.unsubscribe(sessionId)
                 }
+            }
         } catch (e: SecurityException) {
+            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid session ID"))
             logger.warn("Invalid session ID: ${e.message}")
         } catch (e: Exception) {
             logger.error("SSE handler error for session $sessionId", e)
-        } finally {
-            logger.info("SSE connection closed for session: $sessionId")
-            eventBus.unsubscribe(sessionId)
+            // Connection already established, can't send error response
         }
     }
 }

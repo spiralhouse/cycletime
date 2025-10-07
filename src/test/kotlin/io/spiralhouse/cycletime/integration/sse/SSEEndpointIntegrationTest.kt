@@ -61,7 +61,9 @@ class SSEEndpointIntegrationTest : SSETestBase() {
     "should reject SSE connection with invalid session ID format" {
         // EXPECTED FAILURE: Session validation doesn't exist
         withTestApp {
-            val invalidSessionId = "session\nid" // Newline injection attempt
+            // Use special characters that client accepts but server should reject
+            // Server validation requires alphanumeric + hyphens only (regex: ^[a-zA-Z0-9-]+$)
+            val invalidSessionId = "invalid@session#id" // Contains @ and # which are invalid
 
             val response = client.get("/mcp/events") {
                 header("Mcp-Session-Id", invalidSessionId)
