@@ -12,8 +12,12 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * This class manages event distribution to active SSE connections,
  * ensuring each session receives only its own events.
+ *
+ * @property maxEventsPerSession Maximum events to store per session (default 1000)
  */
-class EventBus {
+class EventBus(
+    private val maxEventsPerSession: Int = 1000
+) {
     private val channels = ConcurrentHashMap<String, Channel<SSEEvent>>()
     private val eventStorage = ConcurrentHashMap<String, MutableList<SSEEvent>>()
 
@@ -36,12 +40,20 @@ class EventBus {
     /**
      * Publishes an event to a specific session.
      *
+     * Implements FIFO eviction when maxEventsPerSession is exceeded.
+     *
      * @param sessionId The session identifier
      * @param event The SSE event to publish
      */
     suspend fun publish(sessionId: String, event: SSEEvent) {
-        // Store event for getEvents() testing
-        eventStorage.getOrPut(sessionId) { mutableListOf() }.add(event)
+        // Store event for getEvents() testing with bounded collection
+        val events = eventStorage.getOrPut(sessionId) { mutableListOf() }
+
+        // Enforce limit with FIFO eviction (remove oldest event if at capacity)
+        if (events.size >= maxEventsPerSession) {
+            events.removeAt(0) // Remove oldest (first) event
+        }
+        events.add(event)
 
         // Send to active channel if exists (ignore if no active connection)
         channels[sessionId]?.send(event)

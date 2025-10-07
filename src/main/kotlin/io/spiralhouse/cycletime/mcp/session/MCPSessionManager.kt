@@ -1,10 +1,18 @@
 package io.spiralhouse.cycletime.mcp.session
 
+import io.spiralhouse.cycletime.domain.services.TimeProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.time.Instant
+import kotlinx.datetime.Instant
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Represents an MCP session for SSE transport.
@@ -14,14 +22,14 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * @property id Unique session identifier
  * @property createdAt Session creation timestamp
- * @property lastActivity Last activity timestamp (updated on each request/event)
+ * @property lastActivity Last activity timestamp (immutable - use copy() to update)
  * @property sseConnections Set of active SSE connection IDs
  * @property state Mutable state storage for correlation and session data
  */
 data class MCPSession(
     val id: String,
     val createdAt: Instant,
-    var lastActivity: Instant,
+    val lastActivity: Instant,
     val sseConnections: MutableSet<String> = mutableSetOf(),
     val state: MutableMap<String, Any> = mutableMapOf()
 )
@@ -37,15 +45,20 @@ class TooManySessionsException(message: String) : Exception(message)
  * This class handles session lifecycle, validation, cleanup, and state management.
  * It provides thread-safe operations for concurrent session access.
  *
- * @property sessionTimeout Session idle timeout in milliseconds (default 5 minutes)
+ * @property timeProvider Time provider for testable time handling
+ * @property sessionTimeout Session idle timeout (default 5 minutes)
  * @property maxSessions Maximum concurrent sessions allowed (default 100)
+ * @property cleanupInterval Interval between automatic cleanup runs (default 30 seconds)
  */
 class MCPSessionManager(
-    private val sessionTimeout: Long = 300_000, // 5 minutes
-    private val maxSessions: Int = 100
+    private val timeProvider: TimeProvider,
+    private val sessionTimeout: Duration = 5.minutes,
+    private val maxSessions: Int = 100,
+    private val cleanupInterval: Duration = 30.seconds
 ) {
     private val sessions = ConcurrentHashMap<String, MCPSession>()
     private val mutex = Mutex()
+    private var cleanupJob: Job? = null
 
     /**
      * Gets or creates a session with the given ID.
@@ -63,9 +76,10 @@ class MCPSessionManager(
 
         return mutex.withLock {
             // Check if session already exists
-            sessions[sessionId]?.also {
-                it.lastActivity = Instant.now()
-                return it
+            sessions[sessionId]?.let { existingSession ->
+                val updated = existingSession.copy(lastActivity = timeProvider.now())
+                sessions[sessionId] = updated
+                return updated
             }
 
             // Check session limit before creating new session
@@ -81,8 +95,8 @@ class MCPSessionManager(
             // Create new session
             val session = MCPSession(
                 id = sessionId,
-                createdAt = Instant.now(),
-                lastActivity = Instant.now()
+                createdAt = timeProvider.now(),
+                lastActivity = timeProvider.now()
             )
             sessions[sessionId] = session
             session
@@ -96,8 +110,10 @@ class MCPSessionManager(
      * @return The session object, or null if not found
      */
     suspend fun getSession(sessionId: String): MCPSession? {
-        return sessions[sessionId]?.also {
-            it.lastActivity = Instant.now()
+        return sessions[sessionId]?.let { existingSession ->
+            val updated = existingSession.copy(lastActivity = timeProvider.now())
+            sessions[sessionId] = updated
+            updated
         }
     }
 
@@ -107,7 +123,9 @@ class MCPSessionManager(
      * @param sessionId The session identifier
      */
     suspend fun updateActivity(sessionId: String) {
-        sessions[sessionId]?.lastActivity = Instant.now()
+        sessions[sessionId]?.let { existingSession ->
+            sessions[sessionId] = existingSession.copy(lastActivity = timeProvider.now())
+        }
     }
 
     /**
@@ -145,9 +163,9 @@ class MCPSessionManager(
      * Internal cleanup without acquiring mutex (caller must hold mutex).
      */
     private fun cleanupExpiredSessionsInternal() {
-        val now = Instant.now()
+        val now = timeProvider.now()
         sessions.entries.removeIf { (_, session) ->
-            val age = now.toEpochMilli() - session.lastActivity.toEpochMilli()
+            val age = now - session.lastActivity
             age > sessionTimeout
         }
     }
@@ -199,6 +217,29 @@ class MCPSessionManager(
      * @return Number of active sessions
      */
     fun sessionCount(): Int = sessions.size
+
+    /**
+     * Starts automatic cleanup of expired sessions.
+     *
+     * @param scope Coroutine scope for the cleanup job
+     */
+    fun startCleanup(scope: CoroutineScope) {
+        cleanupJob?.cancel() // Cancel any existing job
+        cleanupJob = scope.launch {
+            while (true) {
+                delay(cleanupInterval)
+                cleanupExpiredSessions()
+            }
+        }
+    }
+
+    /**
+     * Shuts down the session manager and cancels automatic cleanup.
+     */
+    fun shutdown() {
+        cleanupJob?.cancel()
+        cleanupJob = null
+    }
 }
 
 /**

@@ -7,6 +7,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.assertions.throwables.shouldThrow
+import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.mcp.correlation.*
 import io.spiralhouse.cycletime.mcp.sse.SSEEvent
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
@@ -15,6 +16,7 @@ import kotlinx.serialization.json.*
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 // Alias for test compatibility
 typealias ServerSentEvent = SSEEvent
@@ -109,7 +111,7 @@ class MessageCorrelationTest : StringSpec({
 
     "should correlate multiple requests with their responses" {
         // EXPECTED FAILURE: Multi-request correlation not implemented
-        val correlator = MessageCorrelator()
+        val correlator = MessageCorrelator(MockTimeProvider())
         val sessionId = "multi-req-session"
 
         // Register multiple pending requests
@@ -133,7 +135,7 @@ class MessageCorrelationTest : StringSpec({
 
     "should track pending requests per session" {
         // EXPECTED FAILURE: Request tracking not implemented
-        val correlator = MessageCorrelator()
+        val correlator = MessageCorrelator(MockTimeProvider())
 
         correlator.registerPendingRequest("session-1", JsonPrimitive(1), "test")
         correlator.registerPendingRequest("session-1", JsonPrimitive(2), "test")
@@ -145,7 +147,7 @@ class MessageCorrelationTest : StringSpec({
 
     "should remove resolved requests from pending queue" {
         // EXPECTED FAILURE: Queue management not implemented
-        val correlator = MessageCorrelator()
+        val correlator = MessageCorrelator(MockTimeProvider())
         val sessionId = "resolve-test"
 
         correlator.registerPendingRequest(sessionId, JsonPrimitive(1), "test")
@@ -156,7 +158,7 @@ class MessageCorrelationTest : StringSpec({
 
     "should handle out-of-order responses" {
         // EXPECTED FAILURE: Out-of-order handling not implemented
-        val correlator = MessageCorrelator()
+        val correlator = MessageCorrelator(MockTimeProvider())
         val sessionId = "ooo-test"
 
         // Register requests in order 1, 2, 3
@@ -175,12 +177,13 @@ class MessageCorrelationTest : StringSpec({
 
     "should timeout stale pending requests" {
         // EXPECTED FAILURE: Request timeout not implemented
-        val correlator = MessageCorrelator(requestTimeout = 100) // 100ms
+        val mockTimeProvider = MockTimeProvider()
+        val correlator = MessageCorrelator(mockTimeProvider, requestTimeout = 100.milliseconds)
         val sessionId = "timeout-test"
 
         correlator.registerPendingRequest(sessionId, JsonPrimitive(1), "slow_method")
 
-        Thread.sleep(150) // Wait for timeout
+        mockTimeProvider.advance(150.milliseconds) // Advance time past timeout
 
         correlator.cleanupStaleRequests()
 
@@ -189,7 +192,7 @@ class MessageCorrelationTest : StringSpec({
 
     "should support notification correlation (no response expected)" {
         // EXPECTED FAILURE: Notification handling not implemented
-        val correlator = MessageCorrelator()
+        val correlator = MessageCorrelator(MockTimeProvider())
         val sessionId = "notify-test"
 
         // Notifications have null ID
@@ -232,7 +235,7 @@ class MessageCorrelationTest : StringSpec({
 
     "should detect duplicate request IDs within session" {
         // EXPECTED FAILURE: Duplicate detection not implemented
-        val correlator = MessageCorrelator()
+        val correlator = MessageCorrelator(MockTimeProvider())
         val sessionId = "dup-test"
 
         correlator.registerPendingRequest(sessionId, JsonPrimitive(1), "test")
@@ -244,7 +247,7 @@ class MessageCorrelationTest : StringSpec({
 
     "should allow same request ID in different sessions" {
         // EXPECTED FAILURE: Session isolation not verified
-        val correlator = MessageCorrelator()
+        val correlator = MessageCorrelator(MockTimeProvider())
 
         // Same ID in different sessions is OK
         correlator.registerPendingRequest("session-1", JsonPrimitive(1), "test")
@@ -256,7 +259,7 @@ class MessageCorrelationTest : StringSpec({
 
     "should clear all pending requests for session on disconnect" {
         // EXPECTED FAILURE: Session cleanup not implemented
-        val correlator = MessageCorrelator()
+        val correlator = MessageCorrelator(MockTimeProvider())
         val sessionId = "disconnect-cleanup"
 
         correlator.registerPendingRequest(sessionId, JsonPrimitive(1), "test1")
@@ -270,7 +273,7 @@ class MessageCorrelationTest : StringSpec({
 
     "should provide request metadata for debugging" {
         // EXPECTED FAILURE: Metadata tracking not implemented
-        val correlator = MessageCorrelator()
+        val correlator = MessageCorrelator(MockTimeProvider())
         val sessionId = "metadata-test"
 
         correlator.registerPendingRequest(

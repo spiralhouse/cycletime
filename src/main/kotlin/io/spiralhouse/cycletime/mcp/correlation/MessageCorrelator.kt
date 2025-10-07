@@ -1,11 +1,14 @@
 package io.spiralhouse.cycletime.mcp.correlation
 
+import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcError
 import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import java.time.Instant
+import kotlinx.datetime.Instant
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Exception thrown when a duplicate request ID is detected within a session.
@@ -28,10 +31,12 @@ private data class PendingRequest(
  * This class tracks pending requests per session and ensures responses
  * are properly matched to their originating requests.
  *
- * @property requestTimeout Timeout for pending requests in milliseconds (default 30 seconds)
+ * @property timeProvider Time provider for testable time handling
+ * @property requestTimeout Timeout for pending requests (default 30 seconds)
  */
 class MessageCorrelator(
-    private val requestTimeout: Long = 30_000
+    private val timeProvider: TimeProvider,
+    private val requestTimeout: Duration = 30.seconds
 ) {
     private val pendingRequests = ConcurrentHashMap<String, MutableMap<String, PendingRequest>>()
 
@@ -66,7 +71,7 @@ class MessageCorrelator(
         sessionRequests[requestKey] = PendingRequest(
             requestId = requestId,
             method = method,
-            timestamp = Instant.now(),
+            timestamp = timeProvider.now(),
             metadata = metadata
         )
     }
@@ -107,10 +112,10 @@ class MessageCorrelator(
      * Cleans up stale pending requests that have exceeded the timeout.
      */
     suspend fun cleanupStaleRequests() {
-        val now = Instant.now()
+        val now = timeProvider.now()
         pendingRequests.values.forEach { sessionRequests ->
             sessionRequests.entries.removeIf { (_, request) ->
-                val age = now.toEpochMilli() - request.timestamp.toEpochMilli()
+                val age = now - request.timestamp
                 age > requestTimeout
             }
         }

@@ -8,9 +8,10 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.assertions.throwables.shouldThrow
+import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.mcp.session.*
-import java.time.Instant
 import java.util.UUID
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * TDD RED Phase: MCP Session Manager Unit Tests
@@ -45,7 +46,7 @@ class MCPSessionManagerTest : StringSpec({
 
     "should create new session for valid session ID" {
         // EXPECTED FAILURE: MCPSessionManager class doesn't exist
-        val manager = MCPSessionManager()
+        val manager = MCPSessionManager(MockTimeProvider())
         val sessionId = "new-session-${UUID.randomUUID()}"
 
         val session = manager.getOrCreateSession(sessionId)
@@ -57,7 +58,7 @@ class MCPSessionManagerTest : StringSpec({
 
     "should reuse existing session for same session ID" {
         // EXPECTED FAILURE: MCPSessionManager doesn't exist
-        val manager = MCPSessionManager()
+        val manager = MCPSessionManager(MockTimeProvider())
         val sessionId = "session-${UUID.randomUUID()}"
 
         val session1 = manager.getOrCreateSession(sessionId)
@@ -105,13 +106,14 @@ class MCPSessionManagerTest : StringSpec({
 
     "should update session last activity timestamp" {
         // EXPECTED FAILURE: Activity tracking not implemented
-        val manager = MCPSessionManager()
+        val mockTimeProvider = MockTimeProvider()
+        val manager = MCPSessionManager(mockTimeProvider)
         val sessionId = "activity-test"
 
         val session = manager.getOrCreateSession(sessionId)
         val initialActivity = session.lastActivity
 
-        Thread.sleep(10) // Small delay
+        mockTimeProvider.advance(10.milliseconds) // Advance time
 
         manager.updateActivity(sessionId)
         val updatedSession = manager.getSession(sessionId)
@@ -121,7 +123,7 @@ class MCPSessionManagerTest : StringSpec({
 
     "should track active SSE connections per session" {
         // EXPECTED FAILURE: Connection tracking not implemented
-        val manager = MCPSessionManager()
+        val manager = MCPSessionManager(MockTimeProvider())
         val sessionId = "connection-test"
 
         val session = manager.getOrCreateSession(sessionId)
@@ -136,7 +138,7 @@ class MCPSessionManagerTest : StringSpec({
 
     "should remove SSE connection when disconnected" {
         // EXPECTED FAILURE: Connection removal logic doesn't exist
-        val manager = MCPSessionManager()
+        val manager = MCPSessionManager(MockTimeProvider())
         val sessionId = "disconnect-test"
 
         manager.registerSSEConnection(sessionId, "conn-1")
@@ -151,12 +153,13 @@ class MCPSessionManagerTest : StringSpec({
 
     "should clean up expired sessions" {
         // EXPECTED FAILURE: Cleanup mechanism doesn't exist
-        val manager = MCPSessionManager(sessionTimeout = 100) // 100ms timeout
+        val mockTimeProvider = MockTimeProvider()
+        val manager = MCPSessionManager(mockTimeProvider, sessionTimeout = 100.milliseconds) // 100ms timeout
         val sessionId = "expire-test"
 
         manager.getOrCreateSession(sessionId)
 
-        Thread.sleep(150) // Wait for expiration
+        mockTimeProvider.advance(150.milliseconds) // Advance time past expiration
 
         manager.cleanupExpiredSessions()
 
@@ -165,15 +168,16 @@ class MCPSessionManagerTest : StringSpec({
 
     "should not clean up active sessions" {
         // EXPECTED FAILURE: Expiration logic not implemented
-        val manager = MCPSessionManager(sessionTimeout = 100)
+        val mockTimeProvider = MockTimeProvider()
+        val manager = MCPSessionManager(mockTimeProvider, sessionTimeout = 100.milliseconds)
         val sessionId = "active-test"
 
         manager.getOrCreateSession(sessionId)
 
-        Thread.sleep(50) // Halfway to expiration
+        mockTimeProvider.advance(50.milliseconds) // Halfway to expiration
         manager.updateActivity(sessionId) // Keep alive
 
-        Thread.sleep(60) // Total 110ms, but activity was updated at 50ms
+        mockTimeProvider.advance(60.milliseconds) // Total 110ms, but activity was updated at 50ms
 
         manager.cleanupExpiredSessions()
 
@@ -182,7 +186,7 @@ class MCPSessionManagerTest : StringSpec({
 
     "should get all active session IDs" {
         // EXPECTED FAILURE: Session enumeration not implemented
-        val manager = MCPSessionManager()
+        val manager = MCPSessionManager(MockTimeProvider())
 
         manager.getOrCreateSession("session-1")
         manager.getOrCreateSession("session-2")
@@ -198,7 +202,7 @@ class MCPSessionManagerTest : StringSpec({
 
     "should limit maximum concurrent sessions" {
         // EXPECTED FAILURE: Rate limiting not implemented
-        val manager = MCPSessionManager(maxSessions = 2)
+        val manager = MCPSessionManager(MockTimeProvider(), maxSessions = 2)
 
         manager.getOrCreateSession("session-1")
         manager.getOrCreateSession("session-2")
@@ -210,7 +214,7 @@ class MCPSessionManagerTest : StringSpec({
 
     "should store session state for correlation" {
         // EXPECTED FAILURE: State storage not implemented
-        val manager = MCPSessionManager()
+        val manager = MCPSessionManager(MockTimeProvider())
         val sessionId = "state-test"
 
         val session = manager.getOrCreateSession(sessionId)
@@ -224,7 +228,7 @@ class MCPSessionManagerTest : StringSpec({
 
     "should clear all session state on cleanup" {
         // EXPECTED FAILURE: State cleanup not implemented
-        val manager = MCPSessionManager()
+        val manager = MCPSessionManager(MockTimeProvider())
         val sessionId = "cleanup-test"
 
         manager.getOrCreateSession(sessionId)

@@ -192,12 +192,15 @@ private fun DependencyRegistry.configureMCPDependencies() {
     // SSE Transport Components (SPI-665)
     provide<MCPSessionManager> {
         MCPSessionManager(
-            sessionTimeout = 300_000, // 5 minutes
-            maxSessions = 100
+            timeProvider = resolve()
         )
     }
     provide<EventBus> { EventBus() }
-    provide<MessageCorrelator> { MessageCorrelator() }
+    provide<MessageCorrelator> {
+        MessageCorrelator(
+            timeProvider = resolve()
+        )
+    }
     provide<McpToolHandler> {
         DefaultMcpToolHandler(
             toolRegistry = resolve<ToolRegistry>()
