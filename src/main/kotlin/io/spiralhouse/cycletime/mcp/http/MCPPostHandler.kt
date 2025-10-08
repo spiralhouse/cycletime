@@ -6,6 +6,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.http.*
 import io.spiralhouse.cycletime.mcp.session.MCPSessionManager
+import io.spiralhouse.cycletime.mcp.session.TooManySessionsException
 import io.spiralhouse.cycletime.mcp.correlation.EventBus
 import io.spiralhouse.cycletime.mcp.correlation.MessageCorrelator
 import io.spiralhouse.cycletime.mcp.sse.SSEEvent
@@ -69,29 +70,23 @@ fun Route.mcpPostEndpoint(
             // Process request through method handler
             val jsonRpcResponse = methodHandler.handleRequest(jsonRpcRequest)
 
-            // If SSE connection active, queue response for delivery
-            if (eventBus.hasActiveConnection(sessionId)) {
-                val responseJson = Json.encodeToString(
-                    io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse.serializer(),
-                    jsonRpcResponse
-                )
+            // Queue response for SSE delivery (EventBus buffers if connection not yet established)
+            val responseJson = Json.encodeToString(
+                io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse.serializer(),
+                jsonRpcResponse
+            )
 
-                val sseEvent = SSEEvent(
-                    data = responseJson,
-                    event = "message",
-                    id = jsonRpcRequest.id?.toString()
-                )
+            val sseEvent = SSEEvent(
+                data = responseJson,
+                event = "message",
+                id = jsonRpcRequest.id?.toString()
+            )
 
-                eventBus.publish(sessionId, sseEvent)
+            eventBus.publish(sessionId, sseEvent)
 
-                // Return 202 Accepted (response sent via SSE)
-                call.respond(HttpStatusCode.Accepted)
-                logger.debug("Response queued for SSE delivery to session $sessionId")
-            } else {
-                // No SSE connection - return response directly
-                call.respond(HttpStatusCode.OK, jsonRpcResponse)
-                logger.debug("Response sent directly to session $sessionId (no SSE)")
-            }
+            // Return 202 Accepted (response queued for SSE delivery)
+            call.respond(HttpStatusCode.Accepted)
+            logger.debug("Response queued for SSE delivery to session $sessionId")
 
         } catch (e: SecurityException) {
             call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid session ID"))
@@ -105,6 +100,9 @@ fun Route.mcpPostEndpoint(
         } catch (e: RequestTooLargeException) {
             call.respond(HttpStatusCode.PayloadTooLarge, mapOf("error" to e.message))
             logger.warn("Request too large: ${e.message}")
+        } catch (e: TooManySessionsException) {
+            call.respond(HttpStatusCode.TooManyRequests, mapOf("error" to e.message))
+            logger.warn("Session limit exceeded: ${e.message}")
         } catch (e: Exception) {
             call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
             logger.error("POST handler error for session $sessionId", e)
