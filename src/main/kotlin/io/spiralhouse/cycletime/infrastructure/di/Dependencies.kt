@@ -32,6 +32,9 @@ import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
 import io.spiralhouse.cycletime.mcp.tools.*
 import io.spiralhouse.cycletime.mcp.resources.ResourceRegistry
 import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
+import io.spiralhouse.cycletime.mcp.session.MCPSessionManager
+import io.spiralhouse.cycletime.mcp.correlation.EventBus
+import io.spiralhouse.cycletime.mcp.correlation.MessageCorrelator
 
 /**
  * Dependency injection configuration using Ktor's native DI.
@@ -179,12 +182,25 @@ fun Application.configureDependencies(
 
 private fun DependencyRegistry.configureMCPDependencies() {
     provide<MCPServerConfig> { MCPServerConfig() }
-    provide<MCPConnectionManager> { 
+    provide<MCPConnectionManager> {
         MCPConnectionManager(MCPConfiguration.fromEnvironment())
     }
     provide<ProtocolHandler> { JsonRpcProtocolHandler() }
     provide<ResourceRegistry> { ResourceRegistry() }
     provide<ToolRegistry> { ToolRegistry() }
+
+    // SSE Transport Components (SPI-665)
+    provide<MCPSessionManager> {
+        MCPSessionManager(
+            timeProvider = resolve()
+        )
+    }
+    provide<EventBus> { EventBus() }
+    provide<MessageCorrelator> {
+        MessageCorrelator(
+            timeProvider = resolve()
+        )
+    }
     provide<McpToolHandler> {
         DefaultMcpToolHandler(
             toolRegistry = resolve<ToolRegistry>()
