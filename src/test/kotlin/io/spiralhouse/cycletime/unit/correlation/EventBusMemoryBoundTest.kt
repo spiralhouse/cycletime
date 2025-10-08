@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.ints.shouldBeLessThanOrEqual
 import io.spiralhouse.cycletime.mcp.correlation.EventBus
 import io.spiralhouse.cycletime.mcp.sse.SSEEvent
+import kotlinx.coroutines.runBlocking
 
 /**
  * TDD RED Phase: Memory Bound Tests for EventBus
@@ -48,7 +49,7 @@ class EventBusMemoryBoundTest : StringSpec({
         }
 
         // Should only retain the most recent 100 events
-        val events = eventBus.getEvents(sessionId)
+        val events = runBlocking { eventBus.getEvents(sessionId) }
         events.size shouldBe maxSize
     }
 
@@ -66,7 +67,7 @@ class EventBusMemoryBoundTest : StringSpec({
             )
         }
 
-        val events = eventBus.getEvents(sessionId)
+        val events = runBlocking { eventBus.getEvents(sessionId) }
 
         // Should have exactly maxSize events
         events.size shouldBe maxSize
@@ -92,16 +93,16 @@ class EventBusMemoryBoundTest : StringSpec({
         }
 
         // Each session should have exactly maxSize events
-        eventBus.getEvents("session-1").size shouldBe maxSize
-        eventBus.getEvents("session-2").size shouldBe maxSize
+        runBlocking { eventBus.getEvents("session-1") }.size shouldBe maxSize
+        runBlocking { eventBus.getEvents("session-2") }.size shouldBe maxSize
 
         // Verify correct events retained for session-1 (10-19)
-        val s1Events = eventBus.getEvents("session-1")
+        val s1Events = runBlocking { eventBus.getEvents("session-1") }
         s1Events.first().data shouldBe "s1-event-10"
         s1Events.last().data shouldBe "s1-event-19"
 
         // Verify correct events retained for session-2 (5-14)
-        val s2Events = eventBus.getEvents("session-2")
+        val s2Events = runBlocking { eventBus.getEvents("session-2") }
         s2Events.first().data shouldBe "s2-event-5"
         s2Events.last().data shouldBe "s2-event-14"
     }
@@ -120,7 +121,7 @@ class EventBusMemoryBoundTest : StringSpec({
         }
 
         // Should retain exactly 1000 events
-        val events = eventBus.getEvents(sessionId)
+        val events = runBlocking { eventBus.getEvents(sessionId) }
         events.size shouldBe 1000
 
         // Should be the most recent 1000 (500-1499)
@@ -145,12 +146,12 @@ class EventBusMemoryBoundTest : StringSpec({
             }
 
             // After each batch, verify size is bounded
-            val events = eventBus.getEvents(sessionId)
+            val events = runBlocking { eventBus.getEvents(sessionId) }
             events.size shouldBeLessThanOrEqual maxSize
         }
 
         // After 1000 total events, should still only have maxSize
-        eventBus.getEvents(sessionId).size shouldBe maxSize
+        runBlocking { eventBus.getEvents(sessionId) }.size shouldBe maxSize
     }
 
     "EventBus should handle rapid concurrent publishing within limits" {
@@ -168,7 +169,7 @@ class EventBusMemoryBoundTest : StringSpec({
         }
 
         // Should respect size limit
-        val events = eventBus.getEvents(sessionId)
+        val events = runBlocking { eventBus.getEvents(sessionId) }
         events.size shouldBe maxSize
     }
 
@@ -186,15 +187,15 @@ class EventBusMemoryBoundTest : StringSpec({
             )
         }
 
-        eventBus.getEvents(sessionId).size shouldBe maxSize
+        runBlocking { eventBus.getEvents(sessionId) }.size shouldBe maxSize
 
         // Unsubscribe should clear storage
-        kotlinx.coroutines.runBlocking {
+        runBlocking {
             eventBus.unsubscribe(sessionId)
         }
 
         // getEvents should return empty list after unsubscribe
-        eventBus.getEvents(sessionId).size shouldBe 0
+        runBlocking { eventBus.getEvents(sessionId) }.size shouldBe 0
     }
 
     "EventBus should handle maxEventsPerSession of 1" {
@@ -211,7 +212,7 @@ class EventBusMemoryBoundTest : StringSpec({
         }
 
         // Should only retain the most recent event
-        val events = eventBus.getEvents(sessionId)
+        val events = runBlocking { eventBus.getEvents(sessionId) }
         events.size shouldBe 1
         events.first().data shouldBe "event-4"
     }
@@ -231,7 +232,7 @@ class EventBusMemoryBoundTest : StringSpec({
         }
 
         // Should retain exactly maxSize events
-        val events = eventBus.getEvents(sessionId)
+        val events = runBlocking { eventBus.getEvents(sessionId) }
         events.size shouldBe maxSize
 
         // Should be events 5000-14999
@@ -263,6 +264,6 @@ class EventBusMemoryBoundTest : StringSpec({
         durationMs.toInt() shouldBeLessThanOrEqual 500
 
         // Size should be bounded
-        eventBus.getEvents(sessionId).size shouldBe maxSize
+        runBlocking { eventBus.getEvents(sessionId) }.size shouldBe maxSize
     }
 })

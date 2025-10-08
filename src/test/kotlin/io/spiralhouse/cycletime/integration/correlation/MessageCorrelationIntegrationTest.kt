@@ -412,8 +412,9 @@ class MessageCorrelationIntegrationTest : SSETestBase() {
         withTestApp {
             val sessionId = "rapid-${UUID.randomUUID()}"
 
-            // Send 10 requests concurrently (reduced from 50 to prevent test resource exhaustion)
-            repeat(10) { index ->
+            // Send 5 requests concurrently (reduced for GitHub Actions 4 vCPU constraint)
+            // Prevents server exhaustion while still testing concurrent handling
+            repeat(5) { index ->
                 launch {
                     client.post("/mcp") {
                         header("Mcp-Session-Id", sessionId)

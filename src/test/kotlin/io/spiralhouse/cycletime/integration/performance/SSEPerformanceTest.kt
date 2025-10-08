@@ -85,7 +85,7 @@ class SSEPerformanceTest : SSETestBase() {
             }
 
             // All connections should establish quickly
-            time shouldBeLessThan 1000 // <1 second for 10 connections
+            time shouldBeLessThan 1000
         }
     }
 

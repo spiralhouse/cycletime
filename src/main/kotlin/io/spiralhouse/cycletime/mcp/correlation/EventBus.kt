@@ -24,7 +24,7 @@ class EventBus(
 ) {
     private val channels = ConcurrentHashMap<String, Channel<SSEEvent>>()
     private val eventStorage = ConcurrentHashMap<String, MutableList<SSEEvent>>()
-    private val eventStorageLock = Mutex()
+    private val sessionLocks = ConcurrentHashMap<String, Mutex>()
 
     companion object {
         const val DEFAULT_MAX_EVENTS_PER_SESSION = 1000
@@ -56,8 +56,9 @@ class EventBus(
      * @param event The SSE event to publish
      */
     suspend fun publish(sessionId: String, event: SSEEvent) {
-        // Protect storage with lock
-        eventStorageLock.withLock {
+        // Use session-specific lock to prevent contention between independent sessions
+        val sessionLock = sessionLocks.getOrPut(sessionId) { Mutex() }
+        sessionLock.withLock {
             val events = eventStorage.getOrPut(sessionId) { mutableListOf() }
             if (events.size >= maxEventsPerSession) {
                 events.removeAt(0)
@@ -75,11 +76,10 @@ class EventBus(
      * @param sessionId The session identifier
      * @return List of events for this session
      */
-    fun getEvents(sessionId: String): List<SSEEvent> {
-        return runBlocking {
-            eventStorageLock.withLock {
-                eventStorage[sessionId]?.toList() ?: emptyList()
-            }
+    suspend fun getEvents(sessionId: String): List<SSEEvent> {
+        val sessionLock = sessionLocks.getOrPut(sessionId) { Mutex() }
+        return sessionLock.withLock {
+            eventStorage[sessionId]?.toList() ?: emptyList()
         }
     }
 
@@ -90,8 +90,14 @@ class EventBus(
      */
     suspend fun unsubscribe(sessionId: String) {
         channels.remove(sessionId)?.close()
-        eventStorageLock.withLock {
-            eventStorage.remove(sessionId)
+
+        // Acquire session lock before cleanup, then remove it
+        val sessionLock = sessionLocks[sessionId]
+        if (sessionLock != null) {
+            sessionLock.withLock {
+                eventStorage.remove(sessionId)
+            }
+            sessionLocks.remove(sessionId)  // Cleanup lock to prevent memory leak
         }
     }
 
