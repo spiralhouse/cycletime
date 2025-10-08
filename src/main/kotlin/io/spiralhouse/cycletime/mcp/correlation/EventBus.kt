@@ -5,6 +5,9 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -16,10 +19,17 @@ import java.util.concurrent.ConcurrentHashMap
  * @property maxEventsPerSession Maximum events to store per session (default 1000)
  */
 class EventBus(
-    private val maxEventsPerSession: Int = 1000
+    private val maxEventsPerSession: Int = DEFAULT_MAX_EVENTS_PER_SESSION,
+    private val channelCapacity: Int = DEFAULT_CHANNEL_CAPACITY
 ) {
     private val channels = ConcurrentHashMap<String, Channel<SSEEvent>>()
     private val eventStorage = ConcurrentHashMap<String, MutableList<SSEEvent>>()
+    private val eventStorageLock = Mutex()
+
+    companion object {
+        const val DEFAULT_MAX_EVENTS_PER_SESSION = 1000
+        const val DEFAULT_CHANNEL_CAPACITY = 100
+    }
 
     /**
      * Subscribes to events for a specific session.
@@ -30,7 +40,7 @@ class EventBus(
     fun subscribe(sessionId: String): Flow<SSEEvent> {
         val channel = channels.getOrPut(sessionId) {
             Channel(
-                capacity = 100,
+                capacity = channelCapacity,
                 onBufferOverflow = BufferOverflow.DROP_OLDEST
             )
         }
@@ -46,16 +56,16 @@ class EventBus(
      * @param event The SSE event to publish
      */
     suspend fun publish(sessionId: String, event: SSEEvent) {
-        // Store event for getEvents() testing with bounded collection
-        val events = eventStorage.getOrPut(sessionId) { mutableListOf() }
-
-        // Enforce limit with FIFO eviction (remove oldest event if at capacity)
-        if (events.size >= maxEventsPerSession) {
-            events.removeAt(0) // Remove oldest (first) event
+        // Protect storage with lock
+        eventStorageLock.withLock {
+            val events = eventStorage.getOrPut(sessionId) { mutableListOf() }
+            if (events.size >= maxEventsPerSession) {
+                events.removeAt(0)
+            }
+            events.add(event)
         }
-        events.add(event)
 
-        // Send to active channel if exists (ignore if no active connection)
+        // Send to channel (outside lock - already thread-safe)
         channels[sessionId]?.send(event)
     }
 
@@ -66,7 +76,11 @@ class EventBus(
      * @return List of events for this session
      */
     fun getEvents(sessionId: String): List<SSEEvent> {
-        return eventStorage[sessionId]?.toList() ?: emptyList()
+        return runBlocking {
+            eventStorageLock.withLock {
+                eventStorage[sessionId]?.toList() ?: emptyList()
+            }
+        }
     }
 
     /**
@@ -74,9 +88,11 @@ class EventBus(
      *
      * @param sessionId The session identifier
      */
-    fun unsubscribe(sessionId: String) {
+    suspend fun unsubscribe(sessionId: String) {
         channels.remove(sessionId)?.close()
-        eventStorage.remove(sessionId)
+        eventStorageLock.withLock {
+            eventStorage.remove(sessionId)
+        }
     }
 
     /**

@@ -189,7 +189,9 @@ class EventBusMemoryBoundTest : StringSpec({
         eventBus.getEvents(sessionId).size shouldBe maxSize
 
         // Unsubscribe should clear storage
-        eventBus.unsubscribe(sessionId)
+        kotlinx.coroutines.runBlocking {
+            eventBus.unsubscribe(sessionId)
+        }
 
         // getEvents should return empty list after unsubscribe
         eventBus.getEvents(sessionId).size shouldBe 0

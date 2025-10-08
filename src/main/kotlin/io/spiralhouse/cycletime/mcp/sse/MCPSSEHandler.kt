@@ -5,6 +5,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.spiralhouse.cycletime.mcp.session.MCPSessionManager
 import io.spiralhouse.cycletime.mcp.correlation.EventBus
+import io.spiralhouse.cycletime.mcp.http.validateSessionHeader
 import kotlinx.coroutines.flow.catch
 import org.slf4j.LoggerFactory
 
@@ -31,13 +32,7 @@ fun Route.mcpSSEEndpoint(
     get("/mcp/events") {
         // CRITICAL: Validate session header BEFORE establishing SSE connection
         // This prevents unauthorized connections (matches POST endpoint pattern)
-        val sessionId = call.request.headers["Mcp-Session-Id"]
-
-        if (sessionId.isNullOrBlank()) {
-            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Mcp-Session-Id header required"))
-            logger.warn("SSE connection attempt without Mcp-Session-Id header")
-            return@get
-        }
+        val sessionId = call.validateSessionHeader("SSE", logger) ?: return@get
 
         try {
             // Validate and create/get session

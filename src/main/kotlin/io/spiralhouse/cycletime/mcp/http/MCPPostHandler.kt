@@ -36,13 +36,7 @@ fun Route.mcpPostEndpoint(
     methodHandler: McpMethodHandler
 ) {
     post("/mcp") {
-        val sessionId = call.request.headers["Mcp-Session-Id"]
-
-        if (sessionId.isNullOrBlank()) {
-            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing Mcp-Session-Id header"))
-            logger.warn("POST request without Mcp-Session-Id header")
-            return@post
-        }
+        val sessionId = call.validateSessionHeader("POST", logger) ?: return@post
 
         try {
             // Validate and get/create session

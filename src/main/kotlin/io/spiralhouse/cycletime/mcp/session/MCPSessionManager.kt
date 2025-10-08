@@ -52,13 +52,19 @@ class TooManySessionsException(message: String) : Exception(message)
  */
 class MCPSessionManager(
     private val timeProvider: TimeProvider,
-    private val sessionTimeout: Duration = 5.minutes,
-    private val maxSessions: Int = 100,
-    private val cleanupInterval: Duration = 30.seconds
+    private val sessionTimeout: Duration = DEFAULT_SESSION_TIMEOUT,
+    private val maxSessions: Int = DEFAULT_MAX_SESSIONS,
+    private val cleanupInterval: Duration = DEFAULT_CLEANUP_INTERVAL
 ) {
     private val sessions = ConcurrentHashMap<String, MCPSession>()
     private val mutex = Mutex()
     private var cleanupJob: Job? = null
+
+    companion object {
+        val DEFAULT_SESSION_TIMEOUT = 5.minutes
+        const val DEFAULT_MAX_SESSIONS = 100
+        val DEFAULT_CLEANUP_INTERVAL = 30.seconds
+    }
 
     /**
      * Gets or creates a session with the given ID.

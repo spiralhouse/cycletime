@@ -36,9 +36,13 @@ private data class PendingRequest(
  */
 class MessageCorrelator(
     private val timeProvider: TimeProvider,
-    private val requestTimeout: Duration = 30.seconds
+    private val requestTimeout: Duration = DEFAULT_REQUEST_TIMEOUT
 ) {
     private val pendingRequests = ConcurrentHashMap<String, MutableMap<String, PendingRequest>>()
+
+    companion object {
+        val DEFAULT_REQUEST_TIMEOUT = 30.seconds
+    }
 
     /**
      * Registers a pending request for correlation.
@@ -94,7 +98,7 @@ class MessageCorrelator(
      * @param sessionId The session identifier
      * @return true if pending requests exist
      */
-    suspend fun hasPendingRequests(sessionId: String): Boolean {
+    fun hasPendingRequests(sessionId: String): Boolean {
         return (pendingRequests[sessionId]?.size ?: 0) > 0
     }
 
@@ -104,7 +108,7 @@ class MessageCorrelator(
      * @param sessionId The session identifier
      * @return Number of pending requests
      */
-    suspend fun getPendingCount(sessionId: String): Int {
+    fun getPendingCount(sessionId: String): Int {
         return pendingRequests[sessionId]?.size ?: 0
     }
 
@@ -127,7 +131,7 @@ class MessageCorrelator(
      * @param requestId The request ID
      * @return true if notification
      */
-    suspend fun isNotification(requestId: JsonElement?): Boolean {
+    fun isNotification(requestId: JsonElement?): Boolean {
         return requestId == null
     }
 
@@ -147,7 +151,7 @@ class MessageCorrelator(
      * @param requestId The request ID
      * @return Request metadata, or null if not found
      */
-    suspend fun getRequestMetadata(sessionId: String, requestId: JsonElement): Map<String, Any>? {
+    fun getRequestMetadata(sessionId: String, requestId: JsonElement): Map<String, Any>? {
         val requestKey = requestId.toString()
         return pendingRequests[sessionId]?.get(requestKey)?.metadata
     }
