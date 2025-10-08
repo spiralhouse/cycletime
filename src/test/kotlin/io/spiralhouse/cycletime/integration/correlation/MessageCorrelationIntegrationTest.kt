@@ -12,6 +12,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.coroutineScope
 import java.util.UUID
 
 /**
@@ -414,17 +415,20 @@ class MessageCorrelationIntegrationTest : SSETestBase() {
 
             // Send 5 requests concurrently (reduced for GitHub Actions 4 vCPU constraint)
             // Prevents server exhaustion while still testing concurrent handling
-            repeat(5) { index ->
-                launch {
-                    client.post("/mcp") {
-                        header("Mcp-Session-Id", sessionId)
-                        contentType(ContentType.Application.Json)
-                        setBody("""{"jsonrpc":"2.0","method":"tools/list","id":$index}""")
+            // Use structured concurrency to ensure all requests complete before SSE connection
+            coroutineScope {
+                repeat(5) { index ->
+                    launch {
+                        client.post("/mcp") {
+                            header("Mcp-Session-Id", sessionId)
+                            contentType(ContentType.Application.Json)
+                            setBody("""{"jsonrpc":"2.0","method":"tools/list","id":$index}""")
+                        }
                     }
                 }
-            }
+            } // All launches complete here before proceeding
 
-            delay(200) // Wait for processing
+            delay(50) // Brief delay for response processing
 
             client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", sessionId)
