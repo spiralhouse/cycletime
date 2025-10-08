@@ -62,8 +62,8 @@ code .mcp.json
 {
   "mcpServers": {
     "cycletime": {
-      "type": "websocket",
-      "url": "ws://localhost:8080/mcp"
+      "type": "sse",
+      "url": "http://localhost:8080/mcp/events"
     }
     // ... other MCP servers you may have configured
   }
@@ -78,8 +78,8 @@ cat > .mcp.json << 'EOF'
 {
   "mcpServers": {
     "cycletime": {
-      "type": "websocket",
-      "url": "ws://localhost:8080/mcp"
+      "type": "sse",
+      "url": "http://localhost:8080/mcp/events"
     }
   }
 }
@@ -134,24 +134,25 @@ Use the same server configuration format shown above.
 
 **Key Points:**
 - Embedded H2 database for data persistence
-- MCP WebSocket server for Claude Code integration
+- MCP SSE transport for Claude Code integration (specification v2024-11-05 compliant)
 - REST APIs for programmatic access
 - Docker container deployment available
 
-"CycleTime runs as a single container with an embedded database for straightforward deployment."
+"CycleTime runs as a single container with an embedded database for straightforward deployment. The MCP integration uses Server-Sent Events (SSE) transport for real-time streaming communication, following the official MCP specification."
 
 ### 3. Claude Code Connection (2 minutes)
 
 **Demonstrate:**
 1. Show the project-local `.mcp.json` file in the repository root with CycleTime server entry
 2. Highlight that this configuration is version-controlled and portable with the project
-3. Point out the WebSocket URL: `ws://localhost:8080/mcp`
-4. Show Claude Code successfully connected to CycleTime (connection indicator shows active)
-5. If first-time connection, demonstrate the security approval prompt and click "Allow"
-6. Display MCP server availability in Claude Code's server list
+3. Point out the SSE transport configuration: `"type": "sse"` with URL `http://localhost:8080/mcp/events`
+4. Explain the dual-endpoint architecture: SSE for server-to-client streaming, POST endpoint (`/mcp`) for client-to-server requests
+5. Show Claude Code successfully connected to CycleTime (connection indicator shows active)
+6. If first-time connection, demonstrate the security approval prompt and click "Allow"
+7. Display MCP server availability in Claude Code's server list
 
 **Script:**
-"Claude Code connects to CycleTime through the MCP protocol using a WebSocket connection. Notice that the configuration lives right here in our project repository - it's version-controlled and portable. This means anyone cloning the repository gets the same MCP setup automatically. The configuration tells Claude Code where to find our CycleTime server, providing AI-assisted project management capabilities directly in your development workflow."
+"Claude Code connects to CycleTime through the MCP protocol using Server-Sent Events (SSE) transport. This follows the official MCP specification v2024-11-05 for HTTP-based server communication. Notice that the configuration lives right here in our project repository - it's version-controlled and portable. This means anyone cloning the repository gets the same MCP setup automatically. The SSE transport provides real-time streaming from the server, while client requests are sent via HTTP POST to the `/mcp` endpoint. This architecture enables asynchronous request/response handling with proper session management, providing AI-assisted project management capabilities directly in your development workflow."
 
 **Show in Claude Code:**
 - Project-local `.mcp.json` file in VS Code file explorer
