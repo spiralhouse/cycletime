@@ -15,13 +15,12 @@ docker run -d -p 8080:8080 --name cycletime-demo ghcr.io/spiralhouse/cycletime:l
 curl http://localhost:8080/health
 ```
 
-> **Note**: The CycleTime repository includes a pre-configured `.mcp.json` file at the project root for easy Claude Code integration. This makes setup straightforward for demos and early adopters.
 
 ### 2. Configure Claude Code MCP Connection
 
 **Project-Local Configuration (Recommended for Demos):**
 
-CycleTime includes a project-local `.mcp.json` file at the repository root, making MCP configuration portable and version-controlled. This approach is ideal for demos and early adopter onboarding.
+Create a project-local `.mcp.json` file in your project root to make MCP configuration portable and version-controlled. This approach is ideal for demos and early adopter onboarding.
 
 ```mermaid
 %%{init: {
@@ -40,11 +39,11 @@ CycleTime includes a project-local `.mcp.json` file at the repository root, maki
   }
 }}%%
 graph LR
-    A[Clone Repository] --> B[.mcp.json Included]
+    A[Start CycleTime Server] --> B[Create .mcp.json]
     B --> C[Restart Claude Code]
     C --> D[Approve MCP Server]
     D --> E[Connected!]
-    
+
     style B fill:#2ea043,stroke:#3fb950,color:#ffffff
     style E fill:#1f6feb,stroke:#58a6ff,color:#ffffff
 ```
@@ -143,7 +142,7 @@ Use the same server configuration format shown above.
 ### 3. Claude Code Connection (2 minutes)
 
 **Demonstrate:**
-1. Show the project-local `.mcp.json` file in the repository root with CycleTime server entry
+1. Show how to create a `.mcp.json` file in your project root with CycleTime server configuration
 2. Highlight that this configuration is version-controlled and portable with the project
 3. Point out the SSE transport configuration: `"type": "sse"` with URL `http://localhost:8080/mcp/events`
 4. Explain the dual-endpoint architecture: SSE for server-to-client streaming, POST endpoint (`/mcp`) for client-to-server requests
@@ -152,18 +151,18 @@ Use the same server configuration format shown above.
 7. Display MCP server availability in Claude Code's server list
 
 **Script:**
-"Claude Code connects to CycleTime through the MCP protocol using Server-Sent Events (SSE) transport. This follows the official MCP specification v2024-11-05 for HTTP-based server communication. Notice that the configuration lives right here in our project repository - it's version-controlled and portable. This means anyone cloning the repository gets the same MCP setup automatically. The SSE transport provides real-time streaming from the server, while client requests are sent via HTTP POST to the `/mcp` endpoint. This architecture enables asynchronous request/response handling with proper session management, providing AI-assisted project management capabilities directly in your development workflow."
+"Claude Code connects to CycleTime through the MCP protocol using Server-Sent Events (SSE) transport. This follows the official MCP specification v2024-11-05 for HTTP-based server communication. The configuration is simple - create a `.mcp.json` file in your project root with the SSE transport settings. This makes the configuration version-controlled and portable, so team members can share the same MCP setup. The SSE transport provides real-time streaming from the server, while client requests are sent via HTTP POST to the `/mcp` endpoint. This architecture enables asynchronous request/response handling with proper session management, providing AI-assisted project management capabilities directly in your development workflow."
 
 **Show in Claude Code:**
-- Project-local `.mcp.json` file in VS Code file explorer
+- How to create the `.mcp.json` configuration file
 - MCP server list displaying "cycletime" server
 - Connected status indicator (green)
 - Available tools and resources from CycleTime
 
 **Key Benefits to Emphasize:**
-- Configuration travels with the project (no manual setup for team members)
-- Version-controlled alongside codebase
-- Early adopters can clone and immediately connect
+- Project-local configuration enables version control and team sharing
+- Simple setup process with minimal configuration
+- Portable configuration that travels with your codebase
 - Security controls prevent unauthorized server access
 
 ### 4. Project Creation Flow (3 minutes)
@@ -283,23 +282,30 @@ Based on current implementation status and community feedback, we're focusing on
 
 1. Share capability summary with current implementation status
 2. Provide Docker quick-start instructions for local testing
-3. **Highlight the `.mcp.json` configuration** - emphasize that early adopters can clone the repository and the MCP setup is already configured
+3. **Provide `.mcp.json` configuration instructions** - share the simple configuration format for early adopters
 4. Review completed features and roadmap
 5. Gather feedback on core capabilities and feature priorities
 6. Discuss integration approaches and use cases
 
 **Quick Start for Early Adopters:**
 ```bash
-# 1. Clone the repository
-git clone https://github.com/spiralhouse/cycletime.git
-cd cycletime
-
-# 2. Start the server (Docker)
+# 1. Start the server (Docker)
 docker run -d -p 8080:8080 ghcr.io/spiralhouse/cycletime:latest
 
-# 3. The .mcp.json is already configured in the project root
-# 4. Restart Claude Code and approve the CycleTime MCP server
-# 5. Start using CycleTime directly in Claude Code!
+# 2. Create .mcp.json in your project root
+cat > .mcp.json << 'EOF'
+{
+  "mcpServers": {
+    "cycletime": {
+      "type": "sse",
+      "url": "http://localhost:8080/mcp/events"
+    }
+  }
+}
+EOF
+
+# 3. Restart Claude Code and approve the CycleTime MCP server
+# 4. Start using CycleTime directly in Claude Code!
 ```
 
 ---
