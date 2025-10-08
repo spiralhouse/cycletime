@@ -42,11 +42,11 @@ class EdgeCaseTest : SSETestBase() {
             val sessionId = "timeout-${UUID.randomUUID()}"
 
             // Connect SSE
-            val response = client.get("/mcp/events") {
+            client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", sessionId)
+            }.execute { response ->
+                response.status shouldBe HttpStatusCode.OK
             }
-
-            response.status shouldBe HttpStatusCode.OK
 
             // Wait for timeout (configured in test to be short)
             delay(100)
@@ -198,13 +198,13 @@ class EdgeCaseTest : SSETestBase() {
             val sessionId = "new-session-${UUID.randomUUID()}"
 
             // Connect SSE without any prior POST request
-            val response = client.get("/mcp/events") {
+            client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", sessionId)
+            }.execute { response ->
+                // Should auto-create session or require initialization first
+                response.status shouldBe HttpStatusCode.OK // Auto-create
+                // OR response.status shouldBe HttpStatusCode.BadRequest // Require init
             }
-
-            // Should auto-create session or require initialization first
-            response.status shouldBe HttpStatusCode.OK // Auto-create
-            // OR response.status shouldBe HttpStatusCode.BadRequest // Require init
         }
     }
 
@@ -222,11 +222,12 @@ class EdgeCaseTest : SSETestBase() {
                 }
 
                 // Connect SSE
-                client.get("/mcp/events") {
+                client.prepareGet("/mcp/events") {
                     header("Mcp-Session-Id", sessionId)
+                }.execute { response ->
+                    // Immediately disconnect (request completes)
                 }
 
-                // Immediately disconnect (request completes)
                 // Session cleanup
             }
 
@@ -309,20 +310,20 @@ class EdgeCaseTest : SSETestBase() {
                 setBody("""{"jsonrpc":"2.0","method":"tools/list","id":1}""")
             }
 
-            val response1 = client.get("/mcp/events") {
+            client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", sessionId)
+            }.execute { response ->
+                response.status shouldBe HttpStatusCode.OK
             }
-
-            response1.status shouldBe HttpStatusCode.OK
 
             // Reconnect with Last-Event-ID to resume
-            val response2 = client.get("/mcp/events") {
+            client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", sessionId)
                 header("Last-Event-ID", "3")
+            }.execute { response ->
+                response.status shouldBe HttpStatusCode.OK
+                // Should receive events after ID 3
             }
-
-            response2.status shouldBe HttpStatusCode.OK
-            // Should receive events after ID 3
         }
     }
 
@@ -433,21 +434,23 @@ class EdgeCaseTest : SSETestBase() {
             val sessionId = "multi-tab-${UUID.randomUUID()}"
 
             // Simulate 3 tabs opening SSE connections with same session
-            val connection1 = client.get("/mcp/events") {
+            client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", sessionId)
+            }.execute { response ->
+                response.status shouldBe HttpStatusCode.OK
             }
 
-            val connection2 = client.get("/mcp/events") {
+            client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", sessionId)
+            }.execute { response ->
+                response.status shouldBe HttpStatusCode.OK
             }
 
-            val connection3 = client.get("/mcp/events") {
+            client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", sessionId)
+            }.execute { response ->
+                response.status shouldBe HttpStatusCode.OK
             }
-
-            connection1.status shouldBe HttpStatusCode.OK
-            connection2.status shouldBe HttpStatusCode.OK
-            connection3.status shouldBe HttpStatusCode.OK
 
             // All should receive events
             // (or last connection replaces previous - implementation choice)

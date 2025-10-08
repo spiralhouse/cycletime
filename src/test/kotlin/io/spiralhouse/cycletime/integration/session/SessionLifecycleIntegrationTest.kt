@@ -13,7 +13,7 @@ import kotlinx.coroutines.delay
 import java.util.UUID
 
 /**
- * TDD RED Phase: Session Lifecycle Integration Tests
+ * Session Lifecycle Integration Tests
  *
  * Integration tests for session management across POST and SSE endpoints.
  * Tests verify session creation, state persistence, header validation,
@@ -26,18 +26,14 @@ import java.util.UUID
  * - Validate session headers
  * - Clean up expired sessions
  *
- * EXPECTED FAILURES (RED Phase):
- * - Session management integration doesn't exist
- * - Session state persistence not implemented
- * - Header validation not implemented
- *
- * These tests will pass once the Developer agent implements session lifecycle.
+ * ARCHITECTURAL NOTE:
+ * SSE connections are long-lived streams. Use prepareGet().execute{} pattern
+ * to avoid timeout issues with client.get().
  */
 class SessionLifecycleIntegrationTest : SSETestBase() {
     init {
 
     "should maintain session state across POST and SSE requests" {
-        // EXPECTED FAILURE: Session management doesn't exist
         withTestApp {
             val sessionId = "lifecycle-test-${UUID.randomUUID()}"
 
@@ -51,12 +47,12 @@ class SessionLifecycleIntegrationTest : SSETestBase() {
             postResponse.status shouldBe HttpStatusCode.Accepted
 
             // Second request uses same session via SSE
-            val sseResponse = client.get("/mcp/events") {
+            client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", sessionId)
+            }.execute { response ->
+                response.status shouldBe HttpStatusCode.OK
+                response.contentType() shouldBe ContentType.Text.EventStream
             }
-
-            sseResponse.status shouldBe HttpStatusCode.OK
-            sseResponse.contentType() shouldBe ContentType.Text.EventStream
 
             // Session should be shared and maintain state
         }
@@ -77,11 +73,11 @@ class SessionLifecycleIntegrationTest : SSETestBase() {
             postResponse.status shouldBe HttpStatusCode.BadRequest
 
             // SSE should also reject
-            val sseResponse = client.get("/mcp/events") {
+            client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", invalidSessionId)
+            }.execute { response ->
+                response.status shouldBe HttpStatusCode.BadRequest
             }
-
-            sseResponse.status shouldBe HttpStatusCode.BadRequest
         }
     }
 
@@ -142,17 +138,18 @@ class SessionLifecycleIntegrationTest : SSETestBase() {
             val sessionId = "multi-sse-test-${UUID.randomUUID()}"
 
             // Open first SSE connection
-            val sse1 = client.get("/mcp/events") {
+            client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", sessionId)
+            }.execute { response ->
+                response.status shouldBe HttpStatusCode.OK
             }
 
             // Open second SSE connection for same session
-            val sse2 = client.get("/mcp/events") {
+            client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", sessionId)
+            }.execute { response ->
+                response.status shouldBe HttpStatusCode.OK
             }
-
-            sse1.status shouldBe HttpStatusCode.OK
-            sse2.status shouldBe HttpStatusCode.OK
 
             // Both connections should be tracked under same session
         }
@@ -164,11 +161,11 @@ class SessionLifecycleIntegrationTest : SSETestBase() {
             val sessionId = "cleanup-test-${UUID.randomUUID()}"
 
             // Create session with SSE connection
-            val sseResponse = client.get("/mcp/events") {
+            client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", sessionId)
+            }.execute { response ->
+                response.status shouldBe HttpStatusCode.OK
             }
-
-            sseResponse.status shouldBe HttpStatusCode.OK
 
             // Close connection (simulated by request completion)
             // Session should be cleaned up
@@ -264,18 +261,18 @@ class SessionLifecycleIntegrationTest : SSETestBase() {
             }
 
             // Open SSE connection
-            val sse1 = client.get("/mcp/events") {
+            client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", sessionId)
+            }.execute { response ->
+                response.status shouldBe HttpStatusCode.OK
             }
-
-            sse1.status shouldBe HttpStatusCode.OK
 
             // Close and reconnect SSE
-            val sse2 = client.get("/mcp/events") {
+            client.prepareGet("/mcp/events") {
                 header("Mcp-Session-Id", sessionId)
+            }.execute { response ->
+                response.status shouldBe HttpStatusCode.OK
             }
-
-            sse2.status shouldBe HttpStatusCode.OK
             // Session initialization state should be preserved
         }
     }
