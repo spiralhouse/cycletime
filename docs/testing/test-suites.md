@@ -25,7 +25,7 @@ The CycleTime project now uses three distinct test suites optimized for differen
 - **Database Isolation**: Each test gets its own H2 in-memory database instance
 - **Usage**: `./gradlew integrationTest`
 
-**MCP Test Coverage**: Includes MCP server infrastructure, WebSocket connections, and resource management tests (see `.claude/shared/testing-standards.md` for complete categorization)
+**MCP Test Coverage**: Includes MCP server infrastructure, SSE connections, and resource management tests (see `.claude/shared/testing-standards.md` for complete categorization)
 
 ### 3. System Tests (`systemTest`)
 - **Purpose**: End-to-end scenarios and performance validation

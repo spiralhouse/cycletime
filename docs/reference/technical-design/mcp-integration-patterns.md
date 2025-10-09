@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the Model Context Protocol (MCP) integration patterns for CycleTime, enabling seamless communication with Claude Code through WebSocket connections and JSON-RPC messaging. The implementation leverages Ktor's WebSocket support and dependency injection for maintainable, testable MCP server components.
+This document outlines the Model Context Protocol (MCP) integration patterns for CycleTime, enabling seamless communication with Claude Code through SSE (Server-Sent Events) transport and JSON-RPC messaging. The implementation leverages Ktor's SSE support and dependency injection for maintainable, testable MCP server components.
 
 ## MCP Protocol Overview
 
@@ -11,7 +11,8 @@ This document outlines the Model Context Protocol (MCP) integration patterns for
 - **Resources**: Read-only data exposed to Claude Code (projects, issues, contexts)
 - **Tools**: Executable functions Claude Code can invoke (create, update, delete operations)
 - **Prompts**: Pre-configured prompt templates for common workflows
-- **WebSocket Transport**: Real-time bidirectional communication
+- **SSE Transport**: Server-Sent Events for server-to-client streaming
+- **POST Requests**: Client-to-server JSON-RPC requests
 - **JSON-RPC 2.0**: Standard request/response protocol
 
 ### Protocol Flow
@@ -19,19 +20,18 @@ This document outlines the Model Context Protocol (MCP) integration patterns for
 ```
 Claude Code                    CycleTime MCP Server
     |                               |
-    |-------- WebSocket Connect --->|
+    |------- SSE Connect (/mcp/events) -->|
     |                               |
-    |<------- Initialize Request ---|
-    |-------- Initialize Response ->|
+    |<------ SSE Stream Established ---|
     |                               |
-    |<------- Resources List -------|
-    |<------- Tools List ------------|
+    |-- POST /mcp (Initialize) ----->|
+    |<------ Initialize Response -----|
     |                               |
-    |-------- Resource Read -------->|
-    |<------- Resource Content ------|
+    |-- POST /mcp (Resources List) ->|
+    |<------ Resources via SSE -------|
     |                               |
-    |-------- Tool Execute --------->|
-    |<------- Tool Result -----------|
+    |-- POST /mcp (Tool Execute) ---->|
+    |<------ Tool Result via SSE ------|
     |                               |
 ```
 
@@ -40,17 +40,17 @@ Claude Code                    CycleTime MCP Server
 ```kotlin
 // build.gradle.kts
 dependencies {
-    // Ktor WebSocket support
-    implementation("io.ktor:ktor-server-websockets:3.2.0")
-    implementation("io.ktor:ktor-server-content-negotiation:3.2.0")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:3.2.0")
-    
+    // Ktor SSE support
+    implementation("io.ktor:ktor-server-sse:3.2.3")
+    implementation("io.ktor:ktor-server-content-negotiation:3.2.3")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.2.3")
+
     // JSON-RPC implementation
     implementation("com.github.kotlin-json-rpc:json-rpc:1.0.0")
-    
+
     // Coroutines for async handling
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    
+
     // Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 }
@@ -64,12 +64,14 @@ dependencies {
 // src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/CycleTimeMCPServer.kt
 
 import io.ktor.server.application.*
-import io.ktor.server.websocket.*
-import io.ktor.websocket.*
+import io.ktor.server.response.*
+import io.ktor.server.request.*
+import io.ktor.server.routing.*
+import io.ktor.server.sse.*
+import io.ktor.sse.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.*
-import java.time.Duration
 
 /**
  * Main MCP server coordinating resources and tools
@@ -81,55 +83,64 @@ class CycleTimeMCPServer(
 ) {
     private val logger = LoggerFactory.getLogger(CycleTimeMCPServer::class.java)
     private val sessions = mutableMapOf<String, MCPSession>()
-    
+
     /**
-     * Initialize MCP server with WebSocket endpoint
+     * Initialize MCP server with SSE and POST endpoints
      */
     fun Application.configureMCP() {
-        install(WebSockets) {
-            pingPeriod = Duration.ofSeconds(15)
-            timeout = Duration.ofSeconds(15)
-            maxFrameSize = Long.MAX_VALUE
-            masking = false
-        }
-        
+        install(SSE)
+
         routing {
-            webSocket("/mcp") {
-                handleMCPConnection(this)
+            // SSE endpoint for server-to-client events
+            sse("/mcp/events") {
+                handleSSEConnection(this)
+            }
+
+            // POST endpoint for client-to-server requests
+            post("/mcp") {
+                handlePostRequest(call)
             }
         }
     }
-    
+
     /**
-     * Handle incoming MCP WebSocket connection
+     * Handle incoming MCP SSE connection
      */
-    private suspend fun handleMCPConnection(session: WebSocketSession) {
+    private suspend fun handleSSEConnection(session: ServerSentEventSession) {
         val sessionId = generateSessionId()
         val mcpSession = MCPSession(sessionId, session)
         sessions[sessionId] = mcpSession
-        
+
         try {
-            logger.info("MCP client connected: $sessionId")
-            
-            // Handle incoming messages
-            for (frame in session.incoming) {
-                when (frame) {
-                    is Frame.Text -> {
-                        val text = frame.readText()
-                        handleJsonRpcMessage(mcpSession, text)
-                    }
-                    is Frame.Close -> {
-                        logger.info("MCP client disconnected: $sessionId")
-                        break
-                    }
-                    else -> {} // Ignore other frame types
-                }
+            logger.info("MCP SSE client connected: $sessionId")
+
+            // Send keep-alive events
+            while (true) {
+                session.send(ServerSentEvent("ping"))
+                kotlinx.coroutines.delay(30000) // 30 second keep-alive
             }
         } catch (e: Exception) {
-            logger.error("Error in MCP session $sessionId", e)
+            logger.error("Error in MCP SSE session $sessionId", e)
         } finally {
             sessions.remove(sessionId)
             mcpSession.close()
+        }
+    }
+
+    /**
+     * Handle incoming POST requests
+     */
+    private suspend fun handlePostRequest(call: ApplicationCall) {
+        try {
+            val message = call.receiveText()
+            val jsonElement = Json.parseToJsonElement(message)
+            val request = Json.decodeFromJsonElement<JsonRpcRequest>(jsonElement)
+
+            val response = processJsonRpcRequest(request)
+            call.respond(response)
+        } catch (e: Exception) {
+            logger.error("Error processing POST request", e)
+            call.respond(createErrorResponse(e))
         }
     }
     

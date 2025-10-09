@@ -4,13 +4,13 @@ Comprehensive testing and verification procedures for CycleTime's Model Context 
 
 ## Overview
 
-This guide provides step-by-step procedures to verify MCP functionality, test protocol compliance, and troubleshoot connection issues. The CycleTime MCP server provides WebSocket-based communication following the MCP specification version 2024-11-05.
+This guide provides step-by-step procedures to verify MCP functionality, test protocol compliance, and troubleshoot connection issues. The CycleTime MCP server provides SSE (Server-Sent Events) transport following the MCP specification version 2024-11-05.
 
 **MCP Endpoints**:
-- **WebSocket**: `ws://localhost:8080/mcp` - Primary MCP protocol communication
+- **SSE Stream**: `GET http://localhost:8080/mcp/events` - Server-to-client event stream (MCP v2024-11-05)
+- **POST Endpoint**: `POST http://localhost:8080/mcp` - Client-to-server JSON-RPC requests
 - **Server Info**: `GET http://localhost:8080/mcp` - Server metadata and capabilities
 - **Statistics**: `GET http://localhost:8080/mcp/stats` - Connection metrics and monitoring
-- **SSE Events**: `GET http://localhost:8080/mcp/events` - Server-sent events (legacy support)
 
 ## Prerequisites
 
@@ -27,11 +27,12 @@ java -version
 
 **Testing Tools**:
 ```bash
-# Install wscat for WebSocket testing
-npm install -g wscat
+# curl for HTTP/SSE testing (usually pre-installed)
+curl --version
 
-# Or use websocat (alternative)
-brew install websocat  # macOS
+# jq for JSON formatting (optional but recommended)
+brew install jq  # macOS
+sudo apt-get install jq  # Linux
 ```
 
 **HTTP Client**:
@@ -153,37 +154,37 @@ curl http://localhost:8080/mcp/stats
 # Response: {"error": "Metrics disabled"}
 ```
 
-## WebSocket Connectivity Tests
+## SSE Connectivity Tests
 
-### 3. Basic WebSocket Connection
+### 3. Basic SSE Connection
 
-**Using wscat**:
+**Using curl**:
 ```bash
-wscat -c ws://localhost:8080/mcp
+# Connect to SSE endpoint (server-to-client event stream)
+curl -N http://localhost:8080/mcp/events
 ```
 
 **Expected Output**:
 ```
-Connected (press CTRL+C to quit)
+# Connection established, waiting for server events
+# (Connection stays open, press CTRL+C to exit)
 ```
 
 **Verification**:
 - Connection establishes without errors
-- No immediate disconnection
-- Ready to send/receive messages
+- curl stays connected (doesn't immediately exit)
+- Server may send periodic keep-alive events
 
-**Connection Test**:
+**Alternative test with headers**:
 ```bash
-# Send ping frame
-> ping
+# Show HTTP headers during connection
+curl -N -v http://localhost:8080/mcp/events
 
-# Expected: pong response
-< pong
-```
-
-**Using websocat** (alternative):
-```bash
-websocat ws://localhost:8080/mcp
+# Expected headers:
+# < HTTP/1.1 200 OK
+# < Content-Type: text/event-stream
+# < Cache-Control: no-cache
+# < Connection: keep-alive
 ```
 
 ### 4. MCP Protocol Handshake
@@ -675,48 +676,46 @@ websocat ws://localhost:8080/mcp
 - [ ] MIME type is application/json
 - [ ] Text field contains valid JSON
 
-## Complete WebSocket Test Session
+## Complete SSE + POST Test Session
 
-**Full test sequence using wscat**:
+**Full test sequence using curl and POST**:
 
 ```bash
-# 1. Connect
-wscat -c ws://localhost:8080/mcp
+# Terminal 1: Establish SSE connection (server-to-client events)
+curl -N http://localhost:8080/mcp/events
 
-# 2. Initialize (paste and press Enter)
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test-client","version":"1.0.0"}}}
+# Terminal 2: Send JSON-RPC requests via POST (client-to-server)
 
-# Wait for init response, then:
+# 1. Initialize
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test-client","version":"1.0.0"}}}'
 
-# 3. List tools
-{"jsonrpc":"2.0","id":2,"method":"tools/list"}
+# 2. List tools
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type": "application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
 
-# 4. List resources
-{"jsonrpc":"2.0","id":3,"method":"resources/list"}
+# 3. List resources
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type": "application/json" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"resources/list"}'
 
-# 5. Execute tool
-{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"list_projects","arguments":{}}}
+# 4. Execute tool
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type": "application/json" \
+  -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"list_projects","arguments":{}}}'
 
-# 6. Read resource
-{"jsonrpc":"2.0","id":5,"method":"resources/read","params":{"uri":"cycletime://session/current"}}
-
-# 7. Close connection (Ctrl+C)
+# 5. Read resource
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type": "application/json" \
+  -d '{"jsonrpc":"2.0","id":5,"method":"resources/read","params":{"uri":"cycletime://session/current"}}'
 ```
 
 **Expected Flow**:
-```
-Connected (press CTRL+C to quit)
-> {"jsonrpc":"2.0","id":1,"method":"initialize",...}
-< {"jsonrpc":"2.0","id":1,"result":{...}}
-> {"jsonrpc":"2.0","id":2,"method":"tools/list"}
-< {"jsonrpc":"2.0","id":2,"result":{"tools":[...]}}
-> {"jsonrpc":"2.0","id":3,"method":"resources/list"}
-< {"jsonrpc":"2.0","id":3,"result":{"resources":[...]}}
-> {"jsonrpc":"2.0","id":4,"method":"tools/call",...}
-< {"jsonrpc":"2.0","id":4,"result":{"content":[...]}}
-> {"jsonrpc":"2.0","id":5,"method":"resources/read",...}
-< {"jsonrpc":"2.0","id":5,"result":{"contents":[...]}}
-```
+- **Terminal 1 (SSE)**: Receives server-sent events with JSON-RPC responses
+- **Terminal 2 (POST)**: Sends JSON-RPC requests, receives immediate HTTP responses
+- Responses correlate via EventBus + MessageCorrelator using request IDs
 
 ## Debugging and Troubleshooting
 
@@ -774,21 +773,26 @@ lsof -i :8080
 - Check port availability: `lsof -i :8080`
 - Verify no firewall blocking port 8080
 
-**Issue: WebSocket Upgrade Failed**
+**Issue: SSE Connection Failed**
 ```bash
-wscat -c ws://localhost:8080/mcp
-error: Unexpected server response: 404
+curl -N http://localhost:8080/mcp/events
+# No response or immediate disconnect
 ```
 
 **Diagnosis**:
 ```bash
-# Verify endpoint exists
+# Verify SSE endpoint exists
+curl -v http://localhost:8080/mcp/events
+# Should return HTTP 200 with Content-Type: text/event-stream
+
+# Verify POST endpoint exists
 curl http://localhost:8080/mcp
-# Should return server info, not 404
+# Should return server info JSON
 ```
 
 **Solution**:
-- Confirm correct path: `/mcp` (not `/mcp/ws` or other variations)
+- Confirm correct SSE path: `/mcp/events` for server-to-client stream
+- Confirm correct POST path: `/mcp` for client-to-server requests
 - Check server logs for routing errors
 - Verify MCP module loaded: look for "MCP routing configured" in logs
 
@@ -1046,7 +1050,8 @@ MCP_DETAILED_LOGGING=true MCP_CACHE_ENABLED=true ./gradlew run
 # Connection
 MCP_HOST=0.0.0.0              # Bind address
 MCP_PORT=8080                  # Server port
-MCP_PATH=/mcp                  # WebSocket path
+MCP_SSE_PATH=/mcp/events       # SSE endpoint (server-to-client)
+MCP_POST_PATH=/mcp             # POST endpoint (client-to-server)
 
 # Performance
 MCP_MAX_CONNECTIONS=100        # Max concurrent connections
@@ -1063,10 +1068,9 @@ MCP_METRICS_ENABLED=true       # Enable statistics
 MCP_SLOW_REQUEST_MS=100        # Slow request threshold
 MCP_DETAILED_LOGGING=false     # Verbose logging
 
-# WebSocket
-MCP_PING_PERIOD=30000          # Ping interval (ms)
+# Connection Settings
 MCP_TIMEOUT=15000              # Connection timeout (ms)
-MCP_MAX_FRAME_SIZE=10485760    # Max frame size (10MB)
+MCP_SESSION_TIMEOUT=3600000    # Session timeout (1 hour)
 ```
 
 ## Related Documentation

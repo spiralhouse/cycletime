@@ -13,7 +13,7 @@ This guide addresses the top 10 common MCP issues encountered during development
 | Issue | Problem | Jump To |
 |-------|---------|---------|
 | #1 | Connection Refused | [→](#issue-1-connection-refused) |
-| #2 | WebSocket Handshake Failed | [→](#issue-2-websocket-handshake-failed) |
+| #2 | SSE Connection Failed | [→](#issue-2-sse-connection-failed) |
 | #3 | Connection Timeout | [→](#issue-3-connection-timeout) |
 | #4 | Invalid JSON-RPC Request | [→](#issue-4-invalid-json-rpc-request) |
 | #5 | Tool Not Found | [→](#issue-5-tool-not-found) |
@@ -31,17 +31,17 @@ This guide addresses the top 10 common MCP issues encountered during development
 sequenceDiagram
     participant Client
     participant HTTP as HTTP Endpoint
-    participant WS as WebSocket
+    participant SSE as SSE Events
     participant MCP as MCP Server
     participant DB as Database
 
     Client->>HTTP: GET /mcp (Server Info)
     HTTP-->>Client: JSON (name, version, capabilities)
 
-    Client->>WS: Upgrade to WebSocket
-    WS-->>Client: 101 Switching Protocols
+    Client->>SSE: GET /mcp/events (Accept: text/event-stream)
+    SSE-->>Client: 200 OK + SSE Stream
 
-    Client->>MCP: JSON-RPC Request
+    Client->>HTTP: POST /mcp (JSON-RPC Request)
     MCP->>DB: Query/Update
     DB-->>MCP: Result
     MCP-->>Client: JSON-RPC Response
@@ -54,13 +54,13 @@ Understanding default configuration helps diagnose issues quickly:
 **Connection Settings** (MCPConfiguration.kt):
 - Host: `0.0.0.0` (all interfaces)
 - Port: `8080`
-- Path: `/mcp`
+- SSE Path: `/mcp/events`
+- POST Path: `/mcp`
 - Enabled: `true`
 
-**WebSocket Settings**:
-- Ping period: `30000ms` (30 seconds)
+**SSE Settings**:
 - Timeout: `15000ms` (15 seconds)
-- Max frame size: `10485760` bytes (10MB)
+- Keep-alive interval: `30000ms` (30 seconds)
 
 **Performance Settings**:
 - Request timeout: `60000ms` (60 seconds)
@@ -72,8 +72,9 @@ Understanding default configuration helps diagnose issues quickly:
 MCP_ENABLED=true          # Enable/disable MCP server
 MCP_HOST=0.0.0.0          # Bind address
 MCP_PORT=8080             # Server port
-MCP_PATH=/mcp             # WebSocket path
-MCP_TIMEOUT=15000         # WebSocket timeout (ms)
+MCP_SSE_PATH=/mcp/events  # SSE endpoint path
+MCP_POST_PATH=/mcp        # POST endpoint path
+MCP_TIMEOUT=15000         # Connection timeout (ms)
 MCP_REQUEST_TIMEOUT=60000 # Request timeout (ms)
 MCP_SLOW_REQUEST_MS=100   # Slow request threshold
 MCP_METRICS_ENABLED=true  # Enable metrics (default: true)
@@ -92,8 +93,8 @@ curl: (7) Failed to connect to localhost port 8080: Connection refused
 ```
 
 ```bash
-$ wscat -c ws://localhost:8080/mcp
-error: Error: connect ECONNREFUSED 127.0.0.1:8080
+$ curl -N -H "Accept: text/event-stream" http://localhost:8080/mcp/events
+curl: (7) Failed to connect to localhost port 8080: Connection refused
 ```
 
 **Observable Behavior**:

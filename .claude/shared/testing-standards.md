@@ -289,7 +289,7 @@ src/test/kotlin/io/spiralhouse/cycletime/
 
 **Integration Tests**:
 - `mcp.integration.*` - MCP server integration
-- `mcp.server.*` - Server infrastructure, WebSocket connections
+- `mcp.server.*` - Server infrastructure, SSE connections
 - Database interactions and resource management
 - Target execution time: <100ms per test
 

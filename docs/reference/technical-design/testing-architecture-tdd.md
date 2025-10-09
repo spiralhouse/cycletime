@@ -525,82 +525,83 @@ class ProjectApiTest : DescribeSpec({
 })
 ```
 
-### WebSocket Testing
+### SSE Testing
 
 ```kotlin
-// src/test/kotlin/io/spiralhouse/cycletime/mcp/MCPWebSocketTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/mcp/MCPSSETest.kt
 
-import io.ktor.client.plugins.websocket.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.server.testing.*
-import io.ktor.websocket.*
+import io.ktor.http.*
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.serialization.json.*
 
-class MCPWebSocketTest : DescribeSpec({
-    
-    describe("MCP WebSocket") {
-        
-        it("should handle MCP handshake") {
+class MCPSSETest : DescribeSpec({
+
+    describe("MCP SSE") {
+
+        it("should handle MCP initialization via POST") {
             testApplication {
                 application {
                     configureDependencies()
                     configureMCP()
                 }
-                
-                client.webSocket("/mcp") {
-                    // Send initialize request
-                    val initRequest = buildJsonObject {
-                        put("jsonrpc", "2.0")
-                        put("method", "initialize")
-                        put("id", 1)
-                        put("params", buildJsonObject {
-                            put("protocolVersion", "1.0")
-                            put("clientInfo", buildJsonObject {
-                                put("name", "test-client")
-                                put("version", "1.0.0")
-                            })
+
+                // Send initialize request via POST
+                val initRequest = buildJsonObject {
+                    put("jsonrpc", "2.0")
+                    put("method", "initialize")
+                    put("id", 1)
+                    put("params", buildJsonObject {
+                        put("protocolVersion", "2024-11-05")
+                        put("clientInfo", buildJsonObject {
+                            put("name", "test-client")
+                            put("version", "1.0.0")
                         })
-                    }
-                    
-                    send(Frame.Text(initRequest.toString()))
-                    
-                    // Receive response
-                    val response = incoming.receive() as Frame.Text
-                    val responseJson = Json.parseToJsonElement(response.readText()).jsonObject
-                    
-                    responseJson["jsonrpc"]?.jsonPrimitive?.content shouldBe "2.0"
-                    responseJson["id"]?.jsonPrimitive?.int shouldBe 1
-                    responseJson["result"] shouldNotBe null
+                    })
                 }
+
+                val response = client.post("/mcp") {
+                    contentType(ContentType.Application.Json)
+                    setBody(initRequest.toString())
+                }
+
+                // Verify response
+                val responseJson = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+
+                responseJson["jsonrpc"]?.jsonPrimitive?.content shouldBe "2.0"
+                responseJson["id"]?.jsonPrimitive?.int shouldBe 1
+                responseJson["result"] shouldNotBe null
             }
         }
-        
-        it("should handle resource requests") {
+
+        it("should handle resource requests via POST") {
             testApplication {
                 TestFixtures.withProject { projectId ->
-                    client.webSocket("/mcp") {
-                        // Initialize first
-                        MCPTestHelper.initialize(this)
-                        
-                        // Request project resource
-                        val resourceRequest = buildJsonObject {
-                            put("jsonrpc", "2.0")
-                            put("method", "resources/read")
-                            put("id", 2)
-                            put("params", buildJsonObject {
-                                put("uri", "cycletime://project/$projectId")
-                            })
-                        }
-                        
-                        send(Frame.Text(resourceRequest.toString()))
-                        
-                        val response = incoming.receive() as Frame.Text
-                        val responseJson = Json.parseToJsonElement(response.readText()).jsonObject
-                        
-                        val result = responseJson["result"]?.jsonObject
-                        result?.get("contents")?.jsonArray?.isNotEmpty() shouldBe true
+                    // Initialize first
+                    MCPTestHelper.initializeViaPost(this)
+
+                    // Request project resource via POST
+                    val resourceRequest = buildJsonObject {
+                        put("jsonrpc", "2.0")
+                        put("method", "resources/read")
+                        put("id", 2)
+                        put("params", buildJsonObject {
+                            put("uri", "cycletime://project/$projectId")
+                        })
                     }
+
+                    val response = client.post("/mcp") {
+                        contentType(ContentType.Application.Json)
+                        setBody(resourceRequest.toString())
+                    }
+
+                    val responseJson = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+
+                    val result = responseJson["result"]?.jsonObject
+                    result?.get("contents")?.jsonArray?.isNotEmpty() shouldBe true
                 }
             }
         }
