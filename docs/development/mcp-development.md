@@ -53,7 +53,8 @@ MCP_DETAILED_LOGGING=true ./gradlew run
 ```
 
 The server will be available at:
-- **WebSocket**: `ws://localhost:8080/mcp`
+- **SSE Events**: `http://localhost:8080/mcp/events`
+- **POST Requests**: `http://localhost:8080/mcp`
 - **Server Info**: `http://localhost:8080/mcp`
 - **Statistics**: `http://localhost:8080/mcp/stats`
 
@@ -131,8 +132,8 @@ Connect Claude Code to your local MCP server:
    {
      "mcpServers": {
        "cycletime-local": {
-         "transport": "websocket",
-         "url": "ws://localhost:8080/mcp"
+         "transport": "sse",
+         "url": "http://localhost:8080/mcp/events"
        }
      }
    }
@@ -140,21 +141,26 @@ Connect Claude Code to your local MCP server:
 3. **Restart Claude Code** to load the configuration
 4. **Verify Connection** by checking available tools
 
-### WebSocket Test Client (wscat)
+### SSE Test Client (curl)
 
 For protocol-level testing:
 
 ```bash
-# Install wscat
-npm install -g wscat
+# Connect to SSE endpoint (receive events)
+curl -N -H "Accept: text/event-stream" http://localhost:8080/mcp/events
 
-# Connect to server
-wscat -c ws://localhost:8080/mcp
+# Send JSON-RPC requests via POST
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{}}}'
 
-# Test JSON-RPC requests
-> {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{}}}
-> {"jsonrpc":"2.0","id":2,"method":"tools/list"}
-> {"jsonrpc":"2.0","id":3,"method":"resources/list"}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"resources/list"}'
 ```
 
 ### HTTP Test Requests
@@ -256,9 +262,10 @@ Tool(
 **3. Verify Tool Registration**
 
 ```bash
-# Using wscat
-wscat -c ws://localhost:8080/mcp
-> {"jsonrpc":"2.0","id":1,"method":"tools/list"}
+# Using curl
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 
 # Look for "archive_project" in response
 ```
@@ -304,11 +311,14 @@ override suspend fun readResource(uri: String): String {
 
 ```bash
 # List resources
-wscat -c ws://localhost:8080/mcp
-> {"jsonrpc":"2.0","id":1,"method":"resources/list"}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"resources/list"}'
 
 # Read resource content
-> {"jsonrpc":"2.0","id":2,"method":"resources/read","params":{"uri":"project://recent"}}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"resources/read","params":{"uri":"project://recent"}}'
 ```
 
 ## Debugging MCP Issues
@@ -326,7 +336,7 @@ MCP_SLOW_REQUEST_MS=50 \
 ```
 
 This enables:
-- **Connection Lifecycle**: WebSocket connect/disconnect events
+- **Connection Lifecycle**: SSE connection/disconnect events
 - **Request/Response Details**: Full JSON-RPC message logging
 - **Performance Timing**: Request duration tracking
 - **Slow Request Warnings**: Alerts for requests exceeding threshold
@@ -337,7 +347,7 @@ Monitor server logs for MCP events:
 
 ```bash
 # Start server and watch logs
-./gradlew run | grep -E "(MCP|WebSocket)"
+./gradlew run | grep -E "(MCP|SSE)"
 
 # Filter for specific events
 ./gradlew run 2>&1 | grep "MCP.*error"
@@ -345,29 +355,29 @@ Monitor server logs for MCP events:
 
 Key log patterns:
 - `MCP Configuration loaded` - Server startup
-- `MCP WebSocket connection` - Client connection events
+- `MCP SSE connection` - Client connection events
 - `Tool execution:` - Tool invocation traces
 - `Resource read:` - Resource access traces
 - `ERROR` - Error conditions and stack traces
 
-### WebSocket Frame Inspection
+### SSE Stream Inspection
 
 **Browser DevTools Method**:
 
-1. Navigate to `http://localhost:8080/mcp` in Chrome/Firefox
+1. Navigate to `http://localhost:8080/mcp/events` in Chrome/Firefox
 2. Open DevTools (F12)
 3. Go to Network tab
-4. Click on WebSocket connection
-5. View frames being sent/received
+4. Click on the SSE connection (EventStream type)
+5. View events being received in real-time
 
-**Wireshark Method**:
+**curl Method**:
 
 ```bash
-# Capture WebSocket traffic
-sudo tcpdump -i lo0 -A 'tcp port 8080'
+# Monitor SSE stream with verbose output
+curl -N -v -H "Accept: text/event-stream" http://localhost:8080/mcp/events
 
-# Filter for WebSocket frames in Wireshark
-tcp.port == 8080 && websocket
+# Capture and analyze SSE traffic
+sudo tcpdump -i lo0 -A 'tcp port 8080 and host localhost' | grep -A 5 "data:"
 ```
 
 ### JSON-RPC Protocol Debugging
@@ -375,22 +385,30 @@ tcp.port == 8080 && websocket
 Test protocol handling directly:
 
 ```bash
-wscat -c ws://localhost:8080/mcp
-
 # Test initialize
-> {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{}}}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{}}}'
 
 # Test invalid method
-> {"jsonrpc":"2.0","id":2,"method":"invalid_method"}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"invalid_method"}'
 
 # Test malformed JSON
-> {invalid json}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{invalid json}'
 
 # Test missing required parameters
-> {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"create_project"}}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"create_project"}}'
 
 # Test tool execution
-> {"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"list_projects","arguments":{}}}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"list_projects","arguments":{}}}'
 ```
 
 ### Common Issues and Solutions
@@ -412,8 +430,9 @@ curl http://localhost:8080/mcp
 
 ```bash
 # List all registered tools
-wscat -c ws://localhost:8080/mcp
-> {"jsonrpc":"2.0","id":1,"method":"tools/list"}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 
 # Check ToolProvider registration in logs
 ./gradlew run | grep "ToolProvider"
@@ -423,11 +442,14 @@ wscat -c ws://localhost:8080/mcp
 
 ```bash
 # List available resources
-wscat -c ws://localhost:8080/mcp
-> {"jsonrpc":"2.0","id":1,"method":"resources/list"}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"resources/list"}'
 
 # Test resource read with exact URI
-> {"jsonrpc":"2.0","id":2,"method":"resources/read","params":{"uri":"project://stats"}}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"resources/read","params":{"uri":"project://stats"}}'
 ```
 
 **Issue: Invalid Schema Validation**
@@ -605,16 +627,20 @@ handler = ToolHandler.Async { params ->
 Test with invalid inputs:
 
 ```bash
-wscat -c ws://localhost:8080/mcp
-
 # Missing required parameter
-> {"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_project","arguments":{}}}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_project","arguments":{}}}'
 
 # Invalid parameter format
-> {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_project","arguments":{"id":"invalid-id-format"}}}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_project","arguments":{"id":"invalid-id-format"}}}'
 
 # Non-existent resource
-> {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_project","arguments":{"id":"00000000-0000-0000-0000-000000000000"}}}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_project","arguments":{"id":"00000000-0000-0000-0000-000000000000"}}}'
 ```
 
 ### Adding Custom Response Formats
@@ -689,8 +715,9 @@ MCP_DETAILED_LOGGING=true ./gradlew run --continuous
 
 **Terminal 3: Manual testing**
 ```bash
-wscat -c ws://localhost:8080/mcp
-# Interactively test protocol changes
+# Monitor SSE stream
+curl -N -H "Accept: text/event-stream" http://localhost:8080/mcp/events
+# Or test JSON-RPC requests via POST
 ```
 
 **Terminal 4: Log monitoring**
@@ -736,14 +763,14 @@ class ProjectToolProviderTest : StringSpec({
 
 ### Integration Testing MCP Server
 
-Test WebSocket connections and request handling using `MCPIntegrationTestBase`:
+Test SSE connections and request handling using `MCPIntegrationTestBase`:
 
 ```kotlin
 class MCPServerIntegrationTest : MCPIntegrationTestBase() {
     init {
-        "should accept WebSocket connection and perform handshake" {
+        "should accept SSE connection and perform handshake" {
             withTestApplication {
-                // Create and initialize MCP client (handles connection internally)
+                // Create and initialize MCP client (handles SSE connection internally)
                 val client = createInitializedMcpClient(
                     clientName = "Test-Client",
                     protocolVersion = "2024-11-05"
@@ -765,7 +792,7 @@ class MCPServerIntegrationTest : MCPIntegrationTestBase() {
 **Key Testing Patterns**:
 - Extend `MCPIntegrationTestBase` for automatic test infrastructure setup
 - Use `withTestApplication {}` which calls `module()` to configure full app including MCP routes
-- Use `createConnectedMcpClient()` or `createInitializedMcpClient()` for WebSocket connections
+- Use `createConnectedMcpClient()` or `createInitializedMcpClient()` for SSE connections
 - MCPIntegrationTestBase provides validation helpers: `validateJsonRpcResponse()`, `validateToolsList()`, etc.
 
 ### Manual Testing Checklist
@@ -778,7 +805,7 @@ Before committing MCP changes:
 - [ ] Tool execution with valid parameters succeeds
 - [ ] Tool execution with invalid parameters returns proper errors
 - [ ] Resource reads return correct content
-- [ ] WebSocket connection handles disconnects gracefully
+- [ ] SSE connection handles disconnects gracefully
 - [ ] Performance metrics show acceptable latency
 - [ ] Unit tests pass
 - [ ] Integration tests pass
@@ -791,11 +818,10 @@ Before committing MCP changes:
 |----------|---------|-------------|
 | `MCP_HOST` | `0.0.0.0` | Server bind address |
 | `MCP_PORT` | `8080` | Server port |
-| `MCP_PATH` | `/mcp` | WebSocket endpoint path |
+| `MCP_SSE_PATH` | `/mcp/events` | SSE endpoint path |
+| `MCP_POST_PATH` | `/mcp` | POST endpoint path |
 | `MCP_ENABLED` | `true` | Enable MCP server |
-| `MCP_PING_PERIOD` | `30000` | WebSocket ping interval (ms) |
 | `MCP_TIMEOUT` | `15000` | Connection timeout (ms) |
-| `MCP_MAX_FRAME_SIZE` | `10485760` | Max WebSocket frame size (10MB) |
 | `MCP_MAX_CONNECTIONS` | `100` | Maximum concurrent connections |
 | `MCP_ASYNC_ENABLED` | `true` | Enable async tool processing |
 | `MCP_CACHE_ENABLED` | `true` | Enable resource caching |

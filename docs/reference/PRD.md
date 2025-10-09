@@ -387,7 +387,7 @@ graph TB
     end
 
     subgraph "CycleTime"
-        MCP[MCP Server<br/>WebSocket]
+        MCP[MCP Server<br/>SSE Transport]
         API[REST API]
         APP[Application Layer<br/>DDD Services]
         DOMAIN[Domain Layer<br/>Entities & Rules]

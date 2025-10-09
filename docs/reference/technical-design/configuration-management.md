@@ -114,20 +114,22 @@ cycletime {
     
     mcp {
         enabled = true
-        
-        websocket {
-            path = "/mcp"
-            pingInterval = 30000
+
+        sse {
+            path = "/mcp/events"
             timeout = 15000
-            maxFrameSize = 1048576  # 1MB
         }
-        
+
+        post {
+            path = "/mcp"
+        }
+
         resources {
             maxListSize = 1000
             cacheEnabled = true
             cacheTtl = 300000  # 5 minutes
         }
-        
+
         tools {
             maxConcurrent = 10
             timeout = 30000
@@ -297,10 +299,14 @@ cycletime {
     
     mcp {
         enabled = true
-        
-        websocket {
-            pingInterval = 1000
+
+        sse {
+            path = "/mcp/events"
             timeout = 5000
+        }
+
+        post {
+            path = "/mcp"
         }
     }
     
@@ -478,7 +484,8 @@ data class PoolConfig(
 @Serializable
 data class MCPConfig(
     val enabled: Boolean,
-    val websocket: WebSocketConfig,
+    val sse: SSEConfig,
+    val post: PostConfig,
     val resources: ResourceConfig,
     val tools: ToolConfig
 )
@@ -613,8 +620,8 @@ class ConfigurationService(
         
         // MCP validation
         if (config.mcp.enabled) {
-            require(config.mcp.websocket.path.isNotBlank()) {
-                "MCP WebSocket path is required"
+            require(config.mcp.sse.path.isNotBlank()) {
+                "MCP SSE path is required"
             }
         }
     }
@@ -1103,14 +1110,18 @@ class ConfigurationValidator {
     }
     
     private fun validateMCP(config: MCPConfig, errors: MutableList<ValidationError>) {
-        if (config.websocket.path.isBlank()) {
-            errors.add(ValidationError("mcp.websocket.path", "WebSocket path cannot be blank"))
+        if (config.sse.path.isBlank()) {
+            errors.add(ValidationError("mcp.sse.path", "SSE path cannot be blank"))
         }
-        
-        if (config.websocket.pingInterval <= 0) {
-            errors.add(ValidationError("mcp.websocket.pingInterval", "Ping interval must be positive"))
+
+        if (config.post.path.isBlank()) {
+            errors.add(ValidationError("mcp.post.path", "POST path cannot be blank"))
         }
-        
+
+        if (config.sse.timeout <= 0) {
+            errors.add(ValidationError("mcp.sse.timeout", "SSE timeout must be positive"))
+        }
+
         if (config.tools.maxConcurrent <= 0) {
             errors.add(ValidationError("mcp.tools.maxConcurrent", "Max concurrent must be positive"))
         }
