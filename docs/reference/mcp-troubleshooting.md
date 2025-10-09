@@ -209,143 +209,144 @@ MCP_ENABLED=true ./gradlew run
 
 ---
 
-## Issue 2: WebSocket Handshake Failed
+## Issue 2: SSE Connection Failed
 
 ### Symptoms
 
 ```bash
-$ wscat -c ws://localhost:8080
-error: Unexpected server response: 404
+$ curl -N http://localhost:8080/mcp/events
+curl: (52) Empty reply from server
 ```
 
 ```bash
-$ wscat -c wss://localhost:8080/mcp
-error: Error: socket hang up
+$ curl -N https://localhost:8080/mcp/events
+curl: (60) SSL certificate problem
 ```
 
 **Observable Behavior**:
-- HTTP 400/404 errors during WebSocket upgrade
+- HTTP 400/404 errors when connecting to SSE endpoint
 - Connection closes immediately after attempt
-- "Unexpected server response" errors
-- SSL/TLS errors with `wss://` protocol
+- "Empty reply from server" errors
+- SSL/TLS errors with `https://` protocol
 
 ### Root Causes
 
-1. **Incorrect WebSocket URL**
-   - Missing `/mcp` path
-   - Wrong protocol (`wss://` instead of `ws://` for local)
+1. **Incorrect SSE endpoint URL**
+   - Missing `/mcp/events` path
+   - Wrong protocol (`https://` instead of `http://` for local)
    - Wrong host or port
 
-2. **Server not configured for WebSocket upgrade**
-   - HTTP endpoint exists but WebSocket not initialized
+2. **Server not configured for SSE**
+   - HTTP endpoint exists but SSE stream not initialized
    - Path mismatch between client and server
 
 3. **SSL/TLS configuration issues**
-   - Using `wss://` without SSL certificate
+   - Using `https://` without SSL certificate
    - Certificate validation failures
 
 ### Step-by-Step Solutions
 
-**Solution 1: Use correct WebSocket URL**
+**Solution 1: Use correct SSE endpoint URL**
 
 ```bash
-# ✅ CORRECT - Local development
-wscat -c ws://localhost:8080/mcp
+# ✅ CORRECT - Local development (SSE stream)
+curl -N http://localhost:8080/mcp/events
 
-# ❌ WRONG - Missing path
-wscat -c ws://localhost:8080
+# ❌ WRONG - Missing /events path
+curl -N http://localhost:8080/mcp
 
 # ❌ WRONG - Wrong protocol for local
-wscat -c wss://localhost:8080/mcp
+curl -N https://localhost:8080/mcp/events
 
 # ❌ WRONG - Wrong path
-wscat -c ws://localhost:8080/ws
+curl -N http://localhost:8080/ws
 ```
 
-**Solution 2: Verify server info before WebSocket connection**
+**Solution 2: Verify server info before SSE connection**
 
 ```bash
-# Step 1: Check HTTP endpoint
+# Step 1: Check HTTP server info endpoint
 curl http://localhost:8080/mcp
 
-# Step 2: Verify capabilities include WebSocket
-# Look for: "transports": ["websocket"]
+# Step 2: Verify capabilities include resources and tools
+# Look for: "capabilities": {"resources": true, "tools": true}
 
-# Step 3: Connect to WebSocket
-wscat -c ws://localhost:8080/mcp
+# Step 3: Connect to SSE stream
+curl -N http://localhost:8080/mcp/events
 ```
 
 **Solution 3: Test with custom path configuration**
 
 ```bash
-# Start server with custom path
-MCP_PATH=/custom ./gradlew run
+# Start server with custom SSE path
+MCP_SSE_PATH=/custom/events ./gradlew run
 
 # Connect using custom path
-wscat -c ws://localhost:8080/custom
+curl -N http://localhost:8080/custom/events
 
-# Verify with HTTP endpoint
-curl http://localhost:8080/custom
+# Verify with HTTP endpoint (POST path may differ)
+curl http://localhost:8080/mcp
 ```
 
-**Solution 4: Debug WebSocket handshake**
+**Solution 4: Debug SSE connection**
 
 ```bash
-# Use curl to see handshake details
+# Use curl with verbose output to see connection details
 curl -i -N \
-  -H "Connection: Upgrade" \
-  -H "Upgrade: websocket" \
-  -H "Sec-WebSocket-Version: 13" \
-  -H "Sec-WebSocket-Key: test" \
-  http://localhost:8080/mcp
+  -H "Accept: text/event-stream" \
+  http://localhost:8080/mcp/events
 
 # Expected response:
-# HTTP/1.1 101 Switching Protocols
-# Upgrade: websocket
-# Connection: upgrade
+# HTTP/1.1 200 OK
+# Content-Type: text/event-stream
+# Cache-Control: no-cache
+# Connection: keep-alive
 ```
 
 ### Prevention Tips
 
-- **Document WebSocket URL format**: Include in API documentation
+- **Document SSE endpoint URLs**: Include in API documentation
   ```
-  Local: ws://localhost:8080/mcp
-  Production: wss://api.example.com/mcp
+  Local SSE: http://localhost:8080/mcp/events
+  Local POST: http://localhost:8080/mcp
+  Production SSE: https://api.example.com/mcp/events
+  Production POST: https://api.example.com/mcp
   ```
 
 - **Consistent path configuration**: Use environment variables
   ```bash
-  export MCP_PATH=/mcp
+  export MCP_SSE_PATH=/mcp/events
+  export MCP_POST_PATH=/mcp
   ```
 
 - **Client configuration validation**: Validate URLs before connection
   ```kotlin
-  // Validate WebSocket URL (Ktor client)
+  // Validate SSE endpoint URL
   import io.ktor.http.*
 
-  fun validateMcpUrl(wsUrl: String) {
-      val url = Url(wsUrl)
-      require(url.protocol == URLProtocol.WS || url.protocol == URLProtocol.WSS) {
-          "Invalid WebSocket protocol: ${url.protocol.name}"
+  fun validateMcpSseUrl(sseUrl: String) {
+      val url = Url(sseUrl)
+      require(url.protocol == URLProtocol.HTTP || url.protocol == URLProtocol.HTTPS) {
+          "Invalid SSE protocol: ${url.protocol.name}"
       }
-      require(url.encodedPath.startsWith("/mcp")) {
-          "Invalid MCP path: ${url.encodedPath}"
+      require(url.encodedPath.contains("/events")) {
+          "Invalid MCP SSE path: ${url.encodedPath} (must contain /events)"
       }
   }
   ```
 
-- **Health check integration**: Test WebSocket connectivity in CI
+- **Health check integration**: Test SSE connectivity in CI
   ```bash
   #!/bin/bash
-  echo "Testing WebSocket handshake..."
-  wscat -c ws://localhost:8080/mcp --execute "exit" || exit 1
+  echo "Testing SSE connection..."
+  timeout 5 curl -N -f http://localhost:8080/mcp/events || exit 1
   ```
 
 ### Related Configuration
 
-- `MCPConfiguration.kt:21` - MCP path setting
-- `MCPConfiguration.kt:25-28` - WebSocket settings
-- Environment: `MCP_PATH`, `MCP_TIMEOUT`
+- `MCPConfiguration.kt:21` - MCP SSE path setting
+- `MCPConfiguration.kt:25-28` - SSE connection settings
+- Environment: `MCP_SSE_PATH`, `MCP_POST_PATH`, `MCP_TIMEOUT`
 
 ---
 
@@ -354,8 +355,8 @@ curl -i -N \
 ### Symptoms
 
 ```bash
-$ wscat -c ws://localhost:8080/mcp
-error: Error: Connection timeout
+$ curl -N --max-time 15 http://localhost:8080/mcp/events
+curl: (28) Operation timed out after 15000 milliseconds
 ```
 
 **Observable Behavior**:
@@ -393,28 +394,23 @@ error: Error: Connection timeout
 # "Application started in X.XX seconds."
 # "MCP server listening on 0.0.0.0:8080"
 
-# Then connect
-wscat -c ws://localhost:8080/mcp
+# Then connect to SSE stream
+curl -N http://localhost:8080/mcp/events
 ```
 
 **Solution 2: Increase client timeout**
 
 ```bash
-# Increase timeout in client configuration
-# Example with wscat
-wscat -c ws://localhost:8080/mcp --timeout 30000
+# Increase timeout with curl
+curl -N --max-time 30 http://localhost:8080/mcp/events
 ```
 
 ```kotlin
-// Example with Ktor WebSocket client
+// Example with Ktor SSE client
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.websocket.*
 
 val client = HttpClient(CIO) {
-    install(WebSockets) {
-        pingInterval = 30_000  // 30 seconds
-    }
     engine {
         requestTimeout = 30_000  // 30 seconds
     }
@@ -434,7 +430,7 @@ MCP_TIMEOUT=30000 ./gradlew run
 **Solution 4: Test HTTP endpoint first**
 
 ```bash
-# Quick health check before WebSocket
+# Quick health check before SSE connection
 curl -f http://localhost:8080/mcp || echo "Server not ready"
 
 # Retry with backoff
@@ -444,8 +440,8 @@ for i in {1..10}; do
   sleep 2
 done
 
-# Then connect WebSocket
-wscat -c ws://localhost:8080/mcp
+# Then connect to SSE stream
+curl -N http://localhost:8080/mcp/events
 ```
 
 **Solution 5: Check server resource usage**
@@ -484,11 +480,8 @@ pkill -f gradle
   ```
 
   ```kotlin
-  // Ktor client timeout configuration
+  // Ktor SSE client timeout configuration
   val client = HttpClient(CIO) {
-      install(WebSockets) {
-          pingInterval = 30_000
-      }
       engine {
           requestTimeout = 30_000
       }
@@ -503,18 +496,21 @@ pkill -f gradle
 - **Use connection retry logic**: Implement exponential backoff
   ```kotlin
   import io.ktor.client.*
-  import io.ktor.client.plugins.websocket.*
+  import io.ktor.client.request.*
+  import io.ktor.client.statement.*
   import kotlinx.coroutines.delay
   import kotlin.math.pow
 
-  suspend fun connectWithRetry(
+  suspend fun connectSseWithRetry(
       client: HttpClient,
       url: String,
       maxRetries: Int = 5
-  ): DefaultWebSocketSession {
+  ): HttpResponse {
       repeat(maxRetries) { attempt ->
           try {
-              return client.webSocketSession(url)
+              return client.get(url) {
+                  header("Accept", "text/event-stream")
+              }
           } catch (e: Exception) {
               if (attempt == maxRetries - 1) throw e
               val backoffMs = 2.0.pow(attempt).toLong() * 1000
@@ -527,7 +523,7 @@ pkill -f gradle
 
 ### Related Configuration
 
-- `MCPConfiguration.kt:26` - WebSocket timeout
+- `MCPConfiguration.kt:26` - SSE connection timeout
 - `MCPConfiguration.kt:34` - Request timeout
 - Environment: `MCP_TIMEOUT`, `MCP_REQUEST_TIMEOUT`
 
@@ -639,25 +635,42 @@ fun createJsonRpcRequest(method: String, params: JsonObject = JsonObject(emptyMa
     return Json.encodeToString(request)
 }
 
-// Usage with WebSocket session
-suspend fun DefaultWebSocketSession.sendJsonRpcRequest(method: String, params: JsonObject = JsonObject(emptyMap())) {
+// Usage with HTTP POST (client-to-server)
+suspend fun HttpClient.sendJsonRpcRequest(
+    url: String,
+    method: String,
+    params: JsonObject = JsonObject(emptyMap())
+): HttpResponse {
     val request = createJsonRpcRequest(method, params)
-    send(Frame.Text(request))
+    return this.post(url) {
+        header("Content-Type", "application/json")
+        setBody(request)
+    }
 }
 ```
 
 **Solution 3: Test with known-good requests**
 
 ```bash
+# Terminal 1: Open SSE stream to receive responses
+curl -N http://localhost:8080/mcp/events
+
+# Terminal 2: Send JSON-RPC requests via POST
+
 # Test tools/list
-wscat -c ws://localhost:8080/mcp
-> {"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 
 # Test resources/list
-> {"jsonrpc":"2.0","id":2,"method":"resources/list","params":{}}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"resources/list","params":{}}'
 
 # Test tool call
-> {
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
     "jsonrpc":"2.0",
     "id":3,
     "method":"tools/call",
@@ -665,14 +678,16 @@ wscat -c ws://localhost:8080/mcp
       "name":"create_project",
       "arguments":{"name":"Test Project","description":"Test"}
     }
-  }
+  }'
 ```
 
 **Solution 4: Handle JSON parsing errors**
 
 ```kotlin
-// Client error handling with Ktor WebSocket
-import io.ktor.websocket.*
+// Client error handling with HTTP POST responses
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 
@@ -690,28 +705,33 @@ data class JsonRpcResponse(
     val error: JsonRpcError? = null
 )
 
-suspend fun handleWebSocketMessages(session: DefaultWebSocketSession) {
-    for (frame in session.incoming) {
-        if (frame is Frame.Text) {
-            try {
-                val text = frame.readText()
-                val response = Json.decodeFromString<JsonRpcResponse>(text)
-
-                if (response.error != null) {
-                    println("JSON-RPC Error: ${response.error}")
-                    // Handle specific error codes
-                    when (response.error.code) {
-                        -32600 -> println("Invalid Request - check JSON-RPC format")
-                        -32601 -> println("Method not found")
-                        -32602 -> println("Invalid params")
-                    }
-                } else {
-                    println("Success: ${response.result}")
-                }
-            } catch (e: SerializationException) {
-                println("Failed to parse response: ${e.message}")
-            }
+suspend fun sendAndHandleJsonRpcRequest(
+    client: HttpClient,
+    url: String,
+    requestBody: String
+) {
+    try {
+        val response: HttpResponse = client.post(url) {
+            header("Content-Type", "application/json")
+            setBody(requestBody)
         }
+
+        val responseText = response.bodyAsText()
+        val jsonRpcResponse = Json.decodeFromString<JsonRpcResponse>(responseText)
+
+        if (jsonRpcResponse.error != null) {
+            println("JSON-RPC Error: ${jsonRpcResponse.error}")
+            // Handle specific error codes
+            when (jsonRpcResponse.error.code) {
+                -32600 -> println("Invalid Request - check JSON-RPC format")
+                -32601 -> println("Method not found")
+                -32602 -> println("Invalid params")
+            }
+        } else {
+            println("Success: ${jsonRpcResponse.result}")
+        }
+    } catch (e: SerializationException) {
+        println("Failed to parse response: ${e.message}")
     }
 }
 ```
@@ -720,30 +740,31 @@ suspend fun handleWebSocketMessages(session: DefaultWebSocketSession) {
 
 - **Use JSON-RPC client libraries**: Avoid manual formatting
   ```kotlin
-  // Create a reusable JSON-RPC client with Ktor
+  // Create a reusable JSON-RPC client with Ktor HTTP
   import io.ktor.client.*
-  import io.ktor.client.plugins.websocket.*
+  import io.ktor.client.request.*
+  import io.ktor.client.statement.*
   import kotlinx.serialization.json.*
 
-  class JsonRpcClient(private val url: String) {
-      private val client = HttpClient(CIO) {
-          install(WebSockets)
-      }
+  class JsonRpcClient(private val postUrl: String) {
+      private val client = HttpClient(CIO)
 
       suspend fun call(method: String, params: JsonObject = JsonObject(emptyMap())): JsonElement? {
-          return client.webSocketSession(url).use { session ->
-              val request = createJsonRpcRequest(method, params, id = 1)
-              session.send(Frame.Text(request))
+          val request = createJsonRpcRequest(method, params, id = 1)
 
-              val frame = session.incoming.receive() as Frame.Text
-              val response = Json.decodeFromString<JsonRpcResponse>(frame.readText())
-              response.result
+          val response: HttpResponse = client.post(postUrl) {
+              header("Content-Type", "application/json")
+              setBody(request)
           }
+
+          val responseText = response.bodyAsText()
+          val jsonRpcResponse = Json.decodeFromString<JsonRpcResponse>(responseText)
+          return jsonRpcResponse.result
       }
   }
 
   // Usage
-  val client = JsonRpcClient("ws://localhost:8080/mcp")
+  val client = JsonRpcClient("http://localhost:8080/mcp")
   client.call("tools/list")
   ```
 
@@ -772,11 +793,14 @@ suspend fun handleWebSocketMessages(session: DefaultWebSocketSession) {
 
 - **Request logging**: Log all requests for debugging
   ```kotlin
-  // Log WebSocket messages
-  suspend fun DefaultWebSocketSession.sendWithLogging(message: String) {
-      val formatted = Json.parseToJsonElement(message).toString()
+  // Log HTTP POST messages
+  suspend fun HttpClient.postWithLogging(url: String, body: String): HttpResponse {
+      val formatted = Json.parseToJsonElement(body).toString()
       println("[SEND] $formatted")
-      send(Frame.Text(message))
+      return this.post(url) {
+          header("Content-Type", "application/json")
+          setBody(body)
+      }
   }
   ```
 
@@ -842,14 +866,16 @@ suspend fun handleWebSocketMessages(session: DefaultWebSocketSession) {
 **Solution 1: List available tools**
 
 ```bash
-# Connect to MCP server
-wscat -c ws://localhost:8080/mcp
+# Terminal 1: Open SSE stream to receive responses
+curl -N http://localhost:8080/mcp/events
 
-# List all available tools
-> {"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}
+# Terminal 2: Send tools/list request via POST
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 
-# Response shows available tools
-< {
+# Response shows available tools (received in Terminal 1 via SSE)
+{
     "jsonrpc": "2.0",
     "result": {
       "tools": [
@@ -883,13 +909,19 @@ wscat -c ws://localhost:8080/mcp
 
 ```bash
 # ✅ CORRECT - snake_case naming
-> {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"create_project","arguments":{"name":"Test"}}}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"create_project","arguments":{"name":"Test"}}}'
 
 # ❌ WRONG - camelCase naming
-> {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"createProject","arguments":{"name":"Test"}}}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"createProject","arguments":{"name":"Test"}}}'
 
 # ❌ WRONG - kebab-case naming
-> {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"create-project","arguments":{"name":"Test"}}}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"create-project","arguments":{"name":"Test"}}}'
 ```
 
 **Solution 3: Verify tool provider configuration**
@@ -909,13 +941,17 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
 **Solution 4: Test tool with correct parameters**
 
 ```bash
-# Get tool schema first
-> {"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}
+# Get tool schema first via POST
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 
-# Check inputSchema for required parameters
+# Check inputSchema for required parameters in SSE response
 # Then call with correct parameters
 
-> {
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
     "jsonrpc":"2.0",
     "id":2,
     "method":"tools/call",
@@ -927,7 +963,7 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
         "startDate":"2024-01-01"
       }
     }
-  }
+  }'
 ```
 
 ### Prevention Tips
@@ -941,6 +977,10 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
 - **Tool discovery on connect**: List tools after connection
   ```kotlin
   import kotlinx.serialization.json.*
+  import io.ktor.client.*
+  import io.ktor.client.request.*
+  import io.ktor.client.statement.*
+
   // Discover available tools
   @Serializable
   data class ToolInfo(val name: String, val description: String)
@@ -948,12 +988,16 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
   @Serializable
   data class ToolsResult(val tools: List<ToolInfo>)
 
-  suspend fun discoverTools(session: DefaultWebSocketSession): List<String> {
+  suspend fun discoverTools(client: HttpClient, postUrl: String): List<String> {
       val request = createJsonRpcRequest("tools/list", JsonObject(emptyMap()), id = 1)
-      session.send(Frame.Text(request))
 
-      val frame = session.incoming.receive() as Frame.Text
-      val response = Json.decodeFromString<JsonRpcResponse>(frame.readText())
+      val httpResponse: HttpResponse = client.post(postUrl) {
+          header("Content-Type", "application/json")
+          setBody(request)
+      }
+
+      val responseText = httpResponse.bodyAsText()
+      val response = Json.decodeFromString<JsonRpcResponse>(responseText)
       val toolsResult = Json.decodeFromJsonElement<ToolsResult>(response.resultOrThrow())
 
       val toolNames = toolsResult.tools.map { it.name }
@@ -966,11 +1010,15 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
   ```kotlin
   // Tool validation before calling
   import kotlinx.serialization.json.*
-  class ValidatedToolClient(private val session: DefaultWebSocketSession) {
+  import io.ktor.client.*
+  import io.ktor.client.request.*
+  import io.ktor.client.statement.*
+
+  class ValidatedToolClient(private val client: HttpClient, private val postUrl: String) {
       private lateinit var availableTools: List<String>
 
       suspend fun initialize() {
-          availableTools = discoverTools(session)
+          availableTools = discoverTools(client, postUrl)
       }
 
       suspend fun callTool(name: String, arguments: JsonObject): JsonElement {
@@ -983,10 +1031,14 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
               put("arguments", arguments)
           }
           val request = createJsonRpcRequest("tools/call", params, id = 1)
-          session.send(Frame.Text(request))
 
-          val frame = session.incoming.receive() as Frame.Text
-          val response = Json.decodeFromString<JsonRpcResponse>(frame.readText())
+          val httpResponse: HttpResponse = client.post(postUrl) {
+              header("Content-Type", "application/json")
+              setBody(request)
+          }
+
+          val responseText = httpResponse.bodyAsText()
+          val response = Json.decodeFromString<JsonRpcResponse>(responseText)
           return response.resultOrThrow()
       }
   }
@@ -1065,14 +1117,16 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
 **Solution 1: List available resources**
 
 ```bash
-# Connect to MCP server
-wscat -c ws://localhost:8080/mcp
+# Terminal 1: Open SSE stream to receive responses
+curl -N http://localhost:8080/mcp/events
 
-# List all available resources
-> {"jsonrpc":"2.0","id":1,"method":"resources/list","params":{}}
+# Terminal 2: Send resources/list request via POST
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"resources/list","params":{}}'
 
-# Response shows available resource templates
-< {
+# Response shows available resource templates (received in Terminal 1 via SSE)
+{
     "jsonrpc": "2.0",
     "result": {
       "resources": [
@@ -1131,10 +1185,13 @@ cycletime://projectList  # Should be "projects"
 **Solution 3: Verify resource exists before reading**
 
 ```bash
-# Step 1: List resources to find valid IDs
-> {"jsonrpc":"2.0","id":1,"method":"resources/read","params":{"uri":"cycletime://projects"}}
+# Step 1: List resources to find valid IDs (via POST)
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"resources/read","params":{"uri":"cycletime://projects"}}'
 
-< {
+# Response (received via SSE):
+{
     "jsonrpc": "2.0",
     "result": {
       "contents": [
@@ -1149,7 +1206,9 @@ cycletime://projectList  # Should be "projects"
   }
 
 # Step 2: Read specific resource using valid ID
-> {"jsonrpc":"2.0","id":2,"method":"resources/read","params":{"uri":"cycletime://projects/proj_abc123"}}
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"resources/read","params":{"uri":"cycletime://projects/proj_abc123"}}'
 ```
 
 **Solution 4: Check resource provider registration**
@@ -1203,6 +1262,10 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
 - **Resource discovery**: List resources on startup
   ```kotlin
   import kotlinx.serialization.json.*
+  import io.ktor.client.*
+  import io.ktor.client.request.*
+  import io.ktor.client.statement.*
+
   // Discover available resources
   @Serializable
   data class ResourceInfo(val uri: String, val name: String, val description: String, val mimeType: String)
@@ -1210,12 +1273,16 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
   @Serializable
   data class ResourcesResult(val resources: List<ResourceInfo>)
 
-  suspend fun discoverResources(session: DefaultWebSocketSession): List<ResourceInfo> {
+  suspend fun discoverResources(client: HttpClient, postUrl: String): List<ResourceInfo> {
       val request = createJsonRpcRequest("resources/list", JsonObject(emptyMap()), id = 1)
-      session.send(Frame.Text(request))
 
-      val frame = session.incoming.receive() as Frame.Text
-      val response = Json.decodeFromString<JsonRpcResponse>(frame.readText())
+      val httpResponse: HttpResponse = client.post(postUrl) {
+          header("Content-Type", "application/json")
+          setBody(request)
+      }
+
+      val responseText = httpResponse.bodyAsText()
+      val response = Json.decodeFromString<JsonRpcResponse>(responseText)
       val resourcesResult = Json.decodeFromJsonElement<ResourcesResult>(response.resultOrThrow())
 
       println("Available resources: ${resourcesResult.resources.map { it.uri }}")
@@ -1227,10 +1294,14 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
   ```kotlin
   // Type-safe resource client
   import kotlinx.serialization.json.*
+  import io.ktor.client.*
+  import io.ktor.client.request.*
+  import io.ktor.client.statement.*
+
   @Serializable
   data class Session(val id: String, val projectId: String, val active: Boolean)
 
-  class ResourceClient(private val session: DefaultWebSocketSession) {
+  class ResourceClient(private val client: HttpClient, private val postUrl: String) {
       suspend fun getProjects(): List<Project> {
           return read("cycletime://projects")
       }
@@ -1246,10 +1317,14 @@ cat src/main/kotlin/io/spiralhouse/cycletime/mcp/MCPModule.kt
       private suspend inline fun <reified T> read(uri: String): T {
           val params = buildJsonObject { put("uri", uri) }
           val request = createJsonRpcRequest("resources/read", params, id = 1)
-          session.send(Frame.Text(request))
 
-          val frame = this.session.incoming.receive() as Frame.Text
-          val response = Json.decodeFromString<JsonRpcResponse>(frame.readText())
+          val httpResponse: HttpResponse = client.post(postUrl) {
+              header("Content-Type", "application/json")
+              setBody(request)
+          }
+
+          val responseText = httpResponse.bodyAsText()
+          val response = Json.decodeFromString<JsonRpcResponse>(responseText)
           return Json.decodeFromJsonElement(response.resultOrThrow())
       }
   }
@@ -1669,9 +1744,6 @@ DATABASE_LOGGING=true MCP_REQUEST_TIMEOUT=120000 ./gradlew run
   // Server timeout: 60s
   // Client timeout: 65s (5s buffer)
   val client = HttpClient(CIO) {
-      install(WebSockets) {
-          pingInterval = 30_000
-      }
       engine {
           requestTimeout = 65_000  // 5s buffer over server timeout
       }
@@ -1947,8 +2019,8 @@ lsof -i :8080  # Should show nothing
 # Start server on alternative port
 MCP_PORT=3006 ./gradlew run
 
-# Update client configuration
-wscat -c ws://localhost:3006/mcp
+# Update client configuration for SSE connection
+curl -N http://localhost:3006/mcp/events
 
 # Or use environment variable
 export MCP_PORT=3006
@@ -2105,25 +2177,27 @@ fi
 echo -n "Server info: "
 curl -s http://localhost:8080/mcp | jq -r '.name + " v" + .version'
 
-# Check WebSocket
-echo -n "WebSocket: "
-if echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | wscat -c ws://localhost:8080/mcp -w 1 > /dev/null 2>&1; then
+# Check SSE connectivity
+echo -n "SSE Connection: "
+if timeout 2 curl -N -f http://localhost:8080/mcp/events > /dev/null 2>&1; then
   echo "✅ OK"
 else
   echo "❌ FAILED"
 fi
 
-# Check tools
+# Check tools via POST endpoint
 echo "Available tools:"
-echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | \
-  wscat -c ws://localhost:8080/mcp -w 1 2>/dev/null | \
+curl -s -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | \
   jq -r '.result.tools[].name' | \
   sed 's/^/  - /'
 
-# Check resources
+# Check resources via POST endpoint
 echo "Available resources:"
-echo '{"jsonrpc":"2.0","id":1,"method":"resources/list","params":{}}' | \
-  wscat -c ws://localhost:8080/mcp -w 1 2>/dev/null | \
+curl -s -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"resources/list","params":{}}' | \
   jq -r '.result.resources[].uri' | \
   sed 's/^/  - /'
 
@@ -2175,18 +2249,17 @@ echo "1. Testing HTTP endpoint..."
 curl -v http://localhost:8080/mcp 2>&1 | grep -E "(HTTP|connected|Server)"
 
 echo ""
-echo "2. Testing WebSocket upgrade..."
-curl -v \
-  -H "Connection: Upgrade" \
-  -H "Upgrade: websocket" \
-  -H "Sec-WebSocket-Version: 13" \
-  -H "Sec-WebSocket-Key: test" \
-  http://localhost:8080/mcp 2>&1 | grep -E "(HTTP|Upgrade)"
+echo "2. Testing SSE endpoint..."
+curl -v -N \
+  -H "Accept: text/event-stream" \
+  --max-time 2 \
+  http://localhost:8080/mcp/events 2>&1 | grep -E "(HTTP|Content-Type)"
 
 echo ""
-echo "3. Testing JSON-RPC request..."
-echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | \
-  wscat -c ws://localhost:8080/mcp -w 1 2>&1
+echo "3. Testing JSON-RPC request via POST..."
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' 2>&1
 
 echo ""
 echo "=== Debug Complete ==="
@@ -2210,7 +2283,7 @@ echo "=== Debug Complete ==="
 | Code | Meaning | Common Causes |
 |------|---------|---------------|
 | 404 | Not Found | Wrong path, MCP disabled, server not started |
-| 400 | Bad Request | Malformed WebSocket upgrade request |
+| 400 | Bad Request | Malformed SSE connection request, incorrect headers |
 | 500 | Internal Server Error | Server crash, unhandled exception |
 | 503 | Service Unavailable | Server overloaded, database down |
 
@@ -2219,10 +2292,10 @@ echo "=== Debug Complete ==="
 When encountering MCP issues:
 
 - [ ] Verify server is running: `curl http://localhost:8080/mcp`
-- [ ] Check correct WebSocket URL: `ws://localhost:8080/mcp`
+- [ ] Check SSE connection: `curl -N http://localhost:8080/mcp/events`
 - [ ] Validate JSON-RPC format: Include `jsonrpc`, `id`, `method`
-- [ ] List available tools: `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`
-- [ ] List available resources: `{"jsonrpc":"2.0","id":1,"method":"resources/list"}`
+- [ ] List available tools via POST: `curl -X POST http://localhost:8080/mcp -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`
+- [ ] List available resources via POST: `curl -X POST http://localhost:8080/mcp -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","id":1,"method":"resources/list"}'`
 - [ ] Check server logs: `./gradlew run | grep -i error`
 - [ ] Verify port availability: `lsof -i :8080`
 - [ ] Enable metrics: `MCP_METRICS_ENABLED=true ./gradlew run`

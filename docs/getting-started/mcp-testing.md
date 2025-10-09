@@ -53,7 +53,8 @@ brew install httpie  # macOS
 ./gradlew run
 
 # Server starts at http://localhost:8080
-# WebSocket endpoint: ws://localhost:8080/mcp
+# SSE endpoint: http://localhost:8080/mcp/events
+# POST endpoint: http://localhost:8080/mcp
 ```
 
 **Development Mode with Hot Reload**:
@@ -166,12 +167,12 @@ curl -N http://localhost:8080/mcp/events
 
 **Expected Output**:
 ```
-# Connection established, waiting for server events
+# SSE connection established, waiting for server events
 # (Connection stays open, press CTRL+C to exit)
 ```
 
 **Verification**:
-- Connection establishes without errors
+- SSE connection establishes without errors
 - curl stays connected (doesn't immediately exit)
 - Server may send periodic keep-alive events
 
@@ -729,7 +730,7 @@ MCP_DETAILED_LOGGING=true ./gradlew run
 
 **Log Output** (example):
 ```
-[MCP] WebSocket connection established from /127.0.0.1:54321
+[MCP] SSE connection established from /127.0.0.1:54321
 [MCP] Received request: method=initialize, id=1
 [MCP] Processing initialize request...
 [MCP] Sending response: id=1, size=234 bytes
@@ -941,10 +942,10 @@ Use this checklist to verify complete MCP functionality:
 - [ ] Capabilities show resources=true, tools=true
 - [ ] GET /mcp/stats returns connection metrics (if enabled)
 
-### WebSocket Connectivity
-- [ ] WebSocket connection to ws://localhost:8080/mcp succeeds
+### SSE Connectivity
+- [ ] SSE connection to http://localhost:8080/mcp/events succeeds
 - [ ] Connection remains open and stable
-- [ ] Ping/pong frames work correctly
+- [ ] Keep-alive events work correctly
 
 ### MCP Protocol
 - [ ] Initialize handshake completes successfully
@@ -989,13 +990,13 @@ Use this checklist to verify complete MCP functionality:
 
 **Test multiple clients**:
 ```bash
-# Terminal 1
-wscat -c ws://localhost:8080/mcp
+# Terminal 1: First SSE connection
+curl -N http://localhost:8080/mcp/events
 
-# Terminal 2
-wscat -c ws://localhost:8080/mcp
+# Terminal 2: Second SSE connection
+curl -N http://localhost:8080/mcp/events
 
-# Terminal 3
+# Terminal 3: Check active connections
 curl http://localhost:8080/mcp | jq .activeConnections
 # Should show 2
 ```
@@ -1018,13 +1019,15 @@ curl http://localhost:8080/mcp/stats | jq '.connections.totalRequests'
 
 **Long-running connection test**:
 ```bash
-# Connect and leave idle
-wscat -c ws://localhost:8080/mcp
+# Terminal 1: Open SSE connection and leave idle
+curl -N http://localhost:8080/mcp/events
 
-# Wait 5 minutes, then send request
-{"jsonrpc":"2.0","id":1,"method":"tools/list"}
+# Terminal 2: Wait 5 minutes, then send request via POST
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 
-# Verify: Should still respond normally
+# Verify: Should still respond normally via SSE in Terminal 1
 # Connection should survive ping/timeout mechanisms
 ```
 

@@ -268,7 +268,7 @@ netstat -ano | findstr :8080
 MCP_PORT=3006 ./gradlew run
 
 # Update Claude Code configuration to match
-# url: "ws://localhost:3006/mcp"
+# url: "http://localhost:3006/mcp/events"
 ```
 
 ### SSE Connection Failed
