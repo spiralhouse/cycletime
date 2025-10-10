@@ -27,6 +27,12 @@ class SSEMCPSession(
 
     /**
      * SSE session is active if there's an active SSE connection subscribed to EventBus.
+     *
+     * **WARNING: LIVE QUERY - see [MCPSession.isActive] for TOCTOU race condition details.**
+     *
+     * This property queries EventBus state on every access. The value can change between
+     * consecutive reads if the SSE connection closes. Always use defensive error handling
+     * in send() rather than relying on this check for correctness.
      */
     override val isActive: Boolean
         get() = eventBus.hasActiveConnection(sessionId)

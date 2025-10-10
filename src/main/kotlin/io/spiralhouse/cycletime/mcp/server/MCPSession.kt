@@ -20,6 +20,35 @@ interface MCPSession {
 
     /**
      * Whether this session is currently active and can send messages.
+     *
+     * **WARNING: This is a LIVE QUERY, not a cached value.**
+     * - The value can change between consecutive reads (Time-Of-Check-Time-Of-Use race condition)
+     * - Property syntax suggests stability, but this queries live session state on every access
+     * - DO NOT rely on this for safety: `if (isActive) send()` has a race condition
+     *
+     * **Safe Usage Pattern:**
+     * ```kotlin
+     * // ❌ UNSAFE - race condition between check and send
+     * if (session.isActive) {
+     *     session.send(message)  // May fail if session closed between check and send
+     * }
+     *
+     * // ✅ SAFE - use defensive error handling
+     * try {
+     *     session.send(message)  // Let send() handle session state check
+     * } catch (e: IllegalStateException) {
+     *     // Handle inactive session
+     * }
+     * ```
+     *
+     * This property is useful for:
+     * - Monitoring/metrics (sampling current state)
+     * - Non-critical decisions (logging, UI updates)
+     * - Early bailout optimizations (if caller has proper error handling)
+     *
+     * But NOT for:
+     * - Critical correctness decisions
+     * - Preventing exceptions (always handle send() exceptions)
      */
     val isActive: Boolean
 

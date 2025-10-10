@@ -24,18 +24,20 @@ import kotlin.system.measureTimeMillis
  * @property id Unique connection identifier
  * @property session The MCP session (transport-agnostic)
  * @property connectedAt Timestamp when connection was established
- * @property lastActivity Timestamp of last activity (mutable, updated on each request)
+ * @property lastActivity Timestamp of last activity (atomic for thread safety in concurrent request processing)
  * @property requestCount Number of requests processed (atomic counter for thread safety)
  * @property errorCount Number of errors encountered (atomic counter for thread safety)
+ * @property sendFailureCount Number of consecutive send failures (for health monitoring)
  * @property metadata Extensible metadata storage for custom connection properties
  */
 class ConnectionInfo(
     val id: String,
     val session: MCPSession,
     val connectedAt: Long = System.currentTimeMillis(),
-    var lastActivity: Long = System.currentTimeMillis(),
+    val lastActivity: AtomicLong = AtomicLong(System.currentTimeMillis()),
     var requestCount: AtomicLong = AtomicLong(0),
     var errorCount: AtomicInteger = AtomicInteger(0),
+    val sendFailureCount: AtomicInteger = AtomicInteger(0),
     val metadata: MutableMap<String, Any> = ConcurrentHashMap()
 ) {
     /**
@@ -44,7 +46,7 @@ class ConnectionInfo(
      */
     override fun toString(): String {
         return "ConnectionInfo(id='$id', connectedAt=$connectedAt, " +
-               "lastActivity=$lastActivity, requests=${requestCount.get()}, " +
+               "lastActivity=${lastActivity.get()}, requests=${requestCount.get()}, " +
                "errors=${errorCount.get()}, metadataKeys=${metadata.keys})"
     }
 
@@ -126,11 +128,12 @@ class MCPConnectionManager(
             connections.remove(connectionId)?.let { info ->
                 connectionCount.decrementAndGet()
                 val duration = System.currentTimeMillis() - info.connectedAt
-                
+
                 logger.info(
                     "Connection unregistered: $connectionId " +
                     "(duration: ${duration}ms, requests: ${info.requestCount.get()}, " +
-                    "errors: ${info.errorCount.get()}, active: ${connectionCount.get()})"
+                    "errors: ${info.errorCount.get()}, active: ${connectionCount.get()}, " +
+                    "lastActivity: ${System.currentTimeMillis() - info.lastActivity.get()}ms ago)"
                 )
             }
         }
@@ -153,14 +156,17 @@ class MCPConnectionManager(
     ): String? {
         val connection = connections[connectionId] ?: return null
 
-        val processingTime = measureTimeMillis {
-            connection.lastActivity = System.currentTimeMillis()
-            connection.requestCount.incrementAndGet()
-            totalRequests.incrementAndGet()
-        }
+        // Update activity tracking BEFORE measurement (atomic operations are microsecond-level)
+        connection.lastActivity.set(System.currentTimeMillis())
+        connection.requestCount.incrementAndGet()
+        totalRequests.incrementAndGet()
 
         return try {
-            val response = measureAndProcess(message, handler)
+            // Measure ACTUAL processing time (not counter updates!)
+            lateinit var response: String
+            val processingTime = measureTimeMillis {
+                response = measureAndProcess(message, handler)
+            }
             recordLatency(processingTime)
             response
         } catch (e: Exception) {
@@ -174,6 +180,7 @@ class MCPConnectionManager(
      * Send a message to a specific connection with error handling.
      *
      * Transport-agnostic message sending that works with any MCPSession type.
+     * Tracks consecutive failures for health monitoring and connection cleanup.
      *
      * @param connectionId The connection identifier
      * @param message The message to send
@@ -184,14 +191,27 @@ class MCPConnectionManager(
 
         return try {
             connection.session.send(message)
-            connection.lastActivity = System.currentTimeMillis()
+            connection.lastActivity.set(System.currentTimeMillis())
+            connection.sendFailureCount.set(0)  // Reset failure count on success
             true
         } catch (e: CancellationException) {
             logger.debug("Send cancelled for connection: $connectionId")
+            connection.sendFailureCount.incrementAndGet()
             false
         } catch (e: Exception) {
-            logger.error("Failed to send message to connection $connectionId: ${e.message}")
             connection.errorCount.incrementAndGet()
+            val failureCount = connection.sendFailureCount.incrementAndGet()
+
+            // WARN for individual failures (production-visible)
+            logger.warn("Failed to send to session $connectionId: ${e.message}")
+
+            // ERROR for repeated failures (triggers alerts)
+            if (failureCount > 3) {
+                logger.error(
+                    "Session $connectionId has $failureCount consecutive send failures. " +
+                    "Connection may be dead. Consider cleanup."
+                )
+            }
             false
         }
     }
@@ -207,7 +227,7 @@ class MCPConnectionManager(
                 duration = now - info.connectedAt,
                 requests = info.requestCount.get(),
                 errors = info.errorCount.get(),
-                lastActivity = now - info.lastActivity
+                lastActivity = now - info.lastActivity.get()
             )
         }
         
@@ -235,9 +255,9 @@ class MCPConnectionManager(
         val staleThreshold = now - maxIdle.inWholeMilliseconds
 
         connections.entries.filter { (_, info) ->
-            info.lastActivity < staleThreshold
+            info.lastActivity.get() < staleThreshold
         }.forEach { (id, info) ->
-            logger.info("Closing stale connection: $id (idle: ${now - info.lastActivity}ms)")
+            logger.info("Closing stale connection: $id (idle: ${now - info.lastActivity.get()}ms)")
             try {
                 info.session.close()
             } catch (e: Exception) {
@@ -248,14 +268,53 @@ class MCPConnectionManager(
     }
     
     /**
-     * Broadcast a message to all connections.
+     * Broadcast a message to all connections with failure aggregation.
+     *
+     * Logs aggregated failure rate for production visibility. High failure rates
+     * (>10%) indicate systemic issues requiring investigation.
      */
     suspend fun broadcast(message: String) {
-        connections.values.parallelForEach { info ->
+        val allConnections = connections.values.toList()
+        val failures = mutableListOf<String>()
+
+        allConnections.parallelForEach { info ->
             try {
                 info.session.send(message)
+                info.sendFailureCount.set(0)  // Reset on successful broadcast
             } catch (e: Exception) {
-                logger.debug("Failed to broadcast to connection ${info.id}: ${e.message}")
+                failures.add(info.id)
+                val failureCount = info.sendFailureCount.incrementAndGet()
+
+                // Log individual failure at WARN
+                logger.warn("Broadcast failed for session ${info.id}: ${e.message}")
+
+                // Log repeated failures at ERROR
+                if (failureCount > 3) {
+                    logger.error(
+                        "Session ${info.id} has $failureCount consecutive broadcast failures. " +
+                        "Connection unhealthy."
+                    )
+                }
+            }
+        }
+
+        // Aggregate failure reporting for systemic issues
+        if (failures.isNotEmpty()) {
+            val failureRate = failures.size.toDouble() / allConnections.size
+            val failurePercent = String.format("%.1f", failureRate * 100)
+
+            if (failureRate > 0.1) {  // >10% failure rate = systemic issue
+                logger.error(
+                    "Broadcast failed for ${failures.size}/${allConnections.size} connections " +
+                    "($failurePercent% failure rate). Systemic issue detected. " +
+                    "Failed sessions: ${failures.take(10).joinToString()}" +
+                    if (failures.size > 10) " ... and ${failures.size - 10} more" else ""
+                )
+            } else {
+                logger.warn(
+                    "Broadcast failed for ${failures.size}/${allConnections.size} connections " +
+                    "($failurePercent% failure rate): ${failures.joinToString()}"
+                )
             }
         }
     }
