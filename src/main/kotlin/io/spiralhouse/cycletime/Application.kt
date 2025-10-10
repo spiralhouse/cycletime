@@ -560,7 +560,6 @@ private fun buildMcpHealthStatus(
             )
             
             val metrics = buildMap {
-                put("mcpConnections", mcpStatus.activeConnections.toString())
                 put("mcpPort", mcpStatus.port.toString())
                 put("mcpUptime", mcpStatus.uptimeMs.toString())
                 put("mcpStatus", if (mcpStatus.isRunning) "running" else "stopped")
@@ -573,7 +572,6 @@ private fun buildMcpHealthStatus(
                 "mcp" to "running"
             )
             val metrics = mapOf(
-                "mcpConnections" to "0", // No service available to get real count
                 "mcpPort" to "3006",
                 "mcpUptime" to "0",
                 "mcpStatus" to "running"

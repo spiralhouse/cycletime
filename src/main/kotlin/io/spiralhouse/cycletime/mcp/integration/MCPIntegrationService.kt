@@ -1,6 +1,5 @@
 package io.spiralhouse.cycletime.mcp.integration
 
-import io.spiralhouse.cycletime.mcp.server.MCPConnectionManager
 import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
 import io.spiralhouse.cycletime.mcp.protocol.ProtocolHandler
 import io.spiralhouse.cycletime.mcp.providers.ProjectResourceProvider
@@ -21,7 +20,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 class MCPIntegrationService(
     private val methodHandler: McpMethodHandler,
     private val protocolHandler: ProtocolHandler,
-    private val connectionManager: MCPConnectionManager,
     private val config: MCPServerConfig = MCPServerConfig(),
     private val resourceRegistry: ResourceRegistry? = null,
     private val toolRegistry: ToolRegistry? = null,
@@ -103,10 +101,9 @@ class MCPIntegrationService(
     fun isRunning(): Boolean = isRunning.get()
     
     /**
-     * Get simplified server status with real connection statistics.
+     * Get simplified server status.
      */
     fun getStatus(): MCPServerStatus {
-        val connectionStats = connectionManager.getStatistics()
         return MCPServerStatus(
             isRunning = isRunning(),
             port = config.port,
@@ -114,18 +111,15 @@ class MCPIntegrationService(
             path = config.path,
             enableSsl = config.enableSsl,
             registeredResources = listOfNotNull(
-                projectResourceProvider, 
-                issueResourceProvider, 
-                sessionResourceProvider, 
+                projectResourceProvider,
+                issueResourceProvider,
+                sessionResourceProvider,
                 workflowResourceProvider
             ).size,
             registeredTools = toolProviders.size,
             uptimeMs = if (isRunning.get() && serverStartTime > 0) {
                 System.currentTimeMillis() - serverStartTime
-            } else 0,
-            activeConnections = connectionStats.activeCount,
-            totalRequests = connectionStats.totalRequests,
-            totalErrors = connectionStats.totalErrors
+            } else 0
         )
     }
     
@@ -147,7 +141,7 @@ data class MCPServerConfig(
 )
 
 /**
- * Simplified status information for MCP server with connection statistics.
+ * Simplified status information for MCP server.
  */
 data class MCPServerStatus(
     val isRunning: Boolean,
@@ -157,10 +151,7 @@ data class MCPServerStatus(
     val enableSsl: Boolean,
     val registeredResources: Int = 0,
     val registeredTools: Int = 0,
-    val uptimeMs: Long = 0,
-    val activeConnections: Int = 0,
-    val totalRequests: Long = 0,
-    val totalErrors: Long = 0
+    val uptimeMs: Long = 0
 )
 
 /**
