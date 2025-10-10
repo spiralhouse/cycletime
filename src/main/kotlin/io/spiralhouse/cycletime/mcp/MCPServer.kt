@@ -1,15 +1,9 @@
 package io.spiralhouse.cycletime.mcp
 
-import io.spiralhouse.cycletime.domain.services.BuildInfo
-import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
-import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
-import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
-import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
 import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
 import io.spiralhouse.cycletime.mcp.server.MCPConfiguration
 import io.spiralhouse.cycletime.mcp.server.MCPConnectionManager
 import io.spiralhouse.cycletime.mcp.server.ConnectionCleanupService
-import io.spiralhouse.cycletime.mcp.websocket.MCPWebSocketHandler
 import io.spiralhouse.cycletime.mcp.sse.mcpSSEEndpoint
 import io.spiralhouse.cycletime.mcp.http.mcpPostEndpoint
 import io.spiralhouse.cycletime.mcp.session.MCPSessionManager
@@ -17,16 +11,11 @@ import io.spiralhouse.cycletime.mcp.correlation.EventBus
 import io.spiralhouse.cycletime.mcp.correlation.MessageCorrelator
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.sse.*
-import io.ktor.server.websocket.*
-import io.ktor.websocket.*
 import io.ktor.server.plugins.di.*
 import kotlinx.coroutines.*
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
-import kotlin.system.measureTimeMillis
 
 // Extension function for formatting doubles
 private fun Double.format(decimals: Int): String = "%.${decimals}f".format(this)
@@ -60,8 +49,7 @@ fun Routing.configureMCP() {
     
     // Get shared components from DI
     val connectionManager: MCPConnectionManager by application.dependencies
-    val protocolHandler = JsonRpcProtocolHandler() // Reuse single instance
-    
+
     // Initialize and start the cleanup service with proper lifecycle management
     val cleanupService = ConnectionCleanupService(
         connectionManager = connectionManager,
@@ -90,39 +78,6 @@ fun Routing.configureMCP() {
         mcpPostEndpoint(sessionManager, eventBus, correlator, methodHandler)
     }
 
-    // WebSocket endpoint for MCP protocol communication
-    webSocket("/mcp") {
-        val connectionStartTime = System.currentTimeMillis()
-        
-        try {
-            // Get MCP components from DI
-            val methodHandler: McpMethodHandler by application.dependencies
-            
-            // Create handler for this connection
-            val handler = MCPWebSocketHandler(
-                config = config,
-                methodHandler = methodHandler,
-                protocolHandler = protocolHandler,
-                connectionManager = connectionManager
-            )
-            
-            // Handle connection
-            val processingTime = measureTimeMillis {
-                handler.handleConnection(this)
-            }
-            
-            if (config.detailedLogging) {
-                logger.info("MCP WebSocket connection closed after ${processingTime}ms")
-            }
-            
-        } catch (e: Exception) {
-            logger.error("MCP WebSocket error: ${e.message}", e)
-            closeReason.await()?.let { reason ->
-                logger.info("Connection closed: ${reason.message}")
-            }
-        }
-    }
-    
     // Register cleanup service for proper shutdown
     // The cleanup service is already running via application scope
     // We just need to ensure it's stopped when the application stops

@@ -1,6 +1,5 @@
 package io.spiralhouse.cycletime.mcp.server
 
-import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
@@ -15,24 +14,68 @@ import kotlin.system.measureTimeMillis
 
 /**
  * Connection information for tracking and monitoring.
+ *
+ * Uses regular class (not data class) because it contains mutable state
+ * that changes during the connection lifecycle (lastActivity, counters, metadata).
+ * Data classes are intended for immutable value objects.
+ *
+ * Uses generic MCPSession interface to support multiple transport types (SSE, WebSocket, etc.)
+ *
+ * @property id Unique connection identifier
+ * @property session The MCP session (transport-agnostic)
+ * @property connectedAt Timestamp when connection was established
+ * @property lastActivity Timestamp of last activity (mutable, updated on each request)
+ * @property requestCount Number of requests processed (atomic counter for thread safety)
+ * @property errorCount Number of errors encountered (atomic counter for thread safety)
+ * @property metadata Extensible metadata storage for custom connection properties
  */
-data class ConnectionInfo(
+class ConnectionInfo(
     val id: String,
-    val session: WebSocketSession,
+    val session: MCPSession,
     val connectedAt: Long = System.currentTimeMillis(),
     var lastActivity: Long = System.currentTimeMillis(),
     var requestCount: AtomicLong = AtomicLong(0),
     var errorCount: AtomicInteger = AtomicInteger(0),
     val metadata: MutableMap<String, Any> = ConcurrentHashMap()
-)
+) {
+    /**
+     * String representation for debugging and logging.
+     * Provides snapshot of current connection state.
+     */
+    override fun toString(): String {
+        return "ConnectionInfo(id='$id', connectedAt=$connectedAt, " +
+               "lastActivity=$lastActivity, requests=${requestCount.get()}, " +
+               "errors=${errorCount.get()}, metadataKeys=${metadata.keys})"
+    }
+
+    /**
+     * Equality based on connection ID only.
+     * Two connections are equal if they have the same ID.
+     */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ConnectionInfo) return false
+        return id == other.id
+    }
+
+    /**
+     * Hash code based on connection ID only.
+     * Consistent with equals() - only ID matters for identity.
+     */
+    override fun hashCode(): Int {
+        return id.hashCode()
+    }
+}
 
 /**
- * Production-ready WebSocket connection manager with optimized resource management.
- * 
+ * Production-ready transport-agnostic connection manager with optimized resource management.
+ *
+ * Supports multiple transport types (SSE, WebSocket, etc.) via the MCPSession interface.
+ *
  * Features:
  * - Connection pooling and limits
  * - Graceful degradation under load
- * - Memory-efficient frame processing
+ * - Memory-efficient message processing
  * - Connection health monitoring
  * - Automatic cleanup of stale connections
  */
@@ -51,37 +94,32 @@ class MCPConnectionManager(
     private val latencyMutex = Mutex()
     private val maxLatencySamples = 1000
     
-    // Frame processing optimization
-    private val frameBuffer = Channel<Pair<String, Frame>>(capacity = Channel.BUFFERED)
-    
     /**
-     * Register a new WebSocket connection.
-     * 
+     * Register a new MCP session (transport-agnostic).
+     *
+     * @param session The MCP session to register (SSE, WebSocket, etc.)
      * @return Connection ID if accepted, null if rejected
      */
-    suspend fun registerConnection(session: WebSocketSession): String? {
+    suspend fun registerConnection(session: MCPSession): String? {
         return connectionMutex.withLock {
             if (connectionCount.get() >= config.maxConnections) {
                 logger.warn("Connection rejected: max connections (${config.maxConnections}) reached")
-                session.close(CloseReason(
-                    CloseReason.Codes.TRY_AGAIN_LATER,
-                    "Server at capacity"
-                ))
+                session.close()
                 return null
             }
-            
+
             val connectionId = generateConnectionId()
             val info = ConnectionInfo(connectionId, session)
             connections[connectionId] = info
             connectionCount.incrementAndGet()
-            
+
             logger.info("Connection registered: $connectionId (active: ${connectionCount.get()})")
             connectionId
         }
     }
     
     /**
-     * Unregister a WebSocket connection.
+     * Unregister an MCP session.
      */
     suspend fun unregisterConnection(connectionId: String) {
         connectionMutex.withLock {
@@ -99,56 +137,60 @@ class MCPConnectionManager(
     }
     
     /**
-     * Process an incoming frame with optimized handling.
+     * Process an incoming message with optimized handling.
+     *
+     * Transport-agnostic message processing that works with any MCPSession type.
+     *
+     * @param connectionId The connection identifier
+     * @param message The message content (typically JSON-RPC 2.0 format)
+     * @param handler The message handler function
+     * @return The response message, or null if connection not found
      */
-    suspend fun processFrame(
+    suspend fun processMessage(
         connectionId: String,
-        frame: Frame,
+        message: String,
         handler: suspend (String) -> String
     ): String? {
         val connection = connections[connectionId] ?: return null
-        
-        return when (frame) {
-            is Frame.Text -> {
-                val processingTime = measureTimeMillis {
-                    connection.lastActivity = System.currentTimeMillis()
-                    connection.requestCount.incrementAndGet()
-                    totalRequests.incrementAndGet()
-                }
-                
-                try {
-                    val response = measureAndProcess(frame.readText(), handler)
-                    recordLatency(processingTime)
-                    response
-                } catch (e: Exception) {
-                    connection.errorCount.incrementAndGet()
-                    totalErrors.incrementAndGet()
-                    throw e
-                }
-            }
-            is Frame.Binary -> {
-                logger.warn("Binary frames not supported for connection: $connectionId")
-                null
-            }
-            else -> null
+
+        val processingTime = measureTimeMillis {
+            connection.lastActivity = System.currentTimeMillis()
+            connection.requestCount.incrementAndGet()
+            totalRequests.incrementAndGet()
+        }
+
+        return try {
+            val response = measureAndProcess(message, handler)
+            recordLatency(processingTime)
+            response
+        } catch (e: Exception) {
+            connection.errorCount.incrementAndGet()
+            totalErrors.incrementAndGet()
+            throw e
         }
     }
     
     /**
-     * Send a frame to a specific connection with error handling.
+     * Send a message to a specific connection with error handling.
+     *
+     * Transport-agnostic message sending that works with any MCPSession type.
+     *
+     * @param connectionId The connection identifier
+     * @param message The message to send
+     * @return true if sent successfully, false otherwise
      */
-    suspend fun sendFrame(connectionId: String, frame: Frame): Boolean {
+    suspend fun sendMessage(connectionId: String, message: String): Boolean {
         val connection = connections[connectionId] ?: return false
-        
+
         return try {
-            connection.session.send(frame)
+            connection.session.send(message)
             connection.lastActivity = System.currentTimeMillis()
             true
         } catch (e: CancellationException) {
             logger.debug("Send cancelled for connection: $connectionId")
             false
         } catch (e: Exception) {
-            logger.error("Failed to send frame to connection $connectionId: ${e.message}")
+            logger.error("Failed to send message to connection $connectionId: ${e.message}")
             connection.errorCount.incrementAndGet()
             false
         }
@@ -188,19 +230,16 @@ class MCPConnectionManager(
      */
     suspend fun cleanupStaleConnections(maxIdle: Duration = Duration.INFINITE) {
         if (maxIdle == Duration.INFINITE) return
-        
+
         val now = System.currentTimeMillis()
         val staleThreshold = now - maxIdle.inWholeMilliseconds
-        
+
         connections.entries.filter { (_, info) ->
             info.lastActivity < staleThreshold
         }.forEach { (id, info) ->
             logger.info("Closing stale connection: $id (idle: ${now - info.lastActivity}ms)")
             try {
-                info.session.close(CloseReason(
-                    CloseReason.Codes.NORMAL,
-                    "Connection idle timeout"
-                ))
+                info.session.close()
             } catch (e: Exception) {
                 logger.debug("Error closing stale connection: ${e.message}")
             }
@@ -209,12 +248,12 @@ class MCPConnectionManager(
     }
     
     /**
-     * Broadcast a frame to all connections.
+     * Broadcast a message to all connections.
      */
-    suspend fun broadcast(frame: Frame) {
+    suspend fun broadcast(message: String) {
         connections.values.parallelForEach { info ->
             try {
-                info.session.send(frame)
+                info.session.send(message)
             } catch (e: Exception) {
                 logger.debug("Failed to broadcast to connection ${info.id}: ${e.message}")
             }
@@ -238,18 +277,15 @@ class MCPConnectionManager(
      */
     suspend fun closeAll() {
         logger.info("Closing all ${connections.size} connections")
-        
+
         connections.values.parallelForEach { info ->
             try {
-                info.session.close(CloseReason(
-                    CloseReason.Codes.GOING_AWAY,
-                    "Server shutting down"
-                ))
+                info.session.close()
             } catch (e: Exception) {
                 logger.debug("Error closing connection ${info.id}: ${e.message}")
             }
         }
-        
+
         connections.clear()
         connectionCount.set(0)
     }

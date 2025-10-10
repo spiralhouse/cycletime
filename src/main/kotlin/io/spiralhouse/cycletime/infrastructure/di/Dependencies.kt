@@ -16,8 +16,6 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import org.jetbrains.exposed.sql.Database
 import org.slf4j.LoggerFactory
 import io.spiralhouse.cycletime.infrastructure.database.DatabaseProvider
-import io.spiralhouse.cycletime.mcp.handlers.DefaultWebSocketHandler
-import io.spiralhouse.cycletime.mcp.handlers.WebSocketHandler
 import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
 import io.spiralhouse.cycletime.mcp.integration.MCPServerConfig
 import io.spiralhouse.cycletime.mcp.integration.MCPProviderRegistry
@@ -257,9 +255,7 @@ private fun DependencyRegistry.configureMCPDependencies() {
             )
         )
     }
-    
-    provide<WebSocketHandler> { DefaultWebSocketHandler(resolve()) }
-    
+
     // Resource Providers
     provide<ProjectResourceProvider> { 
         DefaultProjectResourceProvider(

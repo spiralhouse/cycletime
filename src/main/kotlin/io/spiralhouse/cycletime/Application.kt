@@ -34,7 +34,6 @@ import io.ktor.server.plugins.di.*
 import io.ktor.server.plugins.di.DI
 import io.ktor.server.plugins.openapi.*
 import io.ktor.server.plugins.swagger.*
-import io.ktor.server.websocket.*
 import kotlin.time.Duration.Companion.seconds
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -306,8 +305,8 @@ private fun Application.configureDatabaseConnection(
 }
 
 /**
- * Configure Ktor features including content negotiation, SSE, and WebSockets.
- * 
+ * Configure Ktor features including content negotiation and SSE.
+ *
  * @param logger Application logger
  * @param performanceMetrics Map to store timing metrics
  */
@@ -326,15 +325,7 @@ private fun Application.configureKtorFeatures(
     }
 
     install(SSE)
-    
-    // Install WebSocket support for MCP
-    install(WebSockets) {
-        pingPeriod = 30.seconds
-        timeout = 15.seconds
-        maxFrameSize = Long.MAX_VALUE
-        masking = false
-    }
-    
+
     val featuresEndTime = System.currentTimeMillis()
     val featuresTime = featuresEndTime - featuresStartTime
     performanceMetrics["features"] = featuresTime
@@ -577,7 +568,7 @@ private fun buildMcpHealthStatus(
             
             HealthStatus(dependencies, metrics)
         } else {
-            // WebSocket endpoint available but no monitoring service
+            // SSE endpoint available but no monitoring service
             val dependencies = mapOf(
                 "mcp" to "running"
             )

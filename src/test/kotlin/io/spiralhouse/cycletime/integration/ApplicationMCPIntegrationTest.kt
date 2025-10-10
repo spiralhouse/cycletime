@@ -25,7 +25,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Integration tests for MCP WebSocket server integration into Application.kt startup flow.
+ * Integration tests for MCP server integration into Application.kt startup flow.
  *
  * Phase 9: These tests validate that the MCP server works end-to-end
  * after the 8-phase extraction from the mega-PR.
