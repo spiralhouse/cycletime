@@ -93,7 +93,7 @@ cycletime/                               # Root project directory
 │   │   │       ├── resources/       # MCP resources for Claude Code
 │   │   │       ├── server/          # MCP server core
 │   │   │       ├── tools/           # MCP tools for operations
-│   │   │       └── websocket/       # WebSocket transport
+│   │   │       └── sse/             # SSE transport
 │   │   └── resources/                 # Resources
 │   │       ├── application.conf       # Ktor configuration
 │   │       └── META-INF/              # Metadata
@@ -214,7 +214,7 @@ io.spiralhouse.cycletime/
     ├── resources/    # MCP Resources for Claude Code
     ├── server/       # MCP server core functionality
     ├── tools/        # MCP Tools for operations
-    └── websocket/    # WebSocket transport layer
+    └── sse/          # SSE transport layer
 ```
 
 ### 3. Dependency Rules

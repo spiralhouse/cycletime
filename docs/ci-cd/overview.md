@@ -392,7 +392,7 @@ outputs: type=docker,dest=/tmp/cycletime-image.tar
 **Test Coverage**:
 - **Health Endpoint**: Validates `/health` endpoint response
 - **MCP Endpoints**: Tests `/mcp`, `/mcp/tools`, `/mcp/resources` accessibility
-- **WebSocket Connectivity**: Verifies WebSocket endpoint at `/ws`
+- **SSE Connectivity**: Verifies SSE endpoint at `/mcp/events`
 - **Container Startup Time**: Ensures startup within 30 seconds
 - **Resource Usage**: Validates memory usage under 512MB
 - **Port Accessibility**: Confirms host-to-container port mapping
@@ -645,7 +645,7 @@ The container publishing process implements multiple validation gates to ensure 
 **Gate 2: Smoke Test Validation** (Container Smoke Tests Job)
 - Health endpoint response validation
 - MCP server endpoint accessibility
-- WebSocket connectivity verification
+- SSE connectivity verification
 - Resource usage validation (< 512MB memory)
 - Container startup time verification (< 30 seconds)
 - Port accessibility from host system

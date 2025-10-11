@@ -25,7 +25,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Integration tests for MCP WebSocket server integration into Application.kt startup flow.
+ * Integration tests for MCP server integration into Application.kt startup flow.
  *
  * Phase 9: These tests validate that the MCP server works end-to-end
  * after the 8-phase extraction from the mega-PR.
@@ -72,12 +72,11 @@ class ApplicationMCPIntegrationTest : StringSpec({
 
             val healthJson = Json.parseToJsonElement(healthResponse.bodyAsText())
             val dependencies = healthJson.jsonObject["dependencies"]?.jsonObject
-            
+
             // Health endpoint should include MCP server status
             dependencies?.get("mcp")?.jsonPrimitive?.content shouldBe "running"
-            
+
             val metrics = healthJson.jsonObject["metrics"]?.jsonObject
-            metrics?.get("mcpConnections")?.jsonPrimitive?.content shouldBe "0"
             metrics?.get("mcpPort")?.jsonPrimitive?.content shouldBe "3006"
         }
     }
@@ -161,9 +160,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
 
             val healthJson = Json.parseToJsonElement(healthResponse.bodyAsText())
             val metrics = healthJson.jsonObject["metrics"]?.jsonObject
-            
+
             // Verify metrics are present
-            metrics?.get("mcpConnections") shouldNotBe null
             metrics?.get("mcpPort") shouldNotBe null
             metrics?.get("mcpUptime") shouldNotBe null
             metrics?.get("mcpStatus") shouldNotBe null

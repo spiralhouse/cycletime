@@ -1,5 +1,7 @@
 # ADR-006: Lifecycle-Managed Connection Cleanup Service
 
+> **Historical Note**: This document describes the WebSocket-based MCP implementation that was superseded by SSE (Server-Sent Events) transport in SPI-665 (October 2025). CycleTime now uses SSE transport following MCP specification v2024-11-05. For current implementation details, see [MCP Client Setup](../../getting-started/mcp-client-setup.md) and [MCP Integration Patterns](mcp-integration-patterns.md).
+
 ## Status
 Accepted
 
