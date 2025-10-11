@@ -56,7 +56,14 @@ fun Route.mcpSSEEndpoint(
             // Establish SSE connection using respondTextWriter
             call.respondTextWriter(contentType = ContentType.Text.EventStream) {
                 try {
-                    // Always send session ID as first event (for client confirmation)
+                    // MCP Spec Requirement: Send 'endpoint' event FIRST
+                    // This tells the client where to send POST requests
+                    write("event: endpoint\n")
+                    write("data: /mcp\n\n")
+                    flush()
+                    logger.debug("Sent endpoint event for session: $sessionId")
+
+                    // Then send session ID as second event (for client confirmation)
                     // Note: Using manual formatting to ensure "event:" comes before "data:"
                     // as expected by SSE clients and tests
                     write("event: session\n")

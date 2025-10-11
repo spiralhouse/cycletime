@@ -122,9 +122,11 @@ class SSEEndpointIntegrationTest : SSETestBase() {
 
                 // Read first chunk from stream with timeout
                 val body = readSSEStream(response)
-                // After SPI-689: First event should be session event (for confirmation)
+                // After SPI-698: First event is endpoint event (MCP spec requirement)
+                // Second event is session event (for confirmation)
                 if (body.isNotEmpty()) {
-                    body shouldStartWith "event: session" // Session confirmation event
+                    body shouldStartWith "event: endpoint" // MCP spec: endpoint event first
+                    body shouldContain "event: session" // Session confirmation follows
                 }
             }
         }

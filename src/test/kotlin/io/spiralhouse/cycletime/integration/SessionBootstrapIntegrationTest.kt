@@ -208,17 +208,22 @@ class SessionBootstrapIntegrationTest : DescribeSpec({
                     response.contentType()?.contentType shouldBe "text"
                     response.contentType()?.contentSubtype shouldBe "event-stream"
 
-                    // Read first SSE event
+                    // Read first SSE event (endpoint event per MCP spec)
                     val channel = response.bodyAsChannel()
                     val firstEvent = channel.readSSEEvent()
 
-                    // Validate first event contains session ID
+                    // Validate first event is endpoint event (MCP spec requirement)
                     firstEvent.isNotBlank() shouldBe true
-                    firstEvent shouldContain "event: session"
-                    firstEvent shouldContain "sessionId"
+                    firstEvent shouldContain "event: endpoint"
+                    firstEvent shouldContain "/mcp"
+
+                    // Read second SSE event (session event)
+                    val secondEvent = channel.readSSEEvent()
+                    secondEvent shouldContain "event: session"
+                    secondEvent shouldContain "sessionId"
 
                     // Extract and validate session ID format
-                    val sessionId = extractSessionIdFromSSEEvent(firstEvent)
+                    val sessionId = extractSessionIdFromSSEEvent(secondEvent)
                     sessionId shouldNotBe null
                     UUID.fromString(sessionId!!) // Should not throw
                 }
@@ -241,11 +246,14 @@ class SessionBootstrapIntegrationTest : DescribeSpec({
 
                     response.status shouldBe HttpStatusCode.OK
 
-                    // Read first event
+                    // Read first event (endpoint event per MCP spec)
                     val channel = response.bodyAsChannel()
                     val firstEvent = channel.readSSEEvent()
+                    firstEvent shouldContain "event: endpoint"
 
-                    firstEvent shouldContain existingSessionId
+                    // Read second event (session event with session ID)
+                    val secondEvent = channel.readSSEEvent()
+                    secondEvent shouldContain existingSessionId
                 }
             }
         }
@@ -263,10 +271,16 @@ class SessionBootstrapIntegrationTest : DescribeSpec({
                 val sseJob = launch {
                     client.prepareGet("/mcp/events").execute { response ->
                         val channel = response.bodyAsChannel()
-                        val firstEvent = channel.readSSEEvent()
 
-                        if (firstEvent.contains("sessionId")) {
-                            capturedSessionId = extractSessionIdFromSSEEvent(firstEvent)
+                        // First event: endpoint event (MCP spec)
+                        val firstEvent = channel.readSSEEvent()
+                        // Verify it's the endpoint event
+                        firstEvent shouldContain "event: endpoint"
+
+                        // Second event: session event
+                        val secondEvent = channel.readSSEEvent()
+                        if (secondEvent.contains("sessionId")) {
+                            capturedSessionId = extractSessionIdFromSSEEvent(secondEvent)
                         }
                     }
                 }
