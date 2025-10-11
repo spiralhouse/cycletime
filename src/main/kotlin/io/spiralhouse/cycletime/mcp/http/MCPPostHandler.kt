@@ -36,21 +36,24 @@ fun Route.mcpPostEndpoint(
     methodHandler: McpMethodHandler
 ) {
     post("/mcp") {
-        val sessionId = call.validateSessionHeader("POST", logger) ?: return@post
-
         try {
-            // Validate and get/create session
-            sessionManager.getOrCreateSession(sessionId)
-
-            // Read and parse request body
+            // Step 1: Parse request FIRST to identify method
             val requestBody = call.receiveText()
-            logger.debug("POST request from session $sessionId: $requestBody")
+            logger.debug("POST request body: $requestBody")
 
             // Validate request size
             validateRequestSize(requestBody)
 
             // Parse JSON-RPC request
             val jsonRpcRequest = parseJsonRpcRequest(requestBody)
+
+            // Step 2: Get or generate session ID based on method
+            // Bootstrap pattern: 'initialize' can create new session, others require existing
+            val sessionId = call.getOrGenerateSessionId(jsonRpcRequest.method, logger)
+                ?: return@post
+
+            // Step 3: Validate and get/create session
+            sessionManager.getOrCreateSession(sessionId)
 
             // Register pending request for correlation (if not a notification)
             if (jsonRpcRequest.id != null) {
@@ -61,8 +64,8 @@ fun Route.mcpPostEndpoint(
                 )
             }
 
-            // Process request through method handler
-            val jsonRpcResponse = methodHandler.handleRequest(jsonRpcRequest)
+            // Process request through method handler (PASS sessionId)
+            val jsonRpcResponse = methodHandler.handleRequest(jsonRpcRequest, sessionId)
 
             // Queue response for SSE delivery (EventBus buffers if connection not yet established)
             val responseJson = Json.encodeToString(
@@ -78,9 +81,9 @@ fun Route.mcpPostEndpoint(
 
             eventBus.publish(sessionId, sseEvent)
 
-            // Return 202 Accepted (response queued for SSE delivery)
-            call.respond(HttpStatusCode.Accepted)
-            logger.debug("Response queued for SSE delivery to session $sessionId")
+            // Return 202 Accepted with JSON-RPC response
+            call.respond(HttpStatusCode.Accepted, jsonRpcResponse)
+            logger.debug("Response sent for session $sessionId")
 
         } catch (e: SecurityException) {
             call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid session ID"))
@@ -99,7 +102,7 @@ fun Route.mcpPostEndpoint(
             logger.warn("Session limit exceeded: ${e.message}")
         } catch (e: Exception) {
             call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Internal server error"))
-            logger.error("POST handler error for session $sessionId", e)
+            logger.error("POST handler error", e)
         }
     }
 }

@@ -7,6 +7,10 @@
     "context7": {
       "type": "sse",
       "url": "https://mcp.context7.com/sse"
+    },
+    "cycletime": {
+      "type": "http",
+      "url": "http://localhost:8080/mcp"
     }
   }
 }
