@@ -50,6 +50,8 @@ class McpToolIntegrationTest : DescribeSpec({
 
     // ===== Integration Test Setup =====
 
+    val testSessionId = "test-session-integration"
+
     lateinit var toolRegistry: ToolRegistry
     lateinit var toolHandler: DefaultMcpToolHandler
     lateinit var methodHandler: McpMethodHandler
@@ -275,7 +277,7 @@ class McpToolIntegrationTest : DescribeSpec({
             params = JsonObject(emptyMap()),
             id = JsonPrimitive("test-list-1")
         )
-        return methodHandler.handleRequest(request)
+        return methodHandler.handleRequest(request, testSessionId)
     }
 
     suspend fun executeToolsCall(toolName: String, arguments: JsonObject = JsonObject(emptyMap())): JsonRpcResponse {
@@ -288,7 +290,7 @@ class McpToolIntegrationTest : DescribeSpec({
             },
             id = JsonPrimitive("test-call-1")
         )
-        return methodHandler.handleRequest(request)
+        return methodHandler.handleRequest(request, testSessionId)
     }
 
     // ===== Integration Tests =====
@@ -601,7 +603,7 @@ class McpToolIntegrationTest : DescribeSpec({
                     id = JsonPrimitive("test")
                 )
 
-                val response = methodHandler.handleRequest(invalidRequest)
+                val response = methodHandler.handleRequest(invalidRequest, testSessionId)
 
                 response.error shouldNotBe null
                 response.error!!.code shouldBe -32700 // Parse error
@@ -615,7 +617,7 @@ class McpToolIntegrationTest : DescribeSpec({
                     id = JsonPrimitive("test")
                 )
 
-                val response = methodHandler.handleRequest(request)
+                val response = methodHandler.handleRequest(request, testSessionId)
 
                 response.error shouldNotBe null
                 response.error!!.code shouldBe -32602 // Invalid params
@@ -635,7 +637,7 @@ class McpToolIntegrationTest : DescribeSpec({
                     id = JsonPrimitive("test")
                 )
 
-                val response = methodHandler.handleRequest(request)
+                val response = methodHandler.handleRequest(request, testSessionId)
 
                 response.error shouldNotBe null
                 response.error!!.code shouldBe -32602 // Invalid params
@@ -661,7 +663,7 @@ class McpToolIntegrationTest : DescribeSpec({
                     id = JsonPrimitive("test")
                 )
 
-                val response = uninitializedMethodHandler.handleRequest(request)
+                val response = uninitializedMethodHandler.handleRequest(request, testSessionId)
 
                 response.error shouldNotBe null
                 response.error!!.code shouldBe -32003
@@ -762,7 +764,7 @@ class McpToolIntegrationTest : DescribeSpec({
                     params = JsonObject(emptyMap()),
                     id = JsonPrimitive("test")
                 )
-                val methodError = methodHandler.handleRequest(methodRequest)
+                val methodError = methodHandler.handleRequest(methodRequest, testSessionId)
 
                 // All errors should be properly formatted as JSON-RPC errors
                 listOf(toolError, protocolError, methodError).forEach { response ->

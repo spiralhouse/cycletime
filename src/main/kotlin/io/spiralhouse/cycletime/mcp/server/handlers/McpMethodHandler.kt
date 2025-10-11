@@ -32,16 +32,17 @@ class McpMethodHandler(
     
     /**
      * Handles a synchronous JSON-RPC request.
-     * 
+     *
      * @param request The JSON-RPC request to handle
+     * @param sessionId The session ID for this request
      * @return The JSON-RPC response
      */
-    suspend fun handleRequest(request: JsonRpcRequest): JsonRpcResponse {
+    suspend fun handleRequest(request: JsonRpcRequest, sessionId: String): JsonRpcResponse {
         // Validate JSON-RPC protocol version
         if (request.jsonrpc != "2.0") {
             return createParseError(request)
         }
-        
+
         // Ensure server is running (except for initialize)
         if (!serverState.isRunning() && request.method != "initialize") {
             return createErrorResponse(
@@ -50,10 +51,10 @@ class McpMethodHandler(
                 message = "Server not initialized"
             )
         }
-        
+
         return try {
             when (request.method) {
-                "initialize" -> handleInitialize(request)
+                "initialize" -> handleInitialize(request, sessionId)
                 "tools/list" -> handleToolsList(request)
                 "tools/call" -> handleToolsCall(request, async = false)
                 "resources/list" -> handleResourcesList(request)
@@ -72,14 +73,15 @@ class McpMethodHandler(
     /**
      * Handles an asynchronous JSON-RPC request.
      * This method supports long-running operations like async tool invocation.
-     * 
+     *
      * @param request The JSON-RPC request to handle
+     * @param sessionId The session ID for this request
      * @return The JSON-RPC response
      */
-    suspend fun handleRequestAsync(request: JsonRpcRequest): JsonRpcResponse {
+    suspend fun handleRequestAsync(request: JsonRpcRequest, sessionId: String): JsonRpcResponse {
         return try {
             when (request.method) {
-                "initialize" -> handleInitialize(request)
+                "initialize" -> handleInitialize(request, sessionId)
                 "tools/list" -> handleToolsList(request)
                 "tools/call" -> handleToolsCall(request, async = true)
                 "resources/list" -> handleResourcesList(request)
@@ -112,7 +114,7 @@ class McpMethodHandler(
     
     // ===== Method Handlers =====
     
-    private fun handleInitialize(request: JsonRpcRequest): JsonRpcResponse {
+    private fun handleInitialize(request: JsonRpcRequest, sessionId: String): JsonRpcResponse {
         // Initialize method must have an ID (not a notification)
         if (request.id == null) {
             return createErrorResponse(
@@ -121,45 +123,46 @@ class McpMethodHandler(
                 message = "initialize method requires request ID"
             )
         }
-        
+
         // Parameters are required
         val params = request.params as? JsonObject
             ?: return createInvalidParamsError(request, "Expected object parameters")
-        
+
         // Validate required parameters
         if (params["protocolVersion"] == null) {
             return createInvalidParamsError(request, "protocolVersion parameter is required")
         }
-        
+
         if (params["capabilities"] == null) {
             return createInvalidParamsError(request, "capabilities parameter is required")
         }
-        
+
         // Validate protocol version
         val protocolVersion = params["protocolVersion"]?.jsonPrimitive?.content
         if (protocolVersion != "2024-11-05") {
             return createInvalidParamsError(
-                request, 
+                request,
                 "Unsupported protocol version: $protocolVersion. Supported versions: 2024-11-05"
             )
         }
-        
+
         // clientInfo is optional but if present, name should be provided
         val clientInfo = params["clientInfo"] as? JsonObject
         if (clientInfo != null && clientInfo.get("name")?.jsonPrimitive?.content.isNullOrBlank()) {
             return createInvalidParamsError(request, "client name is required in clientInfo")
         }
-        
+
         // Update server state to running
         serverState.transitionTo(io.spiralhouse.cycletime.mcp.server.state.ServerStatus.STARTING)
         serverState.transitionTo(io.spiralhouse.cycletime.mcp.server.state.ServerStatus.RUNNING)
-        
+
         val result = buildJsonObject {
             put("protocolVersion", "2024-11-05")
+            put("sessionId", sessionId)
             put("capabilities", buildCapabilities())
             put("serverInfo", buildServerInfo())
         }
-        
+
         return createSuccessResponse(request, result)
     }
     

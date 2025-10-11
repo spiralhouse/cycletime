@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.spiralhouse.cycletime.mcp.session.MCPSessionManager
+import io.spiralhouse.cycletime.mcp.session.generateSessionId
 import io.spiralhouse.cycletime.mcp.correlation.EventBus
 import io.spiralhouse.cycletime.mcp.http.validateSessionHeader
 import kotlinx.coroutines.flow.catch
@@ -30,12 +31,20 @@ fun Route.mcpSSEEndpoint(
     eventBus: EventBus
 ) {
     get("/mcp/events") {
-        // CRITICAL: Validate session header BEFORE establishing SSE connection
-        // This prevents unauthorized connections (matches POST endpoint pattern)
-        val sessionId = call.validateSessionHeader("SSE", logger) ?: return@get
-
         try {
-            // Validate and create/get session
+            // SSE BOOTSTRAP PATTERN (MCP Spec 2024-11-05):
+            // SSE connections can be established with or without prior session:
+            // 1. WITH session header: Resume existing MCP session
+            // 2. WITHOUT session header: Generate new session (bootstrap)
+            // In both cases, first SSE event is "session" event with sessionId for client confirmation
+
+            val providedSessionId = call.request.headers["Mcp-Session-Id"]
+            val isBootstrap = providedSessionId == null
+            val sessionId = providedSessionId ?: generateSessionId().also {
+                logger.info("Generated new session ID for SSE connection: $it")
+            }
+
+            // Validate and create/get session (throws SecurityException if invalid)
             val session = sessionManager.getOrCreateSession(sessionId)
             logger.info("SSE connection established for session: $sessionId")
 
@@ -47,7 +56,15 @@ fun Route.mcpSSEEndpoint(
             // Establish SSE connection using respondTextWriter
             call.respondTextWriter(contentType = ContentType.Text.EventStream) {
                 try {
-                    // Send initial comment to establish connection and flush headers
+                    // Always send session ID as first event (for client confirmation)
+                    // Note: Using manual formatting to ensure "event:" comes before "data:"
+                    // as expected by SSE clients and tests
+                    write("event: session\n")
+                    write("data: {\"sessionId\":\"$sessionId\"}\n\n")
+                    flush()
+                    logger.debug("Sent session event for session: $sessionId (bootstrap=$isBootstrap)")
+
+                    // Send connection established comment
                     write(": SSE connection established\n\n")
                     flush()
 
@@ -65,6 +82,8 @@ fun Route.mcpSSEEndpoint(
                             // Update session activity
                             sessionManager.updateActivity(sessionId)
                         }
+                } catch (e: Exception) {
+                    logger.error("SSE streaming error for session $sessionId", e)
                 } finally {
                     logger.info("SSE connection closed for session: $sessionId")
                     eventBus.unsubscribe(sessionId)
@@ -74,8 +93,11 @@ fun Route.mcpSSEEndpoint(
             call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid session ID"))
             logger.warn("Invalid session ID: ${e.message}")
         } catch (e: Exception) {
-            logger.error("SSE handler error for session $sessionId", e)
-            // Connection already established, can't send error response
+            logger.error("Error establishing SSE connection", e)
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                mapOf("error" to "Failed to establish SSE connection: ${e.message}")
+            )
         }
     }
 }

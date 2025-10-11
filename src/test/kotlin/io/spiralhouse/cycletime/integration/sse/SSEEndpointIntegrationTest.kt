@@ -71,12 +71,12 @@ class SSEEndpointIntegrationTest : SSETestBase() {
         }
     }
 
-    "should reject SSE connection without Mcp-Session-Id header" {
+    "should allow SSE connection without Mcp-Session-Id header (SPI-689 bootstrap fix)".config(enabled = false) {
+        // Test disabled: SSE connections are long-lived streams that don't complete
+        // Bootstrap behavior is tested in SessionBootstrapIntegrationTest instead
         withTestApp {
             val response = client.get("/mcp/events")
-
-            response.status shouldBe HttpStatusCode.BadRequest
-            response.bodyAsText() shouldContain "Mcp-Session-Id header required"
+            response.status shouldBe HttpStatusCode.OK
         }
     }
 
@@ -122,9 +122,9 @@ class SSEEndpointIntegrationTest : SSETestBase() {
 
                 // Read first chunk from stream with timeout
                 val body = readSSEStream(response)
-                // SSE format verification - should start with comment or data
+                // After SPI-689: First event should be session event (for confirmation)
                 if (body.isNotEmpty()) {
-                    body shouldStartWith ":" // SSE comment format
+                    body shouldStartWith "event: session" // Session confirmation event
                 }
             }
         }
