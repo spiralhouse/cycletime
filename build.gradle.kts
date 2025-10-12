@@ -84,8 +84,8 @@ dependencies {
 
     // Dependency Injection - Using Ktor native DI (requires Ktor 3.2.3+)
 
-    // MCP SDK (when available)
-    // implementation(libs.mcp.kotlin.sdk)
+    // MCP SDK - Official Kotlin SDK for MCP protocol (SPI-700)
+    implementation(libs.mcp.kotlin.sdk)
 
     // Logging
     implementation(libs.logback.classic)
