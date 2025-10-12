@@ -31,6 +31,8 @@ import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
 import io.spiralhouse.cycletime.mcp.session.MCPSessionManager
 import io.spiralhouse.cycletime.mcp.correlation.EventBus
 import io.spiralhouse.cycletime.mcp.correlation.MessageCorrelator
+import io.spiralhouse.cycletime.mcp.sdk.MCPSdkServer
+import io.spiralhouse.cycletime.mcp.sdk.SDKSessionManager
 
 /**
  * Dependency injection configuration using Ktor's native DI.
@@ -181,6 +183,17 @@ private fun DependencyRegistry.configureMCPDependencies() {
     provide<ProtocolHandler> { JsonRpcProtocolHandler() }
     provide<ResourceRegistry> { ResourceRegistry() }
     provide<ToolRegistry> { ToolRegistry() }
+
+    // SDK v0.7.2 Components (Phase 2 - Transport Layer)
+    provide<SDKSessionManager> {
+        SDKSessionManager(
+            sessionService = resolve<SessionApplicationService>()
+        )
+    }
+    provide<MCPSdkServer> {
+        val version = System.getProperty("cycletime.version") ?: "unknown"
+        MCPSdkServer(version)
+    }
 
     // SSE Transport Components (SPI-665)
     provide<MCPSessionManager> {
