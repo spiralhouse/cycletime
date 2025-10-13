@@ -14,8 +14,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.ktor.server.plugins.di.*
-import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper
-import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper.configureTestApplication
+import io.spiralhouse.cycletime.test.utils.*
 import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
 import io.spiralhouse.cycletime.mcp.integration.MCPServerConfig
 import kotlinx.coroutines.delay
@@ -25,31 +24,25 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Integration tests for MCP server integration into Application.kt startup flow.
+ * Integration tests for MCP server SDK integration into Application.kt.
  *
- * Phase 9: These tests validate that the MCP server works end-to-end
- * after the 8-phase extraction from the mega-PR.
+ * Validates end-to-end MCP server functionality using the official SDK v0.7.2:
+ * - Application startup with SDK endpoints
+ * - DI registration of SDK components
+ * - Health endpoint integration
+ * - Graceful shutdown
+ *
+ * Migration from EventBus to SDK transport (Phase 4.2):
+ * - Uses testSDKApplication for consistent test setup
+ * - Tests SDK routing at /mcp endpoint
+ * - Validates production DI configuration
  */
 @OptIn(ExperimentalKotest::class)
 class ApplicationMCPIntegrationTest : StringSpec({
 
-    beforeSpec {
-        // Initialize test database using helper to prevent race conditions
-        DatabaseTestHelper.initTestDatabase(
-            testName = "app_mcp_test",
-            enableLogging = false
-        )
-    }
-
-    afterSpec {
-        // Clean up test database
-        DatabaseTestHelper.cleanupTestDatabase()
-    }
-
     "should start application with MCP server enabled by default" {
-        testApplication {
-            // Use helper to ensure proper initialization order
-            configureTestApplication(testName = "app_mcp_test")
+        testSDKApplication {
+            val client = createTestClient()
 
             // Verify REST server is running
             val healthResponse = client.get("/health")
@@ -63,9 +56,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
     }
 
     "should include MCP server status in health endpoint" {
-        testApplication {
-            // Use helper to ensure proper initialization order
-            configureTestApplication(testName = "app_mcp_test")
+        testSDKApplication {
+            val client = createTestClient()
 
             val healthResponse = client.get("/health")
             healthResponse.status shouldBe HttpStatusCode.OK
@@ -96,9 +88,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
     */
 
     "should start MCP server on different port than REST server" {
-        testApplication {
-            // Use helper to ensure proper initialization order
-            configureTestApplication(testName = "app_mcp_test")
+        testSDKApplication {
+            val client = createTestClient()
 
             val healthResponse = client.get("/health")
             healthResponse.status shouldBe HttpStatusCode.OK
@@ -115,10 +106,7 @@ class ApplicationMCPIntegrationTest : StringSpec({
     // This test fails due to concurrent execution safety problems in the DI resolution mechanism
     // during integration testing, not MVP functionality issues.
     "should register all MCP components in DI container".config(enabled = false) {
-        testApplication {
-            // Use helper to ensure proper initialization order
-            configureTestApplication(testName = "app_mcp_test")
-
+        testSDKApplication {
             // All MCP components should be registered and resolvable
             val mcpService: MCPIntegrationService by application.dependencies
             mcpService shouldNotBe null
@@ -134,9 +122,8 @@ class ApplicationMCPIntegrationTest : StringSpec({
     }
 
     "should support graceful shutdown of both REST and MCP servers" {
-        testApplication {
-            // Use helper to ensure proper initialization order
-            configureTestApplication(testName = "app_mcp_test")
+        testSDKApplication {
+            val client = createTestClient()
 
             val healthResponse = client.get("/health")
             healthResponse.status shouldBe HttpStatusCode.OK
@@ -145,15 +132,14 @@ class ApplicationMCPIntegrationTest : StringSpec({
             mcpService.isRunning() shouldBe true
 
             // Application shutdown should stop MCP server
-            // This is tested by testApplication cleanup
+            // This is tested by testSDKApplication cleanup
         }
     }
 
     // TODO(SPI-589): Re-enable when advanced MCP monitoring integration is implemented
     "should report MCP server performance metrics in health check".config(enabled = false) {
-        testApplication {
-            // Use helper to ensure proper initialization order
-            configureTestApplication(testName = "app_mcp_test")
+        testSDKApplication {
+            val client = createTestClient()
 
             val healthResponse = client.get("/health")
             healthResponse.status shouldBe HttpStatusCode.OK
@@ -172,16 +158,15 @@ class ApplicationMCPIntegrationTest : StringSpec({
     "should handle rapid application restart with MCP server".config(enabled = false) {
         // Test for resource cleanup issues
         repeat(3) {
-            testApplication {
-                // Use helper to ensure proper initialization order
-                configureTestApplication(testName = "app_mcp_test")
+            testSDKApplication {
+                val client = createTestClient()
 
                 val healthResponse = client.get("/health")
                 healthResponse.status shouldBe HttpStatusCode.OK
 
                 val mcpService: MCPIntegrationService by application.dependencies
                 mcpService.isRunning() shouldBe true
-                
+
                 // Each iteration should cleanly start and stop
             }
         }

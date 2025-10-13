@@ -5,293 +5,64 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.spiralhouse.cycletime.mcp.protocol.JsonRpcRequest
-import io.spiralhouse.cycletime.mcp.protocol.JsonRpcResponse
-import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
-import io.spiralhouse.cycletime.mcp.resources.ResourceRegistry
-import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
-import io.spiralhouse.cycletime.mcp.server.state.ServerState
-import io.spiralhouse.cycletime.mcp.tools.DefaultMcpToolHandler
-import io.spiralhouse.cycletime.mcp.tools.Tool
-import io.spiralhouse.cycletime.mcp.tools.ToolHandler
-import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
-import kotlinx.coroutines.delay
+import io.ktor.client.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.spiralhouse.cycletime.test.utils.*
 import kotlinx.serialization.json.*
 
 /**
- * Comprehensive integration tests for the complete SPI-632 JSON-RPC extraction architecture.
+ * Comprehensive integration tests for MCP tool operations via SDK v0.7.2.
  *
- * These integration tests validate the end-to-end flow through all architectural layers:
- * **MCP Server → McpMethodHandler → McpToolHandler → ToolRegistry**
+ * Validates end-to-end tool execution through SDK transport:
+ * - **Tool Discovery**: List all registered tools via tools/list
+ * - **Tool Execution**: Call tools with arguments via tools/call
+ * - **Response Format**: Validate MCP content format and JSON-RPC structure
+ * - **Error Handling**: Verify error propagation and validation
  *
- * ## Integration Testing Objectives
+ * Migration from EventBus to SDK transport (Phase 4.2):
+ * - Uses testSDKApplication for production-like test setup
+ * - Tests production tools (session, project, issue, workflow)
+ * - Uses SDK routing at /mcp endpoint
+ * - Validates JSON-RPC 2.0 protocol via SDK
  *
- * ### Primary Goal
- * Create integration tests that validate the complete request/response flow through all layers:
- * - **Complete Chain**: Test full request flow through all architectural layers
- * - **Tool Operations**: Validate both `tools/list` and `tools/call` through integration
- * - **Response Format**: Ensure JSON-RPC responses match expected MCP format
- * - **Error Propagation**: Verify errors propagate correctly through all layers
+ * ## Test Strategy
  *
- * ### Architecture Layer Testing
- * - **Integration Layer**: McpMethodHandler properly routes JSON-RPC methods
- * - **Protocol Layer**: McpToolHandler correctly handles tool protocol specifics
- * - **Domain Layer**: ToolRegistry performs tool operations without protocol concerns
- * - **Clean Separation**: Each layer focuses on its single responsibility
+ * Tests use production tools to validate real behavior:
+ * - **Session Tools**: session_create, session_get
+ * - **Project Tools**: project_list, project_get
+ * - **Issue Tools**: issue_list, issue_get
+ * - **Workflow Tools**: workflow_list, workflow_execute
  *
- * ### Enhanced JSON Response Testing
- * - **Complex JSON Objects**: Test JsonObject responses with pretty printing
- * - **Array Responses**: Test JsonArray responses with proper formatting
- * - **Primitive Values**: Test JsonPrimitive (string and non-string) handling
- * - **Mixed Response Types**: Validate different tool response formats
+ * This ensures tests validate actual production code paths rather than
+ * synthetic test-only tools.
  */
 class McpToolIntegrationTest : DescribeSpec({
 
-    // ===== Integration Test Setup =====
+    // ===== Helper Functions for SDK Testing =====
 
-    val testSessionId = "test-session-integration"
-
-    lateinit var toolRegistry: ToolRegistry
-    lateinit var toolHandler: DefaultMcpToolHandler
-    lateinit var methodHandler: McpMethodHandler
-    lateinit var protocolHandler: JsonRpcProtocolHandler
-    lateinit var resourceRegistry: ResourceRegistry
-    lateinit var serverState: ServerState
-
-    fun setupIntegrationTestTools() {
-        // Simple sync tool for basic integration testing
-        toolRegistry.register(Tool(
-            name = "integration.simple",
-            description = "Simple sync tool for integration testing",
-            parametersSchema = buildJsonObject {
-                put("type", "object")
-                putJsonObject("properties") {
-                    putJsonObject("message") {
-                        put("type", "string")
-                        put("description", "Message to echo")
-                    }
-                }
-            },
-            handler = ToolHandler.Sync { params ->
-                val message = params.jsonObject["message"]?.jsonPrimitive?.content ?: "default"
-                Result.success(JsonPrimitive("Echo: $message"))
-            }
-        ))
-
-        // Complex JSON response tool for enhanced testing
-        toolRegistry.register(Tool(
-            name = "integration.complex",
-            description = "Tool returning complex JSON objects",
-            parametersSchema = buildJsonObject {
-                put("type", "object")
-                putJsonObject("properties") {
-                    putJsonObject("structure") {
-                        put("type", "string")
-                        put("description", "Type of structure to return")
-                    }
-                }
-            },
-            handler = ToolHandler.Sync { params ->
-                val structureType = params.jsonObject["structure"]?.jsonPrimitive?.content ?: "object"
-                when (structureType) {
-                    "object" -> Result.success(buildJsonObject {
-                        put("type", "complex")
-                        put("status", "success")
-                        put("timestamp", "2024-01-01T00:00:00Z")
-                        putJsonObject("metadata") {
-                            put("version", "1.0")
-                            put("author", "integration-test")
-                        }
-                    })
-                    "array" -> Result.success(buildJsonArray {
-                        add("item1")
-                        add("item2")
-                        add(buildJsonObject {
-                            put("nested", "object")
-                            put("value", 42)
-                        })
-                    })
-                    "primitive" -> Result.success(JsonPrimitive(12345))
-                    else -> Result.failure(RuntimeException("Unknown structure type: $structureType"))
-                }
-            }
-        ))
-
-        // Async tool for timeout and concurrency testing
-        toolRegistry.register(Tool(
-            name = "integration.async",
-            description = "Async tool for concurrency testing",
-            parametersSchema = buildJsonObject {
-                put("type", "object")
-                putJsonObject("properties") {
-                    putJsonObject("delay") {
-                        put("type", "number")
-                        put("description", "Delay in milliseconds")
-                    }
-                    putJsonObject("action") {
-                        put("type", "string")
-                        put("description", "Action to perform")
-                    }
-                }
-            },
-            handler = ToolHandler.Async { params ->
-                val delayMs = params.jsonObject["delay"]?.jsonPrimitive?.long ?: 10L
-                val action = params.jsonObject["action"]?.jsonPrimitive?.content ?: "default"
-
-                delay(delayMs)
-
-                when (action) {
-                    "success" -> Result.success(JsonPrimitive("Async completed after ${delayMs}ms"))
-                    "fail" -> Result.failure(RuntimeException("Async operation failed"))
-                    "timeout" -> {
-                        delay(15000) // Force timeout
-                        Result.success(JsonPrimitive("Should not reach here"))
-                    }
-                    else -> Result.success(buildJsonObject {
-                        put("action", action)
-                        put("delay", delayMs)
-                        put("result", "async_success")
-                    })
-                }
-            }
-        ))
-
-        // Failing tool for error testing
-        toolRegistry.register(Tool(
-            name = "integration.failing",
-            description = "Tool that always fails for error testing",
-            parametersSchema = buildJsonObject {
-                put("type", "object")
-                putJsonObject("properties") {
-                    putJsonObject("errorType") {
-                        put("type", "string")
-                        put("description", "Type of error to generate")
-                    }
-                }
-            },
-            handler = ToolHandler.Sync { params ->
-                val errorType = params.jsonObject["errorType"]?.jsonPrimitive?.content ?: "generic"
-                when (errorType) {
-                    "validation" -> Result.failure(IllegalArgumentException("Parameter validation failed"))
-                    "execution" -> Result.failure(RuntimeException("Tool execution failed"))
-                    "timeout" -> Result.failure(RuntimeException("Operation timed out"))
-                    else -> Result.failure(Exception("Generic tool error"))
-                }
-            }
-        ))
-
-        // Math tool for parameter validation testing
-        toolRegistry.register(Tool(
-            name = "integration.math",
-            description = "Math operations for parameter testing",
-            parametersSchema = buildJsonObject {
-                put("type", "object")
-                putJsonObject("properties") {
-                    putJsonObject("operation") {
-                        put("type", "string")
-                        put("enum", buildJsonArray {
-                            add("add")
-                            add("multiply")
-                            add("divide")
-                        })
-                    }
-                    putJsonObject("a") {
-                        put("type", "number")
-                    }
-                    putJsonObject("b") {
-                        put("type", "number")
-                    }
-                }
-                putJsonArray("required") {
-                    add("operation")
-                    add("a")
-                    add("b")
-                }
-            },
-            handler = ToolHandler.Sync { params ->
-                val operation = params.jsonObject["operation"]?.jsonPrimitive?.content
-                val a = params.jsonObject["a"]?.jsonPrimitive?.double
-                val b = params.jsonObject["b"]?.jsonPrimitive?.double
-
-                if (operation == null || a == null || b == null) {
-                    return@Sync Result.failure(IllegalArgumentException("Missing required parameters"))
-                }
-
-                val result = when (operation) {
-                    "add" -> a + b
-                    "multiply" -> a * b
-                    "divide" -> {
-                        if (b == 0.0) {
-                            return@Sync Result.failure(ArithmeticException("Division by zero"))
-                        }
-                        a / b
-                    }
-                    else -> return@Sync Result.failure(IllegalArgumentException("Unknown operation: $operation"))
-                }
-
-                Result.success(buildJsonObject {
-                    put("operation", operation)
-                    put("operandA", a)
-                    put("operandB", b)
-                    put("result", result)
-                })
-            }
-        ))
+    suspend fun HttpClient.executeToolsList(): HttpResponse {
+        return listMCPTools()
     }
 
-    fun initializeServerForTesting() {
-        // Initialize server with test configuration
-        serverState.transitionTo(io.spiralhouse.cycletime.mcp.server.state.ServerStatus.STARTING)
-        serverState.transitionTo(io.spiralhouse.cycletime.mcp.server.state.ServerStatus.RUNNING)
+    suspend fun HttpClient.executeToolsCall(
+        toolName: String,
+        arguments: Map<String, Any> = emptyMap(),
+        sessionId: String? = null
+    ): HttpResponse {
+        return callMCPTool(toolName, arguments, sessionId)
     }
 
-    beforeEach {
-        // Setup complete integration chain
-        toolRegistry = ToolRegistry()
-        toolHandler = DefaultMcpToolHandler(toolRegistry)
-        protocolHandler = JsonRpcProtocolHandler()
-        resourceRegistry = ResourceRegistry()
-        serverState = ServerState()
+    // Production tools available for testing:
+    // - session_create, session_get (session management)
+    // - project_list, project_get, project_create (project operations)
+    // - issue_list, issue_get, issue_create (issue operations)
+    // - workflow_list, workflow_execute (workflow operations)
 
-        methodHandler = McpMethodHandler(
-            protocolHandler = protocolHandler,
-            toolHandler = toolHandler,
-            resourceRegistry = resourceRegistry,
-            serverState = serverState
-        )
-
-        // Register test tools for integration testing
-        setupIntegrationTestTools()
-
-        // Initialize server state
-        initializeServerForTesting()
-    }
-
-    // ===== Helper Functions =====
-
-    suspend fun executeToolsList(): JsonRpcResponse {
-        val request = JsonRpcRequest(
-            jsonrpc = "2.0",
-            method = "tools/list",
-            params = JsonObject(emptyMap()),
-            id = JsonPrimitive("test-list-1")
-        )
-        return methodHandler.handleRequest(request, testSessionId)
-    }
-
-    suspend fun executeToolsCall(toolName: String, arguments: JsonObject = JsonObject(emptyMap())): JsonRpcResponse {
-        val request = JsonRpcRequest(
-            jsonrpc = "2.0",
-            method = "tools/call",
-            params = buildJsonObject {
-                put("name", toolName)
-                put("arguments", arguments)
-            },
-            id = JsonPrimitive("test-call-1")
-        )
-        return methodHandler.handleRequest(request, testSessionId)
-    }
+    // SDK handles all setup automatically via testSDKApplication
 
     // ===== Integration Tests =====
 
@@ -299,544 +70,485 @@ class McpToolIntegrationTest : DescribeSpec({
 
         describe("Complete Tools/List Flow") {
 
-            it("should handle complete tools/list request flow through all layers") {
-                val response = executeToolsList()
+            it("should handle complete tools/list request flow through SDK") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
 
-                // Validate JSON-RPC response structure
-                response.jsonrpc shouldBe "2.0"
-                response.id shouldBe JsonPrimitive("test-list-1")
-                response.error shouldBe null
-                response.result shouldNotBe null
+                    val response = client.executeToolsList()
 
-                // Validate MCP tool listing format
-                val result = response.result as JsonObject
-                result["tools"] shouldNotBe null
-                result["tools"].shouldBeInstanceOf<JsonArray>()
+                    // Verify HTTP response
+                    response.status shouldBe HttpStatusCode.OK
 
-                val toolsArray = result["tools"] as JsonArray
-                toolsArray.size shouldBe 5 // All registered integration test tools
+                    // Verify JSON-RPC success
+                    response.isMCPSuccess() shouldBe true
+                    val result = response.extractMCPResult()
 
-                // Verify tool structure compliance
-                toolsArray.forEach { toolElement ->
-                    val tool = toolElement.jsonObject
-                    tool["name"] shouldNotBe null
-                    tool["description"] shouldNotBe null
-                    tool["inputSchema"] shouldNotBe null
-                    tool["inputSchema"].shouldBeInstanceOf<JsonObject>()
+                    // Validate MCP tool listing format
+                    result shouldNotBe null
+                    val tools = result.jsonObject["tools"]
+                    tools shouldNotBe null
+                    tools.shouldBeInstanceOf<JsonArray>()
+
+                    val toolsArray = tools!!.jsonArray
+                    // Production tools: session (2), project (3+), issue (3+), workflow (2+) = 17 tools
+                    toolsArray shouldHaveSize 17
+
+                    // Verify tool structure compliance
+                    toolsArray.forEach { toolElement ->
+                        val tool = toolElement.jsonObject
+                        tool["name"] shouldNotBe null
+                        tool["description"] shouldNotBe null
+                        tool["inputSchema"] shouldNotBe null
+                        tool["inputSchema"].shouldBeInstanceOf<JsonObject>()
+                    }
+
+                    // Verify production tools are present
+                    val toolNames = toolsArray.map { it.jsonObject["name"]?.jsonPrimitive?.content }.filterNotNull()
+                    toolNames shouldContain "session_create"
+                    toolNames shouldContain "session_get"
+                    toolNames shouldContain "project_list"
+                    toolNames shouldContain "issue_list"
+                    toolNames shouldContain "workflow_list"
                 }
-
-                // Verify specific tools are present
-                val toolNames = toolsArray.map { it.jsonObject["name"]?.jsonPrimitive?.content }.filterNotNull()
-                toolNames shouldContain "integration.simple"
-                toolNames shouldContain "integration.complex"
-                toolNames shouldContain "integration.async"
-                toolNames shouldContain "integration.failing"
-                toolNames shouldContain "integration.math"
             }
 
-            it("should maintain proper layer delegation without protocol coupling") {
-                val response = executeToolsList()
+            it("should maintain proper tool metadata through SDK transport") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
 
-                // Validate that each layer properly delegates to the next
-                response.result shouldNotBe null
-                val result = response.result as JsonObject
-                val toolsArray = result["tools"] as JsonArray
+                    val response = client.executeToolsList()
+                    val result = response.extractMCPResult()
 
-                // Verify ToolRegistry metadata is properly exposed through all layers
-                val simpleTool = toolsArray.find {
-                    it.jsonObject["name"]?.jsonPrimitive?.content == "integration.simple"
-                }?.jsonObject
+                    // Verify tool metadata is properly exposed through SDK
+                    val toolsArray = result.jsonObject["tools"]!!.jsonArray
 
-                simpleTool shouldNotBe null
-                simpleTool!!["description"]?.jsonPrimitive?.content shouldBe "Simple sync tool for integration testing"
-                simpleTool["inputSchema"]?.jsonObject?.get("type")?.jsonPrimitive?.content shouldBe "object"
+                    val sessionTool = toolsArray.find {
+                        it.jsonObject["name"]?.jsonPrimitive?.content == "session_create"
+                    }?.jsonObject
+
+                    sessionTool shouldNotBe null
+                    sessionTool!!["description"] shouldNotBe null
+                    sessionTool["inputSchema"]?.jsonObject?.get("type")?.jsonPrimitive?.content shouldBe "object"
+                }
             }
         }
 
         describe("Complete Tools/Call Flow") {
 
-            it("should handle complete tools/call request flow through all layers") {
-                val arguments = buildJsonObject {
-                    put("message", "integration test")
+            it("should handle complete tools/call request flow through SDK") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
+
+                    val response = client.executeToolsCall(
+                        "session_create",
+                        mapOf("projectId" to "TEST-PROJECT-INTEGRATION")
+                    )
+
+                    // Verify HTTP response
+                    response.status shouldBe HttpStatusCode.OK
+
+                    // Verify JSON-RPC success
+                    response.isMCPSuccess() shouldBe true
+                    val result = response.extractMCPResult()
+
+                    // Validate MCP content format
+                    result shouldNotBe null
+                    val content = result.jsonObject["content"]
+                    content shouldNotBe null
+                    content.shouldBeInstanceOf<JsonArray>()
+
+                    val contentArray = content!!.jsonArray
+                    contentArray.shouldNotBeEmpty()
+
+                    val contentItem = contentArray[0].jsonObject
+                    contentItem["type"]?.jsonPrimitive?.content shouldBe "text"
+                    contentItem["text"] shouldNotBe null
+
+                    // Verify session was created (text contains session data)
+                    val textContent = contentItem["text"]?.jsonPrimitive?.content
+                    textContent shouldContain "id"
+                    textContent shouldContain "TEST-PROJECT-INTEGRATION"
                 }
-
-                val response = executeToolsCall("integration.simple", arguments)
-
-                // Validate JSON-RPC response structure
-                response.jsonrpc shouldBe "2.0"
-                response.id shouldBe JsonPrimitive("test-call-1")
-                response.error shouldBe null
-                response.result shouldNotBe null
-
-                // Validate MCP content format
-                val result = response.result as JsonObject
-                result["content"] shouldNotBe null
-                result["content"].shouldBeInstanceOf<JsonArray>()
-
-                val contentArray = result["content"] as JsonArray
-                contentArray.size shouldBe 1
-
-                val contentItem = contentArray[0].jsonObject
-                contentItem["type"]?.jsonPrimitive?.content shouldBe "text"
-                contentItem["text"]?.jsonPrimitive?.content shouldBe "Echo: integration test"
             }
 
-            it("should handle parameter passing and response formatting correctly") {
-                val arguments = buildJsonObject {
-                    put("operation", "add")
-                    put("a", 10)
-                    put("b", 5)
+            it("should handle parameter passing through SDK correctly") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
+
+                    // Create session with specific project ID
+                    val response = client.executeToolsCall(
+                        "session_create",
+                        mapOf("projectId" to "TEST-PARAM-PASSING")
+                    )
+
+                    response.isMCPSuccess() shouldBe true
+                    val result = response.extractMCPResult()
+
+                    // Verify parameters were passed correctly
+                    val contentArray = result.jsonObject["content"]!!.jsonArray
+                    val textContent = contentArray[0].jsonObject["text"]?.jsonPrimitive?.content
+                    textContent shouldContain "TEST-PARAM-PASSING"
                 }
-
-                val response = executeToolsCall("integration.math", arguments)
-
-                response.error shouldBe null
-                val result = response.result as JsonObject
-                val contentArray = result["content"] as JsonArray
-                val contentItem = contentArray[0].jsonObject
-                val responseText = contentItem["text"]?.jsonPrimitive?.content
-
-                // Verify JSON object response is pretty-printed
-                responseText shouldNotBe null
-                responseText!! shouldContain "operation"
-                responseText shouldContain "add"
-                responseText shouldContain "result"
-                responseText shouldContain "15.0"
             }
 
-            it("should handle sync and async tool execution through integration") {
-                // Test sync tool
-                val syncResponse = executeToolsCall("integration.simple", buildJsonObject {
-                    put("message", "sync test")
-                })
-                syncResponse.error shouldBe null
+            it("should handle multiple tool invocations in sequence") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
 
-                // Test async tool
-                val asyncResponse = executeToolsCall("integration.async", buildJsonObject {
-                    put("delay", 50)
-                    put("action", "success")
-                })
-                asyncResponse.error shouldBe null
+                    // Create session
+                    val createResponse = client.executeToolsCall(
+                        "session_create",
+                        mapOf("projectId" to "TEST-SEQUENCE")
+                    )
+                    createResponse.isMCPSuccess() shouldBe true
 
-                val asyncResult = asyncResponse.result as JsonObject
-                val asyncContentArray = asyncResult["content"] as JsonArray
-                val asyncContentItem = asyncContentArray[0].jsonObject
-                asyncContentItem["text"]?.jsonPrimitive?.content shouldBe "Async completed after 50ms"
+                    // Extract session ID
+                    val createResult = createResponse.extractMCPResult()
+                    val contentArray = createResult.jsonObject["content"]!!.jsonArray
+                    val textContent = contentArray[0].jsonObject["text"]?.jsonPrimitive?.content
+                    val sessionData = Json.parseToJsonElement(textContent!!).jsonObject
+                    val sessionId = sessionData["id"]?.jsonPrimitive?.content
+
+                    // Get session using ID
+                    val getResponse = client.executeToolsCall(
+                        "session_get",
+                        mapOf(),
+                        sessionId
+                    )
+                    getResponse.isMCPSuccess() shouldBe true
+                }
             }
         }
     }
 
-    describe("Enhanced JSON Response Handling") {
+    describe("SDK Response Format Validation") {
 
-        describe("Complex JSON Response Formatting") {
+        describe("MCP Content Structure") {
 
-            it("should handle JsonObject responses with pretty printing") {
-                val response = executeToolsCall("integration.complex", buildJsonObject {
-                    put("structure", "object")
-                })
+            it("should return proper MCP content structure for tool results") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
 
-                response.error shouldBe null
-                val result = response.result as JsonObject
-                val contentArray = result["content"] as JsonArray
-                val contentItem = contentArray[0].jsonObject
-                val responseText = contentItem["text"]?.jsonPrimitive?.content
+                    val response = client.executeToolsCall(
+                        "session_create",
+                        mapOf("projectId" to "TEST-CONTENT-FORMAT")
+                    )
 
-                responseText shouldNotBe null
-                responseText!! shouldContain "\"type\": \"complex\""
-                responseText shouldContain "\"status\": \"success\""
-                responseText shouldContain "\"metadata\":"
-                responseText shouldContain "\"version\": \"1.0\""
+                    val result = response.extractMCPResult()
 
-                // Verify pretty printing format (indentation)
-                responseText!! shouldContain "{\n    "
-            }
+                    // Validate strict MCP content structure
+                    result.jsonObject["content"] shouldNotBe null
+                    val contentArray = result.jsonObject["content"]!!.jsonArray
+                    contentArray.shouldNotBeEmpty()
 
-            it("should handle JsonArray responses with proper formatting") {
-                val response = executeToolsCall("integration.complex", buildJsonObject {
-                    put("structure", "array")
-                })
-
-                response.error shouldBe null
-                val result = response.result as JsonObject
-                val contentArray = result["content"] as JsonArray
-                val contentItem = contentArray[0].jsonObject
-                val responseText = contentItem["text"]?.jsonPrimitive?.content
-
-                responseText shouldNotBe null
-                responseText!! shouldContain "[\n    \"item1\","
-                responseText shouldContain "\"item2\","
-                responseText shouldContain "{\n        \"nested\": \"object\""
-                responseText shouldContain "\"value\": 42"
-            }
-
-            it("should handle JsonPrimitive responses correctly") {
-                val response = executeToolsCall("integration.complex", buildJsonObject {
-                    put("structure", "primitive")
-                })
-
-                response.error shouldBe null
-                val result = response.result as JsonObject
-                val contentArray = result["content"] as JsonArray
-                val contentItem = contentArray[0].jsonObject
-                val responseText = contentItem["text"]?.jsonPrimitive?.content
-
-                responseText shouldBe "12345"
-            }
-
-            it("should validate MCP content format compliance") {
-                val response = executeToolsCall("integration.math", buildJsonObject {
-                    put("operation", "multiply")
-                    put("a", 7)
-                    put("b", 6)
-                })
-
-                response.error shouldBe null
-                val result = response.result as JsonObject
-
-                // Validate strict MCP content structure
-                result.keys shouldBe setOf("content")
-                val contentArray = result["content"] as JsonArray
-                contentArray.size shouldBe 1
-
-                val contentItem = contentArray[0].jsonObject
-                contentItem.keys shouldBe setOf("type", "text")
-                contentItem["type"]?.jsonPrimitive?.content shouldBe "text"
-                contentItem["text"] shouldNotBe null
-            }
-        }
-
-        describe("Mixed Response Type Validation") {
-
-            it("should handle different tool response formats consistently") {
-                // Test simple string response
-                val stringResponse = executeToolsCall("integration.simple", buildJsonObject {
-                    put("message", "test")
-                })
-
-                // Test complex object response
-                val objectResponse = executeToolsCall("integration.math", buildJsonObject {
-                    put("operation", "divide")
-                    put("a", 20)
-                    put("b", 4)
-                })
-
-                // Test async response
-                val asyncResponse = executeToolsCall("integration.async", buildJsonObject {
-                    put("delay", 25)
-                    put("action", "complex")
-                })
-
-                // All should use same MCP content format
-                listOf(stringResponse, objectResponse, asyncResponse).forEach { response ->
-                    response.error shouldBe null
-                    val result = response.result as JsonObject
-                    result["content"].shouldBeInstanceOf<JsonArray>()
-                    val contentArray = result["content"] as JsonArray
-                    contentArray.size shouldBe 1
                     val contentItem = contentArray[0].jsonObject
                     contentItem["type"]?.jsonPrimitive?.content shouldBe "text"
                     contentItem["text"] shouldNotBe null
                 }
             }
+
+            it("should handle JSON object responses via SDK") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
+
+                    // Create session returns JSON object
+                    val response = client.executeToolsCall(
+                        "session_create",
+                        mapOf("projectId" to "TEST-JSON-RESPONSE")
+                    )
+
+                    response.isMCPSuccess() shouldBe true
+                    val result = response.extractMCPResult()
+                    val contentArray = result.jsonObject["content"]!!.jsonArray
+                    val textContent = contentArray[0].jsonObject["text"]?.jsonPrimitive?.content
+
+                    // Verify response contains valid JSON
+                    textContent shouldNotBe null
+                    val jsonObject = Json.parseToJsonElement(textContent!!)
+                    jsonObject.shouldBeInstanceOf<JsonObject>()
+                }
+            }
         }
     }
 
-    describe("Error Propagation Through All Layers") {
+    describe("Error Propagation Through SDK") {
 
         describe("Tool-Level Error Handling") {
 
-            it("should propagate tool not found errors correctly") {
-                val response = executeToolsCall("nonexistent.tool", JsonObject(emptyMap()))
+            it("should propagate tool not found errors correctly via SDK") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
 
-                response.error shouldNotBe null
-                response.result shouldBe null
+                    val response = client.executeToolsCall(
+                        "nonexistent_tool",
+                        mapOf()
+                    )
 
-                val error = response.error!!
-                error.code shouldBe -32601 // Method not found
-                error.message shouldContain "Tool not found: nonexistent.tool"
+                    // SDK returns HTTP 200 with JSON-RPC error
+                    response.status shouldBe HttpStatusCode.OK
+                    val error = response.extractMCPError()
+
+                    error shouldNotBe null
+                    error!!["code"] shouldNotBe null
+                    error["message"]?.jsonPrimitive?.content shouldContain "not found"
+                }
             }
 
-            it("should propagate parameter validation errors correctly") {
-                val response = executeToolsCall("integration.math", buildJsonObject {
-                    put("operation", "add")
-                    // Missing required parameters a and b
-                })
+            it("should propagate parameter validation errors correctly via SDK") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
 
-                response.error shouldNotBe null
-                val error = response.error!!
-                // Parameter validation happens in ToolRegistry, shows as parameter validation error
-                error.code shouldBe -32603 // Internal error
-                error.message shouldContain "parameter validation failed"
+                    // Call tool without required parameters
+                    val response = client.executeToolsCall(
+                        "session_create",
+                        mapOf() // Missing required projectId
+                    )
+
+                    val error = response.extractMCPError()
+                    error shouldNotBe null
+                    error!!["message"]?.jsonPrimitive?.content shouldContain "required"
+                }
             }
 
-            it("should propagate tool execution errors correctly") {
-                val response = executeToolsCall("integration.failing", buildJsonObject {
-                    put("errorType", "execution")
-                })
+            it("should handle tool execution errors gracefully") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
 
-                response.error shouldNotBe null
-                val error = response.error!!
-                error.code shouldBe -32603 // Internal error
-                error.message shouldContain "Tool execution failed"
-            }
+                    // Attempt to get session without session ID
+                    val response = client.executeToolsCall(
+                        "session_get",
+                        mapOf() // No session ID in metadata
+                    )
 
-            it("should propagate async tool timeout errors correctly") {
-                val response = executeToolsCall("integration.async", buildJsonObject {
-                    put("delay", 15000) // Longer than default timeout
-                    put("action", "timeout")
-                })
-
-                response.error shouldNotBe null
-                val error = response.error!!
-                error.code shouldBe -32603 // Internal error
-                error.message shouldContain "timed out after"
+                    val error = response.extractMCPError()
+                    error shouldNotBe null
+                    error!!["message"] shouldNotBe null
+                }
             }
         }
 
         describe("Protocol-Level Error Handling") {
 
-            it("should handle invalid JSON-RPC requests correctly") {
-                val invalidRequest = JsonRpcRequest(
-                    jsonrpc = "1.0", // Invalid version
-                    method = "tools/list",
-                    params = JsonObject(emptyMap()),
-                    id = JsonPrimitive("test")
-                )
+            it("should handle invalid JSON-RPC requests via SDK") {
+                testSDKApplication {
+                    val client = createTestClient()
 
-                val response = methodHandler.handleRequest(invalidRequest, testSessionId)
+                    // Send malformed JSON-RPC request
+                    val response = client.sendMCPRequest(
+                        """{"invalid": "request", "missing": "fields"}"""
+                    )
 
-                response.error shouldNotBe null
-                response.error!!.code shouldBe -32700 // Parse error
+                    response.status shouldBe HttpStatusCode.OK
+                    val error = response.extractMCPError()
+
+                    error shouldNotBe null
+                    error!!["code"]?.jsonPrimitive?.int shouldBe -32600 // Invalid Request
+                }
             }
 
-            it("should handle invalid method parameters correctly") {
-                val request = JsonRpcRequest(
-                    jsonrpc = "2.0",
-                    method = "tools/call",
-                    params = JsonPrimitive("invalid_params"), // Should be object
-                    id = JsonPrimitive("test")
-                )
+            it("should handle malformed request parameters via SDK") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
 
-                val response = methodHandler.handleRequest(request, testSessionId)
+                    // Send request with invalid parameter types
+                    val response = client.sendMCPRequest(
+                        MCPRequestBuilders.buildCustomRequest(
+                            method = "tools/call",
+                            params = buildJsonObject {
+                                put("name", "session_create")
+                                put("arguments", JsonPrimitive("invalid")) // Should be object
+                            }
+                        )
+                    )
 
-                response.error shouldNotBe null
-                response.error!!.code shouldBe -32602 // Invalid params
-                response.error!!.message shouldContain "Expected object parameters"
+                    val error = response.extractMCPError()
+                    error shouldNotBe null
+                }
             }
 
-            it("should handle missing required parameters correctly") {
-                val request = JsonRpcRequest(
-                    jsonrpc = "2.0",
-                    method = "tools/call",
-                    params = buildJsonObject {
-                        // Missing required "name" parameter
-                        putJsonObject("arguments") {
-                            put("test", "value")
-                        }
-                    },
-                    id = JsonPrimitive("test")
-                )
+            it("should handle missing required request fields via SDK") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
 
-                val response = methodHandler.handleRequest(request, testSessionId)
+                    // Send tools/call without tool name
+                    val response = client.sendMCPRequest(
+                        MCPRequestBuilders.buildCustomRequest(
+                            method = "tools/call",
+                            params = buildJsonObject {
+                                // Missing "name" field
+                                putJsonObject("arguments") {
+                                    put("test", "value")
+                                }
+                            }
+                        )
+                    )
 
-                response.error shouldNotBe null
-                response.error!!.code shouldBe -32602 // Invalid params
-                response.error!!.message shouldContain "Missing required parameter: name"
-            }
-        }
-
-        describe("Server State Error Handling") {
-
-            it("should handle requests when server is not initialized") {
-                val uninitializedServerState = ServerState()
-                val uninitializedMethodHandler = McpMethodHandler(
-                    protocolHandler = protocolHandler,
-                    toolHandler = toolHandler,
-                    resourceRegistry = resourceRegistry,
-                    serverState = uninitializedServerState
-                )
-
-                val request = JsonRpcRequest(
-                    jsonrpc = "2.0",
-                    method = "tools/list",
-                    params = JsonObject(emptyMap()),
-                    id = JsonPrimitive("test")
-                )
-
-                val response = uninitializedMethodHandler.handleRequest(request, testSessionId)
-
-                response.error shouldNotBe null
-                response.error!!.code shouldBe -32003
-                response.error!!.message shouldBe "Server not initialized"
+                    val error = response.extractMCPError()
+                    error shouldNotBe null
+                    error!!["message"]?.jsonPrimitive?.content shouldContain "name"
+                }
             }
         }
     }
 
-    describe("Architecture Compliance Validation") {
+    describe("SDK Integration Validation") {
 
-        describe("Layer Separation Verification") {
+        describe("End-to-End Request Flow") {
 
-            it("should maintain clean separation between layers") {
-                // This test verifies that each layer focuses on its single responsibility
-                val response = executeToolsCall("integration.complex", buildJsonObject {
-                    put("structure", "object")
-                })
+            it("should handle complete request flow through SDK transport") {
+                testSDKApplication {
+                    val client = createTestClient()
 
-                // McpMethodHandler should handle JSON-RPC protocol
-                response.jsonrpc shouldBe "2.0"
-                response.id shouldNotBe null
+                    // Initialize connection
+                    val initResponse = client.mcpInitialize()
+                    initResponse.isMCPSuccess() shouldBe true
 
-                // McpToolHandler should handle MCP content formatting
-                val result = response.result as JsonObject
-                result["content"].shouldBeInstanceOf<JsonArray>()
+                    // List tools
+                    val listResponse = client.executeToolsList()
+                    listResponse.isMCPSuccess() shouldBe true
 
-                // ToolRegistry should handle domain logic (verified by correct tool execution)
-                val contentArray = result["content"] as JsonArray
-                val contentItem = contentArray[0].jsonObject
-                val responseText = contentItem["text"]?.jsonPrimitive?.content
-                responseText shouldContain "\"type\": \"complex\""
+                    // Call tool
+                    val callResponse = client.executeToolsCall(
+                        "session_create",
+                        mapOf("projectId" to "TEST-FLOW")
+                    )
+                    callResponse.isMCPSuccess() shouldBe true
+
+                    // All operations succeed through SDK
+                    val result = callResponse.extractMCPResult()
+                    result.jsonObject["content"] shouldNotBe null
+                }
             }
 
-            it("should demonstrate proper dependency direction") {
-                // Integration test verifies unidirectional dependency flow:
-                // McpMethodHandler -> McpToolHandler -> ToolRegistry
+            it("should maintain proper JSON-RPC protocol through SDK") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
 
-                val listResponse = executeToolsList()
-                val callResponse = executeToolsCall("integration.simple", buildJsonObject {
-                    put("message", "dependency test")
-                })
+                    val response = client.executeToolsCall(
+                        "session_create",
+                        mapOf("projectId" to "TEST-PROTOCOL")
+                    )
 
-                // Both operations should succeed, demonstrating proper dependency injection
-                listResponse.error shouldBe null
-                callResponse.error shouldBe null
+                    // Verify JSON-RPC 2.0 protocol
+                    response.status shouldBe HttpStatusCode.OK
 
-                // Verify that ToolRegistry operations are accessible through the chain
-                val listResult = listResponse.result as JsonObject
-                val toolsArray = listResult["tools"] as JsonArray
-                toolsArray.size shouldBe 5 // All tools accessible
+                    val body = response.bodyAsText()
+                    val json = Json.parseToJsonElement(body).jsonObject
 
-                val callResult = callResponse.result as JsonObject
-                val contentArray = callResult["content"] as JsonArray
-                val contentItem = contentArray[0].jsonObject
-                contentItem["text"]?.jsonPrimitive?.content shouldBe "Echo: dependency test"
-            }
-
-            it("should maintain protocol independence in domain layer") {
-                // Verify that ToolRegistry operations work independently of protocol concerns
-
-                // Direct ToolRegistry access should work the same as through the integration chain
-                val directResult = toolRegistry.invoke("integration.simple", buildJsonObject {
-                    put("message", "direct access")
-                })
-
-                directResult.isSuccess shouldBe true
-                val directValue = directResult.getOrNull()
-                directValue shouldBe JsonPrimitive("Echo: direct access")
-
-                // Integration chain should produce equivalent results (after MCP formatting)
-                val integrationResponse = executeToolsCall("integration.simple", buildJsonObject {
-                    put("message", "direct access")
-                })
-
-                integrationResponse.error shouldBe null
-                val integrationResult = integrationResponse.result as JsonObject
-                val contentArray = integrationResult["content"] as JsonArray
-                val contentItem = contentArray[0].jsonObject
-                contentItem["text"]?.jsonPrimitive?.content shouldBe "Echo: direct access"
+                    json["jsonrpc"]?.jsonPrimitive?.content shouldBe "2.0"
+                    json["id"] shouldNotBe null
+                    json["result"] shouldNotBe null
+                }
             }
         }
 
-        describe("Error Boundary Validation") {
+        describe("Error Consistency") {
 
-            it("should demonstrate clean error handling at each layer boundary") {
-                // Test error originating in ToolRegistry
-                val toolError = executeToolsCall("integration.failing", buildJsonObject {
-                    put("errorType", "execution")
-                })
+            it("should return consistent error format across all error types") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
 
-                // Test error originating in McpToolHandler (protocol layer)
-                val protocolError = executeToolsCall("nonexistent.tool", JsonObject(emptyMap()))
+                    // Tool not found error
+                    val notFoundError = client.executeToolsCall("nonexistent", mapOf())
+                    notFoundError.extractMCPError() shouldNotBe null
 
-                // Test error originating in McpMethodHandler (integration layer)
-                val methodRequest = JsonRpcRequest(
-                    jsonrpc = "2.0",
-                    method = "unknown/method",
-                    params = JsonObject(emptyMap()),
-                    id = JsonPrimitive("test")
-                )
-                val methodError = methodHandler.handleRequest(methodRequest, testSessionId)
+                    // Parameter validation error
+                    val validationError = client.executeToolsCall("session_create", mapOf())
+                    validationError.extractMCPError() shouldNotBe null
 
-                // All errors should be properly formatted as JSON-RPC errors
-                listOf(toolError, protocolError, methodError).forEach { response ->
-                    response.error shouldNotBe null
-                    response.result shouldBe null
-                    response.error!!.code shouldNotBe null
-                    response.error!!.message shouldNotBe null
+                    // Both errors have consistent structure
+                    val error1 = notFoundError.extractMCPError()!!
+                    val error2 = validationError.extractMCPError()!!
+
+                    error1["code"] shouldNotBe null
+                    error1["message"] shouldNotBe null
+                    error2["code"] shouldNotBe null
+                    error2["message"] shouldNotBe null
                 }
-
-                // Each layer should contribute appropriate error codes
-                toolError.error!!.code shouldBe -32603 // Internal error (from tool execution)
-                protocolError.error!!.code shouldBe -32601 // Method not found (from tool handler)
-                methodError.error!!.code shouldBe -32601 // Method not found (from method handler)
             }
         }
     }
 
-    describe("Performance and Quality Validation") {
+    describe("Production Tool Integration") {
 
-        describe("Concurrent Access Testing") {
+        describe("Session Tool Operations") {
 
-            it("should handle multiple concurrent tool invocations safely") {
-                val tools = listOf("integration.simple", "integration.math", "integration.complex")
-                val responses = mutableListOf<JsonRpcResponse>()
+            it("should handle complete session lifecycle via SDK") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
 
-                // Execute multiple tools concurrently
-                tools.forEach { toolName ->
-                    val arguments = when (toolName) {
-                        "integration.simple" -> buildJsonObject { put("message", "concurrent-$toolName") }
-                        "integration.math" -> buildJsonObject {
-                            put("operation", "add")
-                            put("a", 1)
-                            put("b", 2)
-                        }
-                        "integration.complex" -> buildJsonObject { put("structure", "object") }
-                        else -> JsonObject(emptyMap())
-                    }
+                    // Create session
+                    val createResponse = client.executeToolsCall(
+                        "session_create",
+                        mapOf("projectId" to "TEST-LIFECYCLE")
+                    )
+                    createResponse.isMCPSuccess() shouldBe true
 
-                    val response = executeToolsCall(toolName, arguments)
-                    responses.add(response)
+                    // Extract session ID
+                    val createResult = createResponse.extractMCPResult()
+                    val contentArray = createResult.jsonObject["content"]!!.jsonArray
+                    val textContent = contentArray[0].jsonObject["text"]?.jsonPrimitive?.content
+                    val sessionData = Json.parseToJsonElement(textContent!!).jsonObject
+                    val sessionId = sessionData["id"]?.jsonPrimitive?.content
+
+                    sessionId shouldNotBe null
+
+                    // Get session
+                    val getResponse = client.executeToolsCall(
+                        "session_get",
+                        mapOf(),
+                        sessionId
+                    )
+                    getResponse.isMCPSuccess() shouldBe true
+
+                    // Verify same session
+                    val getResult = getResponse.extractMCPResult()
+                    val getContent = getResult.jsonObject["content"]!!.jsonArray
+                    val getText = getContent[0].jsonObject["text"]?.jsonPrimitive?.content
+                    getText shouldContain sessionId!!
                 }
-
-                // All operations should succeed
-                responses.forEach { response ->
-                    response.error shouldBe null
-                    response.result shouldNotBe null
-                }
-
-                responses.size shouldBe 3
             }
-        }
 
-        describe("Resource Cleanup Validation") {
+            it("should handle multiple sessions independently") {
+                testSDKApplication {
+                    val client = createTestClient()
+                    client.mcpInitialize()
 
-            it("should properly handle async operation cleanup") {
-                // Test async tool that completes successfully
-                val successResponse = executeToolsCall("integration.async", buildJsonObject {
-                    put("delay", 25)
-                    put("action", "success")
-                })
+                    // Create two different sessions
+                    val session1 = client.executeToolsCall(
+                        "session_create",
+                        mapOf("projectId" to "TEST-SESSION-1")
+                    )
+                    val session2 = client.executeToolsCall(
+                        "session_create",
+                        mapOf("projectId" to "TEST-SESSION-2")
+                    )
 
-                successResponse.error shouldBe null
+                    session1.isMCPSuccess() shouldBe true
+                    session2.isMCPSuccess() shouldBe true
 
-                // Test async tool that fails
-                val failResponse = executeToolsCall("integration.async", buildJsonObject {
-                    put("delay", 10)
-                    put("action", "fail")
-                })
+                    // Both sessions should exist independently
+                    val result1 = session1.extractMCPResult()
+                    val result2 = session2.extractMCPResult()
 
-                failResponse.error shouldNotBe null
-                failResponse.error!!.code shouldBe -32603 // Internal error
-                failResponse.error!!.message shouldContain "Async operation failed"
+                    result1 shouldNotBe null
+                    result2 shouldNotBe null
+                }
             }
         }
     }

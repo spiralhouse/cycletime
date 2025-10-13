@@ -3,6 +3,7 @@ package io.spiralhouse.cycletime.mcp.sdk
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.ktor.server.plugins.di.*
+import io.modelcontextprotocol.kotlin.sdk.server.mcp
 import org.slf4j.LoggerFactory
 
 /**
@@ -24,7 +25,7 @@ import org.slf4j.LoggerFactory
 private val logger = LoggerFactory.getLogger("MCPSdkRouting")
 
 /**
- * Configure MCP SDK routing at the specified path.
+ * Configure MCP SDK routing at /mcp path.
  *
  * This function registers the SDK server with Ktor routing. The SDK automatically
  * handles:
@@ -36,31 +37,27 @@ private val logger = LoggerFactory.getLogger("MCPSdkRouting")
  * Usage from Application.kt:
  * ```
  * routing {
- *     route("/mcp") {
- *         configureMCPSdk()
- *     }
+ *     configureMCPSdk()
  * }
  * ```
  *
  * The SDK will be available at:
  * - POST /mcp - JSON-RPC requests
- * - GET /mcp/events - SSE event stream (if SDK supports this pattern)
+ * - SSE connection for server-to-client events
  */
-fun Route.configureMCPSdk() {
+fun Routing.configureMCPSdk() {
     val sdkServer: MCPSdkServer by application.dependencies
     val startTime = System.currentTimeMillis()
 
-    // TODO Phase 3: Register SDK server with Ktor routing
-    // The SDK v0.7.2 provides a Ktor extension for routing integration.
-    // Pattern will be similar to:
-    // mcp { sdkServer.server }
-    //
-    // For Phase 2, we're setting up the infrastructure without full routing
-    // integration, as tool/resource registration happens in Phase 3.
+    // Register SDK server with Ktor routing at /mcp path
+    // The mcp extension automatically configures SSE + JSON-RPC endpoints
+    mcp("/mcp") {
+        sdkServer.server
+    }
 
     val initTime = System.currentTimeMillis() - startTime
-    logger.info("MCP SDK routing configured in ${initTime}ms (Phase 2: infrastructure only)")
-    logger.info("SDK v0.7.2 server initialized and ready for tool registration (Phase 3)")
+    logger.info("MCP SDK routing configured and operational in ${initTime}ms at /mcp")
+    logger.info("SDK endpoints active: POST /mcp (JSON-RPC requests), SSE connection ready")
 }
 
 /**
@@ -78,10 +75,8 @@ fun Route.configureMCPSdk() {
 fun Routing.configureMCPParallelMode(legacyRouting: Routing.() -> Unit) {
     logger.info("Configuring MCP in parallel mode (SDK + legacy EventBus)")
 
-    // SDK transport (primary)
-    route("/mcp") {
-        configureMCPSdk()
-    }
+    // SDK transport (primary) - registers at /mcp
+    configureMCPSdk()
 
     // Legacy EventBus transport (for rollback)
     route("/mcp-old") {
