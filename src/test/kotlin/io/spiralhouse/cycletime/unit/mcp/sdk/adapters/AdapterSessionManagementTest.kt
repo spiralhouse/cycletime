@@ -4,8 +4,10 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldMatch
 import io.spiralhouse.cycletime.mcp.sdk.MCPSdkServer
+import io.spiralhouse.cycletime.unit.mocks.MCPSdkServerTestFactory
 import io.spiralhouse.cycletime.unit.mocks.MockSDKToolExecutor
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -31,17 +33,16 @@ class AdapterSessionManagementTest : StringSpec({
 
     "should extract session from request metadata" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val metadata = mapOf(
             "sessionId" to JsonPrimitive("test-session-456")
         )
 
-        // When - This WILL FAIL in RED phase - adapter session extraction not implemented yet
         // The test verifies that tools/resources can access session from metadata
         val result = executor.executeTool(
-            toolName = "get_session",
+            toolName = "session_get_session",
             arguments = buildJsonObject {
                 put("sessionKey", JsonPrimitive("test-session-456"))
             },
@@ -55,14 +56,13 @@ class AdapterSessionManagementTest : StringSpec({
 
     "should create new session when sessionId not in metadata" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val metadata = emptyMap<String, kotlinx.serialization.json.JsonElement>()
 
-        // When - This WILL FAIL in RED phase - session creation not implemented yet
         val result = executor.executeTool(
-            toolName = "create_session",
+            toolName = "session_create_session",
             arguments = buildJsonObject {
                 put("projectId", JsonPrimitive("TEST-PROJECT"))
             },
@@ -74,35 +74,35 @@ class AdapterSessionManagementTest : StringSpec({
         // GREEN phase will verify actual session creation
     }
 
-    "should throw when session required but missing" {
+    "should use default session when sessionKey not provided to get_next_task" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val metadata = emptyMap<String, kotlinx.serialization.json.JsonElement>()
 
-        // When/Then - This WILL FAIL in RED phase - error handling not implemented yet
-        // Some tools may require session context
-        shouldThrow<IllegalStateException> {
-            executor.executeTool(
-                toolName = "get_next_task", // Example tool requiring session
-                arguments = buildJsonObject { },
-                meta = metadata
-            )
-        }
+        // When - get_next_task has optional sessionKey parameter
+        val result = executor.executeTool(
+            toolName = "session_get_next_task",
+            arguments = buildJsonObject { },
+            meta = metadata
+        )
+
+        // Then - should succeed with default session (sessionKey is optional)
+        result shouldNotBe null
+        result.isError shouldBe false
     }
 
     "should validate session exists in repository" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         // First, create a session
         val createMetadata = emptyMap<String, kotlinx.serialization.json.JsonElement>()
 
-        // When - This WILL FAIL in RED phase - validation not implemented yet
         val createResult = executor.executeTool(
-            toolName = "create_session",
+            toolName = "session_create_session",
             arguments = buildJsonObject {
                 put("projectId", JsonPrimitive("TEST-PROJECT"))
             },
@@ -116,16 +116,15 @@ class AdapterSessionManagementTest : StringSpec({
 
     "should use session in tool execution context" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val metadata = mapOf(
             "sessionId" to JsonPrimitive("context-session")
         )
 
-        // When - This WILL FAIL in RED phase - context passing not implemented yet
         val result = executor.executeTool(
-            toolName = "create_project",
+            toolName = "project_create_project",
             arguments = buildJsonObject {
                 put("name", JsonPrimitive("Test Project"))
             },
@@ -139,25 +138,24 @@ class AdapterSessionManagementTest : StringSpec({
 
     "should isolate sessions across concurrent requests" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val session1Metadata = mapOf("sessionId" to JsonPrimitive("concurrent-1"))
         val session2Metadata = mapOf("sessionId" to JsonPrimitive("concurrent-2"))
 
-        // When - This WILL FAIL in RED phase - concurrency isolation not implemented yet
         val results = runBlocking {
             listOf(
                 async {
                     executor.executeTool(
-                        toolName = "list_projects",
+                        toolName = "project_list_projects",
                         arguments = buildJsonObject { },
                         meta = session1Metadata
                     )
                 },
                 async {
                     executor.executeTool(
-                        toolName = "list_projects",
+                        toolName = "project_list_projects",
                         arguments = buildJsonObject { },
                         meta = session2Metadata
                     )

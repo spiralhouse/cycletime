@@ -4,6 +4,11 @@ import io.modelcontextprotocol.kotlin.sdk.Implementation
 import io.modelcontextprotocol.kotlin.sdk.ServerCapabilities
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
+import io.spiralhouse.cycletime.mcp.resources.ResourceProvider
+import io.spiralhouse.cycletime.mcp.sdk.adapters.SDKResourceAdapter
+import io.spiralhouse.cycletime.mcp.sdk.adapters.SDKToolAdapter
+import io.spiralhouse.cycletime.mcp.tools.ToolProvider
+import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 
 /**
@@ -19,10 +24,19 @@ import org.slf4j.LoggerFactory
  * This class encapsulates server creation and capability configuration following
  * the official MCP Kotlin SDK patterns.
  *
+ * In Phase 3 GREEN, this class now registers tool and resource adapters that bridge
+ * existing business logic to the SDK API.
+ *
  * @property version Application version for server identification
+ * @property sessionManager Session manager for SDK session handling
+ * @property toolProviders List of tool providers to register
+ * @property resourceProviders List of resource providers to register
  */
 class MCPSdkServer(
-    private val version: String
+    private val version: String,
+    private val sessionManager: SDKSessionManager? = null,
+    private val toolProviders: List<ToolProvider> = emptyList(),
+    private val resourceProviders: List<ResourceProvider> = emptyList()
 ) {
     private val logger = LoggerFactory.getLogger(MCPSdkServer::class.java)
 
@@ -52,8 +66,51 @@ class MCPSdkServer(
     )
 
     init {
-        logger.info("MCP SDK Server initialized (SDK v0.7.2, version: $version)")
+        logger.info("MCP SDK Server initializing (SDK v0.7.2, version: $version)")
+
+        // Register all tool and resource providers via adapters (if provided)
+        if (sessionManager != null && (toolProviders.isNotEmpty() || resourceProviders.isNotEmpty())) {
+            runBlocking {
+                registerToolProviders()
+                registerResourceProviders()
+            }
+            logger.info("MCP SDK Server initialized with ${toolProviders.size} tool providers, " +
+                       "${resourceProviders.size} resource providers")
+        } else {
+            logger.info("MCP SDK Server initialized in test mode (no providers registered)")
+        }
+
         logger.debug("Server capabilities: resources (subscribe, listChanged), tools")
+    }
+
+    /**
+     * Register all tool providers via adapters.
+     *
+     * Each tool provider is wrapped in an SDKToolAdapter that bridges the existing
+     * tool implementation to the SDK registration API.
+     */
+    private suspend fun registerToolProviders() {
+        val manager = sessionManager ?: return
+        toolProviders.forEach { provider ->
+            val adapter = SDKToolAdapter(provider, manager)
+            adapter.registerTools(server)
+        }
+        logger.debug("Registered ${toolProviders.size} tool providers")
+    }
+
+    /**
+     * Register all resource providers via adapters.
+     *
+     * Each resource provider is wrapped in an SDKResourceAdapter that bridges the existing
+     * resource implementation to the SDK registration API.
+     */
+    private suspend fun registerResourceProviders() {
+        val manager = sessionManager ?: return
+        resourceProviders.forEach { provider ->
+            val adapter = SDKResourceAdapter(provider, manager)
+            adapter.registerResources(server)
+        }
+        logger.debug("Registered ${resourceProviders.size} resource providers")
     }
 
     /**

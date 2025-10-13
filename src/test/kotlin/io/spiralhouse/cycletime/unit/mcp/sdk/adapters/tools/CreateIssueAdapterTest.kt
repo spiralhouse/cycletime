@@ -5,8 +5,10 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.shouldBe
 import io.spiralhouse.cycletime.mcp.sdk.MCPSdkServer
 import io.spiralhouse.cycletime.unit.mocks.MockSDKToolExecutor
+import io.spiralhouse.cycletime.unit.mocks.MCPSdkServerTestFactory
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -20,19 +22,18 @@ class CreateIssueAdapterTest : StringSpec({
 
     "should register create_issue tool with SDK" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
-        // When - This WILL FAIL in RED phase
         val tools = executor.listTools()
 
         // Then
-        tools shouldContain "create_issue"
+        tools shouldContain "issue_create_issue"
     }
 
     "should execute create_issue via SDK CallToolRequest" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val arguments = buildJsonObject {
@@ -42,9 +43,8 @@ class CreateIssueAdapterTest : StringSpec({
             put("type", JsonPrimitive("STORY"))
         }
 
-        // When - This WILL FAIL in RED phase
         val result = executor.executeTool(
-            toolName = "create_issue",
+            toolName = "issue_create_issue",
             arguments = arguments
         )
 
@@ -52,9 +52,9 @@ class CreateIssueAdapterTest : StringSpec({
         result shouldNotBe null  // Will be CallToolResult.Success in GREEN phase
     }
 
-    "should throw IllegalArgumentException when required fields missing" {
+    "should return error when required fields missing" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val arguments = buildJsonObject {
@@ -62,12 +62,14 @@ class CreateIssueAdapterTest : StringSpec({
             // Missing projectId (required)
         }
 
-        // When/Then - This WILL FAIL in RED phase
-        shouldThrow<IllegalArgumentException> {
-            executor.executeTool(
-                toolName = "create_issue",
+        // When
+        val result = executor.executeTool(
+                toolName = "issue_create_issue",
                 arguments = arguments
             )
-        }
+
+        // Then - SDK returns error result instead of throwing
+        result shouldNotBe null
+        result.isError shouldBe true
     }
 })

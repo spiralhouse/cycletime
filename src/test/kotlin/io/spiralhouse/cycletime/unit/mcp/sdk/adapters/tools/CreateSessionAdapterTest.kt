@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.shouldNotBe
 import io.spiralhouse.cycletime.mcp.sdk.MCPSdkServer
+import io.spiralhouse.cycletime.unit.mocks.MCPSdkServerTestFactory
 import io.spiralhouse.cycletime.unit.mocks.MockSDKToolExecutor
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -32,7 +33,7 @@ class CreateSessionAdapterTest : StringSpec({
 
     "should register create_session tool with SDK" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         // When - list all registered tools
@@ -40,12 +41,12 @@ class CreateSessionAdapterTest : StringSpec({
         val tools = executor.listTools()
 
         // Then - verify create_session is registered
-        tools shouldContain "create_session"
+        tools shouldContain "session_create_session"
     }
 
     "should execute create_session via SDK CallToolRequest" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val arguments = buildJsonObject {
@@ -55,7 +56,7 @@ class CreateSessionAdapterTest : StringSpec({
         // When - execute tool via SDK
         // This WILL FAIL in RED phase - no adapter implementation exists yet
         val result = executor.executeTool(
-            toolName = "create_session",
+            toolName = "session_create_session",
             arguments = arguments
         )
 
@@ -65,20 +66,21 @@ class CreateSessionAdapterTest : StringSpec({
         // (specific content assertions will be added in GREEN phase)
     }
 
-    "should throw IllegalArgumentException when projectId missing" {
+    "should return error when projectId missing" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val arguments = JsonObject(emptyMap()) // Missing projectId!
 
-        // When/Then - should throw exception
-        // This WILL FAIL in RED phase - no error handling exists yet
-        shouldThrow<IllegalArgumentException> {
-            executor.executeTool(
-                toolName = "create_session",
-                arguments = arguments
-            )
-        }
+        // When
+        val result = executor.executeTool(
+            toolName = "session_create_session",
+            arguments = arguments
+        )
+
+        // Then - SDK returns error result instead of throwing
+        result shouldNotBe null
+        result.isError shouldBe true
     }
 })

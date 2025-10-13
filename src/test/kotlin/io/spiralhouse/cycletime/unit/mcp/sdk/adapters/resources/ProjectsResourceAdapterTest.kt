@@ -7,6 +7,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.shouldNotBe
 import io.spiralhouse.cycletime.mcp.sdk.MCPSdkServer
 import io.spiralhouse.cycletime.unit.mocks.MockSDKToolExecutor
+import io.spiralhouse.cycletime.unit.mocks.MCPSdkServerTestFactory
 import kotlinx.serialization.json.JsonPrimitive
 
 /**
@@ -23,7 +24,7 @@ class ProjectsResourceAdapterTest : StringSpec({
 
     "should register projects resource with SDK" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         // When - This WILL FAIL in RED phase - no resources registered yet
@@ -35,7 +36,7 @@ class ProjectsResourceAdapterTest : StringSpec({
 
     "should read projects via SDK ReadResourceRequest" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val metadata = mapOf(
@@ -55,7 +56,7 @@ class ProjectsResourceAdapterTest : StringSpec({
 
     "should support resource subscription (listChanged capability)" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         // When - This WILL FAIL in RED phase - no subscription implementation exists yet

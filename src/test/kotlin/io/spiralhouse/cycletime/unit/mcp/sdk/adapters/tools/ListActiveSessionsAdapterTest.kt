@@ -6,6 +6,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.shouldNotBe
 import io.spiralhouse.cycletime.mcp.sdk.MCPSdkServer
 import io.spiralhouse.cycletime.unit.mocks.MockSDKToolExecutor
+import io.spiralhouse.cycletime.unit.mocks.MCPSdkServerTestFactory
 import kotlinx.serialization.json.JsonObject
 
 /**
@@ -17,26 +18,26 @@ class ListActiveSessionsAdapterTest : StringSpec({
 
     "should register list_active_sessions tool with SDK" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         // When - This WILL FAIL in RED phase
         val tools = executor.listTools()
 
         // Then
-        tools shouldContain "list_active_sessions"
+        tools shouldContain "session_list_active_sessions"
     }
 
     "should execute list_active_sessions via SDK CallToolRequest" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val arguments = JsonObject(emptyMap()) // No parameters required
 
         // When - This WILL FAIL in RED phase
         val result = executor.executeTool(
-            toolName = "list_active_sessions",
+            toolName = "session_list_active_sessions",
             arguments = arguments
         )
 
@@ -46,12 +47,12 @@ class ListActiveSessionsAdapterTest : StringSpec({
 
     "should filter only active sessions" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         // When - This WILL FAIL in RED phase
         val result = executor.executeTool(
-            toolName = "list_active_sessions",
+            toolName = "session_list_active_sessions",
             arguments = JsonObject(emptyMap())
         )
 

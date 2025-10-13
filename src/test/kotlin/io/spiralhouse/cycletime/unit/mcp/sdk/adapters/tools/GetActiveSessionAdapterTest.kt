@@ -6,6 +6,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.shouldNotBe
 import io.spiralhouse.cycletime.mcp.sdk.MCPSdkServer
 import io.spiralhouse.cycletime.unit.mocks.MockSDKToolExecutor
+import io.spiralhouse.cycletime.unit.mocks.MCPSdkServerTestFactory
 import kotlinx.serialization.json.JsonObject
 
 /**
@@ -17,26 +18,26 @@ class GetActiveSessionAdapterTest : StringSpec({
 
     "should register get_active_session tool with SDK" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         // When - This WILL FAIL in RED phase
         val tools = executor.listTools()
 
         // Then
-        tools shouldContain "get_active_session"
+        tools shouldContain "session_get_active_session"
     }
 
     "should execute get_active_session via SDK CallToolRequest" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val arguments = JsonObject(emptyMap()) // No parameters required
 
         // When - This WILL FAIL in RED phase
         val result = executor.executeTool(
-            toolName = "get_active_session",
+            toolName = "session_get_active_session",
             arguments = arguments
         )
 
@@ -46,12 +47,12 @@ class GetActiveSessionAdapterTest : StringSpec({
 
     "should handle no active session gracefully" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         // When - This WILL FAIL in RED phase
         val result = executor.executeTool(
-            toolName = "get_active_session",
+            toolName = "session_get_active_session",
             arguments = JsonObject(emptyMap())
         )
 

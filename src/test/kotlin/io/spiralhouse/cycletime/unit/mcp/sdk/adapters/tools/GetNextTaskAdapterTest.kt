@@ -6,6 +6,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.shouldNotBe
 import io.spiralhouse.cycletime.mcp.sdk.MCPSdkServer
 import io.spiralhouse.cycletime.unit.mocks.MockSDKToolExecutor
+import io.spiralhouse.cycletime.unit.mocks.MCPSdkServerTestFactory
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -19,19 +20,19 @@ class GetNextTaskAdapterTest : StringSpec({
 
     "should register get_next_task tool with SDK" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         // When - This WILL FAIL in RED phase
         val tools = executor.listTools()
 
         // Then
-        tools shouldContain "get_next_task"
+        tools shouldContain "session_get_next_task"
     }
 
     "should execute get_next_task with sessionKey via SDK CallToolRequest" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val arguments = buildJsonObject {
@@ -40,7 +41,7 @@ class GetNextTaskAdapterTest : StringSpec({
 
         // When - This WILL FAIL in RED phase
         val result = executor.executeTool(
-            toolName = "get_next_task",
+            toolName = "session_get_next_task",
             arguments = arguments
         )
 
@@ -50,14 +51,14 @@ class GetNextTaskAdapterTest : StringSpec({
 
     "should execute get_next_task without sessionKey (optional parameter)" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val arguments = JsonObject(emptyMap()) // sessionKey is optional
 
         // When - This WILL FAIL in RED phase
         val result = executor.executeTool(
-            toolName = "get_next_task",
+            toolName = "session_get_next_task",
             arguments = arguments
         )
 

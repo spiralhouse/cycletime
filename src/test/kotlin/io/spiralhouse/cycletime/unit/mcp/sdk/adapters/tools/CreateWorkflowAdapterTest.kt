@@ -5,8 +5,10 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.shouldBe
 import io.spiralhouse.cycletime.mcp.sdk.MCPSdkServer
 import io.spiralhouse.cycletime.unit.mocks.MockSDKToolExecutor
+import io.spiralhouse.cycletime.unit.mocks.MCPSdkServerTestFactory
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
@@ -21,19 +23,18 @@ class CreateWorkflowAdapterTest : StringSpec({
 
     "should register create_workflow tool with SDK" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
-        // When - This WILL FAIL in RED phase
         val tools = executor.listTools()
 
         // Then
-        tools shouldContain "create_workflow"
+        tools shouldContain "workflow_create_workflow"
     }
 
     "should execute create_workflow via SDK CallToolRequest" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val arguments = buildJsonObject {
@@ -51,9 +52,8 @@ class CreateWorkflowAdapterTest : StringSpec({
             })
         }
 
-        // When - This WILL FAIL in RED phase
         val result = executor.executeTool(
-            toolName = "create_workflow",
+            toolName = "workflow_create_workflow",
             arguments = arguments
         )
 
@@ -61,21 +61,23 @@ class CreateWorkflowAdapterTest : StringSpec({
         result shouldNotBe null  // Will be CallToolResult.Success in GREEN phase
     }
 
-    "should throw IllegalArgumentException when workflow name missing" {
+    "should return error when workflow name missing" {
         // Given
-        val mcpServer = MCPSdkServer("1.0.0-test")
+        val mcpServer = MCPSdkServerTestFactory.createWithProviders()
         val executor = MockSDKToolExecutor(mcpServer.server)
 
         val arguments = buildJsonObject {
             put("description", JsonPrimitive("Test Description"))
         } // Missing name!
 
-        // When/Then - This WILL FAIL in RED phase
-        shouldThrow<IllegalArgumentException> {
-            executor.executeTool(
-                toolName = "create_workflow",
+        // When
+        val result = executor.executeTool(
+                toolName = "workflow_create_workflow",
                 arguments = arguments
             )
-        }
+
+        // Then - SDK returns error result instead of throwing
+        result shouldNotBe null
+        result.isError shouldBe true
     }
 })

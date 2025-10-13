@@ -99,6 +99,7 @@ dependencies {
     testImplementation("io.ktor:ktor-client-content-negotiation:${libs.versions.ktor.get()}")
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.h2.database)  // H2 for integration testing
+    testImplementation("org.jetbrains.kotlin:kotlin-reflect:${libs.versions.kotlin.get()}")  // Reflection for MockSDKToolExecutor
 
     // TODO: TestContainers for SPI-439 Integration Testing (when H2 repositories are implemented)
     // testImplementation("org.testcontainers:testcontainers:1.19.3")
@@ -249,6 +250,10 @@ val unitTest by tasks.registering(Test::class) {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
         includeTestsMatching("io.spiralhouse.cycletime.unit.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*.*.*.*")
         // Include pure MCP logic tests (protocol handlers, tool handlers)
         includeTestsMatching("io.spiralhouse.cycletime.mcp.protocol.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.tools.*")
@@ -576,6 +581,10 @@ tasks.test {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
         includeTestsMatching("io.spiralhouse.cycletime.unit.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*.*.*.*")
         // Include pure MCP logic tests (protocol handlers, tool handlers)
         includeTestsMatching("io.spiralhouse.cycletime.mcp.protocol.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.tools.*")

@@ -184,7 +184,7 @@ private fun DependencyRegistry.configureMCPDependencies() {
     provide<ResourceRegistry> { ResourceRegistry() }
     provide<ToolRegistry> { ToolRegistry() }
 
-    // SDK v0.7.2 Components (Phase 2 - Transport Layer)
+    // SDK v0.7.2 Components (Phase 3 - Tool/Resource Adapters)
     provide<SDKSessionManager> {
         SDKSessionManager(
             sessionService = resolve<SessionApplicationService>()
@@ -192,7 +192,30 @@ private fun DependencyRegistry.configureMCPDependencies() {
     }
     provide<MCPSdkServer> {
         val version = System.getProperty("cycletime.version") ?: "unknown"
-        MCPSdkServer(version)
+
+        // Tool providers (business logic unchanged)
+        val toolProviders = listOf(
+            resolve<DefaultProjectToolProvider>(),
+            resolve<DefaultIssueToolProvider>(),
+            resolve<DefaultSessionToolProvider>(),
+            resolve<DefaultWorkflowToolProvider>()
+        )
+
+        // Resource providers (business logic unchanged)
+        // Cast to full ResourceProvider interface (from mcp.resources package)
+        val resourceProviders = listOf(
+            resolve<ProjectResourceProvider>() as io.spiralhouse.cycletime.mcp.resources.ResourceProvider,
+            resolve<IssueResourceProvider>() as io.spiralhouse.cycletime.mcp.resources.ResourceProvider,
+            resolve<SessionResourceProvider>() as io.spiralhouse.cycletime.mcp.resources.ResourceProvider,
+            resolve<WorkflowResourceProvider>() as io.spiralhouse.cycletime.mcp.resources.ResourceProvider
+        )
+
+        MCPSdkServer(
+            version = version,
+            sessionManager = resolve<SDKSessionManager>(),
+            toolProviders = toolProviders,
+            resourceProviders = resourceProviders
+        )
     }
 
     // SSE Transport Components (SPI-665)
