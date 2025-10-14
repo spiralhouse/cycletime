@@ -48,7 +48,7 @@ object MCPRequestBuilders {
         clientName: String = "test-client",
         clientVersion: String = "1.0.0",
         capabilities: JsonObject = JsonObject(emptyMap()),
-        sessionId: String? = null
+        sessionId: String? = null  // Kept for backward compatibility but NOT used in initialize
     ): String = buildJsonObject {
         put("jsonrpc", "2.0")
         put("method", "initialize")
@@ -62,12 +62,9 @@ object MCPRequestBuilders {
         }
         put("id", id)
 
-        // Add _meta field at TOP LEVEL (SDK extracts sessionId from here)
-        if (sessionId != null) {
-            putJsonObject("_meta") {
-                put("sessionId", sessionId)
-            }
-        }
+        // SPEC COMPLIANCE: MCP initialize request does NOT include _meta or sessionId!
+        // Per MCP spec 2025-03-26, initialize contains only: jsonrpc, method, params, id
+        // Sessions are managed by SDK internally after initialization completes.
     }.toString()
 
     /**
