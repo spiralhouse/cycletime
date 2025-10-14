@@ -15,8 +15,12 @@ fun Routing.configureMCP() {
     val logger = LoggerFactory.getLogger("MCPRouting")
     val startTime = System.currentTimeMillis()
 
+    logger.info("🚀 configureMCP() CALLED - Starting MCP routing configuration")
+
     // SDK transport (primary) - Phase 3+ migration
+    logger.info("📡 Calling configureMCPSdk() for SDK v0.7.2 transport")
     configureMCPSdk()
+    logger.info("✅ configureMCPSdk() completed")
 
     // Legacy EventBus transport (for backward compatibility during migration)
     // Get SSE transport components from DI (SPI-665)
@@ -25,13 +29,12 @@ fun Routing.configureMCP() {
     val correlator: MessageCorrelator by application.dependencies
     val methodHandler: McpMethodHandler by application.dependencies
 
-    // Legacy SSE endpoint for server-to-client events (SPI-665)
-    route("") {
+    // Legacy endpoints at /mcp-old for backward compatibility during migration
+    route("/mcp-old") {
+        // Legacy SSE endpoint for server-to-client events (SPI-665)
         mcpSSEEndpoint(sessionManager, eventBus)
-    }
 
-    // Legacy POST endpoint for client-to-server requests (SPI-665)
-    route("") {
+        // Legacy POST endpoint for client-to-server requests (SPI-665)
         mcpPostEndpoint(sessionManager, eventBus, correlator, methodHandler)
     }
 

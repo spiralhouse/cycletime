@@ -39,6 +39,7 @@ object MCPRequestBuilders {
      * @param clientName Client application name (default: "test-client")
      * @param clientVersion Client version (default: "1.0.0")
      * @param capabilities Client capabilities (default: empty object)
+     * @param sessionId Optional session ID for session management (included in _meta field)
      * @return JSON-RPC initialize request as string
      */
     fun buildInitializeRequest(
@@ -46,7 +47,8 @@ object MCPRequestBuilders {
         protocolVersion: String = "2024-11-05",
         clientName: String = "test-client",
         clientVersion: String = "1.0.0",
-        capabilities: JsonObject = JsonObject(emptyMap())
+        capabilities: JsonObject = JsonObject(emptyMap()),
+        sessionId: String? = null
     ): String = buildJsonObject {
         put("jsonrpc", "2.0")
         put("method", "initialize")
@@ -59,6 +61,13 @@ object MCPRequestBuilders {
             }
         }
         put("id", id)
+
+        // Add _meta field at TOP LEVEL (SDK extracts sessionId from here)
+        if (sessionId != null) {
+            putJsonObject("_meta") {
+                put("sessionId", sessionId)
+            }
+        }
     }.toString()
 
     /**
@@ -68,14 +77,23 @@ object MCPRequestBuilders {
      * after initialization to discover server capabilities.
      *
      * @param id JSON-RPC request ID (default: 1)
+     * @param sessionId Optional session ID for session management (included in _meta field)
      * @return JSON-RPC tools/list request as string
      */
     fun buildToolsListRequest(
-        id: Int = 1
+        id: Int = 1,
+        sessionId: String? = null
     ): String = buildJsonObject {
         put("jsonrpc", "2.0")
         put("method", "tools/list")
         put("id", id)
+
+        // Add _meta field at TOP LEVEL (SDK extracts sessionId from here)
+        if (sessionId != null) {
+            putJsonObject("_meta") {
+                put("sessionId", sessionId)
+            }
+        }
     }.toString()
 
     /**
@@ -113,15 +131,15 @@ object MCPRequestBuilders {
                     }
                 }
             }
-
-            // Add session metadata if provided
-            if (sessionId != null) {
-                putJsonObject("_meta") {
-                    put("sessionId", sessionId)
-                }
-            }
         }
         put("id", id)
+
+        // Add _meta field at TOP LEVEL (SDK extracts sessionId from here)
+        if (sessionId != null) {
+            putJsonObject("_meta") {
+                put("sessionId", sessionId)
+            }
+        }
     }.toString()
 
     /**
@@ -131,14 +149,23 @@ object MCPRequestBuilders {
      * dynamic data sources (projects, issues, workflows, etc.).
      *
      * @param id JSON-RPC request ID (default: 1)
+     * @param sessionId Optional session ID for session management (included in _meta field)
      * @return JSON-RPC resources/list request as string
      */
     fun buildResourcesListRequest(
-        id: Int = 1
+        id: Int = 1,
+        sessionId: String? = null
     ): String = buildJsonObject {
         put("jsonrpc", "2.0")
         put("method", "resources/list")
         put("id", id)
+
+        // Add _meta field at TOP LEVEL (SDK extracts sessionId from here)
+        if (sessionId != null) {
+            putJsonObject("_meta") {
+                put("sessionId", sessionId)
+            }
+        }
     }.toString()
 
     /**
@@ -161,15 +188,15 @@ object MCPRequestBuilders {
         put("method", "resources/read")
         putJsonObject("params") {
             put("uri", uri)
-
-            // Add session metadata if provided
-            if (sessionId != null) {
-                putJsonObject("_meta") {
-                    put("sessionId", sessionId)
-                }
-            }
         }
         put("id", id)
+
+        // Add _meta field at TOP LEVEL (SDK extracts sessionId from here)
+        if (sessionId != null) {
+            putJsonObject("_meta") {
+                put("sessionId", sessionId)
+            }
+        }
     }.toString()
 
     /**
@@ -179,11 +206,13 @@ object MCPRequestBuilders {
      * subscribed resources change.
      *
      * @param uri Resource URI to subscribe to
+     * @param sessionId Optional session ID for session management (included in _meta field)
      * @param id JSON-RPC request ID (default: 1)
      * @return JSON-RPC resources/subscribe request as string
      */
     fun buildResourceSubscribeRequest(
         uri: String,
+        sessionId: String? = null,
         id: Int = 1
     ): String = buildJsonObject {
         put("jsonrpc", "2.0")
@@ -192,6 +221,13 @@ object MCPRequestBuilders {
             put("uri", uri)
         }
         put("id", id)
+
+        // Add _meta field at TOP LEVEL (SDK extracts sessionId from here)
+        if (sessionId != null) {
+            putJsonObject("_meta") {
+                put("sessionId", sessionId)
+            }
+        }
     }.toString()
 
     /**

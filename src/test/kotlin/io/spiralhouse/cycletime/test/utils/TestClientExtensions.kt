@@ -20,11 +20,16 @@ import java.util.UUID
  * - Minimal boilerplate (hide HTTP details)
  * - Automatic session management (capture and include session IDs)
  *
- * Session Management:
+ * Session Management (SDK v0.7.2):
  * - ThreadLocal storage ensures test isolation
  * - Session ID automatically captured during initialization
- * - Subsequent requests automatically include Mcp-Session-Id header
+ * - Subsequent requests automatically include sessionId query parameter
  * - Thread-safe for parallel test execution
+ *
+ * SDK v0.7.2 Workaround:
+ * - Endpoints registered at root path "/" (not "/mcp")
+ * - Session passed as query parameter (not Mcp-Session-Id header)
+ * - Once PR #314 is merged, this will use proper routing and headers
  *
  * Usage Example:
  * ```kotlin
@@ -34,7 +39,7 @@ import java.util.UUID
  *     // Initialize MCP connection (captures session ID)
  *     client.mcpInitialize()
  *
- *     // Call a tool (session header automatically included)
+ *     // Call a tool (sessionId query parameter automatically included)
  *     val response = client.callMCPTool(
  *         "session_create",
  *         mapOf("projectId" to "TEST-123")
@@ -76,25 +81,36 @@ fun clearTestSession() {
 /**
  * Send raw MCP request to SDK endpoint with automatic session management.
  *
- * Low-level method for sending pre-constructed JSON-RPC requests.
- * Automatically includes Mcp-Session-Id header if a session is active.
+ * SDK v0.7.2 CRITICAL: The SDK requires sessionId in BOTH locations:
+ * 1. HTTP query parameter (for SDK middleware/routing)
+ * 2. JSON-RPC _meta field (for application logic to extract)
  *
- * @param request JSON-RPC request as string
- * @param endpoint MCP endpoint path (default: "/mcp")
- * @param sessionId Optional explicit session ID (overrides ThreadLocal session)
+ * The request builders include sessionId in the _meta field at the top level.
+ * This function adds the sessionId as a query parameter for SDK middleware.
+ *
+ * SDK v0.7.2 BEHAVIOR: Testing SDK endpoint path.
+ * The SDK requires sessionId as a query parameter for all requests (including initialize).
+ *
+ * Reference: https://github.com/modelcontextprotocol/kotlin-sdk
+ *
+ * @param request JSON-RPC request as string (sessionId in _meta field)
+ * @param endpoint MCP endpoint path (default: "/" - SDK may register at root)
+ * @param sessionId Optional explicit session ID for query parameter
  * @return HTTP response
  */
 suspend fun HttpClient.sendMCPRequest(
     request: String,
-    endpoint: String = "/mcp",
+    endpoint: String = "/",  // Testing with root path
     sessionId: String? = getCurrentSessionId()
 ): HttpResponse {
     return post(endpoint) {
         header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
 
-        // Automatically include session header if available
+        // SDK v0.7.2 expects sessionId as query parameter for middleware/routing
         if (sessionId != null) {
-            header("Mcp-Session-Id", sessionId)
+            url {
+                parameters.append("sessionId", sessionId)
+            }
         }
 
         setBody(request)
@@ -108,11 +124,15 @@ suspend fun HttpClient.sendMCPRequest(
  * in every MCP session. Automatically generates and stores a session ID
  * for use in subsequent requests.
  *
- * Session Management:
+ * Session Management (SDK v0.7.2):
  * - Generates unique session ID (UUID)
- * - Includes Mcp-Session-Id header in initialize request
+ * - Includes sessionId in BOTH JSON-RPC _meta field AND query parameter
  * - Stores session ID in ThreadLocal for subsequent requests
  * - Thread-safe for parallel test execution
+ *
+ * CRITICAL: SDK v0.7.2 requires sessionId in both locations:
+ * 1. HTTP query parameter (for SDK middleware validation)
+ * 2. JSON-RPC _meta field (for application logic extraction)
  *
  * @param protocolVersion MCP protocol version (default: "2024-11-05")
  * @param clientName Client name (default: "test-client")
@@ -129,14 +149,73 @@ suspend fun HttpClient.mcpInitialize(
     // Store session ID for subsequent requests
     setCurrentSessionId(sessionId)
 
+    // Build initialize request with sessionId in _meta field
     val request = MCPRequestBuilders.buildInitializeRequest(
         protocolVersion = protocolVersion,
         clientName = clientName,
-        clientVersion = clientVersion
+        clientVersion = clientVersion,
+        sessionId = sessionId
     )
 
-    // Send initialize request with session header
+    // Send with sessionId in both _meta field and query parameter
     return sendMCPRequest(request, sessionId = sessionId)
+}
+
+/**
+ * Create a test session in the database via session_create tool.
+ *
+ * This helper creates a valid session that can be used for subsequent MCP operations
+ * that require session context. The session is created using the session_create tool
+ * and the sessionId is extracted from the response.
+ *
+ * Usage:
+ * ```kotlin
+ * test ClientExtensions {
+ *     val client = createTestClient()
+ *     client.mcpInitialize()
+ *
+ *     // Create a session for testing
+ *     val sessionId = client.createTestSession(projectId = "TEST-PROJECT-1")
+ *
+ *     // Use the session for subsequent requests
+ *     val response = client.callMCPTool("session_get", sessionId = sessionId)
+ * }
+ * ```
+ *
+ * @param projectId Project ID to associate with the session (default: "TEST-PROJECT-1")
+ * @return The created session ID
+ * @throws AssertionError if session creation fails
+ */
+suspend fun HttpClient.createTestSession(
+    projectId: String = "TEST-PROJECT-1"
+): String {
+    // Create session using session_create tool
+    val response = callMCPTool(
+        "session_create",
+        mapOf("projectId" to projectId)
+    )
+
+    // Verify response is successful
+    if (!response.isMCPSuccess()) {
+        throw AssertionError("Failed to create test session: ${response.bodyAsText()}")
+    }
+
+    // Extract session ID from tool response
+    val result = response.extractMCPResult()
+    val contentArray = result.jsonObject["content"]?.jsonArray
+        ?: throw AssertionError("Response missing content array")
+
+    val textContent = contentArray[0].jsonObject["text"]?.jsonPrimitive?.content
+        ?: throw AssertionError("Response missing text content")
+
+    val sessionData = Json.parseToJsonElement(textContent).jsonObject
+    val sessionId = sessionData["id"]?.jsonPrimitive?.content
+        ?: throw AssertionError("Response missing session ID")
+
+    // Store session ID for subsequent requests
+    setCurrentSessionId(sessionId)
+
+    return sessionId
 }
 
 /**
@@ -148,7 +227,8 @@ suspend fun HttpClient.mcpInitialize(
  * @return HTTP response containing tool list
  */
 suspend fun HttpClient.listMCPTools(): HttpResponse {
-    val request = MCPRequestBuilders.buildToolsListRequest()
+    val sessionId = getCurrentSessionId()
+    val request = MCPRequestBuilders.buildToolsListRequest(sessionId = sessionId)
     return sendMCPRequest(request)
 }
 
@@ -185,7 +265,8 @@ suspend fun HttpClient.callMCPTool(
  * @return HTTP response containing resource list
  */
 suspend fun HttpClient.listMCPResources(): HttpResponse {
-    val request = MCPRequestBuilders.buildResourcesListRequest()
+    val sessionId = getCurrentSessionId()
+    val request = MCPRequestBuilders.buildResourcesListRequest(sessionId = sessionId)
     return sendMCPRequest(request)
 }
 
@@ -222,7 +303,8 @@ suspend fun HttpClient.readMCPResource(
 suspend fun HttpClient.subscribeMCPResource(
     uri: String
 ): HttpResponse {
-    val request = MCPRequestBuilders.buildResourceSubscribeRequest(uri)
+    val sessionId = getCurrentSessionId()
+    val request = MCPRequestBuilders.buildResourceSubscribeRequest(uri = uri, sessionId = sessionId)
     return sendMCPRequest(request)
 }
 

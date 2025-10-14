@@ -30,7 +30,7 @@ fun Route.mcpSSEEndpoint(
     sessionManager: MCPSessionManager,
     eventBus: EventBus
 ) {
-    get("/mcp/events") {
+    get {
         try {
             // SSE BOOTSTRAP PATTERN (MCP Spec 2024-11-05):
             // SSE connections can be established with or without prior session:

@@ -52,11 +52,11 @@ class MCPSdkTransportTest : StringSpec({
         testSDKApplication {
             val client = createTestClient()
 
-            val response = client.sendMCPRequest(
-                MCPRequestBuilders.buildInitializeRequest(
-                    clientName = "test-client",
-                    clientVersion = "1.0.0"
-                )
+            // SDK v0.7.2 WORKAROUND: Use mcpInitialize() which generates sessionId
+            // and passes it to both query parameter and _meta field
+            val response = client.mcpInitialize(
+                clientName = "test-client",
+                clientVersion = "1.0.0"
             )
 
             // Verify HTTP response
@@ -85,11 +85,10 @@ class MCPSdkTransportTest : StringSpec({
         testSDKApplication {
             val client = createTestClient()
 
-            // Test with current protocol version
-            val validResponse = client.sendMCPRequest(
-                MCPRequestBuilders.buildInitializeRequest(
-                    protocolVersion = "2024-11-05"
-                )
+            // SDK v0.7.2 WORKAROUND: Use mcpInitialize() which generates sessionId
+            // and passes it to both query parameter and _meta field
+            val validResponse = client.mcpInitialize(
+                protocolVersion = "2024-11-05"
             )
 
             validResponse.status shouldBe HttpStatusCode.OK
@@ -106,11 +105,11 @@ class MCPSdkTransportTest : StringSpec({
         testSDKApplication {
             val client = createTestClient()
 
-            val response = client.sendMCPRequest(
-                MCPRequestBuilders.buildInitializeRequest(
-                    clientName = "integration-test-client",
-                    clientVersion = "2.5.0"
-                )
+            // SDK v0.7.2 WORKAROUND: Use mcpInitialize() which generates sessionId
+            // and passes it to both query parameter and _meta field
+            val response = client.mcpInitialize(
+                clientName = "integration-test-client",
+                clientVersion = "2.5.0"
             )
 
             response.status shouldBe HttpStatusCode.OK

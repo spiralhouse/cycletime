@@ -35,7 +35,7 @@ fun Route.mcpPostEndpoint(
     correlator: MessageCorrelator,
     methodHandler: McpMethodHandler
 ) {
-    post("/mcp") {
+    post {
         try {
             // Step 1: Parse request FIRST to identify method
             val requestBody = call.receiveText()
