@@ -642,4 +642,82 @@ class MCPSdkClientIntegrationTest : StringSpec({
             httpClient.close()
         }
     }
+
+    /**
+     * Test that SDK Client maintains session context across requests.
+     *
+     * **MIGRATION NOTE - PARADIGM SHIFT**: The original test (line 411) manually
+     * extracted sessionId from response metadata and passed it to subsequent requests.
+     * This is impossible with SDK Client as it abstracts session management.
+     *
+     * **Reframed Test**: Instead of extracting sessionId, this test verifies that
+     * session BEHAVIOR works correctly:
+     * 1. First request creates session (SDK tracks it)
+     * 2. Second request requires session context
+     * 3. Both succeed, proving SDK maintains session across calls
+     *
+     * This tests the same underlying concern (session management) without accessing
+     * internal implementation details.
+     *
+     * @see MCPSdkTransportTest Line 411 for original test implementation
+     */
+    "should maintain session context across requests using SDK Client".config(enabled = true) {
+        val httpClient = HttpClient(CIO) {
+            install(SSE)
+        }
+
+        try {
+            val client = Client(
+                clientInfo = Implementation(
+                    name = "cycletime-test-client",
+                    version = "1.0.0"
+                )
+            )
+
+            val transport = SSEClientTransport(
+                client = httpClient,
+                urlString = serverUrl
+            )
+
+            withTimeout(10_000) {
+                client.connect(transport)
+            }
+
+            logger.info("Creating session...")
+
+            // First request: Create session (SDK tracks it internally)
+            val createResult = client.callTool(
+                name = "session_create_session",
+                arguments = mapOf(
+                    "projectId" to JsonPrimitive("TEST-PROJECT-1")
+                )
+            )
+
+            createResult.shouldNotBeNull()
+            createResult.isError shouldBe false
+            logger.info("Session created successfully")
+
+            logger.info("Making session-dependent request...")
+
+            // Second request: Get active session (requires session context)
+            // If SDK maintains session correctly, this will succeed
+            val getResult = client.callTool(
+                name = "session_get_active_session",
+                arguments = emptyMap()
+            )
+
+            getResult.shouldNotBeNull()
+            getResult.isError shouldBe false
+
+            // Verify we got session data back
+            getResult.content.shouldNotBeNull()
+            getResult.content.size shouldBe 1
+
+            logger.info("Session context maintained across requests")
+            logger.info("✅ Session behavior test PASSED")
+
+        } finally {
+            httpClient.close()
+        }
+    }
 })
