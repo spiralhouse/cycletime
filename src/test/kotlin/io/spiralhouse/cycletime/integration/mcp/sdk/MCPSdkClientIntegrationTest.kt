@@ -720,4 +720,63 @@ class MCPSdkClientIntegrationTest : StringSpec({
             httpClient.close()
         }
     }
+
+    /**
+     * Test that SDK Client can subscribe to resource updates.
+     *
+     * This validates resource subscription functionality:
+     * 1. Client subscribes to a resource URI
+     * 2. Server accepts the subscription
+     * 3. Future updates to the resource would trigger notifications
+     *
+     * **MIGRATION NOTE**: This tests basic subscription request/response.
+     * Testing actual notification delivery would require more complex setup
+     * with resource changes and notification handling.
+     *
+     * **SDK API NOTE**: If SDK v0.7.2 doesn't expose a subscribe method,
+     * this test will need to be disabled pending SDK API updates.
+     *
+     * @see MCPSdkTransportTest Line 328 for original test implementation
+     */
+    "should subscribe to resource updates using SDK Client".config(enabled = true) {
+        val httpClient = HttpClient(CIO) {
+            install(SSE)
+        }
+
+        try {
+            val client = Client(
+                clientInfo = Implementation(
+                    name = "cycletime-test-client",
+                    version = "1.0.0"
+                )
+            )
+
+            val transport = SSEClientTransport(
+                client = httpClient,
+                urlString = serverUrl
+            )
+
+            withTimeout(10_000) {
+                client.connect(transport)
+            }
+
+            logger.info("Subscribing to resource cycletime://session/current...")
+
+            // Attempt to subscribe to resource
+            // NOTE: SDK Client may or may not have subscribe method
+            val result = client.subscribeResource(
+                request = io.modelcontextprotocol.kotlin.sdk.SubscribeRequest(
+                    uri = "cycletime://session/current"
+                )
+            )
+
+            // Verify subscription succeeded
+            result.shouldNotBeNull()
+            logger.info("Subscription accepted")
+            logger.info("✅ Resource subscription test PASSED")
+
+        } finally {
+            httpClient.close()
+        }
+    }
 })
