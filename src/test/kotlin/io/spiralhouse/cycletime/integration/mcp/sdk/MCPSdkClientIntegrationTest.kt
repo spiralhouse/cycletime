@@ -13,6 +13,7 @@ import io.modelcontextprotocol.kotlin.sdk.Implementation
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.SSEClientTransport
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.slf4j.LoggerFactory
@@ -492,6 +493,74 @@ class MCPSdkClientIntegrationTest : StringSpec({
             result.isError shouldBe true
 
             logger.info("✅ Malformed parameters test PASSED")
+
+        } finally {
+            httpClient.close()
+        }
+    }
+
+    /**
+     * Test that SDK Client can call tools with valid arguments.
+     *
+     * This validates the complete tool invocation flow:
+     * 1. SDK Client constructs proper tool call request
+     * 2. Server executes tool with provided arguments
+     * 3. SDK Client receives and parses typed response
+     * 4. Result content is properly structured
+     *
+     * **MIGRATION NOTE**: Original test extracted sessionId from response manually.
+     * SDK Client manages session internally, so no extraction needed.
+     *
+     * @see MCPSdkTransportTest Line 160 for original test implementation
+     */
+    "should call tool with valid arguments using SDK Client".config(enabled = true) {
+        val httpClient = HttpClient(CIO) {
+            install(SSE)
+        }
+
+        try {
+            val client = Client(
+                clientInfo = Implementation(
+                    name = "cycletime-test-client",
+                    version = "1.0.0"
+                )
+            )
+
+            val transport = SSEClientTransport(
+                client = httpClient,
+                urlString = serverUrl
+            )
+
+            withTimeout(10_000) {
+                client.connect(transport)
+            }
+
+            logger.info("Calling session_create_session tool...")
+
+            // Call tool with valid arguments (SDK manages session internally)
+            val result = client.callTool(
+                name = "session_create_session",
+                arguments = mapOf(
+                    "projectId" to JsonPrimitive("TEST-PROJECT-1")
+                )
+            )
+
+            // Verify result structure
+            result.shouldNotBeNull()
+            result.isError shouldBe false
+
+            // Verify content array is present and not empty
+            result.content.shouldNotBeNull()
+            result.content.size shouldBe 1
+
+            // Verify first content item has expected properties
+            val firstContent = result.content[0]
+            firstContent.type shouldBe "text"
+            // Note: SDK Content type structure verified by successful parse
+            // Detailed text content validation would require type casting
+
+            logger.info("Session created successfully")
+            logger.info("✅ Call tool with valid arguments test PASSED")
 
         } finally {
             httpClient.close()
