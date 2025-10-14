@@ -96,7 +96,9 @@ dependencies {
     testImplementation(libs.kotest.property)
     testImplementation(libs.mockk)
     testImplementation(libs.ktor.server.test.host)
+    testImplementation("io.ktor:ktor-client-core:${libs.versions.ktor.get()}")
     testImplementation("io.ktor:ktor-client-content-negotiation:${libs.versions.ktor.get()}")
+    testImplementation("io.ktor:ktor-client-cio:${libs.versions.ktor.get()}")
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.h2.database)  // H2 for integration testing
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:${libs.versions.kotlin.get()}")  // Reflection for MockSDKToolExecutor
