@@ -212,7 +212,7 @@ tasks.withType<Test> {
     testLogging {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-        showStandardStreams = false
+        showStandardStreams = true  // Enable to see SDK routing logs during tests
         showCauses = true
         showExceptions = true
         showStackTraces = true
@@ -370,7 +370,7 @@ val unitTest by tasks.registering(Test::class) {
     testLogging {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
-        showStandardStreams = false
+        showStandardStreams = true  // Enable to see SDK routing logs during tests
         showCauses = true
         showExceptions = true
     }
@@ -473,7 +473,7 @@ val integrationTest by tasks.registering(Test::class) {
     testLogging {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-        showStandardStreams = false
+        showStandardStreams = true  // Enable to see SDK routing logs during tests
         showCauses = true
         showExceptions = true
         showStackTraces = true

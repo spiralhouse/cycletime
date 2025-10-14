@@ -157,8 +157,10 @@ suspend fun HttpClient.mcpInitialize(
         sessionId = sessionId
     )
 
-    // Send with sessionId in both _meta field and query parameter
-    return sendMCPRequest(request, sessionId = sessionId)
+    // CRITICAL FIX: Do NOT send sessionId query parameter on initialize request!
+    // Initialize is the FIRST request that establishes the session.
+    // The SDK returns 404 if you pass a sessionId that doesn't exist yet.
+    return sendMCPRequest(request, sessionId = null)
 }
 
 /**
