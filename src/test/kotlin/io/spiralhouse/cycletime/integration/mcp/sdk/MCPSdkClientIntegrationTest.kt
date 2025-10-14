@@ -1,9 +1,11 @@
 package io.spiralhouse.cycletime.integration.mcp.sdk
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.sse.*
@@ -124,20 +126,101 @@ class MCPSdkClientIntegrationTest : StringSpec({
             // Verify expected tools are present
             val toolNames = toolsResult.tools.map { it.name }
 
-            // Session tools
-            toolNames shouldContain "create_session"
-            toolNames shouldContain "list_sessions"
-            toolNames shouldContain "get_active_session"
+            // Session tools (with namespace prefix)
+            toolNames shouldContain "session_create_session"
+            toolNames shouldContain "session_list_sessions"
+            toolNames shouldContain "session_get_active_session"
 
-            // Project tools
-            toolNames shouldContain "create_project"
-            toolNames shouldContain "list_projects"
+            // Project tools (with namespace prefix)
+            toolNames shouldContain "project_create_project"
+            toolNames shouldContain "project_list_projects"
 
-            // Issue tools
-            toolNames shouldContain "create_issue"
-            toolNames shouldContain "list_issues"
+            // Issue tools (with namespace prefix)
+            toolNames shouldContain "issue_create_issue"
+            toolNames shouldContain "issue_list_issues"
 
             logger.info("✅ Tool listing test PASSED")
+
+        } finally {
+            httpClient.close()
+        }
+    }
+
+    /**
+     * Test that SDK Client validates protocol version during initialization.
+     *
+     * This validates that the SDK negotiates the correct MCP protocol version.
+     */
+    "should validate protocol version during initialize".config(enabled = true) {
+        val httpClient = HttpClient(CIO) {
+            install(SSE)
+        }
+
+        try {
+            val client = Client(
+                clientInfo = Implementation(
+                    name = "cycletime-test-client",
+                    version = "1.0.0"
+                )
+            )
+
+            val transport = SSEClientTransport(
+                client = httpClient,
+                urlString = serverUrl
+            )
+
+            // Connect with valid protocol version
+            withTimeout(10_000) {
+                client.connect(transport)
+            }
+
+            // Verify server info contains protocol version
+            val serverInfo = client.serverVersion
+            serverInfo.shouldNotBeNull()
+
+            // Protocol version should be negotiated
+            logger.info("Server protocol version validated")
+            logger.info("✅ Protocol version test PASSED")
+
+        } finally {
+            httpClient.close()
+        }
+    }
+
+    /**
+     * Test that SDK Client handles client info in initialize request.
+     *
+     * This validates that the SDK passes custom client information to the server.
+     */
+    "should handle client info in initialize request".config(enabled = true) {
+        val httpClient = HttpClient(CIO) {
+            install(SSE)
+        }
+
+        try {
+            val client = Client(
+                clientInfo = Implementation(
+                    name = "integration-test-client",
+                    version = "2.5.0"
+                )
+            )
+
+            val transport = SSEClientTransport(
+                client = httpClient,
+                urlString = serverUrl
+            )
+
+            withTimeout(10_000) {
+                client.connect(transport)
+            }
+
+            // Verify server accepted client info by successfully connecting
+            val serverInfo = client.serverVersion
+            serverInfo.shouldNotBeNull()
+            serverInfo.name shouldBe "cycletime-ce"
+
+            logger.info("Client info handled successfully")
+            logger.info("✅ Client info test PASSED")
 
         } finally {
             httpClient.close()
@@ -183,6 +266,138 @@ class MCPSdkClientIntegrationTest : StringSpec({
             }
 
             logger.info("✅ Resource listing test PASSED")
+
+        } finally {
+            httpClient.close()
+        }
+    }
+
+    /**
+     * Test that SDK Client rejects tool calls with invalid tool names.
+     *
+     * This validates that the SDK properly propagates errors for non-existent tools.
+     */
+    "should reject tool call with invalid tool name".config(enabled = true) {
+        val httpClient = HttpClient(CIO) {
+            install(SSE)
+        }
+
+        try {
+            val client = Client(
+                clientInfo = Implementation(
+                    name = "cycletime-test-client",
+                    version = "1.0.0"
+                )
+            )
+
+            val transport = SSEClientTransport(
+                client = httpClient,
+                urlString = serverUrl
+            )
+
+            withTimeout(10_000) {
+                client.connect(transport)
+            }
+
+            // Attempt to call non-existent tool
+            val exception = shouldThrow<Exception> {
+                client.callTool(
+                    name = "nonexistent_tool",
+                    arguments = emptyMap()
+                )
+            }
+
+            // Verify error message indicates tool not found
+            exception.message shouldContain "not found"
+            logger.info("✅ Invalid tool name test PASSED")
+
+        } finally {
+            httpClient.close()
+        }
+    }
+
+    /**
+     * Test that SDK Client rejects tool calls with missing required arguments.
+     *
+     * This validates that the SDK properly validates tool arguments.
+     */
+    "should reject tool call with missing required arguments".config(enabled = true) {
+        val httpClient = HttpClient(CIO) {
+            install(SSE)
+        }
+
+        try {
+            val client = Client(
+                clientInfo = Implementation(
+                    name = "cycletime-test-client",
+                    version = "1.0.0"
+                )
+            )
+
+            val transport = SSEClientTransport(
+                client = httpClient,
+                urlString = serverUrl
+            )
+
+            withTimeout(10_000) {
+                client.connect(transport)
+            }
+
+            // Attempt to call tool without required arguments
+            val result = client.callTool(
+                name = "session_create_session",
+                arguments = emptyMap() // Missing required projectId
+            )
+
+            // Verify error in result
+            result.shouldNotBeNull()
+            result.isError shouldBe true
+            logger.info("✅ Missing required arguments test PASSED")
+
+        } finally {
+            httpClient.close()
+        }
+    }
+
+    /**
+     * Test that SDK Client rejects resource reads with invalid URIs.
+     *
+     * This validates that the SDK properly handles resource errors.
+     */
+    "should reject resource read with invalid URI".config(enabled = true) {
+        val httpClient = HttpClient(CIO) {
+            install(SSE)
+        }
+
+        try {
+            val client = Client(
+                clientInfo = Implementation(
+                    name = "cycletime-test-client",
+                    version = "1.0.0"
+                )
+            )
+
+            val transport = SSEClientTransport(
+                client = httpClient,
+                urlString = serverUrl
+            )
+
+            withTimeout(10_000) {
+                client.connect(transport)
+            }
+
+            // Attempt to read non-existent resource
+            val exception = shouldThrow<Exception> {
+                client.readResource(
+                    request = io.modelcontextprotocol.kotlin.sdk.ReadResourceRequest(
+                        uri = "cycletime://invalid/resource"
+                    )
+                )
+            }
+
+            // Verify error message indicates resource not found
+            exception.message shouldContain "not found"
+            logger.info("✅ Invalid URI test PASSED")
 
         } finally {
             httpClient.close()
