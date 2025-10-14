@@ -13,6 +13,8 @@ import io.modelcontextprotocol.kotlin.sdk.Implementation
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.SSEClientTransport
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import org.slf4j.LoggerFactory
 
 /**
@@ -398,6 +400,98 @@ class MCPSdkClientIntegrationTest : StringSpec({
             // Verify error message indicates resource not found
             exception.message shouldContain "not found"
             logger.info("✅ Invalid URI test PASSED")
+
+        } finally {
+            httpClient.close()
+        }
+    }
+
+    /**
+     * Test that SDK Client rejects invalid JSON-RPC format.
+     *
+     * **MIGRATION NOTE**: This test is disabled because the SDK Client pattern
+     * fundamentally prevents sending malformed JSON-RPC by design.
+     *
+     * **Original Test Intent**: Validate that the server properly rejects JSON
+     * that is missing required JSON-RPC fields (`jsonrpc`, `method`, `id`).
+     *
+     * **Why This Cannot Be Migrated**:
+     * - SDK Client constructs valid JSON-RPC requests internally
+     * - There is no "send raw request" API (by design)
+     * - This protective behavior is a FEATURE, not a limitation
+     *
+     * **Protocol-Level Testing**: If needed, this scenario can be tested using
+     * raw HTTP POST requests that bypass the SDK Client entirely. However,
+     * this would not be an SDK Client integration test.
+     *
+     * **Verification Alternative**: The SDK Client's internal JSON-RPC construction
+     * is validated by all other tests passing. If the SDK constructs invalid JSON-RPC,
+     * all tests would fail.
+     *
+     * @see MCPSdkTransportTest Line 347 for original test implementation
+     */
+    "should reject invalid JSON-RPC format".config(enabled = false) {
+        // Cannot be implemented with SDK Client pattern
+        // SDK Client prevents malformed JSON-RPC by design
+        logger.info("⚠️ Test skipped: SDK Client prevents sending malformed JSON-RPC")
+    }
+
+    /**
+     * Test that SDK Client handles malformed request parameters.
+     *
+     * **MIGRATION NOTE**: The original test (line 385) sent parameters with wrong
+     * JSON types (e.g., string instead of object). The SDK Client's typed API
+     * prevents structural parameter errors.
+     *
+     * **Reframed Test**: Instead, this test validates that the SDK Client properly
+     * propagates business-level validation errors when tool arguments have invalid
+     * values (e.g., invalid format, missing fields, wrong types within the arguments object).
+     *
+     * This tests the same underlying concern (parameter validation) but at the
+     * business logic level rather than the JSON-RPC protocol level.
+     *
+     * @see MCPSdkTransportTest Line 385 for original test implementation
+     */
+    "should handle malformed request parameters".config(enabled = true) {
+        val httpClient = HttpClient(CIO) {
+            install(SSE)
+        }
+
+        try {
+            val client = Client(
+                clientInfo = Implementation(
+                    name = "cycletime-test-client",
+                    version = "1.0.0"
+                )
+            )
+
+            val transport = SSEClientTransport(
+                client = httpClient,
+                urlString = serverUrl
+            )
+
+            withTimeout(10_000) {
+                client.connect(transport)
+            }
+
+            // Attempt to call tool with arguments that have invalid types
+            // Example: projectId should be a string, but we pass a complex object
+            val result = client.callTool(
+                name = "session_create_session",
+                arguments = mapOf(
+                    "projectId" to buildJsonObject {
+                        put("invalid", "structure")
+                        put("should", "be")
+                        put("simple", "string")
+                    }
+                )
+            )
+
+            // Verify error in result (business validation should catch this)
+            result.shouldNotBeNull()
+            result.isError shouldBe true
+
+            logger.info("✅ Malformed parameters test PASSED")
 
         } finally {
             httpClient.close()
