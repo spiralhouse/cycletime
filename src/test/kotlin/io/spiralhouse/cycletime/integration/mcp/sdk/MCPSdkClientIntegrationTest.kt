@@ -566,4 +566,80 @@ class MCPSdkClientIntegrationTest : StringSpec({
             httpClient.close()
         }
     }
+
+    /**
+     * Test that SDK Client can read resources with valid URIs.
+     *
+     * This validates the complete resource read flow:
+     * 1. SDK Client constructs proper resource read request
+     * 2. Server locates and reads the resource
+     * 3. SDK Client receives and parses typed response
+     * 4. Resource contents are properly structured
+     *
+     * **MIGRATION NOTE**: Original test created a session and manually extracted
+     * sessionId to pass to resource read. SDK Client manages session internally,
+     * so we can call tools and read resources without manual session handling.
+     *
+     * @see MCPSdkTransportTest Line 270 for original test implementation
+     */
+    "should read resource with valid URI using SDK Client".config(enabled = true) {
+        val httpClient = HttpClient(CIO) {
+            install(SSE)
+        }
+
+        try {
+            val client = Client(
+                clientInfo = Implementation(
+                    name = "cycletime-test-client",
+                    version = "1.0.0"
+                )
+            )
+
+            val transport = SSEClientTransport(
+                client = httpClient,
+                urlString = serverUrl
+            )
+
+            withTimeout(10_000) {
+                client.connect(transport)
+            }
+
+            logger.info("Creating session first...")
+
+            // Create session (SDK tracks it internally)
+            val sessionResult = client.callTool(
+                name = "session_create_session",
+                arguments = mapOf(
+                    "projectId" to JsonPrimitive("TEST-PROJECT-1")
+                )
+            )
+
+            sessionResult.shouldNotBeNull()
+            sessionResult.isError shouldBe false
+            logger.info("Session created, SDK now tracking session internally")
+
+            logger.info("Reading resource cycletime://session/current...")
+
+            // Read resource (SDK automatically includes session)
+            val resourceResult = client.readResource(
+                request = io.modelcontextprotocol.kotlin.sdk.ReadResourceRequest(
+                    uri = "cycletime://session/current"
+                )
+            )
+
+            // Verify resource read succeeded
+            resourceResult.shouldNotBeNull()
+            // Note: Check if there's an error field or if success is implicit
+
+            // Verify contents are present
+            resourceResult.contents.shouldNotBeNull()
+            resourceResult.contents.size shouldBe 1
+
+            logger.info("Resource read successfully")
+            logger.info("✅ Read resource with valid URI test PASSED")
+
+        } finally {
+            httpClient.close()
+        }
+    }
 })
