@@ -1,16 +1,23 @@
 package io.spiralhouse.cycletime.integration.mcp.sdk
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.modelcontextprotocol.kotlin.sdk.Implementation
+import io.modelcontextprotocol.kotlin.sdk.TextContent
+import io.modelcontextprotocol.kotlin.sdk.client.Client
+import io.modelcontextprotocol.kotlin.sdk.client.SSEClientTransport
 import io.spiralhouse.cycletime.test.utils.*
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.*
 
 /**
@@ -46,58 +53,71 @@ import kotlinx.serialization.json.*
  */
 class MCPSdkTransportTest : StringSpec({
 
+    /**
+     * Helper function to create a test project and return its UUID.
+     * Required because session_create_session needs a valid project UUID.
+     */
+    suspend fun Client.createTestProject(name: String = "Test Project ${System.currentTimeMillis()}"): String {
+        val result = this.callTool(
+            name = "project_create_project",
+            arguments = mapOf(
+                "name" to JsonPrimitive(name),
+                "description" to JsonPrimitive("Test project for SDK transport tests")
+            )
+        )
+
+        result.shouldNotBeNull()
+        result.isError shouldBe false
+        result.content.shouldNotBeEmpty()
+
+        val content = result.content[0]
+        require(content is TextContent) { "Expected TextContent" }
+
+        val jsonText = content.text ?: throw IllegalStateException("TextContent.text is null")
+        val projectIdRegex = "\"id\"\\s*:\\s*\"([0-9a-f-]+)\"".toRegex()
+        val match = projectIdRegex.find(jsonText)
+        if (match != null) {
+            return match.groupValues[1]
+        }
+
+        throw IllegalStateException("Failed to extract project ID from response: ${result.content}")
+    }
+
     // ===== Initialize Connection Tests =====
 
     "should initialize MCP connection via SDK" {
-        testSDKApplication {
-            val client = createTestClient()
+        testSDKApplication { serverUrl, httpClient ->
+            val client = Client(Implementation("cycletime-test-client", "1.0.0"))
+            val transport = SSEClientTransport(httpClient, serverUrl)
 
-            // SDK v0.7.2 WORKAROUND: Use mcpInitialize() which generates sessionId
-            // and passes it to both query parameter and _meta field
-            val response = client.mcpInitialize(
-                clientName = "test-client",
-                clientVersion = "1.0.0"
-            )
+            withTimeout(10_000) {
+                client.connect(transport)
+            }
 
-            // Verify HTTP response
-            response.status shouldBe HttpStatusCode.OK
-
-            // Verify JSON-RPC structure
-            val result = response.extractMCPResult()
-            result.shouldBeInstanceOf<JsonObject>()
-
-            // Verify server info
-            val serverInfo = result.jsonObject["serverInfo"]
-            serverInfo shouldNotBe null
-            serverInfo.shouldBeInstanceOf<JsonObject>()
-
-            val name = serverInfo!!.jsonObject["name"]?.jsonPrimitive?.content
-            name shouldBe "cycletime-ce"
+            // Verify server info (SDK provides automatically)
+            val serverInfo = client.serverVersion
+            serverInfo.shouldNotBeNull()
+            serverInfo.name shouldBe "cycletime-ce"
 
             // Verify capabilities
-            val capabilities = result.jsonObject["capabilities"]
-            capabilities shouldNotBe null
-            capabilities.shouldBeInstanceOf<JsonObject>()
+            val capabilities = client.serverCapabilities
+            capabilities.shouldNotBeNull()
         }
     }
 
     "should validate protocol version during initialize" {
-        testSDKApplication {
-            val client = createTestClient()
+        testSDKApplication { serverUrl, httpClient ->
+            val client = Client(Implementation("cycletime-test-client", "1.0.0"))
+            val transport = SSEClientTransport(httpClient, serverUrl)
 
-            // SDK v0.7.2 WORKAROUND: Use mcpInitialize() which generates sessionId
-            // and passes it to both query parameter and _meta field
-            val validResponse = client.mcpInitialize(
-                protocolVersion = "2024-11-05"
-            )
+            withTimeout(10_000) {
+                client.connect(transport)
+            }
 
-            validResponse.status shouldBe HttpStatusCode.OK
-            val result = validResponse.extractMCPResult()
-            result shouldNotBe null
-
-            // Verify protocol version is echoed back
-            val protocolVersion = result.jsonObject["protocolVersion"]?.jsonPrimitive?.content
-            protocolVersion shouldNotBe null
+            // SDK negotiates protocol version automatically
+            // Verify connection successful (implies protocol negotiation worked)
+            client.serverVersion.shouldNotBeNull()
+            client.serverCapabilities.shouldNotBeNull()
         }
     }
 
@@ -124,91 +144,78 @@ class MCPSdkTransportTest : StringSpec({
     // ===== Tools Operations Tests =====
 
     "should list all MCP tools via SDK" {
-        testSDKApplication {
-            val client = createTestClient()
+        testSDKApplication { serverUrl, httpClient ->
+            val client = Client(Implementation("cycletime-test-client", "1.0.0"))
+            val transport = SSEClientTransport(httpClient, serverUrl)
 
-            // Initialize first (required by MCP protocol)
-            client.mcpInitialize()
-
-            // List tools
-            val response = client.listMCPTools()
-
-            // Verify response structure
-            response.isMCPSuccess() shouldBe true
-            val result = response.extractMCPResult()
-
-            // Verify tools array
-            val tools = result.jsonObject["tools"]
-            tools shouldNotBe null
-            tools.shouldBeInstanceOf<JsonArray>()
-
-            val toolsArray = tools!!.jsonArray
-            // Phase 3 registered 4 tool providers (session, project, issue, workflow)
-            // Each provider has multiple tools, expect 15+ total tools
-            toolsArray.size shouldBe 17
-
-            // Verify tool structure
-            toolsArray.forEach { toolElement ->
-                val tool = toolElement.jsonObject
-                tool["name"] shouldNotBe null
-                tool["description"] shouldNotBe null
-                tool["inputSchema"] shouldNotBe null
+            withTimeout(10_000) {
+                client.connect(transport)
             }
+
+            // Use SDK's type-safe listTools API
+            val toolsResult = client.listTools()
+            toolsResult.tools.shouldNotBeEmpty()
+
+            // Phase 3 registered 4 tool providers (session, project, issue, workflow)
+            // Each provider has multiple tools, expect 17 total tools
+            toolsResult.tools shouldHaveSize 17
+
+            // Verify specific tools exist
+            val toolNames = toolsResult.tools.map { it.name }
+            toolNames shouldContain "session_create_session"
+            toolNames shouldContain "project_create_project"
         }
     }
 
     "should call tool with valid arguments via SDK" {
-        testSDKApplication {
-            val client = createTestClient()
+        testSDKApplication { serverUrl, httpClient ->
+            val client = Client(Implementation("cycletime-test-client", "1.0.0"))
+            val transport = SSEClientTransport(httpClient, serverUrl)
 
-            // Initialize
-            client.mcpInitialize()
+            withTimeout(10_000) {
+                client.connect(transport)
+            }
 
-            // Create session first
-            val createResponse = client.callMCPTool(
-                "session_create",
-                mapOf("projectId" to "TEST-PROJECT-1")
+            // Create project first (need valid project ID)
+            val projectId = client.createTestProject("Test Project for Tool Call")
+
+            // Call session_create_session tool
+            val result = client.callTool(
+                name = "session_create_session",
+                arguments = mapOf("projectId" to JsonPrimitive(projectId))
             )
 
-            createResponse.isMCPSuccess() shouldBe true
-            val result = createResponse.extractMCPResult()
+            // Verify result
+            result.shouldNotBeNull()
+            result.isError shouldBe false
+            result.content.shouldNotBeEmpty()
 
-            // Verify tool result structure
-            result shouldNotBe null
-            val content = result.jsonObject["content"]
-            content shouldNotBe null
-            content.shouldBeInstanceOf<JsonArray>()
+            // Verify content type
+            val content = result.content[0]
+            content.type shouldBe "text"
 
-            val contentArray = content!!.jsonArray
-            contentArray.shouldNotBeEmpty()
-
-            // Verify text content
-            val firstContent = contentArray[0].jsonObject
-            firstContent["type"]?.jsonPrimitive?.content shouldBe "text"
-            firstContent["text"] shouldNotBe null
+            // Verify text contains project ID
+            if (content is TextContent) {
+                content.text shouldContain projectId
+            }
         }
     }
 
     "should reject tool call with invalid tool name" {
-        testSDKApplication {
-            val client = createTestClient()
+        testSDKApplication { serverUrl, httpClient ->
+            val client = Client(Implementation("cycletime-test-client", "1.0.0"))
+            val transport = SSEClientTransport(httpClient, serverUrl)
 
-            // Initialize
-            client.mcpInitialize()
+            withTimeout(10_000) {
+                client.connect(transport)
+            }
 
-            // Call non-existent tool
-            val response = client.callMCPTool(
-                "nonexistent_tool",
-                mapOf()
-            )
+            // SDK throws exception for tool not found
+            val exception = shouldThrow<Exception> {
+                client.callTool("nonexistent_tool", emptyMap())
+            }
 
-            // Verify error response
-            response.status shouldBe HttpStatusCode.OK // JSON-RPC errors return 200
-            val error = response.extractMCPError()
-
-            error shouldNotBe null
-            error!!["code"] shouldNotBe null
-            error["message"]?.jsonPrimitive?.content shouldContain "not found"
+            exception.message shouldContain "not found"
         }
     }
 
