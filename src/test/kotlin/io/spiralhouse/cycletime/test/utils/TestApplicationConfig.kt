@@ -4,6 +4,7 @@ import io.ktor.client.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.engine.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -13,6 +14,8 @@ import io.ktor.server.plugins.di.*
 import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 import io.spiralhouse.cycletime.mcp.configureMCP
 import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
+import io.spiralhouse.cycletime.HealthResponse
+import io.spiralhouse.cycletime.domain.services.BuildInfo
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation as ServerContentNegotiation
 import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
@@ -20,9 +23,11 @@ import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
 import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
 import io.spiralhouse.cycletime.infrastructure.database.WorkflowsTable
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 
 /**
  * Standardized test application configuration for SDK integration tests.
@@ -97,6 +102,12 @@ fun testSDKApplication(
 
         // Configure dependency injection (SDK components, services, etc.)
         configureDependencies(database = testDatabase)
+
+        // Start MCP integration service to match production behavior
+        val mcpService: MCPIntegrationService by dependencies
+        runBlocking {
+            mcpService.start()
+        }
 
         // Configure routing
         routing {
@@ -223,32 +234,147 @@ fun ApplicationTestBuilder.createTestClient(): HttpClient {
 }
 
 /**
+ * Create test application with SDK Client support using embedded HTTP server.
+ *
+ * **IMPORTANT (SPI-710)**: SDK Client requires a real HTTP server because it uses external
+ * HTTP connections. The standard `testApplication` uses an in-memory engine that doesn't
+ * expose network ports, making it incompatible with SDK Client.
+ *
+ * This helper starts a real embedded HTTP server on port 8080 with:
+ * - Production DI configuration (SDK components, services, repositories)
+ * - MCP routing (SDK endpoints at /)
+ * - Isolated test database (fresh H2 instance per test)
+ * - Configured HttpClient with SSE support
+ * - Automatic resource cleanup
+ *
+ * Usage:
+ * ```kotlin
+ * testSDKApplication { serverUrl, httpClient ->
+ *     val client = Client(Implementation("test-client", "1.0.0"))
+ *     val transport = SSEClientTransport(httpClient, serverUrl)
+ *
+ *     withTimeout(10_000) {
+ *         client.connect(transport)
+ *     }
+ *
+ *     // Test operations using SDK Client
+ *     val result = client.callTool("tool_name", args)
+ *     result.isError shouldBe false
+ * }
+ * ```
+ *
+ * @param block Test code receiving serverUrl and httpClient parameters
+ */
+fun testSDKApplication(
+    block: suspend (serverUrl: String, httpClient: HttpClient) -> Unit
+): Unit = runBlocking {
+    // Create isolated test database
+    val testDatabase = Database.connect(
+        url = "jdbc:h2:mem:test_${System.currentTimeMillis()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+        driver = "org.h2.Driver"
+    )
+
+    // Initialize database schema
+    transaction(testDatabase) {
+        SchemaUtils.create(SessionStatesTable, ProjectsTable, IssuesTable, WorkflowsTable)
+    }
+
+    // Start embedded HTTP server on port 8080
+    val server = embeddedServer(io.ktor.server.cio.CIO, port = 8080) {
+        // Install required Ktor plugins
+        install(ServerContentNegotiation) {
+            json(Json {
+                prettyPrint = true
+                isLenient = true
+                ignoreUnknownKeys = true
+            })
+        }
+        install(SSE)
+
+        // Configure dependency injection (SDK components, services, etc.)
+        configureDependencies(database = testDatabase)
+
+        // Start MCP integration service to match production behavior
+        val mcpService: MCPIntegrationService by dependencies
+        runBlocking {
+            mcpService.start()
+        }
+
+        // Configure routing
+        routing {
+            // MCP endpoints (SDK + legacy EventBus during migration)
+            configureMCP()
+        }
+    }.start(wait = false)
+
+    try {
+        // Create HTTP client with SSE support for SDK Client
+        val httpClient = HttpClient(io.ktor.client.engine.cio.CIO) {
+            install(io.ktor.client.plugins.sse.SSE)
+        }
+
+        try {
+            // Server URL for SDK Client connections
+            val serverUrl = "http://localhost:8080"
+
+            // Execute test block with provided parameters
+            block(serverUrl, httpClient)
+
+        } finally {
+            // Always cleanup httpClient to prevent resource leaks
+            httpClient.close()
+        }
+
+    } finally {
+        // Shutdown server and cleanup
+        server.stop(1000, 2000)
+        TransactionManager.closeAndUnregister(testDatabase)
+    }
+}
+
+/**
  * Configure health endpoint for application integration tests.
  *
- * Provides a simple /health endpoint that returns application status
- * and MCP server information for integration testing.
+ * Provides /health endpoint that matches production HealthResponse format.
+ * Returns proper JSON structure with dependencies and metrics for MCP server status.
+ *
+ * NOTE (SPI-710 Phase 2): This must match production Application.kt health endpoint format
+ * to ensure integration tests validate actual production behavior.
  */
 private fun Routing.configureHealthEndpoint() {
     get("/health") {
         try {
-            // Try to get MCP service status from DI
-            val mcpService: io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService? by application.dependencies
+            // Get MCP service status from DI (matches production pattern)
+            val mcpService: MCPIntegrationService? by application.dependencies
 
-            val healthData = buildMap {
-                put("status", "ok")
-                put("dependencies", buildMap {
-                    put("mcp", if (mcpService?.isRunning() == true) "running" else "stopped")
-                })
-                put("metrics", buildMap {
-                    val status = mcpService?.getStatus()
-                    put("mcpPort", status?.port?.toString() ?: "3006")
-                })
-            }
+            // Build health response matching production HealthResponse structure
+            val response = HealthResponse(
+                status = "healthy",
+                service = BuildInfo.serviceName,
+                version = BuildInfo.version,
+                dependencies = mapOf(
+                    "database" to "connected",
+                    "mcp" to if (mcpService?.isRunning() == true) "running" else "stopped"
+                ),
+                metrics = mapOf(
+                    "mcpPort" to (mcpService?.getStatus()?.port?.toString() ?: "3006"),
+                    "mcpUptime" to (mcpService?.getStatus()?.uptimeMs?.toString() ?: "0"),
+                    "mcpStatus" to if (mcpService?.isRunning() == true) "running" else "stopped"
+                ),
+                timestamp = System.currentTimeMillis().toString()
+            )
 
-            call.respond(io.ktor.http.HttpStatusCode.OK, healthData)
+            call.respond(HttpStatusCode.OK, response)
         } catch (e: Exception) {
-            // If MCP service not available, return basic health
-            call.respond(io.ktor.http.HttpStatusCode.OK, mapOf("status" to "ok"))
+            // Return error response matching production format
+            call.respond(HttpStatusCode.ServiceUnavailable, HealthResponse(
+                status = "unhealthy",
+                service = BuildInfo.serviceName,
+                version = BuildInfo.version,
+                dependencies = mapOf("error" to e.message.orEmpty()),
+                metrics = emptyMap(),
+                timestamp = System.currentTimeMillis().toString()
+            ))
         }
     }
 }
