@@ -13,7 +13,7 @@ import kotlinx.coroutines.delay
 import java.util.UUID
 
 /**
- * Edge Case and Error Scenario Integration Tests (SDK Migration - SPI-710 Phase 3)
+ * Edge Case and Error Scenario Integration Tests (SDK Migration - SPI-710)
  *
  * Integration tests for edge cases, error handling, and security scenarios.
  * These tests verify server-side error handling that remains relevant with SDK Client.

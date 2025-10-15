@@ -20,7 +20,7 @@ import kotlin.time.measureTime
  * Performance benchmark tests for SDK v0.7.2 transport layer.
  *
  * These system tests validate that the SDK transport infrastructure meets
- * the performance requirements specified in Phase 2 (SPI-703).
+ * the performance requirements specified in SPI-703.
  *
  * Performance Targets:
  * - SDK server initialization: < 100ms (target: < 50ms)

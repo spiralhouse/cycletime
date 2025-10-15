@@ -17,9 +17,6 @@ import kotlinx.serialization.json.jsonPrimitive
  *
  * Session state is now exclusively managed at the application/domain layer through
  * SessionApplicationService and ExposedSessionRepository.
- *
- * Note: Phase 2 establishes infrastructure. Specific request type handling will be
- * implemented in Phase 3 during tool/resource registration.
  */
 object SessionContext {
     /**
@@ -27,8 +24,6 @@ object SessionContext {
      *
      * The session ID should be provided by the client in meta["sessionId"].
      * Returns null if not present, allowing tools to handle missing sessions appropriately.
-     *
-     * This generic version will be replaced with specific request types in Phase 3.
      *
      * @param meta The request metadata map
      * @return Session ID if present in metadata, null otherwise

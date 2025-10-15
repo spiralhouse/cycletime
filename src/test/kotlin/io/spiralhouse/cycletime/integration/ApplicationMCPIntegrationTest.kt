@@ -32,7 +32,7 @@ import kotlin.time.Duration.Companion.seconds
  * - Health endpoint integration
  * - Graceful shutdown
  *
- * Migration from EventBus to SDK transport (Phase 4.2):
+ * Migration from EventBus to SDK transport (SPI-710):
  * - Uses testSDKApplication for consistent test setup
  * - Tests SDK routing at /mcp endpoint
  * - Validates production DI configuration

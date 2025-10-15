@@ -17,7 +17,7 @@ fun Routing.configureMCP() {
 
     logger.info("🚀 configureMCP() CALLED - Starting MCP routing configuration")
 
-    // SDK transport (primary) - Phase 3+ migration
+    // SDK transport (primary) - SPI-700
     logger.info("📡 Calling configureMCPSdk() for SDK v0.7.2 transport")
     configureMCPSdk()
     logger.info("✅ configureMCPSdk() completed")

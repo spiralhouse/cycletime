@@ -338,7 +338,7 @@ fun testSDKApplication(
  * Provides /health endpoint that matches production HealthResponse format.
  * Returns proper JSON structure with dependencies and metrics for MCP server status.
  *
- * NOTE (SPI-710 Phase 2): This must match production Application.kt health endpoint format
+ * NOTE (SPI-710): This must match production Application.kt health endpoint format
  * to ensure integration tests validate actual production behavior.
  */
 private fun Routing.configureHealthEndpoint() {

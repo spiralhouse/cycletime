@@ -11,9 +11,9 @@ class TestResourceProvider(override val name: String) : ResourceProvider {
     private var running = false
     private val testResources = mutableListOf<Resource>()
     private var explicitlyStarted = false
-    
-    // Removed subscription callbacks for Phase 5 simplification
-    
+
+    // Removed subscription callbacks (SDK v0.7.2 doesn't support subscriptions - SPI-710)
+
     init {
         // Initialize with test data
         testResources.addAll(createTestResources())
@@ -101,7 +101,7 @@ class TestResourceProvider(override val name: String) : ResourceProvider {
                 content = content,
                 metadata = existing.metadata?.copy(modified = Clock.System.now())
             )
-            // Notification system removed for Phase 5 simplification
+            // Notification system removed (SDK v0.7.2 doesn't support subscriptions - SPI-710)
         }
     }
     

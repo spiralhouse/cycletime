@@ -184,7 +184,7 @@ private fun DependencyRegistry.configureMCPDependencies() {
     provide<ResourceRegistry> { ResourceRegistry() }
     provide<ToolRegistry> { ToolRegistry() }
 
-    // SDK v0.7.2 Components (Phase 3 - Tool/Resource Adapters)
+    // SDK v0.7.2 Components (SPI-700)
     provide<SDKSessionManager> {
         SDKSessionManager(
             sessionService = resolve<SessionApplicationService>()

@@ -38,8 +38,8 @@ import org.slf4j.LoggerFactory
  * This eliminates the need for manual SSE/POST endpoint setup, message correlation,
  * and protocol handling that was required with the EventBus architecture.
  *
- * Note: SDK routing is configured in parallel mode during migration (Phase 2-5).
- * Legacy EventBus endpoints remain active for rollback capability until Phase 6.
+ * Note: Both SDK and legacy EventBus transports run in parallel for gradual migration (SPI-700).
+ * Legacy EventBus endpoints remain active for rollback capability until cleanup (SPI-707).
  */
 
 private val logger = LoggerFactory.getLogger("MCPSdkRouting")
@@ -171,12 +171,12 @@ fun Routing.configureMCPSdk() {
 /**
  * Configure SDK routing in parallel mode with legacy EventBus.
  *
- * During migration (Phase 2-5), both SDK and EventBus transports run simultaneously:
+ * Both SDK and EventBus transports run simultaneously for gradual migration (SPI-700):
  * - /mcp - SDK transport (new, primary)
  * - /mcp-old - EventBus transport (legacy, for rollback)
  *
  * This allows gradual migration and easy rollback if issues are discovered.
- * The legacy transport will be removed in Phase 6 (cleanup).
+ * The legacy transport will be removed in SPI-707 (cleanup).
  *
  * @param legacyRouting Function to configure legacy EventBus routing
  */

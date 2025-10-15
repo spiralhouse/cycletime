@@ -124,7 +124,7 @@ class MCPSdkTransportTest : StringSpec({
 
     "should handle client info in initialize request".config(enabled = false) {
         /**
-         * MIGRATION NOTE (SPI-710 Phase 3): Cannot migrate - SDK handles client info internally.
+         * MIGRATION NOTE (SPI-710): Cannot migrate - SDK handles client info internally.
          *
          * Original Test Intent: Verify server accepts custom client name/version in initialize.
          *
@@ -153,7 +153,7 @@ class MCPSdkTransportTest : StringSpec({
             val toolsResult = client.listTools()
             toolsResult.tools.shouldNotBeEmpty()
 
-            // Phase 3 registered 4 tool providers (session, project, issue, workflow)
+            // SDK registered 4 tool providers (session, project, issue, workflow) (SPI-700)
             // Each provider has multiple tools, expect 17 total tools
             toolsResult.tools shouldHaveSize 17
 
@@ -303,7 +303,7 @@ class MCPSdkTransportTest : StringSpec({
 
     "should subscribe to resource updates via SDK".config(enabled = false) {
         /**
-         * MIGRATION NOTE (SPI-710 Phase 2): Cannot migrate - SDK v0.7.2 doesn't support resource subscriptions.
+         * MIGRATION NOTE (SPI-710): Cannot migrate - SDK v0.7.2 doesn't support resource subscriptions.
          *
          * Original Test Intent: Validate server accepts resource subscription requests.
          *
@@ -323,7 +323,7 @@ class MCPSdkTransportTest : StringSpec({
 
     "should reject invalid JSON-RPC format".config(enabled = false) {
         /**
-         * MIGRATION NOTE (SPI-710 Phase 2): Cannot migrate - SDK prevents invalid JSON-RPC by design.
+         * MIGRATION NOTE (SPI-710): Cannot migrate - SDK prevents invalid JSON-RPC by design.
          *
          * Original Test Intent: Validate server rejects JSON missing required
          * JSON-RPC fields (jsonrpc, method, id).
@@ -341,7 +341,7 @@ class MCPSdkTransportTest : StringSpec({
 
     "should reject requests missing session metadata when required".config(enabled = false) {
         /**
-         * MIGRATION NOTE (SPI-710 Phase 3): Cannot migrate - SDK manages session metadata internally.
+         * MIGRATION NOTE (SPI-710): Cannot migrate - SDK manages session metadata internally.
          *
          * Original Test Intent: Validate server rejects requests missing session context.
          *
@@ -356,7 +356,7 @@ class MCPSdkTransportTest : StringSpec({
 
     "should handle malformed request parameters".config(enabled = false) {
         /**
-         * MIGRATION NOTE (SPI-710 Phase 3): Cannot migrate - SDK provides type-safe parameters.
+         * MIGRATION NOTE (SPI-710): Cannot migrate - SDK provides type-safe parameters.
          *
          * Original Test Intent: Validate server rejects requests with wrong parameter types.
          *

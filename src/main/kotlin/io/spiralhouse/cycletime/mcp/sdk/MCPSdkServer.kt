@@ -24,8 +24,8 @@ import org.slf4j.LoggerFactory
  * This class encapsulates server creation and capability configuration following
  * the official MCP Kotlin SDK patterns.
  *
- * In Phase 3 GREEN, this class now registers tool and resource adapters that bridge
- * existing business logic to the SDK API.
+ * This class registers tool and resource adapters that bridge existing business logic
+ * to the SDK API (SPI-700).
  *
  * @property version Application version for server identification
  * @property sessionManager Session manager for SDK session handling

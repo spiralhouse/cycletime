@@ -10,7 +10,7 @@ import kotlin.time.measureTime
 /**
  * Unit tests for MCPSdkServer initialization and configuration.
  *
- * These tests verify the SDK server infrastructure created in Phase 2 (Day 8, SPI-703).
+ * These tests verify the SDK server infrastructure created in SPI-703.
  * Focus is on initialization behavior, capability configuration, and performance.
  *
  * Test Categories:
