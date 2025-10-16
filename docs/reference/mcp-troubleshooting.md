@@ -2155,6 +2155,73 @@ embeddedServer(Netty, port = 8080) {
 
 ## Diagnostic Tools
 
+### MCP Inspector (Protocol Diagnostics)
+
+**Purpose**: Official protocol validation tool from Anthropic for MCP servers
+
+**When to use MCP Inspector**:
+- ✅ curl tests pass but Claude Code won't connect
+- ✅ Validating protocol compliance after changes
+- ✅ Debugging tool/resource registration issues
+- ✅ Verifying JSON-RPC 2.0 error responses
+- ✅ Simulating client connection
+
+**Installation**:
+```bash
+npm install -g @modelcontextprotocol/inspector
+```
+
+**Basic Usage**:
+```bash
+# Terminal 1: Start CycleTime
+./gradlew run
+
+# Terminal 2: Launch Inspector
+npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:8080
+
+# Terminal 3: Access Inspector UI
+# URL: http://localhost:6274
+# Token: [shown in Terminal 2]
+```
+
+**Quick Validation**:
+
+```bash
+# Checklist for protocol compliance
+# In Inspector UI (http://localhost:6274):
+
+1. Initialize request succeeds
+2. Tools list shows 17 tools
+3. Resources list shows 4 providers
+4. Tool execution returns correct structure
+5. Error responses properly formatted
+```
+
+**Diagnostic Pattern: "curl works, Claude Code doesn't"**
+
+```bash
+# Step 1: Validate with curl
+curl http://localhost:8080/mcp  # ✅ Returns server info
+
+# Step 2: Validate with Inspector
+npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:8080
+
+# Step 3: Check Inspector results
+# - ✅ Inspector connects: Protocol OK, Claude Code config issue
+# - ❌ Inspector fails: Protocol violation, server issue
+```
+
+**Inspector Advantages over curl**:
+- Shows exact JSON-RPC protocol errors
+- Validates MCP spec compliance
+- Tests capability exchange
+- Simulates real client connection
+- Visualizes protocol flow
+
+**Detailed usage**: See [MCP Testing Guide](../getting-started/mcp-testing.md#protocol-validation-with-mcp-inspector)
+
+**Development workflow**: See [MCP Development](../development/mcp-development.md#validating-with-mcp-inspector)
+
 ### Quick Health Check
 
 ```bash

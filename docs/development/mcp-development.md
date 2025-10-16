@@ -491,6 +491,83 @@ curl http://localhost:8080/mcp/stats | jq '.connections'
 }
 ```
 
+## Validating with MCP Inspector
+
+### Pre-Commit Validation Workflow
+
+Before committing MCP changes, validate protocol compliance with MCP Inspector:
+
+```bash
+# 1. Run automated tests
+./gradlew test
+
+# 2. Start local server
+./gradlew run
+
+# 3. Launch MCP Inspector (in separate terminal)
+npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:8080
+
+# 4. Validate in Inspector UI (http://localhost:6274)
+#    - Protocol initialization succeeds
+#    - Tools/resources registered correctly
+#    - Tool execution works
+#    - Error handling correct
+
+# 5. If all validations pass
+git add .
+git commit -m "feat(mcp): add new tool"
+```
+
+### Why Inspector is Required
+
+MCP Inspector validates protocol compliance that automated tests cannot:
+
+**Automated tests validate**:
+- Implementation logic correctness
+- Error handling code paths
+- Data transformations
+- Business rules
+
+**MCP Inspector validates**:
+- JSON-RPC 2.0 compliance
+- MCP protocol spec adherence
+- Client simulation (how Claude Code sees server)
+- Protocol-level error responses
+
+**Example failure only Inspector catches**:
+```kotlin
+// ❌ Tests pass but Inspector fails
+// Tool returns wrong JSON-RPC error structure
+return JsonRpcError(
+    code = -32000,
+    message = "Error"
+    // Missing: should wrap in JsonRpcResponse with id field
+)
+
+// ✅ Tests pass AND Inspector passes
+return JsonRpcResponse(
+    jsonrpc = "2.0",
+    id = request.id,
+    error = JsonRpcError(code = -32000, message = "Error")
+)
+```
+
+### Validation Checklist
+
+Use this checklist before every PR:
+
+- [ ] `./gradlew test` passes
+- [ ] `./gradlew integrationTest` passes
+- [ ] MCP Inspector connects successfully
+- [ ] Inspector shows all tools/resources registered
+- [ ] Tool execution works in Inspector
+- [ ] Error handling validated in Inspector
+- [ ] No protocol warnings in Inspector logs
+
+**Detailed validation procedures**: See [MCP Testing Guide](../getting-started/mcp-testing.md#protocol-validation-with-mcp-inspector)
+
+**Troubleshooting with Inspector**: See [MCP Troubleshooting](../reference/mcp-troubleshooting.md#mcp-inspector-protocol-diagnostics)
+
 ## Common Development Tasks
 
 ### Adding a Synchronous Tool

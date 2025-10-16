@@ -108,6 +108,118 @@ curl: (7) Failed to connect to localhost port 8080
 # Fix: Wait a few seconds for full initialization
 ```
 
+## Protocol Validation with MCP Inspector
+
+### What is MCP Inspector?
+
+MCP Inspector is the official validation tool from Anthropic that validates protocol compliance at a level automated tests cannot. While curl tests verify HTTP connectivity and basic request/response handling, Inspector validates JSON-RPC 2.0 compliance, MCP protocol adherence, and simulates how Claude Code will interact with your server.
+
+**When to use MCP Inspector**:
+- ✅ **Before creating PRs** - Validate protocol changes
+- ✅ **After SDK updates** - Confirm compatibility
+- ✅ **Debugging client issues** - Simulate Claude Code connection
+- ✅ **Protocol compliance** - Verify MCP spec adherence
+
+**When to use curl**:
+- ✅ Quick smoke tests during development
+- ✅ CI/CD health checks
+- ✅ Debugging HTTP-level issues
+
+### Quick Start with Inspector
+
+**Installation**:
+```bash
+npm install -g @modelcontextprotocol/inspector
+```
+
+**Launch Inspector**:
+```bash
+# Terminal 1: Start CycleTime server
+./gradlew run
+
+# Terminal 2: Launch Inspector
+npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:8080
+
+# Terminal 3 (optional): Monitor server health
+curl http://localhost:8080/mcp
+```
+
+**Access Inspector UI**:
+```
+Inspector web UI: http://localhost:6274
+Authentication token: [displayed in Terminal 2]
+```
+
+### Validation Checklist (from SPI-706)
+
+Use Inspector to validate these critical aspects:
+
+**1. Protocol Initialization**:
+- [ ] Server responds to `initialize` request
+- [ ] Protocol version negotiation succeeds (2024-11-05)
+- [ ] Capability exchange completes
+- [ ] Server info correctly formatted
+
+**2. Tool Registry**:
+- [ ] All 17 tools registered and discoverable
+- [ ] Tool schemas validate (JSON Schema format)
+- [ ] Tool execution returns correct response structure
+- [ ] Error handling produces proper MCP error responses
+
+**3. Resource Registry**:
+- [ ] All 4 resource providers registered
+- [ ] Resource URIs follow `cycletime://` scheme
+- [ ] Resource content is valid JSON
+- [ ] MIME types correctly specified
+
+**4. Error Handling**:
+- [ ] Invalid tool names return `-32601` (Method not found)
+- [ ] Missing parameters return `-32602` (Invalid params)
+- [ ] Error responses include descriptive messages
+
+### Inspector vs curl Testing
+
+| Validation Type | curl | MCP Inspector | Automated Tests |
+|-----------------|------|---------------|-----------------|
+| HTTP connectivity | ✅ | ✅ | ✅ |
+| JSON-RPC format | ✅ | ✅ | ✅ |
+| **Protocol compliance** | ❌ | **✅** | ⚠️ |
+| **Client simulation** | ❌ | **✅** | ❌ |
+| Interactive testing | ❌ | ✅ | ❌ |
+| CI/CD automation | ✅ | ❌ | ✅ |
+
+**Best Practice**: Use all three validation layers:
+```
+Unit/Integration Tests → MCP Inspector → Claude Code Testing
+```
+
+### Three-Layer Validation Model
+
+```mermaid
+flowchart LR
+    A[Automated Tests] --> B[MCP Inspector]
+    B --> C[Claude Code]
+
+    A -->|Validates| A1[Implementation Logic]
+    B -->|Validates| B1[Protocol Compliance]
+    C -->|Validates| C1[Real-World Usage]
+
+    style B fill:#90EE90
+    style B1 fill:#90EE90
+```
+
+**Validation Flow**:
+1. **Automated Tests**: Run `./gradlew test` - validates implementation correctness
+2. **MCP Inspector**: Launch Inspector - validates protocol compliance
+3. **Claude Code**: Connect real client - validates production readiness
+
+Each layer catches different failure modes. All three must pass before deployment.
+
+### Related Documentation
+
+- [MCP Development Workflow](../development/mcp-development.md#validating-with-mcp-inspector) - Inspector in development workflow
+- [MCP Troubleshooting](../reference/mcp-troubleshooting.md#mcp-inspector-protocol-diagnostics) - Inspector as diagnostic tool
+
 ### 2. Statistics Endpoint
 
 **Test Command**:
