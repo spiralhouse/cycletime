@@ -240,7 +240,10 @@ fun ApplicationTestBuilder.createTestClient(): HttpClient {
  * HTTP connections. The standard `testApplication` uses an in-memory engine that doesn't
  * expose network ports, making it incompatible with SDK Client.
  *
- * This helper starts a real embedded HTTP server on port 8080 with:
+ * **IMPORTANT (SPI-712)**: Uses ephemeral port (OS-assigned) to enable parallel test execution
+ * without port binding conflicts. Each test invocation receives a unique port number.
+ *
+ * This helper starts a real embedded HTTP server with dynamic port assignment:
  * - Production DI configuration (SDK components, services, repositories)
  * - MCP routing (SDK endpoints at /)
  * - Isolated test database (fresh H2 instance per test)
@@ -279,8 +282,9 @@ fun testSDKApplication(
         SchemaUtils.create(SessionStatesTable, ProjectsTable, IssuesTable, WorkflowsTable)
     }
 
-    // Start embedded HTTP server on port 8080
-    val server = embeddedServer(io.ktor.server.cio.CIO, port = 8080) {
+    // Start embedded HTTP server with ephemeral port (OS-assigned to avoid conflicts)
+    // Port 0 requests OS to assign an available port automatically (SPI-712)
+    val server = embeddedServer(io.ktor.server.cio.CIO, port = 0) {
         // Install required Ktor plugins
         install(ServerContentNegotiation) {
             json(Json {
@@ -314,8 +318,10 @@ fun testSDKApplication(
         }
 
         try {
-            // Server URL for SDK Client connections
-            val serverUrl = "http://localhost:8080"
+            // Discover actual assigned port after server starts (SPI-712)
+            // The port is only available after start() completes, not at embeddedServer() call time
+            val actualPort = server.engine.resolvedConnectors().first().port
+            val serverUrl = "http://localhost:$actualPort"
 
             // Execute test block with provided parameters
             block(serverUrl, httpClient)
