@@ -1,4 +1,4 @@
-package io.spiralhouse.cycletime.api.middleware
+package io.spiralhouse.cycletime.api.configuration
 
 import io.ktor.http.*
 import io.ktor.server.application.*
