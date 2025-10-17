@@ -3,7 +3,10 @@ package io.spiralhouse.cycletime.mcp.sdk
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.ktor.server.plugins.di.*
+import io.modelcontextprotocol.kotlin.sdk.EmptyRequestResult
 import io.modelcontextprotocol.kotlin.sdk.Implementation
+import io.modelcontextprotocol.kotlin.sdk.LoggingMessageNotification
+import io.modelcontextprotocol.kotlin.sdk.Method
 import io.modelcontextprotocol.kotlin.sdk.ServerCapabilities
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
@@ -135,6 +138,20 @@ fun Routing.configureMCPSdk() {
         )
 
         logger.info("🟢 Server instance created successfully")
+
+        // Register logging/setLevel handler (SPI-716)
+        // Per MCP spec (2024-11-05), servers that declare logging capability MUST implement
+        // the logging/setLevel request handler. This handler accepts a log level parameter
+        // (debug, info, notice, warning, error, critical, alert, emergency) and returns
+        // an empty success response.
+        server.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(
+            Method.Defined.LoggingSetLevel
+        ) { request, _ ->
+            logger.debug("Client requested log level: ${request.level}")
+            EmptyRequestResult()
+        }
+        logger.debug("Registered logging/setLevel handler on active server instance")
+
         logger.info("📝 Registering ${toolProviders.size} tool providers and ${resourceProviders.size} resource providers")
 
         // CRITICAL: runBlocking may block Ktor initialization

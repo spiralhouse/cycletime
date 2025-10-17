@@ -100,6 +100,10 @@ class MCPSdkServer(
      * The log level is stored but not actively used - we acknowledge the client's
      * preference without changing server-side logging behavior. This is a minimal
      * spec-compliant implementation.
+     *
+     * NOTE: In production, the handler is registered in MCPSdkRouting.kt on the inline-created
+     * Server instance. This registration is kept here for test mode when MCPSdkServer is
+     * instantiated directly without going through the routing layer.
      */
     private fun registerLoggingHandler() {
         server.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(
