@@ -132,23 +132,35 @@ MCP Inspector is the official validation tool from Anthropic that validates prot
 npm install -g @modelcontextprotocol/inspector
 ```
 
-**Launch Inspector**:
+**Launch Inspector** (Two Methods):
+
+**Method 1: SSE Transport (Recommended)**:
 ```bash
 # Terminal 1: Start CycleTime server
 ./gradlew run
 
-# Terminal 2: Launch Inspector
-npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:8080
+# Terminal 2: Launch Inspector with SSE transport
+npx @modelcontextprotocol/inspector sse http://localhost:8080
 
-# Terminal 3 (optional): Monitor server health
-curl http://localhost:8080/mcp
+# Access Inspector UI at http://localhost:6274
+# Connection established automatically via command line
 ```
 
-**Access Inspector UI**:
+**Method 2: Browser Direct Connection**:
+```bash
+# Terminal 1: Start CycleTime server
+./gradlew run
+
+# Terminal 2: Launch Inspector without server URL
+npx @modelcontextprotocol/inspector
+
+# Access Inspector UI at http://localhost:6274
+# Click "Connect" → "Direct Connection" → Enter "http://localhost:8080"
 ```
-Inspector web UI: http://localhost:6274
-Authentication token: [displayed in Terminal 2]
-```
+
+**Which method to use**:
+- ✅ **Method 1 (SSE)**: Faster setup, connection pre-established
+- ✅ **Method 2 (Direct)**: Interactive, good for testing different servers
 
 ### Validation Checklist (from SPI-706)
 

@@ -40,16 +40,23 @@ object CorsConfiguration {
             exposeHeader("X-Request-Id")
             
             // Configure allowed origins based on environment
-            val isDevelopment = app.environment.config.propertyOrNull("ktor.deployment.environment")?.getString() == "development"
+            // Default to development mode unless explicitly set to production
+            // This matches the application.conf default of development = true
+            val isProduction = System.getenv("PRODUCTION")?.toBoolean() ?: false ||
+                              System.getenv("CORS_ALLOWED_ORIGINS") != null
+            val isDevelopment = !isProduction
+
             if (isDevelopment) {
                 // In development, allow common local development origins
                 allowHost("localhost:3000")
                 allowHost("localhost:3001")
                 allowHost("localhost:5173")
+                allowHost("localhost:6274")  // MCP Inspector UI
                 allowHost("localhost:8080")
                 allowHost("127.0.0.1:3000")
                 allowHost("127.0.0.1:3001")
                 allowHost("127.0.0.1:5173")
+                allowHost("127.0.0.1:6274")  // MCP Inspector UI
                 allowHost("127.0.0.1:8080")
             } else {
                 // In production, configure specific allowed origins from environment

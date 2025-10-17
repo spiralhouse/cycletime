@@ -2171,17 +2171,30 @@ embeddedServer(Netty, port = 8080) {
 npm install -g @modelcontextprotocol/inspector
 ```
 
-**Basic Usage**:
+**Basic Usage** (Two Methods):
+
+**Method 1 - SSE Transport (Recommended)**:
+```bash
+# Terminal 1: Start CycleTime
+./gradlew run
+
+# Terminal 2: Launch Inspector with SSE
+npx @modelcontextprotocol/inspector sse http://localhost:8080
+
+# Access Inspector UI at http://localhost:6274
+# Connection auto-established
+```
+
+**Method 2 - Direct Connection**:
 ```bash
 # Terminal 1: Start CycleTime
 ./gradlew run
 
 # Terminal 2: Launch Inspector
-npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:8080
+npx @modelcontextprotocol/inspector
 
-# Terminal 3: Access Inspector UI
-# URL: http://localhost:6274
-# Token: [shown in Terminal 2]
+# Open http://localhost:6274
+# Click "Connect" → "Direct Connection" → Enter "http://localhost:8080"
 ```
 
 **Quick Validation**:

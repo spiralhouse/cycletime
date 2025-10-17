@@ -505,7 +505,12 @@ Before committing MCP changes, validate protocol compliance with MCP Inspector:
 ./gradlew run
 
 # 3. Launch MCP Inspector (in separate terminal)
-npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:8080
+# Method 1 (Recommended): SSE transport with auto-connect
+npx @modelcontextprotocol/inspector sse http://localhost:8080
+
+# Method 2 (Alternative): Direct connection via browser UI
+# npx @modelcontextprotocol/inspector
+# Then open http://localhost:6274 and click "Connect" → "Direct Connection"
 
 # 4. Validate in Inspector UI (http://localhost:6274)
 #    - Protocol initialization succeeds
