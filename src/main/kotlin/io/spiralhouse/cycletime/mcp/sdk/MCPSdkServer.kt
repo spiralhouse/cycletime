@@ -1,6 +1,9 @@
 package io.spiralhouse.cycletime.mcp.sdk
 
+import io.modelcontextprotocol.kotlin.sdk.EmptyRequestResult
 import io.modelcontextprotocol.kotlin.sdk.Implementation
+import io.modelcontextprotocol.kotlin.sdk.LoggingMessageNotification
+import io.modelcontextprotocol.kotlin.sdk.Method
 import io.modelcontextprotocol.kotlin.sdk.ServerCapabilities
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
@@ -68,6 +71,9 @@ class MCPSdkServer(
     init {
         logger.info("MCP SDK Server initializing (SDK v0.7.2, version: $version)")
 
+        // Register logging/setLevel handler (SPI-716)
+        registerLoggingHandler()
+
         // Register all tool and resource providers via adapters (if provided)
         if (sessionManager != null && (toolProviders.isNotEmpty() || resourceProviders.isNotEmpty())) {
             runBlocking {
@@ -80,7 +86,32 @@ class MCPSdkServer(
             logger.info("MCP SDK Server initialized in test mode (no providers registered)")
         }
 
-        logger.debug("Server capabilities: resources (subscribe, listChanged), tools")
+        logger.debug("Server capabilities: resources (subscribe, listChanged), tools, logging")
+    }
+
+    /**
+     * Register logging/setLevel request handler (SPI-716).
+     *
+     * Per MCP spec (2024-11-05), servers that declare logging capability MUST implement
+     * the logging/setLevel request handler. This handler accepts a log level parameter
+     * (debug, info, notice, warning, error, critical, alert, emergency) and returns
+     * an empty success response.
+     *
+     * The log level is stored but not actively used - we acknowledge the client's
+     * preference without changing server-side logging behavior. This is a minimal
+     * spec-compliant implementation.
+     */
+    private fun registerLoggingHandler() {
+        server.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(
+            Method.Defined.LoggingSetLevel
+        ) { request, _ ->
+            // Log the level change for debugging purposes
+            logger.debug("Client requested log level: ${request.level}")
+
+            // Return empty success response (spec-compliant)
+            EmptyRequestResult()
+        }
+        logger.debug("Registered logging/setLevel handler")
     }
 
     /**
