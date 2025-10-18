@@ -230,6 +230,35 @@ tasks.withType<Test> {
 }
 
 // =============================================================================
+// Test Source Sets Configuration (SPI-708)
+// =============================================================================
+sourceSets {
+    create("integrationTest") {
+        compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+        runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+    }
+    create("systemTest") {
+        compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+        runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+    }
+}
+
+configurations {
+    getByName("integrationTestImplementation") {
+        extendsFrom(configurations.testImplementation.get())
+    }
+    getByName("integrationTestRuntimeOnly") {
+        extendsFrom(configurations.testRuntimeOnly.get())
+    }
+    getByName("systemTestImplementation") {
+        extendsFrom(configurations.testImplementation.get())
+    }
+    getByName("systemTestRuntimeOnly") {
+        extendsFrom(configurations.testRuntimeOnly.get())
+    }
+}
+
+// =============================================================================
 // Separate Test Suite Tasks for SPI-473
 // =============================================================================
 
@@ -393,15 +422,15 @@ val unitTest by tasks.registering(Test::class) {
 val integrationTest by tasks.registering(Test::class) {
     description = "Runs integration tests (repositories, services, database)"
     group = "verification"
-    
-    testClassesDirs = sourceSets["test"].output.classesDirs
-    classpath = sourceSets["test"].runtimeClasspath
-    
+
+    testClassesDirs = sourceSets["integrationTest"].output.classesDirs
+    classpath = sourceSets["integrationTest"].runtimeClasspath
+
     useJUnitPlatform()
-    
+
     // Include test source sets - CRITICAL for test discovery
-    testClassesDirs = sourceSets.test.get().output.classesDirs
-    classpath = sourceSets.test.get().runtimeClasspath
+    testClassesDirs = sourceSets["integrationTest"].output.classesDirs
+    classpath = sourceSets["integrationTest"].runtimeClasspath
     
     // Filter for integration tests - infrastructure integration, API layer, and MCP integration/server components only
     filter {
@@ -430,7 +459,7 @@ val integrationTest by tasks.registering(Test::class) {
         include("**/mcp/integration/**/*.kt") // Include MCP integration components
         include("**/mcp/server/**/*.kt") // Include MCP server infrastructure
     })
-    inputs.files(fileTree("src/test/kotlin") {
+    inputs.files(fileTree("src/integrationTest/kotlin") {
         include("**/integration/**/*.kt")
         include("**/api/**/*.kt") // Include API tests for SPI-595
         include("**/infrastructure/**/*.kt") // Infrastructure integration tests
@@ -494,15 +523,15 @@ val integrationTest by tasks.registering(Test::class) {
 val systemTest by tasks.registering(Test::class) {
     description = "Runs system tests (performance, end-to-end scenarios)"
     group = "verification"
-    
-    testClassesDirs = sourceSets["test"].output.classesDirs
-    classpath = sourceSets["test"].runtimeClasspath
-    
+
+    testClassesDirs = sourceSets["systemTest"].output.classesDirs
+    classpath = sourceSets["systemTest"].runtimeClasspath
+
     useJUnitPlatform()
-    
+
     // Include test source sets - CRITICAL for test discovery
-    testClassesDirs = sourceSets.test.get().output.classesDirs
-    classpath = sourceSets.test.get().runtimeClasspath
+    testClassesDirs = sourceSets["systemTest"].output.classesDirs
+    classpath = sourceSets["systemTest"].runtimeClasspath
     
     // Filter for system/performance tests
     filter {
@@ -515,7 +544,7 @@ val systemTest by tasks.registering(Test::class) {
     
     // System tests depend on entire application
     inputs.files(fileTree("src/main/kotlin"))
-    inputs.files(fileTree("src/test/kotlin") {
+    inputs.files(fileTree("src/systemTest/kotlin") {
         include("**/performance/**/*.kt")
         include("**/system/**/*.kt")
     })

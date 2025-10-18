@@ -1,0 +1,43 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.1.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Reusing configuration cache.
+> Task :checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :koverFindJar UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :processTestResources UP-TO-DATE
+> Task :compileKotlin UP-TO-DATE
+> Task :compileJava NO-SOURCE
+> Task :classes UP-TO-DATE
+> Task :jar UP-TO-DATE
+> Task :compileTestKotlin UP-TO-DATE
+> Task :compileTestJava NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test UP-TO-DATE
+
+16 problems were found reusing the configuration cache, 9 of which seem unique.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: invocation of 'Task.project' at execution time is unsupported with the configuration cache.
+  See https://docs.gradle.org/9.1.0/userguide/configuration_cache_requirements.html#config_cache:requirements:use_project_during_execution
+- Task `:compileKotlin` of type `org.jetbrains.kotlin.gradle.tasks.KotlinCompile`: invocation of 'Task.project' at execution time is unsupported with the configuration cache.
+  See https://docs.gradle.org/9.1.0/userguide/configuration_cache_requirements.html#config_cache:requirements:use_project_during_execution
+- Task `:compileTestJava` of type `org.gradle.api.tasks.compile.JavaCompile`: invocation of 'Task.project' at execution time is unsupported with the configuration cache.
+  See https://docs.gradle.org/9.1.0/userguide/configuration_cache_requirements.html#config_cache:requirements:use_project_during_execution
+- Task `:compileTestKotlin` of type `org.jetbrains.kotlin.gradle.tasks.KotlinCompile`: invocation of 'Task.project' at execution time is unsupported with the configuration cache.
+  See https://docs.gradle.org/9.1.0/userguide/configuration_cache_requirements.html#config_cache:requirements:use_project_during_execution
+- Task `:jar` of type `org.gradle.api.tasks.bundling.Jar`: invocation of 'Task.project' at execution time is unsupported with the configuration cache.
+  See https://docs.gradle.org/9.1.0/userguide/configuration_cache_requirements.html#config_cache:requirements:use_project_during_execution
+- Task `:koverFindJar` of type `kotlinx.kover.gradle.plugin.tasks.services.KoverAgentJarTask`: invocation of 'Task.project' at execution time is unsupported with the configuration cache.
+  See https://docs.gradle.org/9.1.0/userguide/configuration_cache_requirements.html#config_cache:requirements:use_project_during_execution
+- Task `:processResources` of type `org.gradle.language.jvm.tasks.ProcessResources`: invocation of 'Task.project' at execution time is unsupported with the configuration cache.
+  See https://docs.gradle.org/9.1.0/userguide/configuration_cache_requirements.html#config_cache:requirements:use_project_during_execution
+- Task `:processTestResources` of type `org.gradle.language.jvm.tasks.ProcessResources`: invocation of 'Task.project' at execution time is unsupported with the configuration cache.
+  See https://docs.gradle.org/9.1.0/userguide/configuration_cache_requirements.html#config_cache:requirements:use_project_during_execution
+- Task `:test` of type `org.gradle.api.tasks.testing.Test`: invocation of 'Task.project' at execution time is unsupported with the configuration cache.
+  See https://docs.gradle.org/9.1.0/userguide/configuration_cache_requirements.html#config_cache:requirements:use_project_during_execution
+
+See the complete report at file:///Users/jburbridge/Projects/cycletime/build/reports/configuration-cache/egmqvouxyfcquo9gy0okkziw8/1cd3wehpdmz1oaqig1e5kwajc/configuration-cache-report.html
+
+[Incubating] Problems report is available at: file:///Users/jburbridge/Projects/cycletime/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 2s
+7 actionable tasks: 7 up-to-date
+Configuration cache entry reused with 16 problems.
