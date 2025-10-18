@@ -139,10 +139,13 @@ The GitHub Actions workflow now runs test suites in parallel for faster feedback
 2. **Pre-commit**: Run `./gradlew testAll` to verify all tests pass
 3. **CI Pipeline**: Automatic parallel execution of all test suites
 
-### Test Organization
-- **Unit Tests**: `src/test/kotlin/*/domain/`, `src/test/kotlin/*/verification/`
-- **Integration Tests**: `src/test/kotlin/*/integration/`
-- **System Tests**: `src/test/kotlin/*/performance/`, `src/test/kotlin/*/system/`
+### Test Organization (Source Set Based)
+
+Tests are organized using Gradle source sets (see [Test Source Set Guide](test-source-set-guide.md)):
+
+- **Unit Tests**: `src/test/kotlin/` - Domain logic, MCP protocol, and tool tests
+- **Integration Tests**: `src/integrationTest/kotlin/` - Component integration and MCP server tests
+- **System Tests**: `src/systemTest/kotlin/` - Performance and end-to-end tests
 
 ## Backward Compatibility
 

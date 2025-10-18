@@ -377,13 +377,25 @@ The migration from TypeScript to Kotlin provides:
 
 ### Test Organization
 
+Tests are organized using Gradle source sets for physical separation (see `docs/testing/test-source-set-guide.md`):
+
 ```
-src/test/kotlin/io/spiralhouse/cycletime/
-├── unit/           # Fast, isolated unit tests
-├── integration/    # Integration tests with real components
-├── system/         # End-to-end system tests
-├── fixtures/       # Test data and utilities
-└── utils/          # Test helpers and mocks
+src/
+├── test/kotlin/                    # Unit tests only
+│   └── io/spiralhouse/cycletime/
+│       ├── domain/                 # Domain logic tests
+│       ├── mcp/protocol/           # MCP protocol tests
+│       ├── mcp/tools/              # MCP tool tests
+│       ├── fixtures/               # Test data
+│       └── utils/                  # Test helpers
+├── integrationTest/kotlin/         # Integration tests
+│   └── io/spiralhouse/cycletime/
+│       ├── integration/            # Component integration
+│       ├── mcp/integration/        # MCP integration
+│       └── mcp/server/             # MCP server tests
+└── systemTest/kotlin/              # System tests
+    └── io/spiralhouse/cycletime/
+        └── performance/            # Performance tests
 ```
 
 ### Testing Frameworks

@@ -233,7 +233,7 @@ jobs:
           echo "📊 Cache status:"
           echo "  Gradle cache: $([ -d ~/.gradle/caches ] && echo 'HIT' || echo 'MISS')"
           echo "  Kotlin cache: $([ -d build/kotlin ] && echo 'HIT' || echo 'MISS')"
-          ./gradlew compileKotlin compileTestKotlin --no-build-cache --configuration-cache --no-daemon
+          ./gradlew compileKotlin compileTestKotlin compileIntegrationTestKotlin compileSystemTestKotlin --no-build-cache --configuration-cache --no-daemon
 
       - name: Upload compiled artifacts
         uses: actions/upload-artifact@v4
@@ -305,7 +305,7 @@ jobs:
       - name: Run unit tests with coverage
         run: |
           echo "🚀 Running unit tests with coverage using pre-compiled artifacts"
-          ./gradlew unitTest koverXmlReport -x compileKotlin -x compileTestKotlin --no-build-cache --configuration-cache --no-daemon
+          ./gradlew unitTest koverXmlReport -x compileKotlin -x compileTestKotlin -x compileIntegrationTestKotlin -x compileSystemTestKotlin --no-build-cache --configuration-cache --no-daemon
 
       - name: Upload unit test results
         uses: actions/upload-artifact@v4
@@ -426,7 +426,7 @@ jobs:
       - name: Run integration tests with coverage
         run: |
           echo "🔗 Running integration tests with coverage using pre-compiled artifacts"
-          ./gradlew integrationTest koverXmlReport -x compileKotlin -x compileTestKotlin --no-build-cache --configuration-cache --no-daemon
+          ./gradlew integrationTest koverXmlReport -x compileKotlin -x compileTestKotlin -x compileIntegrationTestKotlin -x compileSystemTestKotlin --no-build-cache --configuration-cache --no-daemon
 
       - name: Upload integration test results
         uses: actions/upload-artifact@v4
@@ -547,7 +547,7 @@ jobs:
       - name: Run system tests
         run: |
           echo "🎩 Running system tests using pre-compiled artifacts"
-          ./gradlew systemTest -x compileKotlin -x compileTestKotlin --no-build-cache --configuration-cache --no-daemon
+          ./gradlew systemTest -x compileKotlin -x compileTestKotlin -x compileIntegrationTestKotlin -x compileSystemTestKotlin --no-build-cache --configuration-cache --no-daemon
 
       - name: Upload system test results
         uses: actions/upload-artifact@v4
@@ -739,7 +739,7 @@ jobs:
       - name: Build application JAR
         run: |
           echo "🔨 Building application JAR for deployment (version: ${{ needs.version.outputs.version }})"
-          ./gradlew buildFatJar -x compileKotlin -x compileTestKotlin -x test --no-build-cache --configuration-cache --no-daemon
+          ./gradlew buildFatJar -x compileKotlin -x compileTestKotlin -x compileIntegrationTestKotlin -x compileSystemTestKotlin -x test --no-build-cache --configuration-cache --no-daemon
 
       - name: Verify JAR exists
         run: |
