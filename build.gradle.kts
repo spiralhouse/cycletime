@@ -84,8 +84,10 @@ dependencies {
 
     // Dependency Injection - Using Ktor native DI (requires Ktor 3.2.3+)
 
-    // MCP SDK (when available)
-    // implementation(libs.mcp.kotlin.sdk)
+    // MCP SDK v0.7.2 - Official Kotlin SDK for MCP protocol
+    // Provides transport, protocol handling, and session management
+    // Replaced custom EventBus architecture in SPI-700/SPI-707
+    implementation(libs.mcp.kotlin.sdk)
 
     // Logging
     implementation(libs.logback.classic)
@@ -96,9 +98,12 @@ dependencies {
     testImplementation(libs.kotest.property)
     testImplementation(libs.mockk)
     testImplementation(libs.ktor.server.test.host)
+    testImplementation("io.ktor:ktor-client-core:${libs.versions.ktor.get()}")
     testImplementation("io.ktor:ktor-client-content-negotiation:${libs.versions.ktor.get()}")
+    testImplementation("io.ktor:ktor-client-cio:${libs.versions.ktor.get()}")
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.h2.database)  // H2 for integration testing
+    testImplementation("org.jetbrains.kotlin:kotlin-reflect:${libs.versions.kotlin.get()}")  // Reflection for MockSDKToolExecutor
 
     // TODO: TestContainers for SPI-439 Integration Testing (when H2 repositories are implemented)
     // testImplementation("org.testcontainers:testcontainers:1.19.3")
@@ -211,7 +216,7 @@ tasks.withType<Test> {
     testLogging {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-        showStandardStreams = false
+        showStandardStreams = true  // Enable to see SDK routing logs during tests
         showCauses = true
         showExceptions = true
         showStackTraces = true
@@ -249,6 +254,10 @@ val unitTest by tasks.registering(Test::class) {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
         includeTestsMatching("io.spiralhouse.cycletime.unit.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*.*.*.*")
         // Include pure MCP logic tests (protocol handlers, tool handlers)
         includeTestsMatching("io.spiralhouse.cycletime.mcp.protocol.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.tools.*")
@@ -365,7 +374,7 @@ val unitTest by tasks.registering(Test::class) {
     testLogging {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
-        showStandardStreams = false
+        showStandardStreams = true  // Enable to see SDK routing logs during tests
         showCauses = true
         showExceptions = true
     }
@@ -468,7 +477,7 @@ val integrationTest by tasks.registering(Test::class) {
     testLogging {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-        showStandardStreams = false
+        showStandardStreams = true  // Enable to see SDK routing logs during tests
         showCauses = true
         showExceptions = true
         showStackTraces = true
@@ -576,6 +585,10 @@ tasks.test {
         includeTestsMatching("io.spiralhouse.cycletime.domain.*.*.*")
         includeTestsMatching("io.spiralhouse.cycletime.verification.*")
         includeTestsMatching("io.spiralhouse.cycletime.unit.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*.*.*")
+        includeTestsMatching("io.spiralhouse.cycletime.unit.*.*.*.*.*")
         // Include pure MCP logic tests (protocol handlers, tool handlers)
         includeTestsMatching("io.spiralhouse.cycletime.mcp.protocol.*")
         includeTestsMatching("io.spiralhouse.cycletime.mcp.tools.*")

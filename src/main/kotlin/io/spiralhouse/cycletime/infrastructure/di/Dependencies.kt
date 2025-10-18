@@ -18,19 +18,10 @@ import org.slf4j.LoggerFactory
 import io.spiralhouse.cycletime.infrastructure.database.DatabaseProvider
 import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
 import io.spiralhouse.cycletime.mcp.integration.MCPServerConfig
-import io.spiralhouse.cycletime.mcp.integration.MCPProviderRegistry
-import io.spiralhouse.cycletime.mcp.protocol.JsonRpcProtocolHandler
-import io.spiralhouse.cycletime.mcp.protocol.ProtocolHandler
 import io.spiralhouse.cycletime.mcp.providers.*
-import io.spiralhouse.cycletime.mcp.server.DefaultMCPServerEngine
-import io.spiralhouse.cycletime.mcp.server.MCPServerEngine
-import io.spiralhouse.cycletime.mcp.server.handlers.McpMethodHandler
 import io.spiralhouse.cycletime.mcp.tools.*
-import io.spiralhouse.cycletime.mcp.resources.ResourceRegistry
-import io.spiralhouse.cycletime.mcp.tools.ToolRegistry
-import io.spiralhouse.cycletime.mcp.session.MCPSessionManager
-import io.spiralhouse.cycletime.mcp.correlation.EventBus
-import io.spiralhouse.cycletime.mcp.correlation.MessageCorrelator
+import io.spiralhouse.cycletime.mcp.sdk.MCPSdkServer
+import io.spiralhouse.cycletime.mcp.sdk.SDKSessionManager
 
 /**
  * Dependency injection configuration using Ktor's native DI.
@@ -170,83 +161,55 @@ fun Application.configureDependencies(
     val configEndTime = System.currentTimeMillis()
     val totalConfigTime = configEndTime - configStartTime
     logger.debug("Total dependency configuration completed in ${totalConfigTime}ms")
-    
+
     // Log dependency resolution count (approximation based on configured services)
-    val serviceCount = 11 + if (includeMCP) 8 else 0  // Core services + MCP services (added Workflow repo & service)
+    val serviceCount = 11 + if (includeMCP) 8 else 0  // Core services + MCP SDK services (SPI-707)
     logger.info("Configured $serviceCount dependency bindings in ${totalConfigTime}ms")
 }
 
 private fun DependencyRegistry.configureMCPDependencies() {
+    // SDK v0.7.2 Components (SPI-700, SPI-707)
+    // Legacy EventBus transport removed - SDK now provides all transport functionality
     provide<MCPServerConfig> { MCPServerConfig() }
-    provide<ProtocolHandler> { JsonRpcProtocolHandler() }
-    provide<ResourceRegistry> { ResourceRegistry() }
-    provide<ToolRegistry> { ToolRegistry() }
 
-    // SSE Transport Components (SPI-665)
-    provide<MCPSessionManager> {
-        MCPSessionManager(
-            timeProvider = resolve()
+    provide<SDKSessionManager> {
+        SDKSessionManager(
+            sessionService = resolve<SessionApplicationService>()
         )
     }
-    provide<EventBus> { EventBus() }
-    provide<MessageCorrelator> {
-        MessageCorrelator(
-            timeProvider = resolve()
+    provide<MCPSdkServer> {
+        val version = System.getProperty("cycletime.version") ?: "unknown"
+
+        // Tool providers (business logic unchanged)
+        val toolProviders = listOf(
+            resolve<DefaultProjectToolProvider>(),
+            resolve<DefaultIssueToolProvider>(),
+            resolve<DefaultSessionToolProvider>(),
+            resolve<DefaultWorkflowToolProvider>()
+        )
+
+        // Resource providers (business logic unchanged)
+        // Cast to full ResourceProvider interface (from mcp.resources package)
+        val resourceProviders = listOf(
+            resolve<ProjectResourceProvider>() as io.spiralhouse.cycletime.mcp.resources.ResourceProvider,
+            resolve<IssueResourceProvider>() as io.spiralhouse.cycletime.mcp.resources.ResourceProvider,
+            resolve<SessionResourceProvider>() as io.spiralhouse.cycletime.mcp.resources.ResourceProvider,
+            resolve<WorkflowResourceProvider>() as io.spiralhouse.cycletime.mcp.resources.ResourceProvider
+        )
+
+        MCPSdkServer(
+            version = version,
+            sessionManager = resolve<SDKSessionManager>(),
+            toolProviders = toolProviders,
+            resourceProviders = resourceProviders
         )
     }
-    provide<McpToolHandler> {
-        DefaultMcpToolHandler(
-            toolRegistry = resolve<ToolRegistry>()
-        )
-    }
-    provide<MCPProviderRegistry> {
-        MCPProviderRegistry(
-            resourceRegistry = resolve<ResourceRegistry>(),
-            toolRegistry = resolve<ToolRegistry>()
-        )
-    }
-    
-    provide<McpMethodHandler> {
-        McpMethodHandler(
-            protocolHandler = resolve<ProtocolHandler>() as JsonRpcProtocolHandler,
-            toolHandler = resolve<McpToolHandler>(),
-            resourceRegistry = resolve<ResourceRegistry>()
-        )
-    }
+
+    // Integration service (simplified facade for SDK server) (SPI-707)
     provide<MCPIntegrationService> {
         MCPIntegrationService(
-            methodHandler = resolve<McpMethodHandler>(),
-            protocolHandler = resolve<ProtocolHandler>(),
-            config = resolve<MCPServerConfig>(),
-            resourceRegistry = resolve<ResourceRegistry>(),
-            toolRegistry = resolve<ToolRegistry>(),
-            projectResourceProvider = resolve<ProjectResourceProvider>(),
-            issueResourceProvider = resolve<IssueResourceProvider>(),
-            sessionResourceProvider = resolve<SessionResourceProvider>(),
-            workflowResourceProvider = resolve<WorkflowResourceProvider>(),
-            toolProviders = listOf(
-                resolve<DefaultProjectToolProvider>(),
-                resolve<DefaultIssueToolProvider>(),
-                resolve<DefaultSessionToolProvider>(),
-                resolve<DefaultWorkflowToolProvider>()
-            )
-        )
-    }
-    
-    provide<MCPServerEngine> { 
-        DefaultMCPServerEngine(
-            resourceProviders = listOf(
-                resolve<ProjectResourceProvider>(),
-                resolve<IssueResourceProvider>(),
-                resolve<SessionResourceProvider>(),
-                resolve<WorkflowResourceProvider>()
-            ),
-            toolProviders = listOf(
-                resolve<DefaultProjectToolProvider>(),
-                resolve<DefaultIssueToolProvider>(),
-                resolve<DefaultSessionToolProvider>(),
-                resolve<DefaultWorkflowToolProvider>()
-            )
+            sdkServer = resolve<MCPSdkServer>(),
+            config = resolve<MCPServerConfig>()
         )
     }
 

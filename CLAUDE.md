@@ -25,6 +25,13 @@ Currently using H2 with Exposed ORM, migrating to H2 database in SPI-439.
 - **Ktor Native DI**: Dependency injection using `ktor-server-di` plugin (completed in SPI-458)
 - **GraalVM**: Native image compilation support
 
+### MCP Integration
+- **MCP Kotlin SDK v0.7.2**: Official SDK for Model Context Protocol
+- **Maintainers**: Anthropic and JetBrains
+- **Transport**: Ktor integration with SSE + JSON-RPC
+- **Session Management**: Stateless per-request with database persistence
+- **Migration**: Replaced custom EventBus transport (SPI-700/SPI-707)
+
 ### Architecture
 - **Domain-Driven Design**: Rich domain models with business logic encapsulation
 - **Layered Architecture**: Clean separation between domain, application, infrastructure, and MCP layers
