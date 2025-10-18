@@ -84,7 +84,9 @@ dependencies {
 
     // Dependency Injection - Using Ktor native DI (requires Ktor 3.2.3+)
 
-    // MCP SDK - Official Kotlin SDK for MCP protocol (SPI-700)
+    // MCP SDK v0.7.2 - Official Kotlin SDK for MCP protocol
+    // Provides transport, protocol handling, and session management
+    // Replaced custom EventBus architecture in SPI-700/SPI-707
     implementation(libs.mcp.kotlin.sdk)
 
     // Logging

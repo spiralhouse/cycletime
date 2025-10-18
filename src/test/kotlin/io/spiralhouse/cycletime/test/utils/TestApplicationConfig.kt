@@ -360,12 +360,11 @@ private fun Routing.configureHealthEndpoint() {
                 version = BuildInfo.version,
                 dependencies = mapOf(
                     "database" to "connected",
-                    "mcp" to if (mcpService?.isRunning() == true) "running" else "stopped"
+                    "mcp" to if (mcpService?.getStatus()?.isRunning == true) "running" else "stopped"
                 ),
                 metrics = mapOf(
-                    "mcpPort" to (mcpService?.getStatus()?.port?.toString() ?: "3006"),
                     "mcpUptime" to (mcpService?.getStatus()?.uptimeMs?.toString() ?: "0"),
-                    "mcpStatus" to if (mcpService?.isRunning() == true) "running" else "stopped"
+                    "mcpStatus" to if (mcpService?.getStatus()?.isRunning == true) "running" else "stopped"
                 ),
                 timestamp = System.currentTimeMillis().toString()
             )

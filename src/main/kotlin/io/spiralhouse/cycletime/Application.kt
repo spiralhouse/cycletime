@@ -558,9 +558,8 @@ private fun buildMcpHealthStatus(
             val dependencies = mapOf(
                 "mcp" to if (mcpStatus.isRunning) "running" else "stopped"
             )
-            
+
             val metrics = buildMap {
-                put("mcpPort", mcpStatus.port.toString())
                 put("mcpUptime", mcpStatus.uptimeMs.toString())
                 put("mcpStatus", if (mcpStatus.isRunning) "running" else "stopped")
             }
