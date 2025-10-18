@@ -19,7 +19,7 @@ Currently using H2 with Exposed ORM, migrating to H2 database in SPI-439.
 
 ### Core Technologies
 - **Kotlin/JVM 21**: Primary implementation language
-- **Ktor 3.2.3**: Asynchronous web framework for MCP server with native DI
+- **Ktor 3.3.0**: Asynchronous web framework for MCP server with native DI
 - **Exposed ORM 0.58.0**: Type-safe SQL DSL for database operations
 - **H2**: Current embedded database (H2 migration planned in SPI-439)
 - **Ktor Native DI**: Dependency injection using `ktor-server-di` plugin (completed in SPI-458)
