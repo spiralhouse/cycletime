@@ -2,6 +2,8 @@
 
 This guide provides practical workflows for developing and testing Model Context Protocol (MCP) changes in CycleTime. The MCP server enables Claude Code and other AI tools to interact with your project data through a standardized protocol.
 
+CycleTime uses the official MCP Kotlin SDK v0.7.2 for all protocol handling.
+
 ## Development Workflow Overview
 
 ```mermaid
@@ -37,6 +39,18 @@ flowchart TB
 
 ## Local Development Setup
 
+## MCP Server Development
+
+CycleTime uses the official MCP Kotlin SDK v0.7.2 for all protocol handling.
+
+### Architecture Overview
+
+**Key Components:**
+- `MCPSdkServer.kt` - Server initialization, capability configuration
+- `MCPSdkRouting.kt` - Ktor routing integration via `mcp { }` DSL
+- `sdk/adapters/` - Adapters bridging business logic to SDK APIs
+- `SDKSessionManager.kt` - Session handling via request metadata
+
 ### Starting the MCP Server
 
 The MCP server starts automatically when you run the CycleTime application:
@@ -52,34 +66,25 @@ The MCP server starts automatically when you run the CycleTime application:
 MCP_DETAILED_LOGGING=true ./gradlew run
 ```
 
-The server will be available at:
-- **SSE Events**: `http://localhost:8080/mcp/events`
-- **POST Requests**: `http://localhost:8080/mcp`
-- **Server Info**: `http://localhost:8080/mcp`
-- **Statistics**: `http://localhost:8080/mcp/stats`
+**SDK endpoint available** at root path:
+- SSE connection: `GET /`
+- Tool calls handled automatically by SDK
 
-### Verifying Server Status
+### Development Workflow
 
-Check that the MCP server started correctly:
-
+**1. Server starts automatically** when running the application:
 ```bash
-# Using curl
-curl http://localhost:8080/mcp
-
-# Expected response:
-{
-  "name": "cycletime",
-  "version": "0.6.0-SNAPSHOT",
-  "description": "CycleTime Project Orchestration MCP Server (Kotlin)",
-  "capabilities": {
-    "resources": true,
-    "tools": true,
-    "prompts": false
-  },
-  "activeConnections": 0,
-  "totalRequests": 0
-}
+./gradlew run
 ```
+
+**2. SDK endpoint available** at root path:
+- SSE connection: `GET /`
+- Tool calls handled automatically by SDK
+
+**3. Making changes:**
+- Modify tool/resource providers in `mcp/tools/` or `mcp/resources/`
+- Adapters automatically bridge changes to SDK
+- Restart server to apply changes
 
 ### Development Configuration
 
@@ -120,48 +125,30 @@ database {
 
 **Environment Variable Pattern**: Configuration uses HOCON's `${?VAR}` syntax for optional environment variable substitution. The pattern `value = default` followed by `value = ${?ENV_VAR}` means "use default unless ENV_VAR is set".
 
-## Connecting Test Clients
+### Testing with MCP Inspector
 
-### Claude Code
-
-Connect Claude Code to your local MCP server:
-
-1. **Configure MCP Settings** in Claude Code
-2. **Add Server Configuration**:
-   ```json
-   {
-     "mcpServers": {
-       "cycletime-local": {
-         "transport": "sse",
-         "url": "http://localhost:8080/mcp/events"
-       }
-     }
-   }
-   ```
-3. **Restart Claude Code** to load the configuration
-4. **Verify Connection** by checking available tools
-
-### SSE Test Client (curl)
-
-For protocol-level testing:
+Per SPI-716 documentation, use MCP Inspector for validation:
 
 ```bash
-# Connect to SSE endpoint (receive events)
-curl -N -H "Accept: text/event-stream" http://localhost:8080/mcp/events
+# Install MCP Inspector (if not installed)
+npm install -g @modelcontextprotocol/inspector
 
-# Send JSON-RPC requests via POST
-curl -X POST http://localhost:8080/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{}}}'
+# Start server
+./gradlew run
 
-curl -X POST http://localhost:8080/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+# In another terminal, run Inspector
+mcp-inspector
 
-curl -X POST http://localhost:8080/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":3,"method":"resources/list"}'
+# Connect to: http://localhost:8080/
 ```
+
+### SDK Migration Notes (SPI-700/SPI-707)
+
+The SDK replaced custom EventBus transport:
+- **No more** `/mcp-old` endpoints
+- **No more** EventBus correlation
+- **SDK handles** all transport, protocol, and session management
+- **We focus on** business logic in tool/resource providers
 
 ### HTTP Test Requests
 

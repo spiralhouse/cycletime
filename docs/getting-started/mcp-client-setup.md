@@ -12,33 +12,33 @@ Before configuring the MCP client connection, ensure you have:
 
 ## Connection Overview
 
-CycleTime exposes an MCP server using SSE (Server-Sent Events) transport that Claude Code connects to for real-time project data access and tool execution, following the MCP specification v2024-11-05.
+CycleTime uses the official MCP Kotlin SDK v0.7.2 maintained by Anthropic and JetBrains. Claude Code connects to the SDK-managed root endpoint for real-time project data access and tool execution.
 
 ```mermaid
 sequenceDiagram
     participant CC as Claude Code
-    participant SSE as SSE Endpoint
-    participant POST as POST Endpoint
-    participant MCP as MCP Server
+    participant SDK as MCP SDK (v0.7.2)
+    participant Server as CycleTime Server
     participant DB as Project Database
 
-    CC->>SSE: Connect http://localhost:8080/mcp/events (SSE)
-    SSE->>MCP: Initialize Session
-    MCP->>DB: Load Project Context
-    DB-->>MCP: Project Data
-    MCP-->>SSE: Connection Ready
+    CC->>SDK: Connect http://localhost:8080/ (SSE)
+    SDK->>Server: Initialize Session
+    Server->>DB: Load Project Context
+    DB-->>Server: Project Data
+    Server-->>SDK: Connection Ready
+    SDK-->>CC: SSE Stream Active
 
-    CC->>POST: POST /mcp (JSON-RPC Request)
-    POST->>MCP: Process Request
-    MCP->>DB: Query Data
-    DB-->>MCP: Results
-    MCP-->>SSE: Response via EventBus
-    SSE-->>CC: Server-Sent Event
+    CC->>SDK: JSON-RPC Request
+    SDK->>Server: Process Tool/Resource Request
+    Server->>DB: Query Data
+    DB-->>Server: Results
+    Server-->>SDK: Response
+    SDK-->>CC: JSON-RPC Response
 ```
 
 ## MCP Server Configuration
 
-CycleTime's MCP server uses SSE (Server-Sent Events) transport with JSON-RPC 2.0 protocol, following MCP specification v2024-11-05.
+CycleTime's MCP server uses the official SDK with SSE transport and JSON-RPC 2.0 protocol.
 
 ### Default Configuration
 
@@ -48,9 +48,8 @@ CycleTime's MCP server uses SSE (Server-Sent Events) transport with JSON-RPC 2.0
 | **Transport** | SSE | Communication protocol (Server-Sent Events) |
 | **Host** | `0.0.0.0` | Server bind address |
 | **Port** | `8080` | Server port |
-| **SSE Endpoint** | `/mcp/events` | Server-to-client event stream path |
-| **POST Endpoint** | `/mcp` | Client-to-server JSON-RPC request path |
-| **SSE URL** | `http://localhost:8080/mcp/events` | Full SSE connection URL |
+| **Endpoint** | `/` | SDK-managed root endpoint |
+| **Connection URL** | `http://localhost:8080/` | Full connection URL |
 
 ### Server Capabilities
 
@@ -84,13 +83,13 @@ MCP_PORT=3006 MCP_HOST=127.0.0.1 MCP_DETAILED_LOGGING=true ./gradlew run
 |----------|---------|-------------|
 | `MCP_HOST` | `0.0.0.0` | Server bind address |
 | `MCP_PORT` | `8080` | Server port |
-| `MCP_SSE_PATH` | `/mcp/events` | SSE endpoint path (server-to-client) |
-| `MCP_POST_PATH` | `/mcp` | POST endpoint path (client-to-server) |
 | `MCP_ENABLED` | `true` | Enable/disable MCP server |
 | `MCP_TIMEOUT` | `15000` | Connection timeout (ms) |
 | `MCP_MAX_CONNECTIONS` | `100` | Maximum concurrent connections |
 | `MCP_DETAILED_LOGGING` | `false` | Enable debug-level logging |
 | `MCP_METRICS_ENABLED` | `true` | Enable metrics collection |
+
+**Note**: SDK v0.7.2 manages the root endpoint (`/`) automatically. Legacy `/mcp/events` and `/mcp` endpoints have been removed (SPI-707).
 
 ## Claude Code Configuration
 
@@ -117,11 +116,13 @@ Add the following configuration to connect to CycleTime:
   "mcpServers": {
     "cycletime": {
       "type": "sse",
-      "url": "http://localhost:8080/mcp/events"
+      "url": "http://localhost:8080/"
     }
   }
 }
 ```
+
+**Note**: The SDK manages the root endpoint (`/`). This differs from legacy configurations that used `/mcp/events`.
 
 ### Multiple Server Configuration
 
@@ -132,7 +133,7 @@ If you have other MCP servers configured:
   "mcpServers": {
     "cycletime": {
       "type": "sse",
-      "url": "http://localhost:8080/mcp/events"
+      "url": "http://localhost:8080/"
     },
     "other-server": {
       "command": "node",
@@ -151,7 +152,7 @@ If you changed the MCP server port, update the URL accordingly:
   "mcpServers": {
     "cycletime": {
       "type": "sse",
-      "url": "http://localhost:3006/mcp/events"
+      "url": "http://localhost:3006/"
     }
   }
 }

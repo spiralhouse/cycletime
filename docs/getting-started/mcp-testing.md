@@ -4,13 +4,13 @@ Comprehensive testing and verification procedures for CycleTime's Model Context 
 
 ## Overview
 
-This guide provides step-by-step procedures to verify MCP functionality, test protocol compliance, and troubleshoot connection issues. The CycleTime MCP server provides SSE (Server-Sent Events) transport following the MCP specification version 2024-11-05.
+This guide provides step-by-step procedures to verify MCP functionality, test protocol compliance, and troubleshoot connection issues. CycleTime uses the official MCP Kotlin SDK v0.7.2 for all protocol handling.
 
-**MCP Endpoints**:
-- **SSE Stream**: `GET http://localhost:8080/mcp/events` - Server-to-client event stream (MCP v2024-11-05)
-- **POST Endpoint**: `POST http://localhost:8080/mcp` - Client-to-server JSON-RPC requests
-- **Server Info**: `GET http://localhost:8080/mcp` - Server metadata and capabilities
-- **Statistics**: `GET http://localhost:8080/mcp/stats` - Connection metrics and monitoring
+**MCP SDK Implementation**:
+- **Endpoint**: `http://localhost:8080/` (root path)
+- **Transport**: SSE (Server-Sent Events) + JSON-RPC 2.0
+- **Session**: Stateless per-request with database persistence
+- **SDK**: Official Anthropic/JetBrains maintained implementation
 
 ## Prerequisites
 
@@ -53,8 +53,7 @@ brew install httpie  # macOS
 ./gradlew run
 
 # Server starts at http://localhost:8080
-# SSE endpoint: http://localhost:8080/mcp/events
-# POST endpoint: http://localhost:8080/mcp
+# SDK endpoint: http://localhost:8080/ (root path)
 ```
 
 **Development Mode with Hot Reload**:
@@ -62,51 +61,63 @@ brew install httpie  # macOS
 ./gradlew devRun --continuous
 ```
 
-## Basic Health Checks
+## Testing the MCP Server
 
-### 1. Server Information Endpoint
+### Quick Validation
 
-**Test Command**:
+**1. Server Info (via curl):**
 ```bash
-curl http://localhost:8080/mcp
+curl -v http://localhost:8080/
 ```
 
-**Expected Response**:
+**Expected Response:**
+- HTTP 200 OK
+- Content-Type: `text/event-stream`
+- SSE connection established
+
+**2. MCP Inspector Validation:**
+
+The recommended testing approach is using MCP Inspector (documented in detail in this file per SPI-716):
+
+```bash
+# Start server
+./gradlew run
+
+# Connect MCP Inspector to http://localhost:8080/
+```
+
+**Expected in Inspector:**
+- Server capabilities listed
+- 17 tools registered
+- 11 resources registered
+- Protocol version: 2024-11-05
+
+**3. Claude Code Integration:**
+
+Configure in Claude Code MCP settings:
 ```json
 {
-  "name": "cycletime",
-  "version": "0.1.0",
-  "description": "CycleTime Project Orchestration MCP Server (Kotlin)",
-  "capabilities": {
-    "resources": true,
-    "tools": true,
-    "prompts": false
-  },
-  "activeConnections": 0,
-  "totalRequests": 0,
-  "averageLatency": "0ms",
-  "errorRate": "0%"
+  "servers": {
+    "cycletime": {
+      "url": "http://localhost:8080/",
+      "transport": "sse"
+    }
+  }
 }
 ```
 
-**Verification Checklist**:
-- [ ] HTTP 200 OK status
-- [ ] Server name matches "cycletime"
-- [ ] Version string present
-- [ ] Capabilities show resources and tools enabled
-- [ ] Metrics fields present (if `MCP_METRICS_ENABLED=true`)
+### SDK Implementation Details
 
-**Common Issues**:
-```bash
-# Connection refused - server not running
-curl: (7) Failed to connect to localhost port 8080
+CycleTime uses the official MCP Kotlin SDK v0.7.2:
+- Root endpoint: `/` (not `/mcp`)
+- SSE transport handled by SDK
+- JSON-RPC protocol handled by SDK
+- Session management via request metadata
 
-# Fix: Start the server
-./gradlew run
-
-# Invalid JSON response - server starting up
-# Fix: Wait a few seconds for full initialization
-```
+**Legacy Endpoints Removed (SPI-707):**
+- ~~`/mcp-old/events` (SSE)~~
+- ~~`/mcp-old` (POST)~~
+- Replaced by SDK-managed root endpoint
 
 ## Protocol Validation with MCP Inspector
 

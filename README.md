@@ -79,6 +79,35 @@ Example interactions:
 
 See [Quick Start Guide](docs/getting-started/quick-start.md) for detailed MCP configuration steps.
 
+### MCP Server Architecture
+
+CycleTime implements the Model Context Protocol using the official Kotlin SDK v0.7.2:
+
+**Server Configuration:**
+- **Endpoint**: `http://localhost:8080/` (root path)
+- **Transport**: SSE (Server-Sent Events) + JSON-RPC 2.0
+- **Session**: Stateless per-request with database persistence
+- **SDK**: Official Anthropic/JetBrains maintained implementation
+
+**Configure in Claude Code MCP Settings:**
+
+```json
+{
+  "servers": {
+    "cycletime": {
+      "url": "http://localhost:8080/",
+      "transport": "sse"
+    }
+  }
+}
+```
+
+**Benefits of Official SDK:**
+- Automatic protocol updates (MCP spec evolution)
+- First-class client compatibility
+- Reduced maintenance burden
+- Official support from Anthropic + JetBrains
+
 ## Documentation
 
 ### Getting Started
