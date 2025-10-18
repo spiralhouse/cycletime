@@ -54,14 +54,28 @@ The testing strategy uses a three-tier approach where each category serves a dis
 
 ## Test Organization
 
+Tests are organized using Gradle source sets for physical separation and independent execution:
+
 ```
-src/test/kotlin/io/spiralhouse/cycletime/
-├── unit/           # Fast, isolated tests
-├── integration/    # Component interaction tests
-├── system/         # End-to-end tests
-├── fixtures/       # Test data and utilities
-└── utils/          # Test helpers
+src/
+├── test/kotlin/                    # Unit tests only
+│   └── io/spiralhouse/cycletime/
+│       ├── domain/                 # Domain logic tests
+│       ├── mcp/protocol/           # MCP protocol tests
+│       ├── mcp/tools/              # MCP tool tests
+│       ├── fixtures/               # Test data
+│       └── utils/                  # Test helpers
+├── integrationTest/kotlin/         # Integration tests
+│   └── io/spiralhouse/cycletime/
+│       ├── integration/            # Component integration
+│       ├── mcp/integration/        # MCP integration
+│       └── mcp/server/             # MCP server tests
+└── systemTest/kotlin/              # System tests
+    └── io/spiralhouse/cycletime/
+        └── performance/            # Performance tests
 ```
+
+For detailed information about the source set migration, see [Test Source Set Guide](test-source-set-guide.md).
 
 ## TDD Workflow
 

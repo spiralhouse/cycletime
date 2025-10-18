@@ -45,11 +45,11 @@ src/
 
 ### Creating a Unit Test
 
-**Location**: `src/test/kotlin/io/spiralhouse/cycletime/unit/`
+**Location**: `src/test/kotlin/io/spiralhouse/cycletime/`
 
 **Example**:
 ```kotlin
-package io.spiralhouse.cycletime.unit.domain
+package io.spiralhouse.cycletime.domain
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -191,7 +191,7 @@ object TestData {
 }
 
 // Accessible from unit tests
-// src/test/kotlin/io/spiralhouse/cycletime/unit/SomeTest.kt
+// src/test/kotlin/io/spiralhouse/cycletime/domain/SomeTest.kt
 import io.spiralhouse.cycletime.test.utils.TestData
 
 // Accessible from integration tests
