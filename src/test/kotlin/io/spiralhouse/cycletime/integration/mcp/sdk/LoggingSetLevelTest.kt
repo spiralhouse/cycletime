@@ -2,14 +2,11 @@ package io.spiralhouse.cycletime.integration.mcp.sdk
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.sse.*
 import io.modelcontextprotocol.kotlin.sdk.Implementation
 import io.modelcontextprotocol.kotlin.sdk.LoggingLevel
-import io.modelcontextprotocol.kotlin.sdk.LoggingMessageNotification
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.SSEClientTransport
+import io.spiralhouse.cycletime.test.utils.testSDKApplication
 import kotlinx.coroutines.withTimeout
 import org.slf4j.LoggerFactory
 
@@ -22,20 +19,14 @@ import org.slf4j.LoggerFactory
  * 2. The handler accepts valid log levels (RFC 5424)
  * 3. The handler returns empty success response
  *
- * Prerequisites:
- * - Server must be running at http://localhost:8080
- * - Run with: ./gradlew integrationTest --tests "*LoggingSetLevelTest*"
+ * Uses testSDKApplication to start embedded HTTP server with dynamic port allocation.
+ * Run with: ./gradlew integrationTest --tests "*LoggingSetLevelTest*"
  */
 class LoggingSetLevelTest : StringSpec({
     val logger = LoggerFactory.getLogger("LoggingSetLevelTest")
-    val serverUrl = "http://localhost:8080"
 
     "should accept connection when logging/setLevel handler is registered" {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             val client = Client(
                 clientInfo = Implementation(
                     name = "logging-setlevel-test-client",
@@ -57,17 +48,11 @@ class LoggingSetLevelTest : StringSpec({
             logger.info("✅ Logging/setLevel handler successfully registered and accepting requests")
 
             client.close()
-        } finally {
-            httpClient.close()
         }
     }
 
     "should verify all RFC 5424 log levels are supported" {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             val client = Client(
                 clientInfo = Implementation(
                     name = "logging-level-test-client",
@@ -100,8 +85,6 @@ class LoggingSetLevelTest : StringSpec({
             logger.info("✅ All RFC 5424 log levels are supported")
 
             client.close()
-        } finally {
-            httpClient.close()
         }
     }
 })

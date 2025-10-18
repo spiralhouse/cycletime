@@ -6,13 +6,11 @@ import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.sse.*
 import io.modelcontextprotocol.kotlin.sdk.Implementation
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.SSEClientTransport
+import io.spiralhouse.cycletime.test.utils.testSDKApplication
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -27,13 +25,11 @@ import org.slf4j.LoggerFactory
  * 2. SDK automatically handles "endpoint" event and sessionId extraction
  * 3. High-level API abstracts all protocol details
  *
- * Prerequisites:
- * - Server must be running at http://localhost:8080
- * - Run with: ./gradlew integrationTest --tests "*MCPSdkClientIntegrationTest*"
+ * Uses testSDKApplication to start embedded HTTP server with dynamic port allocation.
+ * Run with: ./gradlew integrationTest --tests "*MCPSdkClientIntegrationTest*"
  */
 class MCPSdkClientIntegrationTest : StringSpec({
     val logger = LoggerFactory.getLogger("MCPSdkClientTest")
-    val serverUrl = "http://localhost:8080"
 
     /**
      * Helper function to create a test project and return its UUID.
@@ -81,11 +77,7 @@ class MCPSdkClientIntegrationTest : StringSpec({
      * 5. Server responds with capabilities
      */
     "should initialize connection using SDK Client".config(enabled = true) {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             logger.info("Creating MCP SDK Client")
             val client = Client(
                 clientInfo = Implementation(
@@ -121,9 +113,6 @@ class MCPSdkClientIntegrationTest : StringSpec({
             capabilities.resources?.listChanged shouldBe true
 
             logger.info("✅ SDK Client integration test PASSED")
-
-        } finally {
-            httpClient.close()
         }
     }
 
@@ -133,11 +122,7 @@ class MCPSdkClientIntegrationTest : StringSpec({
      * This validates that the full request/response cycle works through SSE.
      */
     "should list tools using SDK Client".config(enabled = true) {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             val client = Client(
                 clientInfo = Implementation(
                     name = "cycletime-test-client",
@@ -179,9 +164,6 @@ class MCPSdkClientIntegrationTest : StringSpec({
             toolNames shouldContain "issue_list_issues"
 
             logger.info("✅ Tool listing test PASSED")
-
-        } finally {
-            httpClient.close()
         }
     }
 
@@ -191,11 +173,7 @@ class MCPSdkClientIntegrationTest : StringSpec({
      * This validates that the SDK negotiates the correct MCP protocol version.
      */
     "should validate protocol version during initialize".config(enabled = true) {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             val client = Client(
                 clientInfo = Implementation(
                     name = "cycletime-test-client",
@@ -220,9 +198,6 @@ class MCPSdkClientIntegrationTest : StringSpec({
             // Protocol version should be negotiated
             logger.info("Server protocol version validated")
             logger.info("✅ Protocol version test PASSED")
-
-        } finally {
-            httpClient.close()
         }
     }
 
@@ -232,11 +207,7 @@ class MCPSdkClientIntegrationTest : StringSpec({
      * This validates that the SDK passes custom client information to the server.
      */
     "should handle client info in initialize request".config(enabled = true) {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             val client = Client(
                 clientInfo = Implementation(
                     name = "integration-test-client",
@@ -260,9 +231,6 @@ class MCPSdkClientIntegrationTest : StringSpec({
 
             logger.info("Client info handled successfully")
             logger.info("✅ Client info test PASSED")
-
-        } finally {
-            httpClient.close()
         }
     }
 
@@ -270,11 +238,7 @@ class MCPSdkClientIntegrationTest : StringSpec({
      * Test that SDK Client can list resources from the server.
      */
     "should list resources using SDK Client".config(enabled = true) {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             val client = Client(
                 clientInfo = Implementation(
                     name = "cycletime-test-client",
@@ -305,9 +269,6 @@ class MCPSdkClientIntegrationTest : StringSpec({
             }
 
             logger.info("✅ Resource listing test PASSED")
-
-        } finally {
-            httpClient.close()
         }
     }
 
@@ -317,11 +278,7 @@ class MCPSdkClientIntegrationTest : StringSpec({
      * This validates that the SDK properly propagates errors for non-existent tools.
      */
     "should reject tool call with invalid tool name".config(enabled = true) {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             val client = Client(
                 clientInfo = Implementation(
                     name = "cycletime-test-client",
@@ -349,9 +306,6 @@ class MCPSdkClientIntegrationTest : StringSpec({
             // Verify error message indicates tool not found
             exception.message shouldContain "not found"
             logger.info("✅ Invalid tool name test PASSED")
-
-        } finally {
-            httpClient.close()
         }
     }
 
@@ -361,11 +315,7 @@ class MCPSdkClientIntegrationTest : StringSpec({
      * This validates that the SDK properly validates tool arguments.
      */
     "should reject tool call with missing required arguments".config(enabled = true) {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             val client = Client(
                 clientInfo = Implementation(
                     name = "cycletime-test-client",
@@ -392,9 +342,6 @@ class MCPSdkClientIntegrationTest : StringSpec({
             result.shouldNotBeNull()
             result.isError shouldBe true
             logger.info("✅ Missing required arguments test PASSED")
-
-        } finally {
-            httpClient.close()
         }
     }
 
@@ -404,11 +351,7 @@ class MCPSdkClientIntegrationTest : StringSpec({
      * This validates that the SDK properly handles resource errors.
      */
     "should reject resource read with invalid URI".config(enabled = true) {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             val client = Client(
                 clientInfo = Implementation(
                     name = "cycletime-test-client",
@@ -437,9 +380,6 @@ class MCPSdkClientIntegrationTest : StringSpec({
             // Verify error message indicates resource not found
             exception.message shouldContain "not found"
             logger.info("✅ Invalid URI test PASSED")
-
-        } finally {
-            httpClient.close()
         }
     }
 
@@ -490,11 +430,7 @@ class MCPSdkClientIntegrationTest : StringSpec({
      * @see MCPSdkTransportTest Line 385 for original test implementation
      */
     "should handle malformed request parameters".config(enabled = true) {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             val client = Client(
                 clientInfo = Implementation(
                     name = "cycletime-test-client",
@@ -529,9 +465,6 @@ class MCPSdkClientIntegrationTest : StringSpec({
             result.isError shouldBe true
 
             logger.info("✅ Malformed parameters test PASSED")
-
-        } finally {
-            httpClient.close()
         }
     }
 
@@ -550,11 +483,7 @@ class MCPSdkClientIntegrationTest : StringSpec({
      * @see MCPSdkTransportTest Line 160 for original test implementation
      */
     "should call tool with valid arguments using SDK Client".config(enabled = true) {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             val client = Client(
                 clientInfo = Implementation(
                     name = "cycletime-test-client",
@@ -600,9 +529,6 @@ class MCPSdkClientIntegrationTest : StringSpec({
 
             logger.info("Session created successfully")
             logger.info("✅ Call tool with valid arguments test PASSED")
-
-        } finally {
-            httpClient.close()
         }
     }
 
@@ -622,11 +548,7 @@ class MCPSdkClientIntegrationTest : StringSpec({
      * @see MCPSdkTransportTest Line 270 for original test implementation
      */
     "should read resource with valid URI using SDK Client".config(enabled = true) {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             val client = Client(
                 clientInfo = Implementation(
                     name = "cycletime-test-client",
@@ -680,9 +602,6 @@ class MCPSdkClientIntegrationTest : StringSpec({
 
             logger.info("Resource read successfully")
             logger.info("✅ Read resource with valid URI test PASSED")
-
-        } finally {
-            httpClient.close()
         }
     }
 
@@ -705,11 +624,7 @@ class MCPSdkClientIntegrationTest : StringSpec({
      * @see MCPSdkTransportTest Line 411 for original test implementation
      */
     "should maintain session context across requests using SDK Client".config(enabled = true) {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             val client = Client(
                 clientInfo = Implementation(
                     name = "cycletime-test-client",
@@ -761,9 +676,6 @@ class MCPSdkClientIntegrationTest : StringSpec({
 
             logger.info("Session context maintained across requests")
             logger.info("✅ Session behavior test PASSED")
-
-        } finally {
-            httpClient.close()
         }
     }
 
@@ -795,11 +707,7 @@ class MCPSdkClientIntegrationTest : StringSpec({
      * @see MCPSdkTransportTest Line 328 for original test implementation
      */
     "should subscribe to resource updates using SDK Client".config(enabled = false) {
-        val httpClient = HttpClient(CIO) {
-            install(SSE)
-        }
-
-        try {
+        testSDKApplication { serverUrl, httpClient ->
             val client = Client(
                 clientInfo = Implementation(
                     name = "cycletime-test-client",
@@ -830,9 +738,6 @@ class MCPSdkClientIntegrationTest : StringSpec({
             result.shouldNotBeNull()
             logger.info("Subscription accepted")
             logger.info("✅ Resource subscription test PASSED")
-
-        } finally {
-            httpClient.close()
         }
     }
 })
