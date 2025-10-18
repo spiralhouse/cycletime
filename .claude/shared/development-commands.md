@@ -20,11 +20,16 @@
 ## Test Execution Commands
 
 ### Test Task Categories
-- `./gradlew test` - Run unit tests
-- `./gradlew unitTest` - Unit tests (domain, verification, MCP protocol/tools)
-- `./gradlew integrationTest` - Integration tests (infrastructure, database, MCP server)
-- `./gradlew systemTest` - System tests (performance, end-to-end)
-- `./gradlew testAll` - All test categories in sequence
+
+Tests are organized by Gradle source set for clear separation:
+
+- `./gradlew test` - Run unit tests (alias for `unitTest`)
+- `./gradlew unitTest` - Unit tests from `src/test/kotlin/` (domain, verification, MCP protocol/tools)
+- `./gradlew integrationTest` - Integration tests from `src/integrationTest/kotlin/` (infrastructure, database, MCP server)
+- `./gradlew systemTest` - System tests from `src/systemTest/kotlin/` (performance, end-to-end)
+- `./gradlew testAll` - All test categories in sequence (unit → integration → system)
+
+**Note**: Test categorization is enforced by source set location, not package names or filters. Place tests in the correct source set directory during creation.
 
 ### Development Testing
 - `./gradlew quickTest` - Unit tests only

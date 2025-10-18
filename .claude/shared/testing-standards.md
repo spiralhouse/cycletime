@@ -263,21 +263,93 @@ class SessionApplicationService(
 
 ### File Structure
 
+Tests are organized by Gradle source set for clear separation and simplified configuration:
+
 ```
-src/test/kotlin/io/spiralhouse/cycletime/
-├── unit/           # Fast, isolated, no external dependencies
-├── integration/    # Real components, controlled environment
-├── system/         # End-to-end, production-like scenarios
-├── fixtures/       # Test data and utilities
-└── utils/          # Test configuration and helpers
+src/
+├── test/kotlin/                      # Unit Tests (fast, isolated)
+│   ├── io/spiralhouse/cycletime/
+│   │   ├── unit/                    # General unit tests
+│   │   ├── verification/            # Verification tests
+│   │   ├── mcp/tools/               # MCP tool handler tests (unit)
+│   │   ├── mcp/integration/         # MCP protocol tests (shared fixtures)
+│   │   └── test/utils/              # Shared test utilities
+│
+├── integrationTest/kotlin/          # Integration Tests (real infrastructure)
+│   ├── io/spiralhouse/cycletime/
+│   │   ├── integration/             # Infrastructure integration tests
+│   │   │   ├── mcp/                # MCP integration tests
+│   │   │   ├── sse/                # SSE transport tests
+│   │   │   ├── edge/               # Edge case tests
+│   │   │   ├── concurrency/        # Concurrency tests
+│   │   │   └── api/v1/             # API endpoint tests
+│   │   ├── api/                    # API tests
+│   │   └── infrastructure/         # Infrastructure component tests
+│
+└── systemTest/kotlin/               # System Tests (end-to-end, performance)
+    ├── io/spiralhouse/cycletime/
+    │   ├── system/mcp/sdk/         # SDK system tests
+    │   └── performance/            # Performance baseline tests
 ```
+
+**Key Benefits:**
+- **Physical separation**: Test type immediately visible from file path
+- **No filter configuration**: Source set isolation eliminates complex Gradle filters (114 lines eliminated)
+- **IDE recognition**: IntelliJ automatically recognizes test source roots (green folders)
+- **Simplified maintenance**: No package pattern maintenance required
+- **Better caching**: Gradle's incremental compilation works more effectively
 
 ### Naming Conventions
 
-- Unit tests: `*Test.kt` in `unit` package
-- Integration tests: `*IntegrationTest.kt` in `integration` package
-- System tests: `*SystemTest.kt` in `system` package
-- Test utilities: `*TestUtils.kt` in `utils` package
+- **Unit tests**: `*Test.kt` in `src/test/kotlin/` (standard Gradle convention)
+- **Integration tests**: `*IntegrationTest.kt` in `src/integrationTest/kotlin/`
+- **System tests**: `*SystemTest.kt` or `*PerformanceTest.kt` in `src/systemTest/kotlin/`
+- **Test utilities**: `*TestUtils.kt` in `src/test/kotlin/io/spiralhouse/cycletime/test/utils/` (shared across all test types)
+
+### Test Categorization Rules
+
+**Unit Tests** (`src/test/kotlin/`):
+- No external dependencies (database, network, file system)
+- Fast execution (< 10ms per test)
+- Business logic, domain models, protocol handlers, tool handlers
+- Use mocks/fakes for external dependencies
+
+**Integration Tests** (`src/integrationTest/kotlin/`):
+- Real infrastructure components (database, HTTP clients)
+- Moderate execution time (< 100ms per test)
+- Repository patterns, API endpoints, infrastructure integration
+- Controlled test environment (test databases, embedded servers)
+
+**System Tests** (`src/systemTest/kotlin/`):
+- End-to-end workflows, performance testing
+- Longer execution time (< 1s per test)
+- Production-like scenarios, load testing, performance baselines
+- Full system integration
+
+### Migrating Tests to Correct Source Set
+
+If a test is in the wrong source set, migration is straightforward:
+
+**From unit to integration**:
+```bash
+# Move file preserving package structure
+git mv src/test/kotlin/io/spiralhouse/cycletime/unit/SomeTest.kt \
+       src/integrationTest/kotlin/io/spiralhouse/cycletime/integration/SomeTest.kt
+
+# Rename test class if needed (add "Integration" suffix for clarity)
+# Update test to remove mocks and use real infrastructure
+```
+
+**From integration to system**:
+```bash
+git mv src/integrationTest/kotlin/io/spiralhouse/cycletime/integration/PerfTest.kt \
+       src/systemTest/kotlin/io/spiralhouse/cycletime/system/PerfTest.kt
+```
+
+**Decision criteria**:
+- Uses mocks/fakes exclusively → Unit test (`src/test`)
+- Uses real database/HTTP → Integration test (`src/integrationTest`)
+- Tests performance/e2e workflows → System test (`src/systemTest`)
 
 ### MCP Test Categorization
 
