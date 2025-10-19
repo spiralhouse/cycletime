@@ -56,23 +56,42 @@ jobs:
 
       - name: Run Claude Code Review
         id: claude-review
+        timeout-minutes: 30  # Prevent runaway test execution
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Configure Linear MCP server for issue context
+          mcp_config: |
+            {
+              "mcpServers": {
+                "linear": {
+                  "command": "npx",
+                  "args": ["-y", "mcp-remote", "https://mcp.linear.app/sse"],
+                  "env": {
+                    "LINEAR_API_KEY": "${{ secrets.LINEAR_API_KEY }}"
+                  }
+                }
+              }
+            }
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
-            
+
             Please review this pull request with the following personality and approach:
-            
+
             ${{ env.REVIEWER_PERSONALITY }}
-            
+
             Note: The PR branch is already checked out in the current working directory.
-            
+
             Use `gh pr comment` for top-level feedback.
             Only post GitHub comments - don't submit review text as messages.
           use_sticky_comment: true
+          # Security-bounded tool access for comprehensive code review
+          # - Read/Grep/Glob: Read source files and search codebase
+          # - Bash(./gradlew:*): Execute Gradle tests (30min timeout enforced above)
+          # - Bash(gh pr:*): GitHub PR operations (preserved from original)
+          # - mcp__linear-server__*: Read-only Linear access (no create/update)
           claude_args: |
-            --allowedTools "Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+            --allowedTools "Read,Grep,Glob,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(./gradlew:*),mcp__linear-server__get_issue,mcp__linear-server__list_comments,mcp__linear-server__list_issue_statuses"
 
