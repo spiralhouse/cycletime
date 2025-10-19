@@ -21,6 +21,8 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation as ServerCon
 import io.spiralhouse.cycletime.infrastructure.database.SessionStatesTable
 import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
 import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
+import io.spiralhouse.cycletime.infrastructure.database.IssueDependenciesTable
+import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
 import io.spiralhouse.cycletime.infrastructure.database.WorkflowsTable
 import kotlinx.serialization.json.Json
 import kotlinx.coroutines.runBlocking
@@ -85,7 +87,7 @@ fun testSDKApplication(
 
     // Initialize database schema
     transaction(testDatabase) {
-        SchemaUtils.create(SessionStatesTable, ProjectsTable, IssuesTable, WorkflowsTable)
+        SchemaUtils.create(SessionStatesTable, ProjectsTable, IssuesTable, IssueDependenciesTable, IssueLabelsTable, WorkflowsTable)
     }
 
     // Configure application with production DI and routing
@@ -146,7 +148,7 @@ fun testSDKApplicationWithDatabase(
 
     // Initialize database schema
     transaction(testDatabase) {
-        SchemaUtils.create(SessionStatesTable, ProjectsTable, IssuesTable, WorkflowsTable)
+        SchemaUtils.create(SessionStatesTable, ProjectsTable, IssuesTable, IssueDependenciesTable, IssueLabelsTable, WorkflowsTable)
     }
 
     application {
@@ -279,7 +281,7 @@ fun testSDKApplication(
 
     // Initialize database schema
     transaction(testDatabase) {
-        SchemaUtils.create(SessionStatesTable, ProjectsTable, IssuesTable, WorkflowsTable)
+        SchemaUtils.create(SessionStatesTable, ProjectsTable, IssuesTable, IssueDependenciesTable, IssueLabelsTable, WorkflowsTable)
     }
 
     // Start embedded HTTP server with ephemeral port (OS-assigned to avoid conflicts)
