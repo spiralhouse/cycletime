@@ -2629,7 +2629,7 @@ class ProjectResourceProvider(
 ### Core Technologies
 - **Kotlin/JVM 21**: Primary implementation language
 - **Ktor 3.2.3**: Asynchronous web framework for MCP server with native DI
-- **Exposed ORM 0.58.0**: Type-safe SQL DSL for database operations
+- **Exposed ORM 0.61.0**: Type-safe SQL DSL for database operations
 - **H2**: Current embedded database (H2 migration planned in SPI-439)
 - **Ktor Native DI**: Dependency injection using `ktor-server-di` plugin (completed in SPI-458)
 - **GraalVM**: Native image compilation support
@@ -2641,7 +2641,7 @@ class ProjectResourceProvider(
 - **Kotlin/JVM 21**: Primary implementation language
 - **Ktor 3.3.0**: Asynchronous web framework for MCP server with native DI
 - **MCP Kotlin SDK 0.1.0**: Official Model Context Protocol implementation (adopted January 2025)
-- **Exposed ORM 0.58.0**: Type-safe SQL DSL for database operations
+- **Exposed ORM 0.61.0**: Type-safe SQL DSL for database operations
 - **H2**: Embedded database for local development
 - **Ktor Native DI**: Dependency injection using `ktor-server-di` plugin
 - **GraalVM**: Native image compilation support
