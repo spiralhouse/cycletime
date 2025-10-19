@@ -37,7 +37,15 @@ class DefaultProjectResourceProvider(
         filter: ResourceFilter?,
         pagination: ResourcePagination?
     ): List<Resource> {
-        // Return descriptor resources for projects
+        /**
+         * SPI-718: Resource discovery uses template-based URIs.
+         * Individual resource enumeration is not implemented in this version.
+         * Dynamic resource discovery will be implemented in follow-up issue.
+         *
+         * Template resources like "cycletime://projects/{id}" are registered at startup.
+         * Actual resources like "cycletime://projects/uuid-here" are accessible via
+         * readResource() but not enumerated in listResources().
+         */
         return listOf(
             Resource(
                 uri = "cycletime://projects",
@@ -141,6 +149,15 @@ class DefaultIssueResourceProvider(
         filter: ResourceFilter?,
         pagination: ResourcePagination?
     ): List<Resource> {
+        /**
+         * SPI-718: Resource discovery uses template-based URIs.
+         * Individual resource enumeration is not implemented in this version.
+         * Dynamic resource discovery will be implemented in follow-up issue.
+         *
+         * Template resources like "cycletime://issues/{id}" are registered at startup.
+         * Actual resources like "cycletime://issues/uuid-here" are accessible via
+         * readResource() but not enumerated in listResources().
+         */
         return listOf(
             Resource(
                 uri = "cycletime://issues",
