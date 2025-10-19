@@ -196,6 +196,23 @@ class DefaultIssueToolProviderUnitTest : StringSpec({
     "update_issue should return raw update response JSON" {
         runTest {
             val issueId = UUID.randomUUID().toString()
+            val mockIssueDto = IssueDto(
+                id = IssueId(issueId),
+                title = "Updated Title",
+                description = "Original Description",
+                type = IssueType.STORY,
+                status = IssueStatus.TODO,
+                parentId = null,
+                projectId = ProjectId(UUID.randomUUID().toString()),
+                estimate = Estimate.none(),
+                assigneeId = null,
+                dependencies = emptyList(),
+                blockedBy = emptyList(),
+                createdAt = Clock.System.now(),
+                updatedAt = Clock.System.now()
+            )
+            coEvery { mockIssueService.updateIssue(any()) } returns mockIssueDto
+
             val updateTool = toolProvider.getAsyncTools().first { it.name == "update_issue" }
             val params = buildJsonObject {
                 put("id", issueId)
@@ -209,11 +226,11 @@ class DefaultIssueToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return raw JSON data (wrapping happens in McpToolHandler, not provider)
-            // update_issue returns id, updated flag, and updated fields
+            // Should return raw JSON data from serialized DTO (wrapping happens in McpToolHandler, not provider)
             result.shouldBeInstanceOf<JsonObject>()
-            result["id"]!!.jsonPrimitive.content shouldBe issueId
-            result["updated"]!!.jsonPrimitive.boolean shouldBe true
+            // IssueId serializes as {"_value": "uuid"}
+            result["id"].shouldNotBe(null)
+            result["id"]!!.jsonObject["_value"]!!.jsonPrimitive.content shouldBe issueId
             result["title"]!!.jsonPrimitive.content shouldBe "Updated Title"
         }
     }

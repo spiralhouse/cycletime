@@ -19,11 +19,18 @@ Currently using H2 with Exposed ORM, migrating to H2 database in SPI-439.
 
 ### Core Technologies
 - **Kotlin/JVM 21**: Primary implementation language
-- **Ktor 3.2.3**: Asynchronous web framework for MCP server with native DI
+- **Ktor 3.3.0**: Asynchronous web framework for MCP server with native DI
 - **Exposed ORM 0.58.0**: Type-safe SQL DSL for database operations
 - **H2**: Current embedded database (H2 migration planned in SPI-439)
 - **Ktor Native DI**: Dependency injection using `ktor-server-di` plugin (completed in SPI-458)
 - **GraalVM**: Native image compilation support
+
+### MCP Integration
+- **MCP Kotlin SDK v0.7.2**: Official SDK for Model Context Protocol
+- **Maintainers**: Anthropic and JetBrains
+- **Transport**: Ktor integration with SSE + JSON-RPC
+- **Session Management**: Stateless per-request with database persistence
+- **Migration**: Replaced custom EventBus transport (SPI-700/SPI-707)
 
 ### Architecture
 - **Domain-Driven Design**: Rich domain models with business logic encapsulation

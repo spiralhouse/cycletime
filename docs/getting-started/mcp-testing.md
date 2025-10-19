@@ -4,13 +4,13 @@ Comprehensive testing and verification procedures for CycleTime's Model Context 
 
 ## Overview
 
-This guide provides step-by-step procedures to verify MCP functionality, test protocol compliance, and troubleshoot connection issues. The CycleTime MCP server provides WebSocket-based communication following the MCP specification version 2024-11-05.
+This guide provides step-by-step procedures to verify MCP functionality, test protocol compliance, and troubleshoot connection issues. CycleTime uses the official MCP Kotlin SDK v0.7.2 for all protocol handling.
 
-**MCP Endpoints**:
-- **WebSocket**: `ws://localhost:8080/mcp` - Primary MCP protocol communication
-- **Server Info**: `GET http://localhost:8080/mcp` - Server metadata and capabilities
-- **Statistics**: `GET http://localhost:8080/mcp/stats` - Connection metrics and monitoring
-- **SSE Events**: `GET http://localhost:8080/mcp/events` - Server-sent events (legacy support)
+**MCP SDK Implementation**:
+- **Endpoint**: `http://localhost:8080/` (root path)
+- **Transport**: SSE (Server-Sent Events) + JSON-RPC 2.0
+- **Session**: Stateless per-request with database persistence
+- **SDK**: Official Anthropic/JetBrains maintained implementation
 
 ## Prerequisites
 
@@ -27,11 +27,12 @@ java -version
 
 **Testing Tools**:
 ```bash
-# Install wscat for WebSocket testing
-npm install -g wscat
+# curl for HTTP/SSE testing (usually pre-installed)
+curl --version
 
-# Or use websocat (alternative)
-brew install websocat  # macOS
+# jq for JSON formatting (optional but recommended)
+brew install jq  # macOS
+sudo apt-get install jq  # Linux
 ```
 
 **HTTP Client**:
@@ -52,7 +53,7 @@ brew install httpie  # macOS
 ./gradlew run
 
 # Server starts at http://localhost:8080
-# WebSocket endpoint: ws://localhost:8080/mcp
+# SDK endpoint: http://localhost:8080/ (root path)
 ```
 
 **Development Mode with Hot Reload**:
@@ -60,51 +61,187 @@ brew install httpie  # macOS
 ./gradlew devRun --continuous
 ```
 
-## Basic Health Checks
+## Testing the MCP Server
 
-### 1. Server Information Endpoint
+### Quick Validation
 
-**Test Command**:
+**1. Server Info (via curl):**
 ```bash
-curl http://localhost:8080/mcp
+curl -v http://localhost:8080/
 ```
 
-**Expected Response**:
+**Expected Response:**
+- HTTP 200 OK
+- Content-Type: `text/event-stream`
+- SSE connection established
+
+**2. MCP Inspector Validation:**
+
+The recommended testing approach is using MCP Inspector (documented in detail in this file per SPI-716):
+
+```bash
+# Start server
+./gradlew run
+
+# Connect MCP Inspector to http://localhost:8080/
+```
+
+**Expected in Inspector:**
+- Server capabilities listed
+- 17 tools registered
+- 11 resources registered
+- Protocol version: 2024-11-05
+
+**3. Claude Code Integration:**
+
+Configure in Claude Code MCP settings:
 ```json
 {
-  "name": "cycletime",
-  "version": "0.1.0",
-  "description": "CycleTime Project Orchestration MCP Server (Kotlin)",
-  "capabilities": {
-    "resources": true,
-    "tools": true,
-    "prompts": false
-  },
-  "activeConnections": 0,
-  "totalRequests": 0,
-  "averageLatency": "0ms",
-  "errorRate": "0%"
+  "servers": {
+    "cycletime": {
+      "url": "http://localhost:8080/",
+      "transport": "sse"
+    }
+  }
 }
 ```
 
-**Verification Checklist**:
-- [ ] HTTP 200 OK status
-- [ ] Server name matches "cycletime"
-- [ ] Version string present
-- [ ] Capabilities show resources and tools enabled
-- [ ] Metrics fields present (if `MCP_METRICS_ENABLED=true`)
+### SDK Implementation Details
 
-**Common Issues**:
+CycleTime uses the official MCP Kotlin SDK v0.7.2:
+- Root endpoint: `/` (not `/mcp`)
+- SSE transport handled by SDK
+- JSON-RPC protocol handled by SDK
+- Session management via request metadata
+
+**Legacy Endpoints Removed (SPI-707):**
+- ~~`/mcp-old/events` (SSE)~~
+- ~~`/mcp-old` (POST)~~
+- Replaced by SDK-managed root endpoint
+
+## Protocol Validation with MCP Inspector
+
+### What is MCP Inspector?
+
+MCP Inspector is the official validation tool from Anthropic that validates protocol compliance at a level automated tests cannot. While curl tests verify HTTP connectivity and basic request/response handling, Inspector validates JSON-RPC 2.0 compliance, MCP protocol adherence, and simulates how Claude Code will interact with your server.
+
+**When to use MCP Inspector**:
+- ✅ **Before creating PRs** - Validate protocol changes
+- ✅ **After SDK updates** - Confirm compatibility
+- ✅ **Debugging client issues** - Simulate Claude Code connection
+- ✅ **Protocol compliance** - Verify MCP spec adherence
+
+**When to use curl**:
+- ✅ Quick smoke tests during development
+- ✅ CI/CD health checks
+- ✅ Debugging HTTP-level issues
+
+### Quick Start with Inspector
+
+**Installation**:
 ```bash
-# Connection refused - server not running
-curl: (7) Failed to connect to localhost port 8080
+npm install -g @modelcontextprotocol/inspector
+```
 
-# Fix: Start the server
+**Launch Inspector** (Two Methods):
+
+**Method 1: SSE Transport (Recommended)**:
+```bash
+# Terminal 1: Start CycleTime server
 ./gradlew run
 
-# Invalid JSON response - server starting up
-# Fix: Wait a few seconds for full initialization
+# Terminal 2: Launch Inspector with SSE transport
+npx @modelcontextprotocol/inspector sse http://localhost:8080
+
+# Access Inspector UI at http://localhost:6274
+# Connection established automatically via command line
 ```
+
+**Method 2: Browser Direct Connection**:
+```bash
+# Terminal 1: Start CycleTime server
+./gradlew run
+
+# Terminal 2: Launch Inspector without server URL
+npx @modelcontextprotocol/inspector
+
+# Access Inspector UI at http://localhost:6274
+# Click "Connect" → "Direct Connection" → Enter "http://localhost:8080"
+```
+
+**Which method to use**:
+- ✅ **Method 1 (SSE)**: Faster setup, connection pre-established
+- ✅ **Method 2 (Direct)**: Interactive, good for testing different servers
+
+### Validation Checklist (from SPI-706)
+
+Use Inspector to validate these critical aspects:
+
+**1. Protocol Initialization**:
+- [ ] Server responds to `initialize` request
+- [ ] Protocol version negotiation succeeds (2024-11-05)
+- [ ] Capability exchange completes
+- [ ] Server info correctly formatted
+
+**2. Tool Registry**:
+- [ ] All 17 tools registered and discoverable
+- [ ] Tool schemas validate (JSON Schema format)
+- [ ] Tool execution returns correct response structure
+- [ ] Error handling produces proper MCP error responses
+
+**3. Resource Registry**:
+- [ ] All 4 resource providers registered
+- [ ] Resource URIs follow `cycletime://` scheme
+- [ ] Resource content is valid JSON
+- [ ] MIME types correctly specified
+
+**4. Error Handling**:
+- [ ] Invalid tool names return `-32601` (Method not found)
+- [ ] Missing parameters return `-32602` (Invalid params)
+- [ ] Error responses include descriptive messages
+
+### Inspector vs curl Testing
+
+| Validation Type | curl | MCP Inspector | Automated Tests |
+|-----------------|------|---------------|-----------------|
+| HTTP connectivity | ✅ | ✅ | ✅ |
+| JSON-RPC format | ✅ | ✅ | ✅ |
+| **Protocol compliance** | ❌ | **✅** | ⚠️ |
+| **Client simulation** | ❌ | **✅** | ❌ |
+| Interactive testing | ❌ | ✅ | ❌ |
+| CI/CD automation | ✅ | ❌ | ✅ |
+
+**Best Practice**: Use all three validation layers:
+```
+Unit/Integration Tests → MCP Inspector → Claude Code Testing
+```
+
+### Three-Layer Validation Model
+
+```mermaid
+flowchart LR
+    A[Automated Tests] --> B[MCP Inspector]
+    B --> C[Claude Code]
+
+    A -->|Validates| A1[Implementation Logic]
+    B -->|Validates| B1[Protocol Compliance]
+    C -->|Validates| C1[Real-World Usage]
+
+    style B fill:#90EE90
+    style B1 fill:#90EE90
+```
+
+**Validation Flow**:
+1. **Automated Tests**: Run `./gradlew test` - validates implementation correctness
+2. **MCP Inspector**: Launch Inspector - validates protocol compliance
+3. **Claude Code**: Connect real client - validates production readiness
+
+Each layer catches different failure modes. All three must pass before deployment.
+
+### Related Documentation
+
+- [MCP Development Workflow](../development/mcp-development.md#validating-with-mcp-inspector) - Inspector in development workflow
+- [MCP Troubleshooting](../reference/mcp-troubleshooting.md#mcp-inspector-protocol-diagnostics) - Inspector as diagnostic tool
 
 ### 2. Statistics Endpoint
 
@@ -153,37 +290,37 @@ curl http://localhost:8080/mcp/stats
 # Response: {"error": "Metrics disabled"}
 ```
 
-## WebSocket Connectivity Tests
+## SSE Connectivity Tests
 
-### 3. Basic WebSocket Connection
+### 3. Basic SSE Connection
 
-**Using wscat**:
+**Using curl**:
 ```bash
-wscat -c ws://localhost:8080/mcp
+# Connect to SSE endpoint (server-to-client event stream)
+curl -N http://localhost:8080/mcp/events
 ```
 
 **Expected Output**:
 ```
-Connected (press CTRL+C to quit)
+# SSE connection established, waiting for server events
+# (Connection stays open, press CTRL+C to exit)
 ```
 
 **Verification**:
-- Connection establishes without errors
-- No immediate disconnection
-- Ready to send/receive messages
+- SSE connection establishes without errors
+- curl stays connected (doesn't immediately exit)
+- Server may send periodic keep-alive events
 
-**Connection Test**:
+**Alternative test with headers**:
 ```bash
-# Send ping frame
-> ping
+# Show HTTP headers during connection
+curl -N -v http://localhost:8080/mcp/events
 
-# Expected: pong response
-< pong
-```
-
-**Using websocat** (alternative):
-```bash
-websocat ws://localhost:8080/mcp
+# Expected headers:
+# < HTTP/1.1 200 OK
+# < Content-Type: text/event-stream
+# < Cache-Control: no-cache
+# < Connection: keep-alive
 ```
 
 ### 4. MCP Protocol Handshake
@@ -675,48 +812,46 @@ websocat ws://localhost:8080/mcp
 - [ ] MIME type is application/json
 - [ ] Text field contains valid JSON
 
-## Complete WebSocket Test Session
+## Complete SSE + POST Test Session
 
-**Full test sequence using wscat**:
+**Full test sequence using curl and POST**:
 
 ```bash
-# 1. Connect
-wscat -c ws://localhost:8080/mcp
+# Terminal 1: Establish SSE connection (server-to-client events)
+curl -N http://localhost:8080/mcp/events
 
-# 2. Initialize (paste and press Enter)
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test-client","version":"1.0.0"}}}
+# Terminal 2: Send JSON-RPC requests via POST (client-to-server)
 
-# Wait for init response, then:
+# 1. Initialize
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test-client","version":"1.0.0"}}}'
 
-# 3. List tools
-{"jsonrpc":"2.0","id":2,"method":"tools/list"}
+# 2. List tools
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type": "application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
 
-# 4. List resources
-{"jsonrpc":"2.0","id":3,"method":"resources/list"}
+# 3. List resources
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type": "application/json" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"resources/list"}'
 
-# 5. Execute tool
-{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"list_projects","arguments":{}}}
+# 4. Execute tool
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type": "application/json" \
+  -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"list_projects","arguments":{}}}'
 
-# 6. Read resource
-{"jsonrpc":"2.0","id":5,"method":"resources/read","params":{"uri":"cycletime://session/current"}}
-
-# 7. Close connection (Ctrl+C)
+# 5. Read resource
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type": "application/json" \
+  -d '{"jsonrpc":"2.0","id":5,"method":"resources/read","params":{"uri":"cycletime://session/current"}}'
 ```
 
 **Expected Flow**:
-```
-Connected (press CTRL+C to quit)
-> {"jsonrpc":"2.0","id":1,"method":"initialize",...}
-< {"jsonrpc":"2.0","id":1,"result":{...}}
-> {"jsonrpc":"2.0","id":2,"method":"tools/list"}
-< {"jsonrpc":"2.0","id":2,"result":{"tools":[...]}}
-> {"jsonrpc":"2.0","id":3,"method":"resources/list"}
-< {"jsonrpc":"2.0","id":3,"result":{"resources":[...]}}
-> {"jsonrpc":"2.0","id":4,"method":"tools/call",...}
-< {"jsonrpc":"2.0","id":4,"result":{"content":[...]}}
-> {"jsonrpc":"2.0","id":5,"method":"resources/read",...}
-< {"jsonrpc":"2.0","id":5,"result":{"contents":[...]}}
-```
+- **Terminal 1 (SSE)**: Receives server-sent events with JSON-RPC responses
+- **Terminal 2 (POST)**: Sends JSON-RPC requests, receives immediate HTTP responses
+- Responses correlate via EventBus + MessageCorrelator using request IDs
 
 ## Debugging and Troubleshooting
 
@@ -730,7 +865,7 @@ MCP_DETAILED_LOGGING=true ./gradlew run
 
 **Log Output** (example):
 ```
-[MCP] WebSocket connection established from /127.0.0.1:54321
+[MCP] SSE connection established from /127.0.0.1:54321
 [MCP] Received request: method=initialize, id=1
 [MCP] Processing initialize request...
 [MCP] Sending response: id=1, size=234 bytes
@@ -774,21 +909,26 @@ lsof -i :8080
 - Check port availability: `lsof -i :8080`
 - Verify no firewall blocking port 8080
 
-**Issue: WebSocket Upgrade Failed**
+**Issue: SSE Connection Failed**
 ```bash
-wscat -c ws://localhost:8080/mcp
-error: Unexpected server response: 404
+curl -N http://localhost:8080/mcp/events
+# No response or immediate disconnect
 ```
 
 **Diagnosis**:
 ```bash
-# Verify endpoint exists
+# Verify SSE endpoint exists
+curl -v http://localhost:8080/mcp/events
+# Should return HTTP 200 with Content-Type: text/event-stream
+
+# Verify POST endpoint exists
 curl http://localhost:8080/mcp
-# Should return server info, not 404
+# Should return server info JSON
 ```
 
 **Solution**:
-- Confirm correct path: `/mcp` (not `/mcp/ws` or other variations)
+- Confirm correct SSE path: `/mcp/events` for server-to-client stream
+- Confirm correct POST path: `/mcp` for client-to-server requests
 - Check server logs for routing errors
 - Verify MCP module loaded: look for "MCP routing configured" in logs
 
@@ -937,10 +1077,10 @@ Use this checklist to verify complete MCP functionality:
 - [ ] Capabilities show resources=true, tools=true
 - [ ] GET /mcp/stats returns connection metrics (if enabled)
 
-### WebSocket Connectivity
-- [ ] WebSocket connection to ws://localhost:8080/mcp succeeds
+### SSE Connectivity
+- [ ] SSE connection to http://localhost:8080/mcp/events succeeds
 - [ ] Connection remains open and stable
-- [ ] Ping/pong frames work correctly
+- [ ] Keep-alive events work correctly
 
 ### MCP Protocol
 - [ ] Initialize handshake completes successfully
@@ -985,13 +1125,13 @@ Use this checklist to verify complete MCP functionality:
 
 **Test multiple clients**:
 ```bash
-# Terminal 1
-wscat -c ws://localhost:8080/mcp
+# Terminal 1: First SSE connection
+curl -N http://localhost:8080/mcp/events
 
-# Terminal 2
-wscat -c ws://localhost:8080/mcp
+# Terminal 2: Second SSE connection
+curl -N http://localhost:8080/mcp/events
 
-# Terminal 3
+# Terminal 3: Check active connections
 curl http://localhost:8080/mcp | jq .activeConnections
 # Should show 2
 ```
@@ -1014,13 +1154,15 @@ curl http://localhost:8080/mcp/stats | jq '.connections.totalRequests'
 
 **Long-running connection test**:
 ```bash
-# Connect and leave idle
-wscat -c ws://localhost:8080/mcp
+# Terminal 1: Open SSE connection and leave idle
+curl -N http://localhost:8080/mcp/events
 
-# Wait 5 minutes, then send request
-{"jsonrpc":"2.0","id":1,"method":"tools/list"}
+# Terminal 2: Wait 5 minutes, then send request via POST
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 
-# Verify: Should still respond normally
+# Verify: Should still respond normally via SSE in Terminal 1
 # Connection should survive ping/timeout mechanisms
 ```
 
@@ -1046,7 +1188,8 @@ MCP_DETAILED_LOGGING=true MCP_CACHE_ENABLED=true ./gradlew run
 # Connection
 MCP_HOST=0.0.0.0              # Bind address
 MCP_PORT=8080                  # Server port
-MCP_PATH=/mcp                  # WebSocket path
+MCP_SSE_PATH=/mcp/events       # SSE endpoint (server-to-client)
+MCP_POST_PATH=/mcp             # POST endpoint (client-to-server)
 
 # Performance
 MCP_MAX_CONNECTIONS=100        # Max concurrent connections
@@ -1063,10 +1206,9 @@ MCP_METRICS_ENABLED=true       # Enable statistics
 MCP_SLOW_REQUEST_MS=100        # Slow request threshold
 MCP_DETAILED_LOGGING=false     # Verbose logging
 
-# WebSocket
-MCP_PING_PERIOD=30000          # Ping interval (ms)
+# Connection Settings
 MCP_TIMEOUT=15000              # Connection timeout (ms)
-MCP_MAX_FRAME_SIZE=10485760    # Max frame size (10MB)
+MCP_SESSION_TIMEOUT=3600000    # Session timeout (1 hour)
 ```
 
 ## Related Documentation

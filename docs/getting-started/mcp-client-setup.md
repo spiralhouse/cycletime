@@ -12,41 +12,44 @@ Before configuring the MCP client connection, ensure you have:
 
 ## Connection Overview
 
-CycleTime exposes an MCP server over WebSocket that Claude Code connects to for real-time project data access and tool execution.
+CycleTime uses the official MCP Kotlin SDK v0.7.2 maintained by Anthropic and JetBrains. Claude Code connects to the SDK-managed root endpoint for real-time project data access and tool execution.
 
 ```mermaid
 sequenceDiagram
     participant CC as Claude Code
-    participant WS as WebSocket Server
-    participant MCP as MCP Server
+    participant SDK as MCP SDK (v0.7.2)
+    participant Server as CycleTime Server
     participant DB as Project Database
 
-    CC->>WS: Connect ws://localhost:8080/mcp
-    WS->>MCP: Initialize Connection
-    MCP->>DB: Load Project Context
-    DB-->>MCP: Project Data
-    MCP-->>CC: Connection Ready
+    CC->>SDK: Connect http://localhost:8080/ (SSE)
+    SDK->>Server: Initialize Session
+    Server->>DB: Load Project Context
+    DB-->>Server: Project Data
+    Server-->>SDK: Connection Ready
+    SDK-->>CC: SSE Stream Active
 
-    CC->>MCP: Request Resources/Tools
-    MCP->>DB: Query Data
-    DB-->>MCP: Results
-    MCP-->>CC: Response
+    CC->>SDK: JSON-RPC Request
+    SDK->>Server: Process Tool/Resource Request
+    Server->>DB: Query Data
+    DB-->>Server: Results
+    Server-->>SDK: Response
+    SDK-->>CC: JSON-RPC Response
 ```
 
 ## MCP Server Configuration
 
-CycleTime's MCP server uses WebSocket transport with JSON-RPC 2.0 protocol.
+CycleTime's MCP server uses the official SDK with SSE transport and JSON-RPC 2.0 protocol.
 
 ### Default Configuration
 
 | Setting | Default Value | Description |
 |---------|--------------|-------------|
 | **Protocol Version** | `2024-11-05` | MCP protocol version |
-| **Transport** | WebSocket | Communication protocol |
+| **Transport** | SSE | Communication protocol (Server-Sent Events) |
 | **Host** | `0.0.0.0` | Server bind address |
 | **Port** | `8080` | Server port |
-| **Path** | `/mcp` | WebSocket endpoint path |
-| **WebSocket URL** | `ws://localhost:8080/mcp` | Full connection URL |
+| **Endpoint** | `/` | SDK-managed root endpoint |
+| **Connection URL** | `http://localhost:8080/` | Full connection URL |
 
 ### Server Capabilities
 
@@ -80,14 +83,13 @@ MCP_PORT=3006 MCP_HOST=127.0.0.1 MCP_DETAILED_LOGGING=true ./gradlew run
 |----------|---------|-------------|
 | `MCP_HOST` | `0.0.0.0` | Server bind address |
 | `MCP_PORT` | `8080` | Server port |
-| `MCP_PATH` | `/mcp` | WebSocket endpoint path |
 | `MCP_ENABLED` | `true` | Enable/disable MCP server |
-| `MCP_PING_PERIOD` | `30000` | WebSocket ping interval (ms) |
 | `MCP_TIMEOUT` | `15000` | Connection timeout (ms) |
-| `MCP_MAX_FRAME_SIZE` | `10485760` | Max WebSocket frame size (10MB) |
 | `MCP_MAX_CONNECTIONS` | `100` | Maximum concurrent connections |
 | `MCP_DETAILED_LOGGING` | `false` | Enable debug-level logging |
 | `MCP_METRICS_ENABLED` | `true` | Enable metrics collection |
+
+**Note**: SDK v0.7.2 manages the root endpoint (`/`) automatically. Legacy `/mcp/events` and `/mcp` endpoints have been removed (SPI-707).
 
 ## Claude Code Configuration
 
@@ -113,12 +115,14 @@ Add the following configuration to connect to CycleTime:
 {
   "mcpServers": {
     "cycletime": {
-      "command": "websocket",
-      "url": "ws://localhost:8080/mcp"
+      "type": "sse",
+      "url": "http://localhost:8080/"
     }
   }
 }
 ```
+
+**Note**: The SDK manages the root endpoint (`/`). This differs from legacy configurations that used `/mcp/events`.
 
 ### Multiple Server Configuration
 
@@ -128,8 +132,8 @@ If you have other MCP servers configured:
 {
   "mcpServers": {
     "cycletime": {
-      "command": "websocket",
-      "url": "ws://localhost:8080/mcp"
+      "type": "sse",
+      "url": "http://localhost:8080/"
     },
     "other-server": {
       "command": "node",
@@ -147,8 +151,8 @@ If you changed the MCP server port, update the URL accordingly:
 {
   "mcpServers": {
     "cycletime": {
-      "command": "websocket",
-      "url": "ws://localhost:3006/mcp"
+      "type": "sse",
+      "url": "http://localhost:3006/"
     }
   }
 }
@@ -265,23 +269,23 @@ netstat -ano | findstr :8080
 MCP_PORT=3006 ./gradlew run
 
 # Update Claude Code configuration to match
-# url: "ws://localhost:3006/mcp"
+# url: "http://localhost:3006/mcp/events"
 ```
 
-### WebSocket Handshake Failed
+### SSE Connection Failed
 
-**Symptom**: Connection attempts fail with handshake error
+**Symptom**: Connection attempts fail or timeout
 
-**Cause**: Incorrect WebSocket path or protocol mismatch
+**Cause**: Incorrect SSE endpoint path or URL format
 
 **Solution**:
 ```json
-// Verify configuration uses correct WebSocket URL format
+// Verify configuration uses correct SSE URL format
 {
   "mcpServers": {
     "cycletime": {
-      "command": "websocket",
-      "url": "ws://localhost:8080/mcp"  // Not "http://" or missing "/mcp"
+      "type": "sse",
+      "url": "http://localhost:8080/mcp/events"  // Must be HTTP(S) with /mcp/events path
     }
   }
 }
@@ -302,9 +306,9 @@ curl http://localhost:8080/mcp
 # On macOS
 sudo /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
 
-# Verify WebSocket endpoint is accessible
-wscat -c ws://localhost:8080/mcp
-# (Install wscat: npm install -g wscat)
+# Test SSE endpoint directly
+curl -N http://localhost:8080/mcp/events
+# Should establish an SSE connection (press Ctrl+C to exit)
 
 # Enable detailed logging to diagnose
 MCP_DETAILED_LOGGING=true ./gradlew run
@@ -331,8 +335,8 @@ cat ~/.claude.json | jq .
 {
   "mcpServers": {
     "cycletime": {
-      "command": "websocket",
-      "url": "ws://localhost:8080/mcp"
+      "type": "sse",
+      "url": "http://localhost:8080/mcp/events"
     }
   }
 }
@@ -442,12 +446,12 @@ Configure multiple servers in Claude Code:
 {
   "mcpServers": {
     "cycletime-projectA": {
-      "command": "websocket",
-      "url": "ws://localhost:8080/mcp"
+      "type": "sse",
+      "url": "http://localhost:8080/mcp/events"
     },
     "cycletime-projectB": {
-      "command": "websocket",
-      "url": "ws://localhost:8081/mcp"
+      "type": "sse",
+      "url": "http://localhost:8081/mcp/events"
     }
   }
 }
@@ -455,7 +459,7 @@ Configure multiple servers in Claude Code:
 
 ### SSL/TLS Configuration
 
-For secure WebSocket connections (wss://):
+For secure SSE connections (https://):
 
 ```bash
 # Configure SSL in application.conf
@@ -465,8 +469,8 @@ For secure WebSocket connections (wss://):
 {
   "mcpServers": {
     "cycletime": {
-      "command": "websocket",
-      "url": "wss://localhost:8443/mcp"
+      "type": "sse",
+      "url": "https://localhost:8443/mcp/events"
     }
   }
 }
@@ -494,10 +498,10 @@ flowchart TB
     ParseConfig -->|Yes| StartServer{Server Running?}
 
     StartServer -->|No| Error2[Show Connection Refused]
-    StartServer -->|Yes| WSConnect[WebSocket Connect]
+    StartServer -->|Yes| SSEConnect[Connect to SSE Endpoint]
 
-    WSConnect --> Handshake{Handshake OK?}
-    Handshake -->|No| Error3[Show Handshake Failed]
+    SSEConnect --> Handshake{Connection OK?}
+    Handshake -->|No| Error3[Show SSE Connection Failed]
     Handshake -->|Yes| InitProtocol[Initialize MCP Protocol]
 
     InitProtocol --> GetCapabilities[Request Server Capabilities]
@@ -506,19 +510,19 @@ flowchart TB
     ShowConnected --> Ready([Ready for Use])
 
     Ready --> UserRequest[User Requests Resource/Tool]
-    UserRequest --> MCPRequest[Send JSON-RPC Request]
+    UserRequest --> MCPRequest[Send JSON-RPC via POST]
     MCPRequest --> ServerProcess[Server Processes Request]
-    ServerProcess --> MCPResponse[Receive JSON-RPC Response]
+    ServerProcess --> MCPResponse[Response via SSE EventBus]
     MCPResponse --> DisplayResult[Display Result to User]
     DisplayResult --> Ready
 
     Error1 --> Fix1[Fix Configuration File]
     Error2 --> Fix2[Start CycleTime Server]
-    Error3 --> Fix3[Check WebSocket URL]
+    Error3 --> Fix3[Check SSE URL & Endpoints]
 
     Fix1 --> LoadConfig
     Fix2 --> StartServer
-    Fix3 --> WSConnect
+    Fix3 --> SSEConnect
 
     style Start fill:#d4edda
     style Ready fill:#d1ecf1

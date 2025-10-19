@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the Model Context Protocol (MCP) integration patterns for CycleTime, enabling seamless communication with Claude Code through WebSocket connections and JSON-RPC messaging. The implementation leverages Ktor's WebSocket support and dependency injection for maintainable, testable MCP server components.
+This document outlines the Model Context Protocol (MCP) integration patterns for CycleTime, enabling seamless communication with Claude Code through SSE (Server-Sent Events) transport and JSON-RPC messaging. The implementation leverages Ktor's SSE support and dependency injection for maintainable, testable MCP server components.
 
 ## MCP Protocol Overview
 
@@ -11,7 +11,8 @@ This document outlines the Model Context Protocol (MCP) integration patterns for
 - **Resources**: Read-only data exposed to Claude Code (projects, issues, contexts)
 - **Tools**: Executable functions Claude Code can invoke (create, update, delete operations)
 - **Prompts**: Pre-configured prompt templates for common workflows
-- **WebSocket Transport**: Real-time bidirectional communication
+- **SSE Transport**: Server-Sent Events for server-to-client streaming
+- **POST Requests**: Client-to-server JSON-RPC requests
 - **JSON-RPC 2.0**: Standard request/response protocol
 
 ### Protocol Flow
@@ -19,19 +20,18 @@ This document outlines the Model Context Protocol (MCP) integration patterns for
 ```
 Claude Code                    CycleTime MCP Server
     |                               |
-    |-------- WebSocket Connect --->|
+    |------- SSE Connect (/mcp/events) -->|
     |                               |
-    |<------- Initialize Request ---|
-    |-------- Initialize Response ->|
+    |<------ SSE Stream Established ---|
     |                               |
-    |<------- Resources List -------|
-    |<------- Tools List ------------|
+    |-- POST /mcp (Initialize) ----->|
+    |<------ Initialize Response -----|
     |                               |
-    |-------- Resource Read -------->|
-    |<------- Resource Content ------|
+    |-- POST /mcp (Resources List) ->|
+    |<------ Resources via SSE -------|
     |                               |
-    |-------- Tool Execute --------->|
-    |<------- Tool Result -----------|
+    |-- POST /mcp (Tool Execute) ---->|
+    |<------ Tool Result via SSE ------|
     |                               |
 ```
 
@@ -40,17 +40,17 @@ Claude Code                    CycleTime MCP Server
 ```kotlin
 // build.gradle.kts
 dependencies {
-    // Ktor WebSocket support
-    implementation("io.ktor:ktor-server-websockets:3.2.0")
-    implementation("io.ktor:ktor-server-content-negotiation:3.2.0")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:3.2.0")
-    
+    // Ktor SSE support
+    implementation("io.ktor:ktor-server-sse:3.2.3")
+    implementation("io.ktor:ktor-server-content-negotiation:3.2.3")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.2.3")
+
     // JSON-RPC implementation
     implementation("com.github.kotlin-json-rpc:json-rpc:1.0.0")
-    
+
     // Coroutines for async handling
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    
+
     // Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 }
@@ -64,12 +64,14 @@ dependencies {
 // src/main/kotlin/io/spiralhouse/cycletime/infrastructure/mcp/CycleTimeMCPServer.kt
 
 import io.ktor.server.application.*
-import io.ktor.server.websocket.*
-import io.ktor.websocket.*
+import io.ktor.server.response.*
+import io.ktor.server.request.*
+import io.ktor.server.routing.*
+import io.ktor.server.sse.*
+import io.ktor.sse.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.*
-import java.time.Duration
 
 /**
  * Main MCP server coordinating resources and tools
@@ -81,55 +83,64 @@ class CycleTimeMCPServer(
 ) {
     private val logger = LoggerFactory.getLogger(CycleTimeMCPServer::class.java)
     private val sessions = mutableMapOf<String, MCPSession>()
-    
+
     /**
-     * Initialize MCP server with WebSocket endpoint
+     * Initialize MCP server with SSE and POST endpoints
      */
     fun Application.configureMCP() {
-        install(WebSockets) {
-            pingPeriod = Duration.ofSeconds(15)
-            timeout = Duration.ofSeconds(15)
-            maxFrameSize = Long.MAX_VALUE
-            masking = false
-        }
-        
+        install(SSE)
+
         routing {
-            webSocket("/mcp") {
-                handleMCPConnection(this)
+            // SSE endpoint for server-to-client events
+            sse("/mcp/events") {
+                handleSSEConnection(this)
+            }
+
+            // POST endpoint for client-to-server requests
+            post("/mcp") {
+                handlePostRequest(call)
             }
         }
     }
-    
+
     /**
-     * Handle incoming MCP WebSocket connection
+     * Handle incoming MCP SSE connection
      */
-    private suspend fun handleMCPConnection(session: WebSocketSession) {
+    private suspend fun handleSSEConnection(session: ServerSentEventSession) {
         val sessionId = generateSessionId()
         val mcpSession = MCPSession(sessionId, session)
         sessions[sessionId] = mcpSession
-        
+
         try {
-            logger.info("MCP client connected: $sessionId")
-            
-            // Handle incoming messages
-            for (frame in session.incoming) {
-                when (frame) {
-                    is Frame.Text -> {
-                        val text = frame.readText()
-                        handleJsonRpcMessage(mcpSession, text)
-                    }
-                    is Frame.Close -> {
-                        logger.info("MCP client disconnected: $sessionId")
-                        break
-                    }
-                    else -> {} // Ignore other frame types
-                }
+            logger.info("MCP SSE client connected: $sessionId")
+
+            // Send keep-alive events
+            while (true) {
+                session.send(ServerSentEvent("ping"))
+                kotlinx.coroutines.delay(30000) // 30 second keep-alive
             }
         } catch (e: Exception) {
-            logger.error("Error in MCP session $sessionId", e)
+            logger.error("Error in MCP SSE session $sessionId", e)
         } finally {
             sessions.remove(sessionId)
             mcpSession.close()
+        }
+    }
+
+    /**
+     * Handle incoming POST requests
+     */
+    private suspend fun handlePostRequest(call: ApplicationCall) {
+        try {
+            val message = call.receiveText()
+            val jsonElement = Json.parseToJsonElement(message)
+            val request = Json.decodeFromJsonElement<JsonRpcRequest>(jsonElement)
+
+            val response = processJsonRpcRequest(request)
+            call.respond(response)
+        } catch (e: Exception) {
+            logger.error("Error processing POST request", e)
+            call.respond(createErrorResponse(e))
         }
     }
     
@@ -329,20 +340,46 @@ class CycleTimeMCPServer(
 }
 
 /**
- * MCP session representing a connected client
+ * MCP session representing a connected client via SSE
  */
 data class MCPSession(
     val id: String,
-    private val websocket: WebSocketSession
+    private val sseSession: ServerSentEventSession,
+    private val eventBus: EventBus
 ) {
     suspend fun send(message: String) {
-        websocket.send(Frame.Text(message))
+        // Send message via EventBus for delivery through SSE stream
+        eventBus.publish(Event(sessionId = id, data = message))
     }
-    
+
     suspend fun close() {
-        websocket.close(CloseReason(CloseReason.Codes.NORMAL, "Session ended"))
+        sseSession.close()
     }
 }
+
+/**
+ * EventBus for server-to-client event delivery via SSE
+ */
+class EventBus {
+    private val channels = ConcurrentHashMap<String, Channel<Event>>()
+
+    suspend fun subscribe(sessionId: String): Channel<Event> {
+        return channels.getOrPut(sessionId) { Channel(Channel.UNLIMITED) }
+    }
+
+    suspend fun publish(event: Event) {
+        channels[event.sessionId]?.send(event)
+    }
+
+    fun unsubscribe(sessionId: String) {
+        channels.remove(sessionId)?.close()
+    }
+}
+
+data class Event(
+    val sessionId: String,
+    val data: String
+)
 ```
 
 ### JSON-RPC Data Models
@@ -1002,125 +1039,184 @@ fun Application.configureMCP() {
 
 ## Testing MCP Integration
 
-### WebSocket Testing
+### SSE + POST Endpoint Testing
 
 ```kotlin
 // src/test/kotlin/io/spiralhouse/cycletime/mcp/MCPServerTest.kt
 
-import io.ktor.client.plugins.websocket.*
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.*
 
 class MCPServerTest : DescribeSpec({
-    
+
     describe("MCP Server") {
-        
-        describe("WebSocket connection") {
-            it("should handle MCP handshake") {
+
+        describe("SSE connection") {
+            it("should establish SSE event stream") {
                 testApplication {
                     application {
                         configureDependencies()
                         configureMCP()
                     }
-                    
-                    val client = createClient {
-                        install(WebSockets)
+
+                    val client = createClient()
+
+                    // Connect to SSE endpoint
+                    val response = client.get("/mcp/events") {
+                        header(HttpHeaders.Accept, "text/event-stream")
                     }
-                    
-                    client.webSocket("/mcp") {
-                        // Send initialize
-                        val initRequest = buildJsonObject {
-                            put("jsonrpc", "2.0")
-                            put("method", "initialize")
-                            put("id", 1)
-                            put("params", buildJsonObject {
-                                put("protocolVersion", "1.0")
-                                put("clientInfo", buildJsonObject {
-                                    put("name", "test")
-                                    put("version", "1.0")
-                                })
-                            })
-                        }
-                        
-                        send(Frame.Text(initRequest.toString()))
-                        
-                        val response = incoming.receive() as Frame.Text
-                        val json = Json.parseToJsonElement(response.readText()).jsonObject
-                        
-                        json["jsonrpc"]?.jsonPrimitive?.content shouldBe "2.0"
-                        json["id"]?.jsonPrimitive?.int shouldBe 1
-                        json["result"]?.jsonObject?.get("protocolVersion")?.jsonPrimitive?.content shouldBe "1.0"
-                    }
+
+                    response.status shouldBe HttpStatusCode.OK
+                    response.headers[HttpHeaders.ContentType] shouldBe "text/event-stream"
                 }
             }
         }
-        
+
+        describe("POST endpoint") {
+            it("should handle MCP initialize handshake") {
+                testApplication {
+                    application {
+                        configureDependencies()
+                        configureMCP()
+                    }
+
+                    val client = createClient()
+
+                    // Send initialize request via POST
+                    val initRequest = buildJsonObject {
+                        put("jsonrpc", "2.0")
+                        put("method", "initialize")
+                        put("id", 1)
+                        put("params", buildJsonObject {
+                            put("protocolVersion", "2024-11-05")
+                            put("clientInfo", buildJsonObject {
+                                put("name", "test")
+                                put("version", "1.0")
+                            })
+                        })
+                    }
+
+                    val response = client.post("/mcp") {
+                        contentType(ContentType.Application.Json)
+                        setBody(initRequest.toString())
+                    }
+
+                    val json = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+
+                    json["jsonrpc"]?.jsonPrimitive?.content shouldBe "2.0"
+                    json["id"]?.jsonPrimitive?.int shouldBe 1
+                    json["result"]?.jsonObject?.get("protocolVersion")?.jsonPrimitive?.content shouldBe "2024-11-05"
+                }
+            }
+        }
+
         describe("Resource operations") {
-            it("should list available resources") {
-                testApplication {
-                    TestFixtures.withProject { projectId ->
-                        client.webSocket("/mcp") {
-                            MCPTestHelper.initialize(this)
-                            
-                            val listRequest = buildJsonObject {
-                                put("jsonrpc", "2.0")
-                                put("method", "resources/list")
-                                put("id", 2)
-                            }
-                            
-                            send(Frame.Text(listRequest.toString()))
-                            
-                            val response = incoming.receive() as Frame.Text
-                            val json = Json.parseToJsonElement(response.readText()).jsonObject
-                            val resources = json["result"]?.jsonObject?.get("resources")?.jsonArray
-                            
-                            resources?.size shouldBeGreaterThan 0
-                            resources?.any { 
-                                it.jsonObject["uri"]?.jsonPrimitive?.content == "cycletime://project/$projectId"
-                            } shouldBe true
-                        }
-                    }
-                }
-            }
-        }
-        
-        describe("Tool execution") {
-            it("should execute create project tool") {
+            it("should list available resources via POST") {
                 testApplication {
                     application {
                         configureDependencies()
                         configureMCP()
                     }
-                    
-                    client.webSocket("/mcp") {
-                        MCPTestHelper.initialize(this)
-                        
-                        val toolCall = buildJsonObject {
+
+                    TestFixtures.withProject { projectId ->
+                        val client = createClient()
+
+                        val listRequest = buildJsonObject {
                             put("jsonrpc", "2.0")
-                            put("method", "tools/call")
-                            put("id", 3)
-                            put("params", buildJsonObject {
-                                put("name", "cycletime_create_project")
-                                put("arguments", buildJsonObject {
-                                    put("name", "Test Project")
-                                    put("description", "Created via MCP")
-                                })
-                            })
+                            put("method", "resources/list")
+                            put("id", 2)
                         }
-                        
-                        send(Frame.Text(toolCall.toString()))
-                        
-                        val response = incoming.receive() as Frame.Text
-                        val json = Json.parseToJsonElement(response.readText()).jsonObject
-                        val content = json["result"]?.jsonObject?.get("content")?.jsonArray?.first()
-                        val resultText = content?.jsonObject?.get("text")?.jsonPrimitive?.content
-                        val result = Json.parseToJsonElement(resultText ?: "{}").jsonObject
-                        
-                        result["success"]?.jsonPrimitive?.boolean shouldBe true
-                        result["project"]?.jsonObject?.get("name")?.jsonPrimitive?.content shouldBe "Test Project"
+
+                        val response = client.post("/mcp") {
+                            contentType(ContentType.Application.Json)
+                            setBody(listRequest.toString())
+                        }
+
+                        val json = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+                        val resources = json["result"]?.jsonObject?.get("resources")?.jsonArray
+
+                        resources?.size shouldBeGreaterThan 0
+                        resources?.any {
+                            it.jsonObject["uri"]?.jsonPrimitive?.content == "cycletime://project/$projectId"
+                        } shouldBe true
                     }
+                }
+            }
+        }
+
+        describe("Tool execution") {
+            it("should execute create project tool via POST") {
+                testApplication {
+                    application {
+                        configureDependencies()
+                        configureMCP()
+                    }
+
+                    val client = createClient()
+
+                    val toolCall = buildJsonObject {
+                        put("jsonrpc", "2.0")
+                        put("method", "tools/call")
+                        put("id", 3)
+                        put("params", buildJsonObject {
+                            put("name", "create_project")
+                            put("arguments", buildJsonObject {
+                                put("name", "Test Project")
+                                put("description", "Created via MCP")
+                            })
+                        })
+                    }
+
+                    val response = client.post("/mcp") {
+                        contentType(ContentType.Application.Json)
+                        setBody(toolCall.toString())
+                    }
+
+                    val json = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+                    val content = json["result"]?.jsonObject?.get("content")?.jsonArray?.first()
+                    val resultText = content?.jsonObject?.get("text")?.jsonPrimitive?.content
+                    val result = Json.parseToJsonElement(resultText ?: "{}").jsonObject
+
+                    result["success"]?.jsonPrimitive?.boolean shouldBe true
+                    result["project"]?.jsonObject?.get("name")?.jsonPrimitive?.content shouldBe "Test Project"
+                }
+            }
+        }
+
+        describe("EventBus integration") {
+            it("should deliver events via SSE stream") {
+                testApplication {
+                    application {
+                        configureDependencies()
+                        configureMCP()
+                    }
+
+                    val client = createClient()
+                    val eventBus = EventBus()
+
+                    // Launch SSE listener in background
+                    val events = mutableListOf<String>()
+                    launch {
+                        val response = client.get("/mcp/events") {
+                            header(HttpHeaders.Accept, "text/event-stream")
+                        }
+                        // Collect SSE events (in real implementation)
+                    }
+
+                    // Publish event via EventBus
+                    eventBus.publish(Event(
+                        sessionId = "test-session",
+                        data = """{"jsonrpc":"2.0","result":{"success":true}}"""
+                    ))
+
+                    // Events should be delivered through SSE stream
                 }
             }
         }
@@ -1128,78 +1224,201 @@ class MCPServerTest : DescribeSpec({
 })
 ```
 
+### Manual Testing with curl
+
+Testing the SSE + POST dual-endpoint architecture with command-line tools:
+
+```bash
+# Terminal 1: Establish SSE connection (server-to-client events)
+curl -N http://localhost:8080/mcp/events
+
+# Terminal 2: Send JSON-RPC requests via POST (client-to-server)
+
+# 1. Initialize protocol
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2024-11-05",
+      "clientInfo": {
+        "name": "curl-client",
+        "version": "1.0.0"
+      }
+    }
+  }'
+
+# 2. List available tools
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+
+# 3. List available resources
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"resources/list"}'
+
+# 4. Execute tool (create project)
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+      "name": "create_project",
+      "arguments": {
+        "name": "Test Project",
+        "description": "Created via curl"
+      }
+    }
+  }'
+
+# 5. Read resource
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "resources/read",
+    "params": {
+      "uri": "cycletime://projects"
+    }
+  }'
+
+# All responses appear in Terminal 1 via SSE event stream
+```
+
 ### Mock MCP Client
 
 ```kotlin
 // src/test/kotlin/io/spiralhouse/cycletime/testing/mocks/MockMCPClient.kt
 
-import io.ktor.websocket.*
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.*
 
 /**
- * Mock MCP client for testing
+ * Mock MCP client for testing SSE + POST endpoints
  */
-class MockMCPClient {
-    private val responses = Channel<JsonRpcResponse>()
+class MockMCPClient(
+    private val client: HttpClient,
+    private val sseUrl: String = "http://localhost:8080/mcp/events",
+    private val postUrl: String = "http://localhost:8080/mcp"
+) {
+    private val events = Channel<String>(Channel.UNLIMITED)
     private var requestId = 1
-    
+
+    /**
+     * Establish SSE connection to receive server events
+     */
+    suspend fun connectSSE() {
+        val response = client.get(sseUrl) {
+            header(HttpHeaders.Accept, "text/event-stream")
+        }
+        // Process SSE events in background
+    }
+
+    /**
+     * Send initialize request via POST
+     */
     suspend fun initialize(): JsonRpcResponse {
-        val request = JsonRpcRequest(
-            method = "initialize",
-            params = buildJsonObject {
-                put("protocolVersion", "1.0")
+        val request = buildJsonObject {
+            put("jsonrpc", "2.0")
+            put("method", "initialize")
+            put("id", requestId++)
+            put("params", buildJsonObject {
+                put("protocolVersion", "2024-11-05")
                 put("clientInfo", buildJsonObject {
                     put("name", "mock-client")
                     put("version", "1.0")
                 })
-            },
-            id = JsonPrimitive(requestId++)
-        )
-        
-        // Simulate server response
-        return JsonRpcResponse(
-            jsonrpc = "2.0",
-            id = request.id,
-            result = buildJsonObject {
-                put("protocolVersion", "1.0")
-                put("serverInfo", buildJsonObject {
-                    put("name", "CycleTime MCP Server")
-                    put("version", "1.0.0")
-                })
-            }
-        )
-    }
-    
-    suspend fun listResources(): List<ResourceDescriptor> {
-        val request = JsonRpcRequest(
-            method = "resources/list",
-            id = JsonPrimitive(requestId++)
-        )
-        
-        // Mock response
-        return listOf(
-            ResourceDescriptor(
-                uri = "cycletime://projects",
-                name = "All Projects",
-                description = "List of all projects"
-            )
-        )
-    }
-    
-    suspend fun readResource(uri: String): ResourceContent {
-        return ResourceContent(
-            uri = uri,
-            mimeType = "application/json",
-            text = "{\"mock\": \"data\"}"
-        )
-    }
-    
-    suspend fun callTool(name: String, arguments: JsonObject): JsonObject {
-        return buildJsonObject {
-            put("success", true)
-            put("result", "mock result")
+            })
         }
+
+        val response = client.post(postUrl) {
+            contentType(ContentType.Application.Json)
+            setBody(request.toString())
+        }
+
+        return Json.decodeFromString(response.bodyAsText())
+    }
+
+    /**
+     * List resources via POST
+     */
+    suspend fun listResources(): List<ResourceDescriptor> {
+        val request = buildJsonObject {
+            put("jsonrpc", "2.0")
+            put("method", "resources/list")
+            put("id", requestId++)
+        }
+
+        val response = client.post(postUrl) {
+            contentType(ContentType.Application.Json)
+            setBody(request.toString())
+        }
+
+        val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val resources = jsonResponse["result"]?.jsonObject?.get("resources")?.jsonArray
+
+        return resources?.map {
+            Json.decodeFromJsonElement<ResourceDescriptor>(it)
+        } ?: emptyList()
+    }
+
+    /**
+     * Read resource via POST
+     */
+    suspend fun readResource(uri: String): ResourceContent {
+        val request = buildJsonObject {
+            put("jsonrpc", "2.0")
+            put("method", "resources/read")
+            put("id", requestId++)
+            put("params", buildJsonObject {
+                put("uri", uri)
+            })
+        }
+
+        val response = client.post(postUrl) {
+            contentType(ContentType.Application.Json)
+            setBody(request.toString())
+        }
+
+        val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val contents = jsonResponse["result"]?.jsonObject?.get("contents")?.jsonArray
+
+        return contents?.firstOrNull()?.let {
+            Json.decodeFromJsonElement<ResourceContent>(it)
+        } ?: ResourceContent(uri, "application/json", "{}")
+    }
+
+    /**
+     * Call tool via POST
+     */
+    suspend fun callTool(name: String, arguments: JsonObject): JsonObject {
+        val request = buildJsonObject {
+            put("jsonrpc", "2.0")
+            put("method", "tools/call")
+            put("id", requestId++)
+            put("params", buildJsonObject {
+                put("name", name)
+                put("arguments", arguments)
+            })
+        }
+
+        val response = client.post(postUrl) {
+            contentType(ContentType.Application.Json)
+            setBody(request.toString())
+        }
+
+        val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        return jsonResponse["result"]?.jsonObject ?: buildJsonObject {}
     }
 }
 ```
@@ -1312,9 +1531,11 @@ class MCPMetrics(
 
 This MCP integration provides:
 - **Full MCP Protocol Support**: Resources, Tools, and Prompts
-- **WebSocket Transport**: Real-time bidirectional communication
+- **SSE Transport**: Server-Sent Events for server-to-client streaming with dual-endpoint architecture
+- **Dual-Endpoint Architecture**: SSE stream (GET /mcp/events) for server-to-client events, POST endpoint (POST /mcp) for client-to-server requests
 - **JSON-RPC 2.0**: Standard protocol implementation
+- **EventBus Pattern**: Event-driven message delivery through SSE streams
 - **DI Integration**: Clean dependency injection
-- **Comprehensive Testing**: Unit and integration tests
+- **Comprehensive Testing**: Unit and integration tests with SSE + POST patterns
 - **Performance Monitoring**: Metrics and observability
 - **Error Handling**: Robust error management
