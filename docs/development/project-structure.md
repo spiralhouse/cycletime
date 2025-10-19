@@ -93,7 +93,7 @@ cycletime/                               # Root project directory
 │   │   │       ├── resources/       # MCP resources for Claude Code
 │   │   │       ├── server/          # MCP server core
 │   │   │       ├── tools/           # MCP tools for operations
-│   │   │       └── websocket/       # WebSocket transport
+│   │   │       └── sse/             # SSE transport
 │   │   └── resources/                 # Resources
 │   │       ├── application.conf       # Ktor configuration
 │   │       └── META-INF/              # Metadata
@@ -214,7 +214,7 @@ io.spiralhouse.cycletime/
     ├── resources/    # MCP Resources for Claude Code
     ├── server/       # MCP server core functionality
     ├── tools/        # MCP Tools for operations
-    └── websocket/    # WebSocket transport layer
+    └── sse/          # SSE transport layer
 ```
 
 ### 3. Dependency Rules
@@ -377,13 +377,25 @@ The migration from TypeScript to Kotlin provides:
 
 ### Test Organization
 
+Tests are organized using Gradle source sets for physical separation (see `docs/testing/test-source-set-guide.md`):
+
 ```
-src/test/kotlin/io/spiralhouse/cycletime/
-├── unit/           # Fast, isolated unit tests
-├── integration/    # Integration tests with real components
-├── system/         # End-to-end system tests
-├── fixtures/       # Test data and utilities
-└── utils/          # Test helpers and mocks
+src/
+├── test/kotlin/                    # Unit tests only
+│   └── io/spiralhouse/cycletime/
+│       ├── domain/                 # Domain logic tests
+│       ├── mcp/protocol/           # MCP protocol tests
+│       ├── mcp/tools/              # MCP tool tests
+│       ├── fixtures/               # Test data
+│       └── utils/                  # Test helpers
+├── integrationTest/kotlin/         # Integration tests
+│   └── io/spiralhouse/cycletime/
+│       ├── integration/            # Component integration
+│       ├── mcp/integration/        # MCP integration
+│       └── mcp/server/             # MCP server tests
+└── systemTest/kotlin/              # System tests
+    └── io/spiralhouse/cycletime/
+        └── performance/            # Performance tests
 ```
 
 ### Testing Frameworks

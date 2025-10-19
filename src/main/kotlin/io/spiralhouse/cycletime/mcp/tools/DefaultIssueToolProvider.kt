@@ -106,33 +106,37 @@ class DefaultIssueToolProvider(
                     put("id", buildRequiredStringParam("Issue ID"))
                     put("title", buildOptionalStringParam("Issue title"))
                     put("description", buildOptionalStringParam("Issue description"))
-                    put("type", buildJsonObject {
-                        put("type", "string")
-                        put("enum", buildJsonArray {
-                            add("EPIC")
-                            add("STORY")
-                            add("SUBTASK")
-                        })
-                        put("description", "Issue type")
-                    })
                 })
                 put("required", buildJsonArray { add("id") })
             },
             handler = ToolHandler.Async { params ->
+                /**
+                 * SPI-718: Completed mock implementation to enable comprehensive E2E workflow testing.
+                 *
+                 * Previous implementation returned mock JSON without persisting changes. This prevented
+                 * WorkflowE2ETest from validating multi-step workflows where updates must persist across
+                 * tool calls.
+                 *
+                 * Implementation now calls issueService.updateIssue() to persist changes to database,
+                 * enabling proper E2E workflow validation.
+                 */
                 Result.runCatching {
                     val id = extractRequiredParam(params, "id")
                     val title = extractOptionalParam(params, "title")
                     val description = extractOptionalParam(params, "description")
-                    val type = extractOptionalParam(params, "type")
-                    
-                    // For now, return success response - actual update logic can be implemented later
-                    buildJsonObject {
-                        put("id", id)
-                        put("updated", true)
-                        if (title != null) put("title", title)
-                        if (description != null) put("description", description)
-                        if (type != null) put("type", type)
-                    }
+
+                    // Create command with parsed parameters
+                    val command = UpdateIssueCommand(
+                        id = IssueId(id),
+                        title = title,
+                        description = description
+                    )
+
+                    // Call service to persist update
+                    val result = issueService.updateIssue(command)
+
+                    // Return updated issue data
+                    Json.encodeToJsonElement(result)
                 }
             }
         )

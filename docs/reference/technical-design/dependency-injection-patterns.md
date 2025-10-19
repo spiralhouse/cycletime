@@ -52,11 +52,11 @@ dependencies {
     // Database - H2 implementation
     implementation("com.h2database:h2:2.2.224")
     implementation("com.zaxxer:HikariCP:6.2.1")
-    implementation("org.jetbrains.exposed:exposed-core:0.58.0")
-    implementation("org.jetbrains.exposed:exposed-dao:0.58.0")
-    implementation("org.jetbrains.exposed:exposed-jdbc:0.58.0")
-    implementation("org.jetbrains.exposed:exposed-java-time:0.58.0")
-    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.58.0")
+    implementation("org.jetbrains.exposed:exposed-core:0.61.0")
+    implementation("org.jetbrains.exposed:exposed-dao:0.61.0")
+    implementation("org.jetbrains.exposed:exposed-jdbc:0.61.0")
+    implementation("org.jetbrains.exposed:exposed-java-time:0.61.0")
+    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.61.0")
 }
 ```
 
@@ -778,10 +778,15 @@ fun Application.configureMCP() {
     // Resources are already injected via DI
     mcpServer.start()
     
-    // Register WebSocket endpoint
+    // Register SSE endpoint
     routing {
-        webSocket("/mcp") {
-            mcpServer.handleConnection(this)
+        sse("/mcp/events") {
+            mcpServer.handleSseConnection(this)
+        }
+
+        // POST endpoint for requests
+        post("/mcp") {
+            mcpServer.handlePost(call)
         }
     }
 }
@@ -1059,9 +1064,12 @@ database {
 mcp {
     server {
         enabled = true
-        websocket {
+        sse {
+            path = "/mcp/events"
+            timeout = 15000
+        }
+        post {
             path = "/mcp"
-            pingInterval = 30000
         }
     }
 }

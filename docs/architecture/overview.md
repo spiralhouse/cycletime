@@ -310,6 +310,76 @@ MCP Tool → Application Service → Domain Entity → Repository → Database
 - **Tools**: `CreateIssueTool`, `UpdateIssueTool` - write operations
 - **Registries**: Discovery and routing for resources and tools
 
+### MCP SDK Integration (v0.7.2)
+
+CycleTime uses the official MCP Kotlin SDK maintained by Anthropic and JetBrains for all Model Context Protocol functionality.
+
+**Transport Architecture:**
+- **Ktor Integration:** SDK provides native Ktor integration via `mcp { }` DSL
+- **SSE Transport:** Server-Sent Events at root endpoint `/`
+- **Protocol:** Automatic JSON-RPC 2.0 handling with MCP extensions
+- **Session Management:** Stateless per-request with database persistence
+
+**SDK Components:**
+- `MCPSdkServer.kt` - Server initialization and capability configuration
+- `MCPSdkRouting.kt` - Ktor routing integration
+- `sdk/adapters/` - Bridge between business logic and SDK APIs
+  - `SDKToolAdapter` - Adapts ToolProvider to SDK tool registration
+  - `SDKResourceAdapter` - Adapts ResourceProvider to SDK resource registration
+- `SDKSessionManager.kt` - Request metadata-based session handling
+- `SessionContext.kt` - Session extraction utilities
+
+**Migration (SPI-700/SPI-707):**
+
+The SDK replaced our custom EventBus transport implementation:
+
+| Component Removed | SDK Replacement |
+|-------------------|-----------------|
+| EventBus correlation | Per-request transport isolation |
+| MCPPostHandler | SDK Ktor integration |
+| MCPSSEHandler | SDK SSE implementation |
+| JsonRpcProtocolHandler | SDK protocol handling |
+| MCPSessionManager (legacy) | SDKSessionManager |
+
+Benefits: Official support, automatic protocol updates, reduced maintenance, improved client compatibility.
+
+#### MCP SDK Architecture
+
+```mermaid
+%%{init: {'theme':'dark'}}%%
+graph TB
+    subgraph SDK["MCP SDK Layer (v0.7.2)"]
+        Server[MCPSdkServer<br/>Capability Config]
+        Routing[MCPSdkRouting<br/>Ktor Integration]
+        ToolAdapter[SDKToolAdapter<br/>Tool Bridge]
+        ResourceAdapter[SDKResourceAdapter<br/>Resource Bridge]
+        SessionMgr[SDKSessionManager<br/>Session Context]
+    end
+
+    subgraph Business["Business Logic Layer"]
+        ToolProviders[Tool Providers<br/>Project, Issue, Workflow]
+        ResourceProviders[Resource Providers<br/>PRD, Docs, Status]
+        AppServices[Application Services<br/>Domain Logic]
+    end
+
+    Claude[Claude Code] -->|SSE + JSON-RPC| Routing
+    Routing --> Server
+    Server --> ToolAdapter
+    Server --> ResourceAdapter
+    ToolAdapter --> ToolProviders
+    ResourceAdapter --> ResourceProviders
+    ToolProviders --> AppServices
+    ResourceProviders --> AppServices
+    SessionMgr -.Session Context.-> ToolAdapter
+    SessionMgr -.Session Context.-> ResourceAdapter
+
+    style SDK fill:#1f6feb,stroke:#58a6ff
+    style Business fill:#238636,stroke:#2ea043
+    style Claude fill:#8957e5,stroke:#a371f7
+```
+
+*Figure: MCP SDK integration architecture showing official SDK replacing custom transport*
+
 ### 3. Documentation Templates
 
 **Purpose**: Provides basic documentation structure for project bootstrap.

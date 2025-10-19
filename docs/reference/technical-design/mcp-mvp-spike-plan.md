@@ -1,5 +1,7 @@
 # MCP MVP Implementation Plan - 1-Day Spike
 
+> **Historical Note**: This document describes the WebSocket-based MCP implementation that was superseded by SSE (Server-Sent Events) transport in SPI-665 (October 2025). CycleTime now uses SSE transport following MCP specification v2024-11-05. For current implementation details, see [MCP Client Setup](../../getting-started/mcp-client-setup.md) and [MCP Integration Patterns](mcp-integration-patterns.md).
+
 ## Executive Summary
 
 **Critical Discovery**: MCP is not optional infrastructure but THE PRIMARY USER INTERFACE for CycleTime. 90% of user interactions will be through Claude Code via MCP, not the web dashboard.
