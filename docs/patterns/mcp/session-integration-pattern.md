@@ -6,7 +6,7 @@ description: "Pattern for integrating MCP session management with application st
 dependencies: [../../concepts/mcp/mcp-protocol-concepts.md]
 related: [json-rpc-pattern.md, sse-transport-pattern.md, ../../architecture/session-management.md]
 keywords: [mcp, session, integration, state, persistence, pattern]
-status: draft
+status: complete
 last_updated: 2025-10-20
 ---
 

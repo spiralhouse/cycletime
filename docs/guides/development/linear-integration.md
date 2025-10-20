@@ -8,7 +8,7 @@ related: [feature-workflow.md, ../../reference/decision-guide.md]
 keywords: [linear, integration, issue-tracking, workflow, git, branches]
 estimated_time: 15 minutes
 difficulty: intermediate
-status: draft
+status: complete
 last_updated: 2025-10-20
 ---
 
