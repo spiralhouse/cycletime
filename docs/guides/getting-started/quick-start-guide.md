@@ -66,4 +66,4 @@ docker run -p 8080:8080 cycletime
 - [Configuration Options](configuration-guide.md)
 - [API Documentation](../../api/rest-api-reference.md)
 - [Development Setup](../development/development-setup.md)
-- [Testing Guide](../../reference/testing/strategy.md)
+- [Testing Strategy](../../concepts/testing/testing-strategy.md)

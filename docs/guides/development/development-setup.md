@@ -210,7 +210,7 @@ JAVA_OPTS="-Xmx1024m -XX:+UseG1GC -XX:+UseStringDeduplication"
 
 ## Related Documentation
 
-- [Project Structure](../../reference/technical-design/project-structure.md)
+- [Project Structure](../../development/project-structure.md)
 - [Repository Usage](repository-usage.md)
-- [Testing Strategy](../../reference/testing/strategy.md)
+- [Testing Strategy](../../concepts/testing/testing-strategy.md)
 - [Single Feature Workflow](feature-workflow.md)

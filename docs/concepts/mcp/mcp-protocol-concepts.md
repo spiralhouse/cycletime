@@ -406,6 +406,6 @@ To implement MCP in CycleTime, explore these pattern documents:
 
 ## Related Documentation
 
-- [MCP Architecture Overview](../../../architecture/overview.md#mcp-server-integration) - System architecture
-- [MCP Troubleshooting](../../../guides/troubleshooting/mcp/overview.md) - Common issues and solutions
-- [MCP Development Guide](../../../development/mcp-development.md) - Development workflows
+- [MCP Architecture Overview](../../architecture/overview.md#mcp-server-integration) - System architecture
+- [MCP Troubleshooting](../../guides/troubleshooting/mcp/overview.md) - Common issues and solutions
+- [MCP Development Guide](../../guides/development/mcp-development.md) - Development workflows
