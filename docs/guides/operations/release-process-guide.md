@@ -94,7 +94,7 @@ When PR is merged:
 
 ## Container Tagging Strategy
 
-See [Container Tagging](container-tagging.md) for detailed tag management.
+See [Container Tagging](../../ci-cd/container-tagging.md) for detailed tag management.
 
 ### Environment Mapping
 
@@ -268,10 +268,10 @@ git clone --no-single-branch
 
 ## Related Documentation
 
-- [CI/CD Overview](overview.md)
-- [Container Tagging](container-tagging.md)
-- [Environment Management](environments.md)
-- [Versioning Details](versioning.md)# Versioning
+- [CI/CD Overview](../../ci-cd/overview.md)
+- [Container Tagging](../../ci-cd/container-tagging.md)
+- [Environment Management](../../ci-cd/environments.md)
+- [Versioning Details](../../ci-cd/versioning.md)# Versioning
 
 ## Overview
 
@@ -533,7 +533,7 @@ If migrating from manual version management:
 
 ## Related Documentation
 
-- [Release Process](release-process.md)
-- [Container Tagging](container-tagging.md)
-- [CI/CD Overview](overview.md)
+- [Release Process](../../ci-cd/release-process.md)
+- [Container Tagging](../../ci-cd/container-tagging.md)
+- [CI/CD Overview](../../ci-cd/overview.md)
 - [Conventional Commits Specification](https://www.conventionalcommits.org/)
