@@ -4,7 +4,7 @@ type: guide
 domain: [mcp, troubleshooting, connection]
 description: "Solutions for MCP connection failures, SSE issues, and timeouts"
 dependencies: [overview.md]
-related: [protocol-issues.md, performance-issues.md]
+related: [protocol-validation-issues.md, protocol-discovery-issues.md, performance-issues.md]
 keywords: [mcp, connection, sse, timeout, troubleshooting, refused]
 estimated_time: 20 minutes
 difficulty: beginner
@@ -473,7 +473,8 @@ pkill -f gradle
 ## Related Guides
 
 - [MCP Troubleshooting Overview](./overview.md) - Quick reference to all issues
-- [Protocol Troubleshooting](./protocol-issues.md) - JSON-RPC and tool/resource errors
+- [Protocol Validation](./protocol-validation-issues.md) - JSON-RPC format and validation errors
+- [Protocol Discovery](./protocol-discovery-issues.md) - Tool and resource discovery errors
 - [Performance Troubleshooting](./performance-issues.md) - Slow responses and timeouts
 - [Configuration Troubleshooting](./configuration-issues.md) - MCP configuration issues
 

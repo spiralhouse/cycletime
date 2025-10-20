@@ -4,7 +4,7 @@ type: guide
 domain: [mcp, troubleshooting, configuration, deployment]
 description: "Solutions for MCP server disabled and port conflict issues"
 dependencies: [overview.md]
-related: [connection-issues.md, protocol-issues.md]
+related: [connection-issues.md, protocol-validation-issues.md, protocol-discovery-issues.md]
 keywords: [mcp, configuration, port, enabled, disabled, bind, environment]
 estimated_time: 20 minutes
 difficulty: beginner
@@ -564,7 +564,8 @@ export MCP_REQUEST_TIMEOUT=120000
 
 - [MCP Troubleshooting Overview](./overview.md) - Quick reference to all issues
 - [Connection Troubleshooting](./connection-issues.md) - Connection and SSE issues
-- [Protocol Troubleshooting](./protocol-issues.md) - JSON-RPC and tool/resource errors
+- [Protocol Validation](./protocol-validation-issues.md) - JSON-RPC format and validation errors
+- [Protocol Discovery](./protocol-discovery-issues.md) - Tool and resource discovery errors
 - [Performance Troubleshooting](./performance-issues.md) - Slow responses and timeouts
 
 ## See Also

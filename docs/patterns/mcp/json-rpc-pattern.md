@@ -615,7 +615,7 @@ catch (e: Exception) {
 
 ## Troubleshooting
 
-See [Protocol Troubleshooting](../../../guides/troubleshooting/mcp/protocol-issues.md) for common JSON-RPC issues.
+See [Protocol Validation Issues](../../../guides/troubleshooting/mcp/protocol-validation-issues.md) for common JSON-RPC format and validation issues.
 
 ## Related Patterns
 

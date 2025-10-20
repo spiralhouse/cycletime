@@ -4,7 +4,7 @@ type: guide
 domain: [mcp, troubleshooting, performance, optimization]
 description: "Solutions for slow response times, request timeouts, and performance optimization"
 dependencies: [overview.md]
-related: [connection-issues.md, protocol-issues.md]
+related: [connection-issues.md, protocol-validation-issues.md, protocol-discovery-issues.md]
 keywords: [mcp, performance, timeout, slow, optimization, database, caching]
 estimated_time: 30 minutes
 difficulty: intermediate
@@ -588,7 +588,8 @@ echo "=== Benchmark Complete ==="
 
 - [MCP Troubleshooting Overview](./overview.md) - Quick reference to all issues
 - [Connection Troubleshooting](./connection-issues.md) - Connection and SSE issues
-- [Protocol Troubleshooting](./protocol-issues.md) - JSON-RPC and tool/resource errors
+- [Protocol Validation](./protocol-validation-issues.md) - JSON-RPC format and validation errors
+- [Protocol Discovery](./protocol-discovery-issues.md) - Tool and resource discovery errors
 - [Configuration Troubleshooting](./configuration-issues.md) - MCP configuration issues
 
 ## See Also

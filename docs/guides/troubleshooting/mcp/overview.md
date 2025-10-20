@@ -4,7 +4,7 @@ type: guide
 domain: [mcp, troubleshooting]
 description: "Quick reference guide to common MCP server and client issues"
 dependencies: []
-related: [connection-issues.md, protocol-issues.md, performance-issues.md, configuration-issues.md]
+related: [connection-issues.md, protocol-validation-issues.md, protocol-discovery-issues.md, performance-issues.md, configuration-issues.md]
 keywords: [mcp, troubleshooting, debugging, issues, quick-reference]
 estimated_time: 10 minutes
 difficulty: beginner
@@ -26,9 +26,9 @@ This guide addresses the top 10 common MCP issues encountered during development
 | #1 | Connection Refused | Connection | [Connection Issues](./connection-issues.md#issue-1-connection-refused) |
 | #2 | SSE Connection Failed | Connection | [Connection Issues](./connection-issues.md#issue-2-sse-connection-failed) |
 | #3 | Connection Timeout | Connection | [Connection Issues](./connection-issues.md#issue-3-connection-timeout) |
-| #4 | Invalid JSON-RPC Request | Protocol | [Protocol Issues](./protocol-issues.md#issue-4-invalid-json-rpc) |
-| #5 | Tool Not Found | Protocol | [Protocol Issues](./protocol-issues.md#issue-5-tool-not-found) |
-| #6 | Resource Not Found | Protocol | [Protocol Issues](./protocol-issues.md#issue-6-resource-not-found) |
+| #4 | Invalid JSON-RPC Request | Protocol | [Protocol Validation](./protocol-validation-issues.md#issue-invalid-json-rpc-request) |
+| #5 | Tool Not Found | Protocol | [Protocol Discovery](./protocol-discovery-issues.md#issue-tool-not-found) |
+| #6 | Resource Not Found | Protocol | [Protocol Discovery](./protocol-discovery-issues.md#issue-resource-not-found) |
 | #7 | Slow Response Times | Performance | [Performance Issues](./performance-issues.md#issue-7-slow-response-times) |
 | #8 | Request Timeout | Performance | [Performance Issues](./performance-issues.md#issue-8-request-timeout) |
 | #9 | MCP Server Disabled | Configuration | [Configuration Issues](./configuration-issues.md#issue-9-mcp-disabled) |
@@ -43,8 +43,8 @@ Problems establishing or maintaining connections to the MCP server.
 
 ### Protocol Issues
 JSON-RPC protocol errors and tool/resource discovery problems.
-- [Protocol Troubleshooting Guide](./protocol-issues.md)
-- Covers: Invalid requests, tool not found, resource not found
+- [Protocol Validation Guide](./protocol-validation-issues.md) - JSON-RPC format and validation errors
+- [Protocol Discovery Guide](./protocol-discovery-issues.md) - Tool and resource discovery problems
 
 ### Performance Issues
 Slow responses and timeout problems.

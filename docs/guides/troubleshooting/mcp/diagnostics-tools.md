@@ -4,7 +4,7 @@ type: reference
 domain: [mcp, troubleshooting, diagnostics, tools]
 description: "MCP Inspector, diagnostic tools, error code reference, and recovery procedures"
 dependencies: [overview.md]
-related: [connection-issues.md, protocol-issues.md, performance-issues.md, configuration-issues.md]
+related: [connection-issues.md, protocol-validation-issues.md, protocol-discovery-issues.md, performance-issues.md, configuration-issues.md]
 keywords: [mcp, diagnostics, inspector, error-codes, debugging, health-check, recovery]
 estimated_time: 25 minutes
 difficulty: intermediate
@@ -312,10 +312,10 @@ chmod +x mcp-debug-connection.sh
 
 | Code | Meaning | Common Causes | Solution Guide |
 |------|---------|---------------|----------------|
-| -32700 | Parse error | Invalid JSON syntax | [Protocol Issues](./protocol-issues.md#issue-4-invalid-json-rpc-request) |
-| -32600 | Invalid Request | Missing required JSON-RPC fields | [Protocol Issues](./protocol-issues.md#issue-4-invalid-json-rpc-request) |
-| -32601 | Method not found | Wrong tool/resource name | [Protocol Issues](./protocol-issues.md#issue-5-tool-not-found) |
-| -32602 | Invalid params | Wrong parameter format or missing required params | [Protocol Issues](./protocol-issues.md#issue-6-resource-not-found) |
+| -32700 | Parse error | Invalid JSON syntax | [Protocol Validation](./protocol-validation-issues.md#issue-invalid-json-rpc-request) |
+| -32600 | Invalid Request | Missing required JSON-RPC fields | [Protocol Validation](./protocol-validation-issues.md#issue-invalid-json-rpc-request) |
+| -32601 | Method not found | Wrong tool/resource name | [Protocol Discovery](./protocol-discovery-issues.md#issue-tool-not-found) |
+| -32602 | Invalid params | Wrong parameter format or missing required params | [Protocol Discovery](./protocol-discovery-issues.md#issue-resource-not-found) |
 | -32603 | Internal error | Server-side exception | Check server logs |
 | -32000 | Server error | Timeout, resource not found, etc. | [Performance Issues](./performance-issues.md) |
 
@@ -552,7 +552,8 @@ When creating a GitHub issue:
 
 - [MCP Troubleshooting Overview](./overview.md) - Quick reference to all issues
 - [Connection Issues](./connection-issues.md) - Connection and SSE troubleshooting
-- [Protocol Issues](./protocol-issues.md) - JSON-RPC and tool/resource errors
+- [Protocol Validation](./protocol-validation-issues.md) - JSON-RPC format and validation errors
+- [Protocol Discovery](./protocol-discovery-issues.md) - Tool and resource discovery errors
 - [Performance Issues](./performance-issues.md) - Slow responses and timeouts
 - [Configuration Issues](./configuration-issues.md) - MCP configuration problems
 
