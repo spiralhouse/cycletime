@@ -230,12 +230,11 @@ git checkout -b feat/spi-620-documentation-standards
 ```
 
 **MCP Automation**:
-```typescript
-// Automatically executed by git hook
-mcp__linear__update_issue({
-  id: "SPI-620",
-  state: "Todo"  // Status ID: fc814d1f-22b5-4ce6-8b40-87c1312d54ba
-})
+```bash
+# Automatically executed by git hook
+# Invokes Claude Code with MCP tool call
+claude "Update Linear SPI-620 status to Todo"
+# Internal: mcp__linear__update_issue(id="SPI-620", state="Todo")
 ```
 
 #### 2. First Commit → In Progress
@@ -248,12 +247,11 @@ git commit -m "feat: add documentation standards framework"
 ```
 
 **MCP Automation**:
-```typescript
-// Automatically executed by git hook
-mcp__linear__update_issue({
-  id: "SPI-620",
-  state: "In Progress"  // Status ID: a433a32b-b815-4e11-af23-a74cb09606aa
-})
+```bash
+# Automatically executed by git hook
+# Invokes Claude Code with MCP tool call
+claude "Update Linear SPI-620 status to In Progress"
+# Internal: mcp__linear__update_issue(id="SPI-620", state="In Progress")
 ```
 
 #### 3. PR Creation → In Review
@@ -265,12 +263,11 @@ gh pr create --title "feat: standardize documentation patterns"
 ```
 
 **MCP Automation**:
-```typescript
-// Automatically executed by gh CLI hook
-mcp__linear__update_issue({
-  id: "SPI-620",
-  state: "In Review"  // Status ID: 8d617a10-15f3-4e26-ad28-3653215c2f25
-})
+```bash
+# Automatically executed by gh CLI hook
+# Invokes Claude Code with MCP tool call
+claude "Update Linear SPI-620 status to In Review"
+# Internal: mcp__linear__update_issue(id="SPI-620", state="In Review")
 ```
 
 #### 4. PR Merge → Done
@@ -282,12 +279,11 @@ gh pr merge 123 --merge
 ```
 
 **MCP Automation**:
-```typescript
-// Automatically executed by GitHub webhook
-mcp__linear__update_issue({
-  id: "SPI-620",
-  state: "Done"  // Status ID: 3d267fcf-15c0-4f3a-8725-2f1dd717e9e8
-})
+```bash
+# Automatically executed by GitHub webhook
+# Invokes Claude Code with MCP tool call
+claude "Update Linear SPI-620 status to Done"
+# Internal: mcp__linear__update_issue(id="SPI-620", state="Done")
 ```
 
 ### Manual Status Updates via MCP
@@ -305,18 +301,17 @@ Update status manually when automation doesn't cover edge cases:
 @agent-developer "Update Linear SPI-620 status to Todo and add comment about dependency on SPI-615"
 ```
 
-**Direct MCP Call**:
-```typescript
-mcp__linear__update_issue({
-  id: "SPI-620",
-  state: "In Progress"
-})
+**Direct MCP Call via Claude Code**:
+```bash
+# Update issue status
+claude "Update Linear SPI-620 status to In Progress"
 
-// With comment for context
-mcp__linear__create_comment({
-  issueId: "SPI-620",
-  body: "Blocked by SPI-615 - waiting for API redesign completion"
-})
+# Add comment with context
+claude "Add comment to Linear SPI-620: Blocked by SPI-615 - waiting for API redesign completion"
+
+# Internal MCP tool calls:
+# - mcp__linear__update_issue(id="SPI-620", state="In Progress")
+# - mcp__linear__create_comment(issueId="SPI-620", body="Blocked by SPI-615...")
 ```
 
 ### Subtask vs Story Status Management
