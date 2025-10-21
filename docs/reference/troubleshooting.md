@@ -1,3 +1,14 @@
+---
+title: "Troubleshooting Guide"
+type: reference
+domain: [operations, support]
+description: "Comprehensive troubleshooting reference covering agent issues, build failures, database problems, and common development errors with solutions"
+dependencies: []
+related: [agents.md, worktree-operations.md]
+keywords: [troubleshooting, debugging, errors, solutions, diagnostics]
+last_updated: 2025-10-21
+---
+
 # Troubleshooting Guide
 
 Comprehensive troubleshooting reference for CycleTime development issues.

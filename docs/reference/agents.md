@@ -1,3 +1,14 @@
+---
+title: "Agent Reference"
+type: reference
+domain: [development, agent-system]
+description: "Authoritative reference for Task Tool and Claude CLI agents, including capabilities, selection guidelines, and usage patterns for coordinated and autonomous development"
+dependencies: []
+related: [decision-guide.md, worktree-operations.md]
+keywords: [agents, task-tool, claude-cli, workflows, parallel-development, coordination]
+last_updated: 2025-10-21
+---
+
 # Agent Reference
 
 This document provides the authoritative reference for all agent types in CycleTime development.
