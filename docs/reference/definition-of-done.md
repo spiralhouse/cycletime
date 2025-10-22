@@ -4,7 +4,7 @@ type: reference
 domain: [development, quality, process]
 description: "Comprehensive completion criteria for all development work in CycleTime"
 dependencies: []
-related: [../contributing/document-standards.md, ../../CONTRIBUTING.md, ../testing/strategy.md, ../../.claude/shared/testing-standards.md]
+related: [../contributing/document-standards.md, ../../CONTRIBUTING.md, ../concepts/testing/testing-strategy.md, ../../.claude/shared/testing-standards.md]
 keywords: [definition-of-done, dod, quality-gates, completion-criteria, standards, code-quality, testing, documentation]
 last_updated: 2025-10-21
 ---
@@ -39,34 +39,9 @@ The Definition of Done (DoD) ensures:
 - [ ] Error conditions have proper error handling
 - [ ] No known bugs or defects remain
 
-**Verification:**
-```bash
-# Manual verification through issue acceptance criteria
-# Functional testing through automated tests
-./gradlew test
-```
+**Verification:** See [Verification Commands](#verification-commands-reference)
 
-**Example - PASS:**
-```kotlin
-// User authentication feature with all edge cases handled
-fun authenticate(credentials: Credentials): Result<User> {
-    return when {
-        credentials.isEmpty() -> Result.failure(InvalidCredentialsException())
-        !credentials.isValid() -> Result.failure(InvalidFormatException())
-        else -> repository.findUser(credentials)
-            .map { user -> user.validatePassword(credentials.password) }
-            .getOrElse { Result.failure(AuthenticationFailedException()) }
-    }
-}
-```
-
-**Example - FAIL:**
-```kotlin
-// Missing edge case handling
-fun authenticate(credentials: Credentials): User {
-    return repository.findUser(credentials).get() // Can throw if not found!
-}
-```
+**Examples:** [Error Handling Example](../examples/definition-of-done/error-handling-example.md)
 
 ### 1.2 Code Quality Standards
 
@@ -79,41 +54,11 @@ fun authenticate(credentials: Credentials): User {
 - [ ] No hardcoded values (use configuration)
 - [ ] No security vulnerabilities (secrets, SQL injection, etc.)
 
-**Verification:**
-```bash
-./gradlew detekt  # Must pass with zero violations
-```
-
-**Example - PASS:**
-```kotlin
-/**
- * Validates session expiration based on configured timeout.
- * Uses injected TimeProvider to ensure testability.
- */
-class SessionValidator(
-    private val timeProvider: TimeProvider,
-    private val config: SessionConfig
-) {
-    fun isExpired(session: Session): Boolean {
-        val sessionAge = Duration.between(
-            session.lastActivity,
-            timeProvider.now()
-        )
-        return sessionAge > config.maxAge
-    }
-}
-```
-
-**Example - FAIL:**
-```kotlin
-// Hardcoded timeout, untestable time dependency
-fun isExpired(session: Session): Boolean {
-    val age = System.currentTimeMillis() - session.lastActivity
-    return age > 3600000 // Magic number!
-}
-```
+**Verification:** See [Verification Commands](#verification-commands-reference)
 
 ### 1.3 Architecture Alignment
+
+**Complete standards:** See [Architecture Overview](../architecture/overview.md)
 
 **Criteria:**
 - [ ] Follows Domain-Driven Design principles
@@ -123,12 +68,9 @@ fun isExpired(session: Session): Boolean {
 - [ ] Repository pattern for data access
 - [ ] No domain logic in infrastructure layer
 
-**Verification:**
-- Manual code review against architecture patterns
-- Check dependency direction (infrastructure depends on domain, not vice versa)
+**Examples:** [Architecture Alignment Example](../examples/definition-of-done/architecture-alignment-example.md)
 
 **References:**
-- [Architecture Overview](../architecture/overview.md)
 - [Dependency Injection Patterns](../patterns/architecture/dependency-injection.md)
 - [Domain-Driven Design](../concepts/architecture/domain-driven-design.md)
 
@@ -143,18 +85,7 @@ fun isExpired(session: Session): Boolean {
 - [ ] Memory usage remains stable (no leaks)
 - [ ] No unnecessary blocking operations
 
-**Verification:**
-```bash
-# Run performance baseline tests
-./gradlew systemTest --tests "*PerformanceTest"
-
-# Compare against baseline
-diff <(cat docs/performance/baseline-results.md) <(./gradlew systemTest | grep -A 20 "Performance Results")
-```
-
-**References:**
-- [Performance Baseline Results](../archive/pre-dag-migration/performance/baseline-results.md) (archived - pending migration)
-- [Caching Strategy](../archive/pre-dag-migration/performance/caching-strategy.md) (archived - pending migration)
+**Verification:** See [Verification Commands](#verification-commands-reference)
 
 ---
 
@@ -169,83 +100,21 @@ diff <(cat docs/performance/baseline-results.md) <(./gradlew systemTest | grep -
 - [ ] Architectural decisions are explained (inline or ADR)
 - [ ] No misleading or outdated comments
 
-**Example - PASS:**
-```kotlin
-/**
- * Manages session lifecycle with configurable timeout and cleanup.
- *
- * Sessions are stored in-memory with periodic cleanup of expired entries.
- * Cleanup runs every [SessionConfig.cleanupInterval] to prevent memory leaks.
- *
- * @param sessionService Application service for session CRUD operations
- * @param timeProvider Injectable time source for testing
- * @param dbProvider Database connection provider
- * @param config Session configuration (timeout, cleanup interval)
- */
-class SessionManager(
-    private val sessionService: SessionApplicationService,
-    private val timeProvider: TimeProvider,
-    private val dbProvider: DatabaseProvider,
-    private val config: SessionConfig
-) { /* ... */ }
-```
-
 ### 2.2 Documentation File Standards
 
-**NEW REQUIREMENT (SPI-722):**
+**Complete standards:** See [Document Standards](../contributing/document-standards.md)
 
-All new or modified documentation files MUST include:
+**Criteria (SPI-722):**
+- [ ] YAML frontmatter present on all new/modified docs
+- [ ] Required frontmatter fields: title, type, domain, description, dependencies, related, keywords, last_updated
+- [ ] Dependencies declared for prerequisite topics
+- [ ] Cross-references updated to new DAG structure
+- [ ] Relative paths used for all internal links
+- [ ] Document length appropriate for type (200-500 lines optimal)
 
-- [ ] **YAML frontmatter** with required fields:
-  - `title`: Clear, descriptive title
-  - `type`: Document type (guide, reference, concept, tutorial)
-  - `domain`: Relevant domains (array)
-  - `description`: One-sentence summary
-  - `dependencies`: Prerequisite documents (array)
-  - `related`: Related documents with context (array)
-  - `keywords`: Searchable terms (array)
-  - `last_updated`: ISO date (YYYY-MM-DD)
+**Verification:** See [Verification Commands](#verification-commands-reference)
 
-- [ ] **Dependency declarations** for prerequisite knowledge
-- [ ] **Cross-references updated** to point to new doc structure
-- [ ] **Relative paths** used for all internal links
-- [ ] **Length guidelines** followed (200-500 lines optimal)
-
-**Example - PASS:**
-```yaml
----
-title: "Session Management Architecture"
-type: concept
-domain: [architecture, sessions]
-description: "Design and implementation of session lifecycle management"
-dependencies: [../architecture/overview.md]
-related: [./dependency-injection-patterns.md, ../../api/mcp-tools-reference.md]
-keywords: [sessions, lifecycle, architecture, state-management]
-last_updated: 2025-10-21
----
-```
-
-**Example - FAIL:**
-```markdown
-# Session Management
-
-This document explains sessions...
-<!-- Missing frontmatter entirely! -->
-```
-
-**Verification:**
-```bash
-# Check for frontmatter in new/modified docs
-git diff main --name-only -- 'docs/**/*.md' | while read file; do
-    if ! head -1 "$file" | grep -q "^---$"; then
-        echo "ERROR: Missing frontmatter in $file"
-    fi
-done
-```
-
-**References:**
-- [Document Standards](../contributing/document-standards.md)
-- [DAG Documentation Architecture](../README.md)
+**References:** [DAG Documentation Architecture](../README.md)
 
 ### 2.3 User-Facing Documentation
 
@@ -256,12 +125,7 @@ done
 - [ ] Configuration examples updated
 - [ ] Troubleshooting guide updated for new error scenarios
 
-**Applies to:**
-- New MCP tools or resources
-- API endpoint changes
-- Configuration option changes
-- Deployment procedure changes
-- Error handling changes
+**Applies to:** New MCP tools/resources, API changes, configuration changes, deployment changes, error handling changes
 
 ---
 
@@ -275,27 +139,13 @@ done
 - [ ] Code complexity within thresholds (cyclomatic complexity < 15)
 - [ ] No duplicated code blocks
 
-**Verification:**
-```bash
-./gradlew detekt
-# Expected output: "0 findings" or justified suppressions only
-```
+**Verification:** See [Verification Commands](#verification-commands-reference)
 
-**Acceptable Suppression:**
-```kotlin
-@Suppress("ComplexMethod") // Business rules complexity inherent to domain
-fun calculatePremium(policy: Policy): Amount {
-    // 20+ line method with business rule complexity
-}
-```
-
-**Unacceptable Suppression:**
-```kotlin
-@Suppress("TooManyFunctions") // Lazy - refactor instead!
-class GodObject { /* 50 methods */ }
-```
+**Note:** Suppressions require justification comment explaining why complexity is inherent to domain.
 
 ### 3.2 Test Coverage
+
+**Complete standards:** See [Testing Standards](../../.claude/shared/testing-standards.md)
 
 **Criteria:**
 - [ ] Overall coverage ≥ 80% (enforced by koverVerify)
@@ -303,32 +153,25 @@ class GodObject { /* 50 methods */ }
 - [ ] New code coverage ≥ existing project average
 - [ ] Meaningful tests (not just coverage for coverage)
 
-**Verification:**
-```bash
-./gradlew koverVerify koverHtmlReport
-# Open build/reports/kover/html/index.html
-```
+**Coverage by Component:**
+- Domain entities: 100% (pure business logic)
+- Application services: 100% (orchestration logic)
+- Infrastructure: 80% (database, external systems)
+- MCP handlers: 90% (tool and resource handlers)
+- Configuration: 60% (mostly boilerplate)
 
-**Coverage by Component Type:**
-- **Domain entities**: 100% (pure business logic)
-- **Application services**: 100% (orchestration logic)
-- **Infrastructure**: 80% (database, external systems)
-- **MCP handlers**: 90% (tool and resource handlers)
-- **Configuration**: 60% (mostly boilerplate)
+**Verification:** See [Verification Commands](#verification-commands-reference)
 
-**References:**
-- [Testing Strategy](../concepts/testing/testing-strategy.md)
-- [Testing Standards](../../.claude/shared/testing-standards.md)
+**References:** [Testing Strategy](../concepts/testing/testing-strategy.md)
 
 ### 3.3 Security Review
 
 **Required for changes involving:**
-
-- [ ] **Authentication/Authorization**: Token handling, permission checks
-- [ ] **Data Access**: Database queries, file system access
-- [ ] **API Endpoints**: Input validation, rate limiting
-- [ ] **Configuration**: Secret management, sensitive settings
-- [ ] **External Integrations**: Third-party API calls, webhooks
+- [ ] Authentication/Authorization: Token handling, permission checks
+- [ ] Data Access: Database queries, file system access
+- [ ] API Endpoints: Input validation, rate limiting
+- [ ] Configuration: Secret management, sensitive settings
+- [ ] External Integrations: Third-party API calls, webhooks
 
 **Security Checklist:**
 - [ ] No secrets in code (use environment variables)
@@ -338,37 +181,9 @@ class GodObject { /* 50 methods */ }
 - [ ] Authentication checks on protected endpoints
 - [ ] Rate limiting on public endpoints
 
-**Verification:**
-```bash
-# Check for secrets in code
-git diff main | grep -iE '(password|secret|key|token).*=.*["\']'
+**Verification:** See [Verification Commands](#verification-commands-reference)
 
-# Dependency vulnerability scan
-./gradlew dependencyCheckAnalyze
-```
-
-**Example - PASS:**
-```kotlin
-// Environment variable for secrets
-val apiKey = System.getenv("CYCLETIME_API_KEY")
-    ?: throw ConfigurationException("API key required")
-
-// Parameterized query (SQL injection safe)
-fun findUser(email: String): User? {
-    return transaction {
-        Users.select { Users.email eq email }.singleOrNull()
-    }
-}
-```
-
-**Example - FAIL:**
-```kotlin
-// Secret hardcoded!
-val apiKey = "sk-1234567890abcdef"
-
-// SQL injection vulnerable!
-val query = "SELECT * FROM users WHERE email = '$email'"
-```
+**Examples:** [Error Handling Example](../examples/definition-of-done/error-handling-example.md)
 
 ### 3.4 Build Pipeline Success
 
@@ -378,26 +193,15 @@ val query = "SELECT * FROM users WHERE email = '$email'"
 - [ ] No build warnings (treat warnings as errors)
 - [ ] Docker build succeeds (if infrastructure changes)
 
-**CI Checks:**
-- Unit tests (parallel execution)
-- Integration tests (database setup)
-- System tests (performance baselines)
-- Static analysis (detekt)
-- Dependency security scan
-- Commit message validation
+**CI Checks:** Commit validation, unit tests (parallel), integration tests (parallel), system tests (sequential), static analysis (detekt), coverage report (kover), security scan, build verification
 
-**Verification:**
-```bash
-# Run full local build
-./gradlew clean build
-
-# Verify Docker build (if applicable)
-docker build -t cycletime:test .
-```
+**Verification:** See [Verification Commands](#verification-commands-reference)
 
 ---
 
 ## 4. Linear Integration
+
+**Complete workflow:** See [Linear Reference](../../.claude/shared/linear-reference.md)
 
 ### 4.1 Issue Status Management
 
@@ -407,31 +211,11 @@ docker build -t cycletime:test .
 - [ ] Parent story status updated only when ALL subtasks complete
 - [ ] Issue status reflects actual work state (not aspirational)
 
-**Workflow:**
-```
-1. Start work: Todo → In Progress (subtask)
-2. Complete work: In Progress → Done (subtask)
-3. All subtasks done: Story → In Review (parent)
-4. After code review: In Review → Done (parent)
-```
+**Workflow:** Todo → In Progress (subtask) → Done (subtask) → In Review (parent story after ALL subtasks done) → Done (after code review)
 
 **IMPORTANT:** Update status fields using Linear integration, not comments.
 
-**Correct:**
-```bash
-# Update subtask status to Done
-mcp__linear-server__update_issue --id "SPI-123" --state "Done"
-```
-
-**Incorrect:**
-```bash
-# Don't use comments for status updates!
-mcp__linear-server__create_comment --issueId "SPI-123" --body "Work completed"
-```
-
-**References:**
-- [Linear Reference](../../.claude/shared/linear-reference.md)
-- [Linear Integration Guide](../guides/development/linear-integration.md)
+**References:** [Linear Integration Guide](../guides/development/linear-integration.md)
 
 ### 4.2 Acceptance Criteria Verification
 
@@ -441,12 +225,7 @@ mcp__linear-server__create_comment --issueId "SPI-123" --body "Work completed"
 - [ ] No unchecked criteria remain
 - [ ] No "partially complete" items
 
-**Verification Process:**
-1. Read acceptance criteria from Linear issue
-2. Create test for each criterion
-3. Verify test passes
-4. Check off criterion in Linear
-5. Repeat for all criteria
+**Process:** Read criteria → Create test → Verify test passes → Check off in Linear → Repeat
 
 ### 4.3 Related Issues Linked
 
@@ -456,34 +235,17 @@ mcp__linear-server__create_comment --issueId "SPI-123" --body "Work completed"
 - [ ] Duplicate issues marked and linked
 - [ ] Parent-child relationships correct (story → subtask)
 
-**Link Types:**
-- **Blocks**: This issue must complete before linked issue
-- **Blocked by**: Cannot proceed until linked issue completes
-- **Relates to**: Related work, useful context
-- **Duplicates**: Same issue, close one
-
 ### 4.4 Implementation Notes
 
-**Required for:**
-- Complex technical decisions
-- Architectural trade-offs
-- Non-obvious implementation approaches
-- Future improvement opportunities
-- Known limitations or constraints
+**Required for:** Complex technical decisions, architectural trade-offs, non-obvious implementations, future improvements, known limitations
 
-**Example - Implementation Note:**
-```
-Implementation used in-memory caching with LRU eviction (SPI-456).
-Considered Redis but opted for simplicity given current scale.
-Monitor cache hit rate; if < 70%, revisit Redis implementation.
-
-Performance: 95th percentile response time: 45ms (baseline: 120ms)
-Trade-off: Memory usage increased 50MB for 10,000 sessions
-```
+**Template:** Implementation approach, alternatives considered, performance metrics, trade-offs
 
 ---
 
 ## 5. Testing Requirements
+
+**Complete standards:** See [Testing Standards](../../.claude/shared/testing-standards.md)
 
 ### 5.1 Unit Tests
 
@@ -497,57 +259,11 @@ Trade-off: Memory usage increased 50MB for 10,000 sessions
 
 **Location:** `src/test/kotlin/`
 
-**Verification:**
-```bash
-./gradlew unitTest
-# Expected: All pass, < 30s total runtime
-```
+**Performance:** All pass, < 30s total runtime
 
-**Example:**
-```kotlin
-class SessionValidatorTest : StringSpec({
-    lateinit var mockTimeProvider: MockTimeProvider
-    lateinit var validator: SessionValidator
+**Verification:** See [Verification Commands](#verification-commands-reference)
 
-    beforeEach {
-        mockTimeProvider = MockTimeProvider()
-        validator = SessionValidator(
-            mockTimeProvider,
-            SessionConfig(maxAge = Duration.ofSeconds(60))
-        )
-    }
-
-    "should expire session when maxAge exceeded" {
-        val session = Session(
-            lastActivity = mockTimeProvider.now()
-        )
-
-        mockTimeProvider.advance(Duration.ofSeconds(61))
-
-        validator.isExpired(session) shouldBe true
-    }
-
-    "should not expire session within maxAge" {
-        val session = Session(
-            lastActivity = mockTimeProvider.now()
-        )
-
-        mockTimeProvider.advance(Duration.ofSeconds(59))
-
-        validator.isExpired(session) shouldBe false
-    }
-})
-```
-
-**Anti-Pattern (NEVER DO):**
-```kotlin
-// ❌ Real time dependency (flaky)
-"should expire session" {
-    val session = Session(lastActivity = Instant.now())
-    delay(1100) // Flaky! Depends on real time
-    validator.isExpired(session) shouldBe true
-}
-```
+**Examples:** [Unit Test Example](../examples/definition-of-done/unit-test-example.md)
 
 ### 5.2 Integration Tests
 
@@ -561,42 +277,11 @@ class SessionValidatorTest : StringSpec({
 
 **Location:** `src/integrationTest/kotlin/`
 
-**Verification:**
-```bash
-./gradlew integrationTest
-# Expected: All pass, < 3min total runtime
-```
+**Performance:** All pass, < 3min total runtime
 
-**Example:**
-```kotlin
-class SessionRepositoryIntegrationTest : StringSpec({
-    lateinit var database: Database
-    lateinit var repository: SessionRepository
+**Verification:** See [Verification Commands](#verification-commands-reference)
 
-    beforeEach {
-        database = Database.connect(
-            "jdbc:h2:mem:test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1"
-        )
-        transaction(database) {
-            SchemaUtils.create(SessionStates, Projects, Issues)
-        }
-        repository = ExposedSessionRepository()
-    }
-
-    afterEach {
-        TransactionManager.closeAndUnregister(database)
-    }
-
-    "should persist and retrieve session" {
-        val session = Session(id = "sess-123", projectId = "proj-456")
-
-        repository.save(session)
-        val retrieved = repository.findById("sess-123")
-
-        retrieved shouldBe session
-    }
-})
-```
+**Examples:** [Integration Test Example](../examples/definition-of-done/integration-test-example.md)
 
 ### 5.3 System Tests
 
@@ -609,39 +294,11 @@ class SessionRepositoryIntegrationTest : StringSpec({
 
 **Location:** `src/systemTest/kotlin/`
 
-**Verification:**
-```bash
-./gradlew systemTest
-# Expected: All pass, < 10min total runtime
-```
+**Performance:** All pass, < 10min total runtime
 
-**Example:**
-```kotlin
-class WorkflowSystemTest : StringSpec({
-    "should complete full session lifecycle" {
-        testApplication {
-            // Full MCP server + database + all components
+**Verification:** See [Verification Commands](#verification-commands-reference)
 
-            // Create session via MCP
-            val createResponse = client.post("/mcp/tools/create_session") {
-                contentType(ContentType.Application.Json)
-                setBody("""{"projectId": "proj-123"}""")
-            }
-            createResponse.status shouldBe HttpStatusCode.OK
-
-            // Use session
-            val sessionId = extractSessionId(createResponse)
-
-            // Verify session persisted
-            val getResponse = client.get("/mcp/tools/get_session/$sessionId")
-            getResponse.status shouldBe HttpStatusCode.OK
-
-            // Cleanup session
-            client.delete("/mcp/tools/delete_session/$sessionId")
-        }
-    }
-})
-```
+**Examples:** [System Test Example](../examples/definition-of-done/system-test-example.md)
 
 ### 5.4 Test Quality Standards
 
@@ -654,109 +311,43 @@ class WorkflowSystemTest : StringSpec({
 - [ ] No ignored tests without justification
 
 **References:**
-- [Testing Standards](../../.claude/shared/testing-standards.md)
-- [Testing Strategy](../concepts/testing/testing-strategy.md)
 - [Test Architecture](../concepts/testing/test-architecture.md)
+- [Testing Standards](../../.claude/shared/testing-standards.md)
 
 ---
 
 ## 6. Git & Code Review
 
+**Complete standards:** See [CONTRIBUTING.md](../../CONTRIBUTING.md)
+
 ### 6.1 Branch Naming
 
+**Complete standards:** See [Git Conventions](../../.claude/shared/git-conventions.md)
+
 **Criteria:**
-- [ ] Branch follows naming convention
+- [ ] Branch follows naming convention: `<type>/spi-XXX-description`
 - [ ] Branch name includes Linear issue ID
 - [ ] Branch name is descriptive
 
-**Convention:**
-```
-<type>/spi-XXX-description
+**Types:** feat/, fix/, docs/, refactor/, test/, chore/
 
-Types:
-- feat/    : New features
-- fix/     : Bug fixes
-- docs/    : Documentation only
-- refactor/: Code refactoring
-- test/    : Test additions/changes
-- chore/   : Maintenance tasks
-```
+**Examples:** `feat/spi-722-dag-documentation`, `fix/spi-456-session-expiration`
 
-**Examples:**
-```
-feat/spi-722-dag-documentation-structure
-fix/spi-456-session-expiration-bug
-docs/add-definition-of-done
-refactor/spi-789-extract-session-validator
-```
-
-**References:**
-- [Git Conventions](../../.claude/shared/git-conventions.md)
-- [Branching Strategy](../guides/development/branching-strategy.md)
+**References:** [Branching Strategy](../guides/development/branching-strategy.md)
 
 ### 6.2 Commit Messages
 
+**Complete standards:** See [CONTRIBUTING.md](../../CONTRIBUTING.md) sections on Conventional Commits
+
 **Criteria:**
-- [ ] Follows Conventional Commits specification
-- [ ] Type is appropriate (feat, fix, docs, etc.)
-- [ ] Scope is meaningful (optional but recommended)
+- [ ] Format: `<type>(<scope>): <subject>`
+- [ ] Type is appropriate (feat, fix, docs, refactor, test, etc.)
 - [ ] Subject is imperative mood ("add" not "added")
 - [ ] Subject is ≤ 50 characters
-- [ ] Body explains "why" not "what" (if needed)
+- [ ] Body explains "why" not "what" (optional)
 - [ ] References Linear issue in footer
 
-**Format:**
-```
-<type>(<scope>): <subject>
-
-[optional body]
-
-[optional footer]
-```
-
-**Examples:**
-
-**PASS:**
-```
-feat(sessions): add configurable session timeout
-
-Implement session timeout with configurable duration to allow
-different timeout policies per deployment environment.
-
-Implements SPI-456
-```
-
-**PASS:**
-```
-fix(auth): handle expired JWT tokens gracefully
-
-JWT validation was throwing uncaught exception on expired tokens,
-causing 500 errors. Now returns 401 with proper error message.
-
-Fixes SPI-789
-```
-
-**FAIL:**
-```
-fixed bug
-<!-- Missing type, non-descriptive -->
-```
-
-**FAIL:**
-```
-feat: Added new session timeout feature with configurable duration
-<!-- Subject too long (>50 chars) -->
-```
-
-**Verification:**
-```bash
-# Validate commits locally
-npm run commitlint-ci  # Last commit
-npm run commitlint-pr  # All commits in branch
-```
-
-**References:**
-- [CONTRIBUTING.md](../../CONTRIBUTING.md) - Full commit message guide
+**Verification:** See [Verification Commands](#verification-commands-reference)
 
 ### 6.3 Pull Request Requirements
 
@@ -770,32 +361,7 @@ npm run commitlint-pr  # All commits in branch
 - [ ] No merge conflicts with main
 - [ ] Branch is up-to-date with main
 
-**PR Description Template:**
-```markdown
-## Summary
-Brief description of changes (2-3 sentences)
-
-## Linear Issue
-Implements SPI-XXX: [Issue Title](linear-url)
-
-## Changes
-- Added session timeout configuration
-- Implemented timeout validation in SessionValidator
-- Updated session manager to use configurable timeout
-
-## Testing
-- Unit tests: SessionValidatorTest (100% coverage)
-- Integration tests: SessionRepositoryIntegrationTest
-- System tests: SessionLifecycleSystemTest
-- Manual testing: Verified timeout in local environment
-
-## Breaking Changes
-None
-
-## Documentation
-- Updated docs/architecture/session-management.md
-- Added KDoc to SessionValidator class
-```
+**Template:** See CONTRIBUTING.md for PR description template
 
 ### 6.4 Code Review Approval
 
@@ -806,88 +372,13 @@ None
 - [ ] Reviewer verified tests pass locally (for complex changes)
 - [ ] Security review completed (if applicable)
 
-**Review Focus Areas:**
-1. **Correctness**: Does it work as intended?
-2. **Architecture**: Does it fit the design?
-3. **Testability**: Is it properly tested?
-4. **Security**: Are there vulnerabilities?
-5. **Performance**: Will it scale?
-6. **Maintainability**: Can others understand it?
-
-**Review Checklist:**
-```markdown
-- [ ] Code follows architecture patterns
-- [ ] Tests are comprehensive and meaningful
-- [ ] No security vulnerabilities introduced
-- [ ] Performance impact assessed
-- [ ] Documentation is clear and complete
-- [ ] Breaking changes properly handled
-```
+**Review Focus:** Correctness, architecture, testability, security, performance, maintainability
 
 ---
 
-## 7. Continuous Integration
+## 7. Master Checklist
 
-### 7.1 CI Pipeline Success
-
-**All CI checks must pass:**
-
-- [ ] **Commit Validation**: All commit messages valid
-- [ ] **Unit Tests**: All unit tests pass
-- [ ] **Integration Tests**: All integration tests pass
-- [ ] **System Tests**: All system tests pass
-- [ ] **Static Analysis**: Detekt passes with zero violations
-- [ ] **Coverage**: Coverage thresholds met (≥80%)
-- [ ] **Security Scan**: No vulnerable dependencies
-- [ ] **Build**: Clean build succeeds
-
-**Pipeline Stages:**
-```
-1. Commit Message Validation
-2. Unit Tests (parallel)
-3. Integration Tests (parallel)
-4. System Tests (sequential)
-5. Static Analysis (detekt)
-6. Coverage Report (kover)
-7. Security Scan (dependency check)
-8. Build Verification (JAR + Docker)
-```
-
-### 7.2 Performance Baseline Compliance
-
-**Criteria:**
-- [ ] No regression in response times (within 10% of baseline)
-- [ ] Memory usage within acceptable range
-- [ ] Database query counts unchanged or reduced
-- [ ] No new slow queries (> 100ms)
-
-**Baseline Metrics:**
-```
-MCP Tool Calls:
-- create_session: 45ms (p95)
-- get_session: 12ms (p95)
-- list_issues: 78ms (p95)
-
-Database Operations:
-- Insert: 5ms (p95)
-- Select: 8ms (p95)
-- Update: 6ms (p95)
-```
-
-**Verification:**
-```bash
-./gradlew systemTest --tests "*PerformanceTest"
-# Review output against docs/performance/baseline-results.md
-```
-
-**References:**
-- [Performance Baseline Results](../archive/pre-dag-migration/performance/baseline-results.md) (archived - pending migration)
-
----
-
-## 8. Definition of Done Checklist
-
-Use this checklist to verify work is complete:
+Quick self-assessment before requesting review:
 
 ### Code Quality
 - [ ] All acceptance criteria implemented
@@ -933,9 +424,9 @@ Use this checklist to verify work is complete:
 
 ---
 
-## 9. Exceptions and Edge Cases
+## 8. Exceptions and Edge Cases
 
-### 9.1 When DoD May Be Relaxed
+### 8.1 When DoD May Be Relaxed
 
 **Documentation-only changes:**
 - Tests not required for docs-only PRs
@@ -951,7 +442,7 @@ Use this checklist to verify work is complete:
 - Must be clearly marked as experimental
 - Cannot be merged to main without meeting full DoD
 
-### 9.2 Never Skip These
+### 8.2 Never Skip These
 
 **Always required, no exceptions:**
 - [ ] Code review approval
@@ -962,78 +453,147 @@ Use this checklist to verify work is complete:
 
 ---
 
-## 10. DoD Compliance
+## 9. Novel Project-Specific Criteria
 
-### 10.1 Self-Assessment
+Beyond standard Definition of Done practices, CycleTime adds these unique requirements:
 
-Before requesting review, honestly assess:
-1. "Would I be comfortable deploying this to production right now?"
-2. "Can another developer understand and maintain this code?"
-3. "Are there any shortcuts or 'TODOs' I'm leaving for later?"
+### 9.1 DAG Documentation Architecture (SPI-722)
+- [ ] New docs have YAML frontmatter with required fields
+- [ ] Dependencies declared for prerequisite knowledge
+- [ ] Documents placed in correct `docs/{type}/{domain}/` directory
+- [ ] Cross-references use relative paths
+- [ ] Document length follows guidelines (200-500 lines optimal)
 
-If any answer is "no" or uncertain, the work is not done.
+**Impact:** Enables RAG-optimized retrieval for AI agents, better context for AI-assisted development
 
-### 10.2 Review Enforcement
+**References:** [Document Standards](../contributing/document-standards.md)
 
-Code reviewers should:
-- Use this DoD as their review checklist
-- Block PRs that don't meet DoD criteria
-- Provide specific DoD references in feedback
-- Ensure team consistency in standards
+### 9.2 Baseline Performance Testing
+- [ ] Pre-development baseline captured (if new feature affects performance)
+- [ ] Post-development comparison shows no regression (within 10%)
+- [ ] Delta analysis documents new test additions
+- [ ] Performance metrics documented in implementation notes
 
-### 10.3 Continuous Improvement
+**Impact:** Prevents performance degradation over time, maintains SLA compliance
 
-This DoD should evolve:
-- Updated as new patterns emerge
-- Refined based on production issues
-- Simplified if overly burdensome
-- Expanded if gaps are discovered
+**Baseline Metrics:**
+- MCP tool calls: create_session (45ms p95), get_session (12ms p95), list_issues (78ms p95)
+- Database operations: Insert (5ms p95), Select (8ms p95), Update (6ms p95)
 
-**Propose changes via:**
-1. Discussion in team retrospectives
-2. PR to update this document
-3. ADR for significant changes
+### 9.3 Three-Tier Test Categorization
+- [ ] Tests in correct source set (test/integrationTest/systemTest)
+- [ ] Physical directory determines test tier, not package name
+- [ ] Test type matches execution requirements (speed, dependencies)
+- [ ] No package-based filters needed
 
----
+**Impact:** Faster feedback, clearer test purposes, better IDE recognition
 
-## 11. Novel Project-Specific Criteria
+**References:** [Testing Standards](../../.claude/shared/testing-standards.md)
 
-Beyond standard Definition of Done practices, CycleTime adds:
+### 9.4 Linear Subtask-First Workflow
+- [ ] Update subtask status fields (not parent comments)
+- [ ] Parent story to "In Review" only when ALL subtasks done
+- [ ] Status reflects actual work state
+- [ ] Use MCP Linear integration for status updates
 
-### 11.1 DAG Documentation Architecture (SPI-722)
-- All documentation includes machine-readable frontmatter
-- Dependencies form a directed acyclic graph
-- Enables RAG-optimized retrieval for AI agents
-- **Impact**: Better context for AI-assisted development
+**Impact:** Better progress tracking, clearer accountability, accurate reporting
 
-### 11.2 Baseline Performance Testing
-- Every change compared against performance baseline
-- Regression detected automatically in CI
-- **Impact**: Prevents performance degradation over time
+**Correct:** `mcp__linear-server__update_issue --id "SPI-123" --state "Done"`
 
-### 11.3 Three-Tier Test Categorization
-- Physical separation by source set (not package filters)
-- Clear execution strategies per tier
-- **Impact**: Faster feedback, clearer test purposes
+**Incorrect:** Using comments for status updates
 
-### 11.4 Linear Subtask-First Workflow
-- Update subtask status, not parent comments
-- Parent status reflects subtask completion
-- **Impact**: Better progress tracking, clearer accountability
+### 9.5 Time-Mockable Architecture
+- [ ] Time dependencies injected via TimeProvider
+- [ ] No `Instant.now()` in business logic
+- [ ] No `delay()` in business logic
+- [ ] All time-dependent code testable with MockTimeProvider
 
-### 11.5 Time-Mockable Architecture
-- All time dependencies injected (TimeProvider)
-- No `Instant.now()` or `delay()` in business logic
-- **Impact**: Deterministic, fast tests
+**Impact:** Deterministic, fast tests; no flaky time-based failures
 
-### 11.6 Agent-Optimized Documentation
-- Documentation written for AI agent consumption
-- Structured for context retrieval
-- **Impact**: Better AI-assisted development experience
+**Examples:** [Unit Test Example](../examples/definition-of-done/unit-test-example.md), [Architecture Alignment Example](../examples/definition-of-done/architecture-alignment-example.md)
+
+### 9.6 Agent-Optimized Documentation
+- [ ] Documentation structured for Context Engineer discovery
+- [ ] Dependency declarations enable auto-inclusion
+- [ ] Clear examples with working code
+- [ ] Diagrams complement text explanations
+
+**Impact:** Better AI-assisted development experience, faster onboarding
 
 ---
 
-## References
+## 10. Verification Commands Reference
+
+All verification commands in one place for quick access:
+
+### Code Quality
+```bash
+./gradlew detekt                       # Static analysis (must pass with zero violations)
+./gradlew koverVerify                  # Test coverage verification (≥80%)
+./gradlew koverHtmlReport              # Generate coverage report (build/reports/kover/html/index.html)
+```
+
+### Testing
+```bash
+./gradlew test                         # Run unit tests (alias for unitTest)
+./gradlew unitTest                     # Fast unit tests (< 30s total)
+./gradlew integrationTest              # Infrastructure tests (< 3min total)
+./gradlew systemTest                   # E2E workflows (< 10min total)
+./gradlew testAll                      # All test categories sequentially
+./gradlew quickTest                    # Unit tests only (development)
+./gradlew ciTest                       # Parallel test execution (CI)
+```
+
+### Build & Quality Gates
+```bash
+./gradlew clean build                  # Full quality check (compile + test + detekt)
+./gradlew check                        # Run all quality checks (test + detekt + kover)
+./gradlew buildFatJar                  # Build executable JAR
+./gradlew dependencyCheckAnalyze       # Check for vulnerable dependencies
+```
+
+### Security
+```bash
+# Check for secrets in code
+git diff main | grep -iE '(password|secret|key|token).*=.*["\']'
+
+# Dependency vulnerability scan
+./gradlew dependencyCheckAnalyze
+```
+
+### Commit Message Validation
+```bash
+npm run commitlint-ci                  # Validate last commit message
+npm run commitlint-pr                  # Validate all commits in current branch
+```
+
+### Documentation Validation
+```bash
+# Navigate to docs directory for validation scripts
+cd docs
+
+# Check frontmatter YAML syntax
+./.scripts/validate-frontmatter.sh
+
+# Check required fields present
+./.scripts/check-required-fields.sh
+
+# Check document lengths
+./.scripts/check-file-lengths.sh
+
+# Validate DAG (no circular dependencies)
+./.scripts/check-circular-deps.py
+```
+
+### Docker & Deployment
+```bash
+docker build -t cycletime:test .       # Verify Docker build (if infrastructure changes)
+./gradlew installDist                  # Install distribution locally
+```
+
+---
+
+## 11. References
 
 ### Internal Standards
 - [Testing Strategy](../concepts/testing/testing-strategy.md)
@@ -1051,6 +611,13 @@ Beyond standard Definition of Done practices, CycleTime adds:
 - [Linear Reference](../../.claude/shared/linear-reference.md)
 - [Git Conventions](../../.claude/shared/git-conventions.md)
 - [Branching Strategy](../guides/development/branching-strategy.md)
+
+### Examples
+- [Unit Test Example](../examples/definition-of-done/unit-test-example.md)
+- [Integration Test Example](../examples/definition-of-done/integration-test-example.md)
+- [System Test Example](../examples/definition-of-done/system-test-example.md)
+- [Architecture Alignment Example](../examples/definition-of-done/architecture-alignment-example.md)
+- [Error Handling Example](../examples/definition-of-done/error-handling-example.md)
 
 ---
 
