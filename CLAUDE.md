@@ -195,6 +195,10 @@ When documentation is modified:
 
 See complete criteria in [Definition of Done](docs/reference/definition-of-done.md).
 
+## Linear Reference
+
+@.claude/shared/linear-reference.md
+
 ## Development Workflows
 
 ### Core Documentation
@@ -361,6 +365,4 @@ cd docs
 - Update any legacy references encountered during development
 - Verify cross-references using validation scripts
 
-## Linear Reference
 
-@.claude/shared/linear-reference.md
