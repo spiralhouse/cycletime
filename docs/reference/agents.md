@@ -135,38 +135,22 @@ Preparation specialist for structured context curation before agent delegation
 @agent-code-reviewer "Review implementation... [with curated review context]"
 ```
 
-## Claude CLI Agents
+## Legacy: Claude CLI Agents (Deprecated)
 
-### Agent Types
+> **Note**: This section describes the legacy CLI agent system that has been replaced by Task tool agents. The CLI agent system (`claude -p` with `.claude/prompts/*.txt` files) is no longer used in CycleTime. All current workflows use Task tool agents exclusively.
 
-| Prompt File | Purpose | Use Cases |
-|-------------|---------|-----------|
-| `task-agent.txt` | General development | Feature implementation, bug fixes |
-| `test-agent.txt` | Testing specialist | TDD, validation, regression tests |
-| `implementation-agent.txt` | Code implementation | TDD GREEN phase, direct coding |
-| `review-agent.txt` | Quality assurance | Code review, TDD REFACTOR phase |
+**Historical Context:**
+- **Used**: Pre-August 2025 during TypeScript-based prototyping
+- **Replaced By**: Task tool agents (`.claude/agents/*.md`) in August 2025
+- **Current Status**: Deprecated and removed from codebase
 
-### Command Pattern
+The legacy CLI system provided background agent execution but lacked:
+- Interactive refinement capabilities
+- Rich context sharing between agents
+- Dynamic coordination and parallelism
+- Integration with Claude Code's development environment
 
-```bash
-claude -p "task description" \
-  --append-system-prompt "$(cat .claude/prompts/[AGENT_TYPE].txt)" \
-  --permission-mode bypassPermissions \
-  --output-format stream-json \
-  --verbose
-```
-
-### Capabilities
-
-✅ **Strengths:**
-- Make real filesystem changes and git commits
-- True parallel execution across worktrees
-- Background processing with monitoring
-- Production-ready outputs
-
-❌ **Limitations:**
-- One-shot execution (no interactive refinement)
-- Limited context for complex architectural decisions
+**For current agent capabilities, see the Task Tool Agents section above.**
 - Requires well-defined tasks
 - No real-time problem solving
 

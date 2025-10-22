@@ -57,30 +57,28 @@ Comprehensive troubleshooting reference for CycleTime development issues.
 2. Use full path: `/usr/local/bin/claude -p "..." --append-system-prompt ...`
 3. Fix PATH: `export PATH="/usr/local/bin:$PATH"`
 
-#### Missing Prompt Files
-**Symptom**: Agent fails during startup
-**Error**: `cat: .claude/prompts/test-agent.txt: No such file or directory`
-**Cause**: Prompt files not committed to main branch before creating worktrees
+#### Agent Configuration Issues
+**Symptom**: Agent behaves unexpectedly or lacks proper context
+**Cause**: Agent configuration not properly loaded
 
 **Solution**:
 ```bash
-# Commit prompt files to main branch first
-git add .claude/prompts/*.txt
-git commit -m "feat: add agent prompt files"
+# Verify agent configs exist
+ls .claude/agents/
 
-# Then create worktrees
+# Check agent config is valid markdown
+cat .claude/agents/developer.md
+
+# Verify worktree has latest agent configs
 git worktree add .worktrees/feature-name -b feat/feature-name
-
-# Verify files exist
-ls .worktrees/feature-name/.claude/prompts/
+ls .worktrees/feature-name/.claude/agents/
 ```
 
-#### Permission Denied
-**Symptom**: Agent cannot create/modify files
-**Error**: `EACCES: permission denied, open 'src/feature.ts'`
-**Cause**: Missing `--permission-mode bypassPermissions` flag
+#### Permission Issues
+**Symptom**: Task tool agent cannot modify files
+**Cause**: File permissions or directory access restrictions
 
-**Solution**: Always include `--permission-mode bypassPermissions` in Claude CLI commands
+**Solution**: Verify file permissions and ensure Claude Code has proper access to the project directory
 
 #### Task Tool Agent Configuration Issues
 **Symptom**: Task tool agent reports completion but expected file changes didn't occur
@@ -405,7 +403,7 @@ pwd && git branch --show-current && git status
 git worktree list && ls -la .worktrees/
 
 # Agent environment
-which claude && ls -la .claude/prompts/
+ls -la .claude/agents/
 
 # Build environment
 npm --version && node --version && npx tsc --version
