@@ -20,10 +20,12 @@ Every agent should have access to these foundational documents:
 
 | Document | Path | Purpose |
 |----------|------|---------|
+| **Project Fundamentals** | `docs/reference/project-fundamentals.md` | Technology stack, architecture, conventions |
 | **Git Conventions** | `.claude/shared/git-conventions.md` | Branch naming, commit standards |
 | **Linear Reference** | `.claude/shared/linear-reference.md` | Issue management, status workflows |
-| **Project Overview** | `CLAUDE.md` | Project architecture, technology stack |
 | **Definition of Done** | `docs/reference/definition-of-done.md` | Quality gates, completion criteria |
+
+**IMPORTANT**: `CLAUDE.md` is reserved for Development Manager instructions ONLY. It contains orchestration responsibilities (agent delegation, think level strategies, quality gates) that should NOT be included in agent contexts. Agents should reference `docs/reference/project-fundamentals.md` instead for project basics.
 
 ### Agent-Specific Documentation
 

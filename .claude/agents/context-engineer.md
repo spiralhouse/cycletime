@@ -86,32 +86,64 @@ sequenceDiagram
 
 #### Essential Context (Always Include)
 Start with these fundamentals:
-1. **Project Overview**: `CLAUDE.md` - "What is this project?"
+1. **Project Fundamentals**: `docs/reference/project-fundamentals.md` - Technology stack, architecture, conventions
 2. **Issue Details**: Linear issue hierarchy and requirements
 3. **Architecture Basics**: `docs/architecture/overview.md` if relevant to the issue
+
+**IMPORTANT**: Do NOT include `CLAUDE.md` - it contains Development Manager instructions reserved for Claude Code only, not for delegated agents.
 
 #### Agent-Specific Context
 For each agent type in the list, find the most relevant documentation:
 
 **When QA agents are needed:**
-- Testing standards: `.claude/shared/testing-standards.md`
-- Test architecture: `docs/reference/technical-design/testing-architecture-tdd.md`
-- Find test examples with `Grep` if they exist
+- Testing patterns: `docs/patterns/testing/*.md`
+- Testing concepts: `docs/concepts/testing/*.md`
+- Test examples: `docs/examples/tests/*.md`
+- Quality criteria: `docs/reference/definition-of-done.md`
+- Quality checklist: `docs/reference/checklists/test-quality-checklist.md`
 
 **When Developer agents are needed:**
-- Coding standards: `.claude/shared/development-commands.md`
-- Domain patterns: `docs/reference/technical-design/domain-entities.md`
-- Look for similar implementations
+- DI patterns: `docs/patterns/architecture/dependency-injection.md`
+- DDD concepts: `docs/concepts/architecture/domain-driven-design.md`
+- Implementation examples: `docs/examples/definition-of-done/*.md`
+- Feature workflow: `docs/guides/development/feature-workflow.md`
 
 **When Architect agents are needed:**
-- Architecture docs: `docs/architecture/overview.md`
-- Design patterns: `docs/reference/technical-design/`
-- Performance docs if they exist
+- Architecture overview: `docs/architecture/overview.md`
+- Architecture concepts: `docs/concepts/architecture/*.md`
+- Architecture patterns: `docs/patterns/architecture/*.md`
+- MCP patterns: `docs/patterns/mcp/*.md`
+- Product vision: `docs/reference/PRD.md`
+
+**When Product Manager agents are needed:**
+- Product requirements: `docs/reference/PRD.md`
+- User experience: `docs/reference/user-experience.md`
+- Onboarding guide: `docs/guides/getting-started/onboarding-guide.md`
+- Project limitations: `docs/reference/limitations.md`
+
+**When Tech Lead agents are needed:**
+- Linear integration: `docs/guides/development/linear-integration.md`
+- Branching strategy: `docs/guides/development/branching-strategy.md`
+- Decision guide: `docs/reference/decision-guide.md`
+- Definition of Done: `docs/reference/definition-of-done.md`
 
 **When Code Reviewer agents are needed:**
-- Look for review guidelines
-- Search for security patterns
-- Find quality standards
+- Definition of Done: `docs/reference/definition-of-done.md`
+- Testing patterns: `docs/patterns/testing/*.md`
+- DDD concepts: `docs/concepts/architecture/domain-driven-design.md`
+- Quality checklist: `docs/reference/checklists/test-quality-checklist.md`
+
+**When Tech Writer agents are needed:**
+- Document standards: `docs/contributing/document-standards.md`
+- Metadata schema: `docs/contributing/metadata-schema.md`
+- Document templates: `docs/.templates/*.md`
+- Architecture overview: `docs/architecture/overview.md` (for technical context)
+
+**When DevOps Engineer agents are needed:**
+- Operations guides: `docs/guides/operations/*.md`
+- CI/CD reference: `docs/reference/cicd/*.md`
+- CI/CD concepts: `docs/concepts/cicd/*.md`
+- MCP transport patterns: `docs/patterns/mcp/*.md`
 
 #### Task-Specific Context
 Based on what you find in the Linear issue:
