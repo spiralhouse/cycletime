@@ -1,4 +1,19 @@
-# ADR-007: Repository Singleton Scope and Thread-Safety
+---
+title: "ADR-0003: Repository Singleton Scope and Thread-Safety"
+type: reference
+domain: [architecture, decisions, persistence, concurrency]
+description: "Architecture decision verifying thread-safety of repository singletons with Exposed ORM connection management"
+status: accepted
+date: 2025-09-02
+supersedes: []
+superseded_by: []
+keywords: [adr, architecture-decision, thread-safety, singleton, concurrency, repository-pattern]
+dependencies: [./0001-exposed-orm-transaction-pattern.md, ./0002-repository-issue-persistence.md]
+related: [../project-fundamentals.md, ../../architecture/overview.md]
+last_updated: 2025-09-02
+---
+
+# ADR-0003: Repository Singleton Scope and Thread-Safety
 
 ## Status
 Accepted

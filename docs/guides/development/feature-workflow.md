@@ -87,15 +87,9 @@ cd .worktrees/spi-612-api-redesign
 npm install
 # Update Linear SPI-612 to "In Progress"
 
-# 2. Development
-# Option A: Task Tool Agents
+# 2. Development with Task Tool Agents
 @agent-software-architect "Design new API structure for SPI-612"
 @agent-developer "Implement the new API design"
-
-# Option B: Claude CLI Agent
-claude -p "Implement API redesign per SPI-612 requirements" \
-  --append-system-prompt "$(cat .claude/prompts/task-agent.txt)" \
-  --permission-mode bypassPermissions
 
 # 3. Testing and PR
 npm run test

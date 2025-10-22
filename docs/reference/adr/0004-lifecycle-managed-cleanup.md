@@ -1,9 +1,24 @@
-# ADR-006: Lifecycle-Managed Connection Cleanup Service
+---
+title: "ADR-0004: Lifecycle-Managed Connection Cleanup Service"
+type: reference
+domain: [architecture, decisions, mcp, infrastructure]
+description: "Architecture decision for MCP connection cleanup using lifecycle-managed coroutines instead of GlobalScope"
+status: superseded
+date: 2025-09-09
+supersedes: []
+superseded_by: [./0006-adopt-mcp-kotlin-sdk-v0.7.2.md]
+keywords: [adr, architecture-decision, mcp, websocket, lifecycle, coroutines, cleanup]
+dependencies: []
+related: [../project-fundamentals.md, ../../architecture/overview.md, ../../patterns/mcp/sse-transport-pattern.md]
+last_updated: 2025-10-17
+---
 
-> **Historical Note**: This document describes the WebSocket-based MCP implementation that was superseded by SSE (Server-Sent Events) transport in SPI-665 (October 2025). CycleTime now uses SSE transport following MCP specification v2024-11-05. For current implementation details, see [MCP Client Setup](../../getting-started/mcp-client-setup.md) and [MCP Integration Patterns](mcp-integration-patterns.md).
+# ADR-0004: Lifecycle-Managed Connection Cleanup Service
+
+> **Historical Note**: This document describes the WebSocket-based MCP implementation that was superseded by SSE (Server-Sent Events) transport in SPI-665 (October 2025). CycleTime now uses SSE transport following MCP specification v2024-11-05 via the official MCP Kotlin SDK (ADR-0006).
 
 ## Status
-Accepted
+Superseded by ADR-0006 (MCP Kotlin SDK adoption)
 
 ## Context
 The MCP WebSocket server was using `GlobalScope.launch` for connection cleanup tasks, which created several critical production issues:

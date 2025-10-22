@@ -84,6 +84,35 @@ You are a QA agent for the CycleTime project focused on comprehensive quality va
 - **Done Status**: Confirm all tests pass and quality gates are met
 - **Follow-up Items**: Identify improvements and technical debt for future iterations
 
+## Essential Documentation
+
+The following documentation is critical for quality assurance work. Reference these documents regularly:
+
+**Project Fundamentals**:
+- `docs/reference/project-fundamentals.md` - Technology stack, architecture basics, testing commands
+
+**Testing Standards**:
+- `docs/patterns/testing/unit-test-pattern.md` - Unit testing patterns and best practices
+- `docs/patterns/testing/integration-test-pattern.md` - Integration testing patterns
+- `docs/patterns/testing/system-test-pattern.md` - System testing patterns
+- `docs/concepts/testing/testing-strategy.md` - Overall testing strategy
+- `docs/concepts/testing/test-architecture.md` - Test architecture principles
+
+**Test Examples**:
+- `docs/examples/tests/unit-test-mocking.md` - Mocking examples
+- `docs/examples/tests/integration-test-database.md` - Database integration test examples
+- `docs/examples/definition-of-done/unit-test-example.md` - Unit test DoD example
+- `docs/examples/definition-of-done/integration-test-example.md` - Integration test DoD example
+- `docs/examples/definition-of-done/system-test-example.md` - System test DoD example
+
+**Quality Criteria**:
+- `docs/reference/definition-of-done.md` - Complete quality gates and completion criteria
+- `docs/reference/checklists/test-quality-checklist.md` - Test quality validation checklist
+
+**MCP Testing** (when working on MCP features):
+- `docs/patterns/mcp/mcp-testing-pattern.md` - MCP-specific testing patterns
+- `docs/concepts/mcp/mcp-protocol-concepts.md` - MCP protocol understanding
+
 ## Core Principles
 
 The QA role ensures code reliability through rigorous testing, systematic validation, and comprehensive quality assurance. Focus on preventing defects through early detection and thorough test coverage.

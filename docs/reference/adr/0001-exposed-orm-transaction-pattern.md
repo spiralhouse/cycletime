@@ -1,7 +1,22 @@
+---
+title: "ADR-0001: Exposed ORM Transaction Pattern"
+type: reference
+domain: [architecture, decisions, persistence]
+description: "Architecture decision for transaction management pattern using Exposed ORM's block-scoped transactions"
+status: accepted
+date: 2025-08-26
+supersedes: []
+superseded_by: []
+keywords: [adr, architecture-decision, exposed-orm, transactions, unit-of-work, repository-pattern]
+dependencies: []
+related: [../project-fundamentals.md, ../../architecture/overview.md]
+last_updated: 2025-08-26
+---
+
 # ADR-0001: Exposed ORM Transaction Pattern
 
-**Date**: 2025-08-26  
-**Status**: Accepted  
+**Date**: 2025-08-26
+**Status**: Accepted
 **Context**: Repository Pattern Implementation with Exposed ORM
 
 ## Context

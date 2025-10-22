@@ -31,7 +31,7 @@ DDD is built on three fundamental principles:
 ### Business Logic Complexity
 
 Project orchestration involves complex rules and relationships:
-- Issue hierarchies (Epic ’ Story ’ Subtask)
+- Issue hierarchies (Epic â†’ Story â†’ Subtask)
 - Status transition validation
 - Dependency cycle prevention
 - Workflow state machines
@@ -85,7 +85,7 @@ class IssueTest : StringSpec({
             type = IssueType.Story
         )
 
-        issue.updateStatus(IssueStatus.Todo)      // Valid: Backlog ’ Todo
+        issue.updateStatus(IssueStatus.Todo)      // Valid: Backlog â†’ Todo
         shouldThrow<InvalidTransitionException> {
             issue.updateStatus(IssueStatus.Done)  // Invalid: must go through InProgress
         }
@@ -121,7 +121,7 @@ fun setParent(parentType: IssueType) {
 - Manages issue collection consistency
 
 **Issue Entity**:
-- Validates hierarchy rules (Epic ’ Story ’ Subtask)
+- Validates hierarchy rules (Epic â†’ Story â†’ Subtask)
 - Enforces status transition constraints
 - Prevents circular dependencies
 
@@ -287,7 +287,7 @@ Related logic stays together. Finding and modifying business rules is straightfo
 
 ### Flexibility
 
-Swapping infrastructure (SQLite ’ H2, adding Linear integration) requires no domain changes.
+Swapping infrastructure (SQLite â†’ H2, adding Linear integration) requires no domain changes.
 
 ## Related Concepts
 

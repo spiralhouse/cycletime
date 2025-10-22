@@ -54,7 +54,7 @@
 ### Completed Phases
 
 **✅ Phase 1: Foundation & Dependencies** (Days 1-3, 4 points)
-- ADR-001: Comprehensive architecture decision record
+- ADR-0006: Comprehensive architecture decision record
 - Migration Plan: 6-phase implementation roadmap
 - Context Packages: 8 curated agent guidance documents
 - SDK Dependency: v0.7.2 resolved

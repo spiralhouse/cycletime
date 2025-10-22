@@ -398,7 +398,7 @@ graph TB
 - [rest-endpoints.md](../api/rest-endpoints.md) - REST API Documentation
 - OpenAPI Documentation - Available at `/swagger` endpoint when server is running
 - [deployment-guide.md](../operations/deployment-guide.md) - Infrastructure and Deployment
-- [ADR Directory](decisions/) - Architecture Decision Records
+- [ADR Directory](../reference/adr/) - Architecture Decision Records
 
 ### 4. MCP Server Integration
 

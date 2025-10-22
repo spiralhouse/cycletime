@@ -1,4 +1,19 @@
-# ADR-007: Repository Pattern Issue Persistence Strategy
+---
+title: "ADR-0002: Repository Pattern Issue Persistence Strategy"
+type: reference
+domain: [architecture, decisions, persistence]
+description: "Architecture decision for handling Project-Issue associations in repository pattern with referential integrity"
+status: accepted
+date: 2025-08-26
+supersedes: []
+superseded_by: []
+keywords: [adr, architecture-decision, repository-pattern, persistence, relationships, n-plus-one]
+dependencies: [./0001-exposed-orm-transaction-pattern.md]
+related: [../project-fundamentals.md, ../../architecture/overview.md]
+last_updated: 2025-08-26
+---
+
+# ADR-0002: Repository Pattern Issue Persistence Strategy
 
 ## Status
 Accepted
