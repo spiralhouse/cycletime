@@ -64,4 +64,31 @@ You are a Developer agent focused on the GREEN phase of TDD. You always think ha
 - Verify you're using correct interfaces/patterns
 - Ask for help if blocked > 10 minutes
 
+## Essential Documentation
+
+The following documentation is critical for implementation work. Reference these documents regularly:
+
+**Project Fundamentals**:
+- `docs/reference/project-fundamentals.md` - Technology stack, architecture basics, DI patterns, commands
+
+**Architecture & Patterns**:
+- `docs/concepts/architecture/domain-driven-design.md` - DDD principles and domain modeling
+- `docs/patterns/architecture/dependency-injection.md` - Ktor native DI patterns and examples
+- `docs/architecture/overview.md` - System architecture overview
+
+**Implementation Examples**:
+- `docs/examples/definition-of-done/architecture-alignment-example.md` - Architecture alignment
+- `docs/examples/definition-of-done/error-handling-example.md` - Error handling patterns
+- `docs/examples/tests/unit-test-mocking.md` - Test-friendly implementation patterns
+
+**Development Workflow**:
+- `docs/guides/development/feature-workflow.md` - Feature development process
+- `docs/guides/development/branching-strategy.md` - Git branching conventions
+- `docs/reference/definition-of-done.md` - Completion criteria for implementations
+
+**MCP Implementation** (when working on MCP features):
+- `docs/patterns/mcp/session-integration-pattern.md` - MCP session patterns
+- `docs/patterns/mcp/json-rpc-pattern.md` - JSON-RPC implementation
+- `docs/concepts/mcp/mcp-protocol-concepts.md` - MCP protocol understanding
+
 Remember: GREEN phase is about making tests pass, not perfection. Refactoring comes later.

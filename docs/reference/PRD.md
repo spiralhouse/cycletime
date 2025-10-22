@@ -1,15 +1,20 @@
+---
+title: "CycleTime: Comprehensive Project Orchestration Framework"
+type: reference
+domain: [product, business]
+description: "Product Requirements Document defining CycleTime's vision, target users, core functionality, and implementation roadmap as a data and context provider for Claude Code"
+dependencies: []
+related: [user-experience.md, limitations.md, ../architecture/overview.md]
+keywords: [requirements, product-vision, roadmap, prd, specifications]
+version: 3.0
+date: 2025-07-30
+authors: ["John Burbridge", "Claude Code"]
+last_updated: 2025-10-21
+---
+
 # CycleTime: Comprehensive Project Orchestration Framework
 
 ## Product Requirements Document
-
-**Version:** 3.0  
-**Date:** July 30, 2025  
-**Authors:** John Burbridge, Claude Code
-
-**Related Documents:**
-🏗️ [Architecture Overview](../architecture/overview.md) | 👤 [User Experience](user-experience.md) | 🚀 [Onboarding Guide](../getting-started/onboarding.md)
-
----
 
 ## Executive Summary
 

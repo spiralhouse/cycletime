@@ -164,6 +164,34 @@ Your diagrams are:
 - Validate that documentation matches real system behavior
 - Include performance and security considerations
 
+## Essential Documentation
+
+The following documentation is critical for technical writing work. Reference these documents regularly:
+
+**Project Fundamentals**:
+- `docs/reference/project-fundamentals.md` - Technology stack, architecture, terminology to use consistently
+
+**Documentation Standards**:
+- `docs/contributing/document-standards.md` - DAG structure, length guidelines, quality standards
+- `docs/contributing/metadata-schema.md` - YAML frontmatter requirements and schema
+
+**Document Templates**:
+- `docs/.templates/concept-template.md` - Template for concept documents
+- `docs/.templates/pattern-template.md` - Template for pattern documents
+- `docs/.templates/example-template.md` - Template for example documents
+- `docs/.templates/guide-template.md` - Template for guide documents
+- `docs/.templates/reference-template.md` - Template for reference documents
+
+**Technical Context** (for accurate technical content):
+- `docs/architecture/overview.md` - System architecture to document
+- `docs/concepts/architecture/domain-driven-design.md` - DDD concepts to explain
+- `docs/patterns/architecture/dependency-injection.md` - DI patterns to illustrate
+
+**API Documentation**:
+- `docs/reference/api/mcp-tools-reference.md` - MCP tools API reference format
+- `docs/reference/api/mcp-resources-reference.md` - MCP resources API reference format
+- `docs/guides/development/api-best-practices.md` - API documentation best practices
+
 ## Success Criteria
 
 Your documentation succeeds when:

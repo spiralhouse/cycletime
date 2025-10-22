@@ -2358,7 +2358,7 @@ class SDKToolExecutionTest : StringSpec({
    - [ ] `docs/architecture/overview.md` - SDK architecture
    - [ ] `docs/architecture/session-management.md` - SDK session pattern
    - [ ] `docs/architecture/mcp-integration.md` - SDK integration details
-   - [ ] `docs/architecture/decisions/ADR-001-adopt-mcp-kotlin-sdk-v0.7.2.md` - ✅ Complete
+   - [ ] `docs/reference/adr/0006-adopt-mcp-kotlin-sdk-v0.7.2.md` - ✅ Complete
 
 2. **Technology Stack**
    - [ ] `CLAUDE.md` - Update MCP SDK reference
@@ -2370,7 +2370,7 @@ class SDKToolExecutionTest : StringSpec({
    - [ ] `docs/testing/test-architecture.md` - SDK test categories
 
 4. **Developer Guides**
-   - [ ] `docs/development/mcp-development.md` - SDK development guide
+   - [ ] `docs/guides/development/mcp-development.md` - SDK development guide
    - [ ] `docs/reference/sdk-integration.md` - SDK API reference
 
 5. **Migration Archive**
@@ -2483,7 +2483,7 @@ Total: 21 days, 22 story points
 - Transport Spec: https://modelcontextprotocol.io/specification/2025-03-26/basic/transports
 
 **Related Documents**:
-- ADR-001: `docs/architecture/decisions/ADR-001-adopt-mcp-kotlin-sdk-v0.7.2.md`
+- ADR-0006: `docs/reference/adr/0006-adopt-mcp-kotlin-sdk-v0.7.2.md`
 - Current Architecture: `docs/architecture/overview.md`
 
 ---
