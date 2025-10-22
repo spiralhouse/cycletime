@@ -1,4 +1,19 @@
-# ADR-005: Database Initialization Pattern
+---
+title: "ADR-0005: Database Initialization Pattern"
+type: reference
+domain: [architecture, decisions, persistence, concurrency]
+description: "Architecture decision for thread-safe database initialization pattern with double-checked locking and volatile fields"
+status: accepted
+date: 2025-09-25
+supersedes: []
+superseded_by: []
+keywords: [adr, architecture-decision, database, initialization, thread-safety, concurrency, race-condition]
+dependencies: [./0001-exposed-orm-transaction-pattern.md, ./0003-repository-singleton-thread-safety.md]
+related: [../project-fundamentals.md, ../../architecture/overview.md]
+last_updated: 2025-09-25
+---
+
+# ADR-0005: Database Initialization Pattern
 
 ## Status
 Accepted

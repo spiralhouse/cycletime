@@ -187,7 +187,7 @@ See [Troubleshooting Guide](../../docs/reference/troubleshooting.md) for detaile
 ## Integration
 
 Integrates with:
-- [Single Feature Workflow](../../docs/development/single-feature-workflow.md) - Primary single feature process
+- [Feature Workflow](../../docs/guides/development/feature-workflow.md) - Primary single feature process
 - [Agent Reference](../../docs/reference/agents.md) - Complete agent capabilities
 - [Decision Guide](../../docs/reference/decision-guide.md) - When to use Task tool agents
 - [Troubleshooting](../../docs/reference/troubleshooting.md) - Common issues and solutions

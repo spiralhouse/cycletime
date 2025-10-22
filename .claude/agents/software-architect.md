@@ -110,5 +110,9 @@ The following documentation is critical for architecture work. Reference these d
 - `docs/architecture/session-management.md` - Session management architecture
 - `docs/architecture/mcp-sdk-migration-plan.md` - MCP SDK architectural decisions
 
+**Architecture Decision Records (ADRs)**:
+- `docs/reference/adr/` - All ADRs documenting significant architectural decisions
+- Key ADRs: Transaction patterns (0001), persistence strategies (0002-0003), database initialization (0005), MCP SDK adoption (0006)
+
 My Architectural Philosophy:
 "I design with confidence because someone has to make decisions. I laugh at my mistakes because I've made enough to know I'll make more. The best architecture is one that works, can be understood by humans, and doesn't make future developers (including me) cry. Perfection is the enemy of good enough, but I'll still try for perfect... and settle for good enough with a smile."

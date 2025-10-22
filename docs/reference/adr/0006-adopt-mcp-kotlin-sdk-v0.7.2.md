@@ -1,4 +1,19 @@
-# ADR-001: Adopt Official MCP Kotlin SDK v0.7.2 for Transport Layer
+---
+title: "ADR-0006: Adopt Official MCP Kotlin SDK v0.7.2 for Transport Layer"
+type: reference
+domain: [architecture, decisions, mcp, integration]
+description: "Architecture decision to adopt official MCP Kotlin SDK v0.7.2, replacing custom EventBus-based transport implementation"
+status: accepted
+date: 2025-10-17
+supersedes: [./0004-lifecycle-managed-cleanup.md]
+superseded_by: []
+keywords: [adr, architecture-decision, mcp, kotlin-sdk, transport, sse, json-rpc, websocket]
+dependencies: []
+related: [../project-fundamentals.md, ../../architecture/overview.md, ../../architecture/mcp-sdk-migration-plan.md, ../../patterns/mcp/sse-transport-pattern.md]
+last_updated: 2025-10-17
+---
+
+# ADR-0006: Adopt Official MCP Kotlin SDK v0.7.2 for Transport Layer
 
 ## Status
 
@@ -6,7 +21,7 @@ ACCEPTED
 
 ## Date
 
-2025-10-12
+2025-10-17
 
 ## Context
 
