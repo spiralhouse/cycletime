@@ -1,5 +1,7 @@
 # Reference & Getting Started Domain Audit Report (Phase 2)
 
+> **Historical Note**: This document references the WebSocket-based MCP implementation that was superseded by SSE (Server-Sent Events) transport in SPI-665 (MCP specification v2024-11-05). WebSocket references in this audit reflect the architecture at the time of writing (2025-10-01) and do not represent the current SSE-based implementation.
+
 **Audit Date**: 2025-10-01
 **Domain**: Reference & Getting Started
 **Files Reviewed**: 42 files (LARGEST domain - 45.2% of all docs)

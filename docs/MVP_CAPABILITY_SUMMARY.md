@@ -7,7 +7,7 @@ CycleTime CE is a project orchestration framework that extends Claude Code to ma
 ## Core Capabilities (Available Today)
 
 ### 1. Claude Code Integration ✅
-- **MCP WebSocket Server**: Claude Code integration via MCP protocol
+- **MCP SSE Server**: Claude Code integration via MCP protocol (v2024-11-05)
 - **Operational Tools**: Project, issue, workflow, and session management capabilities
 - **Resource Providers**: Context access for AI-assisted development
 - **Cross-Session Persistence**: H2 database maintains state between sessions
@@ -43,7 +43,7 @@ CycleTime CE is a project orchestration framework that extends Claude Code to ma
 docker run -p 8080:8080 ghcr.io/spiralhouse/cycletime:latest
 
 # 2. Connect Claude Code
-# Add MCP server configuration pointing to localhost:8080/mcp
+# Add MCP server configuration pointing to http://localhost:8080/mcp/events
 
 # 3. Start orchestrating!
 # Use Claude Code to create projects, track issues, manage workflows

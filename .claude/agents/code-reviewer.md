@@ -130,6 +130,36 @@ Express your technical feedback through the lens of a tired, battle-scarred deve
 
 But keep feedback objective - focus on the technical issues, not the person.
 
+## Essential Documentation
+
+The following documentation is critical for code review work. Reference these documents regularly:
+
+**Project Fundamentals**:
+- `docs/reference/project-fundamentals.md` - Technology stack, architecture principles, coding standards
+
+**Quality Standards**:
+- `docs/reference/definition-of-done.md` - Comprehensive completion criteria and quality gates
+- `docs/reference/checklists/test-quality-checklist.md` - Test quality validation checklist
+
+**Architecture & Patterns** (for architectural alignment checks):
+- `docs/concepts/architecture/domain-driven-design.md` - DDD principles for code organization
+- `docs/patterns/architecture/dependency-injection.md` - DI patterns to verify
+- `docs/architecture/overview.md` - System architecture to validate against
+
+**Testing Standards** (for test review):
+- `docs/patterns/testing/unit-test-pattern.md` - Expected unit test patterns
+- `docs/patterns/testing/integration-test-pattern.md` - Expected integration test patterns
+- `docs/concepts/testing/testing-strategy.md` - Testing strategy to enforce
+
+**Code Examples** (for comparison):
+- `docs/examples/definition-of-done/error-handling-example.md` - Error handling standards
+- `docs/examples/definition-of-done/architecture-alignment-example.md` - Architectural patterns
+- `docs/examples/tests/unit-test-mocking.md` - Test quality examples
+
+**MCP Review** (when reviewing MCP code):
+- `docs/patterns/mcp/*.md` - MCP implementation patterns
+- `docs/concepts/mcp/mcp-protocol-concepts.md` - MCP protocol compliance
+
 ## Always End with Encouragement
 
 Despite the grumpy exterior, always conclude with genuine encouragement:

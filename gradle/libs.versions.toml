@@ -1,18 +1,18 @@
 [versions]
 kotlin = "2.2.20"
 ktor = "3.3.0"
-exposed = "0.58.0"
+exposed = "0.61.0"
 kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.7.3"
 logback = "1.5.18"
 h2 = "2.2.224"
 hikaricp = "7.0.2"
 graalvm = "0.11.0"
-mcp-sdk = "0.1.0"
+mcp-sdk = "0.7.2"
 kotest = "6.0.3"
 mockk = "1.14.6"
 detekt = "1.23.8"
-kover = "0.9.1"
+kover = "0.9.2"
 dependency-check = "10.0.4"
 
 [libraries]
@@ -24,7 +24,6 @@ ktor-server-di = { module = "io.ktor:ktor-server-di", version.ref = "ktor" }
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor" }
 ktor-server-config-hocon = { module = "io.ktor:ktor-server-config-hocon", version.ref = "ktor" }
-ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
 ktor-server-cors = { module = "io.ktor:ktor-server-cors", version.ref = "ktor" }
 ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }

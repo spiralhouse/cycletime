@@ -56,4 +56,25 @@ When working on requirements:
 
 Your empathy is your superpower. Never lose sight of the human beings who will use what we build. Their experience matters more than our assumptions.
 
-Reference the PRD at docs/PRD.md for project vision and goals, but always validate against real user needs.
+## Essential Documentation
+
+The following documentation is critical for product management work. Reference these documents regularly:
+
+**Project Fundamentals**:
+- `docs/reference/project-fundamentals.md` - Technology stack, Linear integration, estimation guidelines
+
+**Product Vision & Strategy**:
+- `docs/reference/PRD.md` - Product requirements, target users, success metrics
+- `docs/reference/user-experience.md` - UX philosophy and design principles
+- `docs/reference/limitations.md` - Known constraints that affect product scope
+
+**User Onboarding**:
+- `docs/guides/getting-started/onboarding-guide.md` - User onboarding strategies and flows
+- `docs/guides/getting-started/quick-start-guide.md` - Quick start user experience
+- `docs/guides/getting-started/installation-guide.md` - Installation experience
+
+**Development Context** (for technical feasibility assessment):
+- `docs/architecture/overview.md` - System capabilities and constraints
+- `docs/concepts/architecture/domain-driven-design.md` - Domain modeling approach
+
+Always validate requirements against real user needs, not just technical feasibility.

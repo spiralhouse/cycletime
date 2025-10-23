@@ -1,3 +1,14 @@
+---
+title: "Development Decision Guide"
+type: reference
+domain: [development, architecture]
+description: "Unified decision trees and flowcharts for selecting development workflows, agent types, and execution patterns based on task characteristics"
+dependencies: []
+related: [agents.md, worktree-operations.md]
+keywords: [decision-trees, workflows, agent-selection, parallel-development, patterns]
+last_updated: 2025-10-21
+---
+
 # Development Decision Guide
 
 Unified decision trees for CycleTime development workflows and patterns.
