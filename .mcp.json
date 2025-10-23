@@ -9,8 +9,8 @@
       "url": "https://mcp.context7.com/sse"
     },
     "cycletime": {
-      "type": "http",
-      "url": "http://localhost:8080/mcp"
+      "type": "sse",
+      "url": "http://localhost:8080"
     }
   }
 }

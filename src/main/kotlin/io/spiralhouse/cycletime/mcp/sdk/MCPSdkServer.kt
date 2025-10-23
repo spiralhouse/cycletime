@@ -69,10 +69,11 @@ class MCPSdkServer(
     )
 
     init {
-        logger.info("MCP SDK Server initializing (SDK v0.7.2, version: $version)")
+        logger.info("MCP SDK Server initializing (SDK v0.7.3, version: $version)")
 
-        // Register logging/setLevel handler (SPI-716)
-        registerLoggingHandler()
+        // SPI-758: Logging handler registration removed for SDK 0.7.3 migration
+        // SDK 0.7.3 moved setRequestHandler from Server to ServerSession (PR #198)
+        // registerLoggingHandler() has been removed (see method below for details)
 
         // Register all tool and resource providers via adapters (if provided)
         if (sessionManager != null && (toolProviders.isNotEmpty() || resourceProviders.isNotEmpty())) {
@@ -90,33 +91,31 @@ class MCPSdkServer(
     }
 
     /**
-     * Register logging/setLevel request handler (SPI-716).
+     * REMOVED in SDK 0.7.3 migration (SPI-758)
      *
-     * Per MCP spec (2024-11-05), servers that declare logging capability MUST implement
-     * the logging/setLevel request handler. This handler accepts a log level parameter
-     * (debug, info, notice, warning, error, critical, alert, emergency) and returns
-     * an empty success response.
+     * This method registered the logging/setLevel request handler which was required by the
+     * MCP specification for servers declaring logging capability. However, SDK 0.7.3 moved
+     * setRequestHandler from Server to ServerSession (PR #198), making this implementation
+     * incompatible.
      *
-     * The log level is stored but not actively used - we acknowledge the client's
-     * preference without changing server-side logging behavior. This is a minimal
-     * spec-compliant implementation.
+     * The logging/setLevel handler was optional functionality - it acknowledged client log
+     * level preferences but did not actively change server-side logging behavior.
      *
-     * NOTE: In production, the handler is registered in MCPSdkRouting.kt on the inline-created
-     * Server instance. This registration is kept here for test mode when MCPSdkServer is
-     * instantiated directly without going through the routing layer.
+     * If this functionality is needed in the future, it must be reimplemented using the
+     * ServerSession API instead of the Server API.
+     *
+     * Previous implementation (SDK 0.7.2):
+     *
+     * private fun registerLoggingHandler() {
+     *     server.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(
+     *         Method.Defined.LoggingSetLevel
+     *     ) { request, _ ->
+     *         logger.debug("Client requested log level: ${request.level}")
+     *         EmptyRequestResult()
+     *     }
+     *     logger.debug("Registered logging/setLevel handler")
+     * }
      */
-    private fun registerLoggingHandler() {
-        server.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(
-            Method.Defined.LoggingSetLevel
-        ) { request, _ ->
-            // Log the level change for debugging purposes
-            logger.debug("Client requested log level: ${request.level}")
-
-            // Return empty success response (spec-compliant)
-            EmptyRequestResult()
-        }
-        logger.debug("Registered logging/setLevel handler")
-    }
 
     /**
      * Register all tool providers via adapters.

@@ -139,18 +139,20 @@ fun Routing.configureMCPSdk() {
 
         logger.info("🟢 Server instance created successfully")
 
-        // Register logging/setLevel handler (SPI-716)
-        // Per MCP spec (2024-11-05), servers that declare logging capability MUST implement
-        // the logging/setLevel request handler. This handler accepts a log level parameter
-        // (debug, info, notice, warning, error, critical, alert, emergency) and returns
-        // an empty success response.
-        server.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(
-            Method.Defined.LoggingSetLevel
-        ) { request, _ ->
-            logger.debug("Client requested log level: ${request.level}")
-            EmptyRequestResult()
-        }
-        logger.debug("Registered logging/setLevel handler on active server instance")
+        // SPI-758: Logging handler registration removed for SDK 0.7.3 migration
+        // SDK 0.7.3 moved setRequestHandler from Server to ServerSession (PR #198)
+        // The logging/setLevel handler was optional and not critical for core functionality.
+        // If needed in the future, handlers must be registered on ServerSession instances
+        // rather than on the Server itself.
+        //
+        // Previous implementation (SDK 0.7.2):
+        // server.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(
+        //     Method.Defined.LoggingSetLevel
+        // ) { request, _ ->
+        //     logger.debug("Client requested log level: ${request.level}")
+        //     EmptyRequestResult()
+        // }
+        logger.debug("SDK 0.7.3: Logging handler moved to ServerSession (not implemented in this migration)")
 
         logger.info("📝 Registering ${toolProviders.size} tool providers and ${resourceProviders.size} resource providers")
 
