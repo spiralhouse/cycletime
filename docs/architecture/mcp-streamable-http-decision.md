@@ -273,8 +273,8 @@ val server = mcpServer(weatherTool)
 
 **Current Dependencies (from `gradle/libs.versions.toml`):**
 - `mcp-sdk = "0.7.3"` - Keep (for protocol types)
-- `ktor-server-sse = "3.3.0"` - Keep (optional for SSE responses)
-- `ktor-server-core = "3.3.0"` - Keep (routing foundation)
+- `ktor-server-sse = "3.3.1"` - Keep (optional for SSE responses)
+- `ktor-server-core = "3.3.1"` - Keep (routing foundation)
 
 **New Dependencies Required:**
 - None for custom implementation
