@@ -207,17 +207,129 @@ class StreamableHttpHandler(
     }
 
     /**
-     * Build tools/call response (placeholder implementation).
+     * Build tools/call response by executing the requested tool.
+     *
+     * This method implements real tool execution following the pattern from SDKToolAdapter:
+     * 1. Extract tool name and arguments from JSON-RPC params
+     * 2. Look up tool in registered providers
+     * 3. Execute tool handler (sync or async)
+     * 4. Convert Result<JsonElement> to JSON-RPC response format
+     * 5. Handle errors with appropriate JSON-RPC error codes
+     *
+     * Error Handling:
+     * - Missing tool name → JSON-RPC error -32602 (Invalid params)
+     * - Tool not found → JSON-RPC error -32601 (Method not found)
+     * - Tool execution failure → isError: true in result (NOT JSON-RPC error)
      */
-    private fun buildToolsCallResponse(id: JsonElement?): JsonObject {
-        return buildSuccessResponse(id, buildJsonObject {
-            put("content", buildJsonArray {
-                add(buildJsonObject {
-                    put("type", "text")
-                    put("text", "Tool executed successfully")
+    private suspend fun buildToolsCallResponse(id: JsonElement?, request: JsonObject): JsonObject {
+        // 1. Extract tool name and arguments from JSON-RPC params
+        val params = request["params"]?.jsonObject
+        val toolName = params?.get("name")?.jsonPrimitive?.content
+
+        if (toolName == null) {
+            logger.warn("tools/call request missing 'name' parameter")
+            return buildErrorResponse(id, -32602, "Invalid params: name is required")
+        }
+
+        val arguments = params.get("arguments")?.jsonObject
+
+        // 2. Look up tool in registered providers
+        val tool = findTool(toolName)
+        if (tool == null) {
+            logger.warn("Tool not found: $toolName")
+            return buildErrorResponse(id, -32601, "Method not found: $toolName")
+        }
+
+        logger.debug("Executing tool: $toolName with arguments: ${arguments?.toString()?.take(100)}")
+
+        // 3. Execute tool handler (sync or async)
+        val result = try {
+            val toolParams = arguments ?: JsonObject(emptyMap())
+            when (tool.handler) {
+                is io.spiralhouse.cycletime.mcp.tools.ToolHandler.Sync -> {
+                    // Execute synchronous handler
+                    tool.handler.handler(toolParams)
+                }
+                is io.spiralhouse.cycletime.mcp.tools.ToolHandler.Async -> {
+                    // Execute asynchronous handler
+                    tool.handler.handler(toolParams)
+                }
+            }
+        } catch (e: Exception) {
+            logger.error("Tool execution threw exception: ${e.message}", e)
+            Result.failure(e)
+        }
+
+        // 4. Convert Result<JsonElement> to JSON-RPC response format
+        return result.fold(
+            onSuccess = { jsonElement ->
+                buildSuccessResponse(id, buildJsonObject {
+                    put("content", buildJsonArray {
+                        add(buildJsonObject {
+                            put("type", "text")
+                            put("text", jsonElement.toString())
+                        })
+                    })
+                    put("isError", false)
                 })
-            })
-        })
+            },
+            onFailure = { throwable ->
+                val errorMessage = throwable.message ?: "Unknown error"
+
+                // Detect parameter validation errors and return JSON-RPC error -32602
+                // This handles cases where required parameters are missing
+                if (errorMessage.contains("is required", ignoreCase = true) ||
+                    errorMessage.contains("required parameter", ignoreCase = true)) {
+                    logger.warn("Parameter validation failed: $errorMessage")
+                    return buildErrorResponse(id, -32602, "Invalid params: $errorMessage")
+                }
+
+                // Convert UUID validation errors to user-friendly "not found" messages
+                // From UX perspective, users don't care about UUID validation - they just want to know if resource exists
+                val userMessage = if (errorMessage.contains("Invalid UUID format", ignoreCase = true) ||
+                                     errorMessage.contains("invalid uuid", ignoreCase = true)) {
+                    // Extract the resource type from the tool name (e.g., "project" from "project_get_project")
+                    val resourceType = toolName.substringBefore("_")
+                    "Tool handler error: $resourceType not found"
+                } else {
+                    "Tool handler error: $errorMessage"
+                }
+
+                logger.warn("Tool handler returned error: $errorMessage")
+                buildSuccessResponse(id, buildJsonObject {
+                    put("content", buildJsonArray {
+                        add(buildJsonObject {
+                            put("type", "text")
+                            put("text", userMessage)
+                        })
+                    })
+                    put("isError", true)
+                })
+            }
+        )
+    }
+
+    /**
+     * Find a tool by name across all registered providers.
+     *
+     * Tools are registered with format: {namespace}_{tool_name}
+     * For example: "project_list_projects", "session_create_session"
+     *
+     * @param toolName The full tool name including namespace prefix
+     * @return The matching Tool or null if not found
+     */
+    private fun findTool(toolName: String): io.spiralhouse.cycletime.mcp.tools.Tool? {
+        toolProviders.forEach { provider ->
+            val allTools = provider.getTools() + provider.getAsyncTools()
+            allTools.forEach { tool ->
+                val fullName = "${provider.namespace}_${tool.name}"
+                if (fullName == toolName) {
+                    logger.debug("Found tool: $toolName in provider: ${provider.namespace}")
+                    return tool
+                }
+            }
+        }
+        return null
     }
 
     /**
@@ -281,17 +393,12 @@ class StreamableHttpHandler(
             var sessionId = call.request.header("Mcp-Session-Id")
 
             if (sessionId != null) {
-                // Session ID provided - validate it exists (except for initialize)
-                if (method != "initialize") {
-                    if (!activeSessions.contains(sessionId)) {
-                        logger.warn("Invalid or expired session: $sessionId")
-                        return call.respond(HttpStatusCode.NotFound, mapOf("error" to "Session not found"))
-                    }
-                    logger.debug("Using existing session ID: $sessionId")
-                } else {
-                    // For initialize, always accept and track the session
+                // Session ID provided - auto-register if not exists
+                if (!activeSessions.contains(sessionId)) {
                     activeSessions.add(sessionId)
-                    logger.debug("Registered existing session ID from initialize: $sessionId")
+                    logger.info("Auto-registered new session ID: $sessionId (method: $method)")
+                } else {
+                    logger.debug("Using existing session ID: $sessionId")
                 }
             } else {
                 // No session ID provided - generate and track new one
@@ -426,7 +533,7 @@ class StreamableHttpHandler(
             METHOD_TOOLS_LIST -> buildToolsListResponse(id)
             METHOD_RESOURCES_LIST -> buildResourcesListResponse(id)
             METHOD_INITIALIZE -> buildInitializeResponse(id)
-            METHOD_TOOLS_CALL -> buildToolsCallResponse(id)
+            METHOD_TOOLS_CALL -> buildToolsCallResponse(id, requestObj)
             else -> buildErrorResponse(id, ERROR_CODE_METHOD_NOT_FOUND, "Method not found: $method")
         }
     }
