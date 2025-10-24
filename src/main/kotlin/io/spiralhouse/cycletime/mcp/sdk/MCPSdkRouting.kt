@@ -210,3 +210,74 @@ fun Routing.configureMCPParallelMode(legacyRouting: Routing.() -> Unit) {
 
     logger.info("Parallel mode active: /mcp (SDK), /mcp-old (legacy)")
 }
+
+/**
+ * Configure MCP Streamable HTTP transport (MCP Spec 2025-06-18).
+ *
+ * Implements Streamable HTTP handler for Claude Code v2.0.25+ compatibility.
+ * Provides POST and GET endpoints at /mcp with SDK delegation for tools/list and resources/list.
+ */
+fun Routing.configureMCPStreamableHttp() {
+    val startTime = System.currentTimeMillis()
+
+    // Resolve dependencies from DI
+    val sessionManager: SDKSessionManager by application.dependencies
+    val mcpSdkServer: MCPSdkServer by application.dependencies
+
+    // Resolve tool providers for tools/list delegation (SPI-764)
+    val projectToolProvider: DefaultProjectToolProvider by application.dependencies
+    val issueToolProvider: DefaultIssueToolProvider by application.dependencies
+    val sessionToolProvider: DefaultSessionToolProvider by application.dependencies
+    val workflowToolProvider: DefaultWorkflowToolProvider by application.dependencies
+
+    val toolProviders = listOf(
+        projectToolProvider,
+        issueToolProvider,
+        sessionToolProvider,
+        workflowToolProvider
+    )
+
+    // Resolve resource providers for resources/list delegation (SPI-764)
+    val projectResourceProvider: ProjectResourceProvider by application.dependencies
+    val issueResourceProvider: IssueResourceProvider by application.dependencies
+    val sessionResourceProvider: SessionResourceProvider by application.dependencies
+    val workflowResourceProvider: WorkflowResourceProvider by application.dependencies
+
+    val resourceProviders = listOf(
+        projectResourceProvider as io.spiralhouse.cycletime.mcp.resources.ResourceProvider,
+        issueResourceProvider as io.spiralhouse.cycletime.mcp.resources.ResourceProvider,
+        sessionResourceProvider as io.spiralhouse.cycletime.mcp.resources.ResourceProvider,
+        workflowResourceProvider as io.spiralhouse.cycletime.mcp.resources.ResourceProvider
+    )
+
+    // Create handler with configuration
+    val handler = StreamableHttpHandler(
+        mcpServer = mcpSdkServer.server,
+        sessionManager = sessionManager,
+        toolProviders = toolProviders,
+        resourceProviders = resourceProviders,
+        config = StreamableHttpConfig(
+            validateOrigin = true,
+            allowNullOrigin = true,
+            allowedOrigins = listOf(
+                "http://localhost:.*",
+                "https://.*\\.anthropic\\.com"
+            )
+        )
+    )
+
+    // Register routes
+    route("/mcp") {
+        post {
+            handler.handlePost(call)
+        }
+
+        get {
+            handler.handleGet(call)
+        }
+    }
+
+    val initTime = System.currentTimeMillis() - startTime
+    logger.info("MCP Streamable HTTP transport configured at /mcp in ${initTime}ms")
+    logger.info("Streamable HTTP endpoints active: POST /mcp (JSON-RPC), GET /mcp (SSE)")
+}
