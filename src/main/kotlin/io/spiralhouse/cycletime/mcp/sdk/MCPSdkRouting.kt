@@ -250,19 +250,21 @@ fun Routing.configureMCPStreamableHttp() {
         workflowResourceProvider as io.spiralhouse.cycletime.mcp.resources.ResourceProvider
     )
 
-    // Create handler with configuration
+    // Create handler with security configuration
+    // Security: Origin validation always enabled, request size limits, rate limiting
     val handler = StreamableHttpHandler(
-        mcpServer = mcpSdkServer.server,
         sessionManager = sessionManager,
         toolProviders = toolProviders,
         resourceProviders = resourceProviders,
         config = StreamableHttpConfig(
-            validateOrigin = true,
-            allowNullOrigin = true,
+            allowNullOrigin = true,  // For localhost development
             allowedOrigins = listOf(
                 "http://localhost:.*",
                 "https://.*\\.anthropic\\.com"
-            )
+            ),
+            maxRequestBodySize = 1_000_000,  // 1MB limit
+            sessionCreationMaxPerWindow = 5,  // Max 5 per minute per IP
+            sessionCreationWindowMs = 60_000  // 60 second window
         )
     )
 

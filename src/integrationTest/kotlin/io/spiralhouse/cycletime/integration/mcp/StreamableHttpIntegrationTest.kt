@@ -630,9 +630,10 @@ class StreamableHttpIntegrationTest : StringSpec({
             }
 
             // ACT: Create session with project ID
+            // Note: Don't send Mcp-Session-Id header - let system create new session
             val sessionResponse = client.post("/mcp") {
                 header("Content-Type", "application/json")
-                header("Mcp-Session-Id", "test-session-123")
+                // Removed hardcoded session ID - system will create one (SPI-765 security fix)
                 setBody("""
                     {
                         "jsonrpc": "2.0",
@@ -883,8 +884,14 @@ class StreamableHttpIntegrationTest : StringSpec({
 
     "POST /mcp with tools/call should extract session context from headers" {
         testSDKApplication {
-            val sessionId = "test-session-context-456"
+            // ARRANGE: Create a valid session first (SPI-765 security fix requires valid sessions)
+            val createResponse = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""{"jsonrpc":"2.0","id":110,"method":"initialize","params":{"protocolVersion":"2025-06-18","clientInfo":{"name":"test","version":"1.0"},"capabilities":{}}}""")
+            }
+            val sessionId = createResponse.headers["Mcp-Session-Id"]!!
 
+            // ACT: Use the valid session ID
             val response = client.post("/mcp") {
                 header("Content-Type", "application/json")
                 header("Mcp-Session-Id", sessionId)
@@ -901,6 +908,7 @@ class StreamableHttpIntegrationTest : StringSpec({
                 """.trimIndent())
             }
 
+            // ASSERT: Should succeed with valid session
             response.status shouldBe HttpStatusCode.OK
 
             // Response should include the session ID header
