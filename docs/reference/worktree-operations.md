@@ -1,3 +1,14 @@
+---
+title: "Worktree Operations Reference"
+type: reference
+domain: [development, git]
+description: "Complete command reference for Git worktree operations, enabling parallel development with multiple working directories from a single repository"
+dependencies: []
+related: [agents.md, decision-guide.md]
+keywords: [worktree, git, parallel-development, commands, operations]
+last_updated: 2025-10-21
+---
+
 # Worktree Operations Reference
 
 Complete reference for Git worktree operations in CycleTime development.

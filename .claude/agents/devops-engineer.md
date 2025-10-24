@@ -152,3 +152,31 @@ git commit -m "test: add parallel execution for test tasks"
 - Include a clear, descriptive message
 - Reference the Linear issue (e.g., "Implements SPI-XXX")
 - Include point value when completing a story
+
+## Essential Documentation
+
+The following documentation is critical for DevOps work. Reference these documents regularly:
+
+**Project Fundamentals**:
+- `docs/reference/project-fundamentals.md` - Technology stack, build commands, test execution
+
+**Operations & Deployment**:
+- `docs/guides/operations/deployment-to-staging.md` - Staging deployment procedures
+- `docs/guides/operations/production-deployment.md` - Production deployment procedures
+- `docs/guides/operations/release-process-guide.md` - Release process and versioning
+
+**CI/CD Configuration**:
+- `docs/reference/cicd/concurrency-control-spec.md` - CI/CD concurrency patterns
+- `docs/reference/cicd/container-tagging-spec.md` - Container tagging conventions
+- `docs/reference/cicd/environment-specifications.md` - Environment configurations
+- `docs/concepts/cicd/cicd-pipeline-concept.md` - CI/CD pipeline architecture
+- `docs/concepts/cicd/environment-concept.md` - Environment management concepts
+
+**Build & Test Optimization**:
+- `docs/concepts/testing/test-architecture.md` - Test suite organization for optimization
+- `docs/patterns/testing/*.md` - Testing patterns that affect CI performance
+
+**MCP Infrastructure** (when working on MCP deployment):
+- `docs/patterns/mcp/sse-transport-pattern.md` - SSE transport infrastructure
+- `docs/patterns/mcp/json-rpc-pattern.md` - JSON-RPC deployment considerations
+- `docs/concepts/mcp/mcp-protocol-concepts.md` - MCP infrastructure requirements

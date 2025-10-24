@@ -1,13 +1,18 @@
-# CycleTime Scope Limitations and Boundaries
-
-**Version:** 1.0  
-**Date:** August 1, 2025  
-**Authors:** Software Architect Agent, Claude Code
-
-**Related Documents:**
-📋 [PRD](PRD.md) | 🏗️ [Architecture Overview](../architecture/overview.md) | 📚 [MCP Resources](../api/mcp-resources.md)
-
 ---
+title: "CycleTime Scope Limitations and Boundaries"
+type: reference
+domain: [architecture, product]
+description: "Clear boundaries and scope limitations for CycleTime, establishing what the system does and does not do to maintain focus on core value proposition"
+dependencies: [PRD.md]
+related: [../architecture/overview.md, PRD.md, user-experience.md]
+keywords: [scope, boundaries, limitations, design-decisions, architecture]
+version: 1.0
+date: 2025-08-01
+authors: ["Software Architect Agent", "Claude Code"]
+last_updated: 2025-10-21
+---
+
+# CycleTime Scope Limitations and Boundaries
 
 ## Purpose
 
