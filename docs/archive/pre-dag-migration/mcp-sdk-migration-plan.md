@@ -1951,7 +1951,7 @@ mcp-kotlin-sdk = { module = "io.modelcontextprotocol:kotlin-sdk", version.ref = 
 **Location:** `gradle/libs.versions.toml`
 **Configuration:**
 ```toml
-ktor = "3.3.0"
+ktor = "3.3.1"
 ```
 
 **SDK Compatibility:** ✅ SDK v0.1.0 compatible with Ktor 3.3.0

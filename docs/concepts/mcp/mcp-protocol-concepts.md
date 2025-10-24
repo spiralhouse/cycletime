@@ -247,9 +247,9 @@ CycleTime MCP server implementation requires:
 // build.gradle.kts
 dependencies {
     // Ktor SSE support
-    implementation("io.ktor:ktor-server-sse:3.3.0")
-    implementation("io.ktor:ktor-server-content-negotiation:3.3.0")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.0")
+    implementation("io.ktor:ktor-server-sse:3.3.1")
+    implementation("io.ktor:ktor-server-content-negotiation:3.3.1")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.1")
 
     // MCP Kotlin SDK (official from Anthropic/JetBrains)
     implementation("io.modelcontextprotocol:kotlin-sdk:0.7.2")
