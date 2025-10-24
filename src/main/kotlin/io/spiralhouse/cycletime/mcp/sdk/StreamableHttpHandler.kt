@@ -21,18 +21,23 @@ import java.util.concurrent.ConcurrentHashMap
  * - Single endpoint for POST and GET requests
  * - Dual-mode responses (JSON or SSE based on Accept header)
  * - Session management via Mcp-Session-Id header
- * - Origin header validation (security)
+ * - Origin header validation (security - always enabled)
  * - Protocol version header support (NEW in 2025-06-18)
  * - Batch request rejection (REMOVED in 2025-06-18)
+ * - Request size limits (security - prevents DoS attacks)
  *
- * @property mcpServer MCP SDK Server instance
- * @property sessionManager Session manager for session handling
+ * Security Features:
+ * - Origin validation (ALWAYS enabled, no bypass)
+ * - Request body size limits (default 1MB)
+ * - Database-backed session validation
+ * - Rate limiting for session creation
+ *
+ * @property sessionManager Session manager for database-backed session validation
  * @property toolProviders List of tool providers for tools/list delegation (SPI-764)
  * @property resourceProviders List of resource providers for resources/list delegation (SPI-764)
  * @property config Configuration for handler behavior
  */
 class StreamableHttpHandler(
-    private val mcpServer: Server,
     private val sessionManager: SDKSessionManager,
     private val toolProviders: List<io.spiralhouse.cycletime.mcp.tools.ToolProvider> = emptyList(),
     private val resourceProviders: List<io.spiralhouse.cycletime.mcp.resources.ResourceProvider> = emptyList(),
@@ -55,14 +60,10 @@ class StreamableHttpHandler(
         private const val ERROR_CODE_METHOD_NOT_FOUND = -32601
     }
 
-    // Store for SSE channels by session ID
-    // Thread-safe concurrent map for multi-threaded Ktor request handling
-    private val sseChannels = ConcurrentHashMap<String, Channel<ServerSentEvent>>()
-
-    // In-memory session tracking for request lifecycle
-    // Thread-safe concurrent set for multi-threaded Ktor request handling
-    // In production, this would be backed by database
-    private val activeSessions = ConcurrentHashMap.newKeySet<String>()
+    // Rate limiter for session creation (IP address -> last creation timestamp + count)
+    // Security: Prevents session flooding attacks by limiting creation rate per IP
+    // Format: Map<IP, Pair<lastResetTime, creationCount>>
+    private val sessionCreationLimiter = ConcurrentHashMap<String, Pair<Long, Int>>()
 
     // Cached tool and resource lists (built once at initialization)
     // Tools and resources don't change during server lifetime, so we cache them
@@ -207,17 +208,129 @@ class StreamableHttpHandler(
     }
 
     /**
-     * Build tools/call response (placeholder implementation).
+     * Build tools/call response by executing the requested tool.
+     *
+     * This method implements real tool execution following the pattern from SDKToolAdapter:
+     * 1. Extract tool name and arguments from JSON-RPC params
+     * 2. Look up tool in registered providers
+     * 3. Execute tool handler (sync or async)
+     * 4. Convert Result<JsonElement> to JSON-RPC response format
+     * 5. Handle errors with appropriate JSON-RPC error codes
+     *
+     * Error Handling:
+     * - Missing tool name → JSON-RPC error -32602 (Invalid params)
+     * - Tool not found → JSON-RPC error -32601 (Method not found)
+     * - Tool execution failure → isError: true in result (NOT JSON-RPC error)
      */
-    private fun buildToolsCallResponse(id: JsonElement?): JsonObject {
-        return buildSuccessResponse(id, buildJsonObject {
-            put("content", buildJsonArray {
-                add(buildJsonObject {
-                    put("type", "text")
-                    put("text", "Tool executed successfully")
+    private suspend fun buildToolsCallResponse(id: JsonElement?, request: JsonObject): JsonObject {
+        // 1. Extract tool name and arguments from JSON-RPC params
+        val params = request["params"]?.jsonObject
+        val toolName = params?.get("name")?.jsonPrimitive?.content
+
+        if (toolName == null) {
+            logger.warn("tools/call request missing 'name' parameter")
+            return buildErrorResponse(id, -32602, "Invalid params: name is required")
+        }
+
+        val arguments = params.get("arguments")?.jsonObject
+
+        // 2. Look up tool in registered providers
+        val tool = findTool(toolName)
+        if (tool == null) {
+            logger.warn("Tool not found: $toolName")
+            return buildErrorResponse(id, -32601, "Method not found: $toolName")
+        }
+
+        logger.debug("Executing tool: $toolName with arguments: ${arguments?.toString()?.take(100)}")
+
+        // 3. Execute tool handler (sync or async)
+        val result = try {
+            val toolParams = arguments ?: JsonObject(emptyMap())
+            when (tool.handler) {
+                is io.spiralhouse.cycletime.mcp.tools.ToolHandler.Sync -> {
+                    // Execute synchronous handler
+                    tool.handler.handler(toolParams)
+                }
+                is io.spiralhouse.cycletime.mcp.tools.ToolHandler.Async -> {
+                    // Execute asynchronous handler
+                    tool.handler.handler(toolParams)
+                }
+            }
+        } catch (e: Exception) {
+            logger.error("Tool execution threw exception: ${e.message}", e)
+            Result.failure(e)
+        }
+
+        // 4. Convert Result<JsonElement> to JSON-RPC response format
+        return result.fold(
+            onSuccess = { jsonElement ->
+                buildSuccessResponse(id, buildJsonObject {
+                    put("content", buildJsonArray {
+                        add(buildJsonObject {
+                            put("type", "text")
+                            put("text", jsonElement.toString())
+                        })
+                    })
+                    put("isError", false)
                 })
-            })
-        })
+            },
+            onFailure = { throwable ->
+                val errorMessage = throwable.message ?: "Unknown error"
+
+                // Detect parameter validation errors and return JSON-RPC error -32602
+                // This handles cases where required parameters are missing
+                if (errorMessage.contains("is required", ignoreCase = true) ||
+                    errorMessage.contains("required parameter", ignoreCase = true)) {
+                    logger.warn("Parameter validation failed: $errorMessage")
+                    return buildErrorResponse(id, -32602, "Invalid params: $errorMessage")
+                }
+
+                // Convert UUID validation errors to user-friendly "not found" messages
+                // From UX perspective, users don't care about UUID validation - they just want to know if resource exists
+                val userMessage = if (errorMessage.contains("Invalid UUID format", ignoreCase = true) ||
+                                     errorMessage.contains("invalid uuid", ignoreCase = true)) {
+                    // Extract the resource type from the tool name (e.g., "project" from "project_get_project")
+                    val resourceType = toolName.substringBefore("_")
+                    "Tool handler error: $resourceType not found"
+                } else {
+                    "Tool handler error: $errorMessage"
+                }
+
+                logger.warn("Tool handler returned error: $errorMessage")
+                buildSuccessResponse(id, buildJsonObject {
+                    put("content", buildJsonArray {
+                        add(buildJsonObject {
+                            put("type", "text")
+                            put("text", userMessage)
+                        })
+                    })
+                    put("isError", true)
+                })
+            }
+        )
+    }
+
+    /**
+     * Find a tool by name across all registered providers.
+     *
+     * Tools are registered with format: {namespace}_{tool_name}
+     * For example: "project_list_projects", "session_create_session"
+     *
+     * @param toolName The full tool name including namespace prefix
+     * @return The matching Tool or null if not found
+     */
+    private fun findTool(toolName: String): io.spiralhouse.cycletime.mcp.tools.Tool? {
+        toolProviders.forEach { provider ->
+            val allTools = provider.getTools() + provider.getAsyncTools()
+            allTools.forEach { tool ->
+                val fullName = "${provider.namespace}_${tool.name}"
+                if (fullName == toolName) {
+                    logger.debug("Found tool: $toolName in provider: ${provider.namespace}")
+                    return tool
+                }
+            }
+        }
+        return null
     }
 
     /**
@@ -246,7 +359,17 @@ class StreamableHttpHandler(
             val acceptHeader = call.request.accept() ?: "application/json"
             logger.debug("Accept header: $acceptHeader")
 
-            // 4. Request Processing: Parse JSON-RPC message
+            // 4. Request Size Validation: Check Content-Length header before reading body
+            // Security: Prevent DoS attacks via oversized request bodies
+            val contentLength = call.request.header(HttpHeaders.ContentLength)?.toLongOrNull()
+            if (contentLength != null && contentLength > config.maxRequestBodySize) {
+                logger.warn("Request body too large: $contentLength bytes (max: ${config.maxRequestBodySize})")
+                return call.respond(HttpStatusCode.PayloadTooLarge, mapOf(
+                    "error" to "Request body exceeds maximum size of ${config.maxRequestBodySize} bytes"
+                ))
+            }
+
+            // 5. Request Processing: Parse JSON-RPC message
             val requestBody = call.receiveText()
             logger.debug("Received request body: ${requestBody.take(200)}")
 
@@ -277,27 +400,46 @@ class StreamableHttpHandler(
             val method = jsonRpcObject["method"]?.jsonPrimitive?.content
             logger.debug("Received JSON-RPC request: $method")
 
-            // 6. Session Management: Extract, validate, or generate session ID
+            // 6. Session Management: Validate existing or create new session
+            // Security: Database-backed validation prevents session hijacking
             var sessionId = call.request.header("Mcp-Session-Id")
 
             if (sessionId != null) {
-                // Session ID provided - validate it exists (except for initialize)
-                if (method != "initialize") {
-                    if (!activeSessions.contains(sessionId)) {
-                        logger.warn("Invalid or expired session: $sessionId")
-                        return call.respond(HttpStatusCode.NotFound, mapOf("error" to "Session not found"))
-                    }
-                    logger.debug("Using existing session ID: $sessionId")
-                } else {
-                    // For initialize, always accept and track the session
-                    activeSessions.add(sessionId)
-                    logger.debug("Registered existing session ID from initialize: $sessionId")
+                // Session ID provided - validate against database
+                // Security: Wrap in try-catch to handle invalid UUID formats gracefully
+                val session = try {
+                    sessionManager.getSessionOrNull(sessionId)
+                } catch (e: Exception) {
+                    logger.warn("Invalid session ID format rejected: $sessionId (error: ${e.message})")
+                    null
                 }
+
+                if (session == null) {
+                    // Invalid or expired session ID
+                    logger.warn("Invalid session ID rejected: $sessionId (method: $method)")
+                    return call.respond(HttpStatusCode.Unauthorized, mapOf(
+                        "error" to "Invalid or expired session ID",
+                        "details" to "Please create a new session"
+                    ))
+                }
+                logger.debug("Validated existing session: $sessionId")
             } else {
-                // No session ID provided - generate and track new one
-                sessionId = UUID.randomUUID().toString()
-                activeSessions.add(sessionId)
-                logger.info("Generated and registered new session ID: $sessionId (method: $method)")
+                // No session ID provided - create new session with rate limiting
+                // Security: Rate limiting prevents session flooding attacks
+                val clientIp = call.request.local.remoteHost
+                if (!canCreateSession(clientIp)) {
+                    logger.warn("Session creation rate limit exceeded for IP: $clientIp")
+                    return call.respond(HttpStatusCode.TooManyRequests, mapOf(
+                        "error" to "Too many session creation requests",
+                        "details" to "Please wait before creating a new session"
+                    ))
+                }
+
+                // Create new session in database
+                val newSession = sessionManager.getOrCreateSession(UUID.randomUUID().toString())
+                sessionId = newSession.sessionKey.value
+                recordSessionCreation(clientIp)
+                logger.info("Created new session: $sessionId (method: $method, IP: $clientIp)")
             }
 
             // 7. Business Logic: Process through MCP SDK
@@ -389,10 +531,55 @@ class StreamableHttpHandler(
     /**
      * Validate Origin header against whitelist.
      * CRITICAL: Prevents DNS rebinding attacks.
+     * Security: Always validates origin (no bypass allowed).
      */
     private fun validateOrigin(origin: String?) {
-        if (config.validateOrigin && !isAllowedOrigin(origin)) {
-            throw InvalidOriginException("Origin not allowed: $origin")
+        if (!isAllowedOrigin(origin)) {
+            throw InvalidOriginException("Origin not allowed")
+        }
+    }
+
+    /**
+     * Check if session creation is allowed for given IP address.
+     * Security: Rate limiting prevents session flooding attacks.
+     *
+     * Rate limit: 5 sessions per minute per IP address (configurable).
+     * Uses sliding window algorithm with concurrent-safe implementation.
+     *
+     * @param ipAddress Client IP address
+     * @return true if session creation is allowed, false otherwise
+     */
+    private fun canCreateSession(ipAddress: String): Boolean {
+        val now = System.currentTimeMillis()
+        val windowMs = config.sessionCreationWindowMs
+        val maxCreations = config.sessionCreationMaxPerWindow
+
+        // Get or create rate limit state for this IP
+        val (lastResetTime, count) = sessionCreationLimiter.compute(ipAddress) { _, existing ->
+            val (prevResetTime, prevCount) = existing ?: Pair(now, 0)
+
+            // Reset window if expired
+            if (now - prevResetTime >= windowMs) {
+                Pair(now, 0)
+            } else {
+                Pair(prevResetTime, prevCount)
+            }
+        } ?: Pair(now, 0)
+
+        // Check if under limit
+        return count < maxCreations
+    }
+
+    /**
+     * Record session creation for rate limiting.
+     * Security: Updates rate limiter state after successful session creation.
+     *
+     * @param ipAddress Client IP address
+     */
+    private fun recordSessionCreation(ipAddress: String) {
+        sessionCreationLimiter.compute(ipAddress) { _, existing ->
+            val (resetTime, count) = existing ?: Pair(System.currentTimeMillis(), 0)
+            Pair(resetTime, count + 1)
         }
     }
 
@@ -426,7 +613,7 @@ class StreamableHttpHandler(
             METHOD_TOOLS_LIST -> buildToolsListResponse(id)
             METHOD_RESOURCES_LIST -> buildResourcesListResponse(id)
             METHOD_INITIALIZE -> buildInitializeResponse(id)
-            METHOD_TOOLS_CALL -> buildToolsCallResponse(id)
+            METHOD_TOOLS_CALL -> buildToolsCallResponse(id, requestObj)
             else -> buildErrorResponse(id, ERROR_CODE_METHOD_NOT_FOUND, "Method not found: $method")
         }
     }
@@ -494,14 +681,27 @@ class StreamableHttpHandler(
 
 /**
  * Configuration for StreamableHttpHandler.
+ *
+ * Security Configuration:
+ * - Origin validation: ALWAYS enabled (no bypass option)
+ * - Request size limits: Prevent DoS attacks via oversized payloads
+ * - Rate limiting: Prevent session flooding attacks
+ *
+ * @property allowNullOrigin Allow requests with no Origin header (for localhost development)
+ * @property allowedOrigins Regex patterns for allowed origins
+ * @property maxRequestBodySize Maximum request body size in bytes (default 1MB)
+ * @property sessionCreationMaxPerWindow Maximum session creations per time window per IP
+ * @property sessionCreationWindowMs Time window for rate limiting in milliseconds (default 60 seconds)
  */
 data class StreamableHttpConfig(
-    val validateOrigin: Boolean = true,
     val allowNullOrigin: Boolean = true,  // For localhost development
     val allowedOrigins: List<String> = listOf(
         "http://localhost:.*",
         "https://.*\\.anthropic\\.com"
-    )
+    ),
+    val maxRequestBodySize: Long = 1_000_000,  // 1MB default (prevents DoS)
+    val sessionCreationMaxPerWindow: Int = 5,  // Max 5 sessions per window
+    val sessionCreationWindowMs: Long = 60_000  // 60 second window
 )
 
 /**

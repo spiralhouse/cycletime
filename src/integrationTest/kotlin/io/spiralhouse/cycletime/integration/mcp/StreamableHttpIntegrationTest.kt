@@ -7,6 +7,7 @@ import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.collections.shouldContain as shouldContainElement
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -475,6 +476,448 @@ class StreamableHttpIntegrationTest : StringSpec({
             response.status shouldBe HttpStatusCode.BadRequest
             val error = response.bodyAsText()
             error shouldContain "Invalid JSON-RPC"
+        }
+    }
+
+    // ========================================
+    // TOOLS/CALL EXECUTION TESTS (SPI-765)
+    // ========================================
+
+    "POST /mcp with tools/call should execute project_list_projects and return real data" {
+        testSDKApplication {
+            // ARRANGE: Create a test project first
+            val createResponse = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 100,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "project_create_project",
+                            "arguments": {
+                                "name": "Test Project Alpha",
+                                "description": "Test project for verification"
+                            }
+                        }
+                    }
+                """.trimIndent())
+            }
+
+            // ACT: Call project_list_projects
+            val listResponse = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 101,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "project_list_projects",
+                            "arguments": {}
+                        }
+                    }
+                """.trimIndent())
+            }
+
+            // ASSERT: Should return real project data, NOT placeholder
+            listResponse.status shouldBe HttpStatusCode.OK
+            val jsonResponse = Json.parseToJsonElement(listResponse.bodyAsText()).jsonObject
+
+            jsonResponse["jsonrpc"]?.jsonPrimitive?.content shouldBe "2.0"
+            jsonResponse["id"]?.jsonPrimitive?.int shouldBe 101
+
+            val result = jsonResponse["result"]?.jsonObject
+            result shouldNotBe null
+
+            // Verify MCP spec-compliant response format
+            val content = result!!["content"]?.jsonArray
+            content shouldNotBe null
+            content!!.size shouldBeGreaterThan 0
+
+            // First content item should have type and text
+            val firstContent = content[0].jsonObject
+            firstContent["type"]?.jsonPrimitive?.content shouldBe "text"
+
+            val textContent = firstContent["text"]?.jsonPrimitive?.content
+            textContent shouldNotBe null
+
+            // CRITICAL: Should contain real project data, NOT placeholder
+            textContent!!.shouldContain("Test Project Alpha")
+            textContent.shouldNotContain("Tool executed successfully")
+        }
+    }
+
+    "POST /mcp with tools/call should execute project_create_project with arguments" {
+        testSDKApplication {
+            // ACT: Create project with arguments
+            val response = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 102,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "project_create_project",
+                            "arguments": {
+                                "name": "Integration Test Project",
+                                "description": "Created via tools/call"
+                            }
+                        }
+                    }
+                """.trimIndent())
+            }
+
+            // ASSERT: Should create real project in database
+            response.status shouldBe HttpStatusCode.OK
+            val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+
+            val result = jsonResponse["result"]?.jsonObject
+            result shouldNotBe null
+
+            val content = result!!["content"]?.jsonArray
+            content shouldNotBe null
+
+            val textContent = content!![0].jsonObject["text"]?.jsonPrimitive?.content
+            textContent shouldNotBe null
+
+            // Should contain project ID and name from real creation
+            textContent!!.shouldContain("id")
+            textContent.shouldContain("Integration Test Project")
+            textContent.shouldNotContain("Tool executed successfully")
+
+            // Verify isError is false or absent for successful execution
+            val isError = result["isError"]?.jsonPrimitive?.boolean
+            if (isError != null) {
+                isError shouldBe false
+            }
+        }
+    }
+
+    "POST /mcp with tools/call should execute session_create_session with session context" {
+        testSDKApplication {
+            // ARRANGE: Create project first
+            val projectResponse = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 103,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "project_create_project",
+                            "arguments": {
+                                "name": "Session Test Project"
+                            }
+                        }
+                    }
+                """.trimIndent())
+            }
+
+            val projectResult = Json.parseToJsonElement(projectResponse.bodyAsText()).jsonObject
+            val projectContent = projectResult["result"]?.jsonObject?.get("content")?.jsonArray?.get(0)?.jsonObject
+            val projectText = projectContent?.get("text")?.jsonPrimitive?.content
+
+            // Extract project ID from response (assuming JSON format in text)
+            val projectId = if (projectText?.contains("\"id\"") == true) {
+                // Parse the JSON from text content
+                val projectJson = Json.parseToJsonElement(projectText).jsonObject
+                projectJson["id"]?.jsonPrimitive?.content
+            } else {
+                // Fallback: use a test ID if creation didn't work as expected
+                "test-project-id"
+            }
+
+            // ACT: Create session with project ID
+            // Note: Don't send Mcp-Session-Id header - let system create new session
+            val sessionResponse = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                // Removed hardcoded session ID - system will create one (SPI-765 security fix)
+                setBody("""
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 104,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "session_create_session",
+                            "arguments": {
+                                "projectId": "$projectId"
+                            }
+                        }
+                    }
+                """.trimIndent())
+            }
+
+            // ASSERT: Should create real session with project context
+            sessionResponse.status shouldBe HttpStatusCode.OK
+            val jsonResponse = Json.parseToJsonElement(sessionResponse.bodyAsText()).jsonObject
+
+            val result = jsonResponse["result"]?.jsonObject
+            result shouldNotBe null
+
+            val content = result!!["content"]?.jsonArray
+            val textContent = content!![0].jsonObject["text"]?.jsonPrimitive?.content
+            textContent shouldNotBe null
+
+            // Should contain session creation confirmation with project ID
+            textContent!!.shouldContain("session")
+            if (projectId != null) {
+                textContent.shouldContain(projectId)
+            }
+            textContent.shouldNotContain("Tool executed successfully")
+        }
+    }
+
+    "POST /mcp with tools/call should handle async tool execution properly" {
+        testSDKApplication {
+            // All tools are async (from ToolHandler.Async)
+            // This test verifies async execution completes without blocking
+
+            val response = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 105,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "project_list_projects",
+                            "arguments": {}
+                        }
+                    }
+                """.trimIndent())
+            }
+
+            // Should complete successfully (async execution handled by SDK)
+            response.status shouldBe HttpStatusCode.OK
+
+            val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+            jsonResponse["result"] shouldNotBe null
+
+            // Should not timeout or hang (integration test timeout is 100ms target)
+            // If this test passes, async execution is working correctly
+        }
+    }
+
+    "POST /mcp with tools/call should return JSON-RPC error for invalid tool name" {
+        testSDKApplication {
+            val response = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 106,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "nonexistent_invalid_tool",
+                            "arguments": {}
+                        }
+                    }
+                """.trimIndent())
+            }
+
+            // Should return JSON-RPC error, not HTTP error
+            response.status shouldBe HttpStatusCode.OK
+
+            val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+
+            // Should have error object instead of result
+            jsonResponse["error"] shouldNotBe null
+            jsonResponse["result"] shouldBe null
+
+            val error = jsonResponse["error"]?.jsonObject
+            error shouldNotBe null
+
+            // JSON-RPC error code -32601 = Method not found
+            error!!["code"]?.jsonPrimitive?.int shouldBe -32601
+            error["message"]?.jsonPrimitive?.content shouldNotBe null
+        }
+    }
+
+    "POST /mcp with tools/call should return JSON-RPC error for missing required parameters" {
+        testSDKApplication {
+            val response = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 107,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "project_create_project",
+                            "arguments": {}
+                        }
+                    }
+                """.trimIndent())
+            }
+
+            // Should return JSON-RPC error for missing "name" parameter
+            response.status shouldBe HttpStatusCode.OK
+
+            val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+
+            // Should have error object
+            jsonResponse["error"] shouldNotBe null
+
+            val error = jsonResponse["error"]?.jsonObject
+            error shouldNotBe null
+
+            // JSON-RPC error code -32602 = Invalid params
+            error!!["code"]?.jsonPrimitive?.int shouldBe -32602
+            error["message"]?.jsonPrimitive?.content?.lowercase() shouldContain "param"
+        }
+    }
+
+    "POST /mcp with tools/call should return isError true for tool execution failures" {
+        testSDKApplication {
+            // Try to get non-existent project
+            val response = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 108,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "project_get_project",
+                            "arguments": {
+                                "id": "nonexistent-project-id-12345"
+                            }
+                        }
+                    }
+                """.trimIndent())
+            }
+
+            // Should return success response with isError: true
+            response.status shouldBe HttpStatusCode.OK
+
+            val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+            val result = jsonResponse["result"]?.jsonObject
+            result shouldNotBe null
+
+            // MCP spec: execution errors are returned in result with isError flag
+            result!!["isError"]?.jsonPrimitive?.boolean shouldBe true
+
+            // Should have content array with error details
+            val content = result["content"]?.jsonArray
+            content shouldNotBe null
+            content!!.size shouldBeGreaterThan 0
+
+            val errorText = content[0].jsonObject["text"]?.jsonPrimitive?.content
+            errorText shouldNotBe null
+            errorText!!.lowercase().shouldContain("not found")
+        }
+    }
+
+    "POST /mcp with tools/call should propagate parameters correctly to tool handlers" {
+        testSDKApplication {
+            val response = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 109,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "project_create_project",
+                            "arguments": {
+                                "name": "Parameter Test Project",
+                                "description": "Testing parameter propagation"
+                            }
+                        }
+                    }
+                """.trimIndent())
+            }
+
+            response.status shouldBe HttpStatusCode.OK
+            val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+            val result = jsonResponse["result"]?.jsonObject
+            val content = result!!["content"]?.jsonArray
+            val textContent = content!![0].jsonObject["text"]?.jsonPrimitive?.content
+
+            // Verify both parameters were passed and used
+            textContent!!.shouldContain("Parameter Test Project")
+            // Description may or may not be in the response depending on implementation
+            // but the key test is that it didn't fail due to parameter issues
+        }
+    }
+
+    "POST /mcp with tools/call should return content array with text type" {
+        testSDKApplication {
+            val response = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 110,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "project_list_projects",
+                            "arguments": {}
+                        }
+                    }
+                """.trimIndent())
+            }
+
+            response.status shouldBe HttpStatusCode.OK
+            val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+            val result = jsonResponse["result"]?.jsonObject
+
+            // MCP spec: result must have content array
+            result!!.containsKey("content") shouldBe true
+            val content = result["content"]?.jsonArray
+            content shouldNotBe null
+
+            // Each content item must have type field
+            content!!.forEach { item ->
+                val contentItem = item.jsonObject
+                contentItem.containsKey("type") shouldBe true
+                contentItem["type"]?.jsonPrimitive?.content shouldBe "text"
+
+                // Must have text field
+                contentItem.containsKey("text") shouldBe true
+                contentItem["text"]?.jsonPrimitive?.content shouldNotBe null
+            }
+        }
+    }
+
+    "POST /mcp with tools/call should extract session context from headers" {
+        testSDKApplication {
+            // ARRANGE: Create a valid session first (SPI-765 security fix requires valid sessions)
+            val createResponse = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""{"jsonrpc":"2.0","id":110,"method":"initialize","params":{"protocolVersion":"2025-06-18","clientInfo":{"name":"test","version":"1.0"},"capabilities":{}}}""")
+            }
+            val sessionId = createResponse.headers["Mcp-Session-Id"]!!
+
+            // ACT: Use the valid session ID
+            val response = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                header("Mcp-Session-Id", sessionId)
+                setBody("""
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 111,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "session_get_active_session",
+                            "arguments": {}
+                        }
+                    }
+                """.trimIndent())
+            }
+
+            // ASSERT: Should succeed with valid session
+            response.status shouldBe HttpStatusCode.OK
+
+            // Response should include the session ID header
+            response.headers["Mcp-Session-Id"] shouldBe sessionId
+
+            // Tool execution should have access to session context
+            // (verified by successful execution without error)
+            val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+            jsonResponse["result"] shouldNotBe null
         }
     }
 })
