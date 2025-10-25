@@ -251,9 +251,9 @@ Every agent should have access to these foundational documents:
 
 **Specialized Documents**:
 - `docs/design/spi-690-dashboard-design.md` - Dashboard design specification with HTMX/Tailwind patterns
-- `docs/patterns/ui/htmx-patterns.md` - HTMX progressive enhancement patterns (when created)
-- `docs/patterns/ui/tailwind-design-system.md` - Tailwind design system guidelines (when created)
-- `docs/examples/ui/ktor-html-dsl-examples.md` - Ktor HTML DSL component examples (when created)
+- `docs/patterns/ui/htmx-patterns.md` - HTMX progressive enhancement patterns
+- `docs/patterns/ui/tailwind-design-system.md` - Tailwind design system guidelines
+- `docs/examples/ui/ktor-html-dsl-examples.md` - Ktor HTML DSL component examples
 
 **Workflow Documents**:
 - `.claude/workflows/direct-workflow.md` - Direct implementation approach
