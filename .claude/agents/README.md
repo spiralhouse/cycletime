@@ -241,6 +241,30 @@ Every agent should have access to these foundational documents:
 
 ---
 
+#### Web UI Engineer Agent (@agent-web-ui-engineer)
+
+**Primary Role**: Frontend development with HTMX, Tailwind CSS, and server-driven UI architecture
+
+**Generic Documents**:
+- `.claude/shared/development-commands.md` - Build and serve commands
+- `.claude/shared/git-conventions.md` - Commit message standards
+
+**Specialized Documents**:
+- `docs/design/spi-690-dashboard-design.md` - Dashboard design specification with HTMX/Tailwind patterns
+- `docs/patterns/ui/htmx-patterns.md` - HTMX progressive enhancement patterns (when created)
+- `docs/patterns/ui/tailwind-design-system.md` - Tailwind design system guidelines (when created)
+- `docs/examples/ui/ktor-html-dsl-examples.md` - Ktor HTML DSL component examples (when created)
+
+**Workflow Documents**:
+- `.claude/workflows/direct-workflow.md` - Direct implementation approach
+- `docs/reference/definition-of-done.md` (Section 8: UI/UX Requirements when added)
+
+**Domain Focus**: HTMX interactivity patterns, Tailwind CSS utility-first design, Ktor HTML DSL type-safe templates, server-driven architecture, accessibility (WCAG), responsive design, visual hierarchy, progressive enhancement
+
+**Think Level Recommendation**: `think hard` for complex UI patterns and accessibility considerations, `think` for straightforward component implementation
+
+---
+
 ## Document Inclusion Guidelines
 
 ### When to Use @ References in Agent Configs
@@ -443,4 +467,4 @@ After SPI-722 documentation restructuring, agents should reference:
 
 ---
 
-**Last Updated**: 2025-10-21 (SPI-722 documentation optimization)
+**Last Updated**: 2025-10-25 (SPI-804 added web-ui-engineer agent)
