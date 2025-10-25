@@ -30,6 +30,38 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.transactions.TransactionManager
+import io.ktor.http.content.*
+import io.ktor.util.reflect.*
+import io.ktor.utils.io.*
+import io.ktor.serialization.*
+import java.nio.charset.Charset
+
+/**
+ * Content converter for SSE responses in test environment.
+ * Allows ContentNegotiation to handle text/event-stream without returning 406.
+ */
+private object TestSSEContentConverter : ContentConverter {
+    override suspend fun serialize(
+        contentType: ContentType,
+        charset: Charset,
+        typeInfo: TypeInfo,
+        value: Any?
+    ): OutgoingContent? {
+        // Handle any value type for SSE - convert to bytes
+        return when (value) {
+            is ByteArray -> ByteArrayContent(value, contentType)
+            is String -> ByteArrayContent(value.toByteArray(charset), contentType)
+            null -> ByteArrayContent(ByteArray(0), contentType)
+            else -> ByteArrayContent(value.toString().toByteArray(charset), contentType)
+        }
+    }
+
+    override suspend fun deserialize(
+        charset: Charset,
+        typeInfo: TypeInfo,
+        content: ByteReadChannel
+    ): Any? = null
+}
 
 /**
  * Standardized test application configuration for SDK integration tests.
@@ -99,6 +131,9 @@ fun testSDKApplication(
                 isLenient = true
                 ignoreUnknownKeys = true
             })
+
+            // SPI-766: Register SSE content type to prevent 406 errors
+            register(ContentType.Text.EventStream, TestSSEContentConverter)
         }
         install(SSE)
 
@@ -159,6 +194,9 @@ fun testSDKApplicationWithDatabase(
                 isLenient = true
                 ignoreUnknownKeys = true
             })
+
+            // SPI-766: Register SSE content type to prevent 406 errors
+            register(ContentType.Text.EventStream, TestSSEContentConverter)
         }
         install(SSE)
 
