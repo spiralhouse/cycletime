@@ -43,6 +43,47 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.Serializable
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
+import io.ktor.http.content.*
+import io.ktor.util.reflect.*
+import io.ktor.utils.io.*
+import io.ktor.serialization.*
+import java.nio.charset.Charset
+
+/**
+ * Content converter for Server-Sent Events (SSE) responses.
+ *
+ * This converter allows ContentNegotiation to handle text/event-stream responses
+ * by passing through raw byte arrays without serialization. This prevents 406 errors
+ * when handlers respond with SSE content type.
+ *
+ * @see io.spiralhouse.cycletime.mcp.sdk.StreamableHttpHandler.handleGet
+ */
+private object SSEContentConverter : ContentConverter {
+    override suspend fun serialize(
+        contentType: ContentType,
+        charset: Charset,
+        typeInfo: TypeInfo,
+        value: Any?
+    ): OutgoingContent? {
+        // Handle any value type for SSE - convert to bytes
+        // This allows ContentNegotiation to recognize we support text/event-stream
+        return when (value) {
+            is ByteArray -> ByteArrayContent(value, contentType)
+            is String -> ByteArrayContent(value.toByteArray(charset), contentType)
+            null -> ByteArrayContent(ByteArray(0), contentType)
+            else -> ByteArrayContent(value.toString().toByteArray(charset), contentType)
+        }
+    }
+
+    override suspend fun deserialize(
+        charset: Charset,
+        typeInfo: TypeInfo,
+        content: ByteReadChannel
+    ): Any? {
+        // SSE is server-to-client only, no deserialization needed
+        return null
+    }
+}
 
 @Serializable
 data class HealthResponse(
@@ -322,6 +363,11 @@ private fun Application.configureKtorFeatures(
             isLenient = true
             ignoreUnknownKeys = true
         })
+
+        // SPI-766: Register text/event-stream for SSE support
+        // This prevents ContentNegotiation from returning 406 for SSE responses
+        // The converter passes through raw bytes without serialization
+        register(ContentType.Text.EventStream, SSEContentConverter)
     }
 
     install(SSE)

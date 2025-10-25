@@ -491,27 +491,66 @@ class StreamableHttpHandler(
             val sessionId = call.request.header("Mcp-Session-Id")
             if (sessionId == null) {
                 logger.warn("GET request missing Mcp-Session-Id header")
-                return call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Mcp-Session-Id required"))
+                // Return JSON error explicitly (ignore Accept header)
+                return call.respondText(
+                    """{"error":"Missing session ID"}""",
+                    ContentType.Application.Json,
+                    HttpStatusCode.BadRequest
+                )
+            }
+
+            // 3. Session Validation: Verify session exists in database
+            // Security: Database-backed validation prevents session hijacking
+            val session = try {
+                sessionManager.getSessionOrNull(sessionId)
+            } catch (e: Exception) {
+                logger.warn("Invalid session ID format: $sessionId (error: ${e.message})")
+                null
+            }
+
+            if (session == null) {
+                logger.warn("Invalid or expired session ID: $sessionId")
+                // Return JSON error explicitly (ignore Accept header)
+                return call.respondText(
+                    """{"error":"Invalid or expired session","details":"Please create a new session"}""",
+                    ContentType.Application.Json,
+                    HttpStatusCode.Unauthorized
+                )
             }
 
             logger.info("Opening SSE stream for session: $sessionId")
 
-            // 3. Open SSE stream - use Ktor's SSE support
-            // Note: This is a simplified implementation
+            // 4. Open SSE stream - use respondOutputStream to keep connection open
+            // FIX (SPI-766): respondOutputStream bypasses ContentNegotiation and keeps connection open for SSE
+            // Note: ContentNegotiation must be configured to accept text/event-stream
+            // (see Application.kt configureKtorFeatures)
+            // This is a simplified implementation for stream setup
             // In production, would integrate with server-initiated message queue
-            call.response.header("Content-Type", "text/event-stream")
             call.response.header("Cache-Control", "no-cache")
             call.response.header("Connection", "keep-alive")
-
-            // For now, just return OK to indicate stream is ready
-            // Actual streaming would be handled by Ktor SSE route
-            call.respond(HttpStatusCode.OK)
+            call.respondOutputStream(contentType = ContentType.Text.EventStream, status = HttpStatusCode.OK) {
+                // Write a minimal SSE event to establish connection
+                // Format: "data: <message>\n\n"
+                write("data: {\"type\":\"connected\",\"sessionId\":\"$sessionId\"}\n\n".toByteArray())
+                flush()
+                // Connection is now established - in production would keep open for more events
+            }
         } catch (e: InvalidOriginException) {
             logger.warn("Origin validation failed: ${e.message}")
-            call.respond(HttpStatusCode.Forbidden)
+            // Return JSON error explicitly (ignore Accept header)
+            call.respondText(
+                """{"error":"Invalid origin"}""",
+                ContentType.Application.Json,
+                HttpStatusCode.Forbidden
+            )
         } catch (e: Exception) {
             logger.error("GET request failed", e)
-            call.respond(HttpStatusCode.InternalServerError)
+            // Return JSON error explicitly (ignore Accept header)
+            call.respondText(
+                """{"error":"Internal server error"}""",
+                ContentType.Application.Json,
+                HttpStatusCode.InternalServerError
+            )
         }
     }
 
