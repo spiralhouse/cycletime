@@ -25,6 +25,7 @@
 - [Architecture](concepts/architecture/) - System design and DDD
 - [Configuration](concepts/configuration/) - Config management
 - [CI/CD](reference/cicd/) - Continuous integration and deployment
+- [UI/Frontend](patterns/ui/) - HTMX, Tailwind CSS, and server-driven UI patterns
 
 ## Documentation Standards
 
