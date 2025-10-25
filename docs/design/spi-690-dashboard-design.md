@@ -4,6 +4,7 @@ type: guide
 domain: [ui, architecture, api]
 description: "Technical design for view-only web dashboard with hierarchical issue display"
 dependencies: [../reference/project-fundamentals.md, ../architecture/overview.md]
+related: [../patterns/ui/htmx-patterns.md, ../patterns/ui/tailwind-design-system.md, ../examples/ui/ktor-html-dsl-examples.md]
 keywords: [dashboard, ui, htmx, tailwind, ktor, hierarchical-display]
 last_updated: 2025-10-25
 ---
@@ -117,6 +118,13 @@ graph TB
 4. **Developer Experience**: Familiar HTML-centric development
 5. **Performance**: Small bundle size (~14KB HTMX, ~3KB Tailwind compressed)
 6. **Future-Ready**: Easy to add interactivity (filter, search, real-time updates)
+
+**Implementation Resources**:
+
+For detailed implementation patterns and examples, see:
+- **[HTMX Patterns](../patterns/ui/htmx-patterns.md)** - Lazy loading, infinite scroll, optimistic UI, polling, and form validation patterns
+- **[Tailwind Design System](../patterns/ui/tailwind-design-system.md)** - Complete CycleTime design tokens, component patterns, and responsive design
+- **[Ktor HTML DSL Examples](../examples/ui/ktor-html-dsl-examples.md)** - Working code examples for components, HTMX integration, and testing
 
 ### 2.2 Backend Stack
 
@@ -1393,10 +1401,16 @@ The implementation follows the project's architecture principles while deliverin
 
 ## Appendix A: Related Documents
 
+### Core Documentation
 - [Project Fundamentals](/Users/jburbridge/Projects/cycletime/docs/reference/project-fundamentals.md)
 - [Architecture Overview](/Users/jburbridge/Projects/cycletime/docs/architecture/overview.md)
 - [Testing Standards](/Users/jburbridge/Projects/cycletime/.claude/shared/testing-standards.md)
 - [Definition of Done](/Users/jburbridge/Projects/cycletime/docs/reference/definition-of-done.md)
+
+### UI Implementation Patterns (Created for SPI-690)
+- [HTMX Patterns for Server-Driven UIs](../patterns/ui/htmx-patterns.md) - Progressive enhancement patterns, lazy loading, optimistic UI, form validation
+- [Tailwind Design System](../patterns/ui/tailwind-design-system.md) - CycleTime design tokens, color palette, spacing scale, component patterns
+- [Ktor HTML DSL Examples](../examples/ui/ktor-html-dsl-examples.md) - Type-safe HTML generation, component composition, HTMX integration examples
 
 ## Appendix B: Configuration Reference
 
