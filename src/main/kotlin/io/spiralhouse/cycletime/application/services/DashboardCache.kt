@@ -1,25 +1,24 @@
 package io.spiralhouse.cycletime.application.services
 
 import io.spiralhouse.cycletime.domain.services.TimeProvider
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Instant
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * Thread-safe LRU cache with TTL support for dashboard data.
+ * Coroutine-safe LRU cache with TTL support for dashboard data.
  *
  * This cache provides:
  * - **LRU Eviction**: Removes least recently used entries when size limit exceeded
  * - **TTL Expiration**: Entries expire after configured time-to-live
  * - **Pattern Invalidation**: Wildcard-based cache key invalidation
- * - **Thread Safety**: Safe for concurrent access using read-write locks
+ * - **Coroutine Safety**: Safe for concurrent access using coroutine Mutex
  *
  * ## Design Principles:
  * - **Testability**: Uses injected TimeProvider for deterministic testing
- * - **Performance**: Read-write locks allow concurrent reads
+ * - **Coroutine-Aware**: Uses Mutex from kotlinx.coroutines.sync for proper suspend function support
  * - **Simplicity**: Clean API with minimal surface area
  *
  * ## Usage Example:
@@ -30,21 +29,21 @@ import kotlin.time.Duration.Companion.minutes
  *     timeProvider = SystemTimeProvider()
  * )
  *
- * // Get or compute value
+ * // Get or compute value (suspend)
  * val data = cache.getOrPut("project:123") {
  *     loadProjectData(projectId)
  * }
  *
- * // Invalidate specific key
+ * // Invalidate specific key (suspend)
  * cache.invalidate("project:123")
  *
- * // Invalidate by pattern
+ * // Invalidate by pattern (suspend)
  * cache.invalidatePattern("story:*:subtasks")
  * ```
  *
- * ## Thread Safety:
- * All public methods are thread-safe. Uses ReentrantReadWriteLock for efficient
- * concurrent reads with exclusive writes.
+ * ## Coroutine Safety:
+ * All public methods are coroutine-safe. Uses Mutex to ensure proper synchronization
+ * when coroutines suspend and resume, potentially on different threads.
  *
  * @property maxSize Maximum number of entries before LRU eviction (default: 100)
  * @property defaultTTL Default time-to-live for cached entries (default: 5 minutes)
@@ -57,6 +56,15 @@ class DashboardCache(
     private val defaultTTL: Duration = 5.minutes,
     private val timeProvider: TimeProvider
 ) {
+    /**
+     * Represents the result of a cache lookup to distinguish between
+     * "not found" and "found with null value".
+     */
+    private sealed class CacheLookup<out T> {
+        data class Found<T>(val value: T) : CacheLookup<T>()
+        object NotFound : CacheLookup<Nothing>()
+    }
+
     /**
      * Cache entry with value and expiration timestamp.
      *
@@ -91,23 +99,28 @@ class DashboardCache(
     }
 
     /**
-     * Read-write lock for thread-safe cache access.
-     * Allows multiple concurrent readers or single writer.
+     * Mutex for coroutine-safe cache access.
+     * Ensures proper synchronization when coroutines suspend and resume.
      */
-    private val lock = ReentrantReadWriteLock()
+    private val mutex = Mutex()
 
     /**
      * Retrieves a value from cache or computes it if absent/expired.
      *
      * This method:
      * 1. Checks cache for existing valid entry
-     * 2. Returns cached value if found and not expired
+     * 2. Returns cached value if found and not expired (including null values)
      * 3. Computes new value using supplier if cache miss or expired
      * 4. Stores newly computed value with TTL
      *
-     * ## Thread Safety:
-     * Uses optimistic read-lock check followed by write-lock for computation.
-     * This minimizes lock contention for cache hits.
+     * ## Coroutine Safety:
+     * Uses Mutex.withLock to ensure proper synchronization when coroutines
+     * suspend and resume. The lock is released during valueSupplier execution
+     * to allow other operations, then reacquired to store the result.
+     *
+     * ## Null Value Handling:
+     * Uses a CacheLookup wrapper to distinguish between "not found" and
+     * "found with null value", ensuring null values are properly cached.
      *
      * ## TTL Behavior:
      * Expired entries are treated as cache misses and recomputed.
@@ -125,31 +138,39 @@ class DashboardCache(
     ): T {
         val now = timeProvider.now()
 
-        // Fast path: check if value exists and is valid (read lock)
-        lock.read {
+        // Check if value exists and is valid under lock
+        val lookupResult = mutex.withLock {
             @Suppress("UNCHECKED_CAST")
             val entry = cache[key] as? CacheEntry<T>
             if (entry != null && !entry.isExpired(now)) {
-                return entry.value
+                CacheLookup.Found(entry.value)
+            } else {
+                CacheLookup.NotFound
             }
         }
 
-        // Slow path: compute and store new value (write lock)
-        return lock.write {
-            // Double-check after acquiring write lock (another thread may have computed it)
-            @Suppress("UNCHECKED_CAST")
-            val entry = cache[key] as? CacheEntry<T>
-            if (entry != null && !entry.isExpired(now)) {
-                return@write entry.value
+        // Handle result based on lookup outcome
+        return when (lookupResult) {
+            is CacheLookup.Found -> lookupResult.value
+            is CacheLookup.NotFound -> {
+                // Compute new value outside of lock to allow concurrent operations
+                val value = valueSupplier()
+                val effectiveTTL = ttl ?: defaultTTL
+                val expiresAt = now + effectiveTTL
+
+                // Store computed value under lock with double-check
+                mutex.withLock {
+                    // Double-check: another coroutine may have cached it while we were computing
+                    @Suppress("UNCHECKED_CAST")
+                    val existingEntry = cache[key] as? CacheEntry<T>
+                    if (existingEntry != null && !existingEntry.isExpired(now)) {
+                        existingEntry.value
+                    } else {
+                        cache[key] = CacheEntry(value, expiresAt)
+                        value
+                    }
+                }
             }
-
-            // Compute new value and store with TTL
-            val value = valueSupplier()
-            val effectiveTTL = ttl ?: defaultTTL
-            val expiresAt = now + effectiveTTL
-
-            cache[key] = CacheEntry(value, expiresAt)
-            value
         }
     }
 
@@ -159,13 +180,13 @@ class DashboardCache(
      * Removes the entry from cache if it exists. This is a no-op if the key
      * is not present.
      *
-     * ## Thread Safety:
-     * Uses write lock for exclusive access during removal.
+     * ## Coroutine Safety:
+     * Uses Mutex.withLock for exclusive access during removal.
      *
      * @param key The cache key to invalidate
      */
-    fun invalidate(key: String) {
-        lock.write {
+    suspend fun invalidate(key: String) {
+        mutex.withLock {
             cache.remove(key)
         }
     }
@@ -182,15 +203,15 @@ class DashboardCache(
      * Scans all cache keys to find matches. For large caches with frequent
      * pattern invalidation, consider more specific key invalidation.
      *
-     * ## Thread Safety:
-     * Uses write lock for exclusive access during bulk removal.
+     * ## Coroutine Safety:
+     * Uses Mutex.withLock for exclusive access during bulk removal.
      *
      * @param pattern Glob-style pattern with asterisk wildcards
      */
-    fun invalidatePattern(pattern: String) {
+    suspend fun invalidatePattern(pattern: String) {
         val regex = patternToRegex(pattern)
 
-        lock.write {
+        mutex.withLock {
             val keysToRemove = cache.keys.filter { key ->
                 regex.matches(key)
             }
@@ -206,11 +227,11 @@ class DashboardCache(
      * This is a complete cache reset, removing all entries regardless of
      * expiration status.
      *
-     * ## Thread Safety:
-     * Uses write lock for exclusive access during clear operation.
+     * ## Coroutine Safety:
+     * Uses Mutex.withLock for exclusive access during clear operation.
      */
-    fun clear() {
-        lock.write {
+    suspend fun clear() {
+        mutex.withLock {
             cache.clear()
         }
     }
@@ -221,13 +242,13 @@ class DashboardCache(
      * Note: This count includes expired entries that haven't been evicted yet.
      * Expired entries are removed lazily on access.
      *
-     * ## Thread Safety:
-     * Uses read lock for safe concurrent access.
+     * ## Coroutine Safety:
+     * Uses Mutex.withLock for safe concurrent access.
      *
      * @return Number of entries currently in cache
      */
-    fun size(): Int {
-        return lock.read {
+    suspend fun size(): Int {
+        return mutex.withLock {
             cache.size
         }
     }
@@ -238,14 +259,14 @@ class DashboardCache(
      * This method only checks for key presence, not validity.
      * Use `getOrPut` for expiration-aware access.
      *
-     * ## Thread Safety:
-     * Uses read lock for safe concurrent access.
+     * ## Coroutine Safety:
+     * Uses Mutex.withLock for safe concurrent access.
      *
      * @param key The cache key to check
      * @return true if key exists in cache, false otherwise
      */
-    fun containsKey(key: String): Boolean {
-        return lock.read {
+    suspend fun containsKey(key: String): Boolean {
+        return mutex.withLock {
             cache.containsKey(key)
         }
     }
