@@ -6,6 +6,8 @@ import io.spiralhouse.cycletime.application.services.IssueApplicationService
 import io.spiralhouse.cycletime.application.services.ProjectApplicationService
 import io.spiralhouse.cycletime.application.services.SessionApplicationService
 import io.spiralhouse.cycletime.application.services.WorkflowApplicationService
+import io.spiralhouse.cycletime.application.services.DashboardCache
+import io.spiralhouse.cycletime.application.services.DashboardApplicationService
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
@@ -143,7 +145,30 @@ fun Application.configureDependencies(
                 )
             }
         }
-        
+
+        // Dashboard Services
+        provide<DashboardCache> {
+            safeCreate("DashboardCache") {
+                DashboardCache(
+                    maxSize = 100,
+                    defaultTTL = kotlin.time.Duration.parse("PT5M"), // 5 minutes
+                    timeProvider = resolve()
+                )
+            }
+        }
+
+        provide<DashboardApplicationService> {
+            safeCreate("DashboardApplicationService") {
+                DashboardApplicationService(
+                    projectRepository = resolve<ExposedProjectRepository>(),
+                    issueRepository = resolve<ExposedIssueRepository>(),
+                    unitOfWork = resolve<ExposedUnitOfWork>(),
+                    dashboardCache = resolve(),
+                    timeProvider = resolve()
+                )
+            }
+        }
+
         // MCP layer
         if (includeMCP) {
             val mcpStartTime = System.currentTimeMillis()
