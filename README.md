@@ -108,6 +108,70 @@ CycleTime implements the Model Context Protocol using the official Kotlin SDK v0
 - Reduced maintenance burden
 - Official support from Anthropic + JetBrains
 
+## Dashboard REST API
+
+CycleTime provides a REST API for retrieving project hierarchies and dashboard data with intelligent caching.
+
+### Quick Start
+
+Start the server:
+```bash
+./gradlew run
+```
+
+Access the dashboard API:
+```bash
+# List all projects with statistics
+curl http://localhost:8080/api/v1/dashboard
+
+# Get complete project hierarchy (Epic → Story → Subtask)
+curl http://localhost:8080/api/v1/dashboard/projects/{projectId}
+
+# Lazy-load story subtasks
+curl http://localhost:8080/api/v1/dashboard/stories/{storyId}/subtasks
+```
+
+### Key Features
+
+- **Complete Hierarchy**: Epic → Story → Subtask relationships with nested structure
+- **Computed Statistics**: Issue counts, estimate totals, orphaned story detection
+- **Intelligent Caching**: Multi-tier LRU cache (5min/3min TTLs based on data volatility)
+- **Performance Optimized**: Batch loading eliminates N+1 query issues
+- **Comprehensive Testing**: 92% integration test coverage (23/25 tests passing)
+
+### Example Response
+
+```json
+{
+  "project": { "id": "...", "name": "CycleTime", "issueCount": 142 },
+  "epics": [
+    {
+      "issue": { "id": "...", "title": "Core Infrastructure", "type": "EPIC" },
+      "children": [
+        {
+          "issue": { "id": "...", "title": "Implement caching", "type": "STORY" },
+          "children": [
+            { "issue": { "id": "...", "title": "Create cache interface", "type": "SUBTASK", "estimate": 3 } }
+          ]
+        }
+      ]
+    }
+  ],
+  "statistics": {
+    "totalIssues": 142,
+    "epicCount": 12,
+    "storyCount": 48,
+    "subtaskCount": 82,
+    "totalEstimatePoints": 387
+  }
+}
+```
+
+### Documentation
+
+- **[API Reference](docs/reference/api/dashboard-api.md)** - Complete endpoint documentation with examples
+- **[Architecture Decision](docs/reference/adr/0007-dashboard-cache-implementation.md)** - Cache design and rationale
+
 ## Documentation
 
 ### Getting Started

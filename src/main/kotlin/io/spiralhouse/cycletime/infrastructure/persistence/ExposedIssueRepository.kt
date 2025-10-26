@@ -228,10 +228,23 @@ class ExposedIssueRepository(
     /**
      * Updates an existing issue in the database.
      *
-     * @param issue The issue to update
+     * CRITICAL: This method MUST update projectId and parentId to preserve hierarchy relationships.
+     * These fields can change during issue reorganization (e.g., moving stories between epics,
+     * reassigning issues to different projects). The dashboard hierarchy depends on accurate
+     * parent/child relationships.
+     *
+     * Bug fix (SPI-690): Previously omitted projectId and parentId from UPDATE statements,
+     * causing orphaned stories and incorrect hierarchy rendering. These fields are now explicitly
+     * updated to ensure hierarchy consistency.
+     *
+     * @param issue The issue with updated values
      */
     private fun updateIssue(issue: Issue) {
         IssuesTable.update({ IssuesTable.id eq issue.id.value }) {
+            // CRITICAL: Must update projectId and parentId to preserve hierarchy relationships
+            // These can change when reorganizing issues (moving stories between epics, etc.)
+            it[projectId] = issue.projectId?.value
+            it[parentId] = issue.parentId?.value
             it[title] = issue.title
             it[description] = issue.description
             it[type] = issue.type.name

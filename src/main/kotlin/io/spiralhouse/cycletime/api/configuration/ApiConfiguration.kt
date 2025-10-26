@@ -10,6 +10,7 @@ import io.spiralhouse.cycletime.api.middleware.*
 import io.spiralhouse.cycletime.api.routes.configureProjectRoutes
 import io.spiralhouse.cycletime.api.routes.configureIssueRoutes
 import io.spiralhouse.cycletime.api.routes.configureWorkflowRoutes
+import io.spiralhouse.cycletime.dashboard.routes.configureDashboardRoutes
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 
 /**
@@ -104,6 +105,9 @@ object ApiConfiguration {
 
             // Workflow management endpoints
             configureWorkflowRoutes()
+
+            // Dashboard endpoints
+            configureDashboardRoutes()
 
             // Future route configurations can be added here:
             // configureSessionRoutes()
