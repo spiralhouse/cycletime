@@ -419,7 +419,7 @@ class ProjectApplicationServiceTest : StringSpec({
         }
     }
 
-    "should throw ProjectNotFoundException when updating non-existent project".config(enabled = false) {
+    "should throw ProjectNotFoundException when updating non-existent project" {
         runTest {
             val nonExistentId = ProjectId.generate()
             val command = UpdateProjectCommand(

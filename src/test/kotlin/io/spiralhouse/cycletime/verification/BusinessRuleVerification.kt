@@ -315,7 +315,7 @@ fun testInvalidEstimate(context: TestContext, issueId: IssueId): Boolean {
         }
         println("  ✗ FAILED - No exception thrown!")
         false
-    } catch (e: IllegalArgumentException) {
+    } catch (e: DomainException) {
         println("  ✓ Correctly rejected: ${e.message}")
         true
     } catch (e: Exception) {
