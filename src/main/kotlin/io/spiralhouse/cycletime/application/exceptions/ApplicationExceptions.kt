@@ -47,11 +47,11 @@ class BusinessRuleViolationException(message: String) : ApplicationException(mes
  */
 class HierarchyViolationException(message: String) : ApplicationException(message) {
     constructor(childType: IssueType, parentType: IssueType?) : this(
-        "Issue of type ${childType.name} cannot have parent of type ${parentType?.name ?: "none"}"
+        "Issue hierarchy violation: ${childType.name} cannot have parent of type ${parentType?.name ?: "none"}"
     )
 
     constructor(childType: IssueType, parentType: IssueType?, customMessage: String) : this(
-        "Issue of type ${childType.name} cannot have parent of type ${parentType?.name ?: "none"}: $customMessage"
+        "Issue hierarchy violation: ${childType.name} cannot have parent of type ${parentType?.name ?: "none"}: $customMessage"
     )
 }
 

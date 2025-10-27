@@ -4,12 +4,12 @@ type: guide
 domain: [development, linear, workflow]
 description: "Complete guide to Linear issue tracking integration with git workflows and branch management"
 dependencies: [branching-strategy.md]
-related: [feature-workflow.md, ../../reference/decision-guide.md]
-keywords: [linear, integration, issue-tracking, workflow, git, branches]
+related: [feature-workflow.md, ../../reference/decision-guide.md, ../../reference/api/mcp-tools-reference.md]
+keywords: [linear, integration, issue-tracking, workflow, git, branches, hierarchy]
 estimated_time: 15 minutes
 difficulty: intermediate
 status: complete
-last_updated: 2025-10-20
+last_updated: 2025-10-26
 ---
 
 # Linear Integration Guide
@@ -51,6 +51,42 @@ CycleTime uses a three-tier Linear issue hierarchy:
    - Example: "Create workflow engine core"
    - Always have estimates (required)
    - Maps to individual git branches
+
+#### Creating Hierarchical Issues with MCP
+
+CycleTime supports hierarchical issue creation through the `create_issue` MCP tool with the `parentId` parameter:
+
+```kotlin
+// 1. Create Epic (no parent)
+val epicResponse = createIssue(
+    title = "Authentication System",
+    type = "EPIC",
+    projectId = "proj_abc123"
+)
+
+// 2. Create Story under Epic
+val storyResponse = createIssue(
+    title = "User Login",
+    type = "STORY",
+    projectId = "proj_abc123",
+    parentId = epicResponse.id  // Link to Epic
+)
+
+// 3. Create Subtask under Story
+val subtaskResponse = createIssue(
+    title = "Login Form UI",
+    type = "SUBTASK",
+    projectId = "proj_abc123",
+    parentId = storyResponse.id  // Link to Story
+)
+```
+
+**Hierarchy Rules:**
+- EPIC: Cannot have parent (top-level only)
+- STORY: Can have Epic parent or no parent
+- SUBTASK: Must have Story parent
+
+**See Also:** [MCP Tools Reference](../../reference/api/mcp-tools-reference.md#create_issue) for complete `parentId` parameter documentation and error scenarios.
 
 ### Prerequisites
 

@@ -37,6 +37,7 @@ class DefaultIssueToolProvider(
                         put("description", "Issue type")
                         put("default", "STORY")
                     })
+                    put("parentId", buildOptionalStringParam("Parent issue ID for hierarchical relationships (Epic → Story → Subtask)"))
                 })
                 put("required", buildJsonArray { 
                     add("title")
@@ -51,12 +52,14 @@ class DefaultIssueToolProvider(
                     val type = extractOptionalParam(params, "type")?.let {
                         IssueType.fromString(it)
                     } ?: IssueType.STORY
-                    
+                    val parentId = extractOptionalParam(params, "parentId")?.let { IssueId(it) }
+
                     val command = CreateIssueCommand(
                         title = title,
                         description = description,
                         type = type,
-                        projectId = ProjectId(projectId)
+                        projectId = ProjectId(projectId),
+                        parentId = parentId
                     )
                     val result = issueService.createIssue(command)
                     buildJsonObject {
@@ -79,10 +82,30 @@ class DefaultIssueToolProvider(
             handler = ToolHandler.Async { params ->
                 Result.runCatching {
                     val id = extractRequiredParam(params, "id")
-                    
+
                     val issue = issueService.getIssue(IssueId(id))
                         ?: throw IllegalArgumentException("Issue not found: $id")
-                    Json.encodeToJsonElement(issue)
+
+                    // Return flat JSON structure with primitive values
+                    buildJsonObject {
+                        put("id", issue.id.value)
+                        put("title", issue.title)
+                        issue.description?.let { put("description", it) }
+                        put("type", issue.type.name)
+                        put("status", issue.status.name)
+                        issue.parentId?.let { put("parentId", it.value) }
+                        issue.projectId?.let { put("projectId", it.value) }
+                        put("estimate", issue.estimate.value?.toString() ?: "null")
+                        issue.assigneeId?.let { put("assigneeId", it) }
+                        put("dependencies", buildJsonArray {
+                            issue.dependencies.forEach { add(it.value) }
+                        })
+                        put("blockedBy", buildJsonArray {
+                            issue.blockedBy.forEach { add(it.value) }
+                        })
+                        put("createdAt", issue.createdAt.toString())
+                        put("updatedAt", issue.updatedAt.toString())
+                    }
                 }
             }
         ),

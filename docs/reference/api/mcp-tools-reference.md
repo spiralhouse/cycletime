@@ -6,7 +6,7 @@ description: "Complete MCP tools specification with JSON-RPC examples and parame
 dependencies: [../../concepts/mcp/model-context-protocol.md]
 related: [mcp-resources-reference.md, rest-api-reference.md, api-best-practices.md]
 keywords: [mcp, tools, json-rpc, protocol, reference]
-last_updated: 2025-10-19
+last_updated: 2025-10-26
 ---
 
 # MCP Tools & Resources Reference
@@ -311,8 +311,29 @@ Create a new issue with proper hierarchy support.
 | description | string | No | Issue description |
 | projectId | string | Yes | Project ID this issue belongs to |
 | type | string | No | Issue type: "EPIC", "STORY", "SUBTASK" (default: "STORY") |
+| parentId | string | No | Parent issue ID for hierarchical relationships (see Hierarchy Rules below) |
 
-**JSON-RPC Request:**
+**Hierarchy Rules:**
+
+CycleTime enforces strict hierarchy validation:
+
+- **EPIC**: Cannot have parent (top-level only)
+- **STORY**: Can have EPIC parent or no parent
+- **SUBTASK**: Must have STORY parent
+
+**Valid Hierarchies:**
+- ✅ Epic with no parent (top-level)
+- ✅ Story with Epic parent
+- ✅ Story with no parent (orphan story)
+- ✅ Subtask with Story parent
+
+**Invalid Hierarchies:**
+- ❌ Epic with any parent
+- ❌ Story with Subtask parent
+- ❌ Subtask with Epic parent
+- ❌ Subtask with no parent
+
+**JSON-RPC Request Example (Simple Story):**
 
 ```json
 {
@@ -348,30 +369,253 @@ Create a new issue with proper hierarchy support.
 }
 ```
 
-**Example - Creating an Epic:**
+#### Hierarchical Issue Creation
+
+**Complete Epic → Story → Subtask Example:**
+
+```kotlin
+// 1. Create Epic (no parent)
+val epicResponse = mcpClient.callTool("create_issue", buildJsonObject {
+    put("title", "User Management System")
+    put("description", "Complete user management functionality")
+    put("projectId", "proj_abc123")
+    put("type", "EPIC")
+    // No parentId - Epics cannot have parents
+})
+
+val epic = Json.decodeFromString<JsonObject>(epicResponse.content[0].text)
+val epicId = epic["id"]?.jsonPrimitive?.content ?: error("No epic ID")
+
+// 2. Create Story under Epic
+val storyResponse = mcpClient.callTool("create_issue", buildJsonObject {
+    put("title", "User Login")
+    put("description", "Implement login functionality")
+    put("projectId", "proj_abc123")
+    put("type", "STORY")
+    put("parentId", epicId)  // ✅ Story with Epic parent
+})
+
+val story = Json.decodeFromString<JsonObject>(storyResponse.content[0].text)
+val storyId = story["id"]?.jsonPrimitive?.content ?: error("No story ID")
+
+// 3. Create Subtask under Story
+val subtaskResponse = mcpClient.callTool("create_issue", buildJsonObject {
+    put("title", "Create login form UI")
+    put("description", "React component for login form")
+    put("projectId", "proj_abc123")
+    put("type", "SUBTASK")
+    put("parentId", storyId)  // ✅ Subtask with Story parent
+})
+```
+
+**JSON-RPC Examples:**
+
+**Creating an Epic (no parent):**
 
 ```json
 {
-  "name": "create_issue",
-  "arguments": {
-    "title": "User Management System",
-    "description": "Complete user management functionality",
-    "projectId": "proj_abc123",
-    "type": "EPIC"
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "create_issue",
+    "arguments": {
+      "title": "Phase 1: Authentication",
+      "description": "Complete authentication system",
+      "projectId": "proj_abc123",
+      "type": "EPIC"
+    }
   }
 }
 ```
 
-**Example - Creating a Subtask:**
+**Creating a Story with Epic parent:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "create_issue",
+    "arguments": {
+      "title": "User Login",
+      "description": "Login functionality with JWT",
+      "projectId": "proj_abc123",
+      "type": "STORY",
+      "parentId": "epic_abc123"
+    }
+  }
+}
+```
+
+**Creating a Subtask with Story parent:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "create_issue",
+    "arguments": {
+      "title": "Login form component",
+      "description": "React login form UI",
+      "projectId": "proj_abc123",
+      "type": "SUBTASK",
+      "parentId": "story_xyz789"
+    }
+  }
+}
+```
+
+#### Project Inheritance
+
+When creating child issues, the `projectId` parameter is **optional** if the parent issue exists. The project is automatically inherited from the parent:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "create_issue",
+    "arguments": {
+      "title": "Implementation subtask",
+      "type": "SUBTASK",
+      "parentId": "story_xyz789"
+      // projectId omitted - inherited from parent
+    }
+  }
+}
+```
+
+**Best Practice:** Explicitly specify `projectId` for clarity, even when it could be inherited.
+
+#### Validation Errors
+
+**Invalid: Epic with parent**
 
 ```json
 {
   "name": "create_issue",
   "arguments": {
-    "title": "Create login form component",
-    "description": "React component for user login",
-    "projectId": "proj_abc123",
-    "type": "SUBTASK"
+    "type": "EPIC",
+    "parentId": "some_parent_id",
+    "title": "Invalid Epic",
+    "projectId": "proj_abc123"
+  }
+}
+```
+
+**Error Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "error": {
+    "code": -32600,
+    "message": "Issue hierarchy violation: EPIC cannot have parent of type EPIC"
+  }
+}
+```
+
+**Invalid: Subtask with Epic parent**
+
+```json
+{
+  "name": "create_issue",
+  "arguments": {
+    "type": "SUBTASK",
+    "parentId": "epic_abc123",
+    "title": "Invalid Subtask",
+    "projectId": "proj_abc123"
+  }
+}
+```
+
+**Error Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "error": {
+    "code": -32600,
+    "message": "Issue hierarchy violation: SUBTASK cannot have parent of type EPIC"
+  }
+}
+```
+
+**Invalid: Subtask with no parent**
+
+```json
+{
+  "name": "create_issue",
+  "arguments": {
+    "type": "SUBTASK",
+    "title": "Orphan Subtask",
+    "projectId": "proj_abc123"
+    // Missing required parentId for SUBTASK
+  }
+}
+```
+
+**Error Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "error": {
+    "code": -32600,
+    "message": "Issue hierarchy violation: SUBTASK cannot have parent of type none"
+  }
+}
+```
+
+**Invalid: Story with Subtask parent**
+
+```json
+{
+  "name": "create_issue",
+  "arguments": {
+    "type": "STORY",
+    "parentId": "subtask_xyz789",
+    "title": "Invalid Story",
+    "projectId": "proj_abc123"
+  }
+}
+```
+
+**Error Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "error": {
+    "code": -32600,
+    "message": "Issue hierarchy violation: STORY cannot have parent of type SUBTASK"
+  }
+}
+```
+
+**Invalid: Non-existent parent ID**
+
+```json
+{
+  "name": "create_issue",
+  "arguments": {
+    "type": "SUBTASK",
+    "parentId": "non_existent_id",
+    "title": "Subtask",
+    "projectId": "proj_abc123"
+  }
+}
+```
+
+**Error Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "error": {
+    "code": -32600,
+    "message": "Issue with ID non_existent_id not found"
   }
 }
 ```
@@ -1378,29 +1622,43 @@ mcpClient.callTool("create_session", buildJsonObject {
 val projectData = mcpClient.readResource("cycletime://projects/$projectId")
 ```
 
-### Pattern 2: Issue Management Workflow
+### Pattern 2: Issue Management Workflow with Hierarchy
 
 ```kotlin
 // 1. List all issues
 val issuesResponse = mcpClient.readResource("cycletime://issues")
 val issues = Json.decodeFromString<JsonArray>(issuesResponse.contents[0].text)
 
-// 2. Create a new story
+// 2. Create an Epic
+val epicResponse = mcpClient.callTool("create_issue", buildJsonObject {
+    put("title", "Authentication System")
+    put("description", "Complete authentication implementation")
+    put("projectId", "proj_abc123")
+    put("type", "EPIC")
+})
+
+val epic = Json.decodeFromString<JsonObject>(epicResponse.content[0].text)
+val epicId = epic["id"]?.jsonPrimitive?.content ?: error("No epic ID")
+
+// 3. Create a Story under Epic
 val storyResponse = mcpClient.callTool("create_issue", buildJsonObject {
     put("title", "User authentication")
     put("description", "Implement JWT authentication")
     put("projectId", "proj_abc123")
     put("type", "STORY")
+    put("parentId", epicId)  // Link to Epic
 })
 
 val story = Json.decodeFromString<JsonObject>(storyResponse.content[0].text)
+val storyId = story["id"]?.jsonPrimitive?.content ?: error("No story ID")
 
-// 3. Create subtasks
+// 4. Create Subtasks under Story
 mcpClient.callTool("create_issue", buildJsonObject {
     put("title", "Create login endpoint")
     put("description", "POST /api/auth/login")
     put("projectId", "proj_abc123")
     put("type", "SUBTASK")
+    put("parentId", storyId)  // Link to Story
 })
 
 mcpClient.callTool("create_issue", buildJsonObject {
@@ -1408,11 +1666,12 @@ mcpClient.callTool("create_issue", buildJsonObject {
     put("description", "POST /api/auth/logout")
     put("projectId", "proj_abc123")
     put("type", "SUBTASK")
+    put("parentId", storyId)  // Link to Story
 })
 
-// 4. Update issue details
+// 5. Update issue details
 mcpClient.callTool("update_issue", buildJsonObject {
-    put("id", story["id"]?.jsonPrimitive?.content)
+    put("id", storyId)
     put("description", "Implement JWT authentication with refresh tokens")
 })
 ```
@@ -1479,8 +1738,21 @@ if (projects.size > 0) {
 
 1. **Always validate IDs** before calling tools that require resource IDs
 2. **Use appropriate issue types** - EPIC for high-level features, STORY for user-facing functionality, SUBTASK for implementation details
-3. **Create sessions per project** - Maintain separate sessions for different projects
-4. **Handle errors gracefully** - Check for error responses and handle "not found" cases
+3. **Respect hierarchy rules** - Epics cannot have parents, Stories can have Epic parents, Subtasks must have Story parents
+4. **Validate parent existence** - Ensure parent issue exists before creating child issues
+5. **Create sessions per project** - Maintain separate sessions for different projects
+6. **Handle errors gracefully** - Check for error responses and handle "not found" cases
+
+### Issue Hierarchy Best Practices
+
+1. **Top-down creation** - Create Epics first, then Stories, then Subtasks
+2. **Explicit project IDs** - Always specify `projectId` even when it could be inherited
+3. **Validate before creation** - Check parent type before creating child issues
+4. **Error handling** - Handle `HierarchyViolationException` for invalid parent relationships
+5. **Use appropriate granularity** -
+   - Epics: Major features or project phases (weeks/months of work)
+   - Stories: User-facing functionality (days/week of work)
+   - Subtasks: Implementation tasks (hours/days of work)
 
 ### Resource Reading
 
@@ -1518,6 +1790,17 @@ if (projects.size > 0) {
 | "Invalid issue type: {type}" | Malformed type enum value (not EPIC, STORY, or SUBTASK) | Use valid enum value: "EPIC", "STORY", or "SUBTASK" (case-sensitive) |
 | Returns null resource | Resource URI contains multiple path segments (e.g., `cycletime://projects/foo/bar`) | Use single-segment URIs: `cycletime://projects/{id}` not `cycletime://projects/{id}/extra` |
 | "Invalid resource URI format" | Malformed URI pattern | Follow documented patterns: `cycletime://` prefix with valid resource type |
+
+### Hierarchy Validation Errors
+
+| Error Message | Cause | Solution |
+|---------------|-------|----------|
+| "Issue hierarchy violation: EPIC cannot have parent of type EPIC" | Attempting to create Epic with parentId | Remove `parentId` parameter - Epics cannot have parents |
+| "Issue hierarchy violation: EPIC cannot have parent of type STORY" | Attempting to create Epic with Story parent | Remove `parentId` parameter - Epics are always top-level |
+| "Issue hierarchy violation: SUBTASK cannot have parent of type EPIC" | Attempting to create Subtask with Epic parent | Create Story first, then create Subtask with Story parentId |
+| "Issue hierarchy violation: SUBTASK cannot have parent of type none" | Creating Subtask without parentId | Add `parentId` with valid Story ID - Subtasks require Story parent |
+| "Issue hierarchy violation: STORY cannot have parent of type SUBTASK" | Attempting to create Story with Subtask parent | Use Epic parentId or omit parentId for orphan Story |
+| "Issue with ID {parentId} not found" | parentId references non-existent issue | Verify parent issue exists using `get_issue` before creating child |
 
 ### Error Response Handling
 
