@@ -195,7 +195,7 @@ class SessionApplicationServiceTest : StringSpec({
         }
     }
 
-    "should throw ProjectNotFoundException when creating session with invalid project".config(enabled = false) {
+    "should throw ProjectNotFoundException when creating session with invalid project" {
         runTest {
             val invalidProjectId = ProjectId.generate()
             val command = CreateSessionCommand(projectId = invalidProjectId)
@@ -263,7 +263,7 @@ class SessionApplicationServiceTest : StringSpec({
         }
     }
 
-    "should throw SessionNotFoundException when updating non-existent session".config(enabled = false) {
+    "should throw SessionNotFoundException when updating non-existent session" {
         runTest {
             val nonExistentKey = SessionKey.generate()
             val updateCommand = UpdateSessionContextCommand(
@@ -297,7 +297,7 @@ class SessionApplicationServiceTest : StringSpec({
         }
     }
 
-    "should throw SessionNotFoundException when touching non-existent session".config(enabled = false) {
+    "should throw SessionNotFoundException when touching non-existent session" {
         runTest {
             val nonExistentKey = SessionKey.generate()
 
@@ -366,7 +366,7 @@ class SessionApplicationServiceTest : StringSpec({
         }
     }
 
-    "should throw ProjectNotFoundException when associating with invalid project".config(enabled = false) {
+    "should throw ProjectNotFoundException when associating with invalid project" {
         runTest {
             // Create session
             val createCommand = CreateSessionCommand(projectId = null)
@@ -387,7 +387,7 @@ class SessionApplicationServiceTest : StringSpec({
         }
     }
 
-    "should throw SessionNotFoundException when associating non-existent session".config(enabled = false) {
+    "should throw SessionNotFoundException when associating non-existent session" {
         runTest {
             // Create project using UnitOfWork for proper transaction isolation
             val project = unitOfWork.execute {
@@ -436,7 +436,7 @@ class SessionApplicationServiceTest : StringSpec({
         }
     }
 
-    "should throw SessionNotFoundException when disassociating non-existent session".config(enabled = false) {
+    "should throw SessionNotFoundException when disassociating non-existent session" {
         runTest {
             val nonExistentKey = SessionKey.generate()
 

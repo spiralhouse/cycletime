@@ -407,11 +407,6 @@ class MCPSdkClientIntegrationTest : StringSpec({
      *
      * @see MCPSdkTransportTest Line 347 for original test implementation
      */
-    "should reject invalid JSON-RPC format".config(enabled = false) {
-        // Cannot be implemented with SDK Client pattern
-        // SDK Client prevents malformed JSON-RPC by design
-        logger.info("⚠️ Test skipped: SDK Client prevents sending malformed JSON-RPC")
-    }
 
     /**
      * Test that SDK Client handles malformed request parameters.
@@ -706,38 +701,5 @@ class MCPSdkClientIntegrationTest : StringSpec({
      *
      * @see MCPSdkTransportTest Line 328 for original test implementation
      */
-    "should subscribe to resource updates using SDK Client".config(enabled = false) {
-        testSDKApplication { serverUrl, httpClient ->
-            val client = Client(
-                clientInfo = Implementation(
-                    name = "cycletime-test-client",
-                    version = "1.0.0"
-                )
-            )
 
-            val transport = SSEClientTransport(
-                client = httpClient,
-                urlString = serverUrl
-            )
-
-            withTimeout(10_000) {
-                client.connect(transport)
-            }
-
-            logger.info("Subscribing to resource cycletime://session/current...")
-
-            // Attempt to subscribe to resource
-            // NOTE: SDK Client may or may not have subscribe method
-            val result = client.subscribeResource(
-                request = io.modelcontextprotocol.kotlin.sdk.SubscribeRequest(
-                    uri = "cycletime://session/current"
-                )
-            )
-
-            // Verify subscription succeeded
-            result.shouldNotBeNull()
-            logger.info("Subscription accepted")
-            logger.info("✅ Resource subscription test PASSED")
-        }
-    }
 })

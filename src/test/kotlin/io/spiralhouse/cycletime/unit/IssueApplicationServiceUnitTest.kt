@@ -15,6 +15,7 @@ import io.spiralhouse.cycletime.application.commands.*
 import io.spiralhouse.cycletime.application.exceptions.*
 import io.spiralhouse.cycletime.application.services.IssueApplicationService
 import io.spiralhouse.cycletime.domain.entities.Issue
+import io.spiralhouse.cycletime.domain.exceptions.DomainException
 import io.spiralhouse.cycletime.domain.entities.IssueSnapshot
 import io.spiralhouse.cycletime.domain.entities.Project
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
@@ -288,11 +289,11 @@ class IssueApplicationServiceUnitTest : StringSpec({
         mockIssueRepository.saveCallCount shouldBe 0
     }
 
-    "should throw IllegalArgumentException when creating Epic with estimate" {
-        // Given - Epics cannot have estimates
+    "should throw DomainException when creating Epic with estimate" {
+        // Given - Epics cannot have estimates (domain rule)
 
         // When & Then
-        shouldThrow<IllegalArgumentException> {
+        shouldThrow<DomainException> {
             issueService.createIssue(
                 CreateIssueCommand(
                     title = "Invalid Epic",
@@ -436,13 +437,13 @@ class IssueApplicationServiceUnitTest : StringSpec({
         mockIssueRepository.saveCallCount shouldBe 0
     }
 
-    "should throw IllegalArgumentException when updating Epic with estimate" {
+    "should throw DomainException when updating Epic with estimate" {
         // Given
         val testEpic = createTestIssue(id = testIssueId, type = IssueType.EPIC)
         mockIssueRepository.addTestIssues(testEpic)
 
         // When & Then
-        shouldThrow<IllegalArgumentException> {
+        shouldThrow<DomainException> {
             issueService.updateIssue(
                 UpdateIssueCommand(
                     id = testIssueId,
@@ -797,13 +798,13 @@ class IssueApplicationServiceUnitTest : StringSpec({
         mockUnitOfWork.executeCallCount shouldBe 1
     }
 
-    "should throw CircularDependencyException when adding self-dependency" {
+    "should throw DomainException when adding self-dependency" {
         // Given
         val testIssue = createTestIssue(id = testIssueId)
         mockIssueRepository.addTestIssues(testIssue)
 
-        // When & Then
-        shouldThrow<CircularDependencyException> {
+        // When & Then - Self-dependency is a domain rule violation
+        shouldThrow<DomainException> {
             issueService.addDependency(
                 AddDependencyCommand(
                     issueId = testIssueId,

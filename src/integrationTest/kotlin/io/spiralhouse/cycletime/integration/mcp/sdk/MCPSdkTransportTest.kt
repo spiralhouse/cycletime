@@ -49,6 +49,8 @@ import kotlinx.serialization.json.*
  *
  * Tests use production DI configuration to ensure realistic behavior.
  *
+ * SPI-783: Removed 5 SDK-obsolete tests that are prevented by SDK type safety.
+ *
  * @see io.spiralhouse.cycletime.mcp.sdk.MCPSdkServer SDK server implementation
  * @see io.spiralhouse.cycletime.mcp.sdk.adapters SDK adapter implementations
  */
@@ -120,22 +122,6 @@ class MCPSdkTransportTest : StringSpec({
             client.serverVersion.shouldNotBeNull()
             client.serverCapabilities.shouldNotBeNull()
         }
-    }
-
-    "should handle client info in initialize request".config(enabled = false) {
-        /**
-         * MIGRATION NOTE (SPI-710): Cannot migrate - SDK handles client info internally.
-         *
-         * Original Test Intent: Verify server accepts custom client name/version in initialize.
-         *
-         * Why This Cannot Be Migrated:
-         * - SDK Client passes Implementation(name, version) automatically during connect()
-         * - No way to customize or intercept initialize request
-         * - Client info handling is SDK internal behavior
-         *
-         * Verification Alternative: Test #1 validates SDK initialization works.
-         * Custom client info is part of Implementation object passed to Client constructor.
-         */
     }
 
     // ===== Tools Operations Tests =====
@@ -299,75 +285,6 @@ class MCPSdkTransportTest : StringSpec({
             }
             exception.message shouldContain "not found"
         }
-    }
-
-    "should subscribe to resource updates via SDK".config(enabled = false) {
-        /**
-         * MIGRATION NOTE (SPI-710): Cannot migrate - SDK v0.7.2 doesn't support resource subscriptions.
-         *
-         * Original Test Intent: Validate server accepts resource subscription requests.
-         *
-         * Why This Cannot Be Migrated:
-         * - SDK v0.7.2 Client API doesn't provide subscribeToResource() method
-         * - Resource subscription support is pending in SDK
-         * - This is an unimplemented SDK feature, not a test limitation
-         *
-         * Verification Alternative: When SDK adds subscription support,
-         * this test can be migrated following the pattern in tests 7-9.
-         *
-         * Follow-up: Monitor SDK releases for subscription support
-         */
-    }
-
-    // ===== Error Handling Tests =====
-
-    "should reject invalid JSON-RPC format".config(enabled = false) {
-        /**
-         * MIGRATION NOTE (SPI-710): Cannot migrate - SDK prevents invalid JSON-RPC by design.
-         *
-         * Original Test Intent: Validate server rejects JSON missing required
-         * JSON-RPC fields (jsonrpc, method, id).
-         *
-         * Why This Cannot Be Migrated:
-         * - SDK Client constructs valid JSON-RPC requests internally
-         * - There is no "send raw request" API (by design)
-         * - This protective behavior is a FEATURE, not a limitation
-         *
-         * Verification Alternative: SDK Client's internal JSON-RPC construction
-         * is validated by all other tests passing. If SDK constructs invalid
-         * JSON-RPC, all tests would fail.
-         */
-    }
-
-    "should reject requests missing session metadata when required".config(enabled = false) {
-        /**
-         * MIGRATION NOTE (SPI-710): Cannot migrate - SDK manages session metadata internally.
-         *
-         * Original Test Intent: Validate server rejects requests missing session context.
-         *
-         * Why This Cannot Be Migrated:
-         * - SDK Client manages session metadata automatically
-         * - No API to send requests without session metadata
-         * - This is SDK internal session management
-         *
-         * Verification Alternative: Tests 14-15 validate SDK session persistence works correctly.
-         */
-    }
-
-    "should handle malformed request parameters".config(enabled = false) {
-        /**
-         * MIGRATION NOTE (SPI-710): Cannot migrate - SDK provides type-safe parameters.
-         *
-         * Original Test Intent: Validate server rejects requests with wrong parameter types.
-         *
-         * Why This Cannot Be Migrated:
-         * - SDK Client uses Map<String, JsonElement> for arguments (type-safe)
-         * - Cannot pass malformed parameters through SDK API
-         * - Compile-time type safety prevents this error
-         *
-         * Verification Alternative: SDK's type system ensures parameter correctness.
-         * Tests 4-6 validate SDK parameter handling.
-         */
     }
 
     // ===== Session Management Tests =====
