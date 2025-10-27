@@ -84,6 +84,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       is_release: ${{ steps.version.outputs.is_release }}
       run_tests: ${{ steps.changes.outputs.run_tests }}
+      should_tag: ${{ steps.version.outputs.should_tag }}
 
     steps:
       - name: Checkout
@@ -118,20 +119,128 @@ jobs:
             echo "run_tests=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Auto-create version tag on main
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "🏷️ Auto-creating version tag for main branch merge..."
+
+          # Get the last commit message to determine version bump type
+          commit_message=$(git log -1 --pretty=%B)
+          echo "📝 Commit message: $commit_message"
+
+          # Check if this commit should create a version tag
+          should_tag=false
+
+          if [[ "$commit_message" =~ ^feat(\(.*\))?!:|^BREAKING[\ -]CHANGE: ]]; then
+            echo "🚨 BREAKING CHANGE detected - will create major version tag"
+            should_tag=true
+          elif [[ "$commit_message" =~ ^feat(\(.*\))?: ]]; then
+            echo "✨ Feature commit detected - will create minor version tag"
+            should_tag=true
+          elif [[ "$commit_message" =~ ^fix(\(.*\))?: ]]; then
+            echo "🐛 Fix commit detected - will create patch version tag"
+            should_tag=true
+          elif [[ "$commit_message" =~ ^perf(\(.*\))?: ]]; then
+            echo "⚡ Performance commit detected - will create patch version tag"
+            should_tag=true
+          else
+            echo "⏭️ Non-versioning commit (docs, chore, ci, build, etc.) - skipping tag creation"
+            should_tag=false
+          fi
+
+          if [ "$should_tag" = true ]; then
+            # Calculate next version using git-semver-plugin
+            next_version=$(./gradlew printSemVersion --quiet --no-configuration-cache --rerun-tasks | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' | tail -1)
+
+            # Remove -SNAPSHOT suffix if present (we're creating the actual release tag)
+            next_version="${next_version%-SNAPSHOT}"
+
+            if [[ -n "$next_version" && "$next_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "📦 Creating tag: v$next_version"
+
+              # Configure git for tagging
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+
+              # Check if tag already exists to prevent conflicts
+              if git rev-parse "v$next_version" >/dev/null 2>&1; then
+                echo "⚠️ Tag v$next_version already exists, skipping tag creation"
+              else
+                # Create annotated tag with error handling
+                tag_message="Release $next_version
+
+          Automated release tag created by CI/CD pipeline.
+
+          Commit: ${{ github.sha }}
+          Trigger: $commit_message"
+
+                if git tag -a "v$next_version" -m "$tag_message"; then
+                  echo "✅ Tag v$next_version created successfully"
+
+                  # Push tag to repository with retry logic
+                  retry_count=0
+                  max_retries=3
+                  push_success=false
+
+                  while [ $retry_count -lt $max_retries ]; do
+                    if git push origin "v$next_version"; then
+                      echo "✅ Tag v$next_version pushed successfully"
+                      push_success=true
+                      break
+                    else
+                      retry_count=$((retry_count + 1))
+                      if [ $retry_count -lt $max_retries ]; then
+                        echo "⚠️ Tag push failed (attempt $retry_count/$max_retries), retrying in 2 seconds..."
+                        sleep 2
+                      fi
+                    fi
+                  done
+
+                  if [ "$push_success" = false ]; then
+                    echo "❌ Failed to push tag v$next_version after $max_retries attempts"
+                    # Clean up local tag on push failure
+                    git tag -d "v$next_version"
+                    exit 1
+                  fi
+                else
+                  echo "❌ Failed to create tag v$next_version"
+                  exit 1
+                fi
+              fi
+            else
+              echo "⚠️ Failed to calculate next version: $next_version"
+              echo "⏭️ Skipping tag creation due to version calculation failure"
+            fi
+          fi
+
       - name: Calculate version
         id: version
         run: |
+          # Wait for tag propagation to GitHub's backend (eventual consistency)
+          echo "⏳ Waiting 3 seconds for tag propagation..."
+          sleep 3
+
+          # Re-fetch tags after potential tag creation and propagation delay
+          echo "🔄 Fetching tags from remote..."
+          git fetch --tags --force
+
+          # Verify tag propagation for main branch builds
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+            echo "📋 Latest tag after fetch: $latest_tag"
+          fi
+
           # Extract version using printSemVersion with forced execution
           # Note: Even with --quiet, Gradle may output download progress on first run
           # We need to filter for the actual version line (semantic version format)
           version=$(./gradlew printSemVersion --quiet --no-configuration-cache --rerun-tasks | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' | tail -1)
-          
+
           # Fallback - use printVersion if printSemVersion fails
           if [[ -z "$version" ]]; then
             echo "⚠️ printSemVersion failed, trying printVersion..."
             version=$(./gradlew printVersion --quiet --no-configuration-cache --rerun-tasks | grep "^version:" | cut -d' ' -f2)
           fi
-          
+
           # Final fallback - use git describe if gradle fails completely
           if [[ -z "$version" ]]; then
             echo "⚠️ Gradle version extraction failed, using git describe fallback"
@@ -150,23 +259,43 @@ jobs:
               echo "No semantic version tags found, using: $version"
             fi
           fi
-          
+
           echo "version=$version" >> $GITHUB_OUTPUT
-          
-          # Check if this is a release (not SNAPSHOT or has build metadata)
-          if [[ "$version" == *"-SNAPSHOT"* ]] || [[ "$version" == *"+"* ]]; then
-            echo "is_release=false" >> $GITHUB_OUTPUT
+
+          # For main branch builds, always consider it a release if we just created a tag
+          # This allows the release job to run and create GitHub releases
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            # Check if this exact commit is tagged
+            if git describe --exact-match --tags HEAD >/dev/null 2>&1; then
+              echo "is_release=true" >> $GITHUB_OUTPUT
+              echo "should_tag=false" >> $GITHUB_OUTPUT  # Already tagged
+            else
+              # Not tagged yet, but we're on main - might be a non-versioning commit
+              if [[ "$version" == *"-SNAPSHOT"* ]] || [[ "$version" == *"+"* ]]; then
+                echo "is_release=false" >> $GITHUB_OUTPUT
+                echo "should_tag=false" >> $GITHUB_OUTPUT
+              else
+                echo "is_release=true" >> $GITHUB_OUTPUT
+                echo "should_tag=true" >> $GITHUB_OUTPUT
+              fi
+            fi
           else
-            echo "is_release=true" >> $GITHUB_OUTPUT
+            # For non-main branches, use original logic
+            if [[ "$version" == *"-SNAPSHOT"* ]] || [[ "$version" == *"+"* ]]; then
+              echo "is_release=false" >> $GITHUB_OUTPUT
+            else
+              echo "is_release=true" >> $GITHUB_OUTPUT
+            fi
+            echo "should_tag=false" >> $GITHUB_OUTPUT
           fi
-          
+
           # Validate version format (semantic versioning)
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
             echo "❌ Invalid version format: $version"
             echo "Expected semantic version format: MAJOR.MINOR.PATCH[-PRERELEASE][+BUILDMETADATA]"
             exit 1
           fi
-          
+
           echo "📦 Version: $version"
           echo "🚀 Is Release: $([ "$version" == *"-SNAPSHOT"* ] || [ "$version" == *"+"* ] && echo "No" || echo "Yes")"
 
