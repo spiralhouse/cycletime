@@ -356,60 +356,6 @@ class McpToolIntegrationTest : StringSpec({
 
     // ===== Protocol-Level Error Tests (DISABLED) =====
 
-    "should handle invalid JSON-RPC requests via SDK".config(enabled = false) {
-        /**
-         * MIGRATION NOTE (SPI-710): This test is disabled because SDK Client pattern
-         * fundamentally prevents sending malformed JSON-RPC by design.
-         *
-         * Original Test Intent: Validate that server properly rejects JSON
-         * missing required JSON-RPC fields (jsonrpc, method, id).
-         *
-         * Why This Cannot Be Migrated:
-         * - SDK Client constructs valid JSON-RPC requests internally
-         * - There is no "send raw request" API (by design)
-         * - This protective behavior is a FEATURE, not a limitation
-         *
-         * Verification Alternative: The SDK Client's internal JSON-RPC
-         * construction is validated by all other tests passing. If the SDK
-         * constructs invalid JSON-RPC, all tests would fail.
-         */
-    }
-
-    "should handle malformed request parameters via SDK".config(enabled = false) {
-        /**
-         * MIGRATION NOTE (SPI-710): This test is disabled because SDK Client's
-         * typed API prevents structural parameter errors.
-         *
-         * Original Test Intent: Validate that server rejects parameters with
-         * wrong JSON types (e.g., string instead of object for arguments field).
-         *
-         * Why This Cannot Be Migrated:
-         * - SDK Client uses Map<String, JsonElement> for arguments (type-safe)
-         * - Impossible to pass wrong structure through typed API
-         * - Compile-time prevention of this error class
-         *
-         * Note: Business-level validation errors (invalid argument VALUES) are
-         * tested in "should propagate parameter validation errors correctly via SDK".
-         */
-    }
-
-    "should handle missing required request fields via SDK".config(enabled = false) {
-        /**
-         * MIGRATION NOTE (SPI-710): This test is disabled because SDK Client
-         * requires all JSON-RPC fields through method signatures.
-         *
-         * Original Test Intent: Validate that server rejects tools/call requests
-         * missing the "name" field.
-         *
-         * Why This Cannot Be Migrated:
-         * - client.callTool(name: String, ...) makes name parameter required
-         * - Impossible to call method without providing name
-         * - Compile-time enforcement of required fields
-         *
-         * Verification Alternative: Missing required BUSINESS parameters (like
-         * projectId) are tested in parameter validation tests.
-         */
-    }
 
     // ===== Integration Tests =====
 
