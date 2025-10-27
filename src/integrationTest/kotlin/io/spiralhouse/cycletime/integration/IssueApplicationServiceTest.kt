@@ -303,7 +303,7 @@ class IssueApplicationServiceTest : StringSpec({
     // The exception IS being thrown correctly (HierarchyViolationException), but
     // Kotest's shouldThrow doesn't catch it properly in coroutine contexts.
     // This is a test framework limitation, not a code issue.
-    "should enforce hierarchy rules - epic cannot have epic parent".config(enabled = false) {
+    "should enforce hierarchy rules - epic cannot have epic parent" {
         runTest {
             val parentEpic = issueApplicationService.createIssue(
                 CreateIssueCommand("Parent Epic", type = IssueType.EPIC)
@@ -327,7 +327,7 @@ class IssueApplicationServiceTest : StringSpec({
     }
 
     // DISABLED: Kotest shouldThrow issue with suspend functions
-    "should enforce hierarchy rules - subtask must have story parent".config(enabled = false) {
+    "should enforce hierarchy rules - subtask must have story parent" {
         runTest {
             val epic = issueApplicationService.createIssue(
                 CreateIssueCommand("Epic", type = IssueType.EPIC)
@@ -351,14 +351,24 @@ class IssueApplicationServiceTest : StringSpec({
     }
 
     // DISABLED: Kotest shouldThrow issue with suspend functions
-    "should enforce hierarchy rules - story can only have epic parent".config(enabled = false) {
+    "should enforce hierarchy rules - story can only have epic parent" {
         runTest {
-            val subtask = issueApplicationService.createIssue(
-                CreateIssueCommand("Subtask", type = IssueType.SUBTASK)
+            // Create a valid EPIC and STORY first, so we can create a valid SUBTASK
+            val epic = issueApplicationService.createIssue(
+                CreateIssueCommand("Epic", type = IssueType.EPIC)
+            )
+            val story = issueApplicationService.createIssue(
+                CreateIssueCommand("Story", type = IssueType.STORY, parentId = epic.id)
             )
 
+            // Create a valid SUBTASK (with story parent)
+            val subtask = issueApplicationService.createIssue(
+                CreateIssueCommand("Subtask", type = IssueType.SUBTASK, parentId = story.id)
+            )
+
+            // Now try to create a STORY with SUBTASK as parent (should fail)
             val command = CreateIssueCommand(
-                title = "Story",
+                title = "Invalid Story",
                 type = IssueType.STORY,
                 parentId = subtask.id // Should fail - story cannot have subtask parent
             )
@@ -405,7 +415,7 @@ class IssueApplicationServiceTest : StringSpec({
     }
 
     // DISABLED: Kotest shouldThrow issue with suspend functions
-    "should reject move that violates hierarchy rules".config(enabled = false) {
+    "should reject move that violates hierarchy rules" {
         runTest {
             val story = issueApplicationService.createIssue(
                 CreateIssueCommand("Story", type = IssueType.STORY)
@@ -524,7 +534,7 @@ class IssueApplicationServiceTest : StringSpec({
     }
 
     // DISABLED: Kotest shouldThrow issue with suspend functions
-    "should prevent circular dependencies".config(enabled = false) {
+    "should prevent circular dependencies" {
         runTest {
             val issue1 = issueApplicationService.createIssue(
                 CreateIssueCommand("Issue 1", type = IssueType.STORY)
@@ -553,7 +563,7 @@ class IssueApplicationServiceTest : StringSpec({
     }
 
     // DISABLED: Kotest shouldThrow issue with suspend functions
-    "should prevent self-dependency".config(enabled = false) {
+    "should prevent self-dependency" {
         runTest {
             val issue = issueApplicationService.createIssue(
                 CreateIssueCommand("Issue", type = IssueType.STORY)
@@ -618,7 +628,7 @@ class IssueApplicationServiceTest : StringSpec({
     }
 
     // DISABLED: Kotest shouldThrow issue with suspend functions
-    "should validate dependency exists when adding".config(enabled = false) {
+    "should validate dependency exists when adding" {
         runTest {
             val issue1 = issueApplicationService.createIssue(
                 CreateIssueCommand("Issue 1", type = IssueType.STORY)
@@ -662,7 +672,7 @@ class IssueApplicationServiceTest : StringSpec({
     }
 
     // DISABLED: Kotest shouldThrow issue with suspend functions
-    "should reject invalid status transition".config(enabled = false) {
+    "should reject invalid status transition" {
         runTest {
             val issue = issueApplicationService.createIssue(
                 CreateIssueCommand("Issue", type = IssueType.STORY)
@@ -734,7 +744,7 @@ class IssueApplicationServiceTest : StringSpec({
     }
 
     // DISABLED: Kotest shouldThrow issue with suspend functions
-    "should reject estimate on epic".config(enabled = false) {
+    "should reject estimate on epic" {
         runTest {
             val epic = issueApplicationService.createIssue(
                 CreateIssueCommand("Epic", type = IssueType.EPIC)
@@ -757,7 +767,7 @@ class IssueApplicationServiceTest : StringSpec({
     }
 
     // DISABLED: Kotest shouldThrow issue with suspend functions
-    "should require estimate on subtask when updating to non-none value".config(enabled = false) {
+    "should require estimate on subtask when updating to non-none value" {
         runTest {
             val story = issueApplicationService.createIssue(
                 CreateIssueCommand("Story", type = IssueType.STORY)
@@ -855,16 +865,16 @@ class IssueApplicationServiceTest : StringSpec({
     // Query and Search Tests
     // ================================================================================
 
-    "should list all issues".config(enabled = false) { // SPI-609: Test violates hierarchy rules - SUBTASK without parent
+    "should list all issues" {
         runTest {
             issueApplicationService.createIssue(
                 CreateIssueCommand("Issue 1", type = IssueType.EPIC)
             )
-            issueApplicationService.createIssue(
+            val parentStory = issueApplicationService.createIssue(
                 CreateIssueCommand("Issue 2", type = IssueType.STORY)
             )
             issueApplicationService.createIssue(
-                CreateIssueCommand("Issue 3", type = IssueType.SUBTASK)
+                CreateIssueCommand("Issue 3", type = IssueType.SUBTASK, parentId = parentStory.id)
             )
 
             val result = issueApplicationService.listIssues()
@@ -927,7 +937,7 @@ class IssueApplicationServiceTest : StringSpec({
     // ================================================================================
 
     // DISABLED: Kotest shouldThrow issue with suspend functions
-    "should throw IssueNotFoundException when updating non-existent issue".config(enabled = false) {
+    "should throw IssueNotFoundException when updating non-existent issue" {
         runTest {
             val nonExistentId = IssueId.generate()
             val command = UpdateIssueCommand(
@@ -947,7 +957,7 @@ class IssueApplicationServiceTest : StringSpec({
     }
 
     // DISABLED: Kotest shouldThrow issue with suspend functions
-    "should throw IssueNotFoundException when deleting non-existent issue".config(enabled = false) {
+    "should throw IssueNotFoundException when deleting non-existent issue" {
         runTest {
             val nonExistentId = IssueId.generate()
 
@@ -963,7 +973,7 @@ class IssueApplicationServiceTest : StringSpec({
     }
 
     // DISABLED: Kotest shouldThrow issue with suspend functions
-    "should throw ProjectNotFoundException when creating issue with invalid project".config(enabled = false) {
+    "should throw ProjectNotFoundException when creating issue with invalid project" {
         runTest {
             val nonExistentProjectId = ProjectId.generate()
             val command = CreateIssueCommand(
@@ -988,7 +998,7 @@ class IssueApplicationServiceTest : StringSpec({
     // ================================================================================
 
     // DISABLED: Kotest shouldThrow issue with suspend functions
-    "should rollback entire transaction on failure".config(enabled = false) {
+    "should rollback entire transaction on failure" {
         runTest {
             // This test demonstrates expected transactional behavior
             // where partial failures should not leave the system in an inconsistent state
@@ -1027,7 +1037,7 @@ class IssueApplicationServiceTest : StringSpec({
 
     // DISABLED: Invalid status transition in test - needs investigation
     // Test tries to transition from IN_PROGRESS directly to DONE which isn't allowed
-    "should handle complete epic-story-subtask workflow".config(enabled = false) {
+    "should handle complete epic-story-subtask workflow" {
         runTest {
             // Create epic
             val epic = issueApplicationService.createIssue(

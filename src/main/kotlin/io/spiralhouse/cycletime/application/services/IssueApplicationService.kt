@@ -113,12 +113,9 @@ class IssueApplicationService(
 
             // Set estimate if provided
             command.estimate?.let { estimate ->
-                try {
-                    issue.setEstimate(estimate)
-                } catch (e: DomainException) {
-                    // Convert domain exceptions to IllegalArgumentException for API consistency
-                    throw IllegalArgumentException(e.message ?: "Invalid estimate for issue type", e)
-                }
+                // Delegate to domain entity for validation
+                // Domain exceptions will propagate to caller
+                issue.setEstimate(estimate)
             }
 
             // Set assignee if provided
@@ -167,12 +164,9 @@ class IssueApplicationService(
             }
 
             command.estimate?.let { estimate ->
-                try {
-                    issue.setEstimate(estimate)
-                } catch (e: DomainException) {
-                    // Convert domain exceptions to IllegalArgumentException for API consistency
-                    throw IllegalArgumentException(e.message ?: "Invalid estimate for issue type", e)
-                }
+                // Delegate to domain entity for validation
+                // Domain exceptions will propagate to caller
+                issue.setEstimate(estimate)
             }
 
             command.assigneeId?.let { assigneeId ->
@@ -372,12 +366,15 @@ class IssueApplicationService(
             // Validate dependency exists
             val dependency = findIssueOrThrow(command.dependencyId)
 
-            // Check for circular dependency
-            if (hasCircularDependency(command.issueId, command.dependencyId)) {
+            // Check for circular dependency BEFORE adding
+            // Note: Domain entity will handle self-dependency validation
+            if (command.issueId != command.dependencyId && hasCircularDependency(command.issueId, command.dependencyId)) {
                 throw CircularDependencyException(command.issueId, command.dependencyId)
             }
 
+            // Add dependency - domain entity validates (including self-dependency)
             issue.addDependency(command.dependencyId)
+
             issueRepository.save(issue)
             IssueDto.fromIssue(issue)
         }
@@ -566,11 +563,12 @@ class IssueApplicationService(
      * ## Hierarchy Rules:
      * - **Epic**: Cannot have any parent (top-level only)
      * - **Story**: Can have Epic parent or no parent (orphaned stories allowed)
-     * - **Subtask**: Can have Story parent or no parent (orphaned subtasks allowed for flexibility)
+     * - **Subtask**: MUST have Story parent (orphaned subtasks NOT allowed)
      *
-     * Note: While the domain model prefers strict hierarchy, the application layer
-     * allows orphaned stories and subtasks for workflow flexibility. Invalid parent
-     * types are still rejected (e.g., Epic with Epic parent, Story with Subtask parent).
+     * Note: The application layer enforces strict hierarchy for Subtasks to maintain
+     * data integrity and prevent orphaned work items. Stories can be orphaned to allow
+     * flexible workflow organization. Invalid parent types are always rejected
+     * (e.g., Epic with Epic parent, Story with Subtask parent).
      *
      * @param childType The type of the child issue
      * @param parentType The type of the parent issue (null if no parent)
