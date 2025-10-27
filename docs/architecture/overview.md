@@ -310,47 +310,50 @@ MCP Tool → Application Service → Domain Entity → Repository → Database
 - **Tools**: `CreateIssueTool`, `UpdateIssueTool` - write operations
 - **Registries**: Discovery and routing for resources and tools
 
-### MCP SDK Integration (v0.7.2)
+### MCP Streamable HTTP Integration
 
-CycleTime uses the official MCP Kotlin SDK maintained by Anthropic and JetBrains for all Model Context Protocol functionality.
+CycleTime implements the Streamable HTTP transport per MCP specification (2025-06-18) for Claude Code v2.0.25+ compatibility.
 
 **Transport Architecture:**
-- **Ktor Integration:** SDK provides native Ktor integration via `mcp { }` DSL
-- **SSE Transport:** Server-Sent Events at root endpoint `/`
-- **Protocol:** Automatic JSON-RPC 2.0 handling with MCP extensions
+- **Ktor Integration:** Native Ktor routing with POST and GET endpoints
+- **Streamable HTTP:** POST /mcp (JSON-RPC requests), GET /mcp (Server-Sent Events)
+- **Protocol:** JSON-RPC 2.0 with MCP extensions
 - **Session Management:** Stateless per-request with database persistence
+- **Security:** Origin validation, request size limits, rate limiting
 
-**SDK Components:**
+**Components:**
 - `MCPSdkServer.kt` - Server initialization and capability configuration
-- `MCPSdkRouting.kt` - Ktor routing integration
-- `sdk/adapters/` - Bridge between business logic and SDK APIs
+- `MCPSdkRouting.kt` - Streamable HTTP transport routing
+- `StreamableHttpHandler.kt` - POST/GET request handling with security controls
+- `sdk/adapters/` - Bridge between business logic and transport layer
   - `SDKToolAdapter` - Adapts ToolProvider to SDK tool registration
   - `SDKResourceAdapter` - Adapts ResourceProvider to SDK resource registration
 - `SDKSessionManager.kt` - Request metadata-based session handling
 - `SessionContext.kt` - Session extraction utilities
 
-**Migration (SPI-700/SPI-707):**
+**Transport Evolution:**
 
-The SDK replaced our custom EventBus transport implementation:
+| Phase | Transport | Status |
+|-------|-----------|--------|
+| Legacy EventBus | Custom SSE + POST | Removed (SPI-707) |
+| MCP SDK v0.7.2 | SSE Transport | Removed (SPI-763) |
+| Streamable HTTP | POST + SSE at /mcp | Current (SPI-759) |
 
-| Component Removed | SDK Replacement |
-|-------------------|-----------------|
-| EventBus correlation | Per-request transport isolation |
-| MCPPostHandler | SDK Ktor integration |
-| MCPSSEHandler | SDK SSE implementation |
-| JsonRpcProtocolHandler | SDK protocol handling |
-| MCPSessionManager (legacy) | SDKSessionManager |
+Benefits: MCP spec compliance, Claude Code v2.0.25+ support, security controls, simplified architecture.
 
-Benefits: Official support, automatic protocol updates, reduced maintenance, improved client compatibility.
-
-#### MCP SDK Architecture
+#### MCP Streamable HTTP Architecture
 
 ```mermaid
 %%{init: {'theme':'dark'}}%%
 graph TB
-    subgraph SDK["MCP SDK Layer (v0.7.2)"]
-        Server[MCPSdkServer<br/>Capability Config]
+    subgraph Transport["Streamable HTTP Transport Layer"]
+        Handler[StreamableHttpHandler<br/>POST + GET Endpoints]
+        Security[Security Controls<br/>Origin/Rate Limiting]
         Routing[MCPSdkRouting<br/>Ktor Integration]
+    end
+
+    subgraph SDK["MCP SDK Layer"]
+        Server[MCPSdkServer<br/>Capability Config]
         ToolAdapter[SDKToolAdapter<br/>Tool Bridge]
         ResourceAdapter[SDKResourceAdapter<br/>Resource Bridge]
         SessionMgr[SDKSessionManager<br/>Session Context]
@@ -362,7 +365,10 @@ graph TB
         AppServices[Application Services<br/>Domain Logic]
     end
 
-    Claude[Claude Code] -->|SSE + JSON-RPC| Routing
+    Claude[Claude Code v2.0.25+] -->|POST /mcp<br/>JSON-RPC| Handler
+    Claude -->|GET /mcp<br/>SSE| Handler
+    Handler --> Security
+    Security --> Routing
     Routing --> Server
     Server --> ToolAdapter
     Server --> ResourceAdapter
@@ -373,12 +379,13 @@ graph TB
     SessionMgr -.Session Context.-> ToolAdapter
     SessionMgr -.Session Context.-> ResourceAdapter
 
+    style Transport fill:#d29922,stroke:#e3b341
     style SDK fill:#1f6feb,stroke:#58a6ff
     style Business fill:#238636,stroke:#2ea043
     style Claude fill:#8957e5,stroke:#a371f7
 ```
 
-*Figure: MCP SDK integration architecture showing official SDK replacing custom transport*
+*Figure: Streamable HTTP transport architecture (MCP Spec 2025-06-18)*
 
 ### 3. Documentation Templates
 
