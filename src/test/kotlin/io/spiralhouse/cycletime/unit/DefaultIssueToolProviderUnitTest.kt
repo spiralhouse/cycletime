@@ -136,13 +136,14 @@ class DefaultIssueToolProviderUnitTest : StringSpec({
                 }
             }
 
-            // Should return raw JSON data from serialized DTO (wrapping happens in McpToolHandler, not provider)
+            // Should return flat JSON structure with primitive values
             result.shouldBeInstanceOf<JsonObject>()
-            // IssueId serializes as {"_value": "uuid"}
             result["id"].shouldNotBe(null)
-            result["id"]!!.jsonObject["_value"]!!.jsonPrimitive.content shouldBe issueId
+            result["id"]!!.jsonPrimitive.content shouldBe issueId
             result["title"]!!.jsonPrimitive.content shouldBe "Test Issue"
             result["description"]!!.jsonPrimitive.content shouldBe "Test Description"
+            result["type"]!!.jsonPrimitive.content shouldBe "STORY"
+            result["status"]!!.jsonPrimitive.content shouldBe "TODO"
         }
     }
 
@@ -480,6 +481,141 @@ class DefaultIssueToolProviderUnitTest : StringSpec({
 
             result.isFailure shouldBe true
             result.exceptionOrNull()?.message shouldContain "Issue not found:"
+        }
+    }
+
+    // TDD Cycle 6: parentId Parameter Handling Tests (SPI-810)
+    "should pass parentId to CreateIssueCommand when provided" {
+        runTest {
+            val parentUuid = UUID.randomUUID()
+            val mockIssueDto = IssueDto(
+                id = IssueId(UUID.randomUUID().toString()),
+                title = "Child Issue",
+                description = null,
+                type = IssueType.STORY,
+                status = IssueStatus.TODO,
+                parentId = IssueId(parentUuid.toString()),
+                projectId = ProjectId(UUID.randomUUID().toString()),
+                estimate = Estimate.none(),
+                assigneeId = null,
+                dependencies = emptyList(),
+                blockedBy = emptyList(),
+                createdAt = Clock.System.now(),
+                updatedAt = Clock.System.now()
+            )
+            coEvery { mockIssueService.createIssue(any()) } returns mockIssueDto
+
+            val createTool = toolProvider.getAsyncTools().first { it.name == "create_issue" }
+            val params = buildJsonObject {
+                put("title", "Child Issue")
+                put("projectId", UUID.randomUUID().toString())
+                put("type", "STORY")
+                put("parentId", parentUuid.toString())
+            }
+
+            createTool.handler.let { handler ->
+                when (handler) {
+                    is ToolHandler.Async -> handler.handler(params).getOrThrow()
+                    else -> throw IllegalStateException("Expected async handler")
+                }
+            }
+
+            // Verify service called with parentId extracted from params
+            coVerify(exactly = 1) {
+                mockIssueService.createIssue(match<CreateIssueCommand> { command ->
+                    command.parentId != null &&
+                    command.parentId?.value == parentUuid.toString()
+                })
+            }
+        }
+    }
+
+    "should handle missing parentId parameter (defaults to null)" {
+        runTest {
+            val mockIssueDto = IssueDto(
+                id = IssueId(UUID.randomUUID().toString()),
+                title = "Independent Issue",
+                description = null,
+                type = IssueType.EPIC,
+                status = IssueStatus.TODO,
+                parentId = null,
+                projectId = ProjectId(UUID.randomUUID().toString()),
+                estimate = Estimate.none(),
+                assigneeId = null,
+                dependencies = emptyList(),
+                blockedBy = emptyList(),
+                createdAt = Clock.System.now(),
+                updatedAt = Clock.System.now()
+            )
+            coEvery { mockIssueService.createIssue(any()) } returns mockIssueDto
+
+            val createTool = toolProvider.getAsyncTools().first { it.name == "create_issue" }
+            val params = buildJsonObject {
+                put("title", "Independent Issue")
+                put("projectId", UUID.randomUUID().toString())
+                put("type", "EPIC")
+                // No parentId provided - should default to null
+            }
+
+            createTool.handler.let { handler ->
+                when (handler) {
+                    is ToolHandler.Async -> handler.handler(params).getOrThrow()
+                    else -> throw IllegalStateException("Expected async handler")
+                }
+            }
+
+            // Verify service called with null parentId when parameter omitted
+            coVerify(exactly = 1) {
+                mockIssueService.createIssue(match<CreateIssueCommand> { command ->
+                    command.parentId == null
+                })
+            }
+        }
+    }
+
+    "should convert parentId string to IssueId correctly" {
+        runTest {
+            val parentUuid = UUID.randomUUID()
+            val mockIssueDto = IssueDto(
+                id = IssueId(UUID.randomUUID().toString()),
+                title = "Child Subtask",
+                description = null,
+                type = IssueType.SUBTASK,
+                status = IssueStatus.TODO,
+                parentId = IssueId(parentUuid.toString()),
+                projectId = ProjectId(UUID.randomUUID().toString()),
+                estimate = Estimate.none(),
+                assigneeId = null,
+                dependencies = emptyList(),
+                blockedBy = emptyList(),
+                createdAt = Clock.System.now(),
+                updatedAt = Clock.System.now()
+            )
+            coEvery { mockIssueService.createIssue(any()) } returns mockIssueDto
+
+            val createTool = toolProvider.getAsyncTools().first { it.name == "create_issue" }
+            val params = buildJsonObject {
+                put("title", "Child Subtask")
+                put("projectId", UUID.randomUUID().toString())
+                put("type", "SUBTASK")
+                put("parentId", parentUuid.toString())
+            }
+
+            createTool.handler.let { handler ->
+                when (handler) {
+                    is ToolHandler.Async -> handler.handler(params).getOrThrow()
+                    else -> throw IllegalStateException("Expected async handler")
+                }
+            }
+
+            // Verify IssueId type conversion from string UUID
+            coVerify(exactly = 1) {
+                mockIssueService.createIssue(match<CreateIssueCommand> { command ->
+                    command.parentId != null &&
+                    command.parentId is IssueId &&
+                    command.parentId.value == parentUuid.toString()
+                })
+            }
         }
     }
 })

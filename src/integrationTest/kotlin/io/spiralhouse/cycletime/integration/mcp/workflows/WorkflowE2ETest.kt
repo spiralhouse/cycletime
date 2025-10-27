@@ -434,8 +434,8 @@ class WorkflowE2ETest : StringSpec({
             doneJson.jsonObject["title"]?.jsonPrimitive?.content shouldContain "Done"
 
             // Verify issue identity remained consistent
-            // After update_issue returns full IssueDto, ID is serialized as {"_value": "uuid"}
-            val actualId = doneJson.jsonObject["id"]?.jsonObject?.get("_value")?.jsonPrimitive?.content
+            // get_issue returns flat JSON structure with primitive id value
+            val actualId = doneJson.jsonObject["id"]?.jsonPrimitive?.content
             actualId shouldBe issueId
         }
     }
