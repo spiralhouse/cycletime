@@ -13,6 +13,9 @@
     <!-- Tailwind CSS CDN (for rapid prototyping) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- HTMX for interactive examples -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
     <!-- Tailwind Configuration -->
     <script>
         tailwind.config = {
@@ -2304,10 +2307,546 @@ module.exports = {
         <section class="design-section">
             <div class="section-header">
                 <h2 class="text-3xl font-bold text-neutral-100">3. Patterns & Examples</h2>
+                <p class="text-neutral-400 mt-2">Real-world component compositions, HTMX interactions, and responsive design demonstrations</p>
             </div>
-            <div class="bg-neutral-850/50 border border-neutral-800 rounded-lg p-8 text-center">
-                <p class="text-neutral-500 italic">Content will be added in SPI-845: Patterns & Responsive Documentation</p>
+
+            <!-- Component Composition Patterns -->
+            <div class="mb-16">
+                <h3 class="text-2xl font-semibold text-neutral-200 mb-6">Component Composition Patterns</h3>
+
+                <!-- Project Card Grid Pattern -->
+                <div class="mb-12">
+                    <h4 class="text-xl font-semibold text-neutral-300 mb-4">Project Card Grid (3→2→1 Responsive)</h4>
+                    <p class="text-neutral-400 text-sm mb-6">Grid adapts: 3 columns (desktop) → 2 columns (tablet) → 1 column (mobile)</p>
+
+                    <!-- Example Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                        <!-- Project Card 1 -->
+                        <article class="bg-neutral-900 border border-neutral-700 rounded-lg p-6 hover:border-brand-500 hover:-translate-y-1 transition-all duration-200 shadow-lg hover:shadow-brand-500/10">
+                            <h5 class="text-lg font-semibold text-neutral-100 mb-2">CycleTime Core</h5>
+                            <p class="text-sm text-neutral-400 line-clamp-2 mb-4">MCP server integration and workflow orchestration engine for AI-powered development workflows</p>
+                            <div class="flex items-center gap-4 text-xs text-neutral-500 mb-4">
+                                <span>24 issues</span>
+                                <span>89 points</span>
+                                <span class="text-brand-400">68% complete</span>
+                            </div>
+                            <div class="w-full bg-neutral-800 rounded-full h-2">
+                                <div class="bg-brand-500 h-2 rounded-full" style="width: 68%"></div>
+                            </div>
+                        </article>
+
+                        <!-- Project Card 2 -->
+                        <article class="bg-neutral-900 border border-neutral-700 rounded-lg p-6 hover:border-brand-500 hover:-translate-y-1 transition-all duration-200 shadow-lg hover:shadow-brand-500/10">
+                            <h5 class="text-lg font-semibold text-neutral-100 mb-2">Dashboard UI</h5>
+                            <p class="text-sm text-neutral-400 line-clamp-2 mb-4">Design system foundation, component library, and responsive web interface for project management</p>
+                            <div class="flex items-center gap-4 text-xs text-neutral-500 mb-4">
+                                <span>7 issues</span>
+                                <span>26 points</span>
+                                <span class="text-brand-400">62% complete</span>
+                            </div>
+                            <div class="w-full bg-neutral-800 rounded-full h-2">
+                                <div class="bg-brand-500 h-2 rounded-full" style="width: 62%"></div>
+                            </div>
+                        </article>
+
+                        <!-- Project Card 3 -->
+                        <article class="bg-neutral-900 border border-neutral-700 rounded-lg p-6 hover:border-brand-500 hover:-translate-y-1 transition-all duration-200 shadow-lg hover:shadow-brand-500/10">
+                            <h5 class="text-lg font-semibold text-neutral-100 mb-2">Testing Infrastructure</h5>
+                            <p class="text-sm text-neutral-400 line-clamp-2 mb-4">Comprehensive test suite with unit, integration, and system testing across all layers</p>
+                            <div class="flex items-center gap-4 text-xs text-neutral-500 mb-4">
+                                <span>12 issues</span>
+                                <span>34 points</span>
+                                <span class="text-green-400">92% complete</span>
+                            </div>
+                            <div class="w-full bg-neutral-800 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: 92%"></div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <!-- Empty State Example -->
+                    <div class="bg-neutral-850/50 border border-neutral-800 rounded-lg p-16 text-center">
+                        <svg class="w-16 h-16 mx-auto text-neutral-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                        </svg>
+                        <h5 class="text-xl font-semibold text-neutral-300 mb-2">No projects yet</h5>
+                        <p class="text-sm text-neutral-500 mb-6">Get started by creating your first project</p>
+                        <button class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-md transition-colors">
+                            Create Project
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Issue Hierarchy Pattern -->
+                <div class="mb-12">
+                    <h4 class="text-xl font-semibold text-neutral-300 mb-4">Issue Hierarchy Display (Epic → Story → Subtask)</h4>
+                    <p class="text-neutral-400 text-sm mb-6">Three-level hierarchy with color-coded borders and expansion controls</p>
+
+                    <div class="space-y-2">
+                        <!-- Epic (Parent) -->
+                        <div class="bg-neutral-900 border-l-4 border-purple-500 rounded-lg p-4">
+                            <div class="flex items-center gap-3">
+                                <button class="text-neutral-400 hover:text-neutral-200 transition-colors" aria-label="Expand children">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </button>
+                                <span class="px-2.5 py-0.5 text-xs font-medium rounded bg-purple-900/30 text-purple-300">Epic</span>
+                                <span class="text-xs font-mono text-neutral-500">SPI-834</span>
+                                <span class="text-sm font-medium text-neutral-200 flex-1">Design Web UI</span>
+                                <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-900/30 text-blue-300">In Progress</span>
+                                <span class="text-xs text-neutral-500">5 stories</span>
+                            </div>
+                        </div>
+
+                        <!-- Story (Child 1) - Indented -->
+                        <div class="ml-8 bg-neutral-900 border-l-4 border-blue-500 rounded-lg p-4">
+                            <div class="flex items-center gap-3">
+                                <button class="text-neutral-400 hover:text-neutral-200 transition-colors" aria-label="Expand children">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </button>
+                                <span class="px-2.5 py-0.5 text-xs font-medium rounded bg-blue-900/30 text-blue-300">Story</span>
+                                <span class="text-xs font-mono text-neutral-500">SPI-835</span>
+                                <span class="text-sm font-medium text-neutral-200 flex-1">Design System Foundation</span>
+                                <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-900/30 text-blue-300">In Progress</span>
+                                <span class="text-xs text-neutral-500">26pts</span>
+                            </div>
+                        </div>
+
+                        <!-- Subtasks (Grandchildren) - Further Indented -->
+                        <div class="ml-16 bg-neutral-900 border-l-4 border-neutral-600 rounded-lg p-4">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2 py-0.5 text-xs font-medium rounded bg-neutral-800 text-neutral-400">Subtask</span>
+                                <span class="text-xs font-mono text-neutral-500">SPI-840</span>
+                                <span class="text-sm text-neutral-300 flex-1">Setup Tailwind Config</span>
+                                <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-green-900/30 text-green-300">Done</span>
+                                <span class="text-xs text-neutral-500">3pts</span>
+                            </div>
+                        </div>
+
+                        <div class="ml-16 bg-neutral-900 border-l-4 border-neutral-600 rounded-lg p-4">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2 py-0.5 text-xs font-medium rounded bg-neutral-800 text-neutral-400">Subtask</span>
+                                <span class="text-xs font-mono text-neutral-500">SPI-845</span>
+                                <span class="text-sm text-neutral-300 flex-1">Patterns & Responsive Docs</span>
+                                <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-900/30 text-blue-300">In Progress</span>
+                                <span class="text-xs text-neutral-500">3pts</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Panel Pattern -->
+                <div class="mb-12">
+                    <h4 class="text-xl font-semibold text-neutral-300 mb-4">Filter Panel with Active Indicators</h4>
+                    <p class="text-neutral-400 text-sm mb-6">Horizontal filter bar with dropdowns and clear controls</p>
+
+                    <div class="bg-neutral-900 border border-neutral-700 rounded-lg p-4">
+                        <div class="flex flex-wrap items-center gap-4">
+                            <!-- Project Filter -->
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="block text-xs font-medium text-neutral-400 mb-1">Project</label>
+                                <select class="w-full bg-neutral-850 border border-neutral-700 text-neutral-300 rounded-md px-3 py-2 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-opacity-50">
+                                    <option>All Projects</option>
+                                    <option>CycleTime Core</option>
+                                    <option>Dashboard UI</option>
+                                    <option>Testing Infrastructure</option>
+                                </select>
+                            </div>
+
+                            <!-- Status Filter -->
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="block text-xs font-medium text-neutral-400 mb-1">Status</label>
+                                <select class="w-full bg-neutral-850 border border-neutral-700 text-neutral-300 rounded-md px-3 py-2 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-opacity-50">
+                                    <option>All Statuses</option>
+                                    <option>Backlog</option>
+                                    <option>Todo</option>
+                                    <option>In Progress</option>
+                                    <option>In Review</option>
+                                    <option>Done</option>
+                                </select>
+                            </div>
+
+                            <!-- Clear Filters Button -->
+                            <div class="flex items-end">
+                                <button class="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-md text-sm transition-colors flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                    Clear
+                                    <span class="ml-1 px-1.5 py-0.5 bg-brand-600 text-white rounded-full text-xs">2</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Validation Flow -->
+                <div class="mb-12">
+                    <h4 class="text-xl font-semibold text-neutral-300 mb-4">Form Validation Flow</h4>
+                    <p class="text-neutral-400 text-sm mb-6">Multi-input form with inline validation and error summary</p>
+
+                    <div class="bg-neutral-900 border border-neutral-700 rounded-lg p-6 max-w-2xl">
+                        <form class="space-y-6">
+                            <!-- Success: Name field -->
+                            <div>
+                                <label class="block text-sm font-medium text-neutral-300 mb-1">
+                                    Project Name <span class="text-red-400">*</span>
+                                </label>
+                                <input type="text" value="My Project" class="w-full bg-neutral-850 border border-green-500 text-neutral-200 rounded-md px-3 py-2 focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-50" />
+                                <p class="mt-1 text-sm text-green-400 flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    Looks good!
+                                </p>
+                            </div>
+
+                            <!-- Error: Email field -->
+                            <div>
+                                <label class="block text-sm font-medium text-neutral-300 mb-1">
+                                    Owner Email <span class="text-red-400">*</span>
+                                </label>
+                                <input type="email" value="invalid-email" class="w-full bg-neutral-850 border border-red-500 text-neutral-200 rounded-md px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-opacity-50" aria-invalid="true" aria-describedby="email-error" />
+                                <p id="email-error" class="mt-1 text-sm text-red-400 flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Please enter a valid email address
+                                </p>
+                            </div>
+
+                            <!-- Default: Description field -->
+                            <div>
+                                <label class="block text-sm font-medium text-neutral-300 mb-1">
+                                    Description
+                                </label>
+                                <textarea rows="3" class="w-full bg-neutral-850 border border-neutral-700 text-neutral-200 rounded-md px-3 py-2 focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-opacity-50" placeholder="Optional project description"></textarea>
+                                <p class="mt-1 text-xs text-neutral-500">Provide a brief description of your project</p>
+                            </div>
+
+                            <!-- Submit Button (disabled until valid) -->
+                            <button type="submit" disabled class="w-full px-4 py-2 bg-neutral-700 text-neutral-500 rounded-md cursor-not-allowed opacity-50">
+                                Create Project (fix errors first)
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
+
+            <!-- HTMX Interaction Examples -->
+            <div class="mb-16">
+                <h3 class="text-2xl font-semibold text-neutral-200 mb-6">HTMX Interaction Examples</h3>
+                <p class="text-neutral-400 text-sm mb-8">Live demonstrations of HTMX patterns (requires server running)</p>
+
+                <!-- Lazy Loading -->
+                <div class="mb-12">
+                    <h4 class="text-xl font-semibold text-neutral-300 mb-4">Lazy Loading (Click to Load More)</h4>
+                    <div class="bg-neutral-900 border border-neutral-700 rounded-lg p-6">
+                        <div id="lazy-container" class="space-y-2 mb-4">
+                            <div class="bg-neutral-850 border border-neutral-700 rounded-lg p-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-mono text-neutral-500">SPI-848</span>
+                                    <span class="text-sm font-medium text-neutral-200">Initial issue</span>
+                                    <span class="ml-auto px-2.5 py-0.5 text-xs font-medium rounded-full bg-neutral-700 text-neutral-300">Backlog</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button
+                            hx-get="/mockups/api/lazy-load"
+                            hx-target="#lazy-container"
+                            hx-swap="beforeend"
+                            hx-indicator="#lazy-spinner"
+                            class="w-full px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-md transition-colors">
+                            Load More Issues
+                            <span id="lazy-spinner" class="htmx-indicator ml-2">
+                                <svg class="inline w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                    <div class="code-block mt-4">
+                        <code>&lt;!-- Lazy Load Pattern --&gt;
+&lt;button hx-get="/api/lazy-load" hx-target="#container" hx-swap="beforeend"&gt;
+  Load More
+&lt;/button&gt;</code>
+                    </div>
+                </div>
+
+                <!-- Optimistic UI -->
+                <div class="mb-12">
+                    <h4 class="text-xl font-semibold text-neutral-300 mb-4">Optimistic UI Update (Toggle Status)</h4>
+                    <div class="bg-neutral-900 border border-neutral-700 rounded-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-neutral-300">Mark task complete</span>
+                            <button
+                                id="optimistic-status"
+                                hx-get="/mockups/api/optimistic"
+                                hx-target="#optimistic-status"
+                                hx-swap="outerHTML"
+                                class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-neutral-700 text-neutral-300 hover:bg-neutral-600 transition-colors">
+                                In Progress
+                            </button>
+                        </div>
+                        <p class="text-xs text-neutral-500 mt-2">Click status to toggle to "Done"</p>
+                    </div>
+                    <div class="code-block mt-4">
+                        <code>&lt;!-- Optimistic UI Pattern --&gt;
+&lt;button hx-get="/api/toggle" hx-target="this" hx-swap="outerHTML"&gt;
+  Current State
+&lt;/button&gt;</code>
+                    </div>
+                </div>
+
+                <!-- Polling -->
+                <div class="mb-12">
+                    <h4 class="text-xl font-semibold text-neutral-300 mb-4">Polling (Auto-Refresh Status)</h4>
+                    <div class="bg-neutral-900 border border-neutral-700 rounded-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-neutral-300">System Status</span>
+                            <div
+                                id="status-indicator"
+                                hx-get="/mockups/api/status"
+                                hx-trigger="every 3s"
+                                hx-target="this"
+                                hx-swap="innerHTML">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-3 h-3 text-green-400 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10"/>
+                                    </svg>
+                                    <span class="text-sm text-neutral-300">Running</span>
+                                    <span class="text-xs text-neutral-500 ml-2">Updated 0s ago</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-neutral-500 mt-2">Auto-updates every 3 seconds</p>
+                    </div>
+                    <div class="code-block mt-4">
+                        <code>&lt;!-- Polling Pattern --&gt;
+&lt;div hx-get="/api/status" hx-trigger="every 5s" hx-swap="innerHTML"&gt;
+  Initial content
+&lt;/div&gt;</code>
+                    </div>
+                </div>
+
+                <!-- Infinite Scroll -->
+                <div class="mb-12">
+                    <h4 class="text-xl font-semibold text-neutral-300 mb-4">Infinite Scroll (Intersection Observer)</h4>
+                    <div class="bg-neutral-900 border border-neutral-700 rounded-lg p-6 max-h-96 overflow-y-auto">
+                        <div id="scroll-container" class="space-y-2">
+                            <div class="bg-neutral-850 border border-neutral-700 rounded-lg p-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-mono text-neutral-500">SPI-100</span>
+                                    <span class="text-sm font-medium text-neutral-200">Sample issue 100</span>
+                                </div>
+                            </div>
+                            <div id="load-trigger" hx-get="/mockups/api/scroll?page=2" hx-trigger="intersect once" hx-swap="afterend">
+                                <div class="text-center py-4">
+                                    <span class="text-sm text-neutral-500">Scroll down to load more...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="code-block mt-4">
+                        <code>&lt;!-- Infinite Scroll Pattern --&gt;
+&lt;div hx-get="/api/items?page=2" hx-trigger="intersect once" hx-swap="afterend"&gt;
+  Loading trigger element
+&lt;/div&gt;</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Responsive Design Documentation -->
+            <div class="mb-16">
+                <h3 class="text-2xl font-semibold text-neutral-200 mb-6">Responsive Design</h3>
+
+                <!-- Breakpoint Indicator -->
+                <div class="mb-8">
+                    <h4 class="text-xl font-semibold text-neutral-300 mb-4">Breakpoint Indicator</h4>
+                    <p class="text-neutral-400 text-sm mb-4">Shows current viewport size (resize window to test)</p>
+                    <div class="inline-block px-4 py-2 bg-neutral-900 border border-neutral-700 rounded-lg">
+                        <span class="block sm:hidden text-brand-400 font-semibold">MOBILE (&lt;640px)</span>
+                        <span class="hidden sm:block md:hidden text-brand-400 font-semibold">TABLET (640-1023px)</span>
+                        <span class="hidden md:block lg:hidden text-brand-400 font-semibold">DESKTOP SM (1024-1279px)</span>
+                        <span class="hidden lg:block text-brand-400 font-semibold">DESKTOP LG (≥1280px)</span>
+                    </div>
+                </div>
+
+                <!-- Responsive Patterns Table -->
+                <div class="mb-8">
+                    <h4 class="text-xl font-semibold text-neutral-300 mb-4">Breakpoints & Patterns</h4>
+                    <div class="bg-neutral-900 border border-neutral-700 rounded-lg overflow-hidden">
+                        <table class="w-full text-sm">
+                            <thead class="bg-neutral-850 border-b border-neutral-700">
+                                <tr>
+                                    <th class="text-left px-4 py-3 text-neutral-300 font-semibold">Breakpoint</th>
+                                    <th class="text-left px-4 py-3 text-neutral-300 font-semibold">Range</th>
+                                    <th class="text-left px-4 py-3 text-neutral-300 font-semibold">Tailwind Prefix</th>
+                                    <th class="text-left px-4 py-3 text-neutral-300 font-semibold">Pattern Changes</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-neutral-700">
+                                <tr>
+                                    <td class="px-4 py-3 text-neutral-300 font-medium">Mobile</td>
+                                    <td class="px-4 py-3 text-neutral-400">320-639px</td>
+                                    <td class="px-4 py-3 text-brand-400 font-mono text-xs">default</td>
+                                    <td class="px-4 py-3 text-neutral-400 text-xs">Single column, hamburger menu, full-width cards</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 text-neutral-300 font-medium">Tablet</td>
+                                    <td class="px-4 py-3 text-neutral-400">640-1023px</td>
+                                    <td class="px-4 py-3 text-brand-400 font-mono text-xs">sm:, md:</td>
+                                    <td class="px-4 py-3 text-neutral-400 text-xs">2-column grid, visible navigation, max-width containers</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 text-neutral-300 font-medium">Desktop</td>
+                                    <td class="px-4 py-3 text-neutral-400">1024px+</td>
+                                    <td class="px-4 py-3 text-brand-400 font-mono text-xs">lg:, xl:</td>
+                                    <td class="px-4 py-3 text-neutral-400 text-xs">3-column grid, sidebar layouts, larger typography</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Responsive Code Examples -->
+                <div class="code-block">
+                    <code>&lt;!-- Responsive Grid Pattern --&gt;
+&lt;div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"&gt;
+  &lt;!-- 1 column mobile, 2 tablet, 3 desktop --&gt;
+&lt;/div&gt;
+
+&lt;!-- Responsive Navigation --&gt;
+&lt;nav class="hidden md:flex items-center gap-6"&gt;
+  &lt;!-- Hidden on mobile, visible on tablet+ --&gt;
+&lt;/nav&gt;
+
+&lt;!-- Responsive Typography --&gt;
+&lt;h1 class="text-2xl md:text-3xl lg:text-4xl"&gt;
+  &lt;!-- Scales up at larger breakpoints --&gt;
+&lt;/h1&gt;</code>
+                </div>
+            </div>
+
+            <!-- Loading & Empty States -->
+            <div class="mb-16">
+                <h3 class="text-2xl font-semibold text-neutral-200 mb-6">Loading & Empty States</h3>
+
+                <!-- Skeleton Loaders -->
+                <div class="mb-12">
+                    <h4 class="text-xl font-semibold text-neutral-300 mb-4">Skeleton Loaders</h4>
+                    <p class="text-neutral-400 text-sm mb-6">Animated placeholders during content loading</p>
+                    <div class="space-y-4">
+                        <!-- Card Skeleton -->
+                        <div class="bg-neutral-900 border border-neutral-700 rounded-lg p-6 animate-pulse">
+                            <div class="h-5 bg-neutral-800 rounded w-1/3 mb-3"></div>
+                            <div class="h-4 bg-neutral-800 rounded w-full mb-2"></div>
+                            <div class="h-4 bg-neutral-800 rounded w-5/6 mb-4"></div>
+                            <div class="flex gap-4">
+                                <div class="h-3 bg-neutral-800 rounded w-16"></div>
+                                <div class="h-3 bg-neutral-800 rounded w-16"></div>
+                                <div class="h-3 bg-neutral-800 rounded w-20"></div>
+                            </div>
+                        </div>
+                        <!-- List Skeleton -->
+                        <div class="space-y-2">
+                            <div class="bg-neutral-900 border border-neutral-700 rounded p-3 animate-pulse flex items-center gap-3">
+                                <div class="h-4 bg-neutral-800 rounded w-16"></div>
+                                <div class="h-4 bg-neutral-800 rounded flex-1"></div>
+                                <div class="h-4 bg-neutral-800 rounded w-20"></div>
+                            </div>
+                            <div class="bg-neutral-900 border border-neutral-700 rounded p-3 animate-pulse flex items-center gap-3">
+                                <div class="h-4 bg-neutral-800 rounded w-16"></div>
+                                <div class="h-4 bg-neutral-800 rounded flex-1"></div>
+                                <div class="h-4 bg-neutral-800 rounded w-20"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inline Loading Indicators -->
+                <div class="mb-12">
+                    <h4 class="text-xl font-semibold text-neutral-300 mb-4">Inline Loading Indicators</h4>
+                    <p class="text-neutral-400 text-sm mb-6">Spinners and progress indicators</p>
+                    <div class="flex flex-wrap items-center gap-6">
+                        <!-- Spinner -->
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 animate-spin text-brand-400" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span class="text-sm text-neutral-400">Loading...</span>
+                        </div>
+                        <!-- Button Loading State -->
+                        <button disabled class="px-4 py-2 bg-neutral-700 text-neutral-400 rounded-md cursor-not-allowed flex items-center gap-2">
+                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Saving...
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="mb-12">
+                    <h4 class="text-xl font-semibold text-neutral-300 mb-4">Progress Indicators</h4>
+                    <p class="text-neutral-400 text-sm mb-6">Linear progress for long operations</p>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-xs text-neutral-400 mb-1">
+                                <span>Uploading file...</span>
+                                <span>68%</span>
+                            </div>
+                            <div class="w-full bg-neutral-800 rounded-full h-2">
+                                <div class="bg-brand-500 h-2 rounded-full transition-all duration-300" style="width: 68%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-neutral-400 mb-1">
+                                <span>Processing...</span>
+                                <span>Complete!</span>
+                            </div>
+                            <div class="w-full bg-neutral-800 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty States -->
+                <div>
+                    <h4 class="text-xl font-semibold text-neutral-300 mb-4">Empty State Patterns</h4>
+                    <p class="text-neutral-400 text-sm mb-6">Helpful messaging when no content exists</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- No Results -->
+                        <div class="bg-neutral-850/50 border border-neutral-800 rounded-lg p-12 text-center">
+                            <svg class="w-12 h-12 mx-auto text-neutral-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6"></path>
+                            </svg>
+                            <h5 class="text-lg font-semibold text-neutral-300 mb-1">No results found</h5>
+                            <p class="text-sm text-neutral-500 mb-4">Try adjusting your search query</p>
+                            <button class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded text-sm transition-colors">Clear Search</button>
+                        </div>
+
+                        <!-- Filtered Empty -->
+                        <div class="bg-neutral-850/50 border border-neutral-800 rounded-lg p-12 text-center">
+                            <svg class="w-12 h-12 mx-auto text-neutral-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                            </svg>
+                            <h5 class="text-lg font-semibold text-neutral-300 mb-1">No issues match filters</h5>
+                            <p class="text-sm text-neutral-500 mb-4">Try removing some filters</p>
+                            <button class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded text-sm transition-colors">Clear Filters</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </section>
 
     </main>
@@ -2319,7 +2858,7 @@ module.exports = {
                 CycleTime Design System v1.0 - Built with Tailwind CSS, Inter, and JetBrains Mono
             </p>
             <p class="text-neutral-600 text-xs mt-2">
-                Last updated: 2025-10-28 (SPI-844: Badges, Navigation & Icons Complete - ALL COMPONENTS READY FOR REVIEW)
+                Last updated: 2025-10-28 (SPI-845: Patterns & Responsive Documentation Complete - READY FOR ACCESSIBILITY AUDIT)
             </p>
         </div>
     </footer>
