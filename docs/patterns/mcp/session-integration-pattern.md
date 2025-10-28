@@ -4,7 +4,7 @@ type: pattern
 domain: [mcp, session, architecture]
 description: "Pattern for integrating MCP session management with application state and persistence"
 dependencies: [../../concepts/mcp/mcp-protocol-concepts.md]
-related: [json-rpc-pattern.md, sse-transport-pattern.md, ../../architecture/session-management.md]
+related: [json-rpc-pattern.md, streamable-http-transport-pattern.md, ../../architecture/session-management.md]
 keywords: [mcp, session, integration, state, persistence, pattern]
 status: complete
 last_updated: 2025-10-20
@@ -56,8 +56,8 @@ graph TB
     end
 
     subgraph "MCP Protocol Layer (Stateless)"
-        SSE[SSE Endpoint]
-        POST[POST Endpoint]
+        Endpoint[/mcp Endpoint]
+        Handler[StreamableHttpHandler]
         JSONRPC[JSON-RPC Handler]
     end
 
@@ -77,8 +77,9 @@ graph TB
         DB[(H2 Database)]
     end
 
-    Client -->|1. MCP Request<br/>X-MCP-Session-ID| POST
-    POST --> JSONRPC
+    Client -->|1. POST /mcp<br/>Mcp-Session-ID| Endpoint
+    Endpoint --> Handler
+    Handler --> JSONRPC
     JSONRPC -->|2. Extract Session ID| Extract
     Extract -->|3. Load Session| Context
     Context --> Manager
@@ -91,8 +92,8 @@ graph TB
     Context -->|6. Update Session| Manager
     Manager --> Service
 
-    JSONRPC -->|7. Response| SSE
-    SSE -->|8. MCP Response| Client
+    JSONRPC -->|7. Response| Handler
+    Handler -->|8. MCP Response (JSON/SSE)| Client
 
     style Extract fill:#e1f5ff
     style Context fill:#f0e1ff
@@ -1234,7 +1235,7 @@ suspend fun autoRefreshSession(sessionKey: SessionKey) {
 - **[MCP Protocol Concepts](../../concepts/mcp/mcp-protocol-concepts.md)** - Understanding MCP's stateless design
 - **[Session Management Architecture](../../architecture/session-management.md)** - Complete session architecture
 - **[JSON-RPC Pattern](./json-rpc-pattern.md)** - Request handling and session ID extraction
-- **[SSE Transport Pattern](./sse-transport-pattern.md)** - SSE session management
+- **[Streamable HTTP Transport Pattern](./streamable-http-transport-pattern.md)** - Streamable HTTP session management
 
 ## References
 

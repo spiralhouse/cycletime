@@ -11,10 +11,10 @@ last_updated: 2025-10-23
 
 # MCP Streamable HTTP Transport Migration Decision
 
-**Issue:** SPI-759
-**Date:** October 22, 2025
-**Status:** Decision Required
-**Priority:** GA Blocking
+**Issue:** SPI-759 (Completed), SPI-763 (SSE Removal Completed)
+**Date:** October 27, 2025
+**Status:** Implemented and SSE Removed
+**Priority:** Completed
 **Authors:** Software Architect Agent
 
 ---

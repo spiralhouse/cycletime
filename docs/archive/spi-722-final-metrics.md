@@ -57,7 +57,7 @@ Successfully restructured CycleTime CE documentation using DAG architecture prin
 **Top 5 Largest Documents**:
 1. `guides/troubleshooting/mcp/protocol-issues.md` - 883 lines (exceeds 800 line target)
 2. `guides/development/api-best-practices.md` - 643 lines
-3. `patterns/mcp/sse-transport-pattern.md` - 641 lines
+3. `patterns/mcp/streamable-http-transport-pattern.md` - 641 lines (formerly sse-transport-pattern.md, updated in SPI-763)
 4. `patterns/mcp/json-rpc-pattern.md` - 630 lines
 5. `guides/troubleshooting/mcp/performance-issues.md` - 598 lines
 
@@ -128,7 +128,7 @@ Successfully restructured CycleTime CE documentation using DAG architecture prin
 - ✅ **SPI-738**: Documentation audit and assessment
 - ✅ **SPI-739**: Infrastructure and configuration docs
 - ✅ **SPI-740**: DDD foundation concepts
-- ✅ **SPI-741**: MCP documentation splitting
+- ✅ **SPI-741**: MCP documentation splitting (Note: sse-transport-pattern.md replaced with streamable-http-transport-pattern.md in SPI-763)
 - ✅ **SPI-742**: API, CI/CD, Getting Started, Development guides
 
 **Deferred to Future Work**: 2 subtasks (29%)
