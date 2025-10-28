@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.http.content.*
 import io.spiralhouse.cycletime.api.dto.ApiRootResponse
 import io.spiralhouse.cycletime.api.dto.ApiEndpoints
 import io.spiralhouse.cycletime.api.middleware.*
@@ -108,6 +109,12 @@ object ApiConfiguration {
 
             // Dashboard endpoints
             configureDashboardRoutes()
+
+            // Static content serving (design system mockups, assets)
+            staticResources("/mockups", "static/mockups") {
+                // Enable directory index and default files
+                default("design-system.html")
+            }
 
             // Future route configurations can be added here:
             // configureSessionRoutes()

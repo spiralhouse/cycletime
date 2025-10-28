@@ -1,0 +1,289 @@
+/* CycleTime Design System - Input CSS */
+
+/* Tailwind Base Styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base Layer - Font Loading & Resets */
+@layer base {
+  /* System will use Google Fonts CDN for rapid prototyping */
+  body {
+    @apply font-sans bg-neutral-900 text-neutral-100;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Focus outline accessibility */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-400;
+  }
+}
+
+/* Components Layer - Reusable Component Classes */
+@layer components {
+  /* === BUTTONS === */
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium text-body transition-colors duration-150;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-neutral-900;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700;
+    @apply focus:ring-brand-400;
+  }
+
+  .btn-secondary {
+    @apply btn bg-neutral-800 text-neutral-100 border border-neutral-700;
+    @apply hover:bg-neutral-700 active:bg-neutral-600;
+    @apply focus:ring-neutral-400;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-neutral-300;
+    @apply hover:bg-neutral-800/50 active:bg-neutral-800/70;
+    @apply focus:ring-neutral-400;
+  }
+
+  .btn-danger {
+    @apply btn text-white border;
+    background-color: theme('colors.feedback.error.bg');
+    border-color: theme('colors.feedback.error.border');
+    @apply hover:bg-red-800 active:bg-red-700;
+    @apply focus:ring-red-400;
+  }
+
+  /* Button Sizes */
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .btn-md {
+    @apply px-4 py-2 text-body;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-body-lg;
+  }
+
+  /* === CARDS === */
+  .card {
+    @apply bg-neutral-850 border border-neutral-800 rounded-lg p-6 shadow-sm;
+  }
+
+  .card-interactive {
+    @apply card hover:shadow-md hover:border-neutral-700 cursor-pointer transition-all duration-150;
+  }
+
+  .card-header {
+    @apply flex items-center justify-between mb-4;
+  }
+
+  .card-title {
+    @apply text-h2 text-neutral-100;
+  }
+
+  .card-body {
+    @apply space-y-4;
+  }
+
+  .card-description {
+    @apply text-body text-neutral-400;
+  }
+
+  /* === FORMS === */
+  .form-group {
+    @apply space-y-2;
+  }
+
+  .form-label {
+    @apply block text-body font-medium text-neutral-300;
+  }
+
+  .form-required {
+    @apply text-red-400 ml-1;
+  }
+
+  .form-input {
+    @apply w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-md;
+    @apply text-neutral-100 placeholder:text-neutral-500 placeholder:italic;
+    @apply focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply transition-colors duration-150;
+  }
+
+  .form-input-error {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500/20;
+  }
+
+  .form-input-success {
+    @apply border-green-500 focus:border-green-500 focus:ring-green-500/20;
+  }
+
+  .form-select {
+    @apply form-input;
+    @apply appearance-none bg-no-repeat bg-right;
+    /* Chevron icon would be added via background-image */
+  }
+
+  .form-checkbox {
+    @apply w-5 h-5 rounded border-2 border-neutral-700;
+    @apply text-brand-500 focus:ring-2 focus:ring-brand-500/20;
+    @apply hover:border-brand-400;
+    @apply transition-colors duration-150;
+  }
+
+  .form-help-text {
+    @apply text-body-sm text-neutral-500;
+  }
+
+  .form-error-message {
+    @apply text-body-sm flex items-center gap-1;
+    color: theme('colors.feedback.error.text');
+  }
+
+  .form-success-message {
+    @apply text-body-sm flex items-center gap-1;
+    color: theme('colors.feedback.success.text');
+  }
+
+  /* === BADGES === */
+  .badge {
+    @apply inline-flex items-center px-2 py-1 rounded text-caption font-medium;
+    @apply border;
+  }
+
+  /* Status Badges */
+  .badge-status-backlog {
+    background-color: theme('colors.status.backlog.bg');
+    color: theme('colors.status.backlog.text');
+    border-color: theme('colors.status.backlog.border');
+  }
+
+  .badge-status-todo {
+    background-color: theme('colors.status.todo.bg');
+    color: theme('colors.status.todo.text');
+    border-color: theme('colors.status.todo.border');
+  }
+
+  .badge-status-inProgress {
+    background-color: theme('colors.status.inProgress.bg');
+    color: theme('colors.status.inProgress.text');
+    border-color: theme('colors.status.inProgress.border');
+  }
+
+  .badge-status-inReview {
+    background-color: theme('colors.status.inReview.bg');
+    color: theme('colors.status.inReview.text');
+    border-color: theme('colors.status.inReview.border');
+  }
+
+  .badge-status-done {
+    background-color: theme('colors.status.done.bg');
+    color: theme('colors.status.done.text');
+    border-color: theme('colors.status.done.border');
+  }
+
+  .badge-status-canceled {
+    background-color: theme('colors.status.canceled.bg');
+    color: theme('colors.status.canceled.text');
+    border-color: theme('colors.status.canceled.border');
+  }
+
+  /* Issue Type Badges */
+  .badge-issue-epic {
+    background-color: theme('colors.issueType.epic.bg');
+    color: theme('colors.issueType.epic.text');
+  }
+
+  .badge-issue-story {
+    background-color: theme('colors.issueType.story.bg');
+    color: theme('colors.issueType.story.text');
+  }
+
+  .badge-issue-subtask {
+    background-color: theme('colors.issueType.subtask.bg');
+    color: theme('colors.issueType.subtask.text');
+  }
+
+  /* === NAVIGATION === */
+  .nav-primary {
+    @apply bg-neutral-900 border-b border-neutral-800;
+    @apply h-16 px-8;
+    @apply flex items-center justify-between;
+  }
+
+  .nav-links {
+    @apply flex items-center gap-6;
+  }
+
+  .nav-link {
+    @apply flex items-center gap-2 px-3 py-2 rounded-md;
+    @apply text-body text-neutral-400 font-medium;
+    @apply hover:text-neutral-100 hover:bg-neutral-800;
+    @apply transition-colors duration-150;
+  }
+
+  .nav-link-active {
+    @apply nav-link text-brand-400 bg-neutral-800;
+    @apply border-b-2 border-brand-400;
+  }
+
+  .nav-link-icon {
+    @apply w-5 h-5;
+  }
+
+  /* === BREADCRUMBS === */
+  .breadcrumb {
+    @apply flex items-center gap-2 text-body-sm;
+  }
+
+  .breadcrumb-link {
+    @apply text-neutral-400 hover:text-neutral-100 transition-colors duration-150;
+  }
+
+  .breadcrumb-current {
+    @apply text-neutral-100 font-medium;
+  }
+
+  .breadcrumb-separator {
+    @apply text-neutral-600;
+  }
+}
+
+/* Utilities Layer - Custom utility classes */
+@layer utilities {
+  /* Typography utilities */
+  .text-display {
+    @apply text-display;
+  }
+
+  .text-h1 {
+    @apply text-h1;
+  }
+
+  .text-h2 {
+    @apply text-h2;
+  }
+
+  .text-h3 {
+    @apply text-h3;
+  }
+
+  .text-h4 {
+    @apply text-h4;
+  }
+
+  /* Screen reader only */
+  .sr-only {
+    @apply absolute w-px h-px p-0 -m-px overflow-hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}
