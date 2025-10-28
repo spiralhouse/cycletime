@@ -165,7 +165,7 @@
                     <div>
                         <h3 class="text-lg font-semibold text-green-400 mb-2">Building Progress</h3>
                         <p class="text-neutral-300">
-                            Current status: <span class="font-semibold text-yellow-400">SPI-842 - Components: Buttons & Cards (In Progress)</span>
+                            Current status: <span class="font-semibold text-green-400">3 of 7 subtasks complete (11/26 points)</span>
                         </p>
                         <div class="mt-4 space-y-2 text-sm text-neutral-400">
                             <div class="flex items-center gap-2">
@@ -177,12 +177,12 @@
                                 <span>SPI-841: Design Tokens - Colors, Typography, Spacing (Completed)</span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="text-yellow-400">◐</span>
-                                <span>SPI-842: Components - Buttons & Cards (In Progress)</span>
+                                <span class="text-green-400">●</span>
+                                <span>SPI-842: Components - Buttons & Cards (Completed)</span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="text-neutral-600">○</span>
-                                <span>SPI-843: Components - Forms & Inputs (Pending)</span>
+                                <span class="text-green-400">●</span>
+                                <span>SPI-843: Components - Forms & Inputs (Completed)</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="text-neutral-600">○</span>
@@ -1283,6 +1283,516 @@ module.exports = {
                 </div>
             </div>
 
+            <!-- 2.3 Forms & Inputs -->
+            <div class="subsection-header mt-16">
+                <h3 class="text-2xl font-semibold text-neutral-200 mb-4">2.3 Forms & Inputs</h3>
+                <p class="text-neutral-400">Accessible form controls with comprehensive validation states</p>
+            </div>
+
+            <!-- Text Input -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-6">Text Input (All States)</h4>
+                <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                    <div class="space-y-6 mb-6">
+                        <!-- Default State -->
+                        <div>
+                            <label for="input-default" class="block text-sm font-medium text-neutral-200 mb-2">
+                                Project Name
+                            </label>
+                            <input
+                                type="text"
+                                id="input-default"
+                                placeholder="Enter project name"
+                                class="w-full px-4 py-2 bg-neutral-900 border border-neutral-600 rounded text-neutral-100 placeholder-neutral-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all"
+                            />
+                            <p class="text-xs text-neutral-500 mt-1">This will be visible to all team members</p>
+                        </div>
+
+                        <!-- Error State -->
+                        <div>
+                            <label for="input-error" class="block text-sm font-medium text-neutral-200 mb-2">
+                                Email Address <span class="text-red-400">*</span>
+                            </label>
+                            <input
+                                type="email"
+                                id="input-error"
+                                value="invalid-email"
+                                class="w-full px-4 py-2 bg-neutral-900 border border-red-600 rounded text-neutral-100 focus:border-red-500 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all"
+                                aria-invalid="true"
+                                aria-describedby="input-error-message"
+                                aria-required="true"
+                            />
+                            <p id="input-error-message" class="text-xs text-red-400 mt-1 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>Please enter a valid email address</span>
+                            </p>
+                        </div>
+
+                        <!-- Success State -->
+                        <div>
+                            <label for="input-success" class="block text-sm font-medium text-neutral-200 mb-2">
+                                Username
+                            </label>
+                            <input
+                                type="text"
+                                id="input-success"
+                                value="john_developer"
+                                class="w-full px-4 py-2 bg-neutral-900 border border-green-600 rounded text-neutral-100 focus:border-green-500 focus:ring-2 focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all"
+                                aria-describedby="input-success-message"
+                            />
+                            <p id="input-success-message" class="text-xs text-green-400 mt-1 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>Username is available</span>
+                            </p>
+                        </div>
+
+                        <!-- Disabled State -->
+                        <div>
+                            <label for="input-disabled" class="block text-sm font-medium text-neutral-500 mb-2">
+                                Organization ID
+                            </label>
+                            <input
+                                type="text"
+                                id="input-disabled"
+                                value="org_2Dn8xKwL9Mf4"
+                                disabled
+                                class="w-full px-4 py-2 bg-neutral-900 border border-neutral-700 rounded text-neutral-500 cursor-not-allowed opacity-50"
+                            />
+                            <p class="text-xs text-neutral-600 mt-1">This field cannot be edited</p>
+                        </div>
+
+                        <!-- Size Variants -->
+                        <div>
+                            <p class="text-sm font-medium text-neutral-200 mb-3">Input Sizes</p>
+                            <div class="space-y-3">
+                                <input
+                                    type="text"
+                                    placeholder="Small (32px height)"
+                                    class="w-full px-3 py-1.5 text-sm bg-neutral-900 border border-neutral-600 rounded text-neutral-100 placeholder-neutral-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Medium (40px height - default)"
+                                    class="w-full px-4 py-2 text-base bg-neutral-900 border border-neutral-600 rounded text-neutral-100 placeholder-neutral-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Large (48px height)"
+                                    class="w-full px-6 py-3 text-lg bg-neutral-900 border border-neutral-600 rounded text-neutral-100 placeholder-neutral-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="code-block">
+                        <code>&lt;!-- Default Input --&gt;
+&lt;label for="input-id" class="block text-sm font-medium text-neutral-200 mb-2"&gt;
+  Label Text
+&lt;/label&gt;
+&lt;input
+  type="text"
+  id="input-id"
+  class="w-full px-4 py-2 bg-neutral-900 border border-neutral-600 rounded
+         text-neutral-100 placeholder-neutral-500
+         focus:border-brand-500 focus:ring-2 focus:ring-brand-400
+         transition-all"
+/&gt;
+
+&lt;!-- Error Input --&gt;
+&lt;input
+  class="... border-red-600 focus:border-red-500 focus:ring-red-400"
+  aria-invalid="true" aria-describedby="error-msg"
+/&gt;
+&lt;p id="error-msg" class="text-xs text-red-400 mt-1"&gt;Error message&lt;/p&gt;</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Textarea -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-6">Textarea</h4>
+                <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                    <div class="space-y-6 mb-6">
+                        <!-- Default Textarea -->
+                        <div>
+                            <label for="textarea-default" class="block text-sm font-medium text-neutral-200 mb-2">
+                                Project Description
+                            </label>
+                            <textarea
+                                id="textarea-default"
+                                rows="6"
+                                placeholder="Describe your project goals, scope, and requirements..."
+                                class="w-full px-4 py-3 bg-neutral-900 border border-neutral-600 rounded text-neutral-100 placeholder-neutral-500 resize-y focus:border-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all"
+                            ></textarea>
+                            <p class="text-xs text-neutral-500 mt-1">Minimum 20 characters</p>
+                        </div>
+
+                        <!-- Textarea with Character Count -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label for="textarea-count" class="block text-sm font-medium text-neutral-200">
+                                    Issue Description
+                                </label>
+                                <span class="text-xs text-neutral-500">127 / 500</span>
+                            </div>
+                            <textarea
+                                id="textarea-count"
+                                rows="4"
+                                maxlength="500"
+                                class="w-full px-4 py-3 bg-neutral-900 border border-neutral-600 rounded text-neutral-100 resize-y focus:border-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all"
+                            >A unified project orchestration framework for Claude Code that extends development capabilities with structured task management.</textarea>
+                        </div>
+                    </div>
+                    <div class="code-block">
+                        <code>&lt;textarea
+  rows="6"
+  class="w-full px-4 py-3 bg-neutral-900 border border-neutral-600 rounded
+         text-neutral-100 placeholder-neutral-500 resize-y
+         focus:border-brand-500 focus:ring-2 focus:ring-brand-400
+         transition-all"
+&gt;&lt;/textarea&gt;</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Select Dropdown -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-6">Select Dropdown</h4>
+                <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                    <div class="space-y-6 mb-6">
+                        <!-- Default Select -->
+                        <div>
+                            <label for="select-default" class="block text-sm font-medium text-neutral-200 mb-2">
+                                Issue Status
+                            </label>
+                            <div class="relative">
+                                <select
+                                    id="select-default"
+                                    class="w-full px-4 py-2 bg-neutral-900 border border-neutral-600 rounded text-neutral-100 appearance-none focus:border-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all cursor-pointer"
+                                >
+                                    <option>Backlog</option>
+                                    <option>Todo</option>
+                                    <option selected>In Progress</option>
+                                    <option>In Review</option>
+                                    <option>Done</option>
+                                    <option>Canceled</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Disabled Select -->
+                        <div>
+                            <label for="select-disabled" class="block text-sm font-medium text-neutral-500 mb-2">
+                                Team
+                            </label>
+                            <div class="relative">
+                                <select
+                                    id="select-disabled"
+                                    disabled
+                                    class="w-full px-4 py-2 bg-neutral-900 border border-neutral-700 rounded text-neutral-500 appearance-none cursor-not-allowed opacity-50"
+                                >
+                                    <option>Spiral House</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="code-block">
+                        <code>&lt;div class="relative"&gt;
+  &lt;select
+    class="w-full px-4 py-2 bg-neutral-900 border border-neutral-600 rounded
+           text-neutral-100 appearance-none
+           focus:border-brand-500 focus:ring-2 focus:ring-brand-400
+           cursor-pointer transition-all"
+  &gt;
+    &lt;option&gt;Option 1&lt;/option&gt;
+    &lt;option&gt;Option 2&lt;/option&gt;
+  &lt;/select&gt;
+  &lt;div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3"&gt;
+    &lt;svg class="w-5 h-5"&gt;...chevron icon...&lt;/svg&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checkboxes -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-6">Checkbox</h4>
+                <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                    <div class="space-y-4 mb-6">
+                        <!-- Unchecked -->
+                        <div class="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="checkbox-1"
+                                class="w-5 h-5 bg-neutral-900 border-2 border-neutral-600 rounded text-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all cursor-pointer"
+                            />
+                            <label for="checkbox-1" class="ml-3 text-sm text-neutral-200 cursor-pointer">
+                                Send email notifications for new issues
+                            </label>
+                        </div>
+
+                        <!-- Checked -->
+                        <div class="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="checkbox-2"
+                                checked
+                                class="w-5 h-5 bg-neutral-900 border-2 border-neutral-600 rounded text-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all cursor-pointer"
+                            />
+                            <label for="checkbox-2" class="ml-3 text-sm text-neutral-200 cursor-pointer">
+                                Enable real-time collaboration features
+                            </label>
+                        </div>
+
+                        <!-- Disabled Unchecked -->
+                        <div class="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="checkbox-3"
+                                disabled
+                                class="w-5 h-5 bg-neutral-900 border-2 border-neutral-700 rounded text-brand-500 opacity-50 cursor-not-allowed"
+                            />
+                            <label for="checkbox-3" class="ml-3 text-sm text-neutral-500 cursor-not-allowed">
+                                Advanced analytics (Pro plan only)
+                            </label>
+                        </div>
+
+                        <!-- Disabled Checked -->
+                        <div class="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="checkbox-4"
+                                checked
+                                disabled
+                                class="w-5 h-5 bg-neutral-900 border-2 border-neutral-700 rounded text-brand-500 opacity-50 cursor-not-allowed"
+                            />
+                            <label for="checkbox-4" class="ml-3 text-sm text-neutral-500 cursor-not-allowed">
+                                Two-factor authentication (Always enabled)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="code-block">
+                        <code>&lt;div class="flex items-center"&gt;
+  &lt;input
+    type="checkbox"
+    id="checkbox-id"
+    class="w-5 h-5 bg-neutral-900 border-2 border-neutral-600 rounded
+           text-brand-500 focus:ring-2 focus:ring-brand-400
+           cursor-pointer transition-all"
+  /&gt;
+  &lt;label for="checkbox-id" class="ml-3 text-sm text-neutral-200 cursor-pointer"&gt;
+    Label text
+  &lt;/label&gt;
+&lt;/div&gt;</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Radio Buttons -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-6">Radio Buttons</h4>
+                <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                    <div class="space-y-4 mb-6">
+                        <p class="text-sm font-medium text-neutral-200 mb-3">Project Visibility</p>
+
+                        <!-- Radio 1 (Selected) -->
+                        <div class="flex items-center">
+                            <input
+                                type="radio"
+                                id="radio-1"
+                                name="visibility"
+                                checked
+                                class="w-5 h-5 bg-neutral-900 border-2 border-neutral-600 text-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all cursor-pointer"
+                            />
+                            <label for="radio-1" class="ml-3 cursor-pointer">
+                                <span class="text-sm font-medium text-neutral-200">Private</span>
+                                <p class="text-xs text-neutral-500">Only team members can access</p>
+                            </label>
+                        </div>
+
+                        <!-- Radio 2 -->
+                        <div class="flex items-center">
+                            <input
+                                type="radio"
+                                id="radio-2"
+                                name="visibility"
+                                class="w-5 h-5 bg-neutral-900 border-2 border-neutral-600 text-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all cursor-pointer"
+                            />
+                            <label for="radio-2" class="ml-3 cursor-pointer">
+                                <span class="text-sm font-medium text-neutral-200">Team</span>
+                                <p class="text-xs text-neutral-500">Visible to organization members</p>
+                            </label>
+                        </div>
+
+                        <!-- Radio 3 -->
+                        <div class="flex items-center">
+                            <input
+                                type="radio"
+                                id="radio-3"
+                                name="visibility"
+                                class="w-5 h-5 bg-neutral-900 border-2 border-neutral-600 text-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all cursor-pointer"
+                            />
+                            <label for="radio-3" class="ml-3 cursor-pointer">
+                                <span class="text-sm font-medium text-neutral-200">Public</span>
+                                <p class="text-xs text-neutral-500">Anyone with the link can view</p>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="code-block">
+                        <code>&lt;div class="flex items-center"&gt;
+  &lt;input
+    type="radio"
+    id="radio-id"
+    name="group-name"
+    class="w-5 h-5 bg-neutral-900 border-2 border-neutral-600
+           text-brand-500 focus:ring-2 focus:ring-brand-400
+           cursor-pointer transition-all"
+  /&gt;
+  &lt;label for="radio-id" class="ml-3 cursor-pointer"&gt;
+    &lt;span class="text-sm font-medium text-neutral-200"&gt;Option Label&lt;/span&gt;
+    &lt;p class="text-xs text-neutral-500"&gt;Description text&lt;/p&gt;
+  &lt;/label&gt;
+&lt;/div&gt;</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Input -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-6">Search Input</h4>
+                <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                    <div class="mb-6">
+                        <label for="search-input" class="sr-only">Search</label>
+                        <div class="relative">
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                            <input
+                                type="search"
+                                id="search-input"
+                                placeholder="Search projects, issues, or documentation..."
+                                class="w-full pl-11 pr-11 py-3 bg-neutral-900 border border-neutral-600 rounded-full text-neutral-100 placeholder-neutral-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all"
+                            />
+                            <button class="absolute inset-y-0 right-0 flex items-center pr-4 text-neutral-400 hover:text-neutral-300 transition-colors" aria-label="Clear search">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="code-block">
+                        <code>&lt;div class="relative"&gt;
+  &lt;div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4"&gt;
+    &lt;svg class="w-5 h-5 text-neutral-400"&gt;...search icon...&lt;/svg&gt;
+  &lt;/div&gt;
+  &lt;input
+    type="search"
+    placeholder="Search..."
+    class="w-full pl-11 pr-11 py-3 bg-neutral-900 border border-neutral-600
+           rounded-full text-neutral-100 placeholder-neutral-500
+           focus:border-brand-500 focus:ring-2 focus:ring-brand-400
+           transition-all"
+  /&gt;
+  &lt;button class="absolute inset-y-0 right-0 flex items-center pr-4" aria-label="Clear"&gt;
+    &lt;svg class="w-5 h-5"&gt;...x icon...&lt;/svg&gt;
+  &lt;/button&gt;
+&lt;/div&gt;</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Validation Example -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-6">Form Validation Example</h4>
+                <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                    <form class="space-y-6">
+                        <!-- Required Text Input -->
+                        <div>
+                            <label for="form-name" class="block text-sm font-medium text-neutral-200 mb-2">
+                                Full Name <span class="text-red-400">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                id="form-name"
+                                required
+                                aria-required="true"
+                                placeholder="John Doe"
+                                class="w-full px-4 py-2 bg-neutral-900 border border-neutral-600 rounded text-neutral-100 placeholder-neutral-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all"
+                            />
+                        </div>
+
+                        <!-- Email with Error -->
+                        <div>
+                            <label for="form-email" class="block text-sm font-medium text-neutral-200 mb-2">
+                                Email Address <span class="text-red-400">*</span>
+                            </label>
+                            <input
+                                type="email"
+                                id="form-email"
+                                value="invalid-email"
+                                required
+                                aria-required="true"
+                                aria-invalid="true"
+                                aria-describedby="form-email-error"
+                                class="w-full px-4 py-2 bg-neutral-900 border border-red-600 rounded text-neutral-100 focus:border-red-500 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all"
+                            />
+                            <p id="form-email-error" class="text-xs text-red-400 mt-1 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>Please enter a valid email address</span>
+                            </p>
+                        </div>
+
+                        <!-- Checkbox Agreement -->
+                        <div class="flex items-start">
+                            <input
+                                type="checkbox"
+                                id="form-agree"
+                                required
+                                aria-required="true"
+                                class="w-5 h-5 mt-0.5 bg-neutral-900 border-2 border-neutral-600 rounded text-brand-500 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all cursor-pointer"
+                            />
+                            <label for="form-agree" class="ml-3 text-sm text-neutral-200 cursor-pointer">
+                                I agree to the Terms of Service and Privacy Policy <span class="text-red-400">*</span>
+                            </label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="flex gap-3">
+                            <button
+                                type="submit"
+                                class="px-6 py-2 text-base font-medium rounded bg-brand-500 text-white hover:bg-brand-600 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 active:bg-brand-700 transition-all"
+                            >
+                                Submit Form
+                            </button>
+                            <button
+                                type="reset"
+                                class="px-6 py-2 text-base font-medium rounded border border-neutral-600 text-neutral-100 hover:bg-neutral-800 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-850 transition-all"
+                            >
+                                Reset
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
         </section>
 
         <section class="design-section">
@@ -1303,7 +1813,7 @@ module.exports = {
                 CycleTime Design System v1.0 - Built with Tailwind CSS, Inter, and JetBrains Mono
             </p>
             <p class="text-neutral-600 text-xs mt-2">
-                Last updated: 2025-10-28 (SPI-842: Buttons & Cards Complete)
+                Last updated: 2025-10-28 (SPI-843: Forms & Inputs Complete)
             </p>
         </div>
     </footer>
