@@ -95,7 +95,7 @@ The following documentation is critical for architecture work. Reference these d
 - `docs/patterns/architecture/dependency-injection.md` - DI patterns for the project
 - `docs/patterns/mcp/session-integration-pattern.md` - MCP session architecture
 - `docs/patterns/mcp/json-rpc-pattern.md` - JSON-RPC architectural patterns
-- `docs/patterns/mcp/sse-transport-pattern.md` - SSE transport architecture
+- `docs/patterns/mcp/streamable-http-transport-pattern.md` - Streamable HTTP transport architecture
 
 **Product Vision**:
 - `docs/reference/PRD.md` - Product requirements and strategic direction

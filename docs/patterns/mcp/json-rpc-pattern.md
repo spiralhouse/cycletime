@@ -4,7 +4,7 @@ type: pattern
 domain: [mcp, json-rpc, protocol, messaging]
 description: "Implementing JSON-RPC 2.0 message handling for MCP requests and responses"
 dependencies: [mcp-protocol-concepts.md]
-related: [sse-transport-pattern.md, session-integration-pattern.md]
+related: [streamable-http-transport-pattern.md, session-integration-pattern.md]
 keywords: [mcp, json-rpc, protocol, request, response, error, validation]
 audience: [developers]
 difficulty: intermediate
@@ -619,7 +619,7 @@ See [Protocol Validation Issues](../../../guides/troubleshooting/mcp/protocol-va
 
 ## Related Patterns
 
-- [SSE Transport Pattern](./sse-transport-pattern.md) - Delivering JSON-RPC responses via SSE
+- [Streamable HTTP Transport Pattern](./streamable-http-transport-pattern.md) - Delivering JSON-RPC responses via Streamable HTTP
 - [Session Integration Pattern](./session-integration-pattern.md) - Extracting session context from requests
 - [MCP Testing Pattern](./mcp-testing-pattern.md) - Testing JSON-RPC handlers
 
