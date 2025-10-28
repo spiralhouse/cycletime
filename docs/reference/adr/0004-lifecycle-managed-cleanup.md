@@ -9,7 +9,7 @@ supersedes: []
 superseded_by: [./0006-adopt-mcp-kotlin-sdk-v0.7.2.md]
 keywords: [adr, architecture-decision, mcp, websocket, lifecycle, coroutines, cleanup]
 dependencies: []
-related: [../project-fundamentals.md, ../../architecture/overview.md, ../../patterns/mcp/sse-transport-pattern.md]
+related: [../project-fundamentals.md, ../../architecture/overview.md, ../../patterns/mcp/streamable-http-transport-pattern.md]
 last_updated: 2025-10-17
 ---
 

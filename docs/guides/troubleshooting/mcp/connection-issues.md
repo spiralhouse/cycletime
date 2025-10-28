@@ -2,13 +2,13 @@
 title: "MCP Connection Troubleshooting"
 type: guide
 domain: [mcp, troubleshooting, connection]
-description: "Solutions for MCP connection failures, SSE issues, and timeouts"
+description: "Solutions for MCP connection failures, Streamable HTTP issues, and timeouts"
 dependencies: [overview.md]
 related: [protocol-validation-issues.md, protocol-discovery-issues.md, performance-issues.md]
-keywords: [mcp, connection, sse, timeout, troubleshooting, refused]
+keywords: [mcp, connection, streamable-http, timeout, troubleshooting, refused]
 estimated_time: 20 minutes
 difficulty: beginner
-last_updated: 2025-10-19
+last_updated: 2025-10-27
 ---
 
 # MCP Connection Troubleshooting
@@ -19,7 +19,7 @@ Solutions for establishing and maintaining connections to the MCP server.
 
 This guide covers three common connection issues:
 1. [Connection Refused](#issue-1-connection-refused) - Server not reachable
-2. [SSE Connection Failed](#issue-2-sse-connection-failed) - Server-Sent Events stream errors
+2. [Streamable HTTP Connection Failed](#issue-2-streamable-http-connection-failed) - HTTP transport connection errors
 3. [Connection Timeout](#issue-3-connection-timeout) - Connection hangs and times out
 
 ---
@@ -30,11 +30,6 @@ This guide covers three common connection issues:
 
 ```bash
 $ curl http://localhost:8080/mcp
-curl: (7) Failed to connect to localhost port 8080: Connection refused
-```
-
-```bash
-$ curl -N -H "Accept: text/event-stream" http://localhost:8080/mcp/events
 curl: (7) Failed to connect to localhost port 8080: Connection refused
 ```
 
@@ -150,144 +145,182 @@ MCP_ENABLED=true ./gradlew run
 
 ---
 
-## Issue 2: SSE Connection Failed
+## Issue 2: Streamable HTTP Connection Failed
+
+> [!NOTE]
+> **Migration from SSE**: As of SPI-763 (October 2025), CycleTime uses Streamable HTTP transport instead of SSE. Claude Code v2.0.25+ required.
 
 ### Symptoms
 
 ```bash
-$ curl -N http://localhost:8080/mcp/events
+$ curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
 curl: (52) Empty reply from server
 ```
 
 ```bash
-$ curl -N https://localhost:8080/mcp/events
-curl: (60) SSL certificate problem
+$ curl http://localhost:8080/
+<!DOCTYPE html><html>404 Not Found</html>
 ```
 
 **Observable Behavior**:
-- HTTP 400/404 errors when connecting to SSE endpoint
-- Connection closes immediately after attempt
+- HTTP 404/406 errors when connecting to MCP endpoint
 - "Empty reply from server" errors
-- SSL/TLS errors with `https://` protocol
+- Wrong Content-Type response (HTML instead of JSON)
+- Connection closes immediately after attempt
 
 ### Root Causes
 
-1. **Incorrect SSE endpoint URL**
-   - Missing `/mcp/events` path
-   - Wrong protocol (`https://` instead of `http://` for local)
+1. **Incorrect endpoint path**
+   - Using root path `/` instead of `/mcp`
+   - Missing `/mcp` in MCP server URL
    - Wrong host or port
 
-2. **Server not configured for SSE**
-   - HTTP endpoint exists but SSE stream not initialized
-   - Path mismatch between client and server
+2. **Missing or incorrect headers**
+   - Missing `Content-Type: application/json` header
+   - Wrong Accept header
+   - Invalid JSON-RPC request format
 
-3. **SSL/TLS configuration issues**
-   - Using `https://` without SSL certificate
-   - Certificate validation failures
+3. **Client configuration issues**
+   - Claude Code using wrong transport type
+   - Configuration specifies `"transport": "sse"` instead of `"type": "http"`
+   - Outdated Claude Code version (<2.0.25)
 
 ### Step-by-Step Solutions
 
-**Solution 1: Use correct SSE endpoint URL**
+**Solution 1: Verify correct endpoint path**
 
 ```bash
-# ✅ CORRECT - Local development (SSE stream)
-curl -N http://localhost:8080/mcp/events
+# ✅ CORRECT - MCP endpoint
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
 
-# ❌ WRONG - Missing /events path
-curl -N http://localhost:8080/mcp
+# ❌ WRONG - Root path (404 Not Found)
+curl http://localhost:8080/
 
-# ❌ WRONG - Wrong protocol for local
-curl -N https://localhost:8080/mcp/events
-
-# ❌ WRONG - Wrong path
-curl -N http://localhost:8080/ws
+# ❌ WRONG - Missing /mcp path
+curl -X POST http://localhost:8080 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
 ```
 
-**Solution 2: Verify server info before SSE connection**
+**Solution 2: Verify Claude Code configuration**
 
-```bash
-# Step 1: Check HTTP server info endpoint
-curl http://localhost:8080/mcp
+Check your MCP server configuration in Claude Code settings:
 
-# Step 2: Verify capabilities include resources and tools
-# Look for: "capabilities": {"resources": true, "tools": true}
-
-# Step 3: Connect to SSE stream
-curl -N http://localhost:8080/mcp/events
+```json
+{
+  "mcpServers": {
+    "cycletime": {
+      "type": "http",
+      "url": "http://localhost:8080/mcp"
+    }
+  }
+}
 ```
 
-**Solution 3: Test with custom path configuration**
+**Common configuration errors**:
 
-```bash
-# Start server with custom SSE path
-MCP_SSE_PATH=/custom/events ./gradlew run
+```json
+// ❌ WRONG - Old SSE transport (deprecated)
+{
+  "type": "sse",
+  "url": "http://localhost:8080/mcp/events"
+}
 
-# Connect using custom path
-curl -N http://localhost:8080/custom/events
+// ❌ WRONG - Missing /mcp in URL
+{
+  "type": "http",
+  "url": "http://localhost:8080"
+}
 
-# Verify with HTTP endpoint (POST path may differ)
-curl http://localhost:8080/mcp
+// ❌ WRONG - Wrong protocol for local
+{
+  "type": "http",
+  "url": "https://localhost:8080/mcp"
+}
 ```
 
-**Solution 4: Debug SSE connection**
+**Solution 3: Verify Claude Code version**
 
 ```bash
-# Use curl with verbose output to see connection details
-curl -i -N \
-  -H "Accept: text/event-stream" \
-  http://localhost:8080/mcp/events
+# Check Claude Code version (requires 2.0.25+)
+claude --version
+
+# Update if needed
+# Follow Claude Code update instructions for your platform
+```
+
+**Solution 4: Test with curl**
+
+```bash
+# Initialize connection
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2024-11-05",
+      "capabilities": {},
+      "clientInfo": {"name": "test-client", "version": "1.0.0"}
+    }
+  }'
 
 # Expected response:
-# HTTP/1.1 200 OK
-# Content-Type: text/event-stream
-# Cache-Control: no-cache
-# Connection: keep-alive
+# {
+#   "jsonrpc": "2.0",
+#   "id": 1,
+#   "result": {
+#     "protocolVersion": "2024-11-05",
+#     "capabilities": {...},
+#     "serverInfo": {"name": "CycleTime CE MCP Server", "version": "0.1.0"}
+#   }
+# }
 ```
 
 ### Prevention Tips
 
-- **Document SSE endpoint URLs**: Include in API documentation
+- **Document MCP endpoint URL**: Include in setup documentation
   ```
-  Local SSE: http://localhost:8080/mcp/events
-  Local POST: http://localhost:8080/mcp
-  Production SSE: https://api.example.com/mcp/events
-  Production POST: https://api.example.com/mcp
+  Local: http://localhost:8080/mcp
+  Production: https://api.example.com/mcp
   ```
 
-- **Consistent path configuration**: Use environment variables
-  ```bash
-  export MCP_SSE_PATH=/mcp/events
-  export MCP_POST_PATH=/mcp
-  ```
-
-- **Client configuration validation**: Validate URLs before connection
-  ```kotlin
-  // Validate SSE endpoint URL
-  import io.ktor.http.*
-
-  fun validateMcpSseUrl(sseUrl: String) {
-      val url = Url(sseUrl)
-      require(url.protocol == URLProtocol.HTTP || url.protocol == URLProtocol.HTTPS) {
-          "Invalid SSE protocol: ${url.protocol.name}"
+- **Validate Claude Code configuration**: Check settings before connecting
+  ```json
+  {
+    "mcpServers": {
+      "cycletime": {
+        "type": "http",
+        "url": "http://localhost:8080/mcp"
       }
-      require(url.encodedPath.contains("/events")) {
-          "Invalid MCP SSE path: ${url.encodedPath} (must contain /events)"
-      }
+    }
   }
   ```
 
-- **Health check integration**: Test SSE connectivity in CI
+- **Verify Claude Code version**: Ensure 2.0.25 or higher
   ```bash
-  #!/bin/bash
-  echo "Testing SSE connection..."
-  timeout 5 curl -N -f http://localhost:8080/mcp/events || exit 1
+  claude --version
+  ```
+
+- **Health check before connecting**: Test endpoint availability
+  ```bash
+  # Quick health check
+  curl -f http://localhost:8080/mcp \
+    -H "Content-Type: application/json" \
+    -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' \
+    || echo "MCP server not ready"
   ```
 
 ### Related Configuration
 
-- `MCPConfiguration.kt:21` - MCP SSE path setting
-- `MCPConfiguration.kt:25-28` - SSE connection settings
-- Environment: `MCP_SSE_PATH`, `MCP_POST_PATH`, `MCP_TIMEOUT`
+- Claude Code MCP server settings (JSON configuration file)
+- `MCPConfiguration.kt` - Server-side MCP configuration
+- Environment: `MCP_ENABLED`, `MCP_HOST`, `MCP_PORT`
 
 ---
 
@@ -296,7 +329,9 @@ curl -i -N \
 ### Symptoms
 
 ```bash
-$ curl -N --max-time 15 http://localhost:8080/mcp/events
+$ curl -X POST --max-time 15 http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
 curl: (28) Operation timed out after 15000 milliseconds
 ```
 
@@ -335,19 +370,23 @@ curl: (28) Operation timed out after 15000 milliseconds
 # "Application started in X.XX seconds."
 # "MCP server listening on 0.0.0.0:8080"
 
-# Then connect to SSE stream
-curl -N http://localhost:8080/mcp/events
+# Then test MCP endpoint
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
 ```
 
 **Solution 2: Increase client timeout**
 
 ```bash
 # Increase timeout with curl
-curl -N --max-time 30 http://localhost:8080/mcp/events
+curl -X POST --max-time 30 http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
 ```
 
 ```kotlin
-// Example with Ktor SSE client
+// Example with Ktor HTTP client
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 
@@ -368,21 +407,26 @@ MCP_TIMEOUT=30000 ./gradlew run
 # Look for: "MCP timeout: 30000ms"
 ```
 
-**Solution 4: Test HTTP endpoint first**
+**Solution 4: Test HTTP endpoint with health check**
 
 ```bash
-# Quick health check before SSE connection
-curl -f http://localhost:8080/mcp || echo "Server not ready"
+# Quick health check before MCP initialization
+curl -f http://localhost:8080/mcp \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' \
+  || echo "Server not ready"
 
 # Retry with backoff
 for i in {1..10}; do
-  curl -f http://localhost:8080/mcp && break
+  curl -f http://localhost:8080/mcp \
+    -X POST \
+    -H "Content-Type: application/json" \
+    -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' \
+    && break
   echo "Attempt $i failed, retrying..."
   sleep 2
 done
-
-# Then connect to SSE stream
-curl -N http://localhost:8080/mcp/events
 ```
 
 **Solution 5: Check server resource usage**
@@ -421,7 +465,7 @@ pkill -f gradle
   ```
 
   ```kotlin
-  // Ktor SSE client timeout configuration
+  // Ktor HTTP client timeout configuration
   val client = HttpClient(CIO) {
       engine {
           requestTimeout = 30_000
@@ -442,15 +486,16 @@ pkill -f gradle
   import kotlinx.coroutines.delay
   import kotlin.math.pow
 
-  suspend fun connectSseWithRetry(
+  suspend fun connectMcpWithRetry(
       client: HttpClient,
       url: String,
       maxRetries: Int = 5
   ): HttpResponse {
       repeat(maxRetries) { attempt ->
           try {
-              return client.get(url) {
-                  header("Accept", "text/event-stream")
+              return client.post(url) {
+                  header("Content-Type", "application/json")
+                  setBody("""{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}""")
               }
           } catch (e: Exception) {
               if (attempt == maxRetries - 1) throw e
@@ -464,8 +509,8 @@ pkill -f gradle
 
 ### Related Configuration
 
-- `MCPConfiguration.kt:26` - SSE connection timeout
-- `MCPConfiguration.kt:34` - Request timeout
+- `MCPConfiguration.kt` - MCP server configuration
+- `MCPConfiguration.kt` - Connection timeout settings
 - Environment: `MCP_TIMEOUT`, `MCP_REQUEST_TIMEOUT`
 
 ---

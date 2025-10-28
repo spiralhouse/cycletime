@@ -350,18 +350,25 @@ class ExposedIssueRepository(
     }
 
     /**
-     * Deletes all dependency relationships for an issue.
+     * Deletes dependency relationships owned by an issue.
      *
-     * Removes relationships where the issue appears as either the blocker
-     * or the blocked party. This ensures complete cleanup when an issue
-     * is deleted or when refreshing its dependencies.
+     * ONLY removes relationships where this issue is the `blockedId` (the owner).
+     * Does NOT delete relationships where this issue is the `blockerId` (referenced by others).
      *
-     * @param issueId The issue ID whose dependencies should be deleted
+     * This ensures that saving an issue only affects its own dependency lists
+     * and doesn't delete relationships owned by other issues.
+     *
+     * Example: If issueA depends on issueB:
+     * - Record: blockerId=issueB, blockedId=issueA, type=depends
+     * - Owned by issueA (appears in issueA.dependencies)
+     * - deleteIssueDependencies(issueA) deletes it ✓
+     * - deleteIssueDependencies(issueB) does NOT delete it ✓
+     *
+     * @param issueId The issue ID whose owned dependencies should be removed
      */
     private fun deleteIssueDependencies(issueId: IssueId) {
         IssueDependenciesTable.deleteWhere {
-            (IssueDependenciesTable.blockerId eq issueId.value) or
-            (IssueDependenciesTable.blockedId eq issueId.value)
+            IssueDependenciesTable.blockedId eq issueId.value
         }
     }
 

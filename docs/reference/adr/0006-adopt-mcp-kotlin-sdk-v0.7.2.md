@@ -9,7 +9,7 @@ supersedes: [./0004-lifecycle-managed-cleanup.md]
 superseded_by: []
 keywords: [adr, architecture-decision, mcp, kotlin-sdk, transport, sse, json-rpc, websocket]
 dependencies: []
-related: [../project-fundamentals.md, ../../architecture/overview.md, ../../architecture/mcp-sdk-migration-plan.md, ../../patterns/mcp/sse-transport-pattern.md]
+related: [../project-fundamentals.md, ../../architecture/overview.md, ../../architecture/mcp-sdk-migration-plan.md, ../../patterns/mcp/streamable-http-transport-pattern.md]
 last_updated: 2025-10-17
 ---
 
@@ -17,11 +17,13 @@ last_updated: 2025-10-17
 
 ## Status
 
-ACCEPTED
+ACCEPTED (2025-10-17)
+
+**UPDATE 2025-10-27**: SSE transport fully removed in SPI-763. System now uses custom Streamable HTTP handler (SPI-759) on top of MCP Kotlin SDK v0.7.2 protocol types. See [MCP Streamable HTTP Migration Decision](../../architecture/mcp-streamable-http-decision.md) for details.
 
 ## Date
 
-2025-10-17
+2025-10-17 (Last Updated: 2025-10-27)
 
 ## Context
 

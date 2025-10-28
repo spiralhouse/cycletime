@@ -17,22 +17,20 @@ group = "io.spiralhouse.cycletime"
 version = semver.version
 
 // Git SemVersioning configuration (SPI-570: trigger CI for test result validation)
+// SPI-747: Removed defaultPreRelease = "SNAPSHOT" to enable automated releases
 semver {
-    // Use SNAPSHOT for pre-release (aligns with current development pattern)
-    defaultPreRelease = "SNAPSHOT"
-    
     // Pattern for release commits (optional, rarely used)
     releasePattern = "\\Arelease(?:\\([^()]+\\))?:"
-    
+
     // BREAKING CHANGE detection (major version bump)
     majorPattern = "\\A\\w+(?:\\([^()]+\\))?!:|^BREAKING[ -]CHANGE:"
-    
+
     // Feature commits (minor version bump)
     minorPattern = "\\Afeat(?:\\([^()]+\\))?:"
-    
+
     // Fix commits (patch version bump)
     patchPattern = "\\Afix(?:\\([^()]+\\))?:"
-    
+
     // Group multiple commits into single increment
     groupVersionIncrements = true
 }

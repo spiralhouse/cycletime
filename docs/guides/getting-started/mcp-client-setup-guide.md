@@ -5,10 +5,10 @@ domain: [getting-started, mcp]
 description: "Connect Claude Code to CycleTime's MCP server for project orchestration"
 dependencies: [installation-guide.md]
 related: [configuration-guide.md, ../../reference/troubleshooting.md]
-keywords: [mcp, client, setup, claude-code, sse, connection]
+keywords: [mcp, client, setup, claude-code, streamable-http, connection]
 estimated_time: 15 minutes
 difficulty: intermediate
-last_updated: 2025-10-19
+last_updated: 2025-10-27
 ---
 
 # MCP Client Setup
@@ -25,7 +25,7 @@ Before configuring the MCP client connection, ensure you have:
 
 ## Connection Overview
 
-CycleTime uses the official MCP Kotlin SDK v0.7.2 maintained by Anthropic and JetBrains. Claude Code connects to the SDK-managed root endpoint for real-time project data access and tool execution.
+CycleTime uses the official MCP Kotlin SDK v0.7.2 with a custom Streamable HTTP transport handler. Claude Code connects to the `/mcp` endpoint for real-time project data access and tool execution.
 
 ```mermaid
 sequenceDiagram
@@ -34,12 +34,12 @@ sequenceDiagram
     participant Server as CycleTime Server
     participant DB as Project Database
 
-    CC->>SDK: Connect http://localhost:8080/ (SSE)
+    CC->>SDK: Connect http://localhost:8080/mcp (Streamable HTTP)
     SDK->>Server: Initialize Session
     Server->>DB: Load Project Context
     DB-->>Server: Project Data
     Server-->>SDK: Connection Ready
-    SDK-->>CC: SSE Stream Active
+    SDK-->>CC: Connection Active
 
     CC->>SDK: JSON-RPC Request
     SDK->>Server: Process Tool/Resource Request
@@ -51,18 +51,18 @@ sequenceDiagram
 
 ## MCP Server Configuration
 
-CycleTime's MCP server uses the official SDK with SSE transport and JSON-RPC 2.0 protocol.
+CycleTime's MCP server uses the official SDK with Streamable HTTP transport and JSON-RPC 2.0 protocol.
 
 ### Default Configuration
 
 | Setting | Default Value | Description |
 |---------|--------------|-------------|
-| **Protocol Version** | `2024-11-05` | MCP protocol version |
-| **Transport** | SSE | Communication protocol (Server-Sent Events) |
+| **Protocol Version** | `2025-06-18` | MCP protocol version |
+| **Transport** | Streamable HTTP | Communication protocol (HTTP with streaming) |
 | **Host** | `0.0.0.0` | Server bind address |
 | **Port** | `8080` | Server port |
-| **Endpoint** | `/` | SDK-managed root endpoint |
-| **Connection URL** | `http://localhost:8080/` | Full connection URL |
+| **Endpoint** | `/mcp` | Streamable HTTP endpoint |
+| **Connection URL** | `http://localhost:8080/mcp` | Full connection URL |
 
 ### Server Capabilities
 
@@ -102,7 +102,7 @@ MCP_PORT=3006 MCP_HOST=127.0.0.1 MCP_DETAILED_LOGGING=true ./gradlew run
 | `MCP_DETAILED_LOGGING` | `false` | Enable debug-level logging |
 | `MCP_METRICS_ENABLED` | `true` | Enable metrics collection |
 
-**Note**: SDK v0.7.2 manages the root endpoint (`/`) automatically. Legacy `/mcp/events` and `/mcp` endpoints have been removed (SPI-707).
+**Note**: SDK v0.7.2 uses Streamable HTTP transport at `/mcp` endpoint. Legacy SSE transport at root endpoint (`/`) has been removed (SPI-763).
 
 ## Claude Code Configuration
 
@@ -128,14 +128,14 @@ Add the following configuration to connect to CycleTime:
 {
   "mcpServers": {
     "cycletime": {
-      "type": "sse",
-      "url": "http://localhost:8080/"
+      "type": "streamable-http",
+      "url": "http://localhost:8080/mcp"
     }
   }
 }
 ```
 
-**Note**: The SDK manages the root endpoint (`/`). This differs from legacy configurations that used `/mcp/events`.
+**Note**: The Streamable HTTP transport uses the `/mcp` endpoint. This differs from the legacy SSE configuration that used the root endpoint (`/`).
 
 ### Multiple Server Configuration
 
@@ -145,8 +145,8 @@ If you have other MCP servers configured:
 {
   "mcpServers": {
     "cycletime": {
-      "type": "sse",
-      "url": "http://localhost:8080/"
+      "type": "streamable-http",
+      "url": "http://localhost:8080/mcp"
     },
     "other-server": {
       "command": "node",
@@ -164,8 +164,8 @@ If you changed the MCP server port, update the URL accordingly:
 {
   "mcpServers": {
     "cycletime": {
-      "type": "sse",
-      "url": "http://localhost:3006/"
+      "type": "streamable-http",
+      "url": "http://localhost:3006/mcp"
     }
   }
 }
@@ -285,20 +285,20 @@ MCP_PORT=3006 ./gradlew run
 # url: "http://localhost:3006/"
 ```
 
-### SSE Connection Failed
+### Connection Failed
 
 **Symptom**: Connection attempts fail or timeout
 
-**Cause**: Incorrect SSE endpoint path or URL format
+**Cause**: Incorrect endpoint path or URL format
 
 **Solution**:
 ```json
-// Verify configuration uses correct SSE URL format
+// Verify configuration uses correct Streamable HTTP URL format
 {
   "mcpServers": {
     "cycletime": {
-      "type": "sse",
-      "url": "http://localhost:8080/"  // Must be HTTP(S) with root path
+      "type": "streamable-http",
+      "url": "http://localhost:8080/mcp"  // Must be HTTP(S) with /mcp endpoint
     }
   }
 }
@@ -344,8 +344,8 @@ cat ~/.claude.json | jq .
 {
   "mcpServers": {
     "cycletime": {
-      "type": "sse",
-      "url": "http://localhost:8080/"
+      "type": "streamable-http",
+      "url": "http://localhost:8080/mcp"
     }
   }
 }
@@ -411,12 +411,12 @@ Configure multiple servers in Claude Code:
 {
   "mcpServers": {
     "cycletime-projectA": {
-      "type": "sse",
-      "url": "http://localhost:8080/"
+      "type": "streamable-http",
+      "url": "http://localhost:8080/mcp"
     },
     "cycletime-projectB": {
-      "type": "sse",
-      "url": "http://localhost:8081/"
+      "type": "streamable-http",
+      "url": "http://localhost:8081/mcp"
     }
   }
 }

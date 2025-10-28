@@ -128,9 +128,7 @@ class StreamableHttpHandler(
                         put("uri", resource.uri)
                         put("name", resource.name)
                         put("description", resource.description ?: "")
-                        if (resource.mimeType != null) {
-                            put("mimeType", resource.mimeType)
-                        }
+                        put("mimeType", resource.mimeType)
                     }
                 }
                 logger.debug("Collected ${resources.size} resources from provider: ${provider.name}")
