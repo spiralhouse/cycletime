@@ -177,6 +177,6 @@ The following documentation is critical for DevOps work. Reference these documen
 - `docs/patterns/testing/*.md` - Testing patterns that affect CI performance
 
 **MCP Infrastructure** (when working on MCP deployment):
-- `docs/patterns/mcp/sse-transport-pattern.md` - SSE transport infrastructure
+- `docs/patterns/mcp/streamable-http-transport-pattern.md` - Streamable HTTP transport infrastructure
 - `docs/patterns/mcp/json-rpc-pattern.md` - JSON-RPC deployment considerations
 - `docs/concepts/mcp/mcp-protocol-concepts.md` - MCP infrastructure requirements

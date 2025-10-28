@@ -9,7 +9,7 @@ supersedes: [./0004-lifecycle-managed-cleanup.md]
 superseded_by: []
 keywords: [adr, architecture-decision, mcp, kotlin-sdk, transport, sse, json-rpc, websocket]
 dependencies: []
-related: [../project-fundamentals.md, ../../architecture/overview.md, ../../architecture/mcp-sdk-migration-plan.md, ../../patterns/mcp/sse-transport-pattern.md]
+related: [../project-fundamentals.md, ../../architecture/overview.md, ../../architecture/mcp-sdk-migration-plan.md, ../../patterns/mcp/streamable-http-transport-pattern.md]
 last_updated: 2025-10-17
 ---
 

@@ -4,7 +4,7 @@ type: guide
 domain: [development, mcp, protocol]
 description: "Comprehensive guide to developing MCP servers, tools, and resources for CycleTime"
 dependencies: [development-setup.md, ../../concepts/mcp/mcp-protocol-concepts.md]
-related: [../../patterns/mcp/json-rpc-pattern.md, ../../patterns/mcp/sse-transport-pattern.md]
+related: [../../patterns/mcp/json-rpc-pattern.md, ../../patterns/mcp/streamable-http-transport-pattern.md]
 keywords: [mcp, development, server, tools, resources, sdk, protocol]
 estimated_time: 30 minutes
 difficulty: advanced

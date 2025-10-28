@@ -1235,7 +1235,7 @@ suspend fun autoRefreshSession(sessionKey: SessionKey) {
 - **[MCP Protocol Concepts](../../concepts/mcp/mcp-protocol-concepts.md)** - Understanding MCP's stateless design
 - **[Session Management Architecture](../../architecture/session-management.md)** - Complete session architecture
 - **[JSON-RPC Pattern](./json-rpc-pattern.md)** - Request handling and session ID extraction
-- **[SSE Transport Pattern](./sse-transport-pattern.md)** - SSE session management
+- **[Streamable HTTP Transport Pattern](./streamable-http-transport-pattern.md)** - Streamable HTTP session management
 
 ## References
 

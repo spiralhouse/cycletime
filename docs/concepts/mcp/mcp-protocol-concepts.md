@@ -4,7 +4,7 @@ type: concept
 domain: [mcp, protocol, architecture]
 description: "Core concepts of Model Context Protocol for Claude Code integration"
 dependencies: []
-related: [sse-transport-pattern.md, json-rpc-pattern.md, session-integration-pattern.md]
+related: [streamable-http-transport-pattern.md, json-rpc-pattern.md, session-integration-pattern.md]
 keywords: [mcp, protocol, resources, tools, prompts, sse, json-rpc, claude-code]
 audience: [developers, architects]
 last_updated: 2025-10-19
