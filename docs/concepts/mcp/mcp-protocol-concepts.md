@@ -97,9 +97,9 @@ MCP is built on three fundamental primitives that enable AI-tool integration:
 
 ## MCP Protocol Architecture
 
-### Dual Transport Model
+### Streamable HTTP Transport Model
 
-MCP uses two complementary communication channels:
+MCP uses Streamable HTTP transport with a single unified endpoint:
 
 ```mermaid
 graph TD
@@ -108,54 +108,44 @@ graph TD
     end
 
     subgraph "CycleTime MCP Server"
-        SSE[SSE Endpoint<br/>/mcp/events]
-        POST[POST Endpoint<br/>/mcp]
-        Handler[Request Handler]
+        Endpoint[Streamable HTTP Endpoint<br/>/mcp<br/>POST + GET]
+        Handler[StreamableHttpHandler]
         Resources[Resources]
         Tools[Tools]
     end
 
-    CC -->|"1. Connect (HTTP GET)"| SSE
-    SSE -->|"2. Event Stream"| CC
-    CC -->|"3. JSON-RPC Request (HTTP POST)"| POST
-    POST --> Handler
-    Handler --> Resources
-    Handler --> Tools
-    Handler -->|"4. JSON-RPC Response"| SSE
-    SSE -->|"5. Server-Sent Event"| CC
+    CC -->|"POST /mcp<br/>JSON-RPC Request"| Endpoint
+    Endpoint --> Handler
+    Handler -->|"Parse & Route"| Resources
+    Handler -->|"Parse & Route"| Tools
+    Handler -->|"JSON or SSE Response"| CC
+    CC -->|"GET /mcp<br/>(Optional: Server Messages)"| Endpoint
 ```
 
-#### SSE (Server-Sent Events)
+#### Streamable HTTP Transport
 
-**Purpose**: Server-to-client unidirectional streaming
-
-**How it works**:
-1. Client opens persistent HTTP connection to `/mcp/events`
-2. Server sends events as they occur
-3. Connection remains open for continuous updates
-4. Automatic reconnection on disconnect
-
-**Used for**:
-- Streaming MCP responses from server to client
-- Server-initiated notifications
-- Long-running operation updates
-- Keep-alive heartbeats
-
-#### POST Requests
-
-**Purpose**: Client-to-server JSON-RPC commands
+**Purpose**: Unified client-server communication
 
 **How it works**:
-1. Client sends HTTP POST to `/mcp`
-2. Body contains JSON-RPC 2.0 request
-3. Server processes synchronously
-4. Response sent via SSE stream
+1. Client sends HTTP POST to `/mcp` with JSON-RPC request
+2. Server processes request and chooses response type:
+   - **JSON**: Single response for fast request/response
+   - **SSE**: Streaming response for notifications (optional)
+3. Client can open GET `/mcp` for server-initiated messages
+
+**Key Features**:
+- Single endpoint for all communication
+- Server chooses optimal response format
+- Serverless-friendly (can be stateless)
+- Load balancer compatible
+- Required protocol version header: `MCP-Protocol-Version: 2025-06-18`
 
 **Used for**:
 - Client-initiated requests (tools/list, resources/read, etc.)
 - Tool execution commands
 - Resource queries
 - Protocol initialization
+- Server-initiated notifications (via GET endpoint)
 
 ### Protocol Flow
 
@@ -164,32 +154,35 @@ Complete lifecycle of an MCP interaction:
 ```mermaid
 sequenceDiagram
     participant Client as Claude Code
-    participant SSE as SSE Endpoint<br/>/mcp/events
-    participant POST as POST Endpoint<br/>/mcp
+    participant Endpoint as /mcp Endpoint
+    participant Handler as StreamableHttpHandler
     participant Server as MCP Server
 
-    Note over Client,Server: Phase 1: Connection Establishment
-    Client->>SSE: GET /mcp/events<br/>(Accept: text/event-stream)
-    SSE-->>Client: 200 OK<br/>Content-Type: text/event-stream
-    Note over Client,SSE: SSE stream established
+    Note over Client,Server: Phase 1: Initialization
+    Client->>Endpoint: POST /mcp<br/>MCP-Protocol-Version: 2025-06-18<br/>{"method":"initialize",...}
+    Endpoint->>Handler: Route request
+    Handler->>Server: Process initialize
+    Server-->>Handler: Initialize result
+    Handler-->>Client: 200 OK<br/>Content-Type: application/json<br/>{"jsonrpc":"2.0","id":1,"result":{...}}
 
-    Note over Client,Server: Phase 2: Initialization
-    Client->>POST: POST /mcp<br/>{"method":"initialize",...}
-    POST->>Server: Process initialize
-    Server-->>SSE: Initialize result
-    SSE-->>Client: event: message<br/>data: {...}
+    Note over Client,Server: Phase 2: Resource Discovery
+    Client->>Endpoint: POST /mcp<br/>{"method":"resources/list"}
+    Endpoint->>Handler: Route request
+    Handler->>Server: Query resources
+    Server-->>Handler: Resources list
+    Handler-->>Client: 200 OK<br/>{"resources":[...]}
 
-    Note over Client,Server: Phase 3: Resource Discovery
-    Client->>POST: POST /mcp<br/>{"method":"resources/list"}
-    POST->>Server: Query resources
-    Server-->>SSE: Resources list
-    SSE-->>Client: event: message<br/>data: {"resources":[...]}
+    Note over Client,Server: Phase 3: Tool Execution
+    Client->>Endpoint: POST /mcp<br/>{"method":"tools/call",...}
+    Endpoint->>Handler: Route request
+    Handler->>Server: Execute tool
+    Server-->>Handler: Tool result
+    Handler-->>Client: 200 OK<br/>{"result":{...}}
 
-    Note over Client,Server: Phase 4: Tool Execution
-    Client->>POST: POST /mcp<br/>{"method":"tools/call",...}
-    POST->>Server: Execute tool
-    Server-->>SSE: Tool result
-    SSE-->>Client: event: message<br/>data: {"result":{...}}
+    Note over Client,Server: Optional: Server Messages
+    Client->>Endpoint: GET /mcp<br/>Mcp-Session-Id: abc-123
+    Endpoint->>Handler: Open SSE stream
+    Handler-->>Client: 200 OK<br/>Content-Type: text/event-stream<br/>(Server-initiated messages)
 ```
 
 ### JSON-RPC 2.0 Message Format
@@ -246,8 +239,9 @@ CycleTime MCP server implementation requires:
 ```kotlin
 // build.gradle.kts
 dependencies {
-    // Ktor SSE support
-    implementation("io.ktor:ktor-server-sse:3.3.1")
+    // Ktor HTTP and routing support
+    implementation("io.ktor:ktor-server-core:3.3.1")
+    implementation("io.ktor:ktor-server-sse:3.3.1")  // Optional: for SSE responses
     implementation("io.ktor:ktor-server-content-negotiation:3.3.1")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.1")
 
@@ -265,7 +259,7 @@ dependencies {
 ### Client-Side (Claude Code)
 
 Claude Code includes built-in MCP client support:
-- Automatic SSE connection management
+- Streamable HTTP connection management
 - JSON-RPC request handling
 - Resource and tool discovery
 - Error recovery and reconnection
@@ -376,10 +370,11 @@ Understanding when to use MCP vs traditional REST:
 
 To implement MCP in CycleTime, explore these pattern documents:
 
-1. **[SSE Transport Pattern](../../patterns/mcp/sse-transport-pattern.md)**
-   - Implementing SSE endpoints in Ktor
-   - Connection lifecycle management
-   - Keep-alive and reconnection
+1. **[Streamable HTTP Transport Pattern](../../patterns/mcp/streamable-http-transport-pattern.md)**
+   - Implementing Streamable HTTP endpoints in Ktor
+   - Custom transport handler design
+   - Protocol version validation
+   - Request/response lifecycle
 
 2. **[JSON-RPC Pattern](../../patterns/mcp/json-rpc-pattern.md)**
    - Request/response handling
@@ -392,7 +387,7 @@ To implement MCP in CycleTime, explore these pattern documents:
    - Database integration
 
 4. **[MCP Testing Pattern](../../patterns/mcp/mcp-testing-pattern.md)**
-   - Testing SSE connections
+   - Testing Streamable HTTP connections
    - Mock MCP clients
    - Integration testing strategies
 
@@ -401,8 +396,7 @@ To implement MCP in CycleTime, explore these pattern documents:
 - [MCP Official Specification](https://modelcontextprotocol.io/) - Complete protocol specification
 - [MCP Kotlin SDK](https://github.com/modelcontextprotocol/kotlin-sdk) - Official Kotlin SDK
 - [JSON-RPC 2.0 Specification](https://www.jsonrpc.org/specification) - JSON-RPC protocol
-- [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) - SSE standard
-- [Ktor SSE Documentation](https://ktor.io/docs/server-sent-events.html) - Ktor SSE implementation
+- [Streamable HTTP Transport](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports/) - Transport specification
 
 ## Related Documentation
 

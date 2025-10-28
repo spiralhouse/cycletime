@@ -13,6 +13,13 @@ last_updated: 2025-10-19
 
 # SSE Transport Pattern for MCP
 
+> [!WARNING]
+> **DEPRECATED**: This pattern was removed in SPI-763 (October 2025)
+>
+> SSE transport was deprecated in MCP specification 2025-06-18 and removed from CycleTime in favor of Streamable HTTP transport. Claude Code v2.0.25 removed SSE support from native builds, making this transport obsolete. This document is preserved for historical reference only.
+>
+> **Current Implementation**: See [MCP Streamable HTTP Decision](../../../architecture/mcp-streamable-http-decision.md) for the current transport implementation.
+
 ## Overview
 
 Server-Sent Events (SSE) provide the unidirectional server-to-client streaming channel required by MCP. This pattern documents how to implement SSE transport in Ktor for reliable, efficient MCP communication.
