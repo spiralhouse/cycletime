@@ -165,7 +165,7 @@
                     <div>
                         <h3 class="text-lg font-semibold text-green-400 mb-2">Building Progress</h3>
                         <p class="text-neutral-300">
-                            Current status: <span class="font-semibold text-green-400">3 of 7 subtasks complete (11/26 points)</span>
+                            Current status: <span class="font-semibold text-green-400">4 of 7 subtasks complete (16/26 points) - READY FOR REVIEW</span>
                         </p>
                         <div class="mt-4 space-y-2 text-sm text-neutral-400">
                             <div class="flex items-center gap-2">
@@ -185,8 +185,8 @@
                                 <span>SPI-843: Components - Forms & Inputs (Completed)</span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="text-neutral-600">○</span>
-                                <span>SPI-844: Components - Badges, Navigation, Icons (Pending)</span>
+                                <span class="text-green-400">●</span>
+                                <span>SPI-844: Components - Badges, Navigation, Icons (Completed)</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="text-neutral-600">○</span>
@@ -1793,6 +1793,512 @@ module.exports = {
                 </div>
             </div>
 
+            <!-- 2.4 Badges, Navigation & Icons -->
+            <div class="subsection-header mt-16">
+                <h3 class="text-2xl font-semibold text-neutral-200 mb-4">2.4 Badges, Navigation & Icons</h3>
+                <p class="text-neutral-400">Status indicators, navigation patterns, and icon system guidelines</p>
+            </div>
+
+            <!-- Status Badges -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-6">Status Badges (6 Semantic States)</h4>
+                <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                    <div class="flex flex-wrap gap-3 mb-6">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700">
+                            Backlog
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-blue-900/50 text-blue-300 border border-blue-700">
+                            Todo
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-900/50 text-yellow-300 border border-yellow-700">
+                            In Progress
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-purple-900/50 text-purple-300 border border-purple-700">
+                            In Review
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-900/50 text-green-300 border border-green-700">
+                            Done
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-900/50 text-red-300 border border-red-700">
+                            Canceled
+                        </span>
+                    </div>
+
+                    <div class="mb-6">
+                        <p class="text-sm text-neutral-400 mb-3">With Dot Indicators</p>
+                        <div class="flex flex-wrap gap-3">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-900/50 text-yellow-300 border border-yellow-700">
+                                <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
+                                In Progress
+                            </span>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-medium bg-green-900/50 text-green-300 border border-green-700">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                                Done
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="code-block">
+                        <code>&lt;!-- Status Badge --&gt;
+&lt;span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium
+             bg-yellow-900/50 text-yellow-300 border border-yellow-700"&gt;
+  In Progress
+&lt;/span&gt;
+
+&lt;!-- With Dot Indicator --&gt;
+&lt;span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-medium
+             bg-green-900/50 text-green-300 border border-green-700"&gt;
+  &lt;span class="w-1.5 h-1.5 rounded-full bg-green-400"&gt;&lt;/span&gt;
+  Done
+&lt;/span&gt;</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Issue Type Badges -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-6">Issue Type Badges (3 Hierarchy Levels)</h4>
+                <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                    <div class="flex flex-wrap items-center gap-3 mb-6">
+                        <span class="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-medium bg-orange-900/50 text-orange-200 border border-orange-700">
+                            <span class="text-base">📊</span>
+                            Epic
+                        </span>
+                        <span class="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-medium bg-blue-900/50 text-blue-200 border border-blue-700">
+                            <span class="text-base">📖</span>
+                            Story
+                        </span>
+                        <span class="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-medium bg-teal-900/50 text-teal-200 border border-teal-700">
+                            <span class="text-base">✓</span>
+                            Subtask
+                        </span>
+                    </div>
+
+                    <div class="code-block">
+                        <code>&lt;!-- Epic Badge --&gt;
+&lt;span class="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-medium
+             bg-orange-900/50 text-orange-200 border border-orange-700"&gt;
+  &lt;span class="text-base"&gt;📊&lt;/span&gt;
+  Epic
+&lt;/span&gt;</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Count & Pill Badges -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-6">Count & Pill Badge Variants</h4>
+                <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                    <div class="space-y-6 mb-6">
+                        <!-- Count Badges -->
+                        <div>
+                            <p class="text-sm text-neutral-400 mb-3">Count Badges (Circular)</p>
+                            <div class="flex flex-wrap items-center gap-4">
+                                <div class="relative inline-block">
+                                    <button class="px-4 py-2 text-base font-medium rounded bg-neutral-700 text-neutral-100">
+                                        Notifications
+                                    </button>
+                                    <span class="absolute -top-2 -right-2 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-brand-500 rounded-full">
+                                        5
+                                    </span>
+                                </div>
+
+                                <div class="relative inline-block">
+                                    <svg class="w-6 h-6 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                    </svg>
+                                    <span class="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+                                        3
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pill Badges -->
+                        <div>
+                            <p class="text-sm text-neutral-400 mb-3">Pill Badges (Fully Rounded)</p>
+                            <div class="flex flex-wrap gap-3">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-brand-900/50 text-brand-200 border border-brand-700">
+                                    New Feature
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-900/50 text-purple-200 border border-purple-700">
+                                    Beta
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-900/50 text-green-200 border border-green-700">
+                                    Active
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Outlined Badges -->
+                        <div>
+                            <p class="text-sm text-neutral-400 mb-3">Outlined Badges (Border Only)</p>
+                            <div class="flex flex-wrap gap-3">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium border-2 border-brand-500 text-brand-300">
+                                    Primary
+                                </span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium border-2 border-neutral-600 text-neutral-300">
+                                    Secondary
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="code-block">
+                        <code>&lt;!-- Count Badge (Absolute Positioned) --&gt;
+&lt;div class="relative inline-block"&gt;
+  &lt;button&gt;Notifications&lt;/button&gt;
+  &lt;span class="absolute -top-2 -right-2 inline-flex items-center justify-center
+               w-6 h-6 text-xs font-bold text-white bg-brand-500 rounded-full"&gt;
+    5
+  &lt;/span&gt;
+&lt;/div&gt;
+
+&lt;!-- Pill Badge --&gt;
+&lt;span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+             bg-brand-900/50 text-brand-200 border border-brand-700"&gt;
+  New Feature
+&lt;/span&gt;</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Primary Navigation -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-6">Primary Navigation Bar</h4>
+                <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                    <!-- Desktop Navigation Example -->
+                    <nav class="bg-neutral-900 border border-neutral-700 rounded-lg mb-6" aria-label="Primary navigation">
+                        <div class="px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-8">
+                                    <div class="text-xl font-bold text-brand-400">CycleTime</div>
+                                    <div class="hidden md:flex items-center gap-6">
+                                        <a href="#" class="text-sm font-medium text-brand-400 border-b-2 border-brand-400 pb-1">Projects</a>
+                                        <a href="#" class="text-sm font-medium text-neutral-400 hover:text-neutral-200 transition-colors">Issues</a>
+                                        <a href="#" class="text-sm font-medium text-neutral-400 hover:text-neutral-200 transition-colors">Settings</a>
+                                        <a href="#" class="text-sm font-medium text-neutral-400 hover:text-neutral-200 transition-colors">System Status</a>
+                                    </div>
+                                </div>
+                                <button class="md:hidden p-2 text-neutral-400 hover:text-neutral-200" aria-label="Open menu">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <div class="code-block">
+                        <code>&lt;nav class="bg-neutral-900 border border-neutral-700" aria-label="Primary"&gt;
+  &lt;div class="px-6 py-4"&gt;
+    &lt;div class="flex items-center justify-between"&gt;
+      &lt;div class="flex items-center gap-8"&gt;
+        &lt;div class="text-xl font-bold text-brand-400"&gt;CycleTime&lt;/div&gt;
+        &lt;div class="hidden md:flex items-center gap-6"&gt;
+          &lt;!-- Active Link --&gt;
+          &lt;a href="#" class="text-sm font-medium text-brand-400 border-b-2 border-brand-400 pb-1"&gt;
+            Projects
+          &lt;/a&gt;
+          &lt;!-- Default Link --&gt;
+          &lt;a href="#" class="text-sm font-medium text-neutral-400 hover:text-neutral-200"&gt;
+            Issues
+          &lt;/a&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;!-- Mobile Menu Button --&gt;
+      &lt;button class="md:hidden p-2" aria-label="Open menu"&gt;
+        &lt;svg class="w-6 h-6"&gt;...hamburger icon...&lt;/svg&gt;
+      &lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/nav&gt;</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Breadcrumb Navigation -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-6">Breadcrumb Navigation</h4>
+                <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                    <!-- Breadcrumb Example -->
+                    <nav aria-label="Breadcrumb" class="mb-6">
+                        <ol class="flex items-center gap-2 text-sm">
+                            <li>
+                                <a href="#" class="text-neutral-400 hover:text-neutral-200 transition-colors">Projects</a>
+                            </li>
+                            <li class="text-neutral-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </li>
+                            <li>
+                                <a href="#" class="text-neutral-400 hover:text-neutral-200 transition-colors">CycleTime</a>
+                            </li>
+                            <li class="text-neutral-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </li>
+                            <li>
+                                <a href="#" class="text-neutral-400 hover:text-neutral-200 transition-colors">Issues</a>
+                            </li>
+                            <li class="text-neutral-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </li>
+                            <li class="text-neutral-200 font-medium" aria-current="page">
+                                SPI-835
+                            </li>
+                        </ol>
+                    </nav>
+
+                    <!-- Responsive Breadcrumb (Mobile Truncated) -->
+                    <p class="text-sm text-neutral-400 mb-3">Mobile Variant (Truncated)</p>
+                    <nav aria-label="Breadcrumb" class="mb-6">
+                        <ol class="flex items-center gap-2 text-sm">
+                            <li>
+                                <a href="#" class="text-neutral-400 hover:text-neutral-200">Projects</a>
+                            </li>
+                            <li class="text-neutral-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </li>
+                            <li class="text-neutral-500">...</li>
+                            <li class="text-neutral-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </li>
+                            <li class="text-neutral-200 font-medium" aria-current="page">
+                                SPI-835
+                            </li>
+                        </ol>
+                    </nav>
+
+                    <div class="code-block">
+                        <code>&lt;nav aria-label="Breadcrumb"&gt;
+  &lt;ol class="flex items-center gap-2 text-sm"&gt;
+    &lt;li&gt;
+      &lt;a href="#" class="text-neutral-400 hover:text-neutral-200"&gt;Projects&lt;/a&gt;
+    &lt;/li&gt;
+    &lt;li class="text-neutral-600"&gt;
+      &lt;svg class="w-4 h-4"&gt;...chevron right...&lt;/svg&gt;
+    &lt;/li&gt;
+    &lt;li&gt;
+      &lt;a href="#" class="text-neutral-400 hover:text-neutral-200"&gt;CycleTime&lt;/a&gt;
+    &lt;/li&gt;
+    &lt;li class="text-neutral-600"&gt;
+      &lt;svg class="w-4 h-4"&gt;...chevron right...&lt;/svg&gt;
+    &lt;/li&gt;
+    &lt;li class="text-neutral-200 font-medium" aria-current="page"&gt;
+      SPI-835
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/nav&gt;</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Icon System Documentation -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-6">Icon System (Heroicons v2)</h4>
+                <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                    <div class="mb-6">
+                        <div class="bg-blue-900/20 border border-blue-700 rounded-lg p-4 mb-6">
+                            <p class="text-sm text-blue-300">
+                                <strong>Icon Library:</strong> Heroicons v2 (Outline & Solid variants)<br>
+                                <strong>Implementation:</strong> Inline SVG (not icon fonts)<br>
+                                <strong>Color:</strong> currentColor (inherits from parent)<br>
+                                <strong>Sizes:</strong> 16px (w-4), 20px (w-5), 24px (w-6), 32px (w-8)
+                            </p>
+                        </div>
+
+                        <h5 class="text-lg font-semibold text-neutral-200 mb-4">Common Icons & Sizes</h5>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <!-- 16px Icons -->
+                            <div class="bg-neutral-900 border border-neutral-700 rounded p-3">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <svg class="w-4 h-4 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                    <span class="text-xs text-neutral-400">16px</span>
+                                </div>
+                                <p class="text-xs text-neutral-500">Chevron Down</p>
+                            </div>
+
+                            <!-- 20px Icons -->
+                            <div class="bg-neutral-900 border border-neutral-700 rounded p-3">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <svg class="w-5 h-5 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                    <span class="text-xs text-neutral-400">20px</span>
+                                </div>
+                                <p class="text-xs text-neutral-500">Chevron Right</p>
+                            </div>
+
+                            <!-- 24px Icons -->
+                            <div class="bg-neutral-900 border border-neutral-700 rounded p-3">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span class="text-xs text-neutral-400">24px</span>
+                                </div>
+                                <p class="text-xs text-neutral-500">Check</p>
+                            </div>
+
+                            <!-- 32px Icons -->
+                            <div class="bg-neutral-900 border border-neutral-700 rounded p-3">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                    <span class="text-xs text-neutral-400">32px</span>
+                                </div>
+                                <p class="text-xs text-neutral-500">X (Close)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h5 class="text-lg font-semibold text-neutral-200 mb-4">Complete Icon Set</h5>
+                        <div class="grid grid-cols-3 md:grid-cols-5 gap-4">
+                            <!-- Plus -->
+                            <div class="flex flex-col items-center gap-2 p-3 bg-neutral-900 border border-neutral-700 rounded">
+                                <svg class="w-6 h-6 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                <span class="text-xs text-neutral-500">Plus</span>
+                            </div>
+
+                            <!-- Search -->
+                            <div class="flex flex-col items-center gap-2 p-3 bg-neutral-900 border border-neutral-700 rounded">
+                                <svg class="w-6 h-6 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                <span class="text-xs text-neutral-500">Search</span>
+                            </div>
+
+                            <!-- Menu (Bars 3) -->
+                            <div class="flex flex-col items-center gap-2 p-3 bg-neutral-900 border border-neutral-700 rounded">
+                                <svg class="w-6 h-6 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                </svg>
+                                <span class="text-xs text-neutral-500">Menu</span>
+                            </div>
+
+                            <!-- Home -->
+                            <div class="flex flex-col items-center gap-2 p-3 bg-neutral-900 border border-neutral-700 rounded">
+                                <svg class="w-6 h-6 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                                </svg>
+                                <span class="text-xs text-neutral-500">Home</span>
+                            </div>
+
+                            <!-- Settings (Cog) -->
+                            <div class="flex flex-col items-center gap-2 p-3 bg-neutral-900 border border-neutral-700 rounded">
+                                <svg class="w-6 h-6 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <span class="text-xs text-neutral-500">Settings</span>
+                            </div>
+
+                            <!-- Chart Bar -->
+                            <div class="flex flex-col items-center gap-2 p-3 bg-neutral-900 border border-neutral-700 rounded">
+                                <svg class="w-6 h-6 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                                <span class="text-xs text-neutral-500">Chart</span>
+                            </div>
+
+                            <!-- Edit (Pencil) -->
+                            <div class="flex flex-col items-center gap-2 p-3 bg-neutral-900 border border-neutral-700 rounded">
+                                <svg class="w-6 h-6 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                </svg>
+                                <span class="text-xs text-neutral-500">Edit</span>
+                            </div>
+
+                            <!-- Trash -->
+                            <div class="flex flex-col items-center gap-2 p-3 bg-neutral-900 border border-neutral-700 rounded">
+                                <svg class="w-6 h-6 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                <span class="text-xs text-neutral-500">Delete</span>
+                            </div>
+
+                            <!-- Information Circle -->
+                            <div class="flex flex-col items-center gap-2 p-3 bg-neutral-900 border border-neutral-700 rounded">
+                                <svg class="w-6 h-6 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-xs text-neutral-500">Info</span>
+                            </div>
+
+                            <!-- Warning -->
+                            <div class="flex flex-col items-center gap-2 p-3 bg-neutral-900 border border-neutral-700 rounded">
+                                <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                </svg>
+                                <span class="text-xs text-neutral-500">Warning</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h5 class="text-lg font-semibold text-neutral-200 mb-4">Icon Usage Guidelines</h5>
+                        <div class="bg-neutral-900 border border-neutral-700 rounded-lg p-4 space-y-3 text-sm">
+                            <div>
+                                <p class="font-medium text-neutral-200 mb-1">Decorative Icons (aria-hidden="true")</p>
+                                <p class="text-neutral-400">Icons that accompany text and don't add meaning</p>
+                                <code class="text-xs text-brand-300">&lt;svg aria-hidden="true"&gt;...&lt;/svg&gt;</code>
+                            </div>
+                            <div>
+                                <p class="font-medium text-neutral-200 mb-1">Interactive Icons (aria-label)</p>
+                                <p class="text-neutral-400">Icon-only buttons need descriptive labels</p>
+                                <code class="text-xs text-brand-300">&lt;button aria-label="Delete item"&gt;&lt;svg&gt;...&lt;/svg&gt;&lt;/button&gt;</code>
+                            </div>
+                            <div>
+                                <p class="font-medium text-neutral-200 mb-1">Color Inheritance</p>
+                                <p class="text-neutral-400">Use currentColor to inherit parent text color</p>
+                                <code class="text-xs text-brand-300">&lt;svg class="text-red-400"&gt;...uses red...&lt;/svg&gt;</code>
+                            </div>
+                            <div>
+                                <p class="font-medium text-neutral-200 mb-1">Outline vs Solid</p>
+                                <p class="text-neutral-400">Outline for default state, Solid for active/selected</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="code-block">
+                        <code>&lt;!-- Heroicons v2 Implementation --&gt;
+
+&lt;!-- Decorative Icon (with text) --&gt;
+&lt;button class="flex items-center gap-2"&gt;
+  &lt;svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor"&gt;
+    &lt;path d="M12 4v16m8-8H4" /&gt;
+  &lt;/svg&gt;
+  &lt;span&gt;Add Project&lt;/span&gt;
+&lt;/button&gt;
+
+&lt;!-- Icon-only Button (needs aria-label) --&gt;
+&lt;button class="p-2" aria-label="Close dialog"&gt;
+  &lt;svg class="w-5 h-5"&gt;
+    &lt;path d="M6 18L18 6M6 6l12 12" /&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;
+
+&lt;!-- Icon with Color --&gt;
+&lt;svg class="w-6 h-6 text-green-400"&gt;...&lt;/svg&gt;</code>
+                    </div>
+                </div>
+            </div>
+
         </section>
 
         <section class="design-section">
@@ -1813,7 +2319,7 @@ module.exports = {
                 CycleTime Design System v1.0 - Built with Tailwind CSS, Inter, and JetBrains Mono
             </p>
             <p class="text-neutral-600 text-xs mt-2">
-                Last updated: 2025-10-28 (SPI-843: Forms & Inputs Complete)
+                Last updated: 2025-10-28 (SPI-844: Badges, Navigation & Icons Complete - ALL COMPONENTS READY FOR REVIEW)
             </p>
         </div>
     </footer>
