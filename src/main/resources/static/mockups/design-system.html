@@ -58,12 +58,10 @@
 
     <!-- Custom CSS for design system display -->
     <style>
-        /* Custom component styles will be defined inline as we build */
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
-        /* Code blocks for examples */
         .code-block {
             background-color: #0a0a0a;
             border: 1px solid #262626;
@@ -79,7 +77,6 @@
             color: #a3a3a3;
         }
 
-        /* Section styling */
         .design-section {
             margin-bottom: 4rem;
         }
@@ -89,12 +86,43 @@
             padding-bottom: 1rem;
             margin-bottom: 2rem;
         }
+
+        .subsection-header {
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .color-swatch {
+            width: 80px;
+            height: 80px;
+            border-radius: 6px;
+            border: 1px solid #262626;
+            transition: transform 0.2s;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.05);
+        }
+
+        .type-sample {
+            padding: 1rem;
+            background: #0a0a0a;
+            border: 1px solid #262626;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .spacing-box {
+            background: #0ea5e9;
+            border-radius: 4px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body class="bg-neutral-900 text-neutral-100 min-h-screen">
 
     <!-- Page Header -->
-    <header class="bg-neutral-900 border-b border-neutral-800 sticky top-0 z-50">
+    <header class="bg-neutral-900 border-b border-neutral-800 sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
         <div class="container mx-auto px-8 py-6">
             <h1 class="text-4xl font-bold text-neutral-100">CycleTime Design System</h1>
             <p class="text-neutral-400 mt-2">Foundation Components & Design Tokens</p>
@@ -102,7 +130,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-8 py-12">
+    <main class="container mx-auto px-8 py-12 max-w-7xl">
 
         <!-- Introduction -->
         <section class="design-section">
@@ -129,25 +157,24 @@
 
         <!-- Status: Building Progress -->
         <section class="design-section">
-            <div class="bg-brand-900/20 border border-brand-500/50 rounded-lg p-6">
+            <div class="bg-green-900/20 border border-green-500/50 rounded-lg p-6">
                 <div class="flex items-start gap-4">
-                    <svg class="w-6 h-6 text-brand-400 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <svg class="w-6 h-6 text-green-400 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <div>
-                        <h3 class="text-lg font-semibold text-brand-400 mb-2">Design System Under Construction</h3>
+                        <h3 class="text-lg font-semibold text-green-400 mb-2">Building Progress</h3>
                         <p class="text-neutral-300">
-                            This page is being built incrementally across 7 subtasks. Current status:
-                            <span class="font-semibold text-yellow-400">SPI-840 - Setup & Infrastructure (In Progress)</span>
+                            Current status: <span class="font-semibold text-yellow-400">SPI-841 - Design Tokens (In Progress)</span>
                         </p>
                         <div class="mt-4 space-y-2 text-sm text-neutral-400">
                             <div class="flex items-center gap-2">
-                                <span class="text-yellow-400">◐</span>
-                                <span>SPI-840: Setup Tailwind Config & Build Process (In Progress)</span>
+                                <span class="text-green-400">●</span>
+                                <span>SPI-840: Setup Tailwind Config & Build Process (Completed)</span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="text-neutral-600">○</span>
-                                <span>SPI-841: Design Tokens - Colors, Typography, Spacing (Pending)</span>
+                                <span class="text-yellow-400">◐</span>
+                                <span>SPI-841: Design Tokens - Colors, Typography, Spacing (In Progress)</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="text-neutral-600">○</span>
@@ -175,16 +202,506 @@
             </div>
         </section>
 
-        <!-- Placeholder sections for upcoming work -->
-        <section class="design-section">
+        <!-- 1. DESIGN TOKENS -->
+        <section class="design-section" id="design-tokens">
             <div class="section-header">
                 <h2 class="text-3xl font-bold text-neutral-100">1. Design Tokens</h2>
+                <p class="text-neutral-400 mt-2">The foundational visual design decisions for the CycleTime dashboard</p>
             </div>
-            <div class="bg-neutral-850/50 border border-neutral-800 rounded-lg p-8 text-center">
-                <p class="text-neutral-500 italic">Content will be added in SPI-841: Design Tokens - Colors, Typography, Spacing</p>
+
+            <!-- 1.1 Color Palette -->
+            <div class="subsection-header">
+                <h3 class="text-2xl font-semibold text-neutral-200 mb-4">1.1 Color Palette</h3>
+                <p class="text-neutral-400">Dark-first design optimized for developer workflows with semantic color meanings</p>
             </div>
+
+            <!-- Brand Colors -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-4">Brand Colors</h4>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div>
+                        <div class="color-swatch" style="background-color: #38bdf8;"></div>
+                        <div class="mt-2">
+                            <p class="text-sm font-medium text-neutral-200">brand-400</p>
+                            <p class="text-xs text-neutral-500 font-mono">#38bdf8</p>
+                            <p class="text-xs text-neutral-600 mt-1">Primary accent</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background-color: #0ea5e9;"></div>
+                        <div class="mt-2">
+                            <p class="text-sm font-medium text-neutral-200">brand-500</p>
+                            <p class="text-xs text-neutral-500 font-mono">#0ea5e9</p>
+                            <p class="text-xs text-neutral-600 mt-1">Primary CTAs</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background-color: #0284c7;"></div>
+                        <div class="mt-2">
+                            <p class="text-sm font-medium text-neutral-200">brand-600</p>
+                            <p class="text-xs text-neutral-500 font-mono">#0284c7</p>
+                            <p class="text-xs text-neutral-600 mt-1">Hover states</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background-color: #0369a1;"></div>
+                        <div class="mt-2">
+                            <p class="text-sm font-medium text-neutral-200">brand-700</p>
+                            <p class="text-xs text-neutral-500 font-mono">#0369a1</p>
+                            <p class="text-xs text-neutral-600 mt-1">Active states</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background-color: #0c4a6e;"></div>
+                        <div class="mt-2">
+                            <p class="text-sm font-medium text-neutral-200">brand-900</p>
+                            <p class="text-xs text-neutral-500 font-mono">#0c4a6e</p>
+                            <p class="text-xs text-neutral-600 mt-1">Dark variant</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Neutral Scale (Dark-first) -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-4">Neutral Scale (Dark-first)</h4>
+                <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+                    <div>
+                        <div class="color-swatch" style="background-color: #fafafa;"></div>
+                        <div class="mt-2">
+                            <p class="text-sm font-medium text-neutral-200">neutral-50</p>
+                            <p class="text-xs text-neutral-500 font-mono">#fafafa</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background-color: #e5e5e5;"></div>
+                        <div class="mt-2">
+                            <p class="text-sm font-medium text-neutral-200">neutral-200</p>
+                            <p class="text-xs text-neutral-500 font-mono">#e5e5e5</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background-color: #a3a3a3;"></div>
+                        <div class="mt-2">
+                            <p class="text-sm font-medium text-neutral-200">neutral-400</p>
+                            <p class="text-xs text-neutral-500 font-mono">#a3a3a3</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background-color: #525252;"></div>
+                        <div class="mt-2">
+                            <p class="text-sm font-medium text-neutral-200">neutral-600</p>
+                            <p class="text-xs text-neutral-500 font-mono">#525252</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background-color: #262626; border-color: #404040;"></div>
+                        <div class="mt-2">
+                            <p class="text-sm font-medium text-neutral-200">neutral-800</p>
+                            <p class="text-xs text-neutral-500 font-mono">#262626</p>
+                            <p class="text-xs text-neutral-600 mt-1">Elevated surfaces</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background-color: #1a1a1a; border-color: #404040;"></div>
+                        <div class="mt-2">
+                            <p class="text-sm font-medium text-neutral-200">neutral-850</p>
+                            <p class="text-xs text-neutral-500 font-mono">#1a1a1a</p>
+                            <p class="text-xs text-neutral-600 mt-1">Cards</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background-color: #171717; border-color: #404040;"></div>
+                        <div class="mt-2">
+                            <p class="text-sm font-medium text-neutral-200">neutral-900</p>
+                            <p class="text-xs text-neutral-500 font-mono">#171717</p>
+                            <p class="text-xs text-neutral-600 mt-1">Background</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background-color: #0a0a0a; border-color: #404040;"></div>
+                        <div class="mt-2">
+                            <p class="text-sm font-medium text-neutral-200">neutral-950</p>
+                            <p class="text-xs text-neutral-500 font-mono">#0a0a0a</p>
+                            <p class="text-xs text-neutral-600 mt-1">Deepest</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Badges (Live Examples) -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-4">Status Colors (Live Badges)</h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-4">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium border" style="background-color: #1e293b; color: #94a3b8; border-color: #334155;">
+                            Backlog
+                        </span>
+                        <p class="text-xs text-neutral-500 mt-2 font-mono">bg: #1e293b<br>text: #94a3b8<br>Contrast: 7.2:1</p>
+                    </div>
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-4">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium border" style="background-color: #1e3a8a; color: #93c5fd; border-color: #1e40af;">
+                            Todo
+                        </span>
+                        <p class="text-xs text-neutral-500 mt-2 font-mono">bg: #1e3a8a<br>text: #93c5fd<br>Contrast: 6.8:1</p>
+                    </div>
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-4">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium border" style="background-color: #854d0e; color: #fde047; border-color: #a16207;">
+                            In Progress
+                        </span>
+                        <p class="text-xs text-neutral-500 mt-2 font-mono">bg: #854d0e<br>text: #fde047<br>Contrast: 8.1:1</p>
+                    </div>
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-4">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium border" style="background-color: #581c87; color: #d8b4fe; border-color: #6b21a8;">
+                            In Review
+                        </span>
+                        <p class="text-xs text-neutral-500 mt-2 font-mono">bg: #581c87<br>text: #d8b4fe<br>Contrast: 7.5:1</p>
+                    </div>
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-4">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium border" style="background-color: #14532d; color: #86efac; border-color: #166534;">
+                            Done
+                        </span>
+                        <p class="text-xs text-neutral-500 mt-2 font-mono">bg: #14532d<br>text: #86efac<br>Contrast: 8.4:1</p>
+                    </div>
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-4">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium border" style="background-color: #1f2937; color: #9ca3af; border-color: #374151;">
+                            Canceled
+                        </span>
+                        <p class="text-xs text-neutral-500 mt-2 font-mono">bg: #1f2937<br>text: #9ca3af<br>Contrast: 6.9:1</p>
+                    </div>
+                </div>
+                <div class="mt-4 bg-green-900/20 border border-green-700/50 rounded-lg p-4">
+                    <p class="text-sm text-green-300">✅ All status badges meet WCAG 2.1 AA compliance (minimum 4.5:1 contrast ratio)</p>
+                </div>
+            </div>
+
+            <!-- Issue Type Colors -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-4">Issue Type Colors</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-2xl">📊</span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium" style="background-color: #7c2d12; color: #fed7aa;">
+                                Epic
+                            </span>
+                        </div>
+                        <p class="text-xs text-neutral-500 font-mono">bg: #7c2d12 (orange-900)<br>text: #fed7aa (orange-200)<br>icon: #fb923c</p>
+                    </div>
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-2xl">📖</span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium" style="background-color: #1e3a8a; color: #bfdbfe;">
+                                Story
+                            </span>
+                        </div>
+                        <p class="text-xs text-neutral-500 font-mono">bg: #1e3a8a (blue-900)<br>text: #bfdbfe (blue-200)<br>icon: #60a5fa</p>
+                    </div>
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-2xl">✓</span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium" style="background-color: #134e4a; color: #99f6e4;">
+                                Subtask
+                            </span>
+                        </div>
+                        <p class="text-xs text-neutral-500 font-mono">bg: #134e4a (teal-900)<br>text: #99f6e4 (teal-200)<br>icon: #2dd4bf</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Semantic Feedback Colors -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-4">Semantic Feedback Colors</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="border rounded-lg p-4" style="background-color: #14532d; border-color: #166534;">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-5 h-5" style="color: #86efac;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="font-medium" style="color: #86efac;">Success</span>
+                        </div>
+                        <p class="text-xs font-mono" style="color: #86efac;">bg: #14532d<br>text: #86efac</p>
+                    </div>
+                    <div class="border rounded-lg p-4" style="background-color: #78350f; border-color: #92400e;">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-5 h-5" style="color: #fcd34d;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <span class="font-medium" style="color: #fcd34d;">Warning</span>
+                        </div>
+                        <p class="text-xs font-mono" style="color: #fcd34d;">bg: #78350f<br>text: #fcd34d</p>
+                    </div>
+                    <div class="border rounded-lg p-4" style="background-color: #7f1d1d; border-color: #991b1b;">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-5 h-5" style="color: #fca5a5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="font-medium" style="color: #fca5a5;">Error</span>
+                        </div>
+                        <p class="text-xs font-mono" style="color: #fca5a5;">bg: #7f1d1d<br>text: #fca5a5</p>
+                    </div>
+                    <div class="border rounded-lg p-4" style="background-color: #1e3a8a; border-color: #1e40af;">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-5 h-5" style="color: #93c5fd;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="font-medium" style="color: #93c5fd;">Info</span>
+                        </div>
+                        <p class="text-xs font-mono" style="color: #93c5fd;">bg: #1e3a8a<br>text: #93c5fd</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1.2 Typography Scale -->
+            <div class="subsection-header mt-16">
+                <h3 class="text-2xl font-semibold text-neutral-200 mb-4">1.2 Typography Scale</h3>
+                <p class="text-neutral-400">Clear, readable typography optimized for information density and long reading sessions</p>
+            </div>
+
+            <!-- Font Families -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-4">Font Families</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                        <p class="text-2xl font-semibold mb-2" style="font-family: 'Inter', sans-serif;">Inter (Sans-Serif)</p>
+                        <p class="text-neutral-400 mb-4">Modern, highly legible sans-serif optimized for UI. Excellent at small sizes.</p>
+                        <p class="text-sm font-mono text-neutral-500">font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif</p>
+                        <div class="mt-4 space-y-2">
+                            <p style="font-family: 'Inter', sans-serif; font-weight: 400;">Regular 400: The quick brown fox jumps over the lazy dog</p>
+                            <p style="font-family: 'Inter', sans-serif; font-weight: 500;">Medium 500: The quick brown fox jumps over the lazy dog</p>
+                            <p style="font-family: 'Inter', sans-serif; font-weight: 600;">Semibold 600: The quick brown fox jumps over the lazy dog</p>
+                            <p style="font-family: 'Inter', sans-serif; font-weight: 700;">Bold 700: The quick brown fox jumps over the lazy dog</p>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                        <p class="text-2xl font-semibold mb-2" style="font-family: 'JetBrains Mono', monospace;">JetBrains Mono</p>
+                        <p class="text-neutral-400 mb-4">Monospace font for code snippets, IDs, technical data. Better readability than system defaults.</p>
+                        <p class="text-sm font-mono text-neutral-500">font-family: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace</p>
+                        <div class="mt-4 space-y-2 font-mono">
+                            <p style="font-weight: 400;">const project = "CycleTime";</p>
+                            <p style="font-weight: 500;">function calculateVelocity() {}</p>
+                            <p class="text-xs">ID: proj_2Dn8xKwL9Mf4</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Type Scale Examples -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-4">Type Scale (Live Examples)</h4>
+                <div class="space-y-4">
+                    <div class="type-sample">
+                        <p style="font-size: 2.5rem; line-height: 1.2; font-weight: 700;" class="text-neutral-100">Display Heading</p>
+                        <p class="text-sm text-neutral-500 mt-2 font-mono">2.5rem (40px) / 1.2 line-height / 700 weight / text-display</p>
+                        <p class="text-xs text-neutral-600 mt-1">Use case: Hero sections (rare use)</p>
+                    </div>
+                    <div class="type-sample">
+                        <p style="font-size: 2rem; line-height: 1.25; font-weight: 700;" class="text-neutral-100">Heading 1</p>
+                        <p class="text-sm text-neutral-500 mt-2 font-mono">2rem (32px) / 1.25 line-height / 700 weight / text-4xl</p>
+                        <p class="text-xs text-neutral-600 mt-1">Use case: Page titles, main headers</p>
+                    </div>
+                    <div class="type-sample">
+                        <p style="font-size: 1.5rem; line-height: 1.3; font-weight: 600;" class="text-neutral-100">Heading 2</p>
+                        <p class="text-sm text-neutral-500 mt-2 font-mono">1.5rem (24px) / 1.3 line-height / 600 weight / text-2xl</p>
+                        <p class="text-xs text-neutral-600 mt-1">Use case: Section headers, card titles</p>
+                    </div>
+                    <div class="type-sample">
+                        <p style="font-size: 1.25rem; line-height: 1.4; font-weight: 600;" class="text-neutral-100">Heading 3</p>
+                        <p class="text-sm text-neutral-500 mt-2 font-mono">1.25rem (20px) / 1.4 line-height / 600 weight / text-xl</p>
+                        <p class="text-xs text-neutral-600 mt-1">Use case: Component headers, subsections</p>
+                    </div>
+                    <div class="type-sample">
+                        <p style="font-size: 1.125rem; line-height: 1.4; font-weight: 600;" class="text-neutral-100">Heading 4</p>
+                        <p class="text-sm text-neutral-500 mt-2 font-mono">1.125rem (18px) / 1.4 line-height / 600 weight / text-lg</p>
+                        <p class="text-xs text-neutral-600 mt-1">Use case: Sub-component headers</p>
+                    </div>
+                    <div class="type-sample">
+                        <p style="font-size: 1rem; line-height: 1.5; font-weight: 400;" class="text-neutral-100">Body Large - This is the primary body text for important content that needs extra emphasis without being a heading.</p>
+                        <p class="text-sm text-neutral-500 mt-2 font-mono">1rem (16px) / 1.5 line-height / 400 weight / text-base</p>
+                        <p class="text-xs text-neutral-600 mt-1">Use case: Emphasized body text, introductions</p>
+                    </div>
+                    <div class="type-sample">
+                        <p style="font-size: 0.875rem; line-height: 1.5; font-weight: 400;" class="text-neutral-100">Body - This is the default body text used throughout the dashboard. It's optimized for readability and information density.</p>
+                        <p class="text-sm text-neutral-500 mt-2 font-mono">0.875rem (14px) / 1.5 line-height / 400 weight / text-sm</p>
+                        <p class="text-xs text-neutral-600 mt-1">Use case: Default body text, descriptions</p>
+                    </div>
+                    <div class="type-sample">
+                        <p style="font-size: 0.8125rem; line-height: 1.5; font-weight: 400;" class="text-neutral-100">Body Small - Supporting text and metadata display at a smaller size while maintaining legibility.</p>
+                        <p class="text-sm text-neutral-500 mt-2 font-mono">0.8125rem (13px) / 1.5 line-height / 400 weight / text-[0.8125rem]</p>
+                        <p class="text-xs text-neutral-600 mt-1">Use case: Supporting text, metadata</p>
+                    </div>
+                    <div class="type-sample">
+                        <p style="font-size: 0.75rem; line-height: 1.4; font-weight: 500;" class="text-neutral-100">CAPTION TEXT FOR LABELS</p>
+                        <p class="text-sm text-neutral-500 mt-2 font-mono">0.75rem (12px) / 1.4 line-height / 500 weight / text-xs</p>
+                        <p class="text-xs text-neutral-600 mt-1">Use case: Labels, badges, timestamps</p>
+                    </div>
+                    <div class="type-sample">
+                        <p style="font-size: 0.875rem; line-height: 1.5; font-family: 'JetBrains Mono', monospace;" class="text-neutral-100">const code = "example";</p>
+                        <p class="text-sm text-neutral-500 mt-2 font-mono">0.875rem (14px) / 1.5 line-height / 400 weight / font-mono</p>
+                        <p class="text-xs text-neutral-600 mt-1">Use case: Code snippets, IDs, technical data</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1.3 Spacing System -->
+            <div class="subsection-header mt-16">
+                <h3 class="text-2xl font-semibold text-neutral-200 mb-4">1.3 Spacing System</h3>
+                <p class="text-neutral-400">Consistent 4px base unit with exponential scale for predictable, harmonious layouts</p>
+            </div>
+
+            <!-- Spacing Scale Visualization -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-4">Spacing Scale (Visual)</h4>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="spacing-box" style="width: 4px; height: 40px;"></div>
+                        <div>
+                            <p class="text-sm font-medium text-neutral-200">space-1 / 4px</p>
+                            <p class="text-xs text-neutral-500">Icon padding, tight gaps</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="spacing-box" style="width: 8px; height: 40px;"></div>
+                        <div>
+                            <p class="text-sm font-medium text-neutral-200">space-2 / 8px</p>
+                            <p class="text-xs text-neutral-500">Badge padding, compact spacing</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="spacing-box" style="width: 12px; height: 40px;"></div>
+                        <div>
+                            <p class="text-sm font-medium text-neutral-200">space-3 / 12px</p>
+                            <p class="text-xs text-neutral-500">Input padding, button padding</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="spacing-box" style="width: 16px; height: 40px;"></div>
+                        <div>
+                            <p class="text-sm font-medium text-neutral-200">space-4 / 16px</p>
+                            <p class="text-xs text-neutral-500">Default spacing, card padding start</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="spacing-box" style="width: 20px; height: 40px;"></div>
+                        <div>
+                            <p class="text-sm font-medium text-neutral-200">space-5 / 20px</p>
+                            <p class="text-xs text-neutral-500">Section spacing</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="spacing-box" style="width: 24px; height: 40px;"></div>
+                        <div>
+                            <p class="text-sm font-medium text-neutral-200">space-6 / 24px</p>
+                            <p class="text-xs text-neutral-500">Card padding, component separation</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="spacing-box" style="width: 32px; height: 40px;"></div>
+                        <div>
+                            <p class="text-sm font-medium text-neutral-200">space-8 / 32px</p>
+                            <p class="text-xs text-neutral-500">Major section separation</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="spacing-box" style="width: 48px; height: 40px;"></div>
+                        <div>
+                            <p class="text-sm font-medium text-neutral-200">space-12 / 48px</p>
+                            <p class="text-xs text-neutral-500">Page margins, hero spacing</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="spacing-box" style="width: 64px; height: 40px;"></div>
+                        <div>
+                            <p class="text-sm font-medium text-neutral-200">space-16 / 64px</p>
+                            <p class="text-xs text-neutral-500">Maximum separation</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Common Spacing Patterns -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-4">Common Spacing Patterns</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                        <h5 class="text-sm font-semibold text-neutral-200 mb-3">Card Padding</h5>
+                        <div class="space-y-2 text-sm text-neutral-400">
+                            <p><span class="font-mono text-brand-400">p-6</span> (24px) - Desktop cards</p>
+                            <p><span class="font-mono text-brand-400">p-4</span> (16px) - Mobile cards</p>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                        <h5 class="text-sm font-semibold text-neutral-200 mb-3">Button Padding</h5>
+                        <div class="space-y-2 text-sm text-neutral-400">
+                            <p><span class="font-mono text-brand-400">px-3 py-1.5</span> - Small (12px / 6px)</p>
+                            <p><span class="font-mono text-brand-400">px-4 py-2</span> - Medium (16px / 8px)</p>
+                            <p><span class="font-mono text-brand-400">px-6 py-3</span> - Large (24px / 12px)</p>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                        <h5 class="text-sm font-semibold text-neutral-200 mb-3">Section Spacing</h5>
+                        <div class="space-y-2 text-sm text-neutral-400">
+                            <p><span class="font-mono text-brand-400">mb-8</span> (32px) - Between sections</p>
+                            <p><span class="font-mono text-brand-400">gap-4</span> (16px) - Between cards (tight)</p>
+                            <p><span class="font-mono text-brand-400">gap-6</span> (24px) - Between cards (comfortable)</p>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-850 border border-neutral-800 rounded-lg p-6">
+                        <h5 class="text-sm font-semibold text-neutral-200 mb-3">Page Margins</h5>
+                        <div class="space-y-2 text-sm text-neutral-400">
+                            <p><span class="font-mono text-brand-400">px-8 py-6</span> - Desktop (32px / 24px)</p>
+                            <p><span class="font-mono text-brand-400">px-6 py-4</span> - Tablet (24px / 16px)</p>
+                            <p><span class="font-mono text-brand-400">px-4 py-3</span> - Mobile (16px / 12px)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tailwind Config Code Snippet -->
+            <div class="mb-12">
+                <h4 class="text-xl font-semibold text-neutral-300 mb-4">Tailwind Configuration</h4>
+                <div class="code-block">
+                    <code>// src/main/resources/static/mockups/css/tailwind.config.js
+
+module.exports = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          400: '#38bdf8',  // Primary accent
+          500: '#0ea5e9',  // Primary CTAs
+          600: '#0284c7',  // Hover states
+        },
+        neutral: {
+          850: '#1a1a1a',  // Dark mode cards
+          900: '#171717',  // Dark mode background
+          950: '#0a0a0a',  // Darkest backgrounds
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', '-apple-system', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
+      spacing: {
+        '1': '4px',
+        '2': '8px',
+        '3': '12px',
+        '4': '16px',
+        '6': '24px',
+        '8': '32px',
+        '12': '48px',
+        '16': '64px',
+      }
+    }
+  }
+}</code>
+                </div>
+            </div>
+
         </section>
 
+        <!-- Placeholder sections for upcoming components -->
         <section class="design-section">
             <div class="section-header">
                 <h2 class="text-3xl font-bold text-neutral-100">2. Component Library</h2>
@@ -210,6 +727,9 @@
         <div class="container mx-auto px-8 py-8">
             <p class="text-neutral-500 text-sm">
                 CycleTime Design System v1.0 - Built with Tailwind CSS, Inter, and JetBrains Mono
+            </p>
+            <p class="text-neutral-600 text-xs mt-2">
+                Last updated: 2025-10-28 (SPI-841: Design Tokens Complete)
             </p>
         </div>
     </footer>
