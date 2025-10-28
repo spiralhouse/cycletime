@@ -1,1 +1,0 @@
-🧪 Running full test suite with SSE removed... ./gradlew clean check --rerun-tasks
