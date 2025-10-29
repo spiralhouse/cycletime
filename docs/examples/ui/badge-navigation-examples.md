@@ -25,11 +25,14 @@ This document provides complete working examples of badge and navigation compone
 
 ## Prerequisites
 
+- [UI Mockup Catalog](../../reference/ui/mockup-catalog.md) - See navigation in `layout-template.html`
 - [Tailwind Design System](../../patterns/ui/tailwind-design-system.md) - Color tokens and utility patterns
 - [Design Tokens Reference](../../reference/ui/design-tokens.md) - Brand and neutral color values
 - [Card Component Examples](card-component-examples.md) - Badges used in cards
 - Basic understanding of Ktor HTML DSL
 - Familiarity with navigation patterns
+
+**Live Reference**: See `src/main/resources/static/mockups/layout-template.html` for a complete working navigation example with responsive behavior and active page indicators.
 
 ## Example 1: Status Badges (6 States)
 
