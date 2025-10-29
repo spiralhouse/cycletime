@@ -1,0 +1,62 @@
+/**
+ * CycleTime Design System - Tailwind CSS Input
+ *
+ * This file is compiled by Tailwind CLI to generate optimized CSS.
+ * Run: npx tailwindcss -i src/main/resources/static/mockups/css/input.css -o src/main/resources/static/mockups/css/output.css --minify
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Custom component classes for design system
+ * These use @apply to combine Tailwind utilities into reusable classes
+ */
+@layer components {
+  /* Code block styling */
+  .code-block {
+    @apply bg-neutral-950 border border-neutral-800 rounded-lg p-4 overflow-x-auto;
+  }
+
+  .code-block code {
+    @apply font-mono text-sm leading-relaxed text-neutral-400;
+  }
+
+  /* Design section spacing */
+  .design-section {
+    @apply mb-16;
+  }
+
+  .section-header {
+    @apply border-b border-neutral-800 pb-4 mb-8;
+  }
+
+  .subsection-header {
+    @apply mt-12 mb-6;
+  }
+
+  /* Color swatch for design tokens */
+  .color-swatch {
+    @apply w-20 h-20 rounded-lg border border-neutral-800 transition-transform hover:scale-105;
+  }
+
+  /* Component card styling */
+  .component-card {
+    @apply bg-neutral-900 border border-neutral-700 rounded-lg p-6;
+  }
+}
+
+/**
+ * Custom base styles
+ */
+@layer base {
+  body {
+    @apply font-sans antialiased;
+  }
+
+  /* Ensure focus indicators are always visible */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-neutral-950;
+  }
+}
