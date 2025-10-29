@@ -1,0 +1,413 @@
+---
+title: "UI Mockup Catalog"
+type: reference
+domain: [ui, mockups]
+description: "Complete catalog of available UI mockups with viewing instructions and usage guidelines"
+dependencies: [design-tokens.md]
+related: [../../guides/ui/viewing-mockups-guide.md, ../../patterns/ui/tailwind-design-system.md]
+keywords: [mockups, html, design-system, layout, navigation, viewing, catalog]
+audience: [ui-engineers, designers, developers]
+last_updated: 2025-10-29
+---
+
+# UI Mockup Catalog
+
+## Overview
+
+This catalog provides a complete reference to all available UI mockups in the CycleTime project. Mockups are static HTML files that demonstrate UI patterns, components, and layouts using the project's design system.
+
+**Location**: `src/main/resources/static/mockups/`
+
+**Purpose**:
+- Interactive demonstration of design system components
+- Layout and navigation patterns for dashboard pages
+- Reference for implementing server-side rendered views (Ktor HTML DSL)
+- Visual QA and responsive design testing
+
+## Available Mockups
+
+### 1. Design System Foundation
+
+**File**: `src/main/resources/static/mockups/design-system.html`
+**Status**: ✅ Complete (SPI-835)
+**Size**: ~2,200 lines
+
+**Purpose**: Comprehensive interactive showcase of the CycleTime design system including all foundational tokens and component examples.
+
+**Contents**:
+- **Color Palette** (Section 1.1)
+  - Brand colors (brand-400 through brand-900)
+  - Neutral scale (neutral-50 through neutral-950)
+  - Status colors (success, warning, error, info)
+
+- **Typography Scale** (Section 1.2)
+  - Display, Heading, Body, Small, Caption sizes
+  - Font families: Inter (sans), JetBrains Mono (mono)
+  - Font weight examples (400, 500, 600, 700)
+
+- **Spacing System** (Section 1.3)
+  - 4px base unit scale (space-1 through space-16)
+  - Visual spacing examples
+
+- **Component Library** (Section 2)
+  - Buttons (primary, secondary, ghost, danger variants)
+  - Cards (project, issue, info layouts)
+  - Badges (status, count, pill styles)
+  - Forms (inputs, textarea, select, checkbox, radio)
+  - Icons and loading states
+  - Navigation patterns
+
+**Viewing**:
+- Direct: [Open design-system.html](../../../src/main/resources/static/mockups/design-system.html)
+- Via server: `http://localhost:8080/mockups/design-system.html`
+
+**Documentation References**:
+- [Design Tokens](design-tokens.md) - Complete token specifications
+- [Tailwind Design System Pattern](../../patterns/ui/tailwind-design-system.md) - Implementation patterns
+- [Component Examples](../../examples/ui/) - Code snippets for each component
+
+**Use Cases**:
+- Reference when implementing new UI components
+- Copy color codes and spacing values
+- Visual QA for design consistency
+- Onboarding new UI engineers
+
+---
+
+### 2. Layout Pattern & Navigation Structure
+
+**File**: `src/main/resources/static/mockups/layout-template.html`
+**Status**: ✅ Complete (SPI-836)
+**Size**: 290 lines
+
+**Purpose**: Foundational navigation layout template that establishes patterns for all dashboard pages with responsive behavior and active page indicators.
+
+**Contents**:
+- **Primary Navigation Bar**
+  - Brand logo (CycleTime)
+  - 4 navigation links: Projects (home), Issues, Settings, System Status
+  - Active page indicator (Projects highlighted)
+  - Responsive behavior (hamburger menu on mobile)
+
+- **Mobile Menu**
+  - Hidden by default
+  - JavaScript toggle for mockup (HTMX integration notes included)
+  - Vertical stacked layout with touch-friendly targets
+
+- **Content Area**
+  - Centered layout with max-width 1280px
+  - Responsive padding (16px mobile, 24px tablet, 32px desktop)
+  - Example content placeholder showing layout features
+
+- **Footer**
+  - Minimal footer with project name
+  - Sticks to bottom using flexbox
+
+**Responsive Breakpoints**:
+- **375px (mobile)**: Hamburger button visible, horizontal nav hidden
+- **768px (tablet)**: Transition to horizontal navigation
+- **1280px (desktop)**: Full layout with optimal spacing
+
+**Design System Integration**:
+- Colors: brand-400 (#3ba3c9), neutral-850 (#1a1a1a), neutral-900 (#171717)
+- Typography: Inter font family with multiple weights
+- Spacing: Consistent 4px base unit scale
+- Perfect consistency with design-system.html
+
+**Accessibility** (WCAG 2.1 AAA):
+- Semantic HTML: `<header>`, `<nav>`, `<main>`, `<footer>`
+- ARIA attributes: `aria-label`, `aria-current`, `aria-expanded`, `aria-controls`
+- Focus states: Visible brand color rings on all interactive elements
+- Color contrast: > 16:1 (neutral-100 on neutral-950)
+- Full keyboard navigation support
+
+**Viewing**:
+- Direct: [Open layout-template.html](../../../src/main/resources/static/mockups/layout-template.html)
+- Via server: `http://localhost:8080/mockups/layout-template.html`
+
+**Documentation References**:
+- [Navigation Examples](../../examples/ui/badge-navigation-examples.md) - Navigation component code
+- [HTMX Patterns](../../patterns/ui/htmx-patterns.md) - Progressive enhancement strategy
+- [Dashboard Implementation Guide](../../guides/dashboard/dashboard-implementation-guide.md) - Server-side rendering
+
+**Use Cases**:
+- Template for creating new dashboard pages
+- Testing responsive navigation behavior
+- Reference for implementing Ktor HTML DSL navigation component
+- Visual QA for layout consistency across pages
+
+**Future HTMX Integration**:
+Template includes comprehensive inline documentation (lines 269-287) for implementing server-side menu toggle via `/api/menu/toggle` endpoint.
+
+---
+
+## Viewing Mockups
+
+### Quick Start
+
+**Option 1: Direct Browser Open** (Fastest)
+1. Navigate to `src/main/resources/static/mockups/` in Finder/Explorer
+2. Double-click the `.html` file
+3. Opens in your default browser
+
+**Option 2: Via Ktor Server** (Recommended for testing)
+1. Start the CycleTime server:
+   ```bash
+   ./gradlew run
+   ```
+2. Navigate to `http://localhost:8080/mockups/[filename].html`
+3. Uses same server environment as production dashboard
+
+**Option 3: Live Server Extension** (Best for development)
+1. Install "Live Server" extension in VS Code
+2. Right-click `.html` file → "Open with Live Server"
+3. Auto-reloads on file changes
+
+For detailed instructions, see [Viewing Mockups Guide](../../guides/ui/viewing-mockups-guide.md).
+
+---
+
+## Testing Responsive Behavior
+
+### Required Viewports
+
+All mockups must be tested at these standard breakpoints:
+
+| Breakpoint | Width | Device Class | Key Behaviors |
+|------------|-------|--------------|---------------|
+| **Mobile** | 375px | iPhone SE | Hamburger menu, stacked layout, large touch targets |
+| **Tablet** | 768px | iPad Mini | Transition point - horizontal nav appears |
+| **Desktop** | 1280px | Standard laptop | Full layout with optimal spacing |
+| **Large** | 1920px | External monitor | Content stays centered, doesn't stretch |
+
+### Browser DevTools Testing
+
+**Chrome/Edge**:
+1. Press `F12` to open DevTools
+2. Click "Toggle device toolbar" (Ctrl+Shift+M)
+3. Select device preset or enter custom width
+4. Test at all required breakpoints
+
+**Firefox**:
+1. Press `F12` to open DevTools
+2. Click "Responsive Design Mode" (Ctrl+Shift+M)
+3. Enter custom dimensions
+4. Test touch simulation
+
+**Safari**:
+1. Enable Developer Menu: Preferences → Advanced → Show Develop menu
+2. Develop → Enter Responsive Design Mode
+3. Select device or custom size
+
+### Keyboard Navigation Testing
+
+**Required tests for all mockups**:
+1. Tab through all interactive elements
+2. Verify visible focus states (brand color ring)
+3. Test Enter/Space on buttons
+4. Test Escape to close modals/menus (when implemented)
+
+---
+
+## Design System Consistency Checklist
+
+When creating new mockups, verify:
+
+- ✅ **Colors**: Only use design token colors (no arbitrary hex codes)
+  - Brand: brand-400 through brand-900
+  - Neutral: neutral-50 through neutral-950
+  - Status: success, warning, error, info
+
+- ✅ **Typography**: Use defined type scale
+  - Font families: Inter (sans), JetBrains Mono (mono)
+  - Sizes: Display (40px) → Caption (12px)
+  - Weights: 400, 500, 600, 700
+
+- ✅ **Spacing**: Use 4px base unit scale
+  - Tailwind classes: space-1 (4px) through space-16 (64px)
+  - Gap utilities: gap-2, gap-4, gap-6, gap-8
+
+- ✅ **Breakpoints**: Use standard responsive prefixes
+  - Mobile: No prefix (default)
+  - Tablet: `md:` (768px+)
+  - Desktop: `lg:` (1024px+), `xl:` (1280px+)
+
+- ✅ **Accessibility**: WCAG 2.1 AA minimum (AAA preferred)
+  - Semantic HTML
+  - ARIA attributes where needed
+  - Visible focus states
+  - Color contrast ratios (4.5:1 minimum)
+
+---
+
+## Creating New Mockups
+
+### Mockup Template Structure
+
+```html
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[Mockup Title] - CycleTime</title>
+
+    <!-- Google Fonts - Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Configuration (CycleTime Design System) -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f7ff',
+                            200: '#b3ecff',
+                            300: '#80d9ff',
+                            400: '#3ba3c9',
+                            500: '#2878a1',
+                            600: '#1a5178',
+                            700: '#154158',
+                            800: '#0f2e3f',
+                            900: '#0a1f2a',
+                        },
+                        neutral: {
+                            50: '#fafafa',
+                            100: '#f5f5f5',
+                            200: '#e5e5e5',
+                            300: '#d4d4d4',
+                            400: '#a3a3a3',
+                            500: '#737373',
+                            600: '#525252',
+                            700: '#404040',
+                            800: '#262626',
+                            850: '#1a1a1a',
+                            900: '#171717',
+                            950: '#0a0a0a',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- HTMX for Progressive Enhancement -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+
+<body class="min-h-screen bg-neutral-950 text-neutral-100">
+    <!-- Your mockup content here -->
+</body>
+</html>
+```
+
+### File Naming Convention
+
+- Use kebab-case: `feature-name-template.html`
+- Include purpose suffix: `-template`, `-demo`, `-example`
+- Examples:
+  - `design-system.html` (comprehensive system showcase)
+  - `layout-template.html` (page layout pattern)
+  - `project-list-demo.html` (specific page demo)
+
+### Documentation Requirements
+
+When creating a new mockup:
+
+1. **Update this catalog** with new entry
+2. **Create or update guide** in `docs/guides/ui/` if needed
+3. **Add examples** to `docs/examples/ui/` for key components
+4. **Reference in patterns** if establishing new pattern
+5. **Link from implementation guide** if part of feature development
+
+---
+
+## Integration with Server-Side Rendering
+
+### Ktor HTML DSL Conversion
+
+Mockups serve as visual references for Ktor HTML DSL implementation:
+
+**HTML Mockup**:
+```html
+<nav class="bg-neutral-900 border border-neutral-700">
+    <a href="/projects" class="text-brand-400">Projects</a>
+</nav>
+```
+
+**Ktor HTML DSL**:
+```kotlin
+nav(classes = "bg-neutral-900 border border-neutral-700") {
+    a(href = "/projects", classes = "text-brand-400") {
+        +"Projects"
+    }
+}
+```
+
+See [Dashboard Implementation Guide](../../guides/dashboard/dashboard-implementation-guide.md) for complete conversion patterns.
+
+---
+
+## Future Mockups (Planned)
+
+As UI development continues, additional mockups will be added:
+
+### Phase 2: Page-Specific Mockups
+- `project-list-page.html` - Projects page with table/card views
+- `project-detail-page.html` - Single project with epic hierarchy
+- `issue-list-page.html` - Issues page with filters
+- `settings-page.html` - Settings interface
+- `system-status-page.html` - System health dashboard
+
+### Phase 3: Advanced Patterns
+- `modal-examples.html` - Modal dialog patterns
+- `table-patterns.html` - Data table with sorting/filtering
+- `form-layouts.html` - Complex form patterns
+- `empty-states.html` - Empty state variations
+
+---
+
+## Related Resources
+
+**Design System**:
+- [Design Tokens Reference](design-tokens.md) - Complete token specifications
+- [Tailwind Design System Pattern](../../patterns/ui/tailwind-design-system.md) - Implementation patterns
+
+**Component Documentation**:
+- [Button Component Examples](../../examples/ui/button-component-examples.md)
+- [Card Component Examples](../../examples/ui/card-component-examples.md)
+- [Badge & Navigation Examples](../../examples/ui/badge-navigation-examples.md)
+- [Form Component Examples](../../examples/ui/form-component-examples.md)
+- [Icon & Loading Examples](../../examples/ui/icon-loading-examples.md)
+
+**Implementation Guides**:
+- [Viewing Mockups Guide](../../guides/ui/viewing-mockups-guide.md) - Detailed viewing instructions
+- [Dashboard Implementation Guide](../../guides/dashboard/dashboard-implementation-guide.md) - Server-side rendering
+- [HTMX Patterns](../../patterns/ui/htmx-patterns.md) - Progressive enhancement
+
+**Architecture**:
+- [Dashboard Architecture Concept](../../concepts/dashboard/dashboard-architecture-concept.md) - Server-driven UI philosophy
+
+---
+
+## Quick Reference
+
+**Find a mockup**: `src/main/resources/static/mockups/[filename].html`
+**View via server**: `http://localhost:8080/mockups/[filename].html`
+**Test breakpoints**: 375px (mobile), 768px (tablet), 1280px (desktop)
+**Design system**: See `design-system.html` for all components
+**Layout template**: See `layout-template.html` for navigation pattern
+
+**Questions?** See [Viewing Mockups Guide](../../guides/ui/viewing-mockups-guide.md) or ask in team chat.

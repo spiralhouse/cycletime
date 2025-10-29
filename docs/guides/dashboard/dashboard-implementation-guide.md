@@ -25,18 +25,24 @@ This guide provides a step-by-step approach to implementing the CycleTime Dashbo
 
 Before starting implementation:
 
-1. **Read foundational documentation**:
+1. **Review UI mockups and design system**:
+   - [UI Mockup Catalog](../../reference/ui/mockup-catalog.md) - All available mockups
+   - [Viewing Mockups Guide](../ui/viewing-mockups-guide.md) - How to view and test mockups
+   - `src/main/resources/static/mockups/design-system.html` - Design system components
+   - `src/main/resources/static/mockups/layout-template.html` - Navigation layout pattern
+
+2. **Read foundational documentation**:
    - [Dashboard Architecture Concept](../../concepts/dashboard/dashboard-architecture-concept.md)
    - [Dashboard DTO Mapping Pattern](../../patterns/dashboard/dashboard-dto-mapping-pattern.md)
    - [Dashboard Technology Stack](../../reference/dashboard/dashboard-technology-stack-reference.md)
 
-2. **Verify development environment**:
+3. **Verify development environment**:
    ```bash
    ./gradlew clean build  # Should pass
    ./gradlew test         # All existing tests pass
    ```
 
-3. **Check dependencies** in `build.gradle.kts`:
+4. **Check dependencies** in `build.gradle.kts`:
    ```kotlin
    implementation("io.ktor:ktor-server-html-builder:3.3.1")
    implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.11.0")
