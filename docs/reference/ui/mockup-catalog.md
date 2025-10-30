@@ -332,6 +332,72 @@ open src/main/resources/static/mockups/issues-page.html
 
 ---
 
+### 5. Settings Page
+
+**File**: `src/main/resources/static/mockups/settings-page.html`
+**Status**: ✅ Complete (SPI-839)
+**Size**: 294 lines
+
+**Purpose**: Professional placeholder for future settings functionality with outlined future vision.
+
+**Contents**:
+- **Navigation Structure**: Extends layout-template.html with "Settings" active
+- **Placeholder Approach**: Outlined Categories (User Preferences, Project Defaults, MCP Configuration)
+- **Design Intent**: Professional, navigable, extensible (not apologetic)
+- **Future Categories**:
+  * User Preferences: Personal settings, notifications, display preferences
+  * Project Defaults: Workflows, estimation scales, templates
+  * MCP Configuration: Server settings, integrations
+
+**Viewing**:
+```bash
+open src/main/resources/static/mockups/settings-page.html
+# Or via server: http://localhost:8080/mockups/settings-page.html
+```
+
+**Documentation References**:
+- [Design Tokens](design-tokens.md) - Color palette and spacing
+- [Layout Template](../../static/mockups/layout-template.html) - Navigation foundation
+
+**Use Cases**:
+- Navigation completion testing
+- Placeholder pattern reference
+- Future settings page foundation
+
+---
+
+### 6. System Status Page
+
+**File**: `src/main/resources/static/mockups/system-status-page.html`
+**Status**: ✅ Complete (SPI-839)
+**Size**: 302 lines
+
+**Purpose**: Professional placeholder for system health monitoring with basic health indicators.
+
+**Contents**:
+- **Navigation Structure**: Extends layout-template.html with "System Status" active
+- **Health Indicators**: Server Status, Database Status, MCP Connection (all operational)
+- **Status Visualization**: Green dot indicators, status text, last checked timestamps
+- **Design Intent**: Suggests monitoring capability without full implementation
+- **Future Vision**: Metrics, logs, diagnostics, performance monitoring
+
+**Viewing**:
+```bash
+open src/main/resources/static/mockups/system-status-page.html
+# Or via server: http://localhost:8080/mockups/system-status-page.html
+```
+
+**Documentation References**:
+- [Icon & Loading Examples](../../examples/ui/icon-loading-examples.md) - Status indicator patterns
+- [Design Tokens](design-tokens.md) - Status color palette (green-500 for operational)
+
+**Use Cases**:
+- System monitoring placeholder
+- Health indicator pattern demonstration
+- Future status page foundation
+
+---
+
 ## Viewing Mockups
 
 ### Quick Start
@@ -551,6 +617,28 @@ See [Dashboard Implementation Guide](../../guides/dashboard/dashboard-implementa
 
 ---
 
+## Placeholder Pages (SPI-839)
+
+**Purpose**: Complete navigation structure with professional placeholders
+
+**Settings Page** (`settings-page.html`):
+- Outlines future categories: User Preferences, Project Defaults, MCP Configuration
+- Professional and extensible design
+- Not apologetic - hints at future capabilities
+
+**System Status Page** (`system-status-page.html`):
+- Basic health indicators: Server, Database, MCP (green dots)
+- Suggests monitoring capability
+- Foundation for future metrics/logs/diagnostics
+
+**Design Philosophy**:
+- Placeholder state clearly temporary but navigable
+- Future vision outlined without over-promising
+- Consistent with overall dashboard aesthetic
+- Expandable in future implementation phases
+
+---
+
 ## Future Mockups (Planned)
 
 As UI development continues, additional mockups will be added:
@@ -559,8 +647,8 @@ As UI development continues, additional mockups will be added:
 - `project-list-page.html` - Projects page with table/card views
 - `project-detail-page.html` - Single project with epic hierarchy
 - `issue-list-page.html` - Issues page with filters
-- `settings-page.html` - Settings interface
-- `system-status-page.html` - System health dashboard
+- ~~`settings-page.html` - Settings interface~~ ✅ Complete (SPI-839)
+- ~~`system-status-page.html` - System health dashboard~~ ✅ Complete (SPI-839)
 
 ### Phase 3: Advanced Patterns
 - `modal-examples.html` - Modal dialog patterns

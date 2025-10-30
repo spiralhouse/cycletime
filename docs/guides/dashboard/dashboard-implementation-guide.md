@@ -31,7 +31,20 @@ Before starting implementation:
    - [Design System Foundation](../../reference/ui/mockup-catalog.md#design-system-foundation) - Complete component showcase
    - [Layout Template](../../reference/ui/mockup-catalog.md#layout-pattern--navigation-structure) - Navigation structure
    - [Home Page](../../reference/ui/mockup-catalog.md#home-page) - Project list with completion indicators
-   - Future: Issue List Page - Issue hierarchy display (when available)
+   - [Issue List Page](../../reference/ui/mockup-catalog.md#issues-page) - Issue hierarchy display
+   - [Settings Page](../../reference/ui/mockup-catalog.md#settings-page) - Settings placeholder (SPI-839)
+   - [System Status Page](../../reference/ui/mockup-catalog.md#system-status-page) - System status placeholder (SPI-839)
+
+## Placeholder Mockups (SPI-839)
+
+As of Week 1, Settings and System Status pages have been implemented as professional placeholders:
+
+- **Settings Page**: Outlines future categories (User Preferences, Project Defaults, MCP Configuration)
+- **System Status Page**: Shows basic health indicators (Server, Database, MCP) with green dots
+
+These placeholders complete the navigation structure and are intentionally minimal. See [Placeholder Pages](../../reference/ui/mockup-catalog.md#placeholder-pages-spi-839) for detailed strategy and expansion approach for future phases.
+
+---
 
 2. **Read foundational documentation**:
    - [Dashboard Architecture Concept](../../concepts/dashboard/dashboard-architecture-concept.md)

@@ -660,6 +660,29 @@ fun FlowContent.networkError() {
 
 See this component: [Empty States](../../../../src/main/resources/static/mockups/design-system.html#icons)
 
+### Live Reference: System Status Health Indicators
+
+**Mockup**: `system-status-page.html` demonstrates status indicator pattern
+
+**Status Dot Pattern**:
+```html
+<div class="flex items-center gap-3">
+    <span class="w-3 h-3 rounded-full bg-green-500"></span>
+    <span class="text-base font-medium text-neutral-200">Service Name</span>
+</div>
+```
+
+**Status Colors**:
+- `bg-green-500`: Operational/Connected/Active
+- `bg-yellow-500`: Warning/Degraded (future)
+- `bg-red-500`: Error/Disconnected (future)
+- `bg-neutral-600`: Unknown/Initializing (future)
+
+**Use Cases**:
+- Health monitoring dashboards
+- Service status pages
+- Real-time connection indicators
+
 ## Best Practices
 
 ### 1. Consistent Icon Sizing
