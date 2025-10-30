@@ -32,6 +32,43 @@ This document provides complete working examples of card components built with K
 - Basic understanding of Ktor HTML DSL
 - Familiarity with Tailwind CSS utility classes
 
+## Live References
+
+These mockups demonstrate card components in complete, working page contexts:
+
+### Home Page Project List
+
+**Mockup**: [home-page.html](../../../src/main/resources/static/mockups/home-page.html) | **Catalog**: [Mockup Catalog](../../reference/ui/mockup-catalog.md#home-page)
+
+Demonstrates project cards with completion tracking in a responsive grid layout:
+
+**Key patterns implemented**:
+- **Responsive Grid**: Three-column layout (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`) with 24px gap
+- **Progress Visualization**: Progress bars with conditional colors:
+  - Brand-500 (#3ba3c9) for in-progress projects (1-99%)
+  - Success-500 (#22c55e) for 100% complete projects
+  - Empty state for 0% complete projects
+- **Text Handling**: Smart truncation with `line-clamp-2` for descriptions, `truncate` for long titles
+- **Edge Cases**: Handles missing descriptions with placeholder text, extreme completion percentages (0%/100%)
+- **Accessibility**: ARIA progressbar with valuenow/valuemin/valuemax attributes, semantic article elements
+- **Interactive States**: Hover effects (border color, shadow, subtle lift) with smooth transitions
+
+**Sample projects demonstrating**:
+- 75% complete: Standard progress visualization with brand color
+- 100% complete: Green success color treatment
+- 25% complete: Early-stage project
+- 0% complete: "Not started" state with empty progress bar
+- 50% complete with no description: Missing data edge case with placeholder text
+- 90% complete with long name: Text truncation edge case
+
+**Related sections in this document**:
+- [Project Cards](#example-1-project-card) - Detailed component breakdown
+- [Progress Indicators](#explanation) - Progress bar implementation patterns
+- [Empty States](#example-5-empty-state-card) - "No projects yet" pattern (in mockup HTML comments)
+- [Text Truncation](#explanation-1) - Line clamp and truncate utilities
+
+---
+
 ## Example 1: Project Card
 
 Project cards display project metadata, statistics, and progress in a grid layout. They're interactive and navigate to project details on click.
