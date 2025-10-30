@@ -141,6 +141,87 @@ Template includes comprehensive inline documentation (lines 269-287) for impleme
 
 ---
 
+### 3. Home Page
+
+**File**: `src/main/resources/static/mockups/home-page.html`
+**Status**: ✅ Complete (SPI-837)
+**Size**: 529 lines
+
+**Purpose**: Home page displaying project list with completion indicators, statistics, and responsive grid layout demonstrating project card patterns.
+
+**Contents**:
+- **Project Card Grid**
+  - Responsive columns: 1 (mobile), 2 (tablet), 3 (desktop)
+  - 24px gap between cards (`gap-6`)
+  - Sample data: 6 projects with varying completion states
+
+- **Project Cards**
+  - Project name with truncation for long titles (`truncate`)
+  - Description with 2-line clamp (`line-clamp-2`)
+  - Placeholder text for missing descriptions
+  - Statistics row: issue count, points total
+  - Progress bar with conditional colors
+  - Hover effects: border color, shadow, subtle lift
+
+- **Progress Visualization**
+  - Brand-500 (#3ba3c9) for in-progress projects (1-99%)
+  - Success-500 (#22c55e) for 100% complete projects
+  - Empty state for 0% complete projects
+  - ARIA progressbar attributes for accessibility
+
+- **Edge Cases Demonstrated**
+  - 0% complete: "Not started" state
+  - 25%, 50%, 75%, 90%: Various progress levels
+  - 100% complete: Green success color
+  - Long project names: Text truncation
+  - Missing descriptions: Placeholder text
+  - Long descriptions: Line clamping
+
+- **Navigation Structure**
+  - Extends layout-template.html navigation
+  - "Projects" link in active state
+  - Responsive hamburger menu (mobile)
+
+- **Empty State Pattern**
+  - Included in HTML comments
+  - "No projects yet" message
+  - "Create Project" call-to-action button
+
+**Responsive Breakpoints**:
+| Breakpoint | Width | Grid Layout | Card Behavior |
+|------------|-------|-------------|---------------|
+| Mobile     | 375px | Single column (`grid-cols-1`) | Full-width cards, stacked stats |
+| Tablet     | 768px | Two columns (`md:grid-cols-2`) | Side-by-side cards |
+| Desktop    | 1280px+ | Three columns (`lg:grid-cols-3`) | Optimal grid density |
+
+**Viewing**:
+```bash
+# Option 1: Direct file open
+open src/main/resources/static/mockups/home-page.html
+
+# Option 2: Via development server
+./gradlew run
+# Navigate to http://localhost:8080/mockups/home-page.html
+```
+
+**Documentation References**:
+- [Design Tokens](design-tokens.md) - Color palette (brand-500, success-500, neutral scale)
+- [Card Component Examples](../../examples/ui/card-component-examples.md) - Project card pattern
+- [Tailwind Design System](../../patterns/ui/tailwind-design-system.md) - Grid and component patterns
+- [Dashboard Implementation Guide](../../guides/dashboard/dashboard-implementation-guide.md) - Server-side conversion
+
+**Use Cases**:
+- Visual reference for implementing home page with Ktor HTML DSL
+- Project card layout pattern demonstration
+- Progress bar visualization with conditional colors
+- Responsive grid layout testing (1/2/3 columns)
+- Edge case handling reference (0%/100% complete, missing data, long text)
+- Empty state design pattern
+- Completion percentage tracking UI
+- Accessibility patterns (ARIA progressbar, semantic HTML)
+
+---
+
 ## Viewing Mockups
 
 ### Quick Start

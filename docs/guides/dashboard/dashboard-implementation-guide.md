@@ -28,8 +28,10 @@ Before starting implementation:
 1. **Review UI mockups and design system**:
    - [UI Mockup Catalog](../../reference/ui/mockup-catalog.md) - All available mockups
    - [Viewing Mockups Guide](../ui/viewing-mockups-guide.md) - How to view and test mockups
-   - `src/main/resources/static/mockups/design-system.html` - Design system components
-   - `src/main/resources/static/mockups/layout-template.html` - Navigation layout pattern
+   - [Design System Foundation](../../reference/ui/mockup-catalog.md#design-system-foundation) - Complete component showcase
+   - [Layout Template](../../reference/ui/mockup-catalog.md#layout-pattern--navigation-structure) - Navigation structure
+   - [Home Page](../../reference/ui/mockup-catalog.md#home-page) - Project list with completion indicators
+   - Future: Issue List Page - Issue hierarchy display (when available)
 
 2. **Read foundational documentation**:
    - [Dashboard Architecture Concept](../../concepts/dashboard/dashboard-architecture-concept.md)
@@ -47,6 +49,123 @@ Before starting implementation:
    implementation("io.ktor:ktor-server-html-builder:3.3.1")
    implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.11.0")
    ```
+
+### Converting HTML Mockups to Ktor HTML DSL
+
+All mockups in this project are designed for conversion to Ktor's HTML DSL with server-driven rendering. Here's the pattern:
+
+**HTML Mockup** (Static data) → **Ktor HTML DSL** (Dynamic server-rendered)
+
+**Example: Project Card from home-page.html**
+
+Static HTML mockup:
+```html
+<article class="bg-neutral-900 border border-neutral-800 rounded-lg p-6
+                hover:border-brand-500 hover:shadow-lg hover:-translate-y-0.5
+                transition-all cursor-pointer">
+  <h3 class="text-xl font-semibold text-neutral-100 mb-2">CycleTime CE</h3>
+  <p class="text-neutral-400 text-sm mb-4 line-clamp-2">
+    Project orchestration framework extending Claude Code...
+  </p>
+
+  <div class="flex gap-4 text-sm text-neutral-400 mb-3">
+    <span>📋 24 issues</span>
+    <span>⚖️ 89 points</span>
+  </div>
+
+  <div class="w-full bg-neutral-800 rounded-full h-2 overflow-hidden">
+    <div class="bg-brand-500 h-2 transition-all" style="width: 75%;"></div>
+  </div>
+  <p class="text-xs text-neutral-500 mt-1">75% complete</p>
+</article>
+```
+
+Server-rendered Ktor HTML DSL:
+```kotlin
+// Data class for project view
+data class ProjectCardDTO(
+    val id: String,
+    val name: String,
+    val description: String?,
+    val issueCount: Int,
+    val totalPoints: Int,
+    val completionPercent: Int
+)
+
+// Ktor route
+get("/") {
+    val projects = projectService.getAllProjects()
+    call.respondHtml {
+        projectListPage(projects)
+    }
+}
+
+// HTML DSL rendering function
+fun HTML.projectListPage(projects: List<ProjectCardDTO>) {
+    body(classes = "bg-neutral-950 text-neutral-100") {
+        // ... navigation from layout template ...
+
+        main(classes = "max-w-7xl mx-auto p-4 md:p-6 lg:p-8") {
+            div(classes = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6") {
+                projects.forEach { project ->
+                    article(classes = "bg-neutral-900 border border-neutral-800 rounded-lg p-6 hover:border-brand-500 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer") {
+                        h3(classes = "text-xl font-semibold text-neutral-100 mb-2") {
+                            +project.name
+                        }
+
+                        p(classes = "text-neutral-400 text-sm mb-4 line-clamp-2") {
+                            +(project.description ?: "No description provided")
+                        }
+
+                        div(classes = "flex gap-4 text-sm text-neutral-400 mb-3") {
+                            span { +"📋 ${project.issueCount} issues" }
+                            span { +"⚖️ ${project.totalPoints} points" }
+                        }
+
+                        div(classes = "w-full bg-neutral-800 rounded-full h-2 overflow-hidden") {
+                            div(classes = "bg-brand-500 h-2 transition-all") {
+                                style = "width: ${project.completionPercent}%;"
+                            }
+                        }
+
+                        p(classes = "text-xs text-neutral-500 mt-1") {
+                            +"${project.completionPercent}% complete"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**Key conversion principles**:
+1. **Static sample data** → **Dynamic database queries** via service layer
+2. **Hardcoded values** → **Data class properties** passed from controller
+3. **Inline styles** → **Computed from data** (e.g., `width: ${percent}%;`)
+4. **HTML classes** → **Preserved exactly** (Tailwind classes work in server-rendered HTML)
+5. **HTMX attributes** → **Added for progressive enhancement** (e.g., `hx-get`, `hx-target`)
+
+**Progress bar color logic example**:
+```kotlin
+// HTML mockup uses conditional classes manually
+// Ktor HTML DSL computes classes based on data
+val progressBarColor = when {
+    project.completionPercent == 100 -> "bg-success-500"  // Green for complete
+    project.completionPercent == 0 -> "bg-neutral-700"    // Gray for not started
+    else -> "bg-brand-500"                                 // Brand color for in-progress
+}
+
+div(classes = "$progressBarColor h-2 transition-all") {
+    style = "width: ${project.completionPercent}%;"
+}
+```
+
+**Reference mockups for server conversion**:
+- [home-page.html](../../reference/ui/mockup-catalog.md#home-page) - Project list implementation
+- [layout-template.html](../../reference/ui/mockup-catalog.md#layout-pattern--navigation-structure) - Navigation structure
+
+---
 
 ## Phase 1: Foundation (Week 1)
 
