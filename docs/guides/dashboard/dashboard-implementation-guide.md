@@ -649,13 +649,15 @@ class DashboardRoutesIntegrationTest : StringSpec({
 
 ## Phase 2: Hierarchy Display (Week 2)
 
+**Mockup Reference**: [issues-page.html](../../reference/ui/mockup-catalog.md#issues-page)
+
 ### Goal
 
-Implement full project detail page with Epic → Story hierarchy.
+Implement full project detail page with Epic → Story hierarchy and HTMX-powered lazy loading for child issues.
 
 ### Deliverable
 
-A functioning `/dashboard/projects/{id}` endpoint showing hierarchical issue structure.
+A functioning `/dashboard/projects/{id}` endpoint showing hierarchical issue structure with expandable Epic → Story → Subtask relationships.
 
 ### Step 2.1: Extend DTOs for Hierarchy
 
@@ -932,6 +934,182 @@ get("/projects/{projectId}") {
    - Styling matches design
 
 **Phase 2 Complete**: Project hierarchy view working ✅
+
+### Phase 2 Implementation Notes
+
+**Server-Side Rendering Requirements**:
+
+Based on the [issues-page.html mockup](../../reference/ui/mockup-catalog.md#issues-page), the server must provide:
+
+1. **Hierarchical Data Structure**:
+   ```kotlin
+   data class IssueHierarchyNode(
+       val issue: IssueViewDTO,
+       val children: List<IssueHierarchyNode>,
+       val depth: Int  // For indentation: 0 (Epic), 1 (Story), 2 (Subtask)
+   )
+   ```
+
+2. **Expansion Endpoint**: Implement `/api/issues/{id}/children`:
+   ```kotlin
+   get("/api/issues/{issueId}/children") {
+       val issueId = call.parameters["issueId"]
+       val service: DashboardApplicationService by application.dependencies
+       val children = service.getIssueChildren(issueId)
+
+       call.respondHtml(HttpStatusCode.OK) {
+           children.forEach { child ->
+               issueRow(child, depth = 1)  // Render at +1 depth from parent
+           }
+       }
+   }
+   ```
+
+3. **Filter Endpoint**: Implement `/api/issues?project={id}&status={status}&expanded={ids}`:
+   ```kotlin
+   get("/api/issues") {
+       val projectFilter = call.request.queryParameters["project"]
+       val statusFilter = call.request.queryParameters["status"]
+       val expandedIds = call.request.queryParameters["expanded"]?.split(",") ?: emptyList()
+
+       val issues = service.getFilteredIssues(projectFilter, statusFilter)
+
+       call.respondHtml {
+           issues.forEach { issue ->
+               issueRow(issue, depth = 0)
+
+               // Pre-expand if in URL params
+               if (issue.id in expandedIds) {
+                   val children = service.getIssueChildren(issue.id)
+                   div {
+                       id = "children-${issue.id}"
+                       classes = setOf("children-container", "mt-2", "space-y-2")
+
+                       children.forEach { child ->
+                           issueRow(child, depth = 1)
+                       }
+                   }
+               }
+           }
+       }
+   }
+   ```
+
+**Expansion State Management Strategies**:
+
+| Strategy | Pros | Cons | Recommended |
+|----------|------|------|-------------|
+| **CSS-only** (checkbox hack) | No server state, fast | Limited to browser session, no deep linking | ❌ Too limited |
+| **Client-side JS** | Fast, flexible | No bookmarkability, state lost on refresh | ❌ Not HTMX-first |
+| **Session-based** | Stateful, can restore state | Requires session storage, not bookmarkable | ⚠️ Acceptable |
+| **URL parameters** | Bookmarkable, shareable, stateless | URL can get long | ✅ **Recommended** |
+
+**Recommended Implementation**: URL parameter tracking
+- Expanded issues: `?expanded=SPI-834,SPI-838`
+- Filters: `?project=cycletime&status=in-progress`
+- Combined: `?project=cycletime&status=in-progress&expanded=SPI-834`
+
+**HTMX Integration Notes**:
+
+From the mockup, implement these HTMX patterns:
+
+```kotlin
+// Expansion button with HTMX attributes
+button(classes = "expand-btn") {
+    attributes["hx-get"] = "/api/issues/${issue.id}/children"
+    attributes["hx-target"] = "#children-${issue.id}"
+    attributes["hx-swap"] = "innerHTML"
+    attributes["hx-trigger"] = "click once"  // Load only once
+    attributes["hx-push-url"] = "true"       // Update URL with expansion state
+    attributes["aria-expanded"] = "false"
+    attributes["aria-controls"] = "children-${issue.id}"
+
+    // Hyperscript for chevron rotation
+    attributes["_"] = """
+        on htmx:afterRequest toggle [@aria-expanded='true', 'false']
+        on click toggle .rotate-90 on <svg/> in me
+        on click toggle .hidden on #children-${issue.id}
+    """.trimIndent()
+}
+```
+
+**Depth-Based Indentation**:
+
+```kotlin
+fun FlowContent.issueRow(issue: IssueViewDTO, depth: Int) {
+    val indentClass = when (depth) {
+        0 -> ""                     // No indentation for Epic/top-level
+        1 -> "ml-4 md:ml-8"         // 1rem mobile, 2rem desktop for Story
+        2 -> "ml-8 md:ml-16"        // 2rem mobile, 4rem desktop for Subtask
+        else -> "ml-12 md:ml-24"    // Deeper nesting (rare)
+    }
+
+    val borderClass = if (depth > 0) "border-l-2 border-neutral-700" else "border border-neutral-800"
+
+    div(classes = "issue-row bg-neutral-900 $borderClass rounded-lg p-3 $indentClass depth-$depth") {
+        // Issue content
+    }
+}
+```
+
+**Status Badge Integration**:
+
+Use semantic colors from the mockup:
+
+```kotlin
+fun FlowContent.statusBadge(status: String) {
+    val (bgColor, textColor, borderColor) = when (status.lowercase()) {
+        "backlog" -> Triple("bg-gray-800", "text-gray-300", "border-gray-700")
+        "todo" -> Triple("bg-blue-900/50", "text-blue-300", "border-blue-700")
+        "in-progress" -> Triple("bg-yellow-900/50", "text-yellow-300", "border-yellow-700")
+        "in-review" -> Triple("bg-purple-900/50", "text-purple-300", "border-purple-700")
+        "done" -> Triple("bg-green-900/50", "text-green-300", "border-green-700")
+        "canceled" -> Triple("bg-red-900/50", "text-red-300", "border-red-700")
+        else -> Triple("bg-gray-800", "text-gray-300", "border-gray-700")
+    }
+
+    span(classes = "inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium $bgColor $textColor border $borderColor") {
+        +status.replaceFirstChar { it.uppercase() }
+    }
+}
+```
+
+**Keyboard Accessibility**:
+
+Ensure expansion buttons are keyboard-accessible:
+
+```kotlin
+button(classes = "expand-btn") {
+    type = ButtonType.button
+    attributes["aria-label"] = "Expand to show ${issue.childCount} children"
+    attributes["tabindex"] = "0"
+
+    // Keyboard: Enter/Space triggers expansion
+    // Screen reader: Announces button purpose and state
+}
+```
+
+**Testing Checklist**:
+- [ ] Expansion works with HTMX lazy loading
+- [ ] Filter controls update issue list correctly
+- [ ] URL parameters update on filter/expansion changes
+- [ ] Bookmarking expanded/filtered view works
+- [ ] Keyboard navigation functional (Tab, Enter, Space)
+- [ ] Mobile responsive (reduced indentation, stacked filters)
+- [ ] Empty states display correctly (with/without filters)
+- [ ] Status badges use correct semantic colors
+- [ ] Chevron rotation animation smooth
+- [ ] Children load only once (no duplicate requests)
+
+**Complete Pattern Reference**:
+
+See [HTMX Hierarchical Expansion Pattern](../../patterns/ui/htmx-patterns.md#pattern-6-hierarchical-expansion-pattern) for comprehensive implementation details including:
+- Server endpoint design
+- Client-side HTML structure
+- State management strategies
+- Accessibility requirements
+- CSS animations
+- Performance optimizations
 
 ## Phase 3: Lazy Loading & Polish (Week 3)
 

@@ -222,6 +222,116 @@ open src/main/resources/static/mockups/home-page.html
 
 ---
 
+### 4. Issues Page
+
+**File**: `src/main/resources/static/mockups/issues-page.html`
+**Status**: ✅ Complete (SPI-838)
+**Size**: ~700 lines
+
+**Purpose**: Hierarchical issue list with expandable Epic → Story → Subtask relationships, status indicators, and project/status filtering demonstrating HTMX-powered lazy loading patterns.
+
+**Contents**:
+- **Hierarchical Issue Display**
+  - Expandable Epic → Story → Subtask structure
+  - Left border accent with depth-based indentation (0rem, 2rem, 4rem)
+  - Chevron rotation animation on expansion
+  - Visual hierarchy with icon differentiation (📚 Epic, 📖 Story, 📝 Subtask)
+
+- **HTMX Integration**
+  - `hx-get="/api/issues/{id}/children"` for lazy-loading child issues
+  - `hx-target` for container-specific updates
+  - `hx-push-url="true"` for URL parameter persistence on filter changes
+  - `hx-include` for coordinating multiple filter inputs
+  - Loading indicators with spinner animation
+  - Hyperscript for chevron rotation and container toggling
+
+- **Filter Controls**
+  - Project dropdown with "All Projects" option
+  - Status dropdown with 6 workflow states (Backlog, Todo, In Progress, In Review, Done, Canceled)
+  - Clear filters button resetting to defaults
+  - HTMX-powered filter coordination (updates without page reload)
+
+- **Status Badges**
+  - Six semantic states with color coding:
+    - Backlog: Gray (bg-gray-800/text-gray-300)
+    - Todo: Blue (bg-blue-900/50/text-blue-300)
+    - In Progress: Yellow (bg-yellow-900/50/text-yellow-300)
+    - In Review: Purple (bg-purple-900/50/text-purple-300)
+    - Done: Green (bg-green-900/50/text-green-300)
+    - Canceled: Red (bg-red-900/50/text-red-300)
+
+- **Issue Metadata Display**
+  - Issue identifier (e.g., SPI-834) in monospace font
+  - Issue title with truncation on overflow
+  - Status badge with semantic colors
+  - Child count indicator
+  - Estimate points for subtasks
+
+- **Empty States**
+  - "No issues yet" state with "Create Issue" CTA
+  - "No issues found" state for filtered results with "Clear Filters" button
+
+- **Responsive Behavior**
+  - Mobile (<768px): Vertical filter stack, 1rem indentation (ml-4), simplified metadata
+  - Desktop (≥768px): Horizontal filters, 2rem indentation (ml-8), complete metadata display
+  - Touch-friendly tap targets (44px minimum)
+
+- **Accessibility**
+  - Semantic HTML structure (`<nav>`, `<main>`, `<header>`)
+  - ARIA attributes: `aria-label`, `aria-expanded`, `aria-controls`, `aria-current`
+  - Keyboard navigation: Tab to focus expansion buttons, Enter/Space to toggle
+  - Screen reader support: Descriptive labels for all interactive elements
+
+**Sample Data**:
+Uses real SPI-834 Epic hierarchy demonstrating:
+- Epic: SPI-834 "Design Web UI" (In Progress) with 4 stories
+  - Story: SPI-835 "Design System Foundation" (Done) - 26 points, 3 subtasks
+  - Story: SPI-836 "Layout Pattern & Navigation" (Done) - 5 points, 2 subtasks
+  - Story: SPI-837 "Home Page UX" (Done) - 5 points, 2 subtasks
+  - Story: SPI-838 "Issue List UX" (In Progress) - 8 points, 3 subtasks (expanded to show subtasks)
+- Standalone Story: SPI-700 "Migrate to Official MCP SDK" (Done) - 13 points
+
+**HTMX Patterns Demonstrated**:
+- Lazy loading with `hx-trigger="click once"` for one-time expansion
+- Filter coordination with `hx-include` for multi-input queries
+- URL state management with `hx-push-url="true"`
+- Loading indicators with `htmx-indicator` class
+- Hyperscript for client-side enhancements (chevron rotation, container toggling)
+
+**Responsive Breakpoints**:
+| Breakpoint | Width | Indentation | Filter Layout | Metadata Display |
+|------------|-------|-------------|---------------|------------------|
+| Mobile     | <768px | 1rem (ml-4) | Vertical stack | Simplified |
+| Desktop    | ≥768px | 2rem (ml-8) | Horizontal row | Complete |
+
+**Viewing**:
+```bash
+# Option 1: Direct file open
+open src/main/resources/static/mockups/issues-page.html
+
+# Option 2: Via development server
+./gradlew run
+# Navigate to http://localhost:8080/mockups/issues-page.html
+```
+
+**Documentation References**:
+- [HTMX Patterns](../../patterns/ui/htmx-patterns.md) - Hierarchical expansion pattern
+- [Badge & Navigation Examples](../../examples/ui/badge-navigation-examples.md) - Status badge usage
+- [Dashboard Implementation Guide](../../guides/dashboard/dashboard-implementation-guide.md) - Phase 2 server conversion
+- [Design Tokens](design-tokens.md) - Status color palette
+
+**Use Cases**:
+- Visual reference for implementing issues page with Ktor HTML DSL
+- Hierarchical data display pattern demonstration
+- HTMX lazy loading and expansion mechanics
+- Filter coordination without page reload
+- Status badge integration in hierarchical context
+- Expansion state management via URL parameters
+- Accessibility patterns for tree-like structures
+- Responsive indentation strategy for mobile vs desktop
+
+---
+
 ## Viewing Mockups
 
 ### Quick Start
