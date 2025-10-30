@@ -35,6 +35,17 @@ semver {
     groupVersionIncrements = true
 }
 
+// Fix for version print tasks being marked as UP-TO-DATE (SPI-849)
+// These tasks have no declared outputs, causing Gradle to skip them incorrectly
+// This fix ensures version tasks always execute and produce output for CI/CD pipelines
+tasks.matching { it.name in listOf("printSemVersion", "printVersion", "printInfoVersion") }.configureEach {
+    // Always run these tasks - version calculation should never be cached
+    outputs.upToDateWhen { false }
+
+    // Disable configuration cache for version tasks (incompatible with git state access)
+    notCompatibleWithConfigurationCache("Version calculation requires runtime git repository access")
+}
+
 application {
     mainClass.set("io.spiralhouse.cycletime.ApplicationKt")
 
