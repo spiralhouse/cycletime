@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issues - CycleTime</title>
+
+    <!-- Google Fonts - Inter (Design System Typography) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Configuration (CycleTime Design System) -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f7ff',
+                            200: '#b3ecff',
+                            300: '#80d9ff',
+                            400: '#3ba3c9',
+                            500: '#2878a1',
+                            600: '#1a5178',
+                            700: '#154158',
+                            800: '#0f2e3f',
+                            900: '#0a1f2a',
+                        },
+                        neutral: {
+                            50: '#fafafa',
+                            100: '#f5f5f5',
+                            200: '#e5e5e5',
+                            300: '#d4d4d4',
+                            400: '#a3a3a3',
+                            500: '#737373',
+                            600: '#525252',
+                            700: '#404040',
+                            800: '#262626',
+                            850: '#1a1a1a',
+                            900: '#171717',
+                            950: '#0a0a0a',
+                        },
+                        success: {
+                            500: '#22c55e',
+                            600: '#16a34a',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- HTMX for Progressive Enhancement -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <!-- Hyperscript for chevron animations -->
+    <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* Mobile menu transition */
+        #mobile-menu {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        #mobile-menu.hidden {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        #mobile-menu:not(.hidden) {
+            max-height: 500px;
+            opacity: 1;
+        }
+
+        /* Chevron rotation animation */
+        .chevron-icon {
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .chevron-icon.rotate-90 {
+            transform: rotate(90deg);
+        }
+
+        /* HTMX loading indicator */
+        .htmx-indicator {
+            display: none;
+        }
+
+        .htmx-request .htmx-indicator {
+            display: inline-block;
+        }
+
+        /* Children container transition */
+        .children-container {
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in-out;
+        }
+
+        .children-container.hidden {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        .children-container:not(.hidden) {
+            max-height: 2000px;
+            opacity: 1;
+        }
+
+        /* Line clamp utility */
+        .line-clamp-1 {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Left border accent for hierarchy depth */
+        .depth-1 {
+            border-left: 2px solid theme('colors.neutral.700');
+        }
+
+        .depth-2 {
+            border-left: 2px solid theme('colors.neutral.700');
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col">
+    <!-- ============================================
+         HEADER: Primary Navigation
+         ============================================ -->
+    <header class="border-b border-neutral-800 bg-neutral-900">
+        <nav class="container mx-auto max-w-7xl" aria-label="Primary navigation">
+            <div class="px-4 md:px-6 lg:px-8 py-4">
+                <div class="flex items-center justify-between">
+                    <!-- Brand and Desktop Navigation -->
+                    <div class="flex items-center gap-8">
+                        <!-- Brand/Logo -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-brand-400">CycleTime</span>
+                        </div>
+
+                        <!-- Desktop Navigation (hidden on mobile, visible md+) -->
+                        <div class="hidden md:flex items-center gap-6">
+                            <!-- Projects -->
+                            <a href="/projects"
+                               class="text-neutral-400 hover:text-neutral-200 pb-1 px-1 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900 rounded-sm">
+                                Projects
+                            </a>
+
+                            <!-- Issues (Active Page) -->
+                            <a href="/issues"
+                               class="text-brand-400 border-b-2 border-brand-400 pb-1 px-1 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900 rounded-sm"
+                               aria-current="page">
+                                Issues
+                            </a>
+
+                            <!-- Settings -->
+                            <a href="/settings"
+                               class="text-neutral-400 hover:text-neutral-200 pb-1 px-1 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900 rounded-sm">
+                                Settings
+                            </a>
+
+                            <!-- System Status -->
+                            <a href="/system-status"
+                               class="text-neutral-400 hover:text-neutral-200 pb-1 px-1 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900 rounded-sm">
+                                System Status
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Menu Button (visible on mobile, hidden md+) -->
+                    <button class="md:hidden p-2 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900"
+                            aria-label="Toggle menu"
+                            aria-expanded="false"
+                            aria-controls="mobile-menu"
+                            onclick="toggleMobileMenu()">
+                        <!-- Hamburger Icon -->
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Mobile Menu (hidden by default) -->
+                <div id="mobile-menu" class="hidden md:hidden mt-4 pt-4 border-t border-neutral-700">
+                    <div class="flex flex-col gap-3">
+                        <!-- Projects -->
+                        <a href="/projects"
+                           class="text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 px-4 py-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900">
+                            Projects
+                        </a>
+
+                        <!-- Issues (Active Page) -->
+                        <a href="/issues"
+                           class="text-brand-400 bg-neutral-800 px-4 py-3 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900"
+                           aria-current="page">
+                            Issues
+                        </a>
+
+                        <!-- Settings -->
+                        <a href="/settings"
+                           class="text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 px-4 py-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900">
+                            Settings
+                        </a>
+
+                        <!-- System Status -->
+                        <a href="/system-status"
+                           class="text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 px-4 py-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900">
+                            System Status
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ============================================
+         MAIN: Issue List Content
+         ============================================ -->
+    <main class="flex-1 container mx-auto max-w-7xl px-4 md:px-6 lg:px-8 py-8">
+        <!-- Page Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-neutral-100 mb-2">Issues</h1>
+            <p class="text-base text-neutral-400">Browse and manage project issues hierarchically</p>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="mb-6 bg-neutral-900 border border-neutral-800 rounded-lg p-4">
+            <div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                <!-- Project Filter -->
+                <div class="flex-1 w-full md:w-auto">
+                    <label for="project-filter" class="block text-sm font-medium text-neutral-300 mb-2">Project</label>
+                    <select id="project-filter"
+                            name="project"
+                            class="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 text-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-brand-400"
+                            hx-get="/api/issues"
+                            hx-target="#issue-list"
+                            hx-include="[name='status']"
+                            hx-push-url="true"
+                            hx-indicator="#loading-indicator">
+                        <option value="">All Projects</option>
+                        <option value="cycletime" selected>CycleTime</option>
+                        <option value="auth-system">Authentication System</option>
+                        <option value="mobile-app">Mobile App</option>
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="flex-1 w-full md:w-auto">
+                    <label for="status-filter" class="block text-sm font-medium text-neutral-300 mb-2">Status</label>
+                    <select id="status-filter"
+                            name="status"
+                            class="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 text-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-brand-400"
+                            hx-get="/api/issues"
+                            hx-target="#issue-list"
+                            hx-include="[name='project']"
+                            hx-push-url="true"
+                            hx-indicator="#loading-indicator">
+                        <option value="">All Statuses</option>
+                        <option value="backlog">Backlog</option>
+                        <option value="todo">Todo</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="in-review">In Review</option>
+                        <option value="done">Done</option>
+                        <option value="canceled">Canceled</option>
+                    </select>
+                </div>
+
+                <!-- Clear Filters Button -->
+                <div class="flex items-end w-full md:w-auto">
+                    <button type="button"
+                            class="w-full md:w-auto px-4 py-2 bg-neutral-800 text-neutral-300 border border-neutral-700 rounded-lg hover:bg-neutral-700 hover:text-neutral-100 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400"
+                            hx-get="/api/issues"
+                            hx-target="#issue-list"
+                            hx-push-url="true"
+                            onclick="document.getElementById('project-filter').value = 'cycletime'; document.getElementById('status-filter').value = '';">
+                        Clear Filters
+                    </button>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div id="loading-indicator" class="htmx-indicator flex items-center gap-2 text-sm text-neutral-400">
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-400"></div>
+                    <span>Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Issue List (Hierarchical Display) -->
+        <div id="issue-list" class="space-y-4">
+
+            <!-- Epic: SPI-834 "Design Web UI" -->
+            <div class="issue-group">
+                <!-- Epic Row (Depth 0 - Parent) -->
+                <div class="issue-row bg-neutral-900 border border-neutral-800 rounded-lg p-4 hover:border-brand-400 transition-colors"
+                     data-issue-id="SPI-834"
+                     data-depth="0">
+                    <div class="flex items-start gap-3">
+                        <!-- Expansion Button -->
+                        <button class="expand-btn flex-shrink-0 p-1 mt-1 text-neutral-400 hover:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-brand-400 rounded"
+                                hx-get="/api/issues/SPI-834/children"
+                                hx-target="#children-SPI-834"
+                                hx-swap="innerHTML"
+                                hx-trigger="click once"
+                                aria-label="Expand to show 4 stories"
+                                aria-expanded="false"
+                                aria-controls="children-SPI-834"
+                                _="on htmx:afterRequest toggle [@aria-expanded='true', 'false']
+                                   on click toggle .rotate-90 on <svg/> in me
+                                   on click toggle .hidden on #children-SPI-834">
+                            <svg class="chevron-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+
+                        <!-- Issue Content -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                                <!-- Issue Icon -->
+                                <span class="text-lg" aria-hidden="true">📚</span>
+
+                                <!-- Issue Identifier -->
+                                <span class="text-sm font-mono text-brand-400">SPI-834</span>
+
+                                <!-- Issue Title -->
+                                <h3 class="text-base md:text-lg font-semibold text-neutral-100">Design Web UI</h3>
+
+                                <!-- Status Badge -->
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-[#854d0e] text-[#fde047] border border-[#a16207]">
+                                    In Progress
+                                </span>
+                            </div>
+
+                            <!-- Issue Metadata -->
+                            <div class="flex flex-wrap items-center gap-3 text-sm text-neutral-400">
+                                <!-- Child Count -->
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                    </svg>
+                                    4 stories
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Children Container (Stories) -->
+                <div id="children-SPI-834" class="children-container hidden mt-2 ml-4 md:ml-8 space-y-2">
+                    <!-- Stories will be loaded here via HTMX -->
+                    <!-- Mock server response below for demonstration -->
+
+                    <!-- Story: SPI-835 "Design System Foundation" (Depth 1) -->
+                    <div class="issue-row bg-neutral-900 border-l-2 border-neutral-700 rounded-lg p-3 pl-4 hover:border-l-brand-400 transition-colors depth-1"
+                         data-issue-id="SPI-835"
+                         data-depth="1">
+                        <div class="flex items-start gap-3">
+                            <!-- No expansion button for stories without children in this mockup -->
+                            <div class="w-6 flex-shrink-0"></div>
+
+                            <!-- Issue Content -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-2 mb-1">
+                                    <!-- Issue Icon -->
+                                    <span aria-hidden="true">📖</span>
+
+                                    <!-- Issue Identifier -->
+                                    <span class="text-sm font-mono text-brand-300">SPI-835</span>
+
+                                    <!-- Issue Title -->
+                                    <span class="text-sm md:text-base font-medium text-neutral-200 line-clamp-1">Design System Foundation</span>
+
+                                    <!-- Status Badge -->
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#14532d] text-[#86efac] border border-[#166534]">
+                                        Done
+                                    </span>
+                                </div>
+
+                                <!-- Issue Metadata -->
+                                <div class="flex flex-wrap items-center gap-2 text-xs text-neutral-400">
+                                    <span>26 points</span>
+                                    <span>•</span>
+                                    <span>3 subtasks</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Story: SPI-836 "Layout Pattern & Navigation" (Depth 1) -->
+                    <div class="issue-row bg-neutral-900 border-l-2 border-neutral-700 rounded-lg p-3 pl-4 hover:border-l-brand-400 transition-colors depth-1"
+                         data-issue-id="SPI-836"
+                         data-depth="1">
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 flex-shrink-0"></div>
+
+                            <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-2 mb-1">
+                                    <span aria-hidden="true">📖</span>
+                                    <span class="text-sm font-mono text-brand-300">SPI-836</span>
+                                    <span class="text-sm md:text-base font-medium text-neutral-200 line-clamp-1">Layout Pattern & Navigation</span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#14532d] text-[#86efac] border border-[#166534]">
+                                        Done
+                                    </span>
+                                </div>
+
+                                <div class="flex flex-wrap items-center gap-2 text-xs text-neutral-400">
+                                    <span>5 points</span>
+                                    <span>•</span>
+                                    <span>2 subtasks</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Story: SPI-837 "Home Page UX" (Depth 1) -->
+                    <div class="issue-row bg-neutral-900 border-l-2 border-neutral-700 rounded-lg p-3 pl-4 hover:border-l-brand-400 transition-colors depth-1"
+                         data-issue-id="SPI-837"
+                         data-depth="1">
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 flex-shrink-0"></div>
+
+                            <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-2 mb-1">
+                                    <span aria-hidden="true">📖</span>
+                                    <span class="text-sm font-mono text-brand-300">SPI-837</span>
+                                    <span class="text-sm md:text-base font-medium text-neutral-200 line-clamp-1">Home Page UX</span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#14532d] text-[#86efac] border border-[#166534]">
+                                        Done
+                                    </span>
+                                </div>
+
+                                <div class="flex flex-wrap items-center gap-2 text-xs text-neutral-400">
+                                    <span>5 points</span>
+                                    <span>•</span>
+                                    <span>2 subtasks</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Story: SPI-838 "Issue List UX" (Depth 1) - WITH SUBTASK EXPANSION -->
+                    <div class="issue-group">
+                        <div class="issue-row bg-neutral-900 border-l-2 border-neutral-700 rounded-lg p-3 pl-4 hover:border-l-brand-400 transition-colors depth-1"
+                             data-issue-id="SPI-838"
+                             data-depth="1">
+                            <div class="flex items-start gap-3">
+                                <!-- Expansion Button for Subtasks -->
+                                <button class="expand-btn flex-shrink-0 p-1 text-neutral-400 hover:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-brand-400 rounded"
+                                        hx-get="/api/issues/SPI-838/children"
+                                        hx-target="#children-SPI-838"
+                                        hx-swap="innerHTML"
+                                        hx-trigger="click once"
+                                        aria-label="Expand to show 3 subtasks"
+                                        aria-expanded="false"
+                                        aria-controls="children-SPI-838"
+                                        _="on htmx:afterRequest toggle [@aria-expanded='true', 'false']
+                                           on click toggle .rotate-90 on <svg/> in me
+                                           on click toggle .hidden on #children-SPI-838">
+                                    <svg class="chevron-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </button>
+
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-wrap items-center gap-2 mb-1">
+                                        <span aria-hidden="true">📖</span>
+                                        <span class="text-sm font-mono text-brand-300">SPI-838</span>
+                                        <span class="text-sm md:text-base font-medium text-neutral-200 line-clamp-1">Issue List UX - Hierarchical View & Filtering</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#854d0e] text-[#fde047] border border-[#a16207]">
+                                            In Progress
+                                        </span>
+                                    </div>
+
+                                    <div class="flex flex-wrap items-center gap-2 text-xs text-neutral-400">
+                                        <span>8 points</span>
+                                        <span>•</span>
+                                        <span>3 subtasks</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Subtasks Container (Depth 2) -->
+                        <div id="children-SPI-838" class="children-container hidden mt-2 ml-4 md:ml-8 space-y-2">
+                            <!-- Mock subtasks for demonstration -->
+
+                            <!-- Subtask: "Hierarchical display pattern" (Depth 2) -->
+                            <div class="issue-row bg-neutral-800 border-l-2 border-neutral-600 rounded p-2 pl-3 depth-2"
+                                 data-issue-id="SPI-838-1"
+                                 data-depth="2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm" aria-hidden="true">📝</span>
+                                    <span class="text-xs font-mono text-brand-300">SPI-838-1</span>
+                                    <span class="text-sm text-neutral-300 flex-1 line-clamp-1">Hierarchical display pattern implementation</span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#854d0e] text-[#fde047] border border-[#a16207]">
+                                        In Progress
+                                    </span>
+                                    <span class="text-xs text-neutral-500">3 pts</span>
+                                </div>
+                            </div>
+
+                            <!-- Subtask: "HTMX expansion behavior" (Depth 2) -->
+                            <div class="issue-row bg-neutral-800 border-l-2 border-neutral-600 rounded p-2 pl-3 depth-2"
+                                 data-issue-id="SPI-838-2"
+                                 data-depth="2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm" aria-hidden="true">📝</span>
+                                    <span class="text-xs font-mono text-brand-300">SPI-838-2</span>
+                                    <span class="text-sm text-neutral-300 flex-1 line-clamp-1">HTMX expansion behavior with lazy loading</span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#1e3a8a] text-[#93c5fd] border border-[#1e40af]">
+                                        Todo
+                                    </span>
+                                    <span class="text-xs text-neutral-500">3 pts</span>
+                                </div>
+                            </div>
+
+                            <!-- Subtask: "Documentation updates" (Depth 2) -->
+                            <div class="issue-row bg-neutral-800 border-l-2 border-neutral-600 rounded p-2 pl-3 depth-2"
+                                 data-issue-id="SPI-838-3"
+                                 data-depth="2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm" aria-hidden="true">📝</span>
+                                    <span class="text-xs font-mono text-brand-300">SPI-838-3</span>
+                                    <span class="text-sm text-neutral-300 flex-1 line-clamp-1">Update documentation (catalog, patterns, examples)</span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#1e3a8a] text-[#93c5fd] border border-[#1e40af]">
+                                        Todo
+                                    </span>
+                                    <span class="text-xs text-neutral-500">2 pts</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standalone Story: SPI-700 "Migrate to Official MCP SDK" (No Parent) -->
+            <div class="issue-group">
+                <div class="issue-row bg-neutral-900 border border-neutral-800 rounded-lg p-4 hover:border-brand-400 transition-colors"
+                     data-issue-id="SPI-700"
+                     data-depth="0">
+                    <div class="flex items-start gap-3">
+                        <!-- No expansion button (no children) -->
+                        <div class="w-6 flex-shrink-0"></div>
+
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                                <span class="text-lg" aria-hidden="true">📖</span>
+                                <span class="text-sm font-mono text-brand-400">SPI-700</span>
+                                <h3 class="text-base md:text-lg font-semibold text-neutral-100">Migrate to Official MCP SDK</h3>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-[#14532d] text-[#86efac] border border-[#166534]">
+                                    Done
+                                </span>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-3 text-sm text-neutral-400">
+                                <span>13 points</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ============================================
+             EMPTY STATE (for filtered results with no matches)
+             ============================================
+
+        <div class="bg-neutral-900 border border-neutral-800 rounded-lg p-12 text-center">
+            <div class="text-6xl mb-4" aria-hidden="true">🔍</div>
+            <h2 class="text-xl font-semibold text-neutral-100 mb-2">No issues found</h2>
+            <p class="text-base text-neutral-400 mb-6">
+                Try adjusting your filters to see more results.
+            </p>
+            <button class="inline-block px-4 py-2 bg-neutral-800 text-neutral-300 border border-neutral-700 rounded-lg hover:bg-neutral-700 hover:text-neutral-100 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400"
+                    hx-get="/api/issues"
+                    hx-target="#issue-list"
+                    onclick="document.getElementById('project-filter').value = ''; document.getElementById('status-filter').value = '';">
+                Clear Filters
+            </button>
+        </div>
+
+        ============================================ -->
+
+        <!-- ============================================
+             EMPTY STATE (for no issues at all)
+             ============================================
+
+        <div class="bg-neutral-900 border border-neutral-800 rounded-lg p-12 text-center">
+            <div class="text-6xl mb-4" aria-hidden="true">📋</div>
+            <h2 class="text-xl font-semibold text-neutral-100 mb-2">No issues yet</h2>
+            <p class="text-base text-neutral-400 mb-6">
+                Create your first issue to get started tracking work.
+            </p>
+            <a href="/issues/new"
+               class="inline-block px-4 py-2 bg-brand-400 text-white font-medium rounded-lg hover:bg-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-950 transition-colors">
+                Create Issue
+            </a>
+        </div>
+
+        ============================================ -->
+    </main>
+
+    <!-- ============================================
+         FOOTER
+         ============================================ -->
+    <footer class="mt-auto border-t border-neutral-800 bg-neutral-900 py-6">
+        <div class="container mx-auto max-w-7xl px-4 md:px-6 lg:px-8">
+            <p class="text-neutral-500 text-sm text-center">
+                CycleTime Dashboard &bull; Localhost Development Environment
+            </p>
+        </div>
+    </footer>
+
+    <!-- ============================================
+         JAVASCRIPT: Mobile Menu Toggle & HTMX Notes
+         ============================================ -->
+    <script>
+        /**
+         * Toggle mobile menu visibility
+         * NOTE: This is a temporary implementation for the static mockup.
+         * In production, this will be replaced with HTMX server-side toggle.
+         */
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const button = document.querySelector('button[aria-controls="mobile-menu"]');
+
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                button.setAttribute('aria-expanded', 'true');
+            } else {
+                menu.classList.add('hidden');
+                button.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        /**
+         * Close mobile menu when clicking outside
+         */
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('mobile-menu');
+            const button = document.querySelector('button[aria-controls="mobile-menu"]');
+
+            if (!menu.contains(event.target) && !button.contains(event.target)) {
+                if (!menu.classList.contains('hidden')) {
+                    menu.classList.add('hidden');
+                    button.setAttribute('aria-expanded', 'false');
+                }
+            }
+        });
+
+        /**
+         * HTMX Implementation Notes for Production
+         * ==========================================
+         *
+         * 1. Hierarchical Expansion Endpoints:
+         *    - GET /api/issues/{id}/children
+         *    - Returns HTML fragment with child issues at +1 depth
+         *    - Server tracks expansion state via URL params: ?expanded=SPI-834,SPI-838
+         *    - Children container receives innerHTML swap
+         *
+         * 2. Filter Endpoints:
+         *    - GET /api/issues?project={id}&status={status}&expanded={ids}
+         *    - Returns full issue list filtered by params
+         *    - Preserves expansion state from URL params
+         *    - Updates URL with hx-push-url="true"
+         *
+         * 3. Server Response Structure:
+         *    Server should return HTML fragments matching the structure:
+         *
+         *    <div class="issue-row bg-neutral-900 border-l-2 border-neutral-700 rounded-lg p-3 pl-4 depth-1">
+         *      <div class="flex items-start gap-3">
+         *        <!-- Expansion button if has children -->
+         *        <button hx-get="/api/issues/{id}/children" ...>
+         *
+         *        <!-- Issue content -->
+         *        <div class="flex-1">
+         *          <!-- Title, badges, metadata -->
+         *        </div>
+         *      </div>
+         *    </div>
+         *
+         * 4. Depth Styling:
+         *    - Depth 0 (Epic): No left padding, full border
+         *    - Depth 1 (Story): ml-4 md:ml-8 (1rem/2rem), border-l-2
+         *    - Depth 2 (Subtask): Additional ml-4 md:ml-8, border-l-2 lighter color
+         *
+         * 5. Accessibility:
+         *    - aria-expanded updates on button click via hyperscript
+         *    - aria-controls references children container
+         *    - aria-label describes action ("Expand to show N subtasks")
+         *    - Keyboard: Tab focuses button, Enter/Space triggers expansion
+         *
+         * 6. Progressive Enhancement:
+         *    - Without JavaScript: Links to issue detail pages
+         *    - With HTMX: In-place expansion without page reload
+         *    - Chevron rotation via CSS class toggle
+         */
+    </script>
+</body>
+</html>

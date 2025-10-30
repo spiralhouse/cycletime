@@ -634,6 +634,122 @@ fun FlowContent.mobileBreadcrumbs() {
 
 See this component: [Navigation - Breadcrumbs](../../../../src/main/resources/static/mockups/design-system.html#navigation)
 
+## Live Reference: Issue List Hierarchy
+
+See the [issues-page.html mockup](../../reference/ui/mockup-catalog.md#issues-page) for status badge usage in a complete hierarchical issue list context.
+
+**Status Badge Integration**:
+The issues page demonstrates status badges at all hierarchy levels:
+- **Epic Level** (Depth 0): Larger badges with full status text
+- **Story Level** (Depth 1): Medium badges integrated with issue metadata
+- **Subtask Level** (Depth 2): Compact badges optimized for space
+
+**Color System in Action**:
+```html
+<!-- Status badges with semantic colors -->
+<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-900/50 text-yellow-300 border border-yellow-700">
+  In Progress
+</span>
+
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-900/50 text-green-300 border border-green-700">
+  Done
+</span>
+
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-900/50 text-blue-300 border border-blue-700">
+  Todo
+</span>
+```
+
+**Complete Color Mapping**:
+| Status | Background | Text | Border | Use Case |
+|--------|-----------|------|--------|----------|
+| Backlog | `bg-gray-800` | `text-gray-300` | `border-gray-700` | Not started, low priority |
+| Todo | `bg-blue-900/50` | `text-blue-300` | `border-blue-700` | Ready to start, planned |
+| In Progress | `bg-yellow-900/50` | `text-yellow-300` | `border-yellow-700` | Currently being worked |
+| In Review | `bg-purple-900/50` | `text-purple-300` | `border-purple-700` | Under review, awaiting approval |
+| Done | `bg-green-900/50` | `text-green-300` | `border-green-700` | Completed successfully |
+| Canceled | `bg-red-900/50` | `text-red-300` | `border-red-700` | Abandoned or rejected |
+
+**Implementation Pattern**:
+```kotlin
+fun FlowContent.statusBadgeForIssue(status: String) {
+    val (bgColor, textColor, borderColor) = when (status.lowercase()) {
+        "backlog" -> Triple("bg-gray-800", "text-gray-300", "border-gray-700")
+        "todo" -> Triple("bg-blue-900/50", "text-blue-300", "border-blue-700")
+        "in progress", "in-progress" -> Triple("bg-yellow-900/50", "text-yellow-300", "border-yellow-700")
+        "in review", "in-review" -> Triple("bg-purple-900/50", "text-purple-300", "border-purple-700")
+        "done", "completed" -> Triple("bg-green-900/50", "text-green-300", "border-green-700")
+        "canceled", "cancelled" -> Triple("bg-red-900/50", "text-red-300", "border-red-700")
+        else -> Triple("bg-gray-800", "text-gray-300", "border-gray-700")
+    }
+
+    span(classes = "inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium $bgColor $textColor border $borderColor") {
+        +status.replaceFirstChar { it.uppercase() }
+    }
+}
+```
+
+**Navigation Integration**:
+The issues page also demonstrates primary navigation with active state indicators:
+- **Active Page**: "Issues" link highlighted with brand color and bottom border
+- **Filter Bar**: Project and status dropdowns with coordinated HTMX updates
+- **Expansion Controls**: Chevron buttons with keyboard navigation support
+
+**Hierarchy Context Usage**:
+```html
+<!-- Epic with badge (Depth 0) -->
+<div class="issue-row">
+  <span class="text-sm font-mono text-brand-400">SPI-834</span>
+  <h3 class="text-lg font-semibold text-neutral-100">Design Web UI</h3>
+  <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-900/50 text-yellow-300 border border-yellow-700">
+    In Progress
+  </span>
+</div>
+
+<!-- Story with badge (Depth 1 - indented) -->
+<div class="issue-row ml-4 md:ml-8">
+  <span class="text-sm font-mono text-brand-300">SPI-835</span>
+  <span class="text-base font-medium text-neutral-200">Design System Foundation</span>
+  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-900/50 text-green-300 border border-green-700">
+    Done
+  </span>
+</div>
+
+<!-- Subtask with badge (Depth 2 - further indented) -->
+<div class="issue-row ml-8 md:ml-16">
+  <span class="text-xs font-mono text-brand-300">SPI-838-1</span>
+  <span class="text-sm text-neutral-300">Hierarchical display implementation</span>
+  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-900/50 text-yellow-300 border border-yellow-700">
+    In Progress
+  </span>
+  <span class="text-xs text-neutral-500">3 pts</span>
+</div>
+```
+
+**Key Design Decisions**:
+1. **Opacity for Backgrounds**: `/50` suffix creates subtle, non-overwhelming backgrounds
+2. **Border for Definition**: Solid border maintains visibility against dark backgrounds
+3. **Lighter Text Colors**: 300-level colors (e.g., `yellow-300`) provide contrast against dark backgrounds
+4. **Consistent Sizing**: All badges use same padding (`px-2.5 py-0.5` or `px-2 py-0.5`) for visual consistency
+
+**Testing the Pattern**:
+```bash
+# View the complete implementation
+open src/main/resources/static/mockups/issues-page.html
+
+# Test expansion behavior (click chevron buttons)
+# Test filter coordination (change project/status dropdowns)
+# Test responsive behavior (resize browser window)
+```
+
+**Accessibility Notes**:
+- Status badges provide visual status indication
+- Screen readers announce status via badge text content
+- Color is not the sole indicator (text labels always present)
+- High contrast ratios maintained (WCAG AA compliant)
+
+---
+
 ## Best Practices
 
 ### 1. Consistent Badge Sizes

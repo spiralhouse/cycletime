@@ -552,6 +552,343 @@ install(Compression) {
 }
 ```
 
+### Pattern 6: Hierarchical Expansion Pattern
+
+**Use Case**: Lazy-load hierarchical data (Epic → Story → Subtask) using HTMX to expand/collapse parent-child relationships on demand.
+
+**Problem**: Displaying deeply nested hierarchical data in a single page load is slow and overwhelming. Full tree expansion can render hundreds of items unnecessarily.
+
+**Solution**: Load only top-level items initially, then lazy-load children when user expands a parent node.
+
+```kotlin
+// Server endpoint - returns child issues as HTML fragment
+get("/api/issues/{issueId}/children") {
+    val issueId = call.parameters["issueId"]
+        ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing issueId")
+
+    val service: DashboardApplicationService by application.dependencies
+    val children = service.getIssueChildren(issueId)
+
+    call.respondHtml(HttpStatusCode.OK) {
+        // Return HTML fragment, not full page
+        children.forEach { child ->
+            issueRow(child, depth = 1)  // Depth controls indentation
+        }
+    }
+}
+
+// Recursive issue row component
+fun FlowContent.issueRow(issue: IssueViewDTO, depth: Int) {
+    val indentClass = when (depth) {
+        0 -> ""                     // No indentation for top-level
+        1 -> "ml-4 md:ml-8"         // 1rem/2rem for first level
+        2 -> "ml-8 md:ml-16"        // 2rem/4rem for second level
+        else -> "ml-12 md:ml-24"    // 3rem/6rem for deeper levels
+    }
+
+    div(classes = "issue-row bg-neutral-900 border-l-2 border-neutral-700 rounded-lg p-3 $indentClass depth-$depth") {
+        attributes["data-issue-id"] = issue.id
+        attributes["data-depth"] = depth.toString()
+
+        div(classes = "flex items-start gap-3") {
+            // Expansion button (only if has children)
+            if (issue.childCount > 0) {
+                button(classes = "expand-btn flex-shrink-0 p-1 text-neutral-400 hover:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-brand-400 rounded") {
+                    attributes["hx-get"] = "/api/issues/${issue.id}/children"
+                    attributes["hx-target"] = "#children-${issue.id}"
+                    attributes["hx-swap"] = "innerHTML"
+                    attributes["hx-trigger"] = "click once"  // Load only once
+                    attributes["aria-label"] = "Expand to show ${issue.childCount} children"
+                    attributes["aria-expanded"] = "false"
+                    attributes["aria-controls"] = "children-${issue.id}"
+                    attributes["_"] = """
+                        on htmx:afterRequest toggle [@aria-expanded='true', 'false']
+                        on click toggle .rotate-90 on <svg/> in me
+                        on click toggle .hidden on #children-${issue.id}
+                    """.trimIndent()
+
+                    // Chevron icon
+                    svg(classes = "chevron-icon w-5 h-5") {
+                        attributes["fill"] = "none"
+                        attributes["stroke"] = "currentColor"
+                        attributes["viewBox"] = "0 0 24 24"
+                        unsafe {
+                            raw("""<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>""")
+                        }
+                    }
+                }
+            } else {
+                // Spacer for alignment when no expansion button
+                div(classes = "w-6 flex-shrink-0")
+            }
+
+            // Issue content
+            div(classes = "flex-1 min-w-0") {
+                div(classes = "flex flex-wrap items-center gap-2 mb-1") {
+                    span { +issue.title }
+                    statusBadge(issue.status)
+                }
+
+                if (issue.childCount > 0) {
+                    span(classes = "text-xs text-neutral-400") {
+                        +"${issue.childCount} children"
+                    }
+                }
+            }
+        }
+
+        // Children container (populated on expansion)
+        if (issue.childCount > 0) {
+            div {
+                id = "children-${issue.id}"
+                classes = setOf("children-container", "hidden", "mt-2", "space-y-2")
+            }
+        }
+    }
+}
+```
+
+**Client-Side HTML** (Initial Page Load):
+
+```html
+<!-- Parent issue (Epic) - Depth 0 -->
+<div class="issue-row bg-neutral-900 border border-neutral-800 rounded-lg p-4"
+     data-issue-id="SPI-834"
+     data-depth="0">
+  <div class="flex items-start gap-3">
+    <!-- Expansion button -->
+    <button class="expand-btn"
+            hx-get="/api/issues/SPI-834/children"
+            hx-target="#children-SPI-834"
+            hx-swap="innerHTML"
+            hx-trigger="click once"
+            aria-expanded="false"
+            aria-controls="children-SPI-834"
+            _="on htmx:afterRequest toggle [@aria-expanded='true', 'false']
+               on click toggle .rotate-90 on <svg/> in me
+               on click toggle .hidden on #children-SPI-834">
+      <svg class="chevron-icon w-5 h-5"><!-- chevron SVG --></svg>
+    </button>
+
+    <!-- Issue content -->
+    <div class="flex-1">
+      <span>SPI-834</span>
+      <span>Design Web UI</span>
+      <span class="status-badge">In Progress</span>
+      <span>4 stories</span>
+    </div>
+  </div>
+</div>
+
+<!-- Children container (initially empty and hidden) -->
+<div id="children-SPI-834" class="children-container hidden mt-2 ml-4 md:ml-8 space-y-2">
+  <!-- Stories will be loaded here via HTMX -->
+</div>
+```
+
+**Server Response** (HTMX request to `/api/issues/SPI-834/children`):
+
+```html
+<!-- Story 1 - Depth 1 -->
+<div class="issue-row bg-neutral-900 border-l-2 border-neutral-700 rounded-lg p-3 ml-4 md:ml-8 depth-1"
+     data-issue-id="SPI-835"
+     data-depth="1">
+  <div class="flex items-start gap-3">
+    <div class="w-6 flex-shrink-0"></div>  <!-- No children, so spacer -->
+    <div class="flex-1">
+      <span>SPI-835</span>
+      <span>Design System Foundation</span>
+      <span class="status-badge">Done</span>
+    </div>
+  </div>
+</div>
+
+<!-- Story 2 with subtasks - Depth 1 -->
+<div class="issue-row bg-neutral-900 border-l-2 border-neutral-700 rounded-lg p-3 ml-4 md:ml-8 depth-1"
+     data-issue-id="SPI-838"
+     data-depth="1">
+  <div class="flex items-start gap-3">
+    <!-- Has children, so expansion button -->
+    <button class="expand-btn"
+            hx-get="/api/issues/SPI-838/children"
+            hx-target="#children-SPI-838"
+            hx-swap="innerHTML"
+            hx-trigger="click once">
+      <svg class="chevron-icon w-4 h-4"><!-- smaller chevron for nested --></svg>
+    </button>
+
+    <div class="flex-1">
+      <span>SPI-838</span>
+      <span>Issue List UX</span>
+      <span>3 subtasks</span>
+    </div>
+  </div>
+</div>
+
+<!-- Subtasks container (nested expansion) -->
+<div id="children-SPI-838" class="children-container hidden mt-2 ml-4 md:ml-8 space-y-2">
+  <!-- Subtasks will be loaded here if user expands SPI-838 -->
+</div>
+```
+
+**State Management Strategies**:
+
+| Strategy | Pros | Cons | Recommended |
+|----------|------|------|-------------|
+| **CSS-only** (checkbox hack) | No server state, fast | Limited to browser session, no deep linking | ❌ Too limited |
+| **Client-side JS** | Fast, flexible | No bookmarkability, state lost on refresh | ❌ Not HTMX-first |
+| **Session-based** | Stateful, can restore state | Requires session storage, not bookmarkable | ⚠️ Acceptable |
+| **URL parameters** | Bookmarkable, shareable, stateless | URL can get long with many expansions | ✅ **Recommended** |
+
+**Recommended Implementation**: URL parameter tracking
+
+```kotlin
+// Read expansion state from URL
+get("/api/issues") {
+    val expandedIds = call.request.queryParameters["expanded"]?.split(",") ?: emptyList()
+    val projectFilter = call.request.queryParameters["project"]
+    val statusFilter = call.request.queryParameters["status"]
+
+    val issues = service.getFilteredIssues(projectFilter, statusFilter)
+
+    call.respondHtml {
+        issues.forEach { issue ->
+            issueRow(issue, depth = 0)
+
+            // Pre-expand if in URL params
+            if (issue.id in expandedIds) {
+                val children = service.getIssueChildren(issue.id)
+                div {
+                    id = "children-${issue.id}"
+                    classes = setOf("children-container", "mt-2", "space-y-2")  // NOT hidden
+
+                    children.forEach { child ->
+                        issueRow(child, depth = 1)
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**URL Structure Example**:
+```
+/issues?project=cycletime&status=in-progress&expanded=SPI-834,SPI-838
+```
+
+**Benefits**:
+- **Bookmarkable**: Users can save and share specific expanded views
+- **Deep linkable**: Direct link to specific hierarchy state
+- **Stateless**: No server-side session required
+- **Fast**: Expanded state persists across page reloads
+
+**Accessibility Requirements**:
+
+```html
+<!-- REQUIRED attributes for screen readers -->
+<button aria-expanded="false"           <!-- Current state -->
+        aria-controls="children-SPI-834"  <!-- Container it controls -->
+        aria-label="Expand to show 4 stories">  <!-- Action description -->
+```
+
+**Update `aria-expanded` on toggle**:
+- Use hyperscript: `on htmx:afterRequest toggle [@aria-expanded='true', 'false']`
+- Or JavaScript: `button.setAttribute('aria-expanded', isExpanded ? 'true' : 'false')`
+
+**Keyboard Navigation**:
+- Tab: Focus expansion buttons
+- Enter/Space: Toggle expansion
+- Arrow keys (optional): Navigate between issues
+
+**CSS Animations**:
+
+```css
+/* Chevron rotation */
+.chevron-icon {
+    transition: transform 0.2s ease-in-out;
+}
+
+.chevron-icon.rotate-90 {
+    transform: rotate(90deg);
+}
+
+/* Children container slide */
+.children-container {
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in-out;
+}
+
+.children-container.hidden {
+    max-height: 0;
+    opacity: 0;
+}
+
+.children-container:not(.hidden) {
+    max-height: 2000px;  /* Large enough for content */
+    opacity: 1;
+}
+```
+
+**Responsive Considerations**:
+
+```kotlin
+// Mobile: Reduce indentation to prevent horizontal overflow
+val indentClass = when {
+    depth == 0 -> ""
+    depth == 1 && isMobile -> "ml-4"     // 1rem on mobile
+    depth == 1 -> "md:ml-8"              // 2rem on desktop
+    depth == 2 && isMobile -> "ml-8"     // 2rem on mobile
+    depth == 2 -> "md:ml-16"             // 4rem on desktop
+    else -> "ml-12 md:ml-24"
+}
+```
+
+**Performance Optimization**:
+
+1. **Cache children queries**:
+```kotlin
+suspend fun getIssueChildren(issueId: String): List<IssueViewDTO> {
+    return cache.getOrPut("issue:$issueId:children", ttl = 5.minutes) {
+        issueRepository.findByParent(IssueId(issueId))
+            .map { DashboardMapper.toIssueView(it) }
+    }
+}
+```
+
+2. **Use `hx-trigger="click once"`**: Prevents redundant server requests on repeated expansion
+
+3. **Invalidate cache on issue updates**:
+```kotlin
+suspend fun updateIssue(issueId: String, updates: IssueUpdateDTO) {
+    val issue = issueRepository.update(issueId, updates)
+
+    // Invalidate parent and children caches
+    cache.invalidate("issue:${issue.parentId}:children")
+    cache.invalidate("issue:${issue.id}:children")
+}
+```
+
+**Live Reference**:
+
+See complete working example in [issues-page.html mockup](../../reference/ui/mockup-catalog.md#issues-page) demonstrating:
+- Three-level hierarchy (Epic → Story → Subtask)
+- Real SPI-834 hierarchy with mixed statuses
+- Filter coordination with expansion state
+- Mobile responsive indentation
+- Accessibility with ARIA attributes
+
+**Testing Checklist**:
+- [ ] Expansion loads children without page reload
+- [ ] Chevron rotates on expansion
+- [ ] `aria-expanded` updates correctly
+- [ ] Keyboard navigation works (Tab, Enter, Space)
+- [ ] URL parameters update with `hx-push-url`
+- [ ] Bookmarking expanded state works
+- [ ] Children load only once (no duplicate requests)
+- [ ] Mobile indentation prevents horizontal scroll
+- [ ] Empty children containers don't cause layout shift
+
 ## Related Patterns
 
 - [Tailwind Design System](tailwind-design-system.md) - Styling HTMX-powered UIs
@@ -561,6 +898,7 @@ install(Compression) {
 
 - [CycleTime Dashboard Implementation](../../design/spi-690-dashboard-design.md) - Complete HTMX dashboard
 - [Lazy Loading Pattern](../../examples/ui/ktor-html-dsl-examples.md#lazy-loading) - Working code
+- [Hierarchical Expansion](../../reference/ui/mockup-catalog.md#issues-page) - issues-page.html mockup
 
 ## References
 
