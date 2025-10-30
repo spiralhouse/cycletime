@@ -308,7 +308,7 @@
             <!-- Epic: SPI-834 "Design Web UI" -->
             <div class="issue-group">
                 <!-- Epic Row (Depth 0 - Parent) -->
-                <div class="issue-row bg-neutral-900 border border-neutral-800 rounded-lg p-4 hover:border-brand-400 transition-colors"
+                <div class="issue-row bg-neutral-900 border-l-4 border-orange-500 rounded-lg p-4 hover:border-l-orange-400 transition-colors"
                      data-issue-id="SPI-834"
                      data-depth="0">
                     <div class="flex items-start gap-3">
@@ -367,7 +367,7 @@
                     <!-- Mock server response below for demonstration -->
 
                     <!-- Story: SPI-835 "Design System Foundation" (Depth 1) -->
-                    <div class="issue-row bg-neutral-900 border-l-2 border-neutral-700 rounded-lg p-3 pl-4 hover:border-l-brand-400 transition-colors depth-1"
+                    <div class="issue-row bg-neutral-900 border-l-4 border-blue-500 rounded-lg p-3 pl-4 hover:border-l-blue-400 transition-colors depth-1"
                          data-issue-id="SPI-835"
                          data-depth="1">
                         <div class="flex items-start gap-3">
@@ -403,7 +403,7 @@
                     </div>
 
                     <!-- Story: SPI-836 "Layout Pattern & Navigation" (Depth 1) -->
-                    <div class="issue-row bg-neutral-900 border-l-2 border-neutral-700 rounded-lg p-3 pl-4 hover:border-l-brand-400 transition-colors depth-1"
+                    <div class="issue-row bg-neutral-900 border-l-4 border-blue-500 rounded-lg p-3 pl-4 hover:border-l-blue-400 transition-colors depth-1"
                          data-issue-id="SPI-836"
                          data-depth="1">
                         <div class="flex items-start gap-3">
@@ -429,7 +429,7 @@
                     </div>
 
                     <!-- Story: SPI-837 "Home Page UX" (Depth 1) -->
-                    <div class="issue-row bg-neutral-900 border-l-2 border-neutral-700 rounded-lg p-3 pl-4 hover:border-l-brand-400 transition-colors depth-1"
+                    <div class="issue-row bg-neutral-900 border-l-4 border-blue-500 rounded-lg p-3 pl-4 hover:border-l-blue-400 transition-colors depth-1"
                          data-issue-id="SPI-837"
                          data-depth="1">
                         <div class="flex items-start gap-3">
@@ -456,7 +456,7 @@
 
                     <!-- Story: SPI-838 "Issue List UX" (Depth 1) - WITH SUBTASK EXPANSION -->
                     <div class="issue-group">
-                        <div class="issue-row bg-neutral-900 border-l-2 border-neutral-700 rounded-lg p-3 pl-4 hover:border-l-brand-400 transition-colors depth-1"
+                        <div class="issue-row bg-neutral-900 border-l-4 border-blue-500 rounded-lg p-3 pl-4 hover:border-l-blue-400 transition-colors depth-1"
                              data-issue-id="SPI-838"
                              data-depth="1">
                             <div class="flex items-start gap-3">
@@ -501,7 +501,7 @@
                             <!-- Mock subtasks for demonstration -->
 
                             <!-- Subtask: "Hierarchical display pattern" (Depth 2) -->
-                            <div class="issue-row bg-neutral-800 border-l-2 border-neutral-600 rounded p-2 pl-3 depth-2"
+                            <div class="issue-row bg-neutral-800 border-l-4 border-teal-500 rounded p-2 pl-3 depth-2"
                                  data-issue-id="SPI-838-1"
                                  data-depth="2">
                                 <div class="flex items-center gap-2">
@@ -516,7 +516,7 @@
                             </div>
 
                             <!-- Subtask: "HTMX expansion behavior" (Depth 2) -->
-                            <div class="issue-row bg-neutral-800 border-l-2 border-neutral-600 rounded p-2 pl-3 depth-2"
+                            <div class="issue-row bg-neutral-800 border-l-4 border-teal-500 rounded p-2 pl-3 depth-2"
                                  data-issue-id="SPI-838-2"
                                  data-depth="2">
                                 <div class="flex items-center gap-2">
@@ -531,7 +531,7 @@
                             </div>
 
                             <!-- Subtask: "Documentation updates" (Depth 2) -->
-                            <div class="issue-row bg-neutral-800 border-l-2 border-neutral-600 rounded p-2 pl-3 depth-2"
+                            <div class="issue-row bg-neutral-800 border-l-4 border-teal-500 rounded p-2 pl-3 depth-2"
                                  data-issue-id="SPI-838-3"
                                  data-depth="2">
                                 <div class="flex items-center gap-2">
@@ -551,7 +551,7 @@
 
             <!-- Standalone Story: SPI-700 "Migrate to Official MCP SDK" (No Parent) -->
             <div class="issue-group">
-                <div class="issue-row bg-neutral-900 border border-neutral-800 rounded-lg p-4 hover:border-brand-400 transition-colors"
+                <div class="issue-row bg-neutral-900 border-l-4 border-blue-500 rounded-lg p-4 hover:border-l-blue-400 transition-colors"
                      data-issue-id="SPI-700"
                      data-depth="0">
                     <div class="flex items-start gap-3">
@@ -684,7 +684,7 @@
          * 3. Server Response Structure:
          *    Server should return HTML fragments matching the structure:
          *
-         *    <div class="issue-row bg-neutral-900 border-l-2 border-neutral-700 rounded-lg p-3 pl-4 depth-1">
+         *    <div class="issue-row bg-neutral-900 border-l-4 border-blue-500 rounded-lg p-3 pl-4 depth-1">
          *      <div class="flex items-start gap-3">
          *        <!-- Expansion button if has children -->
          *        <button hx-get="/api/issues/{id}/children" ...>
@@ -696,10 +696,10 @@
          *      </div>
          *    </div>
          *
-         * 4. Depth Styling:
-         *    - Depth 0 (Epic): No left padding, full border
-         *    - Depth 1 (Story): ml-4 md:ml-8 (1rem/2rem), border-l-2
-         *    - Depth 2 (Subtask): Additional ml-4 md:ml-8, border-l-2 lighter color
+         * 4. Depth Styling (Color-Coded Borders - Design System Pattern):
+         *    - Depth 0 (Epic): border-l-4 border-orange-500 (🟠 Orange)
+         *    - Depth 1 (Story): ml-4 md:ml-8 (1rem/2rem), border-l-4 border-blue-500 (🔵 Blue)
+         *    - Depth 2 (Subtask): Additional ml-4 md:ml-8, border-l-4 border-teal-500 (🟢 Teal)
          *
          * 5. Accessibility:
          *    - aria-expanded updates on button click via hyperscript
