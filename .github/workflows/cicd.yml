@@ -1043,23 +1043,15 @@ jobs:
           echo "📝 Capturing changelog from CHANGELOG.md..."
 
           # Verify file exists before capture
-          if [ ! -f "CHANGELOG.md" ]; then
-            echo "❌ ERROR: CHANGELOG.md not found after git-cliff generation!"
-            exit 1
-          fi
+          [ -f "CHANGELOG.md" ] || { echo "❌ ERROR: CHANGELOG.md not generated"; exit 1; }
 
           echo "✅ CHANGELOG.md found, capturing content..."
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          cat CHANGELOG.md >> $GITHUB_OUTPUT
+          cat CHANGELOG.md >> $GITHUB_OUTPUT || { echo "❌ ERROR: Failed to read CHANGELOG.md"; exit 1; }
           echo "EOF" >> $GITHUB_OUTPUT
 
           echo "🗑️ Deleting CHANGELOG.md to prevent git commit..."
-          rm CHANGELOG.md
-
-          if [ $? -ne 0 ]; then
-            echo "❌ ERROR: Failed to delete CHANGELOG.md!"
-            exit 1
-          fi
+          rm CHANGELOG.md || { echo "❌ ERROR: Failed to delete CHANGELOG.md"; exit 1; }
 
           echo "✅ Changelog captured and file cleaned up successfully"
 

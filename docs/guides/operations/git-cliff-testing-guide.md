@@ -13,9 +13,18 @@ last_updated: 2025-10-31
 
 ## Overview
 
-This guide provides a comprehensive 14-test validation suite for git-cliff integration. Tests are organized into four phases: local configuration, CI integration, production validation, and regression testing.
+This guide provides comprehensive validation for git-cliff integration at two levels:
 
-**Test Status (as of 2025-10-31)**:
+1. **Automated Testing** (SPI-888): Continuous validation via `scripts/test-cliff-patterns.sh`
+2. **Manual Validation** (SPI-870): 14-test suite for local, CI, and production environments
+
+**Automated Test Status (as of 2025-10-31)**:
+- ✅ 29/29 automated tests passing
+- ⚡ <2 second execution time
+- 🔄 Integrated into CI/CD pipeline
+- 🎯 Validates regex patterns, categorization, filtering, and edge cases
+
+**Manual Test Status (as of 2025-10-31)**:
 - ✅ 8/14 tests completed during local validation (SPI-870)
 - ⚠️ 2 minor non-blocking issues identified
 - ⏭️ 6 tests deferred to post-merge validation
@@ -40,6 +49,440 @@ cargo install git-cliff
 git-cliff --version
 # Expected: git-cliff 2.x.x
 ```
+
+---
+
+## Automated Testing (SPI-888)
+
+### Overview
+
+The automated test suite (`scripts/test-cliff-patterns.sh`) validates cliff.toml configuration against known commit patterns. This prevents regex bugs and configuration drift through continuous validation.
+
+**Key Features**:
+- 29 comprehensive test cases across 9 categories
+- Temporary git repository (no side effects)
+- Fast execution (<2 seconds)
+- CI/CD integration
+- Detailed failure diagnostics
+
+### Quick Start
+
+**Run Automated Tests**:
+```bash
+cd /Users/jburbridge/Projects/cycletime
+./scripts/test-cliff-patterns.sh
+```
+
+**Expected Output**:
+```
+==========================================
+git-cliff Configuration Validation Tests
+==========================================
+
+ℹ Checking prerequisites...
+✅ Prerequisites verified
+
+ℹ Setting up temporary test repository...
+✅ Test repository created at /tmp/tmp.XXXXXXXX
+
+ℹ Testing conventional commit scope preservation...
+✅ Test #1: Scope ui should be preserved
+✅ Test #2: Scope mcp should be preserved
+✅ Test #3: Scope api should be preserved
+
+[... 26 more tests ...]
+
+==========================================
+Test Summary
+==========================================
+Total tests run: 29
+✅ Tests passed: 29
+
+✅ All tests passed! cliff.toml configuration is valid
+```
+
+### Test Categories
+
+#### Category 1: Scope Preservation (3 tests)
+
+Validates that conventional commit scopes are preserved in output as bold markdown.
+
+**Test Commits**:
+```bash
+feat(ui): add button component
+fix(mcp): resolve connection error
+docs(api): update endpoint documentation
+```
+
+**Validation**:
+- Scopes appear as `**ui**:`, `**mcp**:`, `**api**:`
+- Parentheses from commit message removed (git-cliff processing)
+- Scope text preserved for categorization
+
+**Failure Symptom**: Missing `**scope**:` in output indicates regex pattern issue in cliff.toml line 60.
+
+---
+
+#### Category 2: Gitmoji Removal (5 tests)
+
+Validates that gitmoji codes (`:emoji:`) are stripped from commit messages while preserving content.
+
+**Test Commits**:
+```bash
+feat(ui): :sparkles: add new feature
+:bug: fix(mcp): resolve error
+docs(api): :memo: update docs
+```
+
+**Validation**:
+- `:sparkles:`, `:bug:`, `:memo:` removed from output
+- Commit descriptions preserved: "Add new feature", "Resolve error"
+- Note: `upper_first` filter capitalizes first letter
+
+**Failure Symptom**: Gitmoji codes appearing in changelog indicates preprocessor failure (cliff.toml line 60).
+
+---
+
+#### Category 3: Breaking Change Detection (4 tests)
+
+Validates all three breaking change patterns are detected and categorized.
+
+**Test Commits**:
+```bash
+feat(api)!: remove deprecated endpoint              # Pattern 1: Exclamation mark
+feat(api): change response format                   # Pattern 2: Footer
+BREAKING CHANGE: API response structure changed
+feat!: major API overhaul                           # Pattern 3: Type-level exclamation
+```
+
+**Validation**:
+- All three appear in "🚨 BREAKING CHANGES" section
+- Breaking changes prioritized at top of changelog
+- Both inline (`!`) and footer (`BREAKING CHANGE:`) formats supported
+
+**Failure Symptom**: Missing "🚨 BREAKING CHANGES" section indicates commit_parsers misconfiguration (cliff.toml lines 87-89).
+
+---
+
+#### Category 4: Commit Type Filtering (4 tests)
+
+Validates that chore and style commits are filtered out while features and fixes appear.
+
+**Test Commits**:
+```bash
+chore: update dependencies    # Should be filtered
+style: fix formatting         # Should be filtered
+feat(ui): add feature        # Should appear
+fix(api): resolve bug        # Should appear
+```
+
+**Validation**:
+- "update dependencies" and "fix formatting" NOT in output
+- "Add feature" and "Resolve bug" appear
+- Primary `chore:` and `style:` commits excluded
+
+**Failure Symptom**: Chore/style commits appearing indicates `skip = true` not applied (cliff.toml lines 133-140).
+
+---
+
+#### Category 5: Scope-Based Categorization (5 tests)
+
+Validates that scopes map to correct category sections in output.
+
+**Test Commits**:
+```bash
+feat(ui): add user interface feature
+feat(dashboard): add dashboard widget
+feat(mcp): add MCP tool
+feat(api): add API endpoint
+feat: add generic feature
+```
+
+**Validation**:
+- Each scope creates specific section: "✨ User Interface", "✨ Dashboard", "✨ MCP Integration", "✨ API"
+- Generic feat creates "✨ Features" section
+- Category order matches cliff.toml configuration
+
+**Failure Symptom**: Incorrect categorization indicates commit_parsers pattern mismatch (cliff.toml lines 92-97).
+
+---
+
+#### Category 6: Dependency Grouping (2 tests)
+
+Validates that `build(deps):` commits group under dedicated section.
+
+**Test Commits**:
+```bash
+build(deps): bump kotlin from 1.9.0 to 2.0.0
+build(deps): bump ktor from 3.0.0 to 3.1.0
+```
+
+**Validation**:
+- Both appear under "📦 Dependencies" section
+- Automatic `deps` scope assigned
+- Separate from feature/fix sections
+
+**Failure Symptom**: Dependencies appearing in "📦 Build System" indicates group order issue (cliff.toml line 123 must be before line 127).
+
+---
+
+#### Category 7: Edge Cases (3 tests)
+
+Validates handling of special characters, missing scopes, and long scope names.
+
+**Test Commits**:
+```bash
+feat(ui): add button (with icon)           # Parentheses in description
+feat: no scope feature                     # Missing scope
+feat(very-long-scope-name): add feature    # Long scope
+```
+
+**Validation**:
+- Special characters don't break parsing
+- Missing scopes handled gracefully
+- Long scopes don't truncate
+
+**Failure Symptom**: Parse errors or malformed output indicates regex pattern issues.
+
+---
+
+#### Category 8: Multi-line Commits (1 test)
+
+Validates handling of commits with bodies and multiple footers.
+
+**Test Commit**:
+```bash
+feat(api): add new endpoint
+
+This is a detailed description of the feature.
+It spans multiple lines.
+
+Co-authored-by: Test User <test@example.com>
+```
+
+**Validation**:
+- Title line extracted correctly
+- Body and footers don't interfere with categorization
+
+**Failure Symptom**: Missing commits or malformed descriptions indicates multiline parsing issue.
+
+---
+
+#### Category 9: PR and Issue Linking (2 tests)
+
+Validates that postprocessors convert references to clickable links.
+
+**Test Commits**:
+```bash
+feat(ui): add feature (#123)
+fix(api): resolve bug (SPI-456)
+```
+
+**Validation**:
+- PR reference `(#123)` becomes `([#123](https://github.com/...)))`
+- Linear reference `(SPI-456)` becomes `([SPI-456](https://linear.app/...)))`
+
+**Failure Symptom**: Raw text instead of links indicates postprocessor failure (cliff.toml lines 44-47).
+
+---
+
+### Test Architecture
+
+**Design Principles**:
+
+1. **Isolation**: Temporary git repository created per run (no side effects)
+2. **Fast**: <2 second execution via `--allow-empty` commits (no file I/O)
+3. **Comprehensive**: 29 tests cover all cliff.toml patterns
+4. **Diagnostic**: Detailed failure messages with expected vs actual output
+5. **Maintainable**: Self-documenting test functions with clear descriptions
+
+**Implementation Flow**:
+
+```
+1. Create temporary git repository
+2. Configure git user (required for commits)
+3. Create test commits with known patterns
+4. Run git-cliff with project configuration
+5. Validate output against expectations
+6. Cleanup temporary directory
+```
+
+**Key Functions**:
+
+- `assert_contains()`: Validates pattern present in output
+- `assert_not_contains()`: Validates pattern absent from output
+- `assert_section_exists()`: Validates section header present
+
+### CI Integration
+
+The test script is integrated into the CI/CD pipeline to catch configuration regressions.
+
+**GitHub Actions Configuration**:
+
+```yaml
+# In .github/workflows/cicd.yml
+
+- name: Validate git-cliff Configuration
+  run: ./scripts/test-cliff-patterns.sh
+  # Runs on: PRs modifying cliff.toml or test script
+  # Blocks merge: Test failure prevents PR approval
+```
+
+**Trigger Conditions**:
+
+1. **PR modifies cliff.toml**: Validates configuration changes before merge
+2. **PR modifies test script**: Validates test logic changes
+3. **Pre-release validation**: Runs before generating release notes
+
+**Failure Handling**:
+
+When tests fail in CI:
+1. PR blocked from merge
+2. Detailed error message shows which pattern failed
+3. Expected vs actual output displayed
+4. Link to troubleshooting section
+
+### Troubleshooting Automated Tests
+
+#### Test Failure: "Expected pattern not found"
+
+**Symptom**:
+```
+❌ Test #5 FAILED: Gitmoji :sparkles: should be removed
+❌ Expected pattern: :sparkles:
+❌ Output was:
+  [... changelog output showing :sparkles: ...]
+```
+
+**Cause**: Preprocessor regex pattern not matching gitmoji format
+
+**Solution**: Check cliff.toml line 60:
+```toml
+# Current (correct):
+{ pattern = ':\w+:', replace = "" }
+
+# If failing, verify pattern matches your gitmoji format
+```
+
+---
+
+#### Test Failure: "Section not found"
+
+**Symptom**:
+```
+❌ Test #9 FAILED: Breaking changes section should exist
+❌ Expected section: ### 🚨 BREAKING CHANGES
+❌ Sections found:
+  ### ✨ Features
+  ### 🐛 Bug Fixes
+```
+
+**Cause**: Breaking change commit_parsers not matching commit format
+
+**Solution**: Check cliff.toml lines 87-89:
+```toml
+{ message = "^\\w+\\(.*\\)!:", group = "🚨 BREAKING CHANGES" },
+{ message = "^\\w+!:", group = "🚨 BREAKING CHANGES" },
+{ message = "^BREAKING[ -]CHANGE:", group = "🚨 BREAKING CHANGES" },
+```
+
+Ensure regex patterns match your commit convention.
+
+---
+
+#### Test Failure: "git-cliff not installed"
+
+**Symptom**:
+```
+❌ ERROR: git-cliff is not installed
+ℹ Install with: cargo install git-cliff
+```
+
+**Solution**:
+```bash
+# macOS
+brew install git-cliff
+
+# Cross-platform
+cargo install git-cliff
+
+# Verify
+git-cliff --version
+```
+
+---
+
+#### Test Failure: Infrastructure Error
+
+**Symptom**:
+```
+❌ ERROR: cliff.toml not found at /path/to/cliff.toml
+```
+
+**Cause**: Script run from wrong directory
+
+**Solution**:
+```bash
+# Always run from project root
+cd /Users/jburbridge/Projects/cycletime
+./scripts/test-cliff-patterns.sh
+```
+
+---
+
+### Maintenance Strategy
+
+**When to Update Tests**:
+
+1. **cliff.toml Configuration Changes**: Update test expectations to match new patterns
+2. **New Commit Types**: Add test cases for new conventional commit types
+3. **New Scopes**: Add categorization tests for new scope definitions
+4. **Regex Pattern Changes**: Update test patterns to match new regex
+
+**Test Maintenance Checklist**:
+
+- [ ] Update tests in same commit as cliff.toml changes
+- [ ] Document why test expectations changed
+- [ ] Run tests locally before pushing
+- [ ] Verify all 29 tests still pass
+- [ ] Update test descriptions if validation logic changed
+
+**Version Control**:
+
+Tests and configuration are versioned together:
+```bash
+# Example commit for configuration change
+git add cliff.toml scripts/test-cliff-patterns.sh
+git commit -m "build(cliff): update breaking change detection pattern
+
+- Update regex to support new format
+- Update test expectations to match
+- All 29 tests passing"
+```
+
+**Periodic Review**:
+
+- **Quarterly**: Review test coverage against cliff.toml evolution
+- **Post-release**: Verify automated tests caught any manual validation issues
+- **On failure**: Add regression test for any bugs discovered in production
+
+**Self-Documenting Tests**:
+
+Each test function includes documentation:
+```bash
+# Test Category 1: Conventional Commit Scope Preservation
+test_scope_preservation() {
+    log_info "Testing conventional commit scope preservation..."
+
+    # Create test commits
+    # Run git-cliff
+    # Validate expectations
+}
+```
+
+This makes maintenance easier when configuration changes require test updates.
+
+---
 
 ## Phase 1: Local Configuration Testing
 
