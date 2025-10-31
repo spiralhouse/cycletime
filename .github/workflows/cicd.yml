@@ -1027,27 +1027,46 @@ jobs:
           fetch-depth: 0
           fetch-tags: true  # Explicitly fetch tags for changelog generation
 
-      - name: Generate changelog
-        id: changelog
+      - name: Generate changelog with git-cliff
+        id: git-cliff
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --verbose --latest --strip header
+        env:
+          OUTPUT: CHANGELOG.md
+          GITHUB_REPO: ${{ github.repository }}
+
+      - name: Capture and cleanup changelog
+        id: capture
         run: |
-          # Get commits since last tag
-          last_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [ -z "$last_tag" ]; then
-            echo "📝 No previous tags found, using all commits"
-            commits=$(git log --pretty=format:"- %s (%h)" HEAD | head -20)
-          else
-            echo "📝 Generating changelog since $last_tag"
-            commits=$(git log --pretty=format:"- %s (%h)" ${last_tag}..HEAD)
-          fi
-          
-          # Format changelog with categories
-          changelog="## What's Changed"$'\n'
-          changelog+="$commits"$'\n'$'\n'
-          changelog+="**Full Changelog**: https://github.com/${{ github.repository }}/compare/${last_tag}...v${{ needs.version.outputs.version }}"
-          
+          echo "📝 Capturing changelog from CHANGELOG.md..."
+
+          # Verify file exists before capture
+          [ -f "CHANGELOG.md" ] || { echo "❌ ERROR: CHANGELOG.md not generated"; exit 1; }
+
+          echo "✅ CHANGELOG.md found, capturing content..."
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$changelog" >> $GITHUB_OUTPUT
+          cat CHANGELOG.md >> $GITHUB_OUTPUT || { echo "❌ ERROR: Failed to read CHANGELOG.md"; exit 1; }
           echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "🗑️ Deleting CHANGELOG.md to prevent git commit..."
+          rm CHANGELOG.md || { echo "❌ ERROR: Failed to delete CHANGELOG.md"; exit 1; }
+
+          echo "✅ Changelog captured and file cleaned up successfully"
+
+      - name: Verify no changelog file remains
+        run: |
+          echo "🔍 Verifying CHANGELOG.md was properly deleted..."
+
+          if [ -f "CHANGELOG.md" ]; then
+            echo "❌ ERROR: CHANGELOG.md still exists after cleanup!"
+            echo "This file must NOT be committed to git history."
+            exit 1
+          fi
+
+          echo "✅ Confirmed: No CHANGELOG.md file in working directory"
+          echo "✅ Safe to proceed with release creation"
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -1061,11 +1080,11 @@ jobs:
         run: |
           version="${{ needs.version.outputs.version }}"
           echo "🚀 Creating release for version: $version"
-          
+
           # Create release with artifacts
           gh release create "v$version" \
             --title "Release $version" \
-            --notes "${{ steps.changelog.outputs.changelog }}" \
+            --notes "${{ steps.capture.outputs.changelog }}" \
             --target "${{ github.sha }}" \
             build-artifacts/distributions/* \
             build-artifacts/libs/*

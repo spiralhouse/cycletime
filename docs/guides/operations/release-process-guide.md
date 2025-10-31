@@ -2,11 +2,11 @@
 title: "Release Process Guide"
 type: guide
 domain: [cicd, operations, release]
-description: "Step-by-step release process with automatic versioning and continuous delivery"
+description: "Step-by-step release process with automatic versioning, git-cliff release notes, and continuous delivery"
 dependencies: [../../concepts/cicd/cicd-pipeline-concept.md]
-related: [deployment-to-staging.md, production-deployment.md, ../../reference/cicd/container-tagging-spec.md]
-keywords: [release, versioning, semver, deployment, guide]
-last_updated: 2025-10-19
+related: [deployment-to-staging.md, production-deployment.md, ../../reference/cicd/container-tagging-spec.md, ../../examples/cicd/git-cliff-configuration-example.md, ./git-cliff-testing-guide.md]
+keywords: [release, versioning, semver, deployment, guide, git-cliff, changelog, release-notes]
+last_updated: 2025-10-31
 ---
 
 
@@ -136,6 +136,187 @@ git commit -m "docs: update installation guide"
 git commit -m "chore: update dependencies"
 # Version stays the same, only build metadata changes
 ```
+
+## Release Notes Generation with git-cliff
+
+### Overview
+
+CycleTime uses [git-cliff](https://git-cliff.org/) for automated, icon-based release note generation from conventional commits. Release notes are generated during the CI/CD release job and injected directly into GitHub Releases.
+
+### Key Features
+
+- **Icon-based categorization**: 12 commit type categories with visual hierarchy
+- **Automatic linking**: PR numbers and Linear issues converted to clickable links
+- **Dependency grouping**: `build(deps)` commits grouped and highlighted separately
+- **Breaking change highlighting**: `feat!`/`fix!`/`BREAKING CHANGE` detection
+- **Scope-based sub-grouping**: UI, Dashboard, MCP, API subsections
+
+### Configuration
+
+Release notes are configured in `cliff.toml` at repository root. The configuration defines:
+
+- **Commit parsers**: Pattern matching for categorization
+- **Icon mapping**: Visual indicators for each category
+- **Postprocessors**: Link generation for PRs and Linear issues
+- **Filtering rules**: Exclude chore/style commits
+
+See [git-cliff Configuration Example](../../examples/cicd/git-cliff-configuration-example.md) for complete configuration reference.
+
+### Commit Type Categories
+
+| Icon | Category | Commit Type | Priority |
+|------|----------|-------------|----------|
+| 🚨 | BREAKING CHANGES | `feat!:`, `fix!:`, `BREAKING CHANGE:` | Highest |
+| ✨ | Features | `feat:`, `feat(scope):` | High |
+| 🐛 | Bug Fixes | `fix:`, `fix(scope):` | High |
+| ⚡ | Performance | `perf:` | Medium |
+| 🔒 | Security | `security:` | High |
+| 📚 | Documentation | `docs:` | Medium |
+| ♻️ | Refactoring | `refactor:` | Low |
+| 🧪 | Testing | `test:` | Low |
+| 📦 | Build/Dependencies | `build:`, `build(deps):` | Low |
+| ⚙️ | CI/CD | `ci:` | Low |
+| 📝 | Other | Unconventional commits | Lowest |
+
+**Filtered Out** (never shown): `chore:`, `style:`
+
+### CI/CD Integration
+
+The GitHub Actions release workflow (`.github/workflows/cicd.yml`) automatically:
+
+1. **Generates changelog** with `git-cliff-action@v4`
+2. **Captures output** to `GITHUB_OUTPUT` (multiline heredoc)
+3. **Deletes temporary file** (capture-cleanup-verify pattern)
+4. **Verifies no file remains** (safety net)
+5. **Injects into GitHub Release** body
+
+**Critical Safety**: CHANGELOG.md is NEVER committed to git. It exists only temporarily during release job execution.
+
+**Workflow Steps**:
+```yaml
+# Generate changelog
+- name: Generate changelog with git-cliff
+  uses: orhun/git-cliff-action@v4
+  with:
+    config: cliff.toml
+    args: --verbose --latest --strip header
+  env:
+    OUTPUT: CHANGELOG.md  # Temporary file only
+
+# Capture and cleanup
+- name: Capture changelog for release
+  run: |
+    cat CHANGELOG.md >> $GITHUB_OUTPUT
+    rm CHANGELOG.md  # Delete immediately
+```
+
+### Testing Configuration
+
+**Before modifying cliff.toml**, run local validation:
+
+```bash
+# Test current configuration
+git-cliff --config cliff.toml --latest --strip header
+
+# Verify links generated
+git-cliff --config cliff.toml --latest --strip header | grep -E "\[#[0-9]+\]|\[SPI-[0-9]+\]"
+
+# Check performance
+time git-cliff --config cliff.toml --latest --strip header > /dev/null
+# Expected: < 1 second (actual: 68ms in testing)
+```
+
+See [git-cliff Testing Guide](./git-cliff-testing-guide.md) for comprehensive validation procedures.
+
+### Before/After Comparison
+
+**Before git-cliff** (basic changelog):
+```markdown
+## What's Changed
+- feat(ui): Implement hierarchical issue list (#171)
+- fix(mcp): Resolve HTTP 406 error (#152)
+- build(deps): Bump kotest from 6.0.3 to 6.0.4 (#162)
+
+Full Changelog: https://github.com/spiralhouse/cycletime/compare/v0.2.0...v0.3.0
+```
+
+**After git-cliff** (formatted release notes):
+```markdown
+## [0.3.0] - 2025-10-31
+
+### ✨ User Interface
+- **ui**: Implement hierarchical issue list mockup with HTMX expansion ([SPI-838]) ([#171])
+
+### 🐛 Bug Fixes - MCP
+- **mcp**: Resolve HTTP 406 error on GET /mcp SSE endpoint ([SPI-766]) ([#152])
+
+### 📦 Dependencies
+- **deps**: Bump kotest from 6.0.3 to 6.0.4 ([#162])
+
+<!-- generated by git-cliff -->
+```
+
+**Improvements**:
+- ✅ Categorized by type with visual hierarchy
+- ✅ Scope-based sub-grouping (UI, MCP, Dashboard)
+- ✅ PR and Linear issue links
+- ✅ Breaking changes highlighted first
+- ✅ Dependencies in separate section
+- ✅ Professional formatting
+
+### Customization
+
+To modify categorization:
+
+1. **Edit cliff.toml** commit_parsers section
+2. **Test locally**: `git-cliff --config cliff.toml --latest`
+3. **Commit changes**: `git commit -m "chore: update git-cliff configuration"`
+4. **Next release** will use updated configuration
+
+**Common Customizations**:
+
+**Add new scope group**:
+```toml
+[[commit_parsers]]
+message = "^feat\\(graphql\\)"
+group = "✨ GraphQL API"
+
+# Must appear BEFORE generic feature parser
+[[commit_parsers]]
+message = "^feat"
+group = "✨ Features"
+```
+
+**Change icon**:
+```toml
+[[commit_parsers]]
+message = "^feat"
+group = "🎉 New Features"  # Changed from ✨
+```
+
+**Filter additional type**:
+```toml
+[[commit_parsers]]
+message = "^ci"
+skip = true
+```
+
+See [configuration example](../../examples/cicd/git-cliff-configuration-example.md) for more customization scenarios.
+
+### Performance
+
+**Measured Performance** (SPI-870 testing):
+- Execution time: 68 milliseconds
+- Target: < 10 seconds
+- Achievement: 147x faster than target
+- CI/CD impact: Negligible (< 0.1 second overhead)
+
+### References
+
+- [git-cliff Documentation](https://git-cliff.org/)
+- [Conventional Commits Specification](https://www.conventionalcommits.org/)
+- [git-cliff Configuration Example](../../examples/cicd/git-cliff-configuration-example.md)
+- [git-cliff Testing Guide](./git-cliff-testing-guide.md)
 
 ## Rollback Procedures
 
