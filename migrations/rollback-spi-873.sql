@@ -1,7 +1,7 @@
 -- Rollback Migration for SPI-873: Database Schema Migration for Soft-Deletion
 --
 -- Purpose: Safely revert schema changes if needed during deployment
--- Database: H2 (PostgreSQL compatibility mode)
+-- Database: H2 in PostgreSQL compatibility mode (migrated from SQLite in SPI-439)
 --
 -- IMPORTANT: This script is idempotent - safe to run multiple times
 -- Execute this script to revert changes if needed before data population begins
