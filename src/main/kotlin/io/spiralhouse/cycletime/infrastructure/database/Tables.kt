@@ -13,8 +13,13 @@ object ProjectsTable : IdTable<String>("projects") {
     val status = varchar("status", 50).default("active")
     val createdAt = timestamp("created_at")
     val updatedAt = timestamp("updated_at")
+    val deletedAt = timestamp("deleted_at").nullable()
 
     override val primaryKey = PrimaryKey(id)
+
+    init {
+        index(false, deletedAt, id)
+    }
 }
 
 object IssuesTable : IdTable<String>("issues") {
@@ -30,6 +35,7 @@ object IssuesTable : IdTable<String>("issues") {
     val assigneeId = varchar("assignee_id", 100).nullable()
     val createdAt = timestamp("created_at")
     val updatedAt = timestamp("updated_at")
+    val deletedAt = timestamp("deleted_at").nullable()
 
     override val primaryKey = PrimaryKey(id)
 
@@ -39,6 +45,7 @@ object IssuesTable : IdTable<String>("issues") {
         index(false, status)
         index(false, assigneeId)
         index(false, projectId, type, status)
+        index(false, deletedAt, parentId)
     }
 }
 
@@ -96,12 +103,14 @@ object WorkflowsTable : IdTable<String>("workflows") {
     val allowedStatuses = text("allowed_statuses") // JSON array of status names
     val createdAt = timestamp("created_at")
     val updatedAt = timestamp("updated_at")
+    val deletedAt = timestamp("deleted_at").nullable()
 
     override val primaryKey = PrimaryKey(id)
 
     init {
         index(false, name)
         index(false, initialStatus)
+        index(false, deletedAt, id)
     }
 }
 

@@ -37,7 +37,7 @@ Rather than focusing on individual coding tasks, CycleTime CE serves as a data a
 context provider for Claude Code to make intelligent project management decisions.
 
 **Status**: Kotlin/JVM implementation with Domain-Driven Design architecture.
-Currently using H2 with Exposed ORM, migrating to H2 database in SPI-439.
+Currently using H2 with Exposed ORM (migrated from SQLite in SPI-439).
 
 ## Technology Stack
 
@@ -45,7 +45,7 @@ Currently using H2 with Exposed ORM, migrating to H2 database in SPI-439.
 - **Kotlin/JVM 21**: Primary implementation language
 - **Ktor 3.3.1**: Asynchronous web framework for MCP server with native DI
 - **Exposed ORM 0.61.0**: Type-safe SQL DSL for database operations
-- **H2**: Current embedded database (H2 migration planned in SPI-439)
+- **H2**: Current embedded database (migrated from SQLite in SPI-439, completed)
 - **Ktor Native DI**: Dependency injection using `ktor-server-di` plugin (completed in SPI-458)
 - **GraalVM**: Native image compilation support
 

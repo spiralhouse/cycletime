@@ -112,6 +112,13 @@ class DatabaseConfig(
                     // Use createMissingTablesAndColumns to avoid conflicts during tests
                     // This gracefully handles existing tables and indexes
                     // Tables are created in dependency order from the registry
+                    //
+                    // TODO: Consider Flyway migration when soft-delete logic becomes complex (SPI-874+)
+                    // For simple column additions (SPI-873), createMissingTablesAndColumns() is
+                    // idempotent and sufficient. When repository logic requires complex migrations
+                    // (data transformations, multi-step schema changes), evaluate Flyway/Liquibase.
+                    // See: https://github.com/JetBrains/Exposed/wiki/Migration-Guide
+                    @Suppress("DEPRECATION") // Acknowledged: Will migrate to Flyway when complexity warrants it
                     SchemaUtils.createMissingTablesAndColumns(
                         *TableRegistry.ALL_TABLES.toTypedArray()
                     )
