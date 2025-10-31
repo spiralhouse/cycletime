@@ -69,7 +69,6 @@ The automated test suite (`scripts/test-cliff-patterns.sh`) validates cliff.toml
 
 **Run Automated Tests**:
 ```bash
-cd /Users/jburbridge/Projects/cycletime
 ./scripts/test-cliff-patterns.sh
 ```
 
@@ -424,7 +423,6 @@ git-cliff --version
 **Solution**:
 ```bash
 # Always run from project root
-cd /Users/jburbridge/Projects/cycletime
 ./scripts/test-cliff-patterns.sh
 ```
 
@@ -492,7 +490,6 @@ This makes maintenance easier when configuration changes require test updates.
 
 **Command**:
 ```bash
-cd /Users/jburbridge/Projects/cycletime
 git-cliff --config cliff.toml --latest --strip header
 ```
 
