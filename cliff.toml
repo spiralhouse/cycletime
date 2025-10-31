@@ -56,8 +56,8 @@ filter_unconventional = false
 split_commits = false
 # Regex for preprocessing commit messages
 commit_preprocessors = [
-  # Remove gitmoji from commit messages
-  { pattern = '\s*\(?\w*\)?', replace = "" },
+  # Remove gitmoji from commit messages (specific pattern for emoji codes)
+  { pattern = ':\w+:', replace = "" },
 ]
 
 # Protect breaking changes by putting them at the top of the changelog
@@ -80,67 +80,69 @@ topo_order = false
 # Sort commits topologically
 sort_commits = "oldest"
 
-[git.commit_parsers]
-# === Priority: Breaking Changes ===
-# Breaking changes appear first regardless of type
-{ message = "^\\w+\\(.*\\)!:", group = "🚨 BREAKING CHANGES" },
-{ message = "^\\w+!:", group = "🚨 BREAKING CHANGES" },
-{ message = "^BREAKING[ -]CHANGE:", group = "🚨 BREAKING CHANGES" },
+# Commit parsers configuration
+commit_parsers = [
+  # === Priority: Breaking Changes ===
+  # Breaking changes appear first regardless of type
+  { message = "^\\w+\\(.*\\)!:", group = "🚨 BREAKING CHANGES" },
+  { message = "^\\w+!:", group = "🚨 BREAKING CHANGES" },
+  { message = "^BREAKING[ -]CHANGE:", group = "🚨 BREAKING CHANGES" },
 
-# === User-Facing Changes (Main Release Notes) ===
-# Features
-{ message = "^feat\\(ui\\)", group = "✨ User Interface" },
-{ message = "^feat\\(dashboard\\)", group = "✨ Dashboard" },
-{ message = "^feat\\(mcp\\)", group = "✨ MCP Integration" },
-{ message = "^feat\\(api\\)", group = "✨ API" },
-{ message = "^feat", group = "✨ Features" },
+  # === User-Facing Changes (Main Release Notes) ===
+  # Features
+  { message = "^feat\\(ui\\)", group = "✨ User Interface" },
+  { message = "^feat\\(dashboard\\)", group = "✨ Dashboard" },
+  { message = "^feat\\(mcp\\)", group = "✨ MCP Integration" },
+  { message = "^feat\\(api\\)", group = "✨ API" },
+  { message = "^feat", group = "✨ Features" },
 
-# Bug Fixes
-{ message = "^fix\\(mcp\\)", group = "🐛 Bug Fixes - MCP" },
-{ message = "^fix\\(ui\\)", group = "🐛 Bug Fixes - UI" },
-{ message = "^fix\\(cache\\)", group = "🐛 Bug Fixes - Cache" },
-{ message = "^fix", group = "🐛 Bug Fixes" },
+  # Bug Fixes
+  { message = "^fix\\(mcp\\)", group = "🐛 Bug Fixes - MCP" },
+  { message = "^fix\\(ui\\)", group = "🐛 Bug Fixes - UI" },
+  { message = "^fix\\(cache\\)", group = "🐛 Bug Fixes - Cache" },
+  { message = "^fix", group = "🐛 Bug Fixes" },
 
-# Performance
-{ message = "^perf", group = "⚡ Performance Improvements" },
+  # Performance
+  { message = "^perf", group = "⚡ Performance Improvements" },
 
-# Security
-{ message = "^security", group = "🔒 Security" },
+  # Security
+  { message = "^security", group = "🔒 Security" },
 
-# === Developer-Facing Changes ===
-# Documentation
-{ message = "^docs", group = "📚 Documentation" },
+  # === Developer-Facing Changes ===
+  # Documentation
+  { message = "^docs", group = "📚 Documentation" },
 
-# Refactoring
-{ message = "^refactor", group = "♻️ Code Refactoring" },
+  # Refactoring
+  { message = "^refactor", group = "♻️ Code Refactoring" },
 
-# Testing
-{ message = "^test", group = "🧪 Testing" },
+  # Testing
+  { message = "^test", group = "🧪 Testing" },
 
-# === Infrastructure Changes (Collapsed Section) ===
-# Build System (excluding dependency updates)
-{ message = "^build(?!\\(deps\\)).*", group = "📦 Build System" },
+  # === Dependency Updates (Always Collapsed) ===
+  # Group all dependency updates together (must be before general build)
+  { message = "^build\\(deps\\)", group = "📦 Dependencies", default_scope = "deps" },
 
-# CI/CD
-{ message = "^ci", group = "⚙️ Continuous Integration" },
+  # === Infrastructure Changes (Collapsed Section) ===
+  # Build System (general build commits, after deps)
+  { message = "^build", group = "📦 Build System" },
 
-# === Dependency Updates (Always Collapsed) ===
-# Group all dependency updates together
-{ message = "^build\\(deps\\)", group = "📦 Dependencies", default_scope = "deps" },
+  # CI/CD
+  { message = "^ci", group = "⚙️ Continuous Integration" },
 
-# === Maintenance (Filtered Out) ===
-# Chores - skip from release notes
-{ message = "^chore", skip = true },
+  # === Maintenance (Filtered Out) ===
+  # Chores - skip from release notes
+  { message = "^chore", skip = true },
 
-# Reverts
-{ message = "^revert", group = "⏪ Reverts" },
+  # Reverts
+  { message = "^revert", group = "⏪ Reverts" },
 
-# Style changes - skip from release notes
-{ message = "^style", skip = true },
+  # Style changes - skip from release notes
+  { message = "^style", skip = true },
 
-# === Catch-All ===
-# Any other commits
-{ message = ".*", group = "📝 Other Changes" },
+  # === Catch-All ===
+  # Any other commits
+  { message = ".*", group = "📝 Other Changes" },
+]
 
 [remote.github]
 # GitHub remote configuration for linking
