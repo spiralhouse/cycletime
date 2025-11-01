@@ -228,14 +228,14 @@ jobs:
             echo "📋 Latest tag after fetch: $latest_tag"
           fi
 
-          # Extract version using printSemVersion with forced execution
-          # Note: Even with --quiet, Gradle may output download progress on first run
-          # We need to filter for the actual version line (semantic version format)
-          version=$(./gradlew printSemVersion --quiet --no-configuration-cache --rerun-tasks | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' | tail -1)
+          # Extract clean semantic version using printCleanVersion task
+          # This task strips SNAPSHOT and build metadata suffixes (SPI-892)
+          # Use 'tail -1' to get only the last line (handles Gradle wrapper download output edge case)
+          version=$(./gradlew printCleanVersion --quiet --no-configuration-cache | tail -1)
 
-          # Fallback - use printVersion if printSemVersion fails
+          # Fallback - use printVersion if printCleanVersion fails
           if [[ -z "$version" ]]; then
-            echo "⚠️ printSemVersion failed, trying printVersion..."
+            echo "⚠️ printCleanVersion failed, trying printVersion..."
             version=$(./gradlew printVersion --quiet --no-configuration-cache --rerun-tasks | grep "^version:" | cut -d' ' -f2)
           fi
 
@@ -268,34 +268,29 @@ jobs:
               echo "is_release=true" >> $GITHUB_OUTPUT
               echo "should_tag=false" >> $GITHUB_OUTPUT  # Already tagged
             else
-              # Not tagged yet, but we're on main - might be a non-versioning commit
-              if [[ "$version" == *"-SNAPSHOT"* ]] || [[ "$version" == *"+"* ]]; then
-                echo "is_release=false" >> $GITHUB_OUTPUT
-                echo "should_tag=false" >> $GITHUB_OUTPUT
-              else
-                echo "is_release=true" >> $GITHUB_OUTPUT
-                echo "should_tag=true" >> $GITHUB_OUTPUT
-              fi
+              # Not tagged yet - printCleanVersion always returns clean X.Y.Z format
+              # Release determination is handled by commit message patterns (lines 136-149)
+              echo "is_release=true" >> $GITHUB_OUTPUT
+              echo "should_tag=true" >> $GITHUB_OUTPUT
             fi
           else
-            # For non-main branches, use original logic
-            if [[ "$version" == *"-SNAPSHOT"* ]] || [[ "$version" == *"+"* ]]; then
-              echo "is_release=false" >> $GITHUB_OUTPUT
-            else
-              echo "is_release=true" >> $GITHUB_OUTPUT
-            fi
+            # For non-main branches, always treat as release for artifact generation
+            # printCleanVersion ensures clean version format regardless of branch
+            echo "is_release=true" >> $GITHUB_OUTPUT
             echo "should_tag=false" >> $GITHUB_OUTPUT
           fi
 
-          # Validate version format (semantic versioning)
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
+          # Validate version format (clean semantic versioning only)
+          # printCleanVersion should only output X.Y.Z format (no suffixes)
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "❌ Invalid version format: $version"
-            echo "Expected semantic version format: MAJOR.MINOR.PATCH[-PRERELEASE][+BUILDMETADATA]"
+            echo "Expected clean semantic version format: MAJOR.MINOR.PATCH (no suffixes)"
+            echo "printCleanVersion task should have stripped SNAPSHOT and metadata"
             exit 1
           fi
 
           echo "📦 Version: $version"
-          echo "🚀 Is Release: $([ "$version" == *"-SNAPSHOT"* ] || [ "$version" == *"+"* ] && echo "No" || echo "Yes")"
+          echo "🚀 Is Release: Yes (printCleanVersion always produces clean versions)"
 
   # Compile job that runs first to build all code and test classes
   compile:
