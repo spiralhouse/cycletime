@@ -68,4 +68,56 @@ interface ProjectRepository {
      * @return true if the project exists, false otherwise
      */
     suspend fun exists(id: ProjectId): Boolean
+
+    /**
+     * Soft-deletes a project by setting deleted_at timestamp.
+     *
+     * **STUB IMPLEMENTATION**: Default implementation delegates to hard-delete
+     * until SPI-875 implements soft-deletion. Projects with children cascade
+     * the deletion to all child issues.
+     *
+     * @param id The project ID to soft-delete
+     * @throws ProjectNotFoundException if project does not exist
+     */
+    suspend fun softDelete(id: ProjectId) {
+        delete(id)  // Stub: Delegate to existing hard-delete
+    }
+
+    /**
+     * Restores a soft-deleted project by clearing deleted_at timestamp.
+     *
+     * **STUB IMPLEMENTATION**: Default implementation is a no-op until
+     * SPI-875 implements restoration logic.
+     *
+     * @param id The project ID to restore
+     * @throws ProjectNotFoundException if project does not exist
+     */
+    suspend fun restore(id: ProjectId) {
+        // Stub: No-op (not implemented until SPI-875)
+    }
+
+    /**
+     * Finds all soft-deleted projects.
+     *
+     * **STUB IMPLEMENTATION**: Default implementation returns empty list
+     * until SPI-875 implements soft-deletion tracking.
+     *
+     * @return List of deleted projects (empty until real implementation)
+     */
+    suspend fun findDeleted(): List<Project> {
+        return emptyList()  // Stub: No deleted items tracked yet
+    }
+
+    /**
+     * Finds a project by ID, including soft-deleted projects.
+     *
+     * **STUB IMPLEMENTATION**: Default implementation delegates to existing
+     * findById() until SPI-875 implements deleted_at filtering.
+     *
+     * @param id The project ID to find
+     * @return The project if found (including deleted), null otherwise
+     */
+    suspend fun findIncludingDeleted(id: ProjectId): Project? {
+        return findById(id)  // Stub: Delegate to existing findById
+    }
 }

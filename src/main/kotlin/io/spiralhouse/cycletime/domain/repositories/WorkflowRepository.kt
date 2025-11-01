@@ -74,4 +74,56 @@ interface WorkflowRepository {
      * @return true if the workflow exists, false otherwise
      */
     suspend fun existsById(id: WorkflowId): Boolean
+
+    /**
+     * Soft-deletes a workflow by setting deleted_at timestamp.
+     *
+     * **STUB IMPLEMENTATION**: Default implementation delegates to hard-delete
+     * until SPI-877 implements soft-deletion. Workflows with children cascade
+     * the deletion to all child entities.
+     *
+     * @param id The workflow ID to soft-delete
+     * @throws WorkflowNotFoundException if workflow does not exist
+     */
+    suspend fun softDelete(id: WorkflowId): Boolean {
+        return delete(id)  // Stub: Delegate to existing hard-delete
+    }
+
+    /**
+     * Restores a soft-deleted workflow by clearing deleted_at timestamp.
+     *
+     * **STUB IMPLEMENTATION**: Default implementation is a no-op until
+     * SPI-877 implements restoration logic.
+     *
+     * @param id The workflow ID to restore
+     * @throws WorkflowNotFoundException if workflow does not exist
+     */
+    suspend fun restore(id: WorkflowId) {
+        // Stub: No-op (not implemented until SPI-877)
+    }
+
+    /**
+     * Finds all soft-deleted workflows.
+     *
+     * **STUB IMPLEMENTATION**: Default implementation returns empty list
+     * until SPI-877 implements soft-deletion tracking.
+     *
+     * @return List of deleted workflows (empty until real implementation)
+     */
+    suspend fun findDeleted(): List<Workflow> {
+        return emptyList()  // Stub: No deleted items tracked yet
+    }
+
+    /**
+     * Finds a workflow by ID, including soft-deleted workflows.
+     *
+     * **STUB IMPLEMENTATION**: Default implementation delegates to existing
+     * findById() until SPI-877 implements deleted_at filtering.
+     *
+     * @param id The workflow ID to find
+     * @return The workflow if found (including deleted), null otherwise
+     */
+    suspend fun findIncludingDeleted(id: WorkflowId): Workflow? {
+        return findById(id)  // Stub: Delegate to existing findById
+    }
 }
