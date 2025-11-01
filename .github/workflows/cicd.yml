@@ -267,34 +267,29 @@ jobs:
               echo "is_release=true" >> $GITHUB_OUTPUT
               echo "should_tag=false" >> $GITHUB_OUTPUT  # Already tagged
             else
-              # Not tagged yet, but we're on main - might be a non-versioning commit
-              if [[ "$version" == *"-SNAPSHOT"* ]] || [[ "$version" == *"+"* ]]; then
-                echo "is_release=false" >> $GITHUB_OUTPUT
-                echo "should_tag=false" >> $GITHUB_OUTPUT
-              else
-                echo "is_release=true" >> $GITHUB_OUTPUT
-                echo "should_tag=true" >> $GITHUB_OUTPUT
-              fi
+              # Not tagged yet - printCleanVersion always returns clean X.Y.Z format
+              # Release determination is handled by commit message patterns (lines 136-149)
+              echo "is_release=true" >> $GITHUB_OUTPUT
+              echo "should_tag=true" >> $GITHUB_OUTPUT
             fi
           else
-            # For non-main branches, use original logic
-            if [[ "$version" == *"-SNAPSHOT"* ]] || [[ "$version" == *"+"* ]]; then
-              echo "is_release=false" >> $GITHUB_OUTPUT
-            else
-              echo "is_release=true" >> $GITHUB_OUTPUT
-            fi
+            # For non-main branches, always treat as release for artifact generation
+            # printCleanVersion ensures clean version format regardless of branch
+            echo "is_release=true" >> $GITHUB_OUTPUT
             echo "should_tag=false" >> $GITHUB_OUTPUT
           fi
 
-          # Validate version format (semantic versioning)
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
+          # Validate version format (clean semantic versioning only)
+          # printCleanVersion should only output X.Y.Z format (no suffixes)
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "❌ Invalid version format: $version"
-            echo "Expected semantic version format: MAJOR.MINOR.PATCH[-PRERELEASE][+BUILDMETADATA]"
+            echo "Expected clean semantic version format: MAJOR.MINOR.PATCH (no suffixes)"
+            echo "printCleanVersion task should have stripped SNAPSHOT and metadata"
             exit 1
           fi
 
           echo "📦 Version: $version"
-          echo "🚀 Is Release: $([ "$version" == *"-SNAPSHOT"* ] || [ "$version" == *"+"* ] && echo "No" || echo "Yes")"
+          echo "🚀 Is Release: Yes (printCleanVersion always produces clean versions)"
 
   # Compile job that runs first to build all code and test classes
   compile:
