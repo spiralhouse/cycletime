@@ -1074,13 +1074,14 @@ jobs:
           version="${{ needs.version.outputs.version }}"
           echo "🚀 Creating release for version: $version"
 
-          # Create release with artifacts
+          # Create release with artifacts (flat structure from download-artifact)
           gh release create "v$version" \
             --title "Release $version" \
             --notes "${{ steps.capture.outputs.changelog }}" \
             --target "${{ github.sha }}" \
-            build-artifacts/distributions/* \
-            build-artifacts/libs/*
+            build-artifacts/*.jar \
+            build-artifacts/*.tar \
+            build-artifacts/*.zip
 
   # ========================================
   # VALIDATION & REPORTING
