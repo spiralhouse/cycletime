@@ -396,8 +396,8 @@ val unitTest by tasks.registering(Test::class) {
             else -> (availableProcessors / 2).coerceIn(2, 4)  // Balanced parallelism on multi-core
         }
 
-        println("🔧 CI environment detected - applying TestPlan registration coordination")
-        println("   CPU cores: ${availableProcessors}, optimal test parallelism: ${optimalParallelism}")
+        logger.lifecycle("🔧 CI environment detected - applying TestPlan registration coordination")
+        logger.lifecycle("   CPU cores: ${availableProcessors}, optimal test parallelism: ${optimalParallelism}")
 
         // Coordinate discovery phase to prevent TestPlan registration race conditions
         systemProperty("kotest.framework.discovery.parallel", "false") // Sequential discovery

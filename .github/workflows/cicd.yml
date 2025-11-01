@@ -230,7 +230,8 @@ jobs:
 
           # Extract clean semantic version using printCleanVersion task
           # This task strips SNAPSHOT and build metadata suffixes (SPI-892)
-          version=$(./gradlew printCleanVersion --quiet --no-configuration-cache)
+          # Use 'tail -1' to get only the last line (handles Gradle wrapper download output edge case)
+          version=$(./gradlew printCleanVersion --quiet --no-configuration-cache | tail -1)
 
           # Fallback - use printVersion if printCleanVersion fails
           if [[ -z "$version" ]]; then
