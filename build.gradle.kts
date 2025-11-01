@@ -46,6 +46,49 @@ tasks.matching { it.name in listOf("printSemVersion", "printVersion", "printInfo
     notCompatibleWithConfigurationCache("Version calculation requires runtime git repository access")
 }
 
+/**
+ * Prints clean semantic version (X.Y.Z) without SNAPSHOT or build metadata.
+ *
+ * This task sanitizes the version from git-semver-plugin to produce clean
+ * semantic versions suitable for:
+ * - Git tags (vX.Y.Z)
+ * - GitHub releases
+ * - Docker image tags
+ * - Documentation references
+ *
+ * Input examples:
+ *   0.3.0-SNAPSHOT+022.sha.5fdd0c1  → 0.3.0
+ *   0.3.0+sha.5fdd0c1               → 0.3.0
+ *   1.0.0                           → 1.0.0
+ *
+ * Related: SPI-849 (version task caching fix)
+ * Solution for: SPI-892 (automated release tagging)
+ */
+tasks.register("printCleanVersion") {
+    group = "versioning"
+    description = "Prints clean semantic version (X.Y.Z) without SNAPSHOT or build metadata"
+
+    // Always run this task - version calculation should never be cached
+    outputs.upToDateWhen { false }
+
+    // Disable configuration cache for version tasks (incompatible with git state access)
+    notCompatibleWithConfigurationCache("Version calculation requires runtime git repository access")
+
+    doLast {
+        val rawVersion = semver.version
+        val cleanVersion = Regex("^(\\d+\\.\\d+\\.\\d+)").find(rawVersion)?.value
+
+        if (cleanVersion == null) {
+            throw GradleException(
+                "Failed to extract clean version from: $rawVersion\n" +
+                "Expected format: X.Y.Z with optional suffixes (-SNAPSHOT, +metadata)"
+            )
+        }
+
+        println(cleanVersion)
+    }
+}
+
 application {
     mainClass.set("io.spiralhouse.cycletime.ApplicationKt")
 
