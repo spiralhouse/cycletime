@@ -149,11 +149,9 @@ jobs:
           fi
 
           if [ "$should_tag" = true ]; then
-            # Calculate next version using git-semver-plugin
-            next_version=$(./gradlew printSemVersion --quiet --no-configuration-cache --rerun-tasks | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' | tail -1)
-
-            # Remove -SNAPSHOT suffix if present (we're creating the actual release tag)
-            next_version="${next_version%-SNAPSHOT}"
+            # Calculate next version using printCleanVersion task
+            # This task strips SNAPSHOT and build metadata from git-semver-plugin output
+            next_version=$(./gradlew printCleanVersion --quiet --no-configuration-cache)
 
             if [[ -n "$next_version" && "$next_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               echo "📦 Creating tag: v$next_version"
