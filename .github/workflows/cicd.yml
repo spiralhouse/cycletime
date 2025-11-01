@@ -228,14 +228,13 @@ jobs:
             echo "📋 Latest tag after fetch: $latest_tag"
           fi
 
-          # Extract version using printSemVersion with forced execution
-          # Note: Even with --quiet, Gradle may output download progress on first run
-          # We need to filter for the actual version line (semantic version format)
-          version=$(./gradlew printSemVersion --quiet --no-configuration-cache --rerun-tasks | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' | tail -1)
+          # Extract clean semantic version using printCleanVersion task
+          # This task strips SNAPSHOT and build metadata suffixes (SPI-892)
+          version=$(./gradlew printCleanVersion --quiet --no-configuration-cache)
 
-          # Fallback - use printVersion if printSemVersion fails
+          # Fallback - use printVersion if printCleanVersion fails
           if [[ -z "$version" ]]; then
-            echo "⚠️ printSemVersion failed, trying printVersion..."
+            echo "⚠️ printCleanVersion failed, trying printVersion..."
             version=$(./gradlew printVersion --quiet --no-configuration-cache --rerun-tasks | grep "^version:" | cut -d' ' -f2)
           fi
 
