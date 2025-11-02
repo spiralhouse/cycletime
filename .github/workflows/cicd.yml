@@ -111,7 +111,7 @@ jobs:
           if [[ "${{ github.actor }}" == "dependabot[bot]" ]]; then
             echo "🤖 Dependabot PR detected - running full security validation pipeline"
             echo "run_tests=true" >> $GITHUB_OUTPUT
-          elif git diff --name-only HEAD~1 HEAD | grep -E '\.(kt|kts|java|gradle)$|src/|build\.gradle|settings\.gradle|gradle\.properties|gradle/.*\.toml|gradle/'; then
+          elif git diff --name-only HEAD~1 HEAD | grep -E '\.(kt|kts|java|gradle)$|src/|build\.gradle|settings\.gradle|gradle\.properties|gradle/.*\.toml|gradle/|\.github/workflows/'; then
             echo "✅ Code changes detected - will run full pipeline"
             echo "run_tests=true" >> $GITHUB_OUTPUT
           else
@@ -151,7 +151,8 @@ jobs:
           if [ "$should_tag" = true ]; then
             # Calculate next version using printCleanVersion task
             # This task strips SNAPSHOT and build metadata from git-semver-plugin output
-            next_version=$(./gradlew printCleanVersion --quiet --no-configuration-cache)
+            # Use 'tail -1' to get only the last line (handles Gradle wrapper download output edge case)
+            next_version=$(./gradlew printCleanVersion --quiet --no-configuration-cache | tail -1)
 
             if [[ -n "$next_version" && "$next_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               echo "📦 Creating tag: v$next_version"
