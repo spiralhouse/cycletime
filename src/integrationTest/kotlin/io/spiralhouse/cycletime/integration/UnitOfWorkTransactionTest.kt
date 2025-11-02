@@ -244,7 +244,7 @@ class UnitOfWorkTransactionTest : DescribeSpec({
                 // After both transactions, both projects should exist
                 val allProjects = projectRepository.findAll()
                 allProjects shouldHaveSize 2
-                allProjects.map { it.id } shouldBe setOf(project1.id, project2.id)
+                allProjects.map { it.id }.toSet() shouldBe setOf(project1.id, project2.id)
             }
         }
     }
