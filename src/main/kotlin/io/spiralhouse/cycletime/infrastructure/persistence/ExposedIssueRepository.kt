@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.slf4j.LoggerFactory
 
 /**
  * Repository implementation for Issue entities using Exposed ORM.
@@ -52,6 +53,10 @@ class ExposedIssueRepository(
     database: Database? = null
 ) : BaseExposedRepository(timeProvider, database), IssueRepository {
 
+    companion object {
+        private val logger = LoggerFactory.getLogger(ExposedIssueRepository::class.java)
+    }
+
     /**
      * Finds an issue by its unique identifier.
      *
@@ -59,11 +64,20 @@ class ExposedIssueRepository(
      * The method performs a single query to fetch the issue data and then loads its
      * dependencies from the IssueDependenciesTable.
      *
+     * Excludes soft-deleted issues (where deleted_at IS NOT NULL).
+     *
      * @param id The issue ID to search for
-     * @return The fully reconstituted Issue entity if found, null otherwise
+     * @return The fully reconstituted Issue entity if found and not deleted, null otherwise
      */
     override suspend fun findById(id: IssueId): Issue? = dbQuery {
-        findIssueRowById(id.value)?.toIssue()
+        IssuesTable
+            .selectAll()
+            .where {
+                (IssuesTable.id eq id.value) and
+                (IssuesTable.deletedAt.isNull())
+            }
+            .singleOrNull()
+            ?.toIssue()
     }
 
     /**
@@ -223,6 +237,151 @@ class ExposedIssueRepository(
      */
     override suspend fun exists(id: IssueId): Boolean = dbQuery {
         checkIssueExists(id)
+    }
+
+    /**
+     * Soft-deletes an issue by setting deleted_at timestamp.
+     *
+     * Cascades the deletion to all descendant issues using iterative tree traversal.
+     * All operations occur in a single transaction for atomicity.
+     *
+     * @param id The issue ID to soft-delete
+     * @throws IssueNotFoundException if issue does not exist
+     */
+    override suspend fun softDelete(id: IssueId) {
+        dbQuery {
+            // 1. Verify issue exists
+            val exists = IssuesTable
+                .selectAll()
+                .where { IssuesTable.id eq id.value }
+                .count() > 0
+
+            if (!exists) {
+                throw io.spiralhouse.cycletime.domain.exceptions.IssueNotFoundException(id.value)
+            }
+
+            // 2. Collect all descendants using iterative traversal
+            val allDescendants = collectAllDescendants(id.value)
+
+            // 3. Batch update all (root + descendants) with deleted_at timestamp
+            val now = timeProvider.now()
+            val idsToDelete = listOf(id.value) + allDescendants
+
+            val updateCount = IssuesTable.update({
+                IssuesTable.id inList idsToDelete
+            }) {
+                it[deletedAt] = now
+            }
+
+            logger.info("Soft-deleted issue ${id.value} with ${allDescendants.size} descendants ($updateCount total records)")
+        }
+    }
+
+    /**
+     * Restores a soft-deleted issue by clearing deleted_at timestamp.
+     *
+     * Validates that the parent issue (if any) is not deleted before allowing restoration.
+     * Does NOT cascade to child issues - they must be restored explicitly.
+     *
+     * @param id The issue ID to restore
+     * @throws IssueNotFoundException if issue does not exist
+     * @throws ParentIssueDeletedException if parent issue is still deleted
+     */
+    override suspend fun restore(id: IssueId) {
+        dbQuery {
+            // 1. Find issue (including deleted)
+            val issueRow = IssuesTable
+                .selectAll()
+                .where { IssuesTable.id eq id.value }
+                .singleOrNull()
+                ?: throw io.spiralhouse.cycletime.domain.exceptions.IssueNotFoundException(id.value)
+
+            // 2. Get parent_id and check if parent is deleted
+            val parentIdValue = issueRow[IssuesTable.parentId]
+            if (parentIdValue != null) {
+                // Check if parent exists and is NOT deleted
+                val parentActive = IssuesTable
+                    .selectAll()
+                    .where {
+                        (IssuesTable.id eq parentIdValue) and
+                        (IssuesTable.deletedAt.isNull())
+                    }
+                    .count() > 0
+
+                if (!parentActive) {
+                    throw io.spiralhouse.cycletime.domain.exceptions.ParentIssueDeletedException(
+                        "Cannot restore issue ${id.value}: parent $parentIdValue is deleted"
+                    )
+                }
+            }
+
+            // 3. Restore (does NOT cascade to children)
+            val updateCount = IssuesTable.update({
+                IssuesTable.id eq id.value
+            }) {
+                it[deletedAt] = null
+            }
+
+            if (updateCount > 0) {
+                logger.info("Restored issue ${id.value} (children not auto-restored)")
+            }
+        }
+    }
+
+    /**
+     * Finds all soft-deleted issues.
+     *
+     * @return List of deleted issues (where deleted_at IS NOT NULL)
+     */
+    override suspend fun findDeleted(): List<Issue> = dbQuery {
+        IssuesTable
+            .selectAll()
+            .where { IssuesTable.deletedAt.isNotNull() }
+            .map { it.toIssue() }
+    }
+
+    /**
+     * Finds an issue by ID, including soft-deleted issues.
+     *
+     * @param id The issue ID to find
+     * @return The issue if found (including deleted), null otherwise
+     */
+    override suspend fun findIncludingDeleted(id: IssueId): Issue? = dbQuery {
+        IssuesTable
+            .selectAll()
+            .where { IssuesTable.id eq id.value }
+            .singleOrNull()
+            ?.toIssue()
+    }
+
+    /**
+     * Collects all descendant issue IDs using iterative tree traversal.
+     *
+     * Uses breadth-first search to avoid stack overflow with deep hierarchies.
+     * All operations occur within the same transaction.
+     *
+     * @param parentId The parent issue ID to start from
+     * @return List of all descendant issue IDs (children, grandchildren, etc.)
+     */
+    private fun collectAllDescendants(parentId: String): List<String> {
+        val descendants = mutableListOf<String>()
+        val queue = ArrayDeque<String>()
+        queue.add(parentId)
+
+        while (queue.isNotEmpty()) {
+            val currentId = queue.removeFirst()
+
+            // Find all children of current issue
+            val children = IssuesTable
+                .select(IssuesTable.id)
+                .where { IssuesTable.parentId eq currentId }
+                .map { it[IssuesTable.id].value }
+
+            descendants.addAll(children)
+            children.forEach { queue.add(it) }
+        }
+
+        return descendants
     }
 
     /**
@@ -450,16 +609,23 @@ class ExposedIssueRepository(
     }
 
     /**
-     * Checks if an issue exists in the database.
+     * Checks if an issue exists in the database and is not soft-deleted.
      *
      * Uses SELECT 1 with LIMIT 1 for optimal performance, as we only need
      * to know existence, not retrieve the actual data.
      *
      * @param id The issue ID to check
-     * @return true if the issue exists, false otherwise
+     * @return true if the issue exists and is not deleted, false otherwise
      */
     private fun checkIssueExists(id: IssueId): Boolean {
-        return checkExists(IssuesTable) { IssuesTable.id eq id.value }
+        return IssuesTable
+            .selectAll()
+            .where {
+                (IssuesTable.id eq id.value) and
+                (IssuesTable.deletedAt.isNull())
+            }
+            .limit(1)
+            .count() > 0
     }
 
     // ================== Helper Methods ==================
@@ -468,33 +634,20 @@ class ExposedIssueRepository(
      * Finds issues matching a specific condition.
      *
      * This is a reusable helper method that reduces code duplication across
-     * the various find methods.
+     * the various find methods. Automatically filters out soft-deleted issues.
      *
      * @param condition The SQL condition to apply
-     * @return List of issues matching the condition
+     * @return List of issues matching the condition (excluding deleted)
      */
     private fun findIssuesByCondition(condition: SqlExpressionBuilder.() -> Op<Boolean>): List<Issue> {
-        return findByCondition(
-            table = IssuesTable,
-            condition = condition,
-            orderBy = IssuesTable.createdAt to SortOrder.ASC,
-            mapper = { it.toIssue() }
-        )
-    }
-
-    /**
-     * Finds a single issue row by ID.
-     *
-     * @param id The issue ID to search for
-     * @return The result row if found, null otherwise
-     */
-    private fun findIssueRowById(id: String): ResultRow? {
         return IssuesTable
             .selectAll()
-            .where { IssuesTable.id eq id }
-            .singleOrNull()
+            .where {
+                condition() and IssuesTable.deletedAt.isNull()
+            }
+            .orderBy(IssuesTable.createdAt to SortOrder.ASC)
+            .map { it.toIssue() }
     }
-
 
     // ================== Data Classes ==================
 

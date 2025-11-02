@@ -116,52 +116,42 @@ interface IssueRepository {
     /**
      * Soft-deletes an issue by setting deleted_at timestamp.
      *
-     * **STUB IMPLEMENTATION**: Default implementation delegates to hard-delete
-     * until SPI-876 implements soft-deletion. Issues with children cascade
-     * the deletion to all child issues.
+     * Cascades the deletion to all descendant issues (children, grandchildren, etc.)
+     * in a single atomic transaction. Preserves all relationships and data for
+     * potential restoration.
      *
      * @param id The issue ID to soft-delete
      * @throws IssueNotFoundException if issue does not exist
      */
-    suspend fun softDelete(id: IssueId) {
-        delete(id)  // Stub: Delegate to existing hard-delete
-    }
+    suspend fun softDelete(id: IssueId)
 
     /**
      * Restores a soft-deleted issue by clearing deleted_at timestamp.
      *
-     * **STUB IMPLEMENTATION**: Default implementation is a no-op until
-     * SPI-876 implements restoration logic.
+     * Does NOT automatically restore child issues - they must be restored explicitly.
+     * Validates that the parent issue (if any) is not deleted before allowing restoration.
      *
      * @param id The issue ID to restore
      * @throws IssueNotFoundException if issue does not exist
+     * @throws ParentIssueDeletedException if parent issue is still deleted
      */
-    suspend fun restore(id: IssueId) {
-        // Stub: No-op (not implemented until SPI-876)
-    }
+    suspend fun restore(id: IssueId)
 
     /**
      * Finds all soft-deleted issues.
      *
-     * **STUB IMPLEMENTATION**: Default implementation returns empty list
-     * until SPI-876 implements soft-deletion tracking.
-     *
-     * @return List of deleted issues (empty until real implementation)
+     * @return List of deleted issues (where deleted_at IS NOT NULL)
      */
-    suspend fun findDeleted(): List<Issue> {
-        return emptyList()  // Stub: No deleted items tracked yet
-    }
+    suspend fun findDeleted(): List<Issue>
 
     /**
      * Finds an issue by ID, including soft-deleted issues.
      *
-     * **STUB IMPLEMENTATION**: Default implementation delegates to existing
-     * findById() until SPI-876 implements deleted_at filtering.
+     * Useful for admin operations and restoration workflows where deleted
+     * issues need to be queried.
      *
      * @param id The issue ID to find
      * @return The issue if found (including deleted), null otherwise
      */
-    suspend fun findIncludingDeleted(id: IssueId): Issue? {
-        return findById(id)  // Stub: Delegate to existing findById
-    }
+    suspend fun findIncludingDeleted(id: IssueId): Issue?
 }
