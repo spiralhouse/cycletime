@@ -16,3 +16,5 @@ class InvalidStateTransitionException(from: String, to: String) :
 class DependencyCycleException(message: String) : DomainException(message)
 
 class ValidationException(message: String) : DomainException(message)
+
+class ParentIssueDeletedException(message: String) : DomainException(message)

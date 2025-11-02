@@ -172,7 +172,26 @@ class MockIssueRepository(
     override suspend fun exists(id: IssueId): Boolean {
         return issues.containsKey(id)
     }
-    
+
+    override suspend fun softDelete(id: IssueId) {
+        // Mock implementation: just call delete for simplicity
+        delete(id)
+    }
+
+    override suspend fun restore(id: IssueId) {
+        // Mock implementation: no-op (would need separate deleted storage in real mock)
+    }
+
+    override suspend fun findDeleted(): List<Issue> {
+        // Mock implementation: return empty list (would need separate deleted storage)
+        return emptyList()
+    }
+
+    override suspend fun findIncludingDeleted(id: IssueId): Issue? {
+        // Mock implementation: same as findById
+        return findById(id)
+    }
+
     // ================================================================================
     // Test Utilities
     // ================================================================================
