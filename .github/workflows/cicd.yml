@@ -860,10 +860,10 @@ jobs:
           name: compiled-artifacts
           path: build/
 
-      - name: Build application JAR
+      - name: Build application JAR and distributions
         run: |
-          echo "🔨 Building application JAR for deployment (version: ${{ needs.version.outputs.version }})"
-          ./gradlew buildFatJar -x compileKotlin -x compileTestKotlin -x compileIntegrationTestKotlin -x compileSystemTestKotlin -x test --no-build-cache --configuration-cache --no-daemon
+          echo "🔨 Building application artifacts (version: ${{ needs.version.outputs.version }})"
+          ./gradlew buildFatJar assembleDist -x compileKotlin -x compileTestKotlin -x compileIntegrationTestKotlin -x compileSystemTestKotlin -x test --no-build-cache --configuration-cache --no-daemon
 
       - name: Verify JAR exists
         run: |
@@ -1075,14 +1075,14 @@ jobs:
           version="${{ needs.version.outputs.version }}"
           echo "🚀 Creating release for version: $version"
 
-          # Create release with artifacts (flat structure from download-artifact)
+          # Create release with artifacts (preserves subdirectories from upload-artifact@v4)
           gh release create "v$version" \
             --title "Release $version" \
             --notes "${{ steps.capture.outputs.changelog }}" \
             --target "${{ github.sha }}" \
-            build-artifacts/*.jar \
-            build-artifacts/*.tar \
-            build-artifacts/*.zip
+            build-artifacts/libs/*.jar \
+            build-artifacts/distributions/*.tar \
+            build-artifacts/distributions/*.zip
 
   # ========================================
   # VALIDATION & REPORTING
