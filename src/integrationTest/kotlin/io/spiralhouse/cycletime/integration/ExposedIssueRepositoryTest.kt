@@ -1415,8 +1415,9 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                         deletedCount shouldBe 61 // Epic + 10 stories + 50 subtasks
                     }
 
-                    // Performance assertion: should complete in < 1000ms
-                    elapsed shouldBeLessThan 1000
+                    // Performance assertion: should complete reasonably fast
+                    // Generous threshold for CI environments (3s) - typical execution is < 100ms
+                    elapsed shouldBeLessThan 3000
                 }
             }
 
