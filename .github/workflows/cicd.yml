@@ -815,15 +815,21 @@ jobs:
     needs: [version, unit-tests, integration-tests, system-tests, quality]
     # Only run CD build on main branch with successful tests
     if: |
-      github.ref == 'refs/heads/main' && 
-      needs.unit-tests.result == 'success' && 
-      needs.integration-tests.result == 'success' && 
-      needs.system-tests.result == 'success' && 
+      github.ref == 'refs/heads/main' &&
+      needs.unit-tests.result == 'success' &&
+      needs.integration-tests.result == 'success' &&
+      needs.system-tests.result == 'success' &&
       needs.quality.result == 'success'
 
     steps:
+      # Fetch full git history for git-semver plugin to calculate correct version
+      # Without fetch-depth: 0 and fetch-tags: true, git-semver falls back to 0.0.1-SNAPSHOT
+      # This caused release v0.3.2 to contain incorrectly versioned artifacts (SPI-911)
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # Fetch full git history for git-semver plugin
+          fetch-tags: true      # Fetch all version tags
 
       - name: Setup JDK 21
         uses: actions/setup-java@v4
