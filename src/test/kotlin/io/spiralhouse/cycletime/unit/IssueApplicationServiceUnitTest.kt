@@ -10,6 +10,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.assertions.throwables.shouldThrow
 import io.spiralhouse.cycletime.application.commands.*
 import io.spiralhouse.cycletime.application.exceptions.*
@@ -463,7 +464,8 @@ class IssueApplicationServiceUnitTest : StringSpec({
         issueService.deleteIssue(testIssueId)
 
         // Then
-        mockIssueRepository.deleteCallCount shouldBe 1
+        mockIssueRepository.softDeleteCallCount shouldBe 1
+        mockIssueRepository.deleteCallCount shouldBe 0
         mockUnitOfWork.executeCallCount shouldBe 1
     }
 
@@ -1528,6 +1530,9 @@ class IssueApplicationServiceUnitTest : StringSpec({
         // Mock both as deleted (findIncludingDeleted returns with deletedAt)
         mockIssueRepository.deletedIssues[testParentId] = deletedParent
         mockIssueRepository.deletedIssues[testIssueId] = deletedChild
+        // Remove from active issues to properly simulate soft-deletion
+        mockIssueRepository.issues.remove(testParentId)
+        mockIssueRepository.issues.remove(testIssueId)
         // Simulate parent being deleted
         mockIssueRepository.parentIsDeleted = true
 
@@ -1537,9 +1542,10 @@ class IssueApplicationServiceUnitTest : StringSpec({
         }
 
         // Verify error message contains key phrases
-        exception.message shouldContain "Cannot restore issue"
-        exception.message shouldContain "parent is still deleted"
-        exception.message shouldContain "Restore parent first"
+        exception.message.shouldNotBeNull()
+        exception.message!!.shouldContain("Cannot restore issue")
+        exception.message!!.shouldContain("parent is still deleted")
+        exception.message!!.shouldContain("Restore parent first")
 
         mockIssueRepository.restoreCallCount shouldBe 0
     }

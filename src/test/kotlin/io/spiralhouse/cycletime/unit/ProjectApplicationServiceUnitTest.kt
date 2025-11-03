@@ -408,7 +408,8 @@ class ProjectApplicationServiceUnitTest : StringSpec({
         projectService.deleteProject(testProjectId)
 
         // Then
-        mockProjectRepository.deleteCallCount shouldBe 1
+        mockProjectRepository.softDeleteCallCount shouldBe 1
+        mockProjectRepository.deleteCallCount shouldBe 0
         mockUnitOfWork.executeCallCount shouldBe 1
     }
 
@@ -1041,9 +1042,10 @@ class ProjectApplicationServiceUnitTest : StringSpec({
     "should restore deleted project successfully" {
         // Given - deleted project exists
         val deletedProject = createTestProject(testProjectId, "Deleted Project")
-        mockProjectRepository.projects[testProjectId] = deletedProject
         // Mock findIncludingDeleted to return the deleted project
         mockProjectRepository.deletedProjects[testProjectId] = deletedProject
+        // Remove from active projects to properly simulate soft-deletion
+        mockProjectRepository.projects.remove(testProjectId)
 
         // When
         val result = projectService.restoreProject(testProjectId)

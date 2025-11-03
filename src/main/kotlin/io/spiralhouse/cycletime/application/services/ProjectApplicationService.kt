@@ -192,6 +192,10 @@ class ProjectApplicationService(
      */
     suspend fun restoreProject(id: ProjectId): ProjectDto {
         return unitOfWork.execute {
+            // Check if project exists (including deleted) before attempting restore
+            val existingProject = projectRepository.findIncludingDeleted(id)
+                ?: throw ProjectNotFoundException(id)
+
             // Restore project (does NOT auto-restore issues - explicit choice)
             projectRepository.restore(id)
 
