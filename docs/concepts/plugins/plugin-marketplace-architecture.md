@@ -4,7 +4,7 @@ type: concept
 domain: [plugin, mcp, architecture]
 description: "Comprehensive explanation of Claude Code plugin system, marketplace distribution, and component structure"
 dependencies: []
-related: [../../reference/SPI-912-plugin-repositioning-decision.md, ../../patterns/plugin/heavyweight-plugin-pattern.md]
+related: [../../reference/SPI-912-plugin-repositioning-decision.md, ../../reference/SPI-912-implementation-backlog.md]
 keywords: [plugin, marketplace, architecture, distribution, mcp, components]
 last_updated: 2025-11-02
 ---
@@ -228,14 +228,21 @@ Organizations must implement these separately through governance policies.
 
 ---
 
-## Heavyweight Plugin Pattern
+## Plugins with Background Server Processes
 
-### Definition
+### Plugin Complexity Spectrum
 
-**Lightweight Plugin**: Only adds commands/agents (stateless, instant activation)
-**Heavyweight Plugin**: Requires background server process (CycleTime's case)
+**Most Plugins**: Only add commands/agents (stateless, instant activation)
+- No background processes required
+- Configuration only, no lifecycle management
+- Examples: Slash commands, specialized agents, static workflow hooks
 
-### Challenges for Heavyweight Plugins
+**Server-Based Plugins**: Bundle MCP servers requiring process management (CycleTime's case)
+- Background server process starts when plugin activates
+- Lifecycle management needed: startup, health monitoring, shutdown
+- Examples: CycleTime (Ktor + H2), database connectors, API proxies
+
+### Challenges for Server-Based Plugins
 
 1. **Server Lifecycle Management**
    - Must start server on plugin activation
@@ -251,9 +258,17 @@ Organizations must implement these separately through governance policies.
 3. **Resource Management**
    - Long-running processes consume memory/CPU
    - Log file rotation and cleanup
-   - Database file management
+   - Database file management (if stateful)
 
-**Mitigation**: See [Heavyweight Plugin Pattern](../../patterns/plugin/heavyweight-plugin-pattern.md) for implementation strategies.
+### CycleTime's Lifecycle Management Approach
+
+CycleTime addresses these challenges through:
+
+- **Startup Script** (SPI-924): Port allocation with automatic fallback, health check polling, comprehensive error handling
+- **Shutdown Script** (SPI-925): Graceful SIGTERM with timeout-based SIGKILL, idempotent cleanup
+- **Health Monitoring** (SPI-926): Continuous health checks with auto-restart, exponential backoff, user notifications
+
+See [Implementation Backlog](../../reference/SPI-912-implementation-backlog.md) for detailed acceptance criteria of each component.
 
 ---
 
@@ -300,7 +315,7 @@ Organizations must implement these separately through governance policies.
 - **Cross-Session Continuity**: Persistent state via H2 database (not stateless)
 - **Offline-First**: No external service dependencies (vs. Linear/GitHub/Jira plugins)
 - **Structured Hierarchy**: Epic → Story → Subtask with dependency tracking
-- **Heavyweight Architecture**: Long-running server provides continuous availability
+- **Server-Based Architecture**: Long-running background server provides continuous availability
 
 **Competitors:**
 - **Lightweight task plugins**: Stateless, flat task lists
@@ -320,4 +335,3 @@ Organizations must implement these separately through governance policies.
 ---
 
 **Last Updated**: November 2, 2025
-**Related Patterns**: [Heavyweight Plugin Pattern](../../patterns/plugin/heavyweight-plugin-pattern.md)
