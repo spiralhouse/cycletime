@@ -15,7 +15,7 @@ import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 
 /**
- * MCP SDK v0.7.2 Server initialization and configuration.
+ * MCP SDK v0.7.4 Server initialization and configuration.
  *
  * Provides official SDK-based transport layer replacing custom EventBus architecture.
  * The SDK handles:
@@ -69,10 +69,12 @@ class MCPSdkServer(
     )
 
     init {
-        logger.info("MCP SDK Server initializing (SDK v0.7.2, version: $version)")
+        logger.info("MCP SDK Server initializing (SDK v0.7.4, version: $version)")
 
-        // Register logging/setLevel handler (SPI-716)
-        registerLoggingHandler()
+        // TODO (SPI-716): Logging/setLevel handler registration pending SDK API support
+        // The logging capability requires request handler registration which is not yet
+        // available in the SDK. See registerLoggingHandler() implementation below.
+        // registerLoggingHandler()
 
         // Register all tool and resource providers via adapters (if provided)
         if (sessionManager != null && (toolProviders.isNotEmpty() || resourceProviders.isNotEmpty())) {
@@ -89,6 +91,8 @@ class MCPSdkServer(
         logger.debug("Server capabilities: resources (subscribe, listChanged), tools, logging")
     }
 
+    // TODO (SPI-716): Re-enable when SDK provides request handler registration API
+    /*
     /**
      * Register logging/setLevel request handler (SPI-716).
      *
@@ -106,9 +110,9 @@ class MCPSdkServer(
      * instantiated directly without going through the routing layer.
      */
     private fun registerLoggingHandler() {
-        server.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(
+        server.setRequestHandler(
             Method.Defined.LoggingSetLevel
-        ) { request, _ ->
+        ) { request: LoggingMessageNotification.SetLevelRequest, extra: RequestHandlerExtra ->
             // Log the level change for debugging purposes
             logger.debug("Client requested log level: ${request.level}")
 
@@ -117,6 +121,7 @@ class MCPSdkServer(
         }
         logger.debug("Registered logging/setLevel handler")
     }
+    */
 
     /**
      * Register all tool providers via adapters.
