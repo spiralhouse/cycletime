@@ -91,7 +91,40 @@ class MockWorkflowRepository(
     override suspend fun existsById(id: WorkflowId): Boolean {
         return workflows.containsKey(id)
     }
-    
+
+    /**
+     * Mock implementation of soft-delete.
+     * Simply removes workflow from in-memory map for testing purposes.
+     */
+    override suspend fun softDelete(id: WorkflowId) {
+        deleteCallCount++
+        workflows.remove(id)
+    }
+
+    /**
+     * Mock implementation of restore.
+     * No-op in mock since we don't track deletion state.
+     */
+    override suspend fun restore(id: WorkflowId) {
+        // No-op in mock - workflows are either present or absent
+    }
+
+    /**
+     * Mock implementation of findDeleted.
+     * Returns empty list in mock since we don't track deletion state.
+     */
+    override suspend fun findDeleted(): List<Workflow> {
+        return emptyList()
+    }
+
+    /**
+     * Mock implementation of findIncludingDeleted.
+     * Delegates to findById since mock doesn't distinguish deleted state.
+     */
+    override suspend fun findIncludingDeleted(id: WorkflowId): Workflow? {
+        return findById(id)
+    }
+
     // ================================================================================
     // Test Utilities
     // ================================================================================
