@@ -1,0 +1,130 @@
+{
+  "name": "CycleTime Development Container",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "NODE_VERSION": "20",
+      "JAVA_VERSION": "21",
+      "TIMEZONE": "UTC"
+    }
+  },
+
+  // Container user configuration
+  "remoteUser": "vscode",
+  "workspaceFolder": "/workspace",
+
+  // Port forwarding for MCP server
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "MCP Server",
+      "onAutoForward": "notify"
+    }
+  },
+
+  // VS Code customizations
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Kotlin & JVM
+        "fwcd.kotlin",
+        "vscjava.vscode-java-pack",
+        "richardwillis.vscode-gradle",
+
+        // Git integration
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+
+        // Code quality
+        "editorconfig.editorconfig",
+
+        // Containers
+        "ms-azuretools.vscode-docker",
+
+        // Productivity
+        "christian-kohler.path-intellisense"
+      ],
+      "settings": {
+        // Editor
+        "editor.formatOnSave": true,
+        "editor.rulers": [120],
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+
+        // Terminal
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.fontSize": 14,
+
+        // Files
+        "files.exclude": {
+          "**/.gradle": true,
+          "**/build": true,
+          "**/.idea": true,
+          "*.db": true
+        },
+        "files.watcherExclude": {
+          "**/.gradle/**": true,
+          "**/build/**": true
+        },
+
+        // Java & Kotlin
+        "java.configuration.runtimes": [
+          {
+            "name": "JavaSE-21",
+            "path": "${containerEnv:JAVA_HOME}",
+            "default": true
+          }
+        ],
+        "java.jdt.ls.java.home": "${containerEnv:JAVA_HOME}",
+        "kotlin.languageServer.enabled": true,
+
+        // Gradle
+        "java.import.gradle.home": "/opt/gradle",
+        "java.import.gradle.wrapper.enabled": true,
+        "java.import.gradle.java.home": "${containerEnv:JAVA_HOME}"
+      }
+    }
+  },
+
+  // Volume mounts for caching
+  "mounts": [
+    // Gradle cache
+    {
+      "source": "cycletime-gradle-cache",
+      "target": "/home/vscode/.gradle",
+      "type": "volume"
+    },
+    // Maven cache (for Gradle dependency resolution)
+    {
+      "source": "cycletime-maven-cache",
+      "target": "/home/vscode/.m2",
+      "type": "volume"
+    }
+  ],
+
+  // Environment variables
+  // Note: JAVA_HOME is set in Dockerfile and auto-detected based on architecture
+  "remoteEnv": {
+    "GRADLE_USER_HOME": "/home/vscode/.gradle",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+
+  // Lifecycle hooks
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  // Features - using official devcontainer features for common tools
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest",
+      "ppa": false
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": false,
+      "upgradePackages": true,
+      "username": "vscode",
+      "uid": "1000",
+      "gid": "1000"
+    }
+  }
+}
