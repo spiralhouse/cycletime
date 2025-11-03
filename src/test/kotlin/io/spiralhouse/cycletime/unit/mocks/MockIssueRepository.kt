@@ -65,13 +65,25 @@ class MockIssueRepository(
      * Automatically maintained by save() operations.
      */
     val issuesByAssignee: MutableMap<String, MutableList<Issue>> = mutableMapOf()
-    
+
+    /**
+     * Storage for deleted issues (soft-deleted) for testing restore operations.
+     */
+    val deletedIssues: MutableMap<IssueId, Issue> = mutableMapOf()
+
+    /**
+     * Flag to simulate parent being deleted for testing validation.
+     */
+    var parentIsDeleted: Boolean = false
+
     /**
      * Counter for tracking method calls during testing.
      */
     var saveCallCount: Int = 0
     var deleteCallCount: Int = 0
     var findCallCount: Int = 0
+    var softDeleteCallCount: Int = 0
+    var restoreCallCount: Int = 0
     
     // ================================================================================
     // Repository Interface Implementation
@@ -174,22 +186,52 @@ class MockIssueRepository(
     }
 
     override suspend fun softDelete(id: IssueId) {
-        // Mock implementation: just call delete for simplicity
-        delete(id)
+        softDeleteCallCount++
+        // Mock implementation: move to deletedIssues
+        val issue = issues.remove(id)
+        issue?.let {
+            deletedIssues[id] = it
+            // Remove from all indexes
+            it.projectId?.let { projectId ->
+                issuesByProject[projectId]?.removeAll { i -> i.id == id }
+            }
+            it.parentId?.let { parentId ->
+                issuesByParent[parentId]?.removeAll { i -> i.id == id }
+            }
+            it.assigneeId?.let { assigneeId ->
+                issuesByAssignee[assigneeId]?.removeAll { i -> i.id == id }
+            }
+        }
     }
 
     override suspend fun restore(id: IssueId) {
-        // Mock implementation: no-op (would need separate deleted storage in real mock)
+        restoreCallCount++
+        // Mock implementation: move from deletedIssues back to issues
+        val issue = deletedIssues.remove(id)
+        issue?.let {
+            issues[id] = it
+            // Add back to indexes
+            it.projectId?.let { projectId ->
+                issuesByProject.getOrPut(projectId) { mutableListOf() }.add(it)
+            }
+            it.parentId?.let { parentId ->
+                issuesByParent.getOrPut(parentId) { mutableListOf() }.add(it)
+            }
+            it.assigneeId?.let { assigneeId ->
+                issuesByAssignee.getOrPut(assigneeId) { mutableListOf() }.add(it)
+            }
+        }
     }
 
     override suspend fun findDeleted(): List<Issue> {
-        // Mock implementation: return empty list (would need separate deleted storage)
-        return emptyList()
+        findCallCount++
+        return deletedIssues.values.toList()
     }
 
     override suspend fun findIncludingDeleted(id: IssueId): Issue? {
-        // Mock implementation: same as findById
-        return findById(id)
+        findCallCount++
+        // Return from either active or deleted issues
+        return issues[id] ?: deletedIssues[id]
     }
 
     // ================================================================================
@@ -205,9 +247,13 @@ class MockIssueRepository(
         issuesByProject.clear()
         issuesByParent.clear()
         issuesByAssignee.clear()
+        deletedIssues.clear()
+        parentIsDeleted = false
         saveCallCount = 0
         deleteCallCount = 0
         findCallCount = 0
+        softDeleteCallCount = 0
+        restoreCallCount = 0
     }
     
     /**

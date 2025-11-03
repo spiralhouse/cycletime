@@ -54,13 +54,20 @@ class MockProjectRepository(
      * Automatically maintained by save() operations.
      */
     val projectsByStatus: MutableMap<ProjectStatus, MutableList<Project>> = mutableMapOf()
-    
+
+    /**
+     * Storage for deleted projects (soft-deleted) for testing restore operations.
+     */
+    val deletedProjects: MutableMap<ProjectId, Project> = mutableMapOf()
+
     /**
      * Counter for tracking method calls during testing.
      */
     var saveCallCount: Int = 0
     var deleteCallCount: Int = 0
     var findCallCount: Int = 0
+    var softDeleteCallCount: Int = 0
+    var restoreCallCount: Int = 0
     
     // ================================================================================
     // Repository Interface Implementation
@@ -112,7 +119,34 @@ class MockProjectRepository(
     override suspend fun exists(id: ProjectId): Boolean {
         return projects.containsKey(id)
     }
-    
+
+    override suspend fun softDelete(id: ProjectId) {
+        softDeleteCallCount++
+        // Mock implementation: move to deletedProjects
+        val project = projects.remove(id)
+        project?.let {
+            deletedProjects[id] = it
+            // Remove from status index
+            projectsByStatus[it.status]?.removeAll { p -> p.id == id }
+        }
+    }
+
+    override suspend fun restore(id: ProjectId) {
+        restoreCallCount++
+        // Mock implementation: move from deletedProjects back to projects
+        val project = deletedProjects.remove(id)
+        project?.let {
+            projects[id] = it
+            // Add back to status index
+            projectsByStatus.getOrPut(it.status) { mutableListOf() }.add(it)
+        }
+    }
+
+    override suspend fun findIncludingDeleted(id: ProjectId): Project? {
+        findCallCount++
+        return projects[id] ?: deletedProjects[id]
+    }
+
     // ================================================================================
     // Test Utilities
     // ================================================================================
@@ -124,9 +158,12 @@ class MockProjectRepository(
     fun reset() {
         projects.clear()
         projectsByStatus.clear()
+        deletedProjects.clear()
         saveCallCount = 0
         deleteCallCount = 0
         findCallCount = 0
+        softDeleteCallCount = 0
+        restoreCallCount = 0
     }
     
     /**
