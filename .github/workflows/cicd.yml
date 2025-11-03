@@ -1083,6 +1083,7 @@ jobs:
 
           # Create release with artifacts (preserves subdirectories from upload-artifact@v4)
           gh release create "v$version" \
+            --draft \
             --title "Release $version" \
             --notes "${{ steps.capture.outputs.changelog }}" \
             --target "${{ github.sha }}" \
