@@ -4,8 +4,10 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import io.spiralhouse.cycletime.domain.entities.Workflow
 import io.spiralhouse.cycletime.domain.exceptions.DomainException
 
@@ -788,6 +790,287 @@ class ExposedWorkflowRepositoryTest : StringSpec({
             } catch (e: DomainException) {
                 // Expected - domain validation should still work
             }
+        }
+    }
+
+    // ==========================================
+    // Soft-Deletion Tests (SPI-877)
+    // ==========================================
+
+    "should soft-delete workflow successfully" {
+        runTest {
+            // Create and save a workflow
+            val workflow = createTestWorkflow(name = "Workflow to Soft Delete")
+            repository.save(workflow)
+
+            // Verify it exists
+            repository.findById(workflow.id) shouldNotBe null
+
+            // Soft-delete the workflow
+            repository.softDelete(workflow.id)
+
+            // Verify it's excluded from normal queries
+            repository.findById(workflow.id) shouldBe null
+            repository.existsById(workflow.id) shouldBe false
+            repository.findAll() shouldNotContain workflow
+        }
+    }
+
+    "should find soft-deleted workflow with findIncludingDeleted" {
+        runTest {
+            // Create and save a workflow
+            val workflow = createTestWorkflow(name = "Workflow for Deletion Test")
+            repository.save(workflow)
+
+            // Soft-delete it
+            repository.softDelete(workflow.id)
+
+            // Should not be found by normal findById
+            repository.findById(workflow.id) shouldBe null
+
+            // But should be found by findIncludingDeleted
+            val deletedWorkflow = repository.findIncludingDeleted(workflow.id)
+            deletedWorkflow shouldNotBe null
+            deletedWorkflow!!.id shouldBe workflow.id
+            deletedWorkflow.name shouldBe workflow.name
+        }
+    }
+
+    "should throw WorkflowNotFoundException when soft-deleting non-existent workflow" {
+        runTest {
+            val nonExistentId = WorkflowId.generate()
+
+            // Should throw exception
+            try {
+                repository.softDelete(nonExistentId)
+                throw AssertionError("Expected WorkflowNotFoundException")
+            } catch (e: io.spiralhouse.cycletime.domain.exceptions.WorkflowNotFoundException) {
+                // Expected
+                e.message shouldContain nonExistentId.value
+            }
+        }
+    }
+
+    "should be idempotent when soft-deleting already deleted workflow" {
+        runTest {
+            // Create and save a workflow
+            val workflow = createTestWorkflow(name = "Workflow for Idempotent Test")
+            repository.save(workflow)
+
+            // Soft-delete it once
+            repository.softDelete(workflow.id)
+
+            // Soft-delete it again - should not throw exception
+            repository.softDelete(workflow.id)
+
+            // Should still be deleted
+            repository.findById(workflow.id) shouldBe null
+            repository.findIncludingDeleted(workflow.id) shouldNotBe null
+        }
+    }
+
+    "should set deleted_at timestamp when soft-deleting" {
+        runTest {
+            // Create and save a workflow
+            val workflow = createTestWorkflow(name = "Timestamp Test Workflow")
+            repository.save(workflow)
+
+            // Record time before deletion
+            val beforeDelete = mockTimeProvider.now()
+
+            // Advance time and soft-delete
+            mockTimeProvider.advance(1.minutes)
+            repository.softDelete(workflow.id)
+            val afterDelete = mockTimeProvider.now()
+
+            // Verify workflow is in deleted list
+            val deletedWorkflows = repository.findDeleted()
+            deletedWorkflows shouldHaveSize 1
+            deletedWorkflows[0].id shouldBe workflow.id
+        }
+    }
+
+    "should restore soft-deleted workflow successfully" {
+        runTest {
+            // Create and save a workflow
+            val workflow = createTestWorkflow(name = "Workflow to Restore")
+            repository.save(workflow)
+
+            // Soft-delete it
+            repository.softDelete(workflow.id)
+            repository.findById(workflow.id) shouldBe null
+
+            // Restore it
+            repository.restore(workflow.id)
+
+            // Should be found again by normal queries
+            val restoredWorkflow = repository.findById(workflow.id)
+            restoredWorkflow shouldNotBe null
+            restoredWorkflow!!.id shouldBe workflow.id
+            restoredWorkflow.name shouldBe workflow.name
+        }
+    }
+
+    "should be idempotent when restoring already active workflow" {
+        runTest {
+            // Create and save a workflow
+            val workflow = createTestWorkflow(name = "Active Workflow")
+            repository.save(workflow)
+
+            // Restore it (even though it's not deleted) - should not fail
+            repository.restore(workflow.id)
+
+            // Should still be found
+            repository.findById(workflow.id) shouldNotBe null
+        }
+    }
+
+    "should be idempotent when restoring non-existent workflow" {
+        runTest {
+            val nonExistentId = WorkflowId.generate()
+
+            // Should not throw exception (idempotent operation)
+            repository.restore(nonExistentId)
+        }
+    }
+
+    "should exclude soft-deleted workflows from findAll" {
+        runTest {
+            // Create multiple workflows
+            val workflow1 = createTestWorkflow(name = "Active Workflow 1")
+            val workflow2 = createTestWorkflow(name = "To Be Deleted")
+            val workflow3 = createTestWorkflow(name = "Active Workflow 2")
+
+            repository.save(workflow1)
+            repository.save(workflow2)
+            repository.save(workflow3)
+
+            // Verify all are found initially
+            repository.findAll() shouldHaveSize 3
+
+            // Soft-delete one workflow
+            repository.softDelete(workflow2.id)
+
+            // Verify only active workflows are returned
+            val activeWorkflows = repository.findAll()
+            activeWorkflows shouldHaveSize 2
+            activeWorkflows.map { it.id } shouldContain workflow1.id
+            activeWorkflows.map { it.id } shouldContain workflow3.id
+            activeWorkflows.map { it.id } shouldNotContain workflow2.id
+        }
+    }
+
+    "should return all deleted workflows from findDeleted" {
+        runTest {
+            // Create multiple workflows
+            val workflow1 = createTestWorkflow(name = "Active Workflow")
+            val workflow2 = createTestWorkflow(name = "Deleted Workflow 1")
+            val workflow3 = createTestWorkflow(name = "Deleted Workflow 2")
+
+            repository.save(workflow1)
+            repository.save(workflow2)
+            repository.save(workflow3)
+
+            // Soft-delete two workflows
+            mockTimeProvider.advance(1.minutes)
+            repository.softDelete(workflow2.id)
+
+            mockTimeProvider.advance(1.minutes)
+            repository.softDelete(workflow3.id)
+
+            // Verify deleted workflows are returned
+            val deletedWorkflows = repository.findDeleted()
+            deletedWorkflows shouldHaveSize 2
+            deletedWorkflows.map { it.id } shouldContain workflow2.id
+            deletedWorkflows.map { it.id } shouldContain workflow3.id
+            deletedWorkflows.map { it.id } shouldNotContain workflow1.id
+        }
+    }
+
+    "should order deleted workflows by deletion date descending" {
+        runTest {
+            // Create multiple workflows
+            val workflow1 = createTestWorkflow(name = "First Deleted")
+            val workflow2 = createTestWorkflow(name = "Second Deleted")
+            val workflow3 = createTestWorkflow(name = "Third Deleted")
+
+            repository.save(workflow1)
+            repository.save(workflow2)
+            repository.save(workflow3)
+
+            // Delete them in sequence with time advancement
+            mockTimeProvider.setTime(Instant.parse("2025-01-15T10:00:00Z"))
+            repository.softDelete(workflow1.id)
+
+            mockTimeProvider.advance(1.hours)
+            repository.softDelete(workflow2.id)
+
+            mockTimeProvider.advance(1.hours)
+            repository.softDelete(workflow3.id)
+
+            // Verify order (most recently deleted first)
+            val deletedWorkflows = repository.findDeleted()
+            deletedWorkflows shouldHaveSize 3
+            deletedWorkflows[0].id shouldBe workflow3.id // Most recent
+            deletedWorkflows[1].id shouldBe workflow2.id
+            deletedWorkflows[2].id shouldBe workflow1.id // Oldest
+        }
+    }
+
+    "should allow creating new workflow with same name as deleted workflow" {
+        runTest {
+            // Create and delete a workflow
+            val originalWorkflow = createTestWorkflow(name = "Duplicate Name Test")
+            repository.save(originalWorkflow)
+            repository.softDelete(originalWorkflow.id)
+
+            // Create a new workflow with the same name
+            val newWorkflow = createTestWorkflow(name = "Duplicate Name Test")
+            repository.save(newWorkflow)
+
+            // Both should exist (one deleted, one active)
+            repository.findById(newWorkflow.id) shouldNotBe null
+            repository.findIncludingDeleted(originalWorkflow.id) shouldNotBe null
+
+            // Only the new one should appear in active list
+            val activeWorkflows = repository.findAll()
+            activeWorkflows shouldHaveSize 1
+            activeWorkflows[0].id shouldBe newWorkflow.id
+        }
+    }
+
+    "should return empty list from findDeleted when no workflows are deleted" {
+        runTest {
+            // Create active workflows
+            val workflow1 = createTestWorkflow(name = "Active 1")
+            val workflow2 = createTestWorkflow(name = "Active 2")
+            repository.save(workflow1)
+            repository.save(workflow2)
+
+            // No workflows deleted
+            val deletedWorkflows = repository.findDeleted()
+            deletedWorkflows.shouldBeEmpty()
+        }
+    }
+
+    "should handle multiple delete and restore cycles" {
+        runTest {
+            // Create a workflow
+            val workflow = createTestWorkflow(name = "Cycle Test Workflow")
+            repository.save(workflow)
+
+            // Delete and restore multiple times
+            repository.softDelete(workflow.id)
+            repository.findById(workflow.id) shouldBe null
+
+            repository.restore(workflow.id)
+            repository.findById(workflow.id) shouldNotBe null
+
+            repository.softDelete(workflow.id)
+            repository.findById(workflow.id) shouldBe null
+
+            repository.restore(workflow.id)
+            repository.findById(workflow.id) shouldNotBe null
         }
     }
 })
