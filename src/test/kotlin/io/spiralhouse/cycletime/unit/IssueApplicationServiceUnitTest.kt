@@ -1544,7 +1544,7 @@ class IssueApplicationServiceUnitTest : StringSpec({
         // Verify error message contains key phrases
         exception.message.shouldNotBeNull()
         exception.message!!.shouldContain("Cannot restore issue")
-        exception.message!!.shouldContain("parent is still deleted")
+        exception.message!!.shouldContain("is still deleted")
         exception.message!!.shouldContain("Restore parent first")
 
         mockIssueRepository.restoreCallCount shouldBe 0

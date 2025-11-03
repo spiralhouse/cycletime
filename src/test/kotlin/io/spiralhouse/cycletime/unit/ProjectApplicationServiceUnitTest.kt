@@ -1041,7 +1041,18 @@ class ProjectApplicationServiceUnitTest : StringSpec({
 
     "should restore deleted project successfully" {
         // Given - deleted project exists
-        val deletedProject = createTestProject(testProjectId, "Deleted Project")
+        // Use snapshot to ensure correct ID (createTestProject generates new ID)
+        val snapshot = ProjectSnapshot(
+            id = testProjectId,
+            name = "Deleted Project",
+            description = "Test description",
+            status = ProjectStatus.ACTIVE,
+            issues = emptyList(),
+            createdAt = mockTimeProvider.now(),
+            updatedAt = mockTimeProvider.now()
+        )
+        val deletedProject = Project.fromSnapshot(snapshot, mockTimeProvider)
+
         // Mock findIncludingDeleted to return the deleted project
         mockProjectRepository.deletedProjects[testProjectId] = deletedProject
         // Remove from active projects to properly simulate soft-deletion
