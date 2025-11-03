@@ -78,52 +78,40 @@ interface WorkflowRepository {
     /**
      * Soft-deletes a workflow by setting deleted_at timestamp.
      *
-     * **STUB IMPLEMENTATION**: Default implementation delegates to hard-delete
-     * until SPI-877 implements soft-deletion. Workflows with children cascade
-     * the deletion to all child entities.
+     * Workflows have no child entities, so no cascade operations are performed.
+     * Future enhancement: Add validation to prevent deletion of workflows
+     * assigned to active issues when workflow-issue assignment is implemented.
      *
      * @param id The workflow ID to soft-delete
      * @throws WorkflowNotFoundException if workflow does not exist
      */
-    suspend fun softDelete(id: WorkflowId): Boolean {
-        return delete(id)  // Stub: Delegate to existing hard-delete
-    }
+    suspend fun softDelete(id: WorkflowId)
 
     /**
      * Restores a soft-deleted workflow by clearing deleted_at timestamp.
      *
-     * **STUB IMPLEMENTATION**: Default implementation is a no-op until
-     * SPI-877 implements restoration logic.
+     * This operation is idempotent - restoring an already active workflow
+     * will succeed without error.
      *
      * @param id The workflow ID to restore
-     * @throws WorkflowNotFoundException if workflow does not exist
      */
-    suspend fun restore(id: WorkflowId) {
-        // Stub: No-op (not implemented until SPI-877)
-    }
+    suspend fun restore(id: WorkflowId)
 
     /**
      * Finds all soft-deleted workflows.
      *
-     * **STUB IMPLEMENTATION**: Default implementation returns empty list
-     * until SPI-877 implements soft-deletion tracking.
-     *
-     * @return List of deleted workflows (empty until real implementation)
+     * @return List of deleted workflows ordered by deletion date
      */
-    suspend fun findDeleted(): List<Workflow> {
-        return emptyList()  // Stub: No deleted items tracked yet
-    }
+    suspend fun findDeleted(): List<Workflow>
 
     /**
      * Finds a workflow by ID, including soft-deleted workflows.
      *
-     * **STUB IMPLEMENTATION**: Default implementation delegates to existing
-     * findById() until SPI-877 implements deleted_at filtering.
+     * Unlike findById(), this method does not filter by deleted_at status,
+     * allowing retrieval of deleted workflows for restoration purposes.
      *
      * @param id The workflow ID to find
      * @return The workflow if found (including deleted), null otherwise
      */
-    suspend fun findIncludingDeleted(id: WorkflowId): Workflow? {
-        return findById(id)  // Stub: Delegate to existing findById
-    }
+    suspend fun findIncludingDeleted(id: WorkflowId): Workflow?
 }
