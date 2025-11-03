@@ -1,5 +1,5 @@
 {
-  "name": "CycleTime Development Container",
+  "name": "CycleTime Claude Code - Safety Enhanced",
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
@@ -9,9 +9,46 @@
     }
   },
 
-  // Container user configuration
+  // User Configuration
   "remoteUser": "vscode",
+  "containerUser": "vscode",
   "workspaceFolder": "/workspace",
+
+  // Security: Capability Management
+  // Drop all capabilities, add only what's needed
+  "capDrop": ["ALL"],
+  "capAdd": [
+    "CHOWN",        // File ownership changes for Git operations
+    "SETUID",       // Switch user IDs (required for some tools)
+    "SETGID",       // Switch group IDs (required for some tools)
+    "NET_ADMIN"     // For iptables firewall initialization (limited via sudo)
+  ],
+
+  // Security: Seccomp and AppArmor profiles
+  "securityOpt": [],
+
+  // Resource Limits (cgroups)
+  // Prevents resource exhaustion attacks
+  "hostConfig": {
+    "cpus": "4.0",                    // Max 4 CPU cores
+    "memory": "8g",                    // 8GB RAM hard limit
+    "memorySwap": "8g",                // Disable swap (memory + swap = memory)
+    "memoryReservation": "4g",         // Soft limit for early reclaim
+    "pidsLimit": 200,                  // Max 200 processes (prevents fork bombs)
+    "blkioWeight": 500,                // I/O priority (100-1000)
+    "deviceReadBps": [
+      {
+        "path": "/dev/sda",
+        "rate": 104857600              // 100MB/s read limit
+      }
+    ],
+    "deviceWriteBps": [
+      {
+        "path": "/dev/sda",
+        "rate": 52428800               // 50MB/s write limit
+      }
+    ]
+  },
 
   // Port forwarding for MCP server
   "forwardPorts": [8080],
@@ -20,6 +57,74 @@
       "label": "MCP Server",
       "onAutoForward": "notify"
     }
+  },
+
+  // Volume Mounts - Build caches in isolated volumes, workspace writable
+  "mounts": [
+    // Gradle cache
+    {
+      "source": "cycletime-gradle-cache",
+      "target": "/home/vscode/.gradle",
+      "type": "volume"
+    },
+    // Maven cache (for Gradle dependency resolution)
+    {
+      "source": "cycletime-maven-cache",
+      "target": "/home/vscode/.m2",
+      "type": "volume"
+    },
+    // npm cache
+    {
+      "source": "cycletime-npm-cache",
+      "target": "/home/vscode/.npm",
+      "type": "volume"
+    },
+    // Claude Code configuration - Persistent
+    {
+      "source": "cycletime-claude-config",
+      "target": "/home/vscode/.claude",
+      "type": "volume"
+    },
+    // Audit logs - Persistent and accessible from host
+    {
+      "source": "cycletime-audit-logs",
+      "target": "/workspace/.claude",
+      "type": "volume"
+    },
+    // Temporary files - In-memory, size limited
+    {
+      "target": "/tmp",
+      "type": "tmpfs",
+      "tmpfs-size": 1073741824,        // 1GB limit
+      "tmpfs-mode": "1777"             // Sticky bit + world writable
+    }
+  ],
+
+  // Environment Variables
+  "remoteEnv": {
+    // Gradle Configuration
+    "GRADLE_USER_HOME": "/home/vscode/.gradle",
+
+    // Node.js Configuration
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "NODE_ENV": "development",
+
+    // Claude Code Configuration
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+    "CLAUDE_AUDIT_LOG": "/workspace/.claude/audit.log",
+
+    // Container Identification
+    "DEVCONTAINER": "true",
+    "CONTAINER_NAME": "cycletime-claude-code",
+
+    // Safety Configuration
+    "CIRCUIT_BREAKER_FILE": "/tmp/claude-circuit-breaker",
+    "STATE_DIR": "/workspace/.claude/state",
+    "MONITOR_INTERVAL": "5",
+    "CPU_THRESHOLD": "90",
+    "MEM_THRESHOLD": "85",
+    "DISK_THRESHOLD": "90",
+    "PID_THRESHOLD": "80"
   },
 
   // VS Code customizations
@@ -86,31 +191,13 @@
     }
   },
 
-  // Volume mounts for caching
-  "mounts": [
-    // Gradle cache
-    {
-      "source": "cycletime-gradle-cache",
-      "target": "/home/vscode/.gradle",
-      "type": "volume"
-    },
-    // Maven cache (for Gradle dependency resolution)
-    {
-      "source": "cycletime-maven-cache",
-      "target": "/home/vscode/.m2",
-      "type": "volume"
-    }
-  ],
-
-  // Environment variables
-  // Note: JAVA_HOME is set in Dockerfile and auto-detected based on architecture
-  "remoteEnv": {
-    "GRADLE_USER_HOME": "/home/vscode/.gradle",
-    "NODE_OPTIONS": "--max-old-space-size=4096"
-  },
-
   // Lifecycle hooks
   "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  "postStartCommand": {
+    "audit-init": "mkdir -p /workspace/.claude && touch /workspace/.claude/audit.log",
+    "monitor-status": "echo 'Safety mechanisms active. Use emergency-stop.sh for manual control.'"
+  },
 
   // Features - using official devcontainer features for common tools
   "features": {
