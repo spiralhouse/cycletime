@@ -223,20 +223,12 @@ class IssueApplicationService(
                 ?: throw IssueNotFoundException(id)
 
             // Validate parent is not deleted
-            if (issue.parentId != null) {
-                // Check if parent exists (including deleted)
-                val parentIncludingDeleted = issueRepository.findIncludingDeleted(issue.parentId)
-                if (parentIncludingDeleted != null) {
-                    // Parent exists - check if it's deleted by verifying findById returns null
-                    val activeParent = issueRepository.findById(issue.parentId)
-                    if (activeParent == null) {
-                        // Parent exists in findIncludingDeleted but not in findById = deleted
-                        throw IllegalStateException(
-                            "Cannot restore issue ${issue.id.value} - parent ${parentIncludingDeleted.id.value} is still deleted. " +
-                            "Restore parent first or contact support."
-                        )
-                    }
-                }
+            if (issue.parentId != null && isParentDeleted(issue.parentId)) {
+                val parent = issueRepository.findIncludingDeleted(issue.parentId)!!
+                throw IllegalStateException(
+                    "Cannot restore issue ${issue.id.value} - parent ${parent.id.value} is still deleted. " +
+                    "Restore parent issue first before restoring this child issue."
+                )
             }
 
             // Restore issue (does NOT auto-restore children)
@@ -688,5 +680,22 @@ class IssueApplicationService(
         }
 
         return dfs(toIssueId)
+    }
+
+    /**
+     * Checks if a parent issue is soft-deleted.
+     *
+     * This method determines if a parent exists but is currently in a deleted state.
+     * It uses two repository queries to differentiate between:
+     * - Parent doesn't exist at all (might have been hard-deleted previously)
+     * - Parent exists but is soft-deleted (exists in findIncludingDeleted but not findById)
+     *
+     * @param parentId The ID of the parent issue to check
+     * @return true if parent exists and is soft-deleted, false if parent doesn't exist or is active
+     */
+    private suspend fun isParentDeleted(parentId: IssueId): Boolean {
+        val parentIncludingDeleted = issueRepository.findIncludingDeleted(parentId)
+            ?: return false // Parent doesn't exist at all (might have been hard-deleted previously)
+        return issueRepository.findById(parentId) == null // Exists but deleted
     }
 }

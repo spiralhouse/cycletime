@@ -1533,8 +1533,6 @@ class IssueApplicationServiceUnitTest : StringSpec({
         // Remove from active issues to properly simulate soft-deletion
         mockIssueRepository.issues.remove(testParentId)
         mockIssueRepository.issues.remove(testIssueId)
-        // Simulate parent being deleted
-        mockIssueRepository.parentIsDeleted = true
 
         // When & Then
         val exception = shouldThrow<IllegalStateException> {
@@ -1545,7 +1543,7 @@ class IssueApplicationServiceUnitTest : StringSpec({
         exception.message.shouldNotBeNull()
         exception.message!!.shouldContain("Cannot restore issue")
         exception.message!!.shouldContain("is still deleted")
-        exception.message!!.shouldContain("Restore parent first")
+        exception.message!!.shouldContain("Restore parent issue first")
 
         mockIssueRepository.restoreCallCount shouldBe 0
     }
