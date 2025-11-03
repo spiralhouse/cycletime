@@ -72,6 +72,11 @@ class MockIssueRepository(
     val deletedIssues: MutableMap<IssueId, Issue> = mutableMapOf()
 
     /**
+     * Flag to simulate parent being deleted for testing validation.
+     */
+    var parentIsDeleted: Boolean = false
+
+    /**
      * Counter for tracking method calls during testing.
      */
     var saveCallCount: Int = 0
@@ -243,6 +248,7 @@ class MockIssueRepository(
         issuesByParent.clear()
         issuesByAssignee.clear()
         deletedIssues.clear()
+        parentIsDeleted = false
         saveCallCount = 0
         deleteCallCount = 0
         findCallCount = 0
