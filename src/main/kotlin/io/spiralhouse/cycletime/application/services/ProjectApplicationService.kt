@@ -145,15 +145,16 @@ class ProjectApplicationService(
     }
 
     /**
-     * Permanently deletes a project from the system.
+     * Soft-deletes a project from the system.
      *
-     * This is a destructive operation that cannot be undone. Consider using
-     * archiveProject() for soft deletion if recovery might be needed.
+     * This operation marks the project as deleted by setting the deleted_at timestamp
+     * but preserves the data for potential recovery via restoreProject().
+     * Associated issues are cascade soft-deleted (handled by repository).
      *
      * ## Business Rules:
      * - Project must exist or ProjectNotFoundException is thrown
-     * - Associated issues are cascade deleted (handled by repository)
-     * - No recovery possible after deletion
+     * - Associated issues are cascade soft-deleted (handled by repository)
+     * - Deleted project can be recovered via restoreProject()
      *
      * ## Implementation Note:
      * Future enhancement could check for active issues and prevent deletion
@@ -165,7 +166,40 @@ class ProjectApplicationService(
     suspend fun deleteProject(projectId: ProjectId) {
         unitOfWork.execute {
             ensureProjectExists(projectId)
-            projectRepository.delete(projectId)
+            projectRepository.softDelete(projectId)
+        }
+    }
+
+    /**
+     * Restores a soft-deleted project.
+     *
+     * This operation clears the deleted_at timestamp, making the project
+     * active again. Note that child issues are NOT automatically restored -
+     * they must be restored individually if needed.
+     *
+     * ## Business Rules:
+     * - Project must exist (including deleted projects) or ProjectNotFoundException is thrown
+     * - Operation is idempotent - restoring an already-active project succeeds
+     * - Child issues remain deleted (explicit restoration required)
+     *
+     * ## State Transitions:
+     * - DELETED → ACTIVE (clears deleted_at)
+     * - ACTIVE → ACTIVE (idempotent, no-op)
+     *
+     * @param id The ID of the project to restore
+     * @return ProjectDto representing the restored project
+     * @throws ProjectNotFoundException if the project doesn't exist at all
+     */
+    suspend fun restoreProject(id: ProjectId): ProjectDto {
+        return unitOfWork.execute {
+            // Restore project (does NOT auto-restore issues - explicit choice)
+            projectRepository.restore(id)
+
+            // Return restored project
+            val project = projectRepository.findById(id)
+                ?: throw ProjectNotFoundException(id)
+
+            ProjectDto.fromProject(project)
         }
     }
 
