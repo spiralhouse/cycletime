@@ -1,0 +1,151 @@
+{
+  "name": "CycleTime Claude Code - Safety Enhanced",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "NODE_VERSION": "20",
+      "JAVA_VERSION": "21",
+      "TIMEZONE": "UTC"
+    }
+  },
+
+  // User Configuration
+  "remoteUser": "node",
+  "containerUser": "node",
+  "workspaceFolder": "/workspace",
+
+  // Security: Capability Management
+  // Drop all capabilities, add only what's needed
+  "capDrop": ["ALL"],
+  "capAdd": [
+    "CHOWN",        // File ownership changes for Git operations
+    "SETUID",       // Switch user IDs (required for some tools)
+    "SETGID",       // Switch group IDs (required for some tools)
+    "NET_ADMIN"     // For iptables firewall initialization (limited via sudo)
+  ],
+
+  // Security: Seccomp and AppArmor profiles
+  // Note: Seccomp profile to be created in SPI-942 base config
+  "securityOpt": [],
+
+  // Resource Limits (cgroups)
+  // Prevents resource exhaustion attacks
+  "hostConfig": {
+    "cpus": "4.0",                    // Max 4 CPU cores
+    "memory": "8g",                    // 8GB RAM hard limit
+    "memorySwap": "8g",                // Disable swap (memory + swap = memory)
+    "memoryReservation": "4g",         // Soft limit for early reclaim
+    "pidsLimit": 200,                  // Max 200 processes (prevents fork bombs)
+    "blkioWeight": 500,                // I/O priority (100-1000)
+    "deviceReadBps": [
+      {
+        "path": "/dev/sda",
+        "rate": 104857600              // 100MB/s read limit
+      }
+    ],
+    "deviceWriteBps": [
+      {
+        "path": "/dev/sda",
+        "rate": 52428800               // 50MB/s write limit
+      }
+    ]
+  },
+
+  // Volume Mounts - Restricted Access
+  "mounts": [
+    // Source code - READ-ONLY by default
+    // Note: SPI-942 will provide base structure, this config adds safety restrictions
+    {
+      "source": "${localWorkspaceFolder}",
+      "target": "/workspace",
+      "type": "bind",
+      "readonly": true,
+      "consistency": "cached"
+    },
+
+    // Build caches - Isolated volumes
+    {
+      "source": "cycletime-gradle-cache",
+      "target": "/home/node/.gradle",
+      "type": "volume"
+    },
+    {
+      "source": "cycletime-npm-cache",
+      "target": "/home/node/.npm",
+      "type": "volume"
+    },
+
+    // Claude Code configuration - Persistent
+    {
+      "source": "cycletime-claude-config",
+      "target": "/home/node/.claude",
+      "type": "volume"
+    },
+
+    // Audit logs - Persistent and accessible from host
+    {
+      "source": "cycletime-audit-logs",
+      "target": "/workspace/.claude",
+      "type": "volume"
+    },
+
+    // Temporary files - In-memory, size limited
+    {
+      "target": "/tmp",
+      "type": "tmpfs",
+      "tmpfs-size": 1073741824,        // 1GB limit
+      "tmpfs-mode": "1777"             // Sticky bit + world writable
+    }
+  ],
+
+  // Environment Variables
+  "remoteEnv": {
+    // Node.js Configuration
+    "NODE_OPTIONS": "--max-old-space-size=6144",  // 6GB heap (75% of 8GB memory)
+    "NODE_ENV": "development",
+
+    // Java Configuration
+    "JAVA_HOME": "/usr/lib/jvm/java-21-openjdk-amd64",
+    "JAVA_OPTS": "-Xmx4g -Xms2g",                 // JVM heap: 4GB max, 2GB initial
+
+    // Claude Code Configuration
+    "CLAUDE_CONFIG_DIR": "/home/node/.claude",
+    "CLAUDE_AUDIT_LOG": "/workspace/.claude/audit.log",
+
+    // Container Identification
+    "DEVCONTAINER": "true",
+    "CONTAINER_NAME": "cycletime-claude-code",
+
+    // Safety Configuration
+    "CIRCUIT_BREAKER_FILE": "/tmp/claude-circuit-breaker",
+    "STATE_DIR": "/workspace/.claude/state",
+    "MONITOR_INTERVAL": "5",
+    "CPU_THRESHOLD": "90",
+    "MEM_THRESHOLD": "85",
+    "DISK_THRESHOLD": "90",
+    "PID_THRESHOLD": "80"
+  },
+
+  // Lifecycle Hooks
+  "postCreateCommand": {
+    "git-config": "git config --global user.name 'CycleTime Agent' && git config --global user.email 'agent@cycletime.dev'",
+    "git-safe": "git config --global --add safe.directory /workspace",
+    "permissions": "chmod +x /usr/local/bin/*.sh"
+  },
+
+  "postStartCommand": {
+    "firewall": "echo 'Firewall initialization managed by SPI-942 base config'",
+    "audit-init": "mkdir -p /workspace/.claude && touch /workspace/.claude/audit.log",
+    "monitor-start": "echo 'Resource monitoring available via monitor-resources.sh'",
+    "status-check": "echo 'Safety mechanisms active. Use emergency-stop.sh for manual control.'"
+  },
+
+  // VS Code Customizations (defer to SPI-942 base config)
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}
