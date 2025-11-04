@@ -25,6 +25,24 @@ The CycleTime DevContainer includes:
 - **RAM**: 8GB+ recommended (container uses up to 8GB)
 - **Disk**: 10GB+ free space for images and caches
 
+## Documentation
+
+**Complete setup and usage documentation is available in the [`docs/`](./docs/) directory:**
+
+### Getting Started
+- **[Setup Guide](./docs/SETUP-GUIDE.md)** - First-time installation and configuration
+- **[Usage Guide](./docs/USAGE-GUIDE.md)** - Daily development workflows and commands
+
+### Operations
+- **[Best Practices](./docs/BEST-PRACTICES.md)** - Safe workflow patterns and recommendations
+- **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[FAQ](./docs/FAQ.md)** - Frequently asked questions
+- **[Examples](./docs/EXAMPLES.md)** - Real-world usage examples
+
+### Safety & Security
+- **[SAFETY.md](./SAFETY.md)** - Comprehensive safety mechanisms
+- **[DANGEROUS-MODE.md](./DANGEROUS-MODE.md)** - Unattended operations guide
+
 ## Quick Start
 
 ### 1. Open Project in DevContainer
@@ -38,6 +56,8 @@ The CycleTime DevContainer includes:
 **Option B: VS Code Notification**
 1. Open CycleTime project in VS Code
 2. Click "Reopen in Container" in the notification popup
+
+For detailed setup instructions, see [Setup Guide](./docs/SETUP-GUIDE.md).
 
 ### 2. Verify Setup
 
