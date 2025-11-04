@@ -8,6 +8,7 @@ The CycleTime DevContainer includes:
 
 - **Node.js 20** - For MCP server and tooling
 - **OpenJDK 21** - For Kotlin/JVM development
+- **Claude Code CLI** - AI assistant for development workflows
 - **Gradle** - Via project wrapper (./gradlew)
 - **Git** - Version control
 - **VS Code extensions** - Kotlin, Java, Gradle, Git tooling
@@ -50,6 +51,10 @@ java -version
 # Check Node version
 node --version
 # Expected: v20.x.x
+
+# Check Claude Code CLI
+claude --version
+# Expected: 2.0.32
 
 # Check Gradle wrapper
 ./gradlew --version
@@ -147,6 +152,92 @@ gl      # git log --oneline --graph --all -20
 ```
 
 Reload shell to use aliases: `source ~/.bashrc`
+
+## Claude Code CLI
+
+### Authentication Setup
+
+Claude Code CLI requires authentication with an Anthropic API key.
+
+**Step 1: Get Your API Key**
+1. Visit [Anthropic Console](https://console.anthropic.com/)
+2. Navigate to Settings > API Keys
+3. Create a new API key (starts with `sk-ant-`)
+
+**Step 2: Configure API Key in DevContainer**
+
+Add to `.devcontainer/devcontainer.json`:
+```json
+{
+  "containerEnv": {
+    "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
+  }
+}
+```
+
+Then set on your host machine:
+```bash
+# Mac/Linux
+echo 'export ANTHROPIC_API_KEY="sk-ant-api03-..."' >> ~/.zshrc  # or ~/.bashrc
+source ~/.zshrc
+
+# Windows (PowerShell)
+[System.Environment]::SetEnvironmentVariable('ANTHROPIC_API_KEY', 'sk-ant-api03-...', 'User')
+```
+
+**Step 3: Rebuild Container**
+```bash
+# In VS Code:
+# Cmd+Shift+P > "Dev Containers: Rebuild Container"
+```
+
+### Using Claude Code
+
+```bash
+# Start interactive session
+claude
+
+# Get help
+claude --help
+
+# Check version
+claude --version
+
+# Use specific model
+claude --model claude-opus-4-20250514
+
+# Quick commands
+claude "Review the authentication code"
+claude "Add tests for UserService"
+claude "Explain the project structure"
+```
+
+### Configuration Template
+
+See `.devcontainer/claude-config.template` for:
+- Authentication options
+- Model selection
+- Environment variables
+- Security best practices
+- Troubleshooting tips
+
+### Testing Claude CLI
+
+```bash
+# Verify installation (no API call)
+claude --help
+
+# Test API connectivity (uses tokens)
+claude "Say hello"
+```
+
+### Security Notes
+
+- **Never commit API keys** to version control
+- Store keys in environment variables or host machine config
+- Rotate keys regularly (recommended: every 90 days)
+- Use separate keys for dev/staging/production
+- Configuration stored in: `/home/vscode/.config/claude/`
 
 ## Troubleshooting
 
@@ -253,6 +344,65 @@ netstat -ano | findstr :8080  # Windows
 
 # 5. Check build status
 ./gradlew buildStatus
+```
+
+### Claude Code authentication errors
+
+**Issue**: "Authentication failed" or "Invalid API key"
+
+**Solutions**:
+```bash
+# 1. Verify API key is set in container
+echo $ANTHROPIC_API_KEY
+# Should start with 'sk-ant-'
+
+# 2. Verify API key on host
+# Mac/Linux:
+echo $ANTHROPIC_API_KEY
+# Windows PowerShell:
+$env:ANTHROPIC_API_KEY
+
+# 3. Rebuild container to pick up new environment
+# Cmd+Shift+P > "Dev Containers: Rebuild Container"
+
+# 4. Test with a simple command
+claude --help  # Should work without API key
+claude "Say hello"  # Requires valid API key
+```
+
+### Claude Code command not found
+
+**Issue**: `bash: claude: command not found`
+
+**Solutions**:
+```bash
+# 1. Verify installation
+npm list -g @anthropic-ai/claude-code
+which claude  # Should show /usr/local/bin/claude
+
+# 2. Reinstall Claude Code CLI
+npm install -g @anthropic-ai/claude-code@2.0.32
+
+# 3. Rebuild container
+# Cmd+Shift+P > "Dev Containers: Rebuild Container Without Cache"
+```
+
+### Claude Code rate limit errors
+
+**Issue**: "Rate limit exceeded" or "429 Too Many Requests"
+
+**Solutions**:
+```bash
+# 1. Check your usage in Anthropic Console
+# https://console.anthropic.com/settings/usage
+
+# 2. Wait for rate limit reset (usually 1 minute)
+
+# 3. Consider upgrading your plan
+# https://console.anthropic.com/settings/plans
+
+# 4. Use a lower-cost model for development
+claude --model claude-haiku-4-20250309
 ```
 
 ## Container Maintenance
@@ -382,6 +532,12 @@ For issues or questions:
 4. Consult DevContainer documentation
 
 ## Version History
+
+- **v1.1** (SPI-943) - Claude Code CLI integration
+  - Claude Code CLI v2.0.32 installed globally
+  - Authentication via environment variables
+  - Configuration template and documentation
+  - Health check and verification scripts
 
 - **v1.0** (SPI-942) - Base devcontainer configuration
   - Node.js 20 + JVM 21 dual runtime

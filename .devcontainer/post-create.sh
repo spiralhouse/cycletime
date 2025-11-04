@@ -67,7 +67,15 @@ node --version
 npm --version
 print_success "Node.js available"
 
-# 5. Set up shell completions
+# 5. Setup Claude Code CLI
+print_step "Setting up Claude Code CLI..."
+if [ -f ".devcontainer/scripts/install-claude-cli.sh" ]; then
+    bash .devcontainer/scripts/install-claude-cli.sh
+else
+    print_warning "Claude CLI setup script not found"
+fi
+
+# 6. Set up shell completions
 print_step "Setting up shell completions..."
 if [ -f "./gradlew" ]; then
     ./gradlew --completion-script > ~/.gradle-completion.bash 2>/dev/null || true
@@ -75,7 +83,7 @@ if [ -f "./gradlew" ]; then
     print_success "Gradle completion configured"
 fi
 
-# 6. Create useful aliases
+# 7. Create useful aliases
 print_step "Setting up aliases..."
 cat >> ~/.bashrc << 'EOF'
 
@@ -100,7 +108,7 @@ alias gl='git log --oneline --graph --all -20'
 EOF
 print_success "Aliases configured"
 
-# 7. Display workspace info
+# 8. Display workspace info
 echo ""
 echo "========================================="
 echo "Workspace Information"
@@ -108,10 +116,11 @@ echo "========================================="
 echo "Working directory: $(pwd)"
 echo "Java version: $(java -version 2>&1 | head -n 1)"
 echo "Node version: $(node --version)"
+echo "Claude Code: $(claude --version 2>/dev/null || echo "Not configured")"
 echo "Gradle: $([ -f "./gradlew" ] && echo "Available (./gradlew)" || echo "Not found")"
 echo ""
 
-# 8. Health checks
+# 9. Health checks
 print_step "Running health checks..."
 
 # Check if database file exists
@@ -128,7 +137,7 @@ else
     print_success "Clean workspace (no build artifacts)"
 fi
 
-# 9. Display next steps
+# 10. Display next steps
 echo ""
 echo "========================================="
 echo "DevContainer Setup Complete!"

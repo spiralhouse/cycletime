@@ -1,0 +1,149 @@
+# Claude Code Configuration Template
+# This file contains environment variables and configuration options for Claude Code CLI
+
+# ============================================
+# Authentication
+# ============================================
+
+# Anthropic API Key (REQUIRED)
+# Get your API key from: https://console.anthropic.com/
+#
+# IMPORTANT: Never commit your actual API key to version control!
+#
+# Setup methods (choose one):
+#
+# Method 1: Environment variable in devcontainer.json (RECOMMENDED for devcontainers)
+# Add to .devcontainer/devcontainer.json:
+# {
+#   "containerEnv": {
+#     "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
+#   }
+# }
+# Then set on host: export ANTHROPIC_API_KEY='sk-ant-...'
+#
+# Method 2: Shell environment (for manual setup)
+# export ANTHROPIC_API_KEY='sk-ant-api03-...'
+#
+# Method 3: Claude Code configuration file (fallback)
+# Create ~/.config/claude/config.json:
+# {
+#   "apiKey": "sk-ant-api03-..."
+# }
+
+ANTHROPIC_API_KEY='${ANTHROPIC_API_KEY}'
+
+# ============================================
+# Claude Code CLI Configuration
+# ============================================
+
+# Model Selection (optional)
+# Available models:
+#   - claude-opus-4-20250514 (most capable, highest cost)
+#   - claude-sonnet-4-20250514 (balanced performance/cost) [DEFAULT]
+#   - claude-haiku-4-20250309 (fast, lower cost)
+#
+# CLAUDE_MODEL='claude-sonnet-4-20250514'
+
+# Max Tokens (optional)
+# Maximum tokens for Claude responses
+# Default: 8192
+# Range: 1-200000
+#
+# CLAUDE_MAX_TOKENS=8192
+
+# Temperature (optional)
+# Controls randomness in responses
+# Default: 1.0
+# Range: 0.0-1.0 (lower = more deterministic)
+#
+# CLAUDE_TEMPERATURE=1.0
+
+# ============================================
+# Devcontainer-Specific Settings
+# ============================================
+
+# Container Environment Flag
+# Automatically set by Dockerfile, used for environment detection
+DEVCONTAINER=true
+
+# Workspace Directory
+# Automatically set by devcontainer.json
+WORKSPACE_DIR=/workspace
+
+# ============================================
+# Security Best Practices
+# ============================================
+
+# 1. API Key Management
+#    - Never commit API keys to git
+#    - Use environment variables or secrets management
+#    - Rotate keys regularly (recommended: every 90 days)
+#    - Use separate keys for dev/staging/production
+
+# 2. Key Rotation Procedure
+#    a. Generate new API key in Anthropic Console
+#    b. Update environment variable on host machine
+#    c. Rebuild devcontainer to pick up new key
+#    d. Revoke old API key in Anthropic Console
+
+# 3. Volume Storage (for persistent auth across rebuilds)
+#    Claude Code configuration is stored in:
+#    - Container: /home/vscode/.config/claude/
+#    - Volume: cycletime-devcontainer-config (persistent)
+#    This volume survives container rebuilds but NOT removals
+
+# ============================================
+# Usage Examples
+# ============================================
+
+# Basic usage:
+#   claude                          # Start interactive session
+#   claude --help                   # Show help and options
+#   claude --version               # Show version information
+
+# Model selection:
+#   claude --model claude-opus-4-20250514    # Use Opus model
+#   claude --model claude-haiku-4-20250309   # Use Haiku model
+
+# File operations:
+#   claude "Review the authentication code"  # Claude will read relevant files
+#   claude "Add tests for UserService"       # Claude can create/modify files
+
+# Testing connectivity:
+#   claude --help                   # Verifies CLI works (no API call)
+#   claude "Say hello"             # Simple API test (uses tokens)
+
+# ============================================
+# Troubleshooting
+# ============================================
+
+# Issue: "Authentication failed"
+# Solution: Verify ANTHROPIC_API_KEY is set correctly
+#   echo $ANTHROPIC_API_KEY  # Should start with 'sk-ant-'
+
+# Issue: "Command not found: claude"
+# Solution: Verify installation
+#   which claude                 # Should show /usr/local/bin/claude
+#   npm list -g @anthropic-ai/claude-code  # Check installed version
+
+# Issue: "API rate limit exceeded"
+# Solution: Wait for rate limit reset or upgrade plan
+#   https://console.anthropic.com/settings/plans
+
+# Issue: Claude not seeing project files
+# Solution: Verify working directory
+#   pwd                          # Should be /workspace
+#   ls -la                       # Should show project files
+
+# ============================================
+# Additional Resources
+# ============================================
+
+# Documentation:
+#   - Claude Code: https://github.com/anthropics/claude-code
+#   - Anthropic API: https://docs.anthropic.com/
+#   - DevContainers: https://containers.dev/
+
+# Support:
+#   - Anthropic Console: https://console.anthropic.com/
+#   - Claude Code Issues: https://github.com/anthropics/claude-code/issues

@@ -96,14 +96,26 @@ ENV EDITOR=vim
 USER ${USERNAME}
 WORKDIR /workspace
 
+# Install Claude Code CLI globally with specific version pinning
+# Version pinning ensures reproducibility across container rebuilds
+ARG CLAUDE_CODE_VERSION=2.0.32
+RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} \
+    && claude --version
+
+# Configure npm cache for faster rebuilds
+ENV NPM_CONFIG_CACHE=/home/${USERNAME}/.npm
+RUN mkdir -p /home/${USERNAME}/.npm \
+    && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.npm
+
 # Verify installations as non-root user
 RUN node --version \
     && npm --version \
-    && java --version
+    && java --version \
+    && claude --version
 
 # Health check configuration
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node --version && java --version || exit 1
+    CMD node --version && java --version && claude --version || exit 1
 
 # Default command (overridden by VS Code)
 CMD ["/bin/bash"]
