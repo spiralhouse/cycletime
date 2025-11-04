@@ -1,0 +1,298 @@
+name: DevContainer CI
+
+on:
+  push:
+    branches: [main, develop, feat/spi-916-devcontainer-claude-code]
+    paths:
+      - '.devcontainer/**'
+      - 'src/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle/**'
+      - '.github/workflows/devcontainer-ci.yml'
+  pull_request:
+    branches: [main, develop, feat/spi-916-devcontainer-claude-code]
+    paths:
+      - '.devcontainer/**'
+      - 'src/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle/**'
+      - '.github/workflows/devcontainer-ci.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: devcontainer-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Cache configuration
+  DEVCONTAINER_CACHE_VERSION: "v1"
+  # Build configuration
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
+  JAVA_OPTS: "-Xmx2g -XX:MaxMetaspaceSize=512m"
+
+jobs:
+  # Build devcontainer and run comprehensive test suite
+  devcontainer-build-and-test:
+    name: Build and Test in DevContainer
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: devcontainer-buildx-${{ env.DEVCONTAINER_CACHE_VERSION }}-${{ runner.os }}-${{ hashFiles('.devcontainer/Dockerfile', '.devcontainer/devcontainer.json') }}
+          restore-keys: |
+            devcontainer-buildx-${{ env.DEVCONTAINER_CACHE_VERSION }}-${{ runner.os }}-
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: devcontainer-gradle-${{ env.DEVCONTAINER_CACHE_VERSION }}-${{ hashFiles('**/*.gradle*', 'gradle/libs.versions.toml', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            devcontainer-gradle-${{ env.DEVCONTAINER_CACHE_VERSION }}-
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: devcontainer-npm-${{ env.DEVCONTAINER_CACHE_VERSION }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            devcontainer-npm-${{ env.DEVCONTAINER_CACHE_VERSION }}-
+
+      - name: Build and run DevContainer
+        uses: devcontainers/ci@v0.3
+        with:
+          imageName: ghcr.io/${{ github.repository }}/devcontainer
+          cacheFrom: ghcr.io/${{ github.repository }}/devcontainer
+          push: never
+          runCmd: |
+            # Print environment info
+            echo "=== DevContainer Environment ==="
+            echo "User: $(whoami)"
+            echo "Working directory: $(pwd)"
+            echo "Java version: $(java -version 2>&1 | head -1)"
+            echo "Gradle version: $(./gradlew --version | grep Gradle)"
+            echo "Node version: $(node --version)"
+            echo "npm version: $(npm --version)"
+            echo ""
+
+            # Run CI-specific build and test script
+            bash .devcontainer/ci/build-and-test.sh
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: devcontainer-test-results
+          path: |
+            build/reports/tests/
+            build/test-results/
+            /tmp/devcontainer-test-report-*.txt
+          retention-days: 7
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: devcontainer-build-artifacts
+          path: |
+            build/libs/*.jar
+            build/distributions/
+          retention-days: 7
+
+      - name: Upload test coverage
+        uses: codecov/codecov-action@v5
+        if: success()
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./build/reports/kover/report.xml
+          flags: devcontainer
+          name: devcontainer-coverage
+          fail_ci_if_error: false
+
+  # Validate devcontainer configuration
+  devcontainer-validate:
+    name: Validate DevContainer Config
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate devcontainer.json
+        run: |
+          echo "=== Validating devcontainer.json ==="
+
+          # Check JSON syntax
+          if ! jq empty .devcontainer/devcontainer.json 2>/dev/null; then
+            echo "ERROR: Invalid JSON in devcontainer.json"
+            exit 1
+          fi
+
+          echo "✓ Valid JSON syntax"
+
+          # Check required fields
+          required_fields=("name" "build" "remoteUser" "workspaceFolder")
+          for field in "${required_fields[@]}"; do
+            if ! jq -e ".$field" .devcontainer/devcontainer.json > /dev/null 2>&1; then
+              echo "ERROR: Missing required field: $field"
+              exit 1
+            fi
+            echo "✓ Required field present: $field"
+          done
+
+          echo ""
+          echo "=== DevContainer Configuration Summary ==="
+          echo "Name: $(jq -r '.name' .devcontainer/devcontainer.json)"
+          echo "Remote User: $(jq -r '.remoteUser' .devcontainer/devcontainer.json)"
+          echo "Workspace: $(jq -r '.workspaceFolder' .devcontainer/devcontainer.json)"
+          echo "CPU Limit: $(jq -r '.hostConfig.cpus // "not set"' .devcontainer/devcontainer.json)"
+          echo "Memory Limit: $(jq -r '.hostConfig.memory // "not set"' .devcontainer/devcontainer.json)"
+
+      - name: Validate Dockerfile
+        run: |
+          echo "=== Validating Dockerfile ==="
+
+          if [ ! -f .devcontainer/Dockerfile ]; then
+            echo "ERROR: Dockerfile not found"
+            exit 1
+          fi
+
+          # Basic linting with hadolint (if available)
+          if command -v hadolint &> /dev/null; then
+            hadolint .devcontainer/Dockerfile || true
+          else
+            echo "SKIP: hadolint not available (install for better validation)"
+          fi
+
+          echo "✓ Dockerfile exists"
+
+      - name: Validate scripts are executable
+        run: |
+          echo "=== Validating Scripts ==="
+
+          scripts=(
+            ".devcontainer/post-create.sh"
+            ".devcontainer/scripts/monitor.sh"
+            ".devcontainer/scripts/circuit-breaker.sh"
+            ".devcontainer/scripts/emergency-stop.sh"
+            ".devcontainer/tests/run-all-tests.sh"
+            ".devcontainer/ci/build-and-test.sh"
+          )
+
+          for script in "${scripts[@]}"; do
+            if [ -f "$script" ]; then
+              if [ -x "$script" ]; then
+                echo "✓ $script is executable"
+              else
+                echo "WARNING: $script is not executable"
+              fi
+            else
+              echo "WARNING: $script not found"
+            fi
+          done
+
+  # Security scan of devcontainer
+  devcontainer-security:
+    name: Security Scan DevContainer
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.devcontainer'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Check for security issues in Dockerfile
+        run: |
+          echo "=== Security Checks ==="
+
+          # Check for root user
+          if grep -q "USER root" .devcontainer/Dockerfile; then
+            echo "WARNING: Dockerfile contains USER root directive"
+          fi
+
+          # Check for sudo without password
+          if grep -q "NOPASSWD" .devcontainer/Dockerfile; then
+            echo "INFO: Passwordless sudo configured (expected for devcontainer)"
+          fi
+
+          # Check for security capabilities
+          if jq -e '.capDrop' .devcontainer/devcontainer.json > /dev/null 2>&1; then
+            echo "✓ Capabilities dropped: $(jq -r '.capDrop | join(", ")' .devcontainer/devcontainer.json)"
+          fi
+
+          if jq -e '.capAdd' .devcontainer/devcontainer.json > /dev/null 2>&1; then
+            echo "INFO: Capabilities added: $(jq -r '.capAdd | join(", ")' .devcontainer/devcontainer.json)"
+          fi
+
+          # Check for resource limits
+          if jq -e '.hostConfig.memory' .devcontainer/devcontainer.json > /dev/null 2>&1; then
+            echo "✓ Memory limit: $(jq -r '.hostConfig.memory' .devcontainer/devcontainer.json)"
+          fi
+
+          if jq -e '.hostConfig.pidsLimit' .devcontainer/devcontainer.json > /dev/null 2>&1; then
+            echo "✓ PID limit: $(jq -r '.hostConfig.pidsLimit' .devcontainer/devcontainer.json)"
+          fi
+
+  # Summary job
+  devcontainer-summary:
+    name: DevContainer CI Summary
+    needs: [devcontainer-build-and-test, devcontainer-validate, devcontainer-security]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Generate summary
+        run: |
+          echo "# DevContainer CI Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build and Test | ${{ needs.devcontainer-build-and-test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Configuration Validation | ${{ needs.devcontainer-validate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | ${{ needs.devcontainer-security.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Overall status
+          if [[ "${{ needs.devcontainer-build-and-test.result }}" == "success" && \
+                "${{ needs.devcontainer-validate.result }}" == "success" && \
+                "${{ needs.devcontainer-security.result }}" == "success" ]]; then
+            echo "✅ **All DevContainer CI checks passed!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Some DevContainer CI checks failed**" >> $GITHUB_STEP_SUMMARY
+          fi
