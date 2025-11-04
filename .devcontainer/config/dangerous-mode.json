@@ -1,0 +1,432 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "description": "Configuration for Claude Code --dangerously-skip-permissions mode with safety guardrails",
+  "version": "1.0.0",
+
+  "mode": {
+    "enabled": false,
+    "maxDuration": 1800,
+    "comment": "Maximum duration in seconds (30 minutes default)",
+    "allowBackgroundExecution": false,
+    "requireCircuitBreakerCheck": true,
+    "requireResourceMonitoring": true
+  },
+
+  "timeouts": {
+    "commandExecution": 300,
+    "comment": "Individual command timeout in seconds (5 minutes)",
+    "gitOperation": 120,
+    "fileOperation": 60,
+    "networkRequest": 30,
+    "buildOperation": 1800,
+    "testExecution": 900
+  },
+
+  "operationCategories": {
+    "allowlist": {
+      "description": "Operations that can be auto-approved in dangerous mode",
+      "operations": [
+        {
+          "category": "read_operations",
+          "riskLevel": "low",
+          "operations": [
+            "file_read",
+            "directory_list",
+            "git_status",
+            "git_log",
+            "git_diff",
+            "git_show",
+            "git_branch_list",
+            "gradle_tasks",
+            "gradle_dependencies"
+          ]
+        },
+        {
+          "category": "non_destructive_git",
+          "riskLevel": "low",
+          "operations": [
+            "git_add",
+            "git_commit_to_feature_branch",
+            "git_checkout_feature_branch",
+            "git_fetch",
+            "git_pull_feature_branch"
+          ],
+          "conditions": {
+            "branchPattern": "^(feat|fix|refactor|test|docs|chore|build|ci)/.*",
+            "excludeBranches": ["main", "master", "develop", "release/*", "hotfix/*"]
+          }
+        },
+        {
+          "category": "build_operations",
+          "riskLevel": "low",
+          "operations": [
+            "gradle_build",
+            "gradle_compile",
+            "gradle_assemble",
+            "gradle_clean"
+          ],
+          "conditions": {
+            "noDeploymentTasks": true,
+            "noDatabaseMigrations": true
+          }
+        },
+        {
+          "category": "test_execution",
+          "riskLevel": "low",
+          "operations": [
+            "gradle_test",
+            "gradle_unitTest",
+            "gradle_integrationTest",
+            "gradle_check",
+            "npm_test"
+          ]
+        },
+        {
+          "category": "code_quality",
+          "riskLevel": "low",
+          "operations": [
+            "gradle_detekt",
+            "gradle_koverHtmlReport",
+            "gradle_koverVerify",
+            "npm_lint"
+          ]
+        },
+        {
+          "category": "file_modifications",
+          "riskLevel": "medium",
+          "operations": [
+            "file_create",
+            "file_edit",
+            "file_rename"
+          ],
+          "conditions": {
+            "allowedPaths": [
+              "/workspace/src/**",
+              "/workspace/docs/**",
+              "/workspace/.claude/**",
+              "/workspace/build/**",
+              "/workspace/.devcontainer/**"
+            ],
+            "excludedPaths": [
+              "/workspace/.git/**",
+              "/workspace/.env",
+              "/workspace/credentials.json",
+              "/workspace/*.db",
+              "/workspace/production.conf"
+            ]
+          }
+        }
+      ]
+    },
+
+    "denylist": {
+      "description": "Operations that must NEVER be auto-approved",
+      "operations": [
+        {
+          "category": "destructive_git",
+          "riskLevel": "critical",
+          "blocked": true,
+          "operations": [
+            "git_push_force",
+            "git_push_force_with_lease_to_main",
+            "git_reset_hard",
+            "git_clean_fdx",
+            "git_branch_delete_remote",
+            "git_rebase_interactive",
+            "git_filter_branch"
+          ],
+          "reason": "Can cause permanent data loss or corrupt repository history"
+        },
+        {
+          "category": "protected_branch_operations",
+          "riskLevel": "critical",
+          "blocked": true,
+          "operations": [
+            "git_push_to_main",
+            "git_push_to_master",
+            "git_merge_to_main",
+            "git_commit_to_main"
+          ],
+          "reason": "Protected branches require pull request workflow"
+        },
+        {
+          "category": "destructive_filesystem",
+          "riskLevel": "critical",
+          "blocked": true,
+          "operations": [
+            "rm_recursive",
+            "recursive_delete",
+            "file_delete_pattern",
+            "directory_delete"
+          ],
+          "patterns": [
+            "rm -rf",
+            "rm -fr",
+            "find . -delete",
+            "find . -exec rm"
+          ],
+          "reason": "Can cause irreversible data loss"
+        },
+        {
+          "category": "system_configuration",
+          "riskLevel": "critical",
+          "blocked": true,
+          "operations": [
+            "etc_modification",
+            "system_package_install",
+            "system_service_modification",
+            "kernel_module_load",
+            "firewall_rule_modification"
+          ],
+          "paths": [
+            "/etc/**",
+            "/sys/**",
+            "/proc/**",
+            "/boot/**"
+          ],
+          "reason": "System-level changes can compromise container security"
+        },
+        {
+          "category": "docker_host_operations",
+          "riskLevel": "critical",
+          "blocked": true,
+          "operations": [
+            "docker_host_access",
+            "container_privileged_execution",
+            "host_network_access",
+            "volume_host_mount"
+          ],
+          "reason": "Breaking container isolation compromises safety architecture"
+        },
+        {
+          "category": "network_configuration",
+          "riskLevel": "critical",
+          "blocked": true,
+          "operations": [
+            "iptables_flush",
+            "firewall_disable",
+            "dns_modification",
+            "routing_table_modification"
+          ],
+          "reason": "Network isolation is critical security control"
+        },
+        {
+          "category": "credential_operations",
+          "riskLevel": "critical",
+          "blocked": true,
+          "operations": [
+            "env_file_modification",
+            "credential_file_read",
+            "secret_exposure",
+            "api_key_commit"
+          ],
+          "patterns": [
+            ".env",
+            "credentials.json",
+            "*.key",
+            "*.pem",
+            "*.pfx",
+            "*_token",
+            "*_secret"
+          ],
+          "reason": "Credential exposure creates security vulnerabilities"
+        },
+        {
+          "category": "deployment_operations",
+          "riskLevel": "critical",
+          "blocked": true,
+          "operations": [
+            "production_deployment",
+            "database_migration_production",
+            "infrastructure_modification",
+            "cloud_resource_creation"
+          ],
+          "reason": "Production changes require manual approval and validation"
+        }
+      ]
+    },
+
+    "requireConfirmation": {
+      "description": "Operations that require explicit confirmation even in dangerous mode",
+      "operations": [
+        {
+          "category": "git_push",
+          "riskLevel": "medium",
+          "operations": [
+            "git_push_feature_branch",
+            "git_push_with_upstream"
+          ],
+          "confirmationMessage": "Push changes to remote? This will share your work with others.",
+          "allowBypass": false
+        },
+        {
+          "category": "file_deletion",
+          "riskLevel": "medium",
+          "operations": [
+            "file_delete",
+            "multiple_file_delete"
+          ],
+          "confirmationMessage": "Delete file(s)? This action cannot be undone.",
+          "allowBypass": false
+        },
+        {
+          "category": "branch_deletion",
+          "riskLevel": "medium",
+          "operations": [
+            "git_branch_delete_local",
+            "git_branch_delete_merged"
+          ],
+          "confirmationMessage": "Delete branch? Ensure changes are merged or backed up.",
+          "allowBypass": false
+        },
+        {
+          "category": "deployment_staging",
+          "riskLevel": "high",
+          "operations": [
+            "deploy_to_staging",
+            "database_migration_staging"
+          ],
+          "confirmationMessage": "Deploy to staging environment? Verify tests pass first.",
+          "allowBypass": false
+        }
+      ]
+    }
+  },
+
+  "safetyChecks": {
+    "preFlightChecks": [
+      {
+        "name": "circuit_breaker_status",
+        "command": "emergency-stop.sh status",
+        "expectedOutput": "OK",
+        "failureAction": "abort",
+        "description": "Verify circuit breaker is not tripped"
+      },
+      {
+        "name": "resource_availability",
+        "command": "monitor-resources.sh once json",
+        "thresholds": {
+          "cpu": 70,
+          "memory": 70,
+          "disk": 80,
+          "pids": 60
+        },
+        "failureAction": "warn",
+        "description": "Check sufficient resources available"
+      },
+      {
+        "name": "git_repository_clean",
+        "command": "git status --porcelain",
+        "expectedOutput": "",
+        "failureAction": "warn",
+        "description": "Verify no uncommitted changes before dangerous operations"
+      },
+      {
+        "name": "audit_logging_active",
+        "command": "test -f /workspace/.claude/audit.log",
+        "expectedOutput": "0",
+        "failureAction": "abort",
+        "description": "Ensure audit logging is configured"
+      }
+    ],
+
+    "continuousMonitoring": {
+      "enabled": true,
+      "interval": 5,
+      "comment": "Check interval in seconds",
+      "metrics": [
+        {
+          "name": "resource_usage",
+          "script": "monitor-resources.sh once json",
+          "alertThreshold": {
+            "cpu": 90,
+            "memory": 85,
+            "disk": 90,
+            "pids": 80
+          },
+          "action": "emergency_stop"
+        },
+        {
+          "name": "process_count",
+          "command": "ps aux | wc -l",
+          "threshold": 180,
+          "comment": "Alert if approaching PID limit (200)",
+          "action": "warning"
+        },
+        {
+          "name": "disk_io",
+          "command": "iostat -x 1 2 | tail -1",
+          "threshold": 90,
+          "comment": "Alert if disk I/O near throttle limit",
+          "action": "warning"
+        }
+      ]
+    },
+
+    "emergencyStopConditions": [
+      {
+        "condition": "cpu_threshold_exceeded",
+        "threshold": 95,
+        "duration": 30,
+        "comment": "Stop if CPU > 95% for 30 seconds",
+        "action": "immediate_stop"
+      },
+      {
+        "condition": "memory_threshold_exceeded",
+        "threshold": 95,
+        "duration": 10,
+        "comment": "Stop if memory > 95% for 10 seconds",
+        "action": "immediate_stop"
+      },
+      {
+        "condition": "pid_threshold_exceeded",
+        "threshold": 190,
+        "comment": "Stop if approaching PID limit",
+        "action": "immediate_stop"
+      },
+      {
+        "condition": "circuit_breaker_tripped",
+        "action": "immediate_stop"
+      },
+      {
+        "condition": "denylist_operation_attempted",
+        "action": "immediate_stop"
+      }
+    ]
+  },
+
+  "auditLogging": {
+    "enabled": true,
+    "logFile": "/workspace/.claude/audit.log",
+    "logLevel": "debug",
+    "rotationThreshold": 100,
+    "comment": "Rotation threshold in MB",
+    "logOperations": {
+      "allowlist": true,
+      "denylist": true,
+      "requireConfirmation": true,
+      "emergencyStop": true,
+      "resourceAlerts": true,
+      "allCommands": true
+    },
+    "exportEndpoint": null,
+    "comment": "Optional centralized logging endpoint"
+  },
+
+  "dryRunMode": {
+    "enabled": false,
+    "logAllOperations": true,
+    "showRiskAssessment": true,
+    "simulateApprovals": true,
+    "outputFile": "/workspace/.claude/dry-run.log"
+  },
+
+  "recovery": {
+    "autoBackup": true,
+    "backupInterval": 300,
+    "comment": "Backup state every 5 minutes",
+    "backupLocation": "/workspace/.claude/state",
+    "maxBackups": 10,
+    "backupOnEmergencyStop": true
+  }
+}
