@@ -408,7 +408,8 @@ class ProjectApplicationServiceUnitTest : StringSpec({
         projectService.deleteProject(testProjectId)
 
         // Then
-        mockProjectRepository.deleteCallCount shouldBe 1
+        mockProjectRepository.softDeleteCallCount shouldBe 1
+        mockProjectRepository.deleteCallCount shouldBe 0
         mockUnitOfWork.executeCallCount shouldBe 1
     }
 
@@ -993,5 +994,117 @@ class ProjectApplicationServiceUnitTest : StringSpec({
 
         // Then - all operations should have executed within transactions
         mockUnitOfWork.executeCallCount shouldBe 4
+    }
+
+    // ================================================================================
+    // Soft-Deletion Operations Tests (SPI-878)
+    // ================================================================================
+
+    "should use soft-delete instead of hard-delete when deleting project" {
+        // Given
+        addTestProject(testProjectId, "Project to Soft Delete")
+
+        // When
+        projectService.deleteProject(testProjectId)
+
+        // Then - should call softDelete, not delete
+        mockProjectRepository.softDeleteCallCount shouldBe 1
+        mockProjectRepository.deleteCallCount shouldBe 0
+        mockUnitOfWork.executeCallCount shouldBe 1
+    }
+
+    "should cascade soft-delete to issues when deleting project" {
+        // Given
+        addTestProject(testProjectId, "Project with Issues")
+        // Note: Cascade behavior is handled by repository layer (SPI-876)
+        // This test verifies service calls softDelete which triggers cascade
+
+        // When
+        projectService.deleteProject(testProjectId)
+
+        // Then - service should call softDelete (cascade handled by repo)
+        mockProjectRepository.softDeleteCallCount shouldBe 1
+        mockUnitOfWork.executeCallCount shouldBe 1
+    }
+
+    "should complete soft-delete in single transaction" {
+        // Given
+        addTestProject(testProjectId, "Transactional Delete")
+
+        // When
+        projectService.deleteProject(testProjectId)
+
+        // Then - verify single transaction wraps the operation
+        mockUnitOfWork.executeCallCount shouldBe 1
+        mockProjectRepository.softDeleteCallCount shouldBe 1
+    }
+
+    "should restore deleted project successfully" {
+        // Given - deleted project exists
+        // Use snapshot to ensure correct ID (createTestProject generates new ID)
+        val snapshot = ProjectSnapshot(
+            id = testProjectId,
+            name = "Deleted Project",
+            description = "Test description",
+            status = ProjectStatus.ACTIVE,
+            issues = emptyList(),
+            createdAt = mockTimeProvider.now(),
+            updatedAt = mockTimeProvider.now()
+        )
+        val deletedProject = Project.fromSnapshot(snapshot, mockTimeProvider)
+
+        // Mock findIncludingDeleted to return the deleted project
+        mockProjectRepository.deletedProjects[testProjectId] = deletedProject
+        // Remove from active projects to properly simulate soft-deletion
+        mockProjectRepository.projects.remove(testProjectId)
+
+        // When
+        val result = projectService.restoreProject(testProjectId)
+
+        // Then
+        result.shouldNotBeNull()
+        result.id shouldBe testProjectId
+        mockProjectRepository.restoreCallCount shouldBe 1
+        mockUnitOfWork.executeCallCount shouldBe 1
+    }
+
+    "should NOT auto-restore child issues when restoring project" {
+        // Given - deleted project with deleted issues
+        val deletedProject = createTestProject(testProjectId, "Parent Project")
+        mockProjectRepository.deletedProjects[testProjectId] = deletedProject
+
+        // When
+        projectService.restoreProject(testProjectId)
+
+        // Then - only project restored, no issue restoration calls
+        mockProjectRepository.restoreCallCount shouldBe 1
+        mockIssueRepository.restoreCallCount shouldBe 0
+        mockUnitOfWork.executeCallCount shouldBe 1
+    }
+
+    "should be idempotent when restoring already-active project" {
+        // Given - active project (not deleted)
+        val activeProject = createTestProject(testProjectId, "Active Project")
+        mockProjectRepository.projects[testProjectId] = activeProject
+
+        // When - restore is called on active project
+        val result = projectService.restoreProject(testProjectId)
+
+        // Then - operation completes without error (idempotent)
+        result.shouldNotBeNull()
+        mockProjectRepository.restoreCallCount shouldBe 1
+        mockUnitOfWork.executeCallCount shouldBe 1
+    }
+
+    "should throw ProjectNotFoundException when restoring non-existent project" {
+        // Given - project does not exist at all
+        val nonExistentId = ProjectId.generate()
+        // Do not add to repository
+
+        // When & Then
+        shouldThrow<ProjectNotFoundException> {
+            projectService.restoreProject(nonExistentId)
+        }
+        mockProjectRepository.restoreCallCount shouldBe 0
     }
 })

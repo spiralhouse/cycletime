@@ -179,7 +179,11 @@ class IssueApplicationService(
     }
 
     /**
-     * Permanently deletes an issue from the system.
+     * Soft-deletes an issue from the system.
+     *
+     * This operation marks the issue as deleted by setting the deleted_at timestamp
+     * but preserves the data for potential recovery via restoreIssue().
+     * Child issues are cascade soft-deleted (handled by repository).
      *
      * @param issueId The ID of the issue to delete
      * @throws io.spiralhouse.cycletime.application.exceptions.IssueNotFoundException if the issue doesn't exist
@@ -187,8 +191,53 @@ class IssueApplicationService(
     suspend fun deleteIssue(issueId: IssueId) {
         return unitOfWork.execute {
             val issue = findIssueOrThrow(issueId)
+            issueRepository.softDelete(issueId)
+        }
+    }
 
-            issueRepository.delete(issueId)
+    /**
+     * Restores a soft-deleted issue.
+     *
+     * This operation clears the deleted_at timestamp, making the issue
+     * active again. Note that child issues are NOT automatically restored -
+     * they must be restored individually if needed.
+     *
+     * ## Business Rules:
+     * - Issue must exist (including deleted issues) or IssueNotFoundException is thrown
+     * - Operation is idempotent - restoring an already-active issue succeeds
+     * - Child issues remain deleted (explicit restoration required)
+     * - CRITICAL: Cannot restore child issue if parent is still deleted (must restore parent first)
+     *
+     * ## State Transitions:
+     * - DELETED → ACTIVE (clears deleted_at)
+     * - ACTIVE → ACTIVE (idempotent, no-op)
+     *
+     * @param id The ID of the issue to restore
+     * @return IssueDto representing the restored issue
+     * @throws IssueNotFoundException if the issue doesn't exist at all
+     * @throws IllegalStateException if attempting to restore child when parent is deleted
+     */
+    suspend fun restoreIssue(id: IssueId): IssueDto {
+        return unitOfWork.execute {
+            val issue = issueRepository.findIncludingDeleted(id)
+                ?: throw IssueNotFoundException(id)
+
+            // Validate parent is not deleted
+            if (issue.parentId != null && isParentDeleted(issue.parentId)) {
+                val parent = issueRepository.findIncludingDeleted(issue.parentId)!!
+                throw IllegalStateException(
+                    "Cannot restore issue ${issue.id.value} - parent ${parent.id.value} is still deleted. " +
+                    "Restore parent issue first before restoring this child issue."
+                )
+            }
+
+            // Restore issue (does NOT auto-restore children)
+            issueRepository.restore(id)
+
+            val restoredIssue = issueRepository.findById(id)
+                ?: throw IssueNotFoundException(id)
+
+            IssueDto.fromIssue(restoredIssue)
         }
     }
 
@@ -631,5 +680,22 @@ class IssueApplicationService(
         }
 
         return dfs(toIssueId)
+    }
+
+    /**
+     * Checks if a parent issue is soft-deleted.
+     *
+     * This method determines if a parent exists but is currently in a deleted state.
+     * It uses two repository queries to differentiate between:
+     * - Parent doesn't exist at all (might have been hard-deleted previously)
+     * - Parent exists but is soft-deleted (exists in findIncludingDeleted but not findById)
+     *
+     * @param parentId The ID of the parent issue to check
+     * @return true if parent exists and is soft-deleted, false if parent doesn't exist or is active
+     */
+    private suspend fun isParentDeleted(parentId: IssueId): Boolean {
+        val parentIncludingDeleted = issueRepository.findIncludingDeleted(parentId)
+            ?: return false // Parent doesn't exist at all (might have been hard-deleted previously)
+        return issueRepository.findById(parentId) == null // Exists but deleted
     }
 }

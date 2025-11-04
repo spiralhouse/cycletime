@@ -3,12 +3,12 @@ kotlin = "2.2.21"
 ktor = "3.3.1"
 exposed = "0.61.0"
 kotlinx-coroutines = "1.10.2"
-kotlinx-serialization = "1.7.3"
+kotlinx-serialization = "1.9.0"
 logback = "1.5.20"
 h2 = "2.4.240"
 hikaricp = "7.0.2"
 graalvm = "0.11.2"
-mcp-sdk = "0.7.2"
+mcp-sdk = "0.7.4"
 kotest = "6.0.4"
 mockk = "1.14.6"
 detekt = "1.23.8"
@@ -47,7 +47,7 @@ hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
 # Kotlin
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
-kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.6.1" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.7.1-0.6.x-compat" }
 
 # MCP SDK (placeholder - actual version TBD)
 mcp-kotlin-sdk = { module = "io.modelcontextprotocol:kotlin-sdk", version.ref = "mcp-sdk" }

@@ -18,6 +18,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.slf4j.LoggerFactory
 
 /**
  * Repository implementation for Workflow entities using Exposed ORM.
@@ -51,6 +52,10 @@ class ExposedWorkflowRepository(
     timeProvider: TimeProvider = SystemTimeProvider(),
     database: Database? = null
 ) : BaseExposedRepository(timeProvider, database), WorkflowRepository {
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(ExposedWorkflowRepository::class.java)
+    }
 
     /**
      * JSON serializer for IssueStatus sets with lenient configuration.
@@ -104,29 +109,35 @@ class ExposedWorkflowRepository(
 
     /**
      * Finds a workflow by its unique identifier.
+     * Excludes soft-deleted workflows.
      *
      * @param id The workflow identifier
-     * @return The workflow if found, null otherwise
+     * @return The workflow if found and not deleted, null otherwise
      * @throws Exception if database operation fails
      */
     override suspend fun findById(id: WorkflowId): Workflow? = dbQuery {
         WorkflowsTable
             .selectAll()
-            .where { WorkflowsTable.id eq id.value }
+            .where {
+                (WorkflowsTable.id eq id.value) and
+                (WorkflowsTable.deletedAt.isNull())
+            }
             .singleOrNull()
             ?.toWorkflow()
     }
 
     /**
      * Retrieves all workflows from the repository.
+     * Excludes soft-deleted workflows.
      * Results are ordered by creation date for consistent iteration.
      *
-     * @return List of all workflows
+     * @return List of all active workflows (excluding deleted)
      * @throws Exception if database operation fails
      */
     override suspend fun findAll(): List<Workflow> = dbQuery {
         WorkflowsTable
             .selectAll()
+            .where { WorkflowsTable.deletedAt.isNull() }
             .orderBy(WorkflowsTable.createdAt to SortOrder.ASC)
             .map { it.toWorkflow() }
     }
@@ -171,16 +182,105 @@ class ExposedWorkflowRepository(
 
     /**
      * Checks if a workflow exists with the given identifier.
+     * Excludes soft-deleted workflows.
      * Optimized to return just a boolean without loading the entire entity.
      *
      * @param id The workflow identifier
-     * @return true if the workflow exists, false otherwise
+     * @return true if the workflow exists and is not deleted, false otherwise
      * @throws Exception if database operation fails
      */
     override suspend fun existsById(id: WorkflowId): Boolean = dbQuery {
-        checkExists(WorkflowsTable) { WorkflowsTable.id eq id.value }
+        checkExists(WorkflowsTable) {
+            (WorkflowsTable.id eq id.value) and
+            (WorkflowsTable.deletedAt.isNull())
+        }
     }
 
+    /**
+     * Soft-deletes a workflow by setting the deleted_at timestamp.
+     *
+     * Workflows have no child entities, so no cascade operations are performed.
+     * Unlike projects and issues, workflows do not own other entities.
+     *
+     * Future enhancement: Add validation to prevent deletion of workflows
+     * assigned to active issues when workflow-issue assignment is implemented.
+     *
+     * @param id The workflow ID to soft-delete
+     * @throws WorkflowNotFoundException if the workflow does not exist
+     */
+    override suspend fun softDelete(id: WorkflowId) {
+        dbQuery {
+            // 1. Verify workflow exists (throw exception if not)
+            val exists = checkExists(WorkflowsTable) { WorkflowsTable.id eq id.value }
+
+            if (!exists) {
+                throw io.spiralhouse.cycletime.domain.exceptions.WorkflowNotFoundException(id.value)
+            }
+
+            // 2. Set deleted_at timestamp on workflow
+            val now = timeProvider.now()
+            WorkflowsTable.update({ WorkflowsTable.id eq id.value }) {
+                it[deletedAt] = now
+            }
+
+            // No cascade operations - workflows have no child entities
+            logger.info("Soft-deleted workflow ${id.value}")
+        }
+    }
+
+    /**
+     * Restores a soft-deleted workflow by clearing the deleted_at timestamp.
+     *
+     * This operation is idempotent - restoring an already active workflow
+     * will succeed without error.
+     *
+     * @param id The workflow ID to restore
+     */
+    override suspend fun restore(id: WorkflowId) {
+        dbQuery {
+            // Idempotent restore - just clear deleted_at if set
+            val updateCount = WorkflowsTable.update({
+                WorkflowsTable.id eq id.value
+            }) {
+                it[deletedAt] = null
+            }
+
+            // Idempotent: If workflow doesn't exist or already active, updateCount will be 0 or 1
+            if (updateCount > 0) {
+                logger.info("Restored workflow ${id.value}")
+            }
+        }
+    }
+
+    /**
+     * Finds all soft-deleted workflows.
+     *
+     * @return List of deleted workflows ordered by deletion date (most recent first)
+     */
+    override suspend fun findDeleted(): List<Workflow> = dbQuery {
+        WorkflowsTable
+            .selectAll()
+            .where { WorkflowsTable.deletedAt.isNotNull() }
+            .orderBy(WorkflowsTable.deletedAt to SortOrder.DESC)
+            .map { it.toWorkflow() }
+    }
+
+    /**
+     * Finds a workflow by ID, including soft-deleted workflows.
+     *
+     * Unlike findById(), this method does not filter by deleted_at status,
+     * allowing retrieval of deleted workflows for restoration purposes.
+     *
+     * @param id The workflow ID to find
+     * @return The workflow if found (including deleted), null otherwise
+     */
+    override suspend fun findIncludingDeleted(id: WorkflowId): Workflow? = dbQuery {
+        WorkflowsTable
+            .selectAll()
+            .where { WorkflowsTable.id eq id.value }
+            .singleOrNull()
+            ?.toWorkflow()
+    }
 
     /**
      * Converts a database row to a Workflow domain entity.
