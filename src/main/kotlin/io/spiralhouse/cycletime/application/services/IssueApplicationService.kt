@@ -185,13 +185,25 @@ class IssueApplicationService(
      * but preserves the data for potential recovery via restoreIssue().
      * Child issues are cascade soft-deleted (handled by repository).
      *
+     * ## Business Rules:
+     * - Issue must exist (including deleted) or IssueNotFoundException is thrown
+     * - Operation is idempotent - deleting an already-deleted issue succeeds
+     * - Child issues are cascade soft-deleted (handled by repository)
+     * - Deleted issue can be recovered via restoreIssue()
+     *
      * @param issueId The ID of the issue to delete
-     * @throws io.spiralhouse.cycletime.application.exceptions.IssueNotFoundException if the issue doesn't exist
+     * @throws io.spiralhouse.cycletime.application.exceptions.IssueNotFoundException if the issue doesn't exist at all
      */
     suspend fun deleteIssue(issueId: IssueId) {
         return unitOfWork.execute {
-            val issue = findIssueOrThrow(issueId)
-            issueRepository.softDelete(issueId)
+            // Check if issue exists (including deleted) for idempotent behavior
+            val existingIssue = issueRepository.findIncludingDeleted(issueId)
+                ?: throw IssueNotFoundException(issueId)
+
+            // Only soft-delete if not already deleted (idempotent)
+            if (existingIssue.deletedAt == null) {
+                issueRepository.softDelete(issueId)
+            }
         }
     }
 
@@ -547,6 +559,26 @@ class IssueApplicationService(
             ).flatten()
             
             IssueListDto.fromIssues(allIssues)
+        }
+    }
+
+    /**
+     * Retrieves all soft-deleted issues.
+     *
+     * Returns only issues that have been soft-deleted (deletedAt is not null).
+     * Issues are ordered by deletion date in descending order (most recently deleted first).
+     *
+     * ## Use Cases:
+     * - Recovery/restore operations
+     * - Audit trails
+     * - Data cleanup workflows
+     *
+     * @return IssueListDto containing only deleted issues
+     */
+    suspend fun listDeletedIssues(): IssueListDto {
+        return unitOfWork.execute {
+            val issues = issueRepository.findDeleted()
+            IssueListDto.fromIssues(issues)
         }
     }
 

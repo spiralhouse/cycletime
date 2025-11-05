@@ -151,22 +151,65 @@ class WorkflowApplicationService(
     }
 
     /**
-     * Deletes a workflow by its unique identifier.
+     * Soft-deletes a workflow from the system.
      *
-     * This operation is idempotent - deleting a non-existent workflow
-     * returns false without error. The operation bypasses transaction
-     * overhead as it's a single atomic database operation.
+     * This operation marks the workflow as deleted by setting the deleted_at timestamp
+     * but preserves the data for potential recovery via restoreWorkflow().
      *
-     * ## Important:
-     * - Deletion is permanent and cannot be undone
-     * - Consider workflow archival for audit trails
-     * - Existing issues using this workflow may be affected
+     * ## Business Rules:
+     * - Workflow must exist (including deleted) or WorkflowNotFoundException is thrown
+     * - Operation is idempotent - deleting an already-deleted workflow succeeds
+     * - Deleted workflow can be recovered via restoreWorkflow()
      *
-     * @param id The workflow's unique identifier
-     * @return true if the workflow was deleted, false if it didn't exist
+     * @param id The ID of the workflow to delete
+     * @throws WorkflowNotFoundException if the workflow doesn't exist at all
      */
-    suspend fun deleteWorkflow(id: WorkflowId): Boolean {
-        return workflowRepository.delete(id)
+    suspend fun deleteWorkflow(id: WorkflowId) {
+        unitOfWork.execute {
+            // Check if workflow exists (including deleted) for idempotent behavior
+            val existingWorkflow = workflowRepository.findIncludingDeleted(id)
+                ?: throw WorkflowNotFoundException(id)
+
+            // Only soft-delete if not already deleted (idempotent)
+            if (existingWorkflow.deletedAt == null) {
+                workflowRepository.softDelete(id)
+            }
+        }
+    }
+
+    /**
+     * Restores a soft-deleted workflow.
+     *
+     * This operation clears the deleted_at timestamp, making the workflow
+     * active again.
+     *
+     * ## Business Rules:
+     * - Workflow must exist (including deleted workflows) or WorkflowNotFoundException is thrown
+     * - Operation is idempotent - restoring an already-active workflow succeeds
+     *
+     * ## State Transitions:
+     * - DELETED → ACTIVE (clears deleted_at)
+     * - ACTIVE → ACTIVE (idempotent, no-op)
+     *
+     * @param id The ID of the workflow to restore
+     * @return WorkflowDto representing the restored workflow
+     * @throws WorkflowNotFoundException if the workflow doesn't exist at all
+     */
+    suspend fun restoreWorkflow(id: WorkflowId): WorkflowDto {
+        return unitOfWork.execute {
+            // Check if workflow exists (including deleted) before attempting restore
+            val existingWorkflow = workflowRepository.findIncludingDeleted(id)
+                ?: throw WorkflowNotFoundException(id)
+
+            // Restore workflow
+            workflowRepository.restore(id)
+
+            // Return restored workflow
+            val workflow = workflowRepository.findById(id)
+                ?: throw WorkflowNotFoundException(id)
+
+            WorkflowDto.fromWorkflow(workflow)
+        }
     }
 
     /**
@@ -185,6 +228,25 @@ class WorkflowApplicationService(
      */
     suspend fun listWorkflows(): List<WorkflowDto> {
         return workflowRepository.findAll().map { workflow ->
+            WorkflowDto.fromWorkflow(workflow)
+        }
+    }
+
+    /**
+     * Retrieves all soft-deleted workflows.
+     *
+     * Returns only workflows that have been soft-deleted (deletedAt is not null).
+     * Workflows are ordered by deletion date in descending order (most recently deleted first).
+     *
+     * ## Use Cases:
+     * - Recovery/restore operations
+     * - Audit trails
+     * - Data cleanup workflows
+     *
+     * @return List of WorkflowDto containing only deleted workflows
+     */
+    suspend fun listDeletedWorkflows(): List<WorkflowDto> {
+        return workflowRepository.findDeleted().map { workflow ->
             WorkflowDto.fromWorkflow(workflow)
         }
     }

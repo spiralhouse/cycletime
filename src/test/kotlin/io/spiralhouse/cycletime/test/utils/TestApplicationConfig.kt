@@ -13,6 +13,7 @@ import io.ktor.server.sse.*
 import io.ktor.server.plugins.di.*
 import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 import io.spiralhouse.cycletime.mcp.configureMCP
+import io.spiralhouse.cycletime.mcp.sdk.StreamableHttpConfig
 import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
 import io.spiralhouse.cycletime.HealthResponse
 import io.spiralhouse.cycletime.domain.services.BuildInfo
@@ -148,8 +149,17 @@ fun testSDKApplication(
 
         // Configure routing
         routing {
-            // MCP endpoints (SDK + legacy EventBus during migration)
-            configureMCP()
+            // MCP endpoints with test-friendly configuration (SPI-879)
+            // Disable rate limiting for integration tests to prevent HTTP 429 errors
+            configureMCP(
+                config = StreamableHttpConfig(
+                    allowNullOrigin = true,
+                    allowedOrigins = listOf("http://localhost:.*"),
+                    maxRequestBodySize = 1_000_000,
+                    sessionCreationMaxPerWindow = Int.MAX_VALUE,  // Disable rate limiting
+                    sessionCreationWindowMs = 60_000
+                )
+            )
 
             // Health endpoint (for application integration tests)
             if (includeHealthEndpoint) {
@@ -202,7 +212,17 @@ fun testSDKApplicationWithDatabase(
 
         configureDependencies(database = testDatabase)
         routing {
-            configureMCP()
+            // MCP endpoints with test-friendly configuration (SPI-879)
+            // Disable rate limiting for integration tests to prevent HTTP 429 errors
+            configureMCP(
+                config = StreamableHttpConfig(
+                    allowNullOrigin = true,
+                    allowedOrigins = listOf("http://localhost:.*"),
+                    maxRequestBodySize = 1_000_000,
+                    sessionCreationMaxPerWindow = Int.MAX_VALUE,  // Disable rate limiting
+                    sessionCreationWindowMs = 60_000
+                )
+            )
         }
     }
 
@@ -346,8 +366,17 @@ fun testSDKApplication(
 
         // Configure routing
         routing {
-            // MCP endpoints (SDK + legacy EventBus during migration)
-            configureMCP()
+            // MCP endpoints with test-friendly configuration (SPI-879)
+            // Disable rate limiting for integration tests to prevent HTTP 429 errors
+            configureMCP(
+                config = StreamableHttpConfig(
+                    allowNullOrigin = true,
+                    allowedOrigins = listOf("http://localhost:.*"),
+                    maxRequestBodySize = 1_000_000,
+                    sessionCreationMaxPerWindow = Int.MAX_VALUE,  // Disable rate limiting
+                    sessionCreationWindowMs = 60_000
+                )
+            )
         }
     }.start(wait = false)
 

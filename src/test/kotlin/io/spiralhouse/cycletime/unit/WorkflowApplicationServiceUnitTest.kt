@@ -300,7 +300,7 @@ class WorkflowApplicationServiceUnitTest : StringSpec({
         mockWorkflowRepository.saveCallCount shouldBe 0
     }
 
-    "should delete workflow and return true when workflow exists" {
+    "should delete workflow when workflow exists" {
         // Given
         val existingWorkflow = Workflow.create(
             name = "To Delete",
@@ -312,24 +312,20 @@ class WorkflowApplicationServiceUnitTest : StringSpec({
         mockWorkflowRepository.workflows[existingWorkflow.id] = existingWorkflow
 
         // When
-        val result = workflowService.deleteWorkflow(existingWorkflow.id)
+        workflowService.deleteWorkflow(existingWorkflow.id)
 
-        // Then
-        result shouldBe true
+        // Then - verify soft delete was called (tracked via deleteCallCount in mock)
         mockWorkflowRepository.deleteCallCount shouldBe 1
-        mockWorkflowRepository.workflows shouldNotContainKey existingWorkflow.id
     }
 
-    "should return false when deleting non-existent workflow" {
+    "should throw WorkflowNotFoundException when deleting non-existent workflow" {
         // Given
         val nonExistentId = WorkflowId.generate()
 
-        // When
-        val result = workflowService.deleteWorkflow(nonExistentId)
-
-        // Then
-        result shouldBe false
-        mockWorkflowRepository.deleteCallCount shouldBe 1
+        // When & Then
+        shouldThrow<WorkflowNotFoundException> {
+            workflowService.deleteWorkflow(nonExistentId)
+        }
     }
 
     "should list all workflows when workflows exist" {

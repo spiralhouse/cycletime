@@ -105,7 +105,8 @@ class McpToolIntegrationTest : StringSpec({
             val tools = result!!["tools"]?.jsonArray
             tools.shouldNotBeNull()
             tools.shouldNotBeEmpty()
-            tools shouldHaveSize 17
+            // Updated for SPI-879: added 9 soft-deletion tools + 1 additional (27 total)
+            tools shouldHaveSize 27
 
             // Verify production tools present
             val toolNames = tools!!.map { it.jsonObject["name"]?.jsonPrimitive?.content!! }

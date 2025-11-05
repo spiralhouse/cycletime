@@ -269,7 +269,7 @@ class StreamableHttpHandler(
                             put("text", jsonElement.toString())
                         })
                     })
-                    put("isError", false)
+                    // isError field removed - its absence indicates success
                 })
             },
             onFailure = { throwable ->
@@ -295,15 +295,7 @@ class StreamableHttpHandler(
                 }
 
                 logger.warn("Tool handler returned error: $errorMessage")
-                buildSuccessResponse(id, buildJsonObject {
-                    put("content", buildJsonArray {
-                        add(buildJsonObject {
-                            put("type", "text")
-                            put("text", userMessage)
-                        })
-                    })
-                    put("isError", true)
-                })
+                buildErrorResponse(id, -32000, userMessage)
             }
         )
     }
