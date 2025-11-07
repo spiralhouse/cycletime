@@ -771,7 +771,7 @@ class StreamableHttpIntegrationTest : StringSpec({
         }
     }
 
-    "POST /mcp with tools/call should return isError true for tool execution failures" {
+    "POST /mcp with tools/call should return JSON-RPC error for tool execution failures" {
         testSDKApplication {
             // Try to get non-existent project
             val response = client.post("/mcp") {
@@ -791,24 +791,22 @@ class StreamableHttpIntegrationTest : StringSpec({
                 """.trimIndent())
             }
 
-            // Should return success response with isError: true
+            // Should return success response with error object (JSON-RPC compliance)
             response.status shouldBe HttpStatusCode.OK
 
             val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
-            val result = jsonResponse["result"]?.jsonObject
-            result shouldNotBe null
 
-            // MCP spec: execution errors are returned in result with isError flag
-            result!!["isError"]?.jsonPrimitive?.boolean shouldBe true
+            // JSON-RPC spec: errors are returned in error object, not result.isError
+            val error = jsonResponse["error"]?.jsonObject
+            error shouldNotBe null
 
-            // Should have content array with error details
-            val content = result["content"]?.jsonArray
-            content shouldNotBe null
-            content!!.size shouldBeGreaterThan 0
+            // Should have error code and message
+            val errorCode = error!!["code"]?.jsonPrimitive?.int
+            errorCode shouldNotBe null
 
-            val errorText = content[0].jsonObject["text"]?.jsonPrimitive?.content
-            errorText shouldNotBe null
-            errorText!!.lowercase().shouldContain("not found")
+            val errorMessage = error["message"]?.jsonPrimitive?.content
+            errorMessage shouldNotBe null
+            errorMessage!!.lowercase().shouldContain("not found")
         }
     }
 
