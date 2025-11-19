@@ -94,10 +94,10 @@ object MCPSdkServerTestFactory {
 
         // Create tool providers (business logic)
         val toolProviders = listOf(
-            DefaultProjectToolProvider(projectService),
-            DefaultIssueToolProvider(issueService),
+            DefaultProjectToolProvider(projectService, projectRepository),
+            DefaultIssueToolProvider(issueService, issueRepository),
             DefaultSessionToolProvider(sessionService),
-            DefaultWorkflowToolProvider()
+            DefaultWorkflowToolProvider(workflowService, workflowRepository, timeProvider)
         )
 
         // Create resource providers (business logic)

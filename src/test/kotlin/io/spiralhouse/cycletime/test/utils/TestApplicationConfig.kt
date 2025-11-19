@@ -13,6 +13,7 @@ import io.ktor.server.sse.*
 import io.ktor.server.plugins.di.*
 import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 import io.spiralhouse.cycletime.mcp.configureMCP
+import io.spiralhouse.cycletime.mcp.sdk.StreamableHttpConfig
 import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
 import io.spiralhouse.cycletime.HealthResponse
 import io.spiralhouse.cycletime.domain.services.BuildInfo
@@ -104,11 +105,18 @@ private object TestSSEContentConverter : ContentConverter {
  *
  * Each invocation creates an isolated application instance, ensuring test independence.
  *
+ * **Configuration Modes:**
+ * - `config = null` (default): Test-friendly configuration (rate limiting disabled, localhost-only origins)
+ * - `config = StreamableHttpConfig()`: Production configuration (rate limiting enabled, full origin whitelist)
+ * - `config = StreamableHttpConfig(...)`: Custom configuration
+ *
  * @param includeHealthEndpoint Whether to include /health REST endpoint (default: true)
+ * @param config Optional StreamableHttpConfig. When null, uses test-friendly defaults. When provided, uses that config.
  * @param block Test code to execute within application context
  */
 fun testSDKApplication(
     includeHealthEndpoint: Boolean = true,
+    config: StreamableHttpConfig? = null,
     block: suspend ApplicationTestBuilder.() -> Unit
 ) = testApplication {
     // Create isolated test database
@@ -148,8 +156,17 @@ fun testSDKApplication(
 
         // Configure routing
         routing {
-            // MCP endpoints (SDK + legacy EventBus during migration)
-            configureMCP()
+            // MCP endpoints with configurable security settings (SPI-879)
+            // When config is null, use test-friendly defaults (rate limiting disabled)
+            // When config is provided, use that configuration (e.g., production config for security tests)
+            val mcpConfig = config ?: StreamableHttpConfig(
+                allowNullOrigin = true,
+                allowedOrigins = listOf("http://localhost:.*"),
+                maxRequestBodySize = 1_000_000,
+                sessionCreationMaxPerWindow = Int.MAX_VALUE,  // Disable rate limiting for tests
+                sessionCreationWindowMs = 60_000
+            )
+            configureMCP(config = mcpConfig)
 
             // Health endpoint (for application integration tests)
             if (includeHealthEndpoint) {
@@ -202,7 +219,16 @@ fun testSDKApplicationWithDatabase(
 
         configureDependencies(database = testDatabase)
         routing {
-            configureMCP()
+            // MCP endpoints with test-friendly configuration (SPI-879)
+            // Disable rate limiting for integration tests to prevent HTTP 429 errors
+            val mcpConfig = StreamableHttpConfig(
+                allowNullOrigin = true,
+                allowedOrigins = listOf("http://localhost:.*"),
+                maxRequestBodySize = 1_000_000,
+                sessionCreationMaxPerWindow = Int.MAX_VALUE,  // Disable rate limiting
+                sessionCreationWindowMs = 60_000
+            )
+            configureMCP(config = mcpConfig)
         }
     }
 
@@ -346,8 +372,16 @@ fun testSDKApplication(
 
         // Configure routing
         routing {
-            // MCP endpoints (SDK + legacy EventBus during migration)
-            configureMCP()
+            // MCP endpoints with test-friendly configuration (SPI-879)
+            // Disable rate limiting for integration tests to prevent HTTP 429 errors
+            val mcpConfig = StreamableHttpConfig(
+                allowNullOrigin = true,
+                allowedOrigins = listOf("http://localhost:.*"),
+                maxRequestBodySize = 1_000_000,
+                sessionCreationMaxPerWindow = Int.MAX_VALUE,  // Disable rate limiting
+                sessionCreationWindowMs = 60_000
+            )
+            configureMCP(config = mcpConfig)
         }
     }.start(wait = false)
 
