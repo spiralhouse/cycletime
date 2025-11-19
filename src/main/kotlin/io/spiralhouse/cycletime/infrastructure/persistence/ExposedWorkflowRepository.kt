@@ -297,7 +297,8 @@ class ExposedWorkflowRepository(
             initialStatus = IssueStatus.valueOf(this[WorkflowsTable.initialStatus]),
             allowedStatuses = deserializeAllowedStatuses(this[WorkflowsTable.allowedStatuses]),
             createdAt = this[WorkflowsTable.createdAt],
-            updatedAt = this[WorkflowsTable.updatedAt]
+            updatedAt = this[WorkflowsTable.updatedAt],
+            deletedAt = this[WorkflowsTable.deletedAt]
         )
         return Workflow.fromSnapshot(snapshot, timeProvider)
     }

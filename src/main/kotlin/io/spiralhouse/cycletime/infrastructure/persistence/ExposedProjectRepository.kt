@@ -282,6 +282,7 @@ class ExposedProjectRepository(
         val projectRows = ProjectsTable
             .selectAll()
             .where { ProjectsTable.deletedAt.isNotNull() }
+            .orderBy(ProjectsTable.deletedAt to SortOrder.DESC)
             .toList()
 
         // Batch load all issues for these projects
@@ -324,7 +325,8 @@ class ExposedProjectRepository(
             status = ProjectStatus.fromString(this[ProjectsTable.status]),
             issues = loadProjectIssueIds(this[ProjectsTable.id].value),
             createdAt = this[ProjectsTable.createdAt],
-            updatedAt = this[ProjectsTable.updatedAt]
+            updatedAt = this[ProjectsTable.updatedAt],
+            deletedAt = this[ProjectsTable.deletedAt]
         )
         return Project.fromSnapshot(snapshot, timeProvider)
     }
@@ -344,7 +346,8 @@ class ExposedProjectRepository(
             status = ProjectStatus.fromString(this[ProjectsTable.status]),
             issues = issues,
             createdAt = this[ProjectsTable.createdAt],
-            updatedAt = this[ProjectsTable.updatedAt]
+            updatedAt = this[ProjectsTable.updatedAt],
+            deletedAt = this[ProjectsTable.deletedAt]
         )
         return Project.fromSnapshot(snapshot, timeProvider)
     }

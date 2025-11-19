@@ -152,7 +152,8 @@ class ProjectApplicationService(
      * Associated issues are cascade soft-deleted (handled by repository).
      *
      * ## Business Rules:
-     * - Project must exist or ProjectNotFoundException is thrown
+     * - Project must exist (including deleted) or ProjectNotFoundException is thrown
+     * - Operation is idempotent - deleting an already-deleted project succeeds
      * - Associated issues are cascade soft-deleted (handled by repository)
      * - Deleted project can be recovered via restoreProject()
      *
@@ -161,12 +162,18 @@ class ProjectApplicationService(
      * if the project has unresolved work items.
      *
      * @param projectId The ID of the project to delete
-     * @throws ProjectNotFoundException if the project doesn't exist
+     * @throws ProjectNotFoundException if the project doesn't exist at all
      */
     suspend fun deleteProject(projectId: ProjectId) {
         unitOfWork.execute {
-            ensureProjectExists(projectId)
-            projectRepository.softDelete(projectId)
+            // Check if project exists (including deleted) for idempotent behavior
+            val existingProject = projectRepository.findIncludingDeleted(projectId)
+                ?: throw ProjectNotFoundException(projectId)
+
+            // Only soft-delete if not already deleted (idempotent)
+            if (existingProject.deletedAt == null) {
+                projectRepository.softDelete(projectId)
+            }
         }
     }
 
@@ -223,6 +230,26 @@ class ProjectApplicationService(
     suspend fun listProjects(): ProjectListDto {
         return unitOfWork.execute {
             val projects = projectRepository.findAll()
+            ProjectListDto.fromProjects(projects)
+        }
+    }
+
+    /**
+     * Retrieves all soft-deleted projects.
+     *
+     * Returns only projects that have been soft-deleted (deletedAt is not null).
+     * Projects are ordered by deletion date in descending order (most recently deleted first).
+     *
+     * ## Use Cases:
+     * - Recovery/restore operations
+     * - Audit trails
+     * - Data cleanup workflows
+     *
+     * @return ProjectListDto containing only deleted projects
+     */
+    suspend fun listDeletedProjects(): ProjectListDto {
+        return unitOfWork.execute {
+            val projects = projectRepository.findDeleted()
             ProjectListDto.fromProjects(projects)
         }
     }

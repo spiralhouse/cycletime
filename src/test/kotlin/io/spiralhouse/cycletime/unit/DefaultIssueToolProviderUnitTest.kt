@@ -32,11 +32,13 @@ import java.util.UUID
 class DefaultIssueToolProviderUnitTest : StringSpec({
 
     lateinit var mockIssueService: IssueApplicationService
+    lateinit var mockIssueRepository: io.spiralhouse.cycletime.domain.repositories.IssueRepository
     lateinit var toolProvider: DefaultIssueToolProvider
 
     beforeEach {
         mockIssueService = mockk(relaxed = true)
-        toolProvider = DefaultIssueToolProvider(mockIssueService)
+        mockIssueRepository = mockk(relaxed = true)
+        toolProvider = DefaultIssueToolProvider(mockIssueService, mockIssueRepository)
     }
 
     // TDD Cycle 1: Tool Registration Tests
@@ -46,13 +48,16 @@ class DefaultIssueToolProviderUnitTest : StringSpec({
 
     "should register async tools correctly" {
         val asyncTools = toolProvider.getAsyncTools()
-        asyncTools shouldHaveSize 4
-        
+        asyncTools shouldHaveSize 7  // Added: delete, restore, list_deleted (SPI-879)
+
         val toolNames = asyncTools.map { it.name }
         toolNames shouldContain "create_issue"
-        toolNames shouldContain "get_issue"  
+        toolNames shouldContain "get_issue"
         toolNames shouldContain "list_issues"
         toolNames shouldContain "update_issue"
+        toolNames shouldContain "delete_issue"
+        toolNames shouldContain "restore_issue"
+        toolNames shouldContain "list_deleted_issues"
     }
 
     "should provide empty synchronous tools" {
@@ -188,8 +193,8 @@ class DefaultIssueToolProviderUnitTest : StringSpec({
             result["totalCount"]!!.jsonPrimitive.int shouldBe 1
             val issues = result["issues"]!!.jsonArray
             issues shouldHaveSize 1
-            // IssueId serializes as {"_value": "uuid"}
-            issues[0].jsonObject["id"]!!.jsonObject["_value"]!!.jsonPrimitive.content shouldBe issueId
+            // IssueId serializes as plain string (via IssueIdSerializer)
+            issues[0].jsonObject["id"]!!.jsonPrimitive.content shouldBe issueId
             issues[0].jsonObject["title"]!!.jsonPrimitive.content shouldBe "Title 1"
         }
     }
@@ -229,9 +234,9 @@ class DefaultIssueToolProviderUnitTest : StringSpec({
 
             // Should return raw JSON data from serialized DTO (wrapping happens in McpToolHandler, not provider)
             result.shouldBeInstanceOf<JsonObject>()
-            // IssueId serializes as {"_value": "uuid"}
+            // IssueId serializes as plain string (via IssueIdSerializer)
             result["id"].shouldNotBe(null)
-            result["id"]!!.jsonObject["_value"]!!.jsonPrimitive.content shouldBe issueId
+            result["id"]!!.jsonPrimitive.content shouldBe issueId
             result["title"]!!.jsonPrimitive.content shouldBe "Updated Title"
         }
     }

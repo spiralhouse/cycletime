@@ -82,10 +82,10 @@ class StreamableHttpIntegrationTest : StringSpec({
             val tools = result!!["tools"]?.jsonArray
             tools shouldNotBe null
 
-            // CRITICAL: SDK should have 17 tools registered (evidence from logs)
-            // This WILL FAIL because StreamableHttpHandler returns empty array
+            // CRITICAL: SDK should have 27 tools registered (17 original + 9 soft-deletion + 1 additional)
+            // Updated for SPI-879: added 9 soft-deletion tools (delete, restore, list_deleted)
             tools!!.size shouldBeGreaterThan 0
-            tools.size shouldBe 17
+            tools.size shouldBe 27
         }
     }
 
@@ -290,8 +290,8 @@ class StreamableHttpIntegrationTest : StringSpec({
             val tools = result["tools"]?.jsonArray!!
 
             // CRITICAL: Should return tools even without session
-            // This WILL FAIL because StreamableHttpHandler returns empty array
-            tools.size shouldBe 17
+            // Updated for SPI-879: added 9 soft-deletion tools (delete, restore, list_deleted)
+            tools.size shouldBe 27
         }
     }
 
@@ -320,9 +320,9 @@ class StreamableHttpIntegrationTest : StringSpec({
             val result = jsonResponse["result"]?.jsonObject!!
             val tools = result["tools"]?.jsonArray!!
 
-            // CRITICAL: Should still return 17 tools in SSE format
-            // This WILL FAIL because StreamableHttpHandler returns empty array
-            tools.size shouldBe 17
+            // CRITICAL: Should still return all tools in SSE format
+            // Updated for SPI-879: added 9 soft-deletion tools (delete, restore, list_deleted)
+            tools.size shouldBe 27
         }
     }
 
@@ -343,8 +343,9 @@ class StreamableHttpIntegrationTest : StringSpec({
             val result = jsonResponse["result"]?.jsonObject!!
             val tools = result["tools"]?.jsonArray!!
 
-            // Should still return 17 tools
-            tools.size shouldBe 17
+            // Should still return all tools
+            // Updated for SPI-879: added 9 soft-deletion tools (delete, restore, list_deleted)
+            tools.size shouldBe 27
         }
     }
 
@@ -361,12 +362,13 @@ class StreamableHttpIntegrationTest : StringSpec({
             val result = jsonResponse["result"]?.jsonObject!!
             val tools = result["tools"]?.jsonArray!!
 
-            // CRITICAL: Verify all 4 providers are registered (from logs)
-            // - project: 4 tools
-            // - issue: 4 tools
-            // - session: 6 tools
-            // - workflow: 3 tools
-            // Total: 17 tools
+            // CRITICAL: Verify all 4 providers are registered
+            // Updated for SPI-879 soft-deletion tools:
+            // - project: 7 tools (4 original + 3 soft-deletion: delete, restore, list_deleted)
+            // - issue: 7 tools (4 original + 3 soft-deletion: delete, restore, list_deleted)
+            // - session: 6 tools (unchanged)
+            // - workflow: 7 tools (4 original + 3 soft-deletion: delete, restore, list_deleted)
+            // Total: 27 tools (17 original + 9 soft-deletion + 1 additional)
 
             val toolNames = tools.map { it.jsonObject["name"]?.jsonPrimitive?.content!! }
 
@@ -376,11 +378,11 @@ class StreamableHttpIntegrationTest : StringSpec({
             val sessionTools = toolNames.count { it.startsWith("session_") }
             val workflowTools = toolNames.count { it.startsWith("workflow_") }
 
-            // Verify counts match log evidence
-            projectTools shouldBe 4
-            issueTools shouldBe 4
+            // Verify counts match SPI-879 implementation
+            projectTools shouldBe 7
+            issueTools shouldBe 7
             sessionTools shouldBe 6
-            workflowTools shouldBe 3
+            workflowTools shouldBe 7
         }
     }
 
@@ -769,7 +771,7 @@ class StreamableHttpIntegrationTest : StringSpec({
         }
     }
 
-    "POST /mcp with tools/call should return isError true for tool execution failures" {
+    "POST /mcp with tools/call should return JSON-RPC error for tool execution failures" {
         testSDKApplication {
             // Try to get non-existent project
             val response = client.post("/mcp") {
@@ -789,24 +791,22 @@ class StreamableHttpIntegrationTest : StringSpec({
                 """.trimIndent())
             }
 
-            // Should return success response with isError: true
+            // Should return success response with error object (JSON-RPC compliance)
             response.status shouldBe HttpStatusCode.OK
 
             val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
-            val result = jsonResponse["result"]?.jsonObject
-            result shouldNotBe null
 
-            // MCP spec: execution errors are returned in result with isError flag
-            result!!["isError"]?.jsonPrimitive?.boolean shouldBe true
+            // JSON-RPC spec: errors are returned in error object, not result.isError
+            val error = jsonResponse["error"]?.jsonObject
+            error shouldNotBe null
 
-            // Should have content array with error details
-            val content = result["content"]?.jsonArray
-            content shouldNotBe null
-            content!!.size shouldBeGreaterThan 0
+            // Should have error code and message
+            val errorCode = error!!["code"]?.jsonPrimitive?.int
+            errorCode shouldNotBe null
 
-            val errorText = content[0].jsonObject["text"]?.jsonPrimitive?.content
-            errorText shouldNotBe null
-            errorText!!.lowercase().shouldContain("not found")
+            val errorMessage = error["message"]?.jsonPrimitive?.content
+            errorMessage shouldNotBe null
+            errorMessage!!.lowercase().shouldContain("not found")
         }
     }
 
