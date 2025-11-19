@@ -128,16 +128,23 @@ class ExposedWorkflowRepository(
 
     /**
      * Retrieves all workflows from the repository.
-     * Excludes soft-deleted workflows.
-     * Results are ordered by creation date for consistent iteration.
      *
-     * @return List of all active workflows (excluding deleted)
+     * @param includeDeleted if true, includes soft-deleted workflows in results.
+     *                       Default: false (exclude deleted)
+     * @return List of all workflows (empty if none found)
      * @throws Exception if database operation fails
      */
-    override suspend fun findAll(): List<Workflow> = dbQuery {
-        WorkflowsTable
-            .selectAll()
-            .where { WorkflowsTable.deletedAt.isNull() }
+    override suspend fun findAll(includeDeleted: Boolean): List<Workflow> = dbQuery {
+        val query = WorkflowsTable.selectAll()
+
+        // Apply deletion filter unless includeDeleted is true
+        val filteredQuery = if (includeDeleted) {
+            query  // No filter - include everything
+        } else {
+            query.where { WorkflowsTable.deletedAt.isNull() }
+        }
+
+        filteredQuery
             .orderBy(WorkflowsTable.createdAt to SortOrder.ASC)
             .map { it.toWorkflow() }
     }
