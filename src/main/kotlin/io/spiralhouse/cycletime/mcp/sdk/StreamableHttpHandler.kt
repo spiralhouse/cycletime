@@ -57,7 +57,15 @@ class StreamableHttpHandler(
         private const val METHOD_INITIALIZE = "initialize"
         private const val METHOD_TOOLS_CALL = "tools/call"
         private const val PROTOCOL_VERSION_CURRENT = "2025-06-18"
-        private const val ERROR_CODE_METHOD_NOT_FOUND = -32601
+
+        // JSON-RPC error codes (RFC 4627 standard + server-specific)
+        // Standard JSON-RPC 2.0 error codes
+        private const val ERROR_CODE_METHOD_NOT_FOUND = -32601  // Method not found
+        private const val ERROR_CODE_INVALID_PARAMS = -32602    // Invalid method parameter(s)
+        private const val ERROR_CODE_INTERNAL_ERROR = -32603    // Internal JSON-RPC error
+
+        // Server-defined error codes (-32000 to -32099 reserved for implementation-defined errors)
+        private const val ERROR_CODE_SERVER_ERROR = -32000      // Tool execution failures and server errors
     }
 
     // Rate limiter for session creation (IP address -> last creation timestamp + count)
@@ -227,7 +235,7 @@ class StreamableHttpHandler(
 
         if (toolName == null) {
             logger.warn("tools/call request missing 'name' parameter")
-            return buildErrorResponse(id, -32602, "Invalid params: name is required")
+            return buildErrorResponse(id, ERROR_CODE_INVALID_PARAMS, "Invalid params: name is required")
         }
 
         val arguments = params.get("arguments")?.jsonObject
@@ -236,7 +244,7 @@ class StreamableHttpHandler(
         val tool = findTool(toolName)
         if (tool == null) {
             logger.warn("Tool not found: $toolName")
-            return buildErrorResponse(id, -32601, "Method not found: $toolName")
+            return buildErrorResponse(id, ERROR_CODE_METHOD_NOT_FOUND, "Method not found: $toolName")
         }
 
         logger.debug("Executing tool: $toolName with arguments: ${arguments?.toString()?.take(100)}")
@@ -280,7 +288,7 @@ class StreamableHttpHandler(
                 if (errorMessage.contains("is required", ignoreCase = true) ||
                     errorMessage.contains("required parameter", ignoreCase = true)) {
                     logger.warn("Parameter validation failed: $errorMessage")
-                    return buildErrorResponse(id, -32602, "Invalid params: $errorMessage")
+                    return buildErrorResponse(id, ERROR_CODE_INVALID_PARAMS, "Invalid params: $errorMessage")
                 }
 
                 // Convert UUID validation errors to user-friendly "not found" messages
@@ -295,7 +303,7 @@ class StreamableHttpHandler(
                 }
 
                 logger.warn("Tool handler returned error: $errorMessage")
-                buildErrorResponse(id, -32000, userMessage)
+                buildErrorResponse(id, ERROR_CODE_SERVER_ERROR, userMessage)
             }
         )
     }

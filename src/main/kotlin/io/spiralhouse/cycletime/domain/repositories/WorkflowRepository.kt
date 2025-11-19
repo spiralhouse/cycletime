@@ -45,11 +45,13 @@ interface WorkflowRepository {
     suspend fun findById(id: WorkflowId): Workflow?
     
     /**
-     * Retrieves all workflows from the repository.
+     * Retrieves all workflows.
      *
-     * @return List of all workflows, ordered by creation date
+     * @param includeDeleted if true, includes soft-deleted workflows in results.
+     *                       Default: false (exclude deleted)
+     * @return list of workflows (empty if none found)
      */
-    suspend fun findAll(): List<Workflow>
+    suspend fun findAll(includeDeleted: Boolean = false): List<Workflow>
     
     /**
      * Updates an existing workflow in the repository.

@@ -151,15 +151,23 @@ class WorkflowApplicationService(
     }
 
     /**
-     * Soft-deletes a workflow from the system.
+     * Soft-deletes a workflow by setting its deletedAt timestamp.
      *
-     * This operation marks the workflow as deleted by setting the deleted_at timestamp
-     * but preserves the data for potential recovery via restoreWorkflow().
+     * This operation is idempotent - deleting an already-deleted workflow
+     * succeeds without error.
      *
      * ## Business Rules:
      * - Workflow must exist (including deleted) or WorkflowNotFoundException is thrown
      * - Operation is idempotent - deleting an already-deleted workflow succeeds
      * - Deleted workflow can be recovered via restoreWorkflow()
+     *
+     * ## Return Type Rationale:
+     * Returns `Unit` instead of `Boolean` to support idempotent operations.
+     * Success is indicated by the absence of an exception, eliminating the
+     * ambiguity of "false" meaning either "not found" or "already deleted".
+     * This design makes the intent clearer: if the method returns normally,
+     * the workflow is in the deleted state, regardless of whether it was
+     * previously deleted.
      *
      * @param id The ID of the workflow to delete
      * @throws WorkflowNotFoundException if the workflow doesn't exist at all
@@ -178,10 +186,10 @@ class WorkflowApplicationService(
     }
 
     /**
-     * Restores a soft-deleted workflow.
+     * Restores a soft-deleted workflow by clearing its deletedAt timestamp.
      *
-     * This operation clears the deleted_at timestamp, making the workflow
-     * active again.
+     * This operation is idempotent - restoring an already-active workflow
+     * succeeds without error.
      *
      * ## Business Rules:
      * - Workflow must exist (including deleted workflows) or WorkflowNotFoundException is thrown

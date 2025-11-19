@@ -179,17 +179,24 @@ class IssueApplicationService(
     }
 
     /**
-     * Soft-deletes an issue from the system.
+     * Soft-deletes an issue by setting its deletedAt timestamp.
      *
-     * This operation marks the issue as deleted by setting the deleted_at timestamp
-     * but preserves the data for potential recovery via restoreIssue().
-     * Child issues are cascade soft-deleted (handled by repository).
+     * This operation is idempotent - deleting an already-deleted issue
+     * succeeds without error.
      *
      * ## Business Rules:
      * - Issue must exist (including deleted) or IssueNotFoundException is thrown
      * - Operation is idempotent - deleting an already-deleted issue succeeds
      * - Child issues are cascade soft-deleted (handled by repository)
      * - Deleted issue can be recovered via restoreIssue()
+     *
+     * ## Return Type Rationale:
+     * Returns `Unit` instead of `Boolean` to support idempotent operations.
+     * Success is indicated by the absence of an exception, eliminating the
+     * ambiguity of "false" meaning either "not found" or "already deleted".
+     * This design makes the intent clearer: if the method returns normally,
+     * the issue is in the deleted state, regardless of whether it was
+     * previously deleted.
      *
      * @param issueId The ID of the issue to delete
      * @throws io.spiralhouse.cycletime.application.exceptions.IssueNotFoundException if the issue doesn't exist at all
@@ -208,11 +215,10 @@ class IssueApplicationService(
     }
 
     /**
-     * Restores a soft-deleted issue.
+     * Restores a soft-deleted issue by clearing its deletedAt timestamp.
      *
-     * This operation clears the deleted_at timestamp, making the issue
-     * active again. Note that child issues are NOT automatically restored -
-     * they must be restored individually if needed.
+     * This operation is idempotent - restoring an already-active issue
+     * succeeds without error.
      *
      * ## Business Rules:
      * - Issue must exist (including deleted issues) or IssueNotFoundException is thrown

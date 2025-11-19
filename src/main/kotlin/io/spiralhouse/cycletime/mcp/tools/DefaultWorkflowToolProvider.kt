@@ -126,15 +126,8 @@ class DefaultWorkflowToolProvider(
             handler = ToolHandler.Async { params ->
                 Result.runCatching {
                     val includeDeleted = params.jsonObject["includeDeleted"]?.jsonPrimitive?.boolean ?: false
-                    val workflows = if (includeDeleted) {
-                        // Get both active and deleted workflows
-                        val active = workflowRepository.findAll()
-                        val deleted = workflowRepository.findDeleted()
-                        active + deleted
-                    } else {
-                        // Get only active workflows
-                        workflowRepository.findAll()
-                    }
+                    // Use optimized single query with includeDeleted parameter
+                    val workflows = workflowRepository.findAll(includeDeleted = includeDeleted)
                     // Return array of WorkflowDto (not WorkflowListDto) to match test expectations
                     val workflowDtos = workflows.map { WorkflowDto.fromWorkflow(it) }
                     Json.encodeToJsonElement(workflowDtos)

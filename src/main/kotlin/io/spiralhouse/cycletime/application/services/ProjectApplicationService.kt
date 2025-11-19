@@ -145,17 +145,24 @@ class ProjectApplicationService(
     }
 
     /**
-     * Soft-deletes a project from the system.
+     * Soft-deletes a project by setting its deletedAt timestamp.
      *
-     * This operation marks the project as deleted by setting the deleted_at timestamp
-     * but preserves the data for potential recovery via restoreProject().
-     * Associated issues are cascade soft-deleted (handled by repository).
+     * This operation is idempotent - deleting an already-deleted project
+     * succeeds without error.
      *
      * ## Business Rules:
      * - Project must exist (including deleted) or ProjectNotFoundException is thrown
      * - Operation is idempotent - deleting an already-deleted project succeeds
      * - Associated issues are cascade soft-deleted (handled by repository)
      * - Deleted project can be recovered via restoreProject()
+     *
+     * ## Return Type Rationale:
+     * Returns `Unit` instead of `Boolean` to support idempotent operations.
+     * Success is indicated by the absence of an exception, eliminating the
+     * ambiguity of "false" meaning either "not found" or "already deleted".
+     * This design makes the intent clearer: if the method returns normally,
+     * the project is in the deleted state, regardless of whether it was
+     * previously deleted.
      *
      * ## Implementation Note:
      * Future enhancement could check for active issues and prevent deletion
@@ -178,11 +185,10 @@ class ProjectApplicationService(
     }
 
     /**
-     * Restores a soft-deleted project.
+     * Restores a soft-deleted project by clearing its deletedAt timestamp.
      *
-     * This operation clears the deleted_at timestamp, making the project
-     * active again. Note that child issues are NOT automatically restored -
-     * they must be restored individually if needed.
+     * This operation is idempotent - restoring an already-active project
+     * succeeds without error.
      *
      * ## Business Rules:
      * - Project must exist (including deleted projects) or ProjectNotFoundException is thrown
