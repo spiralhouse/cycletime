@@ -9,7 +9,7 @@ keywords: [mcp, development, server, tools, resources, sdk, protocol]
 estimated_time: 30 minutes
 difficulty: advanced
 status: complete
-last_updated: 2025-10-20
+last_updated: 2025-11-20
 ---
 
 # MCP Development Guide
@@ -87,7 +87,7 @@ flowchart TD
 
 ## MCP Server Implementation Patterns
 
-CycleTime uses the official **MCP Kotlin SDK v0.7.2** maintained by Anthropic and JetBrains. The server integrates with Ktor using a custom Streamable HTTP transport handler.
+CycleTime uses the official **MCP Kotlin SDK v0.7.6** maintained by Anthropic and JetBrains. The server integrates with Ktor using a custom Streamable HTTP transport handler.
 
 ### Server Architecture
 
