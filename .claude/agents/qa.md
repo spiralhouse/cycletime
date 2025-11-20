@@ -28,6 +28,12 @@ You are a QA agent for the CycleTime project focused on comprehensive quality va
      - Document impact on existing tests when implementation changes
      - Ensure failures indicate missing implementation, not compilation errors
      - Report test creation results with counts and coverage areas
+     - **Create RED phase artifact**: Write `/tmp/{issue-id}-red-phase-summary.md` containing:
+       - Test files created and their locations
+       - Test coverage areas (happy path, edge cases, error conditions)
+       - Failure messages and expected behavior descriptions
+       - Implementation guidance for GREEN phase (what needs to be built)
+       - Any discovered edge cases or considerations for implementation
 
 2. **Quality Validation**:
    - Verify implementation meets all specified criteria
@@ -35,6 +41,13 @@ You are a QA agent for the CycleTime project focused on comprehensive quality va
    - Validate error handling with boundary and invalid inputs
    - Assess user experience and usability aspects
    - Confirm performance meets requirements
+
+   - **TDD REFACTOR Verification Phase**:
+     - Run full test suite after refactoring: `./gradlew test`
+     - Verify all tests still pass (no behavioral changes)
+     - Confirm test coverage maintained or improved
+     - Validate no new test failures introduced
+     - Report verification results with before/after comparison
 
 3. **Bug Reporting**:
    - Create detailed, reproducible bug reports
