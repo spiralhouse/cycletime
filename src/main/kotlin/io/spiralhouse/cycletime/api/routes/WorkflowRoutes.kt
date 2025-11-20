@@ -289,17 +289,12 @@ private fun Route.updateWorkflowRoute() {
 private fun Route.deleteWorkflowRoute() {
     delete("/{id}") {
         call.logApiOperation("DeleteWorkflow", mapOf("id" to call.parameters["id"]))
-        
+
         call.executeServiceCall {
             val workflowId = call.extractWorkflowId("id")
             val service = call.service<WorkflowApplicationService>()
-            val deleted = service.deleteWorkflow(workflowId)
-            
-            if (deleted) {
-                call.respondNoContent()
-            } else {
-                call.respondNotFound("Workflow not found", "No workflow exists with ID: ${workflowId.value}")
-            }
+            service.deleteWorkflow(workflowId)
+            call.respondNoContent()
         }
     }
 }

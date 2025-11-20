@@ -31,11 +31,13 @@ import java.util.UUID
 class DefaultProjectToolProviderUnitTest : StringSpec({
 
     lateinit var mockProjectService: ProjectApplicationService
+    lateinit var mockProjectRepository: io.spiralhouse.cycletime.domain.repositories.ProjectRepository
     lateinit var toolProvider: DefaultProjectToolProvider
 
     beforeEach {
         mockProjectService = mockk(relaxed = true)
-        toolProvider = DefaultProjectToolProvider(mockProjectService)
+        mockProjectRepository = mockk(relaxed = true)
+        toolProvider = DefaultProjectToolProvider(mockProjectService, mockProjectRepository)
     }
 
     // TDD Cycle 1: Tool Registration Tests
@@ -45,13 +47,16 @@ class DefaultProjectToolProviderUnitTest : StringSpec({
 
     "should register async tools correctly" {
         val asyncTools = toolProvider.getAsyncTools()
-        asyncTools shouldHaveSize 4
-        
+        asyncTools shouldHaveSize 7  // Added: delete, restore, list_deleted (SPI-879)
+
         val toolNames = asyncTools.map { it.name }
         toolNames shouldContain "create_project"
-        toolNames shouldContain "get_project"  
+        toolNames shouldContain "get_project"
         toolNames shouldContain "list_projects"
         toolNames shouldContain "update_project"
+        toolNames shouldContain "delete_project"
+        toolNames shouldContain "restore_project"
+        toolNames shouldContain "list_deleted_projects"
     }
 
     "should provide empty synchronous tools" {
@@ -126,9 +131,9 @@ class DefaultProjectToolProviderUnitTest : StringSpec({
 
             // Should return raw JSON data from serialized DTO (wrapping happens in McpToolHandler, not provider)
             result.shouldBeInstanceOf<JsonObject>()
-            // ProjectId serializes as {"_value": "uuid"}
+            // ProjectId serializes as plain string (via ProjectIdSerializer)
             result["id"].shouldNotBe(null)
-            result["id"]!!.jsonObject["_value"]!!.jsonPrimitive.content shouldBe projectId
+            result["id"]!!.jsonPrimitive.content shouldBe projectId
             result["name"]!!.jsonPrimitive.content shouldBe "Test Project"
             result["description"]!!.jsonPrimitive.content shouldBe "Test Description"
             result["status"]!!.jsonPrimitive.content shouldBe "ACTIVE"
@@ -171,8 +176,8 @@ class DefaultProjectToolProviderUnitTest : StringSpec({
             result["totalCount"]!!.jsonPrimitive.int shouldBe 1
             val projects = result["projects"]!!.jsonArray
             projects shouldHaveSize 1
-            // ProjectId serializes as {"_value": "uuid"}
-            projects[0].jsonObject["id"]!!.jsonObject["_value"]!!.jsonPrimitive.content shouldBe projectId
+            // ProjectId serializes as plain string (via ProjectIdSerializer)
+            projects[0].jsonObject["id"]!!.jsonPrimitive.content shouldBe projectId
             projects[0].jsonObject["name"]!!.jsonPrimitive.content shouldBe "Project 1"
         }
     }

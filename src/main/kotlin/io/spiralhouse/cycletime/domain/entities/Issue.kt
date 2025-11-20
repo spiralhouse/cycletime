@@ -24,7 +24,8 @@ data class IssueSnapshot(
     val dependencies: List<IssueId>,
     val blockedBy: List<IssueId>,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
+    val deletedAt: Instant? = null
 )
 
 /**
@@ -52,6 +53,7 @@ class Issue private constructor(
     private val _blockedBy: MutableSet<IssueId>,
     val createdAt: Instant,
     private var _updatedAt: Instant,
+    private val _deletedAt: Instant?,
     private val timeProvider: TimeProvider
 ) {
     val title: String get() = _title
@@ -62,6 +64,7 @@ class Issue private constructor(
     val dependencies: List<IssueId> get() = _dependencies.toList()
     val blockedBy: List<IssueId> get() = _blockedBy.toList()
     val updatedAt: Instant get() = _updatedAt
+    val deletedAt: Instant? get() = _deletedAt
 
     /**
      * Updates the issue status following valid transition rules.
@@ -212,7 +215,8 @@ class Issue private constructor(
             dependencies = _dependencies.toList(),
             blockedBy = _blockedBy.toList(),
             createdAt = createdAt,
-            updatedAt = _updatedAt
+            updatedAt = _updatedAt,
+            deletedAt = _deletedAt
         )
     }
 
@@ -266,6 +270,7 @@ class Issue private constructor(
                 _blockedBy = mutableSetOf(),
                 createdAt = now,
                 _updatedAt = now,
+                _deletedAt = null,
                 timeProvider = timeProvider
             )
         }
@@ -293,6 +298,7 @@ class Issue private constructor(
                 _blockedBy = snapshot.blockedBy.toMutableSet(),
                 createdAt = snapshot.createdAt,
                 _updatedAt = snapshot.updatedAt,
+                _deletedAt = snapshot.deletedAt,
                 timeProvider = timeProvider
             )
         }

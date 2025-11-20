@@ -8,6 +8,9 @@ import io.spiralhouse.cycletime.application.services.SessionApplicationService
 import io.spiralhouse.cycletime.application.services.WorkflowApplicationService
 import io.spiralhouse.cycletime.application.services.DashboardCache
 import io.spiralhouse.cycletime.application.services.DashboardApplicationService
+import io.spiralhouse.cycletime.domain.repositories.IssueRepository
+import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
+import io.spiralhouse.cycletime.domain.repositories.WorkflowRepository
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
@@ -260,15 +263,17 @@ private fun DependencyRegistry.configureMCPDependencies() {
     provide<WorkflowResourceProvider> { DefaultWorkflowResourceProvider() }
     
     // Tool Providers
-    provide<DefaultProjectToolProvider> { 
+    provide<DefaultProjectToolProvider> {
         DefaultProjectToolProvider(
-            projectService = resolve<ProjectApplicationService>()
+            projectService = resolve<ProjectApplicationService>(),
+            projectRepository = resolve<ProjectRepository>()
         )
     }
-    
-    provide<DefaultIssueToolProvider> { 
+
+    provide<DefaultIssueToolProvider> {
         DefaultIssueToolProvider(
-            issueService = resolve<IssueApplicationService>()
+            issueService = resolve<IssueApplicationService>(),
+            issueRepository = resolve<IssueRepository>()
         )
     }
     
@@ -278,7 +283,11 @@ private fun DependencyRegistry.configureMCPDependencies() {
         )
     }
     
-    provide<DefaultWorkflowToolProvider> { 
-        DefaultWorkflowToolProvider()
+    provide<DefaultWorkflowToolProvider> {
+        DefaultWorkflowToolProvider(
+            workflowService = resolve<WorkflowApplicationService>(),
+            workflowRepository = resolve<WorkflowRepository>(),
+            timeProvider = resolve<TimeProvider>()
+        )
     }
 }

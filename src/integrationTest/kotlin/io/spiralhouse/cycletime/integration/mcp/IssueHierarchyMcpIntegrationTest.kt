@@ -242,8 +242,9 @@ class IssueHierarchyMcpIntegrationTest : StringSpec({
 
             // CRITICAL: Epic must have null parentId
             val parentIdElement = epic["parentId"]
-            if (parentIdElement != null) {
-                parentIdElement.jsonPrimitive.content shouldBe "" // Or check for null
+            // parentId can be a JSON null or omitted entirely
+            if (parentIdElement != null && parentIdElement !is kotlinx.serialization.json.JsonNull) {
+                parentIdElement.jsonPrimitive.content shouldBe ""
             }
         }
     }
@@ -390,8 +391,9 @@ class IssueHierarchyMcpIntegrationTest : StringSpec({
             val story = getIssueViaMcp(client, storyId)
             story["id"]?.jsonPrimitive?.content shouldBe storyId
             story["type"]?.jsonPrimitive?.content shouldBe "STORY"
+            // parentId can be a JSON null or omitted entirely
             story["parentId"].let { element ->
-                if (element != null) {
+                if (element != null && element !is kotlinx.serialization.json.JsonNull) {
                     element.jsonPrimitive.content shouldBe ""
                 }
             }

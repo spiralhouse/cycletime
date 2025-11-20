@@ -231,3 +231,6 @@ providers/*/secrets.*
 .local/*
 !.local/workflows/
 .kotlin/
+
+# Claude Code baseline tracking
+.claude/baseline/

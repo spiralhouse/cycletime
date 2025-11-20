@@ -34,8 +34,10 @@ private val logger = LoggerFactory.getLogger("MCPSdkRouting")
  *
  * Implements Streamable HTTP handler for Claude Code v2.0.25+ compatibility.
  * Provides POST and GET endpoints at /mcp with SDK delegation for tools/list and resources/list.
+ *
+ * @param config Optional configuration for handler behavior (defaults to production settings)
  */
-fun Routing.configureMCPStreamableHttp() {
+fun Routing.configureMCPStreamableHttp(config: StreamableHttpConfig? = null) {
     val startTime = System.currentTimeMillis()
 
     // Resolve dependencies from DI
@@ -68,22 +70,26 @@ fun Routing.configureMCPStreamableHttp() {
         workflowResourceProvider as io.spiralhouse.cycletime.mcp.resources.ResourceProvider
     )
 
+    // Use provided config or default production configuration
+    // SPI-879: Test environments can disable rate limiting via config parameter
+    val handlerConfig = config ?: StreamableHttpConfig(
+        allowNullOrigin = true,  // For localhost development
+        allowedOrigins = listOf(
+            "http://localhost:.*",
+            "https://.*\\.anthropic\\.com"
+        ),
+        maxRequestBodySize = 1_000_000,  // 1MB limit
+        sessionCreationMaxPerWindow = 5,  // Max 5 per minute per IP
+        sessionCreationWindowMs = 60_000  // 60 second window
+    )
+
     // Create handler with security configuration
     // Security: Origin validation always enabled, request size limits, rate limiting
     val handler = StreamableHttpHandler(
         sessionManager = sessionManager,
         toolProviders = toolProviders,
         resourceProviders = resourceProviders,
-        config = StreamableHttpConfig(
-            allowNullOrigin = true,  // For localhost development
-            allowedOrigins = listOf(
-                "http://localhost:.*",
-                "https://.*\\.anthropic\\.com"
-            ),
-            maxRequestBodySize = 1_000_000,  // 1MB limit
-            sessionCreationMaxPerWindow = 5,  // Max 5 per minute per IP
-            sessionCreationWindowMs = 60_000  // 60 second window
-        )
+        config = handlerConfig
     )
 
     // Register routes

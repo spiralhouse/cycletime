@@ -20,7 +20,8 @@ data class ProjectSnapshot(
     val status: ProjectStatus,
     val issues: List<IssueId>,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
+    val deletedAt: Instant? = null
 )
 
 /**
@@ -42,6 +43,7 @@ class Project private constructor(
     private val _issues: MutableSet<IssueId>,
     val createdAt: Instant,
     private var _updatedAt: Instant,
+    private val _deletedAt: Instant?,
     private val timeProvider: TimeProvider
 ) {
     val name: String get() = _name
@@ -50,6 +52,7 @@ class Project private constructor(
     val issues: List<IssueId> get() = _issues.toList()
     val issueCount: Int get() = _issues.size
     val updatedAt: Instant get() = _updatedAt
+    val deletedAt: Instant? get() = _deletedAt
 
     /**
      * Adds an issue to this project.
@@ -140,7 +143,8 @@ class Project private constructor(
             status = _status,
             issues = _issues.toList(),
             createdAt = createdAt,
-            updatedAt = _updatedAt
+            updatedAt = _updatedAt,
+            deletedAt = _deletedAt
         )
     }
 
@@ -179,6 +183,7 @@ class Project private constructor(
                 _issues = mutableSetOf(),
                 createdAt = now,
                 _updatedAt = now,
+                _deletedAt = null,
                 timeProvider = timeProvider
             )
         }
@@ -205,6 +210,7 @@ class Project private constructor(
                 _issues = snapshot.issues.toMutableSet(),
                 createdAt = snapshot.createdAt,
                 _updatedAt = snapshot.updatedAt,
+                _deletedAt = snapshot.deletedAt,
                 timeProvider = timeProvider
             )
         }
