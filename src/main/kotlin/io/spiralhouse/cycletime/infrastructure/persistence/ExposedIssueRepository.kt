@@ -337,6 +337,7 @@ class ExposedIssueRepository(
         IssuesTable
             .selectAll()
             .where { IssuesTable.deletedAt.isNotNull() }
+            .orderBy(IssuesTable.deletedAt to SortOrder.DESC)
             .map { it.toIssue() }
     }
 
@@ -602,7 +603,8 @@ class ExposedIssueRepository(
             dependencies = relationships.dependencies,
             blockedBy = relationships.blockedBy,
             createdAt = this[IssuesTable.createdAt],
-            updatedAt = this[IssuesTable.updatedAt]
+            updatedAt = this[IssuesTable.updatedAt],
+            deletedAt = this[IssuesTable.deletedAt]
         )
 
         return Issue.fromSnapshot(snapshot, timeProvider)

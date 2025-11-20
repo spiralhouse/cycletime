@@ -9,6 +9,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.spiralhouse.cycletime.test.utils.testSDKApplication
+import io.spiralhouse.cycletime.mcp.sdk.StreamableHttpConfig
 import kotlinx.serialization.json.*
 
 /**
@@ -196,7 +197,8 @@ class StreamableHttpSecurityTest : StringSpec({
     }
 
     "POST /mcp with Anthropic Origin should succeed" {
-        testSDKApplication {
+        // Use production config to test Anthropic origin whitelist
+        testSDKApplication(config = productionSecurityConfig()) {
             val response = client.post("/mcp") {
                 header("Content-Type", "application/json")
                 header("Origin", "https://console.anthropic.com")  // Matches .*\.anthropic\.com
@@ -213,8 +215,9 @@ class StreamableHttpSecurityTest : StringSpec({
     // ========================================
 
     "POST /mcp rapid session creation should be rate limited" {
-        testSDKApplication {
-            // ARRANGE: Configure rate limit (5 per minute)
+        // Use production config to test rate limiting behavior
+        testSDKApplication(config = productionSecurityConfig()) {
+            // ARRANGE: Configure rate limit (5 per minute in production)
             val maxCreations = 5
 
             // ACT: Try to create 10 sessions rapidly
@@ -361,3 +364,25 @@ private fun String.shouldNotContain(substring: String) {
         throw AssertionError("String should not contain '$substring' but was: $this")
     }
 }
+
+/**
+ * Production security configuration for testing.
+ *
+ * Matches production defaults from MCPSdkRouting.kt to ensure security tests
+ * validate actual production behavior.
+ *
+ * Configuration includes:
+ * - Full origin whitelist (localhost + Anthropic domains)
+ * - Rate limiting enabled (5 sessions per minute per IP)
+ * - Request size limits (1MB)
+ */
+private fun productionSecurityConfig() = StreamableHttpConfig(
+    allowNullOrigin = true,
+    allowedOrigins = listOf(
+        "http://localhost:.*",
+        "https://.*\\.anthropic\\.com"
+    ),
+    maxRequestBodySize = 1_000_000,
+    sessionCreationMaxPerWindow = 5,  // Production rate limit
+    sessionCreationWindowMs = 60_000
+)

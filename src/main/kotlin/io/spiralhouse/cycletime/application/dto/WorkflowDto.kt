@@ -3,6 +3,8 @@ package io.spiralhouse.cycletime.application.dto
 import io.spiralhouse.cycletime.domain.entities.Workflow
 import io.spiralhouse.cycletime.domain.valueobjects.IssueStatus
 import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
+import io.spiralhouse.cycletime.infrastructure.serialization.InstantSerializer
+import io.spiralhouse.cycletime.infrastructure.serialization.NullableInstantSerializer
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
@@ -17,8 +19,12 @@ data class WorkflowDto(
     val description: String?,
     val initialStatus: String, // IssueStatus as string
     val allowedStatuses: List<String>, // Set as sorted List for consistent serialization
+    @Serializable(with = InstantSerializer::class)
     val createdAt: Instant,
-    val updatedAt: Instant
+    @Serializable(with = InstantSerializer::class)
+    val updatedAt: Instant,
+    @Serializable(with = NullableInstantSerializer::class)
+    val deletedAt: Instant? = null
 ) {
     companion object {
         /**
@@ -32,7 +38,8 @@ data class WorkflowDto(
                 initialStatus = workflow.initialStatus.name,
                 allowedStatuses = workflow.allowedStatuses.map { it.name }.sorted(),
                 createdAt = workflow.createdAt,
-                updatedAt = workflow.updatedAt
+                updatedAt = workflow.updatedAt,
+                deletedAt = workflow.deletedAt
             )
         }
     }
