@@ -95,6 +95,11 @@ parse_arguments() {
           log_error "Missing argument for --timeout"
           exit 2
         fi
+        # Validate timeout is a positive integer
+        if ! [[ "$2" =~ ^[0-9]+$ ]] || [ "$2" -le 0 ]; then
+          log_error "Timeout must be a positive integer (got: $2)"
+          exit 2
+        fi
         TIMEOUT="$2"
         shift 2
         ;;
@@ -277,7 +282,7 @@ check_comprehensive_tests() {
 
 # --- Baseline comparison functions ---
 
-# Find the latest baseline file for the current branch
+# Find the latest baseline file for the current branch or issue
 find_latest_baseline() {
   local branch="$1"
   local branch_sanitized
@@ -289,10 +294,19 @@ find_latest_baseline() {
     return 1
   fi
 
-  # Find latest baseline for this branch (sorted by timestamp, most recent first)
-  local latest
-  latest=$(find "$baseline_dir" -name "${branch_sanitized}-*.json" -type f 2>/dev/null | sort -r | head -1)
+  local latest=""
 
+  # If --issue was provided, search for issue-based baselines first
+  if [ -n "$ISSUE_ID" ]; then
+    latest=$(find "$baseline_dir" -name "${ISSUE_ID}-*.json" -type f 2>/dev/null | sort -r | head -1)
+    if [ -n "$latest" ]; then
+      echo "$latest"
+      return 0
+    fi
+  fi
+
+  # Fall back to branch-based search
+  latest=$(find "$baseline_dir" -name "${branch_sanitized}-*.json" -type f 2>/dev/null | sort -r | head -1)
   echo "$latest"
 }
 
@@ -586,14 +600,25 @@ EOF
   # Write JSON output file
   echo "$json_output" > "$json_file"
 
-  # Create latest symlink for this branch
-  local latest_link="${baseline_dir}/latest-${branch_sanitized}.json"
-  ln -sf "$(basename "$json_file")" "$latest_link"
+  # Create latest symlinks
+  # Always create branch-based symlink
+  local branch_link="${baseline_dir}/latest-${branch_sanitized}.json"
+  ln -sf "$(basename "$json_file")" "$branch_link"
+
+  # If issue-based naming, also create issue-based symlink
+  local issue_link=""
+  if [ -n "$ISSUE_ID" ]; then
+    issue_link="${baseline_dir}/latest-${ISSUE_ID}.json"
+    ln -sf "$(basename "$json_file")" "$issue_link"
+  fi
 
   log_success "Results saved to:"
   echo "  JSON: $json_file"
   echo "  Log:  $log_file"
-  echo "  Link: $latest_link"
+  echo "  Link (branch): $branch_link"
+  if [ -n "$issue_link" ]; then
+    echo "  Link (issue):  $issue_link"
+  fi
   echo ""
   echo "Summary: $summary"
   echo ""
@@ -684,8 +709,17 @@ mode_auto() {
 
   # Check if there's a previous baseline to compare against
   local baseline_dir=".claude/baseline"
+
+  # Determine search pattern based on whether --issue was used
+  local search_pattern
+  if [ -n "$ISSUE_ID" ]; then
+    search_pattern="${ISSUE_ID}-*.json"
+  else
+    search_pattern="${branch_sanitized}-*.json"
+  fi
+
   local baseline_count
-  baseline_count=$(find "$baseline_dir" -name "${branch_sanitized}-*.json" -type f 2>/dev/null | wc -l | tr -d ' ')
+  baseline_count=$(find "$baseline_dir" -name "$search_pattern" -type f 2>/dev/null | wc -l | tr -d ' ')
 
   if [ "$baseline_count" -gt 1 ]; then
     echo ""
@@ -693,7 +727,7 @@ mode_auto() {
 
     # Find the second-most recent baseline (excluding the one we just created)
     local previous_baseline
-    previous_baseline=$(find "$baseline_dir" -name "${branch_sanitized}-*.json" -type f ! -name "$(basename "$json_file")" 2>/dev/null | sort -r | head -1)
+    previous_baseline=$(find "$baseline_dir" -name "$search_pattern" -type f ! -name "$(basename "$json_file")" 2>/dev/null | sort -r | head -1)
 
     if [ -n "$previous_baseline" ]; then
       compare_with_baseline "$previous_baseline" "$test_total" "$test_passed" "$test_failures" "$test_skipped"
