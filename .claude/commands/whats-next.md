@@ -1,3 +1,9 @@
+---
+description: Strategic task recommendation with quality gates and scoring
+allowed-tools: mcp__linear-server__list_issues, mcp__linear-server__get_issue, Bash
+model: sonnet
+---
+
 # Strategic Task Selector Command
 
 **Usage**: `/whats-next`
