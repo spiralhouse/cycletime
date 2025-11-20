@@ -32,11 +32,11 @@ MCP moved from SSE (Server-Sent Events) to Streamable HTTP transport:
 
 **Current Implementation**: Custom Streamable HTTP handler (SPI-759, SPI-763)
 - SSE transport removed in SPI-763
-- Custom handler built on Ktor to bridge to MCP Kotlin SDK v0.7.2
+- Custom handler built on Ktor to bridge to MCP Kotlin SDK v0.7.6
 - Single `/mcp` endpoint supporting both POST and GET methods
 
 **Why Custom Handler?**
-The MCP Kotlin SDK v0.7.2 does not yet provide server-side Streamable HTTP transport with Ktor (open PR blocked by Ktor routing DSL limitations). CycleTime implements a custom handler that will migrate to official SDK support when available.
+The MCP Kotlin SDK v0.7.6 does not yet provide server-side Streamable HTTP transport with Ktor (open PR blocked by Ktor routing DSL limitations). CycleTime implements a custom handler that will migrate to official SDK support when available.
 
 ## Streamable HTTP Architecture in CycleTime
 
