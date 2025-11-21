@@ -47,8 +47,8 @@ class MCPSdkServer(
      * SDK Server instance with configured capabilities.
      *
      * Capabilities:
-     * - Resources: Full support with subscriptions and change notifications
-     * - Tools: Full support for tool execution
+     * - Resources: Read-only support (subscribe/listChanged disabled until SPI-579)
+     * - Tools: Full support for tool execution with change notifications
      */
     val server: Server = Server(
         serverInfo = Implementation(
@@ -58,9 +58,15 @@ class MCPSdkServer(
         options = ServerOptions(
             capabilities = ServerCapabilities(
                 resources = ServerCapabilities.Resources(
-                    subscribe = true,      // Support resource subscriptions
-                    listChanged = true     // Notify resource list changes
+                    subscribe = false,     // Not implemented - see SPI-579
+                    listChanged = false    // Not implemented - see SPI-579
                 ),
+                // KNOWN SDK LIMITATION (SPI-777):
+                // MCP Kotlin SDK v0.7.6 has hardcoded defaults: subscribe=true, listChanged=true
+                // Our explicit false values above are ignored by SDK serialization
+                // This is a known SDK issue - capabilities will advertise subscription support
+                // even though our ResourceRpcHandler throws UnsupportedOperationException
+                // Clients should gracefully handle this mismatch until SDK is fixed
                 tools = ServerCapabilities.Tools(
                     listChanged = true     // Notify tool list changes
                 )
@@ -88,7 +94,7 @@ class MCPSdkServer(
             logger.info("MCP SDK Server initialized in test mode (no providers registered)")
         }
 
-        logger.debug("Server capabilities: resources (subscribe, listChanged), tools, logging")
+        logger.debug("Server capabilities: resources (read-only), tools (listChanged)")
     }
 
     // TODO (SPI-716): Re-enable when SDK provides request handler registration API
