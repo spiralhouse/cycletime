@@ -423,6 +423,61 @@ class StreamableHttpIntegrationTest : StringSpec({
         }
     }
 
+    "POST /mcp initialize should advertise capabilities (SDK limitation documented in SPI-777)" {
+        testSDKApplication {
+            val response = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""
+                    {
+                        "jsonrpc":"2.0",
+                        "id":12,
+                        "method":"initialize",
+                        "params":{
+                            "protocolVersion":"2025-06-18",
+                            "clientInfo":{"name":"test-client","version":"1.0.0"},
+                            "capabilities":{}
+                        }
+                    }
+                """.trimIndent())
+            }
+
+            response.status shouldBe HttpStatusCode.OK
+
+            val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+            val result = jsonResponse["result"]?.jsonObject
+            result shouldNotBe null
+
+            // Verify resource capabilities exist
+            val capabilities = result!!["capabilities"]?.jsonObject
+            capabilities shouldNotBe null
+
+            val resources = capabilities!!["resources"]?.jsonObject
+            resources shouldNotBe null
+
+            // KNOWN SDK LIMITATION (SPI-777):
+            // MCP Kotlin SDK v0.7.6 ignores explicit subscribe=false, listChanged=false values
+            // SDK hardcodes these to true regardless of what we pass in ServerCapabilities.Resources()
+            // Our code explicitly sets these to false (see MCPSdkServer.kt:61-62)
+            // but SDK serialization overrides with true
+            //
+            // This creates a protocol mismatch:
+            // - Capabilities advertise: subscribe=true, listChanged=true
+            // - Actual behavior: ResourceRpcHandler throws UnsupportedOperationException
+            //
+            // Clients must handle this gracefully. When SPI-579 implements subscription support,
+            // these values will correctly reflect true (matching capabilities and implementation)
+            //
+            // For now, we document this SDK limitation and expect true values in tests:
+            resources!!["subscribe"]?.jsonPrimitive?.boolean shouldBe true
+            resources["listChanged"]?.jsonPrimitive?.boolean shouldBe true
+
+            // Verify tool capabilities (correctly supports listChanged)
+            val tools = capabilities["tools"]?.jsonObject
+            tools shouldNotBe null
+            tools!!["listChanged"]?.jsonPrimitive?.boolean shouldBe true
+        }
+    }
+
     // ========================================
     // ERROR HANDLING TESTS (Security & Robustness)
     // ========================================
