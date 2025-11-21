@@ -15,7 +15,7 @@ import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 
 /**
- * MCP SDK v0.7.4 Server initialization and configuration.
+ * MCP SDK v0.7.6 Server initialization and configuration.
  *
  * Provides official SDK-based transport layer replacing custom EventBus architecture.
  * The SDK handles:
@@ -75,7 +75,7 @@ class MCPSdkServer(
     )
 
     init {
-        logger.info("MCP SDK Server initializing (SDK v0.7.4, version: $version)")
+        logger.info("MCP SDK Server initializing (SDK v0.7.6, version: $version)")
 
         // TODO (SPI-716): Logging/setLevel handler registration pending SDK API support
         // The logging capability requires request handler registration which is not yet
