@@ -448,3 +448,134 @@ cd docs
 ## Linear Reference
 
 @.claude/shared/linear-reference.md
+
+## Soft-Deletion & Recovery
+
+CycleTime implements soft-deletion with a 30-day retention policy for projects and issues. This provides recovery from accidental deletions while maintaining data hygiene.
+
+### Core Concepts
+
+**Paranoid Deletion Pattern:**
+- Delete operations set `deleted_at` timestamp instead of removing data
+- Deleted items excluded from default queries (`deleted_at IS NULL`)
+- Items remain recoverable for 30 days
+- Automatic purge after retention period (SPI-880, future release)
+
+**Cascade Behavior:**
+- Project deletion cascades to all issues
+- Epic deletion cascades to Stories and Subtasks
+- Deletion preserves referential integrity
+
+**Restoration Rules:**
+- Parent-first validation (cannot restore child if parent deleted)
+- No automatic child restoration (explicit user decision required)
+- Idempotent operations (safe to restore already-active entities)
+
+### MCP Tools for Deletion
+
+**Project Deletion:**
+- `mcp__cycletime__project_delete_project` - Soft-deletes project and all issues
+  - Parameters: `{"id": "project-uuid"}`
+  - Returns: Success confirmation
+  - Cascade: All issues in project also soft-deleted
+
+**Issue Deletion:**
+- `mcp__cycletime__issue_delete_issue` - Soft-deletes issue and all children
+  - Parameters: `{"id": "issue-uuid"}`
+  - Returns: Success confirmation
+  - Cascade: Epic → Stories → Subtasks
+
+### MCP Tools for Recovery
+
+**Project Restoration:**
+```json
+{
+  "name": "mcp__cycletime__project_restore_project",
+  "parameters": {
+    "id": {
+      "type": "string",
+      "description": "UUID of soft-deleted project to restore"
+    }
+  }
+}
+```
+**Note:** Does NOT auto-restore issues (explicit user choice required)
+
+**Issue Restoration:**
+```json
+{
+  "name": "mcp__cycletime__issue_restore_issue",
+  "parameters": {
+    "id": {
+      "type": "string",
+      "description": "UUID of soft-deleted issue to restore"
+    }
+  }
+}
+```
+**Validation:** Cannot restore if parent issue/project is deleted
+
+### MCP Tools for Querying Deleted Items
+
+**List Deleted Projects:**
+- `mcp__cycletime__project_list_deleted_projects` - Returns all soft-deleted projects
+  - No parameters required
+  - Sorted by deletion date (most recent first)
+
+**List Deleted Issues:**
+- `mcp__cycletime__issue_list_deleted_issues` - Returns all soft-deleted issues
+  - No parameters required
+  - Sorted by deletion date (most recent first)
+
+**Include Deleted in Standard Queries:**
+- `mcp__cycletime__project_list_projects` - Add `{"includeDeleted": true}`
+- `mcp__cycletime__issue_list_issues` - Add `{"includeDeleted": true}`
+
+### Usage Examples
+
+**Recover deleted project:**
+```bash
+# 1. Find deleted projects
+claude mcp__cycletime__project_list_deleted_projects
+
+# 2. Restore specific project
+claude mcp__cycletime__project_restore_project '{"id": "abc-123"}'
+
+# 3. Verify restoration
+claude mcp__cycletime__project_get_project '{"id": "abc-123"}'
+```
+
+**Recover deleted issue with parent validation:**
+```bash
+# If parent is deleted, restore fails with validation error
+# Correct order: Restore parent first, then children
+
+# 1. Restore parent issue/project
+claude mcp__cycletime__project_restore_project '{"id": "parent-id"}'
+
+# 2. Now restore child issue
+claude mcp__cycletime__issue_restore_issue '{"id": "child-id"}'
+```
+
+### Troubleshooting
+
+**Error: "Cannot restore issue - parent is deleted"**
+- Cause: Parent project or issue is soft-deleted
+- Solution: Restore parent first using appropriate restore tool
+
+**Item not in deleted list**
+- Cause 1: Already restored (check with standard get/list operations)
+- Cause 2: Purged after 30-day retention period (not recoverable)
+
+**Need to query both active and deleted**
+- Use `includeDeleted: true` parameter on list operations
+- Deleted items have `deleted_at` timestamp, active items have `null`
+
+### Implementation Details
+
+- Database: `deleted_at TIMESTAMP` column with composite indexes
+- Cascade: Foreign key relationships enforce referential integrity
+- Performance: Query overhead <2ms (95th percentile) with proper indexing
+- Retention: 30-day retention service (SPI-880, future release)
+
+See [ADR-008: Soft-Deletion Pattern](docs/architecture/decisions/ADR-008-soft-deletion-pattern.md) for architectural decisions and trade-offs.
