@@ -336,7 +336,7 @@ CycleTime implements the Streamable HTTP transport per MCP specification (2025-0
 | Phase | Transport | Status |
 |-------|-----------|--------|
 | Legacy EventBus | Custom SSE + POST | Removed (SPI-707) |
-| MCP SDK v0.7.2 | SSE Transport | Removed (SPI-763) |
+| MCP SDK v0.7.6 | SSE Transport | Removed (SPI-763) |
 | Streamable HTTP | POST + SSE at /mcp | Current (SPI-759) |
 
 Benefits: MCP spec compliance, Claude Code v2.0.25+ support, security controls, simplified architecture.

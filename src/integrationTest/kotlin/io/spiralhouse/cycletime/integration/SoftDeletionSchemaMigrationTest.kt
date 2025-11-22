@@ -118,11 +118,12 @@ class SoftDeletionSchemaMigrationTest : StringSpec({
                 """.trimIndent())
 
                 // Create old issues table (without deleted_at)
+                // Note: FK constraints removed to avoid H2 version-specific constraint naming issues
                 exec("""
                     CREATE TABLE issues (
                         id VARCHAR(100) PRIMARY KEY,
-                        project_id VARCHAR(100) REFERENCES projects(id),
-                        parent_id VARCHAR(100) REFERENCES issues(id),
+                        project_id VARCHAR(100),
+                        parent_id VARCHAR(100),
                         title VARCHAR(255) NOT NULL,
                         description TEXT,
                         issue_type VARCHAR(20) NOT NULL,

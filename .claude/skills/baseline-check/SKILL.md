@@ -1,6 +1,6 @@
 ---
 name: baseline-check
-description: Autonomously run quality checks (detekt, Gradle tests) to establish baseline or detect regressions. Triggers before starting development work, after completing changes, when checking code quality, or when explicitly requested. Compares current metrics against previous baseline to identify improvements or regressions in code quality and test coverage.
+description: Autonomously run quality checks (detekt, Gradle tests) to establish baseline or detect regressions. Supports three modes (capture, compare, auto) for comprehensive regression detection. Triggers before starting development work, after completing changes, when checking code quality, or when explicitly requested. Compares current metrics against previous baseline to identify improvements or regressions in code quality and test coverage.
 allowed-tools: Bash, Read, Write, Glob
 ---
 
@@ -10,360 +10,411 @@ allowed-tools: Bash, Read, Write, Glob
 
 This skill maintains code quality throughout development by:
 - Establishing baseline quality metrics before development
-- Detecting regressions after code changes
+- Detecting regressions after code changes with automated delta analysis
 - Tracking quality trends over time
-- Providing clear feedback on code health
+- Providing clear, actionable feedback on code health with visual indicators
 
 ## When to Use
 
 Invoke this skill:
 
-1. **Before starting development work** - Establish current baseline
-2. **After completing changes** - Check for regressions
+1. **Before starting development work** - Establish current baseline (capture mode)
+2. **After completing changes** - Check for regressions (compare or auto mode)
 3. **After GREEN phase** - Verify tests exist and pass
 4. **After REFACTOR phase** - Verify tests still pass after refactoring
-5. **Before committing code** - Verify quality standards
+5. **Before committing code** - Verify quality standards (compare mode)
 6. **When explicitly requested** - User asks for quality check, baseline, or regression analysis
 7. **During code review** - Validate changes meet quality bar
 
-## How to Execute
+## Execution Modes
 
-### Step 1: Run the Baseline Check
+The skill supports three execution modes for different scenarios:
 
-Execute the wrapper script (from project root):
+### Mode 1: Capture (Default)
+**Purpose**: Establish a quality baseline
+
+**When to use:**
+- Starting new development work
+- After syncing with main branch
+- Before making changes
+- Creating a reference point for later comparison
+
+**Command:**
+```bash
+./.claude/skills/baseline-check/baseline-check.sh --capture [--issue SPI-XXX]
+```
+
+**What it does:**
+- Runs `./gradlew clean check --rerun-tasks` (comprehensive, cache-proof execution)
+- Captures test metrics (total, passed, failed, skipped)
+- Captures detekt metrics (offenses by severity)
+- Stores JSON + log file in `.claude/baseline/`
+- Creates latest symlink for easy access
+
+**Output:**
+- JSON file: `.claude/baseline/{branch}-{timestamp}.json`
+- Log file: `.claude/baseline/{branch}-{timestamp}.log`
+- Symlink: `.claude/baseline/latest-{branch}.json`
+
+### Mode 2: Compare
+**Purpose**: Compare current state against a specific baseline
+
+**When to use:**
+- After completing implementation
+- Before creating a pull request
+- Verifying no regressions introduced
+- Explicit regression check requested
+
+**Command:**
+```bash
+# Auto-detect latest baseline for current branch
+./.claude/skills/baseline-check/baseline-check.sh --compare
+
+# Compare against specific baseline file
+./.claude/skills/baseline-check/baseline-check.sh --compare .claude/baseline/main-20241120-100000.json
+```
+
+**What it does:**
+- Runs comprehensive tests (fresh execution)
+- Auto-detects latest baseline if not specified
+- Calculates deltas (total, passed, failed, skipped)
+- Classifies changes (new tests, fixed tests, regressions)
+- Generates visual comparison report with interpretation
+- Returns exit code 1 if regressions detected
+
+**Output:**
+```
+═══════════════════════════════════════════════════════════
+  BASELINE vs CURRENT COMPARISON
+═══════════════════════════════════════════════════════════
+
+BASELINE:
+  • Total: 861 | Passed: 861 | Failed: 0 | Skipped: 0
+
+CURRENT:
+  • Total: 873 | Passed: 868 | Failed: 5 | Skipped: 0
+
+DELTA (Current - Baseline):
+  • Total: +12 | Passed: +7 | Failed: +5 | Skipped: 0
+
+───────────────────────────────────────────────────────────
+  INTERPRETATION
+───────────────────────────────────────────────────────────
+  ✅ 12 new tests added
+  ❌ 5 NEW test failures introduced
+     📋 Analyze if failures are:
+        - Expected (testing edge cases, deprecated endpoints)
+        - Bugs requiring fixes
+        - Pre-existing issues incorrectly attributed
+
+═══════════════════════════════════════════════════════════
+```
+
+### Mode 3: Auto (Autonomous)
+**Purpose**: Capture baseline and automatically compare if previous exists
+
+**When to use:**
+- Continuous quality monitoring
+- Agent-driven autonomous checks
+- When unsure if baseline exists
+- Workflow automation
+
+**Command:**
+```bash
+./.claude/skills/baseline-check/baseline-check.sh --auto [--issue SPI-XXX]
+```
+
+**What it does:**
+1. Captures current baseline (same as capture mode)
+2. Checks if previous baseline exists for this branch
+3. If found, automatically performs comparison
+4. Reports both baseline capture and comparison results
+5. Returns exit code 1 if regressions detected
+
+**Decision logic:**
+- **First run on branch**: Only captures baseline, no comparison
+- **Subsequent runs**: Captures baseline AND compares against previous
+
+## Command-Line Reference
 
 ```bash
+# Capture baseline (default mode)
 ./.claude/skills/baseline-check/baseline-check.sh
+./.claude/skills/baseline-check/baseline-check.sh --capture
+./.claude/skills/baseline-check/baseline-check.sh --capture --issue SPI-866
+
+# Compare against baseline
+./.claude/skills/baseline-check/baseline-check.sh --compare
+./.claude/skills/baseline-check/baseline-check.sh --compare .claude/baseline/main-20241120-100000.json
+
+# Autonomous mode (capture + optional compare)
+./.claude/skills/baseline-check/baseline-check.sh --auto
+./.claude/skills/baseline-check/baseline-check.sh --auto --issue SPI-866
+
+# Adjust timeout (default: 300 seconds)
+./.claude/skills/baseline-check/baseline-check.sh --capture --timeout 600
+
+# Show help
+./.claude/skills/baseline-check/baseline-check.sh --help
 ```
 
-The script will:
-- Run detekt (if available)
-- Run Gradle tests (test + integrationTest if available)
-- Generate a timestamped JSON report
-- Output the filepath to the generated report
+## JSON Output Format
 
-**Expected output:**
-```
-Running baseline checks...
-✓ detekt check completed
-✓ Gradle tests completed
-Baseline saved to: .claude/baseline/main-20251119-143022.json
-```
-
-**Error handling:**
-- If script fails, report the error to user
-- If tools are unavailable, the JSON will reflect `"available": false`
-- Empty test suite is acceptable (allows pre-implementation baselines)
-
-### Step 2: Read the Results
-
-Parse the generated JSON file to extract metrics:
+The skill generates structured JSON for programmatic access:
 
 ```json
 {
-  "timestamp": "2025-11-19T14:30:22Z",
-  "branch": "main",
-  "commit": "5393d9d",
+  "timestamp": "2025-11-20T14:30:22Z",
+  "branch": "feat/spi-866-baseline-enhancement",
+  "commit": "abc123d",
+  "issue_id": "SPI-866",
   "checks": {
     "detekt": {
       "available": true,
-      "status": "failed",
-      "total_offenses": 9,
+      "status": "passed",
+      "total_offenses": 5,
       "offenses_by_severity": {
-        "convention": 3,
-        "warning": 5,
-        "error": 1
+        "convention": 2,
+        "warning": 3,
+        "error": 0
       },
       "execution_time": 8
     },
     "tests": {
       "available": true,
       "status": "passed",
-      "total": 861,
+      "total": 873,
+      "passed": 873,
       "failures": 0,
       "skipped": 0,
-      "execution_time": 45
+      "execution_time": 145
     }
   },
-  "overall_status": "failed",
-  "summary": "Some quality checks failed"
+  "overall_status": "passed",
+  "summary": "All quality checks passed"
 }
 ```
 
-### Step 3: Find Previous Baseline (If Any)
-
-Search for previous baselines on the current branch:
-
-```bash
-ls -t .claude/baseline/{current-branch}-*.json 2>/dev/null | head -2
-```
-
-This returns the two most recent baseline files (including the one just created).
-
-**Scenarios:**
-- **One file returned**: This is the first baseline (nothing to compare)
-- **Two files returned**: Compare the newest against the previous
-- **Zero files returned**: This should not happen if Step 1 succeeded
-
-### Step 4: Compare Baselines
-
-If a previous baseline exists, compare key metrics:
-
-#### Detekt Comparison
-
-| Metric | Check |
-|--------|-------|
-| Total offenses | `current.total_offenses` vs `previous.total_offenses` |
-| Convention offenses | `current.offenses_by_severity.convention` vs `previous` |
-| Warning offenses | `current.offenses_by_severity.warning` vs `previous` |
-| Error offenses | `current.offenses_by_severity.error` vs `previous` |
-
-**Classifications:**
-- **Improvement**: Offenses decreased
-- **Regression**: Offenses increased (especially errors)
-- **Critical Regression**: New error-level offenses introduced
-- **Stable**: No change in offense counts
-
-#### Test Comparison
-
-| Metric | Check |
-|--------|-------|
-| Test count | `current.total` vs `previous.total` |
-| Failures | `current.failures` vs `previous.failures` |
-| Skipped tests | `current.skipped` vs `previous.skipped` |
-
-**Classifications:**
-- **Improvement**: More tests, fewer failures, fewer skipped
-- **Regression**: New failures introduced, test count decreased
-- **Critical Regression**: Tests that previously passed now fail
-- **Stable**: Metrics unchanged or expected changes (e.g., skipped tests fixed)
-
-### Step 5: Report Findings
-
-Provide a clear, actionable summary.
-
-#### Report Format: First Baseline
-
-When no previous baseline exists:
+## File Storage Structure
 
 ```
-Baseline Quality Check - Initial Assessment
-==========================================
-
-Branch: main
-Commit: 5393d9d
-Timestamp: 2025-11-19T14:30:22Z
-
-Detekt Analysis:
-  Status: failed
-  Total Offenses: 9
-    - Convention: 3
-    - Warning: 5
-    - Error: 1
-
-Gradle Test Analysis:
-  Status: passed
-  Total Tests: 861
-  Failures: 0
-  Skipped: 0
-
-Overall Status: FAILED (due to detekt errors)
-
-This is the first baseline for this branch. Future checks will compare against these metrics.
-
-Baseline file: .claude/baseline/main-20251119-143022.json
+.claude/baseline/
+├── main-20241120-100000.json          # Metrics JSON
+├── main-20241120-100000.log           # Full console log
+├── main-20241120-110000.json          # Later baseline
+├── main-20241120-110000.log           # Later log
+├── latest-main.json -> main-20241120-110000.json  # Symlink to latest
+├── feat-spi-866-20241120-120000.json  # Feature branch baseline
+├── feat-spi-866-20241120-120000.log   # Feature branch log
+└── latest-feat-spi-866.json           # Feature branch latest symlink
 ```
 
-#### Report Format: Comparison with Previous Baseline
-
-When comparing against previous baseline:
-
-```
-Baseline Quality Check - Regression Analysis
-============================================
-
-Branch: feat/ssh-integration
-Commit: abc123d
-Timestamp: 2025-11-19T15:45:33Z
-Previous: 2025-11-19T14:30:22Z
-
-Detekt Changes:
-  Status: failed → passed ✓ IMPROVEMENT
-  Total Offenses: 9 → 5 (-4) ✓ IMPROVEMENT
-    - Convention: 3 → 2 (-1)
-    - Warning: 5 → 3 (-2)
-    - Error: 1 → 0 (-1) ✓ CRITICAL IMPROVEMENT
-
-Test Changes:
-  Status: passed → passed
-  Total Tests: 861 → 873 (+12) ✓ IMPROVEMENT
-  Failures: 0 → 0 (stable)
-  Skipped: 0 → 0 (stable)
-
-Overall Status: PASSED
-
-FINDINGS:
-✓  Fixed 1 detekt error
-✓  Reduced offenses by 4
-✓  Added 12 new tests
-
-RECOMMENDATION:
-Quality improved! Consider addressing remaining 5 detekt offenses.
-
-Baseline file: .claude/baseline/feat-ssh-integration-20251119-154533.json
-Previous baseline: .claude/baseline/feat-ssh-integration-20251119-143022.json
-```
-
-#### Report Format: Critical Regression
-
-When significant regressions occur:
-
-```
-Baseline Quality Check - CRITICAL REGRESSIONS DETECTED
-======================================================
-
-Branch: feat/new-feature
-Commit: def456e
-Timestamp: 2025-11-19T16:20:15Z
-
-⚠️  CRITICAL ISSUES DETECTED ⚠️
-
-Detekt Changes:
-  Status: passed → FAILED ❌
-  Total Offenses: 5 → 15 (+10) ❌ CRITICAL REGRESSION
-    - Error: 0 → 3 (+3) ❌ NEW ERRORS
-
-Test Changes:
-  Status: passed → FAILED ❌
-  Total Tests: 873 → 873 (stable)
-  Failures: 0 → 5 (+5) ❌ NEW FAILURES
-
-Overall Status: FAILED ❌
-
-CRITICAL FINDINGS:
-❌ 3 error-level detekt offenses (serious code issues)
-❌ 5 failing tests (broken functionality)
-
-REQUIRED ACTIONS:
-1. Run './gradlew detekt' to see error details
-2. Run './gradlew test integrationTest' to see test failures
-3. Fix all critical issues before proceeding
-4. Re-run baseline check to verify fixes
-
-DO NOT COMMIT until these critical issues are resolved.
-
-Baseline file: .claude/baseline/feat-new-feature-20251119-162015.json
-```
+**Key features:**
+- **Dual storage**: JSON (metrics) + log (full output)
+- **Timestamped**: Sortable, preserves history
+- **Issue-based naming**: Optional `--issue` flag for Linear integration
+- **Latest symlinks**: Easy access to most recent baseline per branch
 
 ## Interpretation Guidelines
 
-### Status Indicators
+### Visual Indicators
 
-Use these indicators in reports:
-- ✓ `IMPROVEMENT` - Metrics got better
-- ⚠️ `REGRESSION` - Metrics got worse (non-critical)
-- ❌ `CRITICAL REGRESSION` - Serious issues (errors, test failures)
-- `(stable)` - No change
-- `PASSED` - All checks passed
-- `FAILED` - One or more checks failed
+The skill uses these indicators in comparison reports:
 
-### Severity Assessment
+- ✅ **Improvements** - Metrics got better (tests fixed, offenses reduced)
+- ⚠️ **Changes** - Neutral changes (tests removed, skipped tests changed)
+- ❌ **Regressions** - Serious issues (new failures, error offenses)
+- **Stable** - No change in metrics
 
-**Critical (❌):**
-- Detekt error offenses
-- Test failures (any)
-- Overall status changed to "failed"
+### Delta Classifications
 
-**Warning (⚠️):**
-- Increased convention offenses
-- Increased warning offenses
-- Decreased test count
-- Increased skipped tests
+**New Tests Added** (Positive):
+- `Delta Total > 0` indicates new test coverage
 
-**Positive (✓):**
-- Decreased offenses
-- Increased test count
-- Decreased skipped tests
-- Resolved failures
+**Tests Fixed** (Positive):
+- `Delta Failures < 0` indicates previously failing tests now pass
 
-### Recommendations
+**Regressions** (Critical):
+- `Delta Failures > 0` indicates NEW test failures introduced
+- Script exits with code 1 (blocks commit)
 
-Based on findings, provide actionable guidance:
+**Tests Removed** (Warning):
+- `Delta Total < 0` may indicate deleted tests (review needed)
 
-**No regressions:**
-- "Quality baseline looks good. Proceed with confidence."
+### Regression Analysis
 
-**Minor regressions:**
-- "Consider addressing new offenses before committing."
-- "Run './gradlew detekt' to see offense details."
+When regressions are detected, the report provides:
 
-**Critical regressions:**
-- "DO NOT COMMIT until critical issues are resolved."
-- "Run diagnostic commands to investigate failures."
-- "Re-run baseline check after fixes to verify."
+1. **Clear identification**: "❌ 5 NEW test failures introduced"
+2. **Classification guidance**: Expected vs bugs vs misattribution
+3. **Actionable next steps**: Review logs, fix failures, re-run check
+4. **Exit code 1**: Signals failure for CI/CD integration
 
-## Edge Cases
+## Workflow Examples
 
-### No Tools Available
+### Example 1: Starting New Feature (Capture Mode)
 
-If both detekt and Gradle tests are unavailable:
+```bash
+# Agent invokes before starting work
+./.claude/skills/baseline-check/baseline-check.sh --capture --issue SPI-866
 
-```
-Baseline Quality Check - Tools Not Available
-============================================
-
-Neither detekt nor Gradle tests are available in this environment.
-
-To enable quality checks:
-1. Ensure detekt plugin is configured in build.gradle.kts
-2. Ensure test tasks are available
-3. Re-run this baseline check
-
-Baseline file: .claude/baseline/main-20251119-143022.json
+# Output shows baseline established
+# Agent proceeds with implementation
+# After implementation, agent runs compare mode
 ```
 
-### Empty Test Suite
-
-If no tests exist yet (pre-implementation):
-
+**Agent prompt:**
 ```
-Baseline Quality Check - Pre-Implementation
-===========================================
+Before starting SPI-866, I'll establish a quality baseline to track regressions.
 
-Detekt: passed (0 offenses)
-Tests: No tests exist yet
+Running baseline check...
 
-This appears to be a pre-implementation baseline. As you add tests,
-future checks will track test coverage growth.
+✓ Baseline captured: 861/861 tests passing, 5 detekt offenses
+✓ Saved to: .claude/baseline/main-20241120-140000.json
 
-Baseline file: .claude/baseline/feat-new-feature-20251119-143022.json
+Proceeding with implementation...
 ```
 
-### Branch Comparison
+### Example 2: Post-Implementation Check (Compare Mode)
 
-If comparing across branches (e.g., feature branch vs main):
+```bash
+# Agent invokes after completing work
+./.claude/skills/baseline-check/baseline-check.sh --compare
 
+# Output shows delta analysis
+# Agent reports findings to user
 ```
-Note: Previous baseline is from a different branch or significantly
-older commit. Comparison may include expected differences from other work.
+
+**Agent prompt:**
+```
+Implementation complete. Running regression check against baseline...
+
+═══════════════════════════════════════════════════════════
+  BASELINE vs CURRENT COMPARISON
+═══════════════════════════════════════════════════════════
+
+BASELINE:
+  • Total: 861 | Passed: 861 | Failed: 0 | Skipped: 0
+
+CURRENT:
+  • Total: 873 | Passed: 873 | Failed: 0 | Skipped: 0
+
+DELTA (Current - Baseline):
+  • Total: +12 | Passed: +12 | Failed: 0 | Skipped: 0
+
+───────────────────────────────────────────────────────────
+  INTERPRETATION
+───────────────────────────────────────────────────────────
+  ✅ 12 new tests added
+
+═══════════════════════════════════════════════════════════
+
+✓ No regressions detected
+✓ Quality improved: 12 new tests for new functionality
+✓ Ready for code review
+```
+
+### Example 3: Autonomous Monitoring (Auto Mode)
+
+```bash
+# Agent uses auto mode for continuous monitoring
+./.claude/skills/baseline-check/baseline-check.sh --auto
+
+# First run: only captures
+# Subsequent runs: captures + compares
+```
+
+**Agent prompt (first run):**
+```
+Running autonomous quality check...
+
+✓ Baseline captured: 861/861 tests passing
+ℹ️  No previous baseline for comparison (first run on this branch)
+
+Baseline established for future comparisons.
+```
+
+**Agent prompt (subsequent run):**
+```
+Running autonomous quality check...
+
+✓ Current: 873/873 tests passing
+✓ Previous baseline detected, performing comparison...
+
+  ✅ 12 new tests added
+  ✅ No regressions detected
+
+Quality maintained!
+```
+
+### Example 4: Regression Detected (Compare Mode)
+
+```bash
+# After changes, comparison detects regressions
+./.claude/skills/baseline-check/baseline-check.sh --compare
+```
+
+**Agent prompt:**
+```
+Running regression check...
+
+═══════════════════════════════════════════════════════════
+  BASELINE vs CURRENT COMPARISON
+═══════════════════════════════════════════════════════════
+
+BASELINE:
+  • Total: 873 | Passed: 873 | Failed: 0 | Skipped: 0
+
+CURRENT:
+  • Total: 885 | Passed: 880 | Failed: 5 | Skipped: 0
+
+DELTA (Current - Baseline):
+  • Total: +12 | Passed: +7 | Failed: +5 | Skipped: 0
+
+───────────────────────────────────────────────────────────
+  INTERPRETATION
+───────────────────────────────────────────────────────────
+  ✅ 12 new tests added
+  ❌ 5 NEW test failures introduced
+     📋 Analyze if failures are:
+        - Expected (testing edge cases, deprecated endpoints)
+        - Bugs requiring fixes
+        - Pre-existing issues incorrectly attributed
+
+═══════════════════════════════════════════════════════════
+
+⚠️  REGRESSIONS DETECTED
+
+I've detected 5 new test failures. Let me analyze the failure logs...
+
+[Agent reviews .claude/baseline/*.log file]
+
+The failures are in SessionManagerTest. These appear to be legitimate bugs
+introduced by the recent changes. I recommend:
+
+1. Review the failing tests in the log file
+2. Fix the SessionManager implementation
+3. Re-run baseline check to verify fixes
+
+Should I help investigate the failures?
 ```
 
 ## TDD Integration
 
 baseline-check plays a critical role in TDD workflow:
 
-**During GREEN Phase**:
+**During GREEN Phase:**
 - Verify tests exist for new implementation
 - Confirm tests are passing
 - Measure test coverage increase
 - Flag if implementation has no corresponding tests
 
-**During REFACTOR Phase**:
+**During REFACTOR Phase:**
 - Confirm all tests still pass after refactoring
 - Verify no test coverage regression
 - Compare before/after refactor metrics
 
-**Quality Gate**:
+**Quality Gate:**
 - No implementation accepted without tests
 - Test count should increase with new features
 - Test pass rate should remain 100%
@@ -371,54 +422,59 @@ baseline-check plays a critical role in TDD workflow:
 
 ## Best Practices
 
-1. **Run before starting work** - Establishes clean baseline
-2. **Run after each significant change** - Catches issues early
-3. **Run after GREEN phase** - Verify tests exist and pass
-4. **Run after REFACTOR phase** - Confirm tests still pass
-5. **Don't ignore warnings** - Small regressions accumulate
-6. **Celebrate improvements** - Acknowledge quality improvements
-7. **Block on critical issues** - Never commit with errors/failures
+1. **Always capture before starting work** - Clean baseline prevents confusion
+2. **Use auto mode for continuous monitoring** - Simplifies workflow
+3. **Compare before creating PRs** - Catch regressions early
+4. **Review logs when failures occur** - Full console output preserved
+5. **Use issue-based naming for Linear integration** - `--issue SPI-XXX`
+6. **Don't ignore regressions** - Exit code 1 should block commits
+7. **Leverage symlinks for quick access** - `latest-{branch}.json`
 
 ## Technical Notes
 
-- Baseline files are timestamped: `{branch}-{YYYYMMDD-HHMMSS}.json`
-- Files are stored in `.claude/baseline/` (gitignored)
-- Script exits 1 if checks fail (for CI integration)
-- Execution times are informational only (don't compare)
-- Branch name is sanitized (slashes replaced with dashes)
-- Detekt results parsed from `build/reports/detekt/detekt.xml`
-- Test results parsed from `build/test-results/test/*.xml` and `build/test-results/integrationTest/*.xml`
-
-## Example Workflow
-
-**Starting new feature:**
-```
-1. User: "I want to add MCP session management"
-2. Claude: Runs baseline-check skill → establishes baseline
-3. Claude: Reports current state (e.g., "861 tests passing, 9 detekt offenses")
-4. Claude: Proceeds with implementation
-5. Claude: After implementation, runs baseline-check again
-6. Claude: Compares results, reports findings
-7. Claude: If regressions, recommends fixes before commit
-```
-
-## Output Files
-
-The skill reads but does not create files (wrapper script creates them):
-- Input: `.claude/baseline/{branch}-{timestamp}.json`
-- Format: See Step 2 for JSON structure
+- **Comprehensive execution**: Uses `./gradlew clean check --rerun-tasks`
+- **Cache-proof**: `--rerun-tasks` forces fresh execution, no FROM-CACHE false positives
+- **Cross-platform**: Works on macOS and Linux
+- **Dual parsing**: Console output (primary) + XML (fallback)
+- **Timeout support**: Default 300s, adjustable with `--timeout`
+- **Exit codes**: 0 = success, 1 = failures/regressions, 2 = script error
+- **Storage**: `.claude/baseline/` (should be in `.gitignore`)
 
 ## Success Criteria
 
 The skill succeeds when it:
-- Executes the wrapper script without errors
-- Reads and parses the JSON results
-- Compares against previous baseline (if available)
-- Provides clear, actionable report
-- Highlights any regressions prominently
-- Guides next steps based on findings
+- Executes in the appropriate mode (capture/compare/auto)
+- Runs comprehensive tests with forced fresh execution
+- Captures metrics in structured JSON format
+- Compares against baseline with delta calculation (compare/auto modes)
+- Provides clear, actionable reports with visual indicators
+- Returns appropriate exit codes for automation
 
 The skill fails when:
-- Wrapper script cannot be executed
-- JSON file cannot be read or parsed
+- Script cannot be executed
+- Tests time out or fail to run
+- JSON cannot be generated or parsed
+- Comparison logic fails
 - Report is unclear or incomplete
+
+## Troubleshooting
+
+### "No baseline found for branch"
+**Cause**: Running `--compare` without a previous baseline
+
+**Solution**: Run `--capture` first, or use `--auto` mode
+
+### "timeout: command not found"
+**Cause**: `timeout` command not available on macOS
+
+**Solution**: Install coreutils (`brew install coreutils`) or script falls back to no timeout
+
+### "Console parsing returned 0 tests"
+**Cause**: Gradle output format changed or tests didn't run
+
+**Solution**: Script automatically falls back to XML parsing
+
+### "Regressions detected but expected"
+**Cause**: Intentional breaking changes or deprecated endpoint tests
+
+**Solution**: Document expectations in PR, consider test-specific skips if appropriate

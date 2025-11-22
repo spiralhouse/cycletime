@@ -8,7 +8,7 @@ related: [configuration-guide.md, ../../reference/troubleshooting.md]
 keywords: [mcp, client, setup, claude-code, streamable-http, connection]
 estimated_time: 15 minutes
 difficulty: intermediate
-last_updated: 2025-10-27
+last_updated: 2025-11-20
 ---
 
 # MCP Client Setup
@@ -25,12 +25,12 @@ Before configuring the MCP client connection, ensure you have:
 
 ## Connection Overview
 
-CycleTime uses the official MCP Kotlin SDK v0.7.2 with a custom Streamable HTTP transport handler. Claude Code connects to the `/mcp` endpoint for real-time project data access and tool execution.
+CycleTime uses the official MCP Kotlin SDK v0.7.6 with a custom Streamable HTTP transport handler. Claude Code connects to the `/mcp` endpoint for real-time project data access and tool execution.
 
 ```mermaid
 sequenceDiagram
     participant CC as Claude Code
-    participant SDK as MCP SDK (v0.7.2)
+    participant SDK as MCP SDK (v0.7.6)
     participant Server as CycleTime Server
     participant DB as Project Database
 
@@ -102,7 +102,7 @@ MCP_PORT=3006 MCP_HOST=127.0.0.1 MCP_DETAILED_LOGGING=true ./gradlew run
 | `MCP_DETAILED_LOGGING` | `false` | Enable debug-level logging |
 | `MCP_METRICS_ENABLED` | `true` | Enable metrics collection |
 
-**Note**: SDK v0.7.2 uses Streamable HTTP transport at `/mcp` endpoint. Legacy SSE transport at root endpoint (`/`) has been removed (SPI-763).
+**Note**: SDK v0.7.6 uses Streamable HTTP transport at `/mcp` endpoint. Legacy SSE transport at root endpoint (`/`) has been removed (SPI-763).
 
 ## Claude Code Configuration
 

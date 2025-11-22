@@ -116,7 +116,7 @@ Currently using H2 with Exposed ORM (migrated from SQLite in SPI-439).
 - **GraalVM**: Native image compilation support
 
 ### MCP Integration
-- **MCP Kotlin SDK v0.7.2**: Official SDK for Model Context Protocol
+- **MCP Kotlin SDK v0.7.6**: Official SDK for Model Context Protocol
 - **Maintainers**: Anthropic and JetBrains
 - **Transport**: Ktor integration with SSE + JSON-RPC
 - **Session Management**: Stateless per-request with database persistence
