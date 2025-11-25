@@ -170,7 +170,7 @@ class IssueApplicationServiceUnitTest : StringSpec({
         result.title shouldBe "New Issue"
         result.type shouldBe IssueType.STORY
         result.projectId.shouldBeNull()
-        result.status shouldBe IssueStatus.TODO
+        result.status shouldBe IssueStatus.BACKLOG
         result.createdAt shouldBe baseTime
         result.updatedAt shouldBe baseTime
         mockIssueRepository.saveCallCount shouldBe 1
@@ -195,7 +195,7 @@ class IssueApplicationServiceUnitTest : StringSpec({
         result.title shouldBe "Project Issue"
         result.type shouldBe IssueType.STORY
         result.projectId shouldBe testProjectId
-        result.status shouldBe IssueStatus.TODO
+        result.status shouldBe IssueStatus.BACKLOG
         mockIssueRepository.saveCallCount shouldBe 1
         mockUnitOfWork.executeCallCount shouldBe 1
     }

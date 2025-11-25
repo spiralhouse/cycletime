@@ -28,6 +28,13 @@ class IssueStatusTest : DescribeSpec({
 
         describe("enum values") {
 
+            it("should have BACKLOG value") {
+                val backlog = IssueStatus.BACKLOG
+
+                backlog.name shouldBe "BACKLOG"
+                backlog.toString() shouldBe "BACKLOG"
+            }
+
             it("should have TODO value") {
                 val todo = IssueStatus.TODO
 
@@ -63,10 +70,11 @@ class IssueStatusTest : DescribeSpec({
                 canceled.toString() shouldBe "CANCELED"
             }
 
-            it("should have exactly five values") {
+            it("should have exactly six values") {
                 val allValues = IssueStatus.values()
 
-                allValues shouldHaveSize 5
+                allValues shouldHaveSize 6
+                allValues shouldContain IssueStatus.BACKLOG
                 allValues shouldContain IssueStatus.TODO
                 allValues shouldContain IssueStatus.IN_PROGRESS
                 allValues shouldContain IssueStatus.IN_REVIEW
@@ -76,6 +84,17 @@ class IssueStatusTest : DescribeSpec({
         }
 
         describe("status transitions") {
+
+            it("should allow valid transitions from BACKLOG") {
+                val validTransitions = IssueStatus.BACKLOG.getValidTransitions()
+
+                validTransitions shouldContain IssueStatus.TODO
+                validTransitions shouldContain IssueStatus.CANCELED
+                validTransitions shouldNotContain IssueStatus.IN_PROGRESS
+                validTransitions shouldNotContain IssueStatus.IN_REVIEW
+                validTransitions shouldNotContain IssueStatus.DONE
+                validTransitions shouldNotContain IssueStatus.BACKLOG
+            }
 
             it("should allow valid transitions from TODO") {
                 val validTransitions = IssueStatus.TODO.getValidTransitions()
@@ -116,7 +135,8 @@ class IssueStatusTest : DescribeSpec({
             it("should allow limited transitions from CANCELED") {
                 val validTransitions = IssueStatus.CANCELED.getValidTransitions()
 
-                validTransitions shouldContain IssueStatus.TODO // Reopen
+                validTransitions shouldContain IssueStatus.BACKLOG // Reopen to backlog
+                validTransitions shouldNotContain IssueStatus.TODO
                 validTransitions shouldNotContain IssueStatus.IN_PROGRESS
                 validTransitions shouldNotContain IssueStatus.IN_REVIEW
                 validTransitions shouldNotContain IssueStatus.DONE
@@ -124,9 +144,18 @@ class IssueStatusTest : DescribeSpec({
             }
 
             it("should validate transition possibilities") {
+                // BACKLOG transitions
+                IssueStatus.BACKLOG.canTransitionTo(IssueStatus.TODO) shouldBe true
+                IssueStatus.BACKLOG.canTransitionTo(IssueStatus.CANCELED) shouldBe true
+                IssueStatus.BACKLOG.canTransitionTo(IssueStatus.IN_PROGRESS) shouldBe false
+                IssueStatus.BACKLOG.canTransitionTo(IssueStatus.IN_REVIEW) shouldBe false
+                IssueStatus.BACKLOG.canTransitionTo(IssueStatus.DONE) shouldBe false
+                IssueStatus.BACKLOG.canTransitionTo(IssueStatus.BACKLOG) shouldBe false
+
                 // TODO transitions
                 IssueStatus.TODO.canTransitionTo(IssueStatus.IN_PROGRESS) shouldBe true
                 IssueStatus.TODO.canTransitionTo(IssueStatus.CANCELED) shouldBe true
+                IssueStatus.TODO.canTransitionTo(IssueStatus.BACKLOG) shouldBe false
                 IssueStatus.TODO.canTransitionTo(IssueStatus.IN_REVIEW) shouldBe false
                 IssueStatus.TODO.canTransitionTo(IssueStatus.DONE) shouldBe false
                 IssueStatus.TODO.canTransitionTo(IssueStatus.TODO) shouldBe false
@@ -135,6 +164,7 @@ class IssueStatusTest : DescribeSpec({
                 IssueStatus.IN_PROGRESS.canTransitionTo(IssueStatus.IN_REVIEW) shouldBe true
                 IssueStatus.IN_PROGRESS.canTransitionTo(IssueStatus.TODO) shouldBe true
                 IssueStatus.IN_PROGRESS.canTransitionTo(IssueStatus.CANCELED) shouldBe true
+                IssueStatus.IN_PROGRESS.canTransitionTo(IssueStatus.BACKLOG) shouldBe false
                 IssueStatus.IN_PROGRESS.canTransitionTo(IssueStatus.DONE) shouldBe false
                 IssueStatus.IN_PROGRESS.canTransitionTo(IssueStatus.IN_PROGRESS) shouldBe false
 
@@ -142,18 +172,21 @@ class IssueStatusTest : DescribeSpec({
                 IssueStatus.IN_REVIEW.canTransitionTo(IssueStatus.DONE) shouldBe true
                 IssueStatus.IN_REVIEW.canTransitionTo(IssueStatus.IN_PROGRESS) shouldBe true
                 IssueStatus.IN_REVIEW.canTransitionTo(IssueStatus.CANCELED) shouldBe true
+                IssueStatus.IN_REVIEW.canTransitionTo(IssueStatus.BACKLOG) shouldBe false
                 IssueStatus.IN_REVIEW.canTransitionTo(IssueStatus.TODO) shouldBe false
                 IssueStatus.IN_REVIEW.canTransitionTo(IssueStatus.IN_REVIEW) shouldBe false
 
                 // DONE transitions (none allowed)
+                IssueStatus.DONE.canTransitionTo(IssueStatus.BACKLOG) shouldBe false
                 IssueStatus.DONE.canTransitionTo(IssueStatus.TODO) shouldBe false
                 IssueStatus.DONE.canTransitionTo(IssueStatus.IN_PROGRESS) shouldBe false
                 IssueStatus.DONE.canTransitionTo(IssueStatus.IN_REVIEW) shouldBe false
                 IssueStatus.DONE.canTransitionTo(IssueStatus.CANCELED) shouldBe false
                 IssueStatus.DONE.canTransitionTo(IssueStatus.DONE) shouldBe false
 
-                // CANCELED transitions (only reopen to TODO)
-                IssueStatus.CANCELED.canTransitionTo(IssueStatus.TODO) shouldBe true
+                // CANCELED transitions (only reopen to BACKLOG)
+                IssueStatus.CANCELED.canTransitionTo(IssueStatus.BACKLOG) shouldBe true
+                IssueStatus.CANCELED.canTransitionTo(IssueStatus.TODO) shouldBe false
                 IssueStatus.CANCELED.canTransitionTo(IssueStatus.IN_PROGRESS) shouldBe false
                 IssueStatus.CANCELED.canTransitionTo(IssueStatus.IN_REVIEW) shouldBe false
                 IssueStatus.CANCELED.canTransitionTo(IssueStatus.DONE) shouldBe false
@@ -207,6 +240,7 @@ class IssueStatusTest : DescribeSpec({
         describe("status properties") {
 
             it("should have display names") {
+                IssueStatus.BACKLOG.getDisplayName() shouldBe "Backlog"
                 IssueStatus.TODO.getDisplayName() shouldBe "To Do"
                 IssueStatus.IN_PROGRESS.getDisplayName() shouldBe "In Progress"
                 IssueStatus.IN_REVIEW.getDisplayName() shouldBe "In Review"
@@ -215,6 +249,7 @@ class IssueStatusTest : DescribeSpec({
             }
 
             it("should have descriptions") {
+                IssueStatus.BACKLOG.getDescription() shouldContain "backlog"
                 IssueStatus.TODO.getDescription() shouldContain "not started"
                 IssueStatus.IN_PROGRESS.getDescription() shouldContain "being worked"
                 IssueStatus.IN_REVIEW.getDescription() shouldContain "review"
@@ -223,6 +258,7 @@ class IssueStatusTest : DescribeSpec({
             }
 
             it("should have color codes") {
+                IssueStatus.BACKLOG.getColor() shouldBe "#9CA3AF" // Light Gray
                 IssueStatus.TODO.getColor() shouldBe "#6B7280" // Gray
                 IssueStatus.IN_PROGRESS.getColor() shouldBe "#3B82F6" // Blue
                 IssueStatus.IN_REVIEW.getColor() shouldBe "#F59E0B" // Amber
@@ -231,11 +267,12 @@ class IssueStatusTest : DescribeSpec({
             }
 
             it("should have priority ordering") {
+                IssueStatus.BACKLOG.getPriority() shouldBe 0
                 IssueStatus.TODO.getPriority() shouldBe 1
                 IssueStatus.IN_PROGRESS.getPriority() shouldBe 2
                 IssueStatus.IN_REVIEW.getPriority() shouldBe 3
                 IssueStatus.DONE.getPriority() shouldBe 4
-                IssueStatus.CANCELED.getPriority() shouldBe 0 // Lowest priority
+                IssueStatus.CANCELED.getPriority() shouldBe 5 // Lowest priority
             }
         }
 
@@ -262,9 +299,11 @@ class IssueStatusTest : DescribeSpec({
 
             it("should parse alternative string formats") {
                 // Support alternative formats
+                IssueStatus.fromString("backlog") shouldBe IssueStatus.BACKLOG
+                IssueStatus.fromString("Backlog") shouldBe IssueStatus.BACKLOG
+
                 IssueStatus.fromString("To Do") shouldBe IssueStatus.TODO
                 IssueStatus.fromString("to-do") shouldBe IssueStatus.TODO
-                IssueStatus.fromString("backlog") shouldBe IssueStatus.TODO
 
                 IssueStatus.fromString("In Progress") shouldBe IssueStatus.IN_PROGRESS
                 IssueStatus.fromString("in-progress") shouldBe IssueStatus.IN_PROGRESS
@@ -306,6 +345,11 @@ class IssueStatusTest : DescribeSpec({
         describe("workflow helpers") {
 
             it("should get next possible statuses") {
+                IssueStatus.BACKLOG.getNextStatuses() shouldContainExactly listOf(
+                    IssueStatus.TODO,
+                    IssueStatus.CANCELED
+                )
+
                 IssueStatus.TODO.getNextStatuses() shouldContainExactly listOf(
                     IssueStatus.IN_PROGRESS,
                     IssueStatus.CANCELED
@@ -326,14 +370,18 @@ class IssueStatusTest : DescribeSpec({
                 IssueStatus.DONE.getNextStatuses() shouldHaveSize 0
 
                 IssueStatus.CANCELED.getNextStatuses() shouldContainExactly listOf(
-                    IssueStatus.TODO
+                    IssueStatus.BACKLOG
                 )
             }
 
             it("should get previous possible statuses") {
-                IssueStatus.TODO.getPreviousStatuses() shouldContainExactly listOf(
-                    IssueStatus.IN_PROGRESS,
+                IssueStatus.BACKLOG.getPreviousStatuses() shouldContainExactly listOf(
                     IssueStatus.CANCELED
+                )
+
+                IssueStatus.TODO.getPreviousStatuses() shouldContainExactly listOf(
+                    IssueStatus.BACKLOG,
+                    IssueStatus.IN_PROGRESS
                 )
 
                 IssueStatus.IN_PROGRESS.getPreviousStatuses() shouldContainExactly listOf(
@@ -350,6 +398,7 @@ class IssueStatusTest : DescribeSpec({
                 )
 
                 IssueStatus.CANCELED.getPreviousStatuses() shouldContainExactly listOf(
+                    IssueStatus.BACKLOG,
                     IssueStatus.TODO,
                     IssueStatus.IN_PROGRESS,
                     IssueStatus.IN_REVIEW
@@ -357,9 +406,10 @@ class IssueStatusTest : DescribeSpec({
             }
 
             it("should calculate transition path") {
-                val path = IssueStatus.TODO.getTransitionPath(IssueStatus.DONE)
+                val path = IssueStatus.BACKLOG.getTransitionPath(IssueStatus.DONE)
 
                 path shouldContainExactly listOf(
+                    IssueStatus.BACKLOG,
                     IssueStatus.TODO,
                     IssueStatus.IN_PROGRESS,
                     IssueStatus.IN_REVIEW,
@@ -368,11 +418,12 @@ class IssueStatusTest : DescribeSpec({
             }
 
             it("should validate transition paths exist") {
+                IssueStatus.BACKLOG.hasPathTo(IssueStatus.DONE) shouldBe true
                 IssueStatus.TODO.hasPathTo(IssueStatus.DONE) shouldBe true
                 IssueStatus.IN_PROGRESS.hasPathTo(IssueStatus.DONE) shouldBe true
                 IssueStatus.IN_REVIEW.hasPathTo(IssueStatus.DONE) shouldBe true
                 IssueStatus.DONE.hasPathTo(IssueStatus.TODO) shouldBe false
-                IssueStatus.CANCELED.hasPathTo(IssueStatus.DONE) shouldBe true // via TODO
+                IssueStatus.CANCELED.hasPathTo(IssueStatus.DONE) shouldBe true // via BACKLOG → TODO
             }
         }
 
@@ -389,11 +440,12 @@ class IssueStatusTest : DescribeSpec({
             }
 
             it("should support ordinal comparison") {
-                IssueStatus.TODO.ordinal shouldBe 0
-                IssueStatus.IN_PROGRESS.ordinal shouldBe 1
-                IssueStatus.IN_REVIEW.ordinal shouldBe 2
-                IssueStatus.DONE.ordinal shouldBe 3
-                IssueStatus.CANCELED.ordinal shouldBe 4
+                IssueStatus.BACKLOG.ordinal shouldBe 0
+                IssueStatus.TODO.ordinal shouldBe 1
+                IssueStatus.IN_PROGRESS.ordinal shouldBe 2
+                IssueStatus.IN_REVIEW.ordinal shouldBe 3
+                IssueStatus.DONE.ordinal shouldBe 4
+                IssueStatus.CANCELED.ordinal shouldBe 5
             }
 
             it("should support priority-based comparison") {
@@ -402,17 +454,19 @@ class IssueStatusTest : DescribeSpec({
                     IssueStatus.DONE,
                     IssueStatus.TODO,
                     IssueStatus.IN_REVIEW,
-                    IssueStatus.IN_PROGRESS
+                    IssueStatus.IN_PROGRESS,
+                    IssueStatus.BACKLOG
                 )
 
                 val sorted = statuses.sortedBy { it.getPriority() }
 
                 sorted shouldContainExactly listOf(
-                    IssueStatus.CANCELED,   // Priority 0
+                    IssueStatus.BACKLOG,    // Priority 0
                     IssueStatus.TODO,       // Priority 1
                     IssueStatus.IN_PROGRESS, // Priority 2
                     IssueStatus.IN_REVIEW,  // Priority 3
-                    IssueStatus.DONE        // Priority 4
+                    IssueStatus.DONE,       // Priority 4
+                    IssueStatus.CANCELED    // Priority 5
                 )
             }
         }

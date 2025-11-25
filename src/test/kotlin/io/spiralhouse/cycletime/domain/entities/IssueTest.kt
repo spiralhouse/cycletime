@@ -57,7 +57,7 @@ class IssueTest : DescribeSpec({
                 issue.title shouldBe "Test Issue"
                 issue.description shouldBe "Test Description"
                 issue.type shouldBe IssueType.STORY
-                issue.status shouldBe IssueStatus.TODO
+                issue.status shouldBe IssueStatus.BACKLOG
                 issue.parentId shouldBe null
                 issue.projectId shouldBe null
                 issue.estimate shouldBe Estimate.none()
@@ -88,15 +88,15 @@ class IssueTest : DescribeSpec({
                 issue2.id.value.length shouldBe DomainConstants.UUID_STRING_LENGTH
             }
 
-            it("should set initial status to TODO") {
+            it("should set initial status to BACKLOG") {
                 val issue = Issue.create(
                     title = "New Issue",
-                    description = "Should start as TODO",
+                    description = "Should start as BACKLOG",
                     type = IssueType.STORY,
                     timeProvider = mockTimeProvider
                 )
 
-                issue.status shouldBe IssueStatus.TODO
+                issue.status shouldBe IssueStatus.BACKLOG
             }
 
             it("should reject empty title") {
@@ -250,7 +250,7 @@ class IssueTest : DescribeSpec({
 
         describe("status transitions") {
 
-            it("should transition from TODO to IN_PROGRESS") {
+            it("should transition from BACKLOG to TODO to IN_PROGRESS") {
                 val issue = Issue.create(
                     title = "Test Issue",
                     description = "Description",
@@ -258,14 +258,18 @@ class IssueTest : DescribeSpec({
                     timeProvider = mockTimeProvider
                 )
 
+                // First move from BACKLOG to TODO
+                issue.updateStatus(IssueStatus.TODO)
                 mockTimeProvider.advance(15.minutes)
+
+                // Then move to IN_PROGRESS
                 issue.updateStatus(IssueStatus.IN_PROGRESS)
 
                 issue.status shouldBe IssueStatus.IN_PROGRESS
                 issue.updatedAt shouldBe Instant.parse("2025-01-15T10:15:00Z")
             }
 
-            it("should transition from IN_PROGRESS to DONE through IN_REVIEW") {
+            it("should transition from BACKLOG to DONE through complete workflow") {
                 val issue = Issue.create(
                     title = "Test Issue",
                     description = "Description",
@@ -273,6 +277,8 @@ class IssueTest : DescribeSpec({
                     timeProvider = mockTimeProvider
                 )
 
+                // BACKLOG → TODO → IN_PROGRESS → IN_REVIEW → DONE
+                issue.updateStatus(IssueStatus.TODO)
                 issue.updateStatus(IssueStatus.IN_PROGRESS)
                 mockTimeProvider.advance(20.minutes)
                 issue.updateStatus(IssueStatus.IN_REVIEW)
@@ -291,9 +297,9 @@ class IssueTest : DescribeSpec({
                     timeProvider = mockTimeProvider
                 )
 
-                // Try invalid transition (depends on IssueStatus implementation)
+                // Try invalid transition from BACKLOG to DONE (skipping intermediate steps)
                 shouldThrow<DomainException> {
-                    issue.updateStatus(IssueStatus.DONE) // Skip IN_PROGRESS
+                    issue.updateStatus(IssueStatus.DONE)
                 }.message shouldContain "Cannot transition"
             }
         }
@@ -562,7 +568,7 @@ class IssueTest : DescribeSpec({
 
                 issue.shouldBeInstanceOf<Issue>()
                 issue.id.shouldBeInstanceOf<IssueId>()
-                issue.status shouldBe IssueStatus.TODO
+                issue.status shouldBe IssueStatus.BACKLOG
             }
 
             it("should support snapshot pattern for reconstitution") {
@@ -576,6 +582,7 @@ class IssueTest : DescribeSpec({
                 // Add some complexity to make it interesting
                 originalIssue.addDependency(IssueId.generate())
                 originalIssue.setEstimate(Estimate.of(3))
+                originalIssue.updateStatus(IssueStatus.TODO)
                 originalIssue.updateStatus(IssueStatus.IN_PROGRESS)
 
                 // Create snapshot
