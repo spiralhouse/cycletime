@@ -510,8 +510,9 @@ class WorkflowApplicationServiceTest : StringSpec({
             every { mockWorkflow.id } returns WorkflowId.generate()
             every { mockWorkflow.name } returns "Default Workflow"
             every { mockWorkflow.description } returns "Standard workflow for general issues with review step"
-            every { mockWorkflow.initialStatus } returns IssueStatus.TODO
+            every { mockWorkflow.initialStatus } returns IssueStatus.BACKLOG
             every { mockWorkflow.allowedStatuses } returns setOf(
+                IssueStatus.BACKLOG,
                 IssueStatus.TODO,
                 IssueStatus.IN_PROGRESS,
                 IssueStatus.IN_REVIEW,
@@ -532,8 +533,8 @@ class WorkflowApplicationServiceTest : StringSpec({
 
             result.name shouldBe "Default Workflow"
             result.description shouldBe "Standard workflow for general issues with review step"
-            result.initialStatus shouldBe "TODO"
-            result.allowedStatuses shouldContain "TODO"
+            result.initialStatus shouldBe "BACKLOG"
+            result.allowedStatuses shouldContain "BACKLOG"
             result.allowedStatuses shouldContain "IN_PROGRESS"
             result.allowedStatuses shouldContain "IN_REVIEW"
             result.allowedStatuses shouldContain "DONE"
@@ -551,8 +552,9 @@ class WorkflowApplicationServiceTest : StringSpec({
             every { mockWorkflow.id } returns WorkflowId.generate()
             every { mockWorkflow.name } returns "Bug Workflow"
             every { mockWorkflow.description } returns "Optimized workflow for bug tracking and resolution"
-            every { mockWorkflow.initialStatus } returns IssueStatus.TODO
+            every { mockWorkflow.initialStatus } returns IssueStatus.BACKLOG
             every { mockWorkflow.allowedStatuses } returns setOf(
+                IssueStatus.BACKLOG,
                 IssueStatus.TODO,
                 IssueStatus.IN_PROGRESS,
                 IssueStatus.DONE,
@@ -572,8 +574,8 @@ class WorkflowApplicationServiceTest : StringSpec({
 
             result.name shouldBe "Bug Workflow"
             result.description shouldBe "Optimized workflow for bug tracking and resolution"
-            result.initialStatus shouldBe "TODO"
-            result.allowedStatuses shouldContain "TODO"
+            result.initialStatus shouldBe "BACKLOG"
+            result.allowedStatuses shouldContain "BACKLOG"
             result.allowedStatuses shouldContain "IN_PROGRESS"
             result.allowedStatuses shouldContain "DONE"
             result.allowedStatuses shouldContain "CANCELED"
@@ -591,8 +593,9 @@ class WorkflowApplicationServiceTest : StringSpec({
             every { mockWorkflow.id } returns WorkflowId.generate()
             every { mockWorkflow.name } returns "Feature Workflow"
             every { mockWorkflow.description } returns "Workflow for feature development with mandatory review step"
-            every { mockWorkflow.initialStatus } returns IssueStatus.TODO
+            every { mockWorkflow.initialStatus } returns IssueStatus.BACKLOG
             every { mockWorkflow.allowedStatuses } returns setOf(
+                IssueStatus.BACKLOG,
                 IssueStatus.TODO,
                 IssueStatus.IN_PROGRESS,
                 IssueStatus.IN_REVIEW,
@@ -613,8 +616,8 @@ class WorkflowApplicationServiceTest : StringSpec({
 
             result.name shouldBe "Feature Workflow"
             result.description shouldBe "Workflow for feature development with mandatory review step"
-            result.initialStatus shouldBe "TODO"
-            result.allowedStatuses shouldContain "TODO"
+            result.initialStatus shouldBe "BACKLOG"
+            result.allowedStatuses shouldContain "BACKLOG"
             result.allowedStatuses shouldContain "IN_PROGRESS"
             result.allowedStatuses shouldContain "IN_REVIEW" // Feature workflow requires review
             result.allowedStatuses shouldContain "DONE"

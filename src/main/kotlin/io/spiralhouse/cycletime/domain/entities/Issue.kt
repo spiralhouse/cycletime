@@ -261,7 +261,7 @@ class Issue private constructor(
                 _title = title,
                 _description = description,
                 type = type,
-                _status = IssueStatus.TODO,
+                _status = IssueStatus.BACKLOG,
                 parentId = parentId,
                 projectId = projectId,
                 _estimate = Estimate.none(),
