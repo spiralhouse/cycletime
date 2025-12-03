@@ -471,6 +471,7 @@ class ExposedWorkflowRepositoryTest : StringSpec({
             retrieved shouldNotBe null
             retrieved!!.name shouldBe "Default Workflow"
             retrieved.allowedStatuses shouldBe setOf(
+                IssueStatus.BACKLOG,
                 IssueStatus.TODO,
                 IssueStatus.IN_PROGRESS,
                 IssueStatus.IN_REVIEW,
@@ -491,6 +492,7 @@ class ExposedWorkflowRepositoryTest : StringSpec({
             retrieved shouldNotBe null
             retrieved!!.name shouldBe "Bug Workflow"
             retrieved.allowedStatuses shouldBe setOf(
+                IssueStatus.BACKLOG,
                 IssueStatus.TODO,
                 IssueStatus.IN_PROGRESS,
                 IssueStatus.DONE,
@@ -510,6 +512,7 @@ class ExposedWorkflowRepositoryTest : StringSpec({
             retrieved shouldNotBe null
             retrieved!!.name shouldBe "Feature Workflow"
             retrieved.allowedStatuses shouldBe setOf(
+                IssueStatus.BACKLOG,
                 IssueStatus.TODO,
                 IssueStatus.IN_PROGRESS,
                 IssueStatus.IN_REVIEW,

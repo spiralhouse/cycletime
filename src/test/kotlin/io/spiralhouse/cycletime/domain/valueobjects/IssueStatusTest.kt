@@ -197,6 +197,7 @@ class IssueStatusTest : DescribeSpec({
         describe("status categories") {
 
             it("should identify active statuses") {
+                IssueStatus.BACKLOG.isActive() shouldBe true
                 IssueStatus.TODO.isActive() shouldBe true
                 IssueStatus.IN_PROGRESS.isActive() shouldBe true
                 IssueStatus.IN_REVIEW.isActive() shouldBe true

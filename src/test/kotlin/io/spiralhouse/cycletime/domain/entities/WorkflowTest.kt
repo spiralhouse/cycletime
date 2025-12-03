@@ -263,7 +263,8 @@ class WorkflowTest : DescribeSpec({
                 val workflow = Workflow.createDefault(mockTimeProvider)
 
                 workflow.name shouldBe "Default Workflow"
-                workflow.initialStatus shouldBe IssueStatus.TODO
+                workflow.initialStatus shouldBe IssueStatus.BACKLOG
+                workflow.allowedStatuses shouldContain IssueStatus.BACKLOG
                 workflow.allowedStatuses shouldContain IssueStatus.TODO
                 workflow.allowedStatuses shouldContain IssueStatus.IN_PROGRESS
                 workflow.allowedStatuses shouldContain IssueStatus.IN_REVIEW
@@ -275,9 +276,10 @@ class WorkflowTest : DescribeSpec({
                 val workflow = Workflow.createBugWorkflow(mockTimeProvider)
 
                 workflow.name shouldBe "Bug Workflow"
-                workflow.initialStatus shouldBe IssueStatus.TODO
+                workflow.initialStatus shouldBe IssueStatus.BACKLOG
                 workflow.description shouldContain "bug"
                 // Bug workflow should have specific statuses for bug lifecycle
+                workflow.allowedStatuses shouldContain IssueStatus.BACKLOG
                 workflow.allowedStatuses shouldContain IssueStatus.TODO
                 workflow.allowedStatuses shouldContain IssueStatus.IN_PROGRESS
                 workflow.allowedStatuses shouldContain IssueStatus.DONE
@@ -288,9 +290,10 @@ class WorkflowTest : DescribeSpec({
                 val workflow = Workflow.createFeatureWorkflow(mockTimeProvider)
 
                 workflow.name shouldBe "Feature Workflow"
-                workflow.initialStatus shouldBe IssueStatus.TODO
+                workflow.initialStatus shouldBe IssueStatus.BACKLOG
                 workflow.description shouldContain "feature"
                 // Feature workflow should have review step
+                workflow.allowedStatuses shouldContain IssueStatus.BACKLOG
                 workflow.allowedStatuses shouldContain IssueStatus.TODO
                 workflow.allowedStatuses shouldContain IssueStatus.IN_PROGRESS
                 workflow.allowedStatuses shouldContain IssueStatus.IN_REVIEW
