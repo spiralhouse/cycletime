@@ -135,8 +135,8 @@ class WorkflowTemplateTest : FunSpec({
 
             val workflowResponse: WorkflowResponse = response.body()
             workflowResponse.name shouldBe "Default Workflow"
-            workflowResponse.initialStatus shouldBe "TODO"
-            workflowResponse.allowedStatuses shouldContain "TODO"
+            workflowResponse.initialStatus shouldBe "BACKLOG"
+            workflowResponse.allowedStatuses shouldContain "BACKLOG"
             workflowResponse.allowedStatuses shouldContain "IN_PROGRESS"
             workflowResponse.allowedStatuses shouldContain "DONE"
             workflowResponse.id shouldNotBe null
@@ -153,8 +153,8 @@ class WorkflowTemplateTest : FunSpec({
 
             val workflowResponse: WorkflowResponse = response.body()
             workflowResponse.name shouldBe "Bug Workflow"
-            workflowResponse.initialStatus shouldBe "TODO"
-            workflowResponse.allowedStatuses shouldContain "TODO"
+            workflowResponse.initialStatus shouldBe "BACKLOG"
+            workflowResponse.allowedStatuses shouldContain "BACKLOG"
             workflowResponse.id shouldNotBe null
         }
     }
@@ -168,8 +168,8 @@ class WorkflowTemplateTest : FunSpec({
 
             val workflowResponse: WorkflowResponse = response.body()
             workflowResponse.name shouldBe "Feature Workflow"
-            workflowResponse.initialStatus shouldBe "TODO"
-            workflowResponse.allowedStatuses shouldContain "TODO"
+            workflowResponse.initialStatus shouldBe "BACKLOG"
+            workflowResponse.allowedStatuses shouldContain "BACKLOG"
             workflowResponse.allowedStatuses shouldContain "IN_PROGRESS"
             workflowResponse.allowedStatuses shouldContain "IN_REVIEW"
             workflowResponse.allowedStatuses shouldContain "DONE"
@@ -266,7 +266,7 @@ class WorkflowTemplateTest : FunSpec({
 
             val workflowResponse: WorkflowResponse = response.body()
             workflowResponse.name shouldBe "Default Workflow" // From template, not body
-            workflowResponse.initialStatus shouldBe "TODO" // From template, not body
+            workflowResponse.initialStatus shouldBe "BACKLOG" // From template, not body
         }
     }
 
@@ -285,10 +285,10 @@ class WorkflowTemplateTest : FunSpec({
             // Verify default workflow structure
             workflowResponse.name shouldBe "Default Workflow"
             workflowResponse.description shouldContain "Standard workflow for general issues"
-            workflowResponse.initialStatus shouldBe "TODO"
+            workflowResponse.initialStatus shouldBe "BACKLOG"
 
             // Verify allowed statuses for default workflow
-            workflowResponse.allowedStatuses shouldContain "TODO"
+            workflowResponse.allowedStatuses shouldContain "BACKLOG"
             workflowResponse.allowedStatuses shouldContain "IN_PROGRESS"
             workflowResponse.allowedStatuses shouldContain "DONE"
         }
@@ -305,10 +305,10 @@ class WorkflowTemplateTest : FunSpec({
             // Verify bug workflow structure
             workflowResponse.name shouldBe "Bug Workflow"
             workflowResponse.description shouldContain "Optimized workflow for bug tracking"
-            workflowResponse.initialStatus shouldBe "TODO"
+            workflowResponse.initialStatus shouldBe "BACKLOG"
 
             // Bug workflows typically include verification steps
-            workflowResponse.allowedStatuses shouldContain "TODO"
+            workflowResponse.allowedStatuses shouldContain "BACKLOG"
             workflowResponse.allowedStatuses shouldContain "IN_PROGRESS"
             workflowResponse.allowedStatuses shouldContain "DONE"
         }
@@ -325,10 +325,10 @@ class WorkflowTemplateTest : FunSpec({
             // Verify feature workflow structure
             workflowResponse.name shouldBe "Feature Workflow"
             workflowResponse.description shouldContain "Workflow for feature development"
-            workflowResponse.initialStatus shouldBe "TODO"
+            workflowResponse.initialStatus shouldBe "BACKLOG"
 
             // Feature workflows include review steps
-            workflowResponse.allowedStatuses shouldContain "TODO"
+            workflowResponse.allowedStatuses shouldContain "BACKLOG"
             workflowResponse.allowedStatuses shouldContain "IN_PROGRESS"
             workflowResponse.allowedStatuses shouldContain "IN_REVIEW"
             workflowResponse.allowedStatuses shouldContain "DONE"
