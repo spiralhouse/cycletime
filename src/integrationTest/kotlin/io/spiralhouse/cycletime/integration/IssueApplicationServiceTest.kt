@@ -163,7 +163,7 @@ class IssueApplicationServiceTest : StringSpec({
             result.title shouldBe "Epic: MVP Features"
             result.description shouldBe "Core features for minimum viable product"
             result.type shouldBe IssueType.EPIC
-            result.status shouldBe IssueStatus.TODO
+            result.status shouldBe IssueStatus.BACKLOG
             result.parentId shouldBe null
             result.projectId shouldBe null
             result.estimate shouldBe Estimate.none()
@@ -660,6 +660,16 @@ class IssueApplicationServiceTest : StringSpec({
 
             mockTimeProvider.advance(30.minutes)
 
+            // First transition from BACKLOG to TODO
+            val todoCommand = UpdateIssueStatusCommand(
+                issueId = issue.id,
+                newStatus = IssueStatus.TODO
+            )
+            issueApplicationService.updateStatus(todoCommand)
+
+            mockTimeProvider.advance(30.minutes)
+
+            // Then transition from TODO to IN_PROGRESS
             val command = UpdateIssueStatusCommand(
                 issueId = issue.id,
                 newStatus = IssueStatus.IN_PROGRESS
@@ -667,7 +677,7 @@ class IssueApplicationServiceTest : StringSpec({
             val result = issueApplicationService.updateStatus(command)
 
             result.status shouldBe IssueStatus.IN_PROGRESS
-            result.updatedAt shouldBe Instant.parse("2025-01-15T10:30:00Z")
+            result.updatedAt shouldBe Instant.parse("2025-01-15T11:00:00Z")
         }
     }
 
@@ -704,16 +714,19 @@ class IssueApplicationServiceTest : StringSpec({
                 CreateIssueCommand("Issue 2", type = IssueType.STORY)
             )
 
-            // Move issue1 to IN_PROGRESS
+            // Move issue1 to TODO then IN_PROGRESS
+            issueApplicationService.updateStatus(
+                UpdateIssueStatusCommand(issue1.id, IssueStatus.TODO)
+            )
             issueApplicationService.updateStatus(
                 UpdateIssueStatusCommand(issue1.id, IssueStatus.IN_PROGRESS)
             )
 
-            val todoIssues = issueApplicationService.getIssuesByStatus(IssueStatus.TODO)
+            val backlogIssues = issueApplicationService.getIssuesByStatus(IssueStatus.BACKLOG)
             val inProgressIssues = issueApplicationService.getIssuesByStatus(IssueStatus.IN_PROGRESS)
 
-            todoIssues shouldHaveSize 1
-            todoIssues.first().id shouldBe issue2.id
+            backlogIssues shouldHaveSize 1
+            backlogIssues.first().id shouldBe issue2.id
 
             inProgressIssues shouldHaveSize 1
             inProgressIssues.first().id shouldBe issue1.id
@@ -1083,7 +1096,10 @@ class IssueApplicationServiceTest : StringSpec({
                 AddDependencyCommand(validationSubtask.id, formSubtask.id)
             )
 
-            // Progress through workflow
+            // Progress through workflow - follow proper transitions from BACKLOG
+            issueApplicationService.updateStatus(
+                UpdateIssueStatusCommand(formSubtask.id, IssueStatus.TODO)
+            )
             issueApplicationService.updateStatus(
                 UpdateIssueStatusCommand(formSubtask.id, IssueStatus.IN_PROGRESS)
             )
@@ -1095,7 +1111,10 @@ class IssueApplicationServiceTest : StringSpec({
                 UpdateIssueStatusCommand(formSubtask.id, IssueStatus.DONE)
             )
 
-            // Now validation can start (dependency resolved)
+            // Now validation can start (dependency resolved) - follow proper transitions
+            issueApplicationService.updateStatus(
+                UpdateIssueStatusCommand(validationSubtask.id, IssueStatus.TODO)
+            )
             issueApplicationService.updateStatus(
                 UpdateIssueStatusCommand(validationSubtask.id, IssueStatus.IN_PROGRESS)
             )

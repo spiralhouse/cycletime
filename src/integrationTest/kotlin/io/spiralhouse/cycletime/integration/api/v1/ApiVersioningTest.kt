@@ -343,6 +343,12 @@ class ApiVersioningTest : FunSpec({
                 projectId = project.id
             ))
 
+            // First transition from BACKLOG to TODO
+            createJsonClient().post("/api/v1/projects/${project.id.value}/issues/${issue.id.value}/status") {
+                contentType(ContentType.Application.Json)
+                setBody(StatusTransitionRequest(status = "TODO"))
+            }
+
             // POST /api/v1/projects/{projectId}/issues/{issueId}/status
             val response = createJsonClient().post("/api/v1/projects/${project.id.value}/issues/${issue.id.value}/status") {
                 contentType(ContentType.Application.Json)

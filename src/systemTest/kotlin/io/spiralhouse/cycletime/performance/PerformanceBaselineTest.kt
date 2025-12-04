@@ -261,10 +261,18 @@ class PerformanceBaselineTest : StringSpec({
     "batch operations should handle large volumes efficiently" {
         println("\n=== Performance Test: Batch Operations ===")
 
-        // Test batch status updates
+        // Test batch status updates - follow proper transitions from BACKLOG
         val batchUpdateTime = measureTimeMillis {
             // Update status for 20 subtasks
             for (subtask in subtasks.take(20)) {
+                // First move to TODO
+                issueService.updateStatus(
+                    UpdateIssueStatusCommand(
+                        issueId = subtask.id,
+                        newStatus = IssueStatus.TODO
+                    )
+                )
+                // Then move to IN_PROGRESS
                 issueService.updateStatus(
                     UpdateIssueStatusCommand(
                         issueId = subtask.id,
@@ -275,7 +283,7 @@ class PerformanceBaselineTest : StringSpec({
         }
 
         println("Batch status update time for 20 issues: ${batchUpdateTime}ms")
-        batchUpdateTime shouldBeLessThan 500
+        batchUpdateTime shouldBeLessThan 1000 // Adjusted for double transitions
     }
 
     "listing issues by different criteria should be performant" {
@@ -311,10 +319,10 @@ class PerformanceBaselineTest : StringSpec({
 
         // List by status
         val listByStatusTime = measureTimeMillis {
-            val todoIssues = issueService.getIssuesByStatus(IssueStatus.TODO)
+            val backlogIssues = issueService.getIssuesByStatus(IssueStatus.BACKLOG)
             val inProgressIssues = issueService.getIssuesByStatus(IssueStatus.IN_PROGRESS)
 
-            todoIssues.size shouldBe 140 // Most still in TODO after batch update
+            backlogIssues.size shouldBe 140 // Most still in BACKLOG after batch update
             inProgressIssues.size shouldBe 20 // 20 updated in batch operation
         }
 
