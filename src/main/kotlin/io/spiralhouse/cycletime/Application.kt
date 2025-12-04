@@ -98,6 +98,29 @@ data class HealthResponse(
 )
 
 /**
+ * Enhanced health response with component-level details.
+ */
+@Serializable
+data class EnhancedHealthResponse(
+    val status: String,
+    val service: String,
+    val version: String,
+    val checks: Map<String, ComponentHealthResponse>,
+    val timestamp: String
+)
+
+/**
+ * Component health status in API response format.
+ */
+@Serializable
+data class ComponentHealthResponse(
+    val status: String,
+    val message: String,
+    val latencyMs: Long? = null,
+    val details: Map<String, String> = emptyMap()
+)
+
+/**
  * Self-documenting data class for MCP health status.
  * Replaces the generic Pair<Map<String,String>, Map<String,String>> return type.
  */
@@ -507,104 +530,58 @@ private fun Application.configureMCPIntegration(
 
 /**
  * Configure health endpoint with comprehensive system checks.
- * 
- * @param mcpIntegrationService MCP service for health reporting
+ *
+ * @param mcpIntegrationService MCP service for health reporting (legacy)
  * @param logger Application logger
  */
 private fun Route.configureHealthEndpoint(
     mcpIntegrationService: MCPIntegrationService?,
     logger: org.slf4j.Logger
 ) {
-    val mcpEnabled = System.getenv("MCP_ENABLED")?.toBoolean() ?: true
-    
     get("/health") {
         try {
-            // Test dependency resolution first
-            val projectService: ProjectApplicationService by application.dependencies
-            val issueService: IssueApplicationService by application.dependencies
-            val sessionService: SessionApplicationService by application.dependencies
-            val database: Database by application.dependencies
+            // Get health check service from DI
+            val healthCheckService: io.spiralhouse.cycletime.infrastructure.health.HealthCheckService by application.dependencies
+            val alertService: io.spiralhouse.cycletime.infrastructure.alerting.AlertService by application.dependencies
 
-            // Verify services are initialized and functional
-            val projectCount = try {
-                projectService.listProjects().projects.size
-            } catch (e: SQLException) {
-                logger.warn("Database connection error during project health check: ${e.message}")
-                -1
-            } catch (e: ExposedSQLException) {
-                logger.warn("Database query error during project health check: ${e.message}")
-                -1
-            } catch (e: IllegalStateException) {
-                logger.warn("ProjectService not properly initialized: ${e.message}")
-                -1
-            }
-            
-            val sessionCount = try {
-                sessionService.getSessionCount()
-            } catch (e: SQLException) {
-                logger.warn("Database connection error during session health check: ${e.message}")
-                -1
-            } catch (e: ExposedSQLException) {
-                logger.warn("Database query error during session health check: ${e.message}")
-                -1
-            } catch (e: IllegalStateException) {
-                logger.warn("SessionService not properly initialized: ${e.message}")
-                -1
-            }
-            
-            // Enhanced MCP health status with performance metrics
-            val mcpHealthStatus = buildMcpHealthStatus(mcpEnabled, mcpIntegrationService)
+            // Perform health checks
+            val systemHealth = healthCheckService.checkSystemHealth()
 
-            call.respond(HttpStatusCode.OK, HealthResponse(
-                status = "healthy",
+            // Trigger alerts for any component failures
+            systemHealth.checks.forEach { (componentName, componentHealth) ->
+                alertService.checkAndAlert(componentName, componentHealth)
+            }
+
+            // Convert to API response format
+            val checksResponse = systemHealth.checks.mapValues { (_, health) ->
+                ComponentHealthResponse(
+                    status = health.status.name.lowercase(),
+                    message = health.message,
+                    latencyMs = health.latencyMs,
+                    details = health.details.mapValues { it.value.toString() }
+                )
+            }
+
+            val httpStatusCode = when (systemHealth.overallStatus) {
+                io.spiralhouse.cycletime.infrastructure.health.HealthStatus.HEALTHY -> HttpStatusCode.OK
+                io.spiralhouse.cycletime.infrastructure.health.HealthStatus.DEGRADED -> HttpStatusCode.OK
+                io.spiralhouse.cycletime.infrastructure.health.HealthStatus.UNHEALTHY -> HttpStatusCode.ServiceUnavailable
+            }
+
+            call.respond(httpStatusCode, EnhancedHealthResponse(
+                status = systemHealth.overallStatus.name.lowercase(),
                 service = BuildInfo.serviceName,
                 version = BuildInfo.version,
-                dependencies = mapOf(
-                    "database" to "connected",
-                    "projectService" to "initialized",
-                    "issueService" to "initialized",
-                    "sessionService" to "initialized"
-                ) + mcpHealthStatus.dependencies,
-                metrics = mapOf(
-                    "projects" to projectCount.toString(),
-                    "sessions" to sessionCount.toString()
-                ) + mcpHealthStatus.metrics,
-                timestamp = System.currentTimeMillis().toString()
+                checks = checksResponse,
+                timestamp = systemHealth.timestamp.toString()
             ))
-        } catch (e: SQLException) {
-            logger.error("Database connection failure in health endpoint: ${e.message}", e)
+        } catch (e: Exception) {
+            logger.error("Health check failed: ${e.message}", e)
             call.respond(HttpStatusCode.ServiceUnavailable, ErrorResponse(
                 status = "unhealthy",
                 service = BuildInfo.serviceName,
                 version = BuildInfo.version,
-                error = "Database unavailable",
-                timestamp = System.currentTimeMillis().toString()
-            ))
-        } catch (e: ExposedSQLException) {
-            logger.error("Database query failure in health endpoint: ${e.message}", e)
-            call.respond(HttpStatusCode.ServiceUnavailable, ErrorResponse(
-                status = "unhealthy",
-                service = BuildInfo.serviceName,
-                version = BuildInfo.version,
-                error = "Database query failed",
-                timestamp = System.currentTimeMillis().toString()
-            ))
-        } catch (e: IllegalStateException) {
-            logger.error("Service initialization failure in health endpoint: ${e.message}", e)
-            call.respond(HttpStatusCode.ServiceUnavailable, ErrorResponse(
-                status = "unhealthy",
-                service = BuildInfo.serviceName,
-                version = BuildInfo.version,
-                error = "Service initialization failed",
-                timestamp = System.currentTimeMillis().toString()
-            ))
-        } catch (e: IOException) {
-            logger.error("IO error in health endpoint: ${e.message}", e)
-            call.respond(HttpStatusCode.ServiceUnavailable, ErrorResponse(
-                status = "unhealthy", 
-                service = BuildInfo.serviceName,
-                version = BuildInfo.version,
-                error = "Service communication error",
+                error = "Health check failed: ${e.message}",
                 timestamp = System.currentTimeMillis().toString()
             ))
         }
