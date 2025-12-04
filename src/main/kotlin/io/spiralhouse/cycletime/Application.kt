@@ -24,6 +24,8 @@ import io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService
 import io.spiralhouse.cycletime.mcp.integration.MCPServerStatus
 import kotlinx.coroutines.launch
 import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
+import io.spiralhouse.cycletime.infrastructure.metrics.MetricsConfiguration
+import io.spiralhouse.cycletime.infrastructure.metrics.MetricsConfiguration.configureMetrics
 import io.spiralhouse.cycletime.api.configuration.ApiConfiguration
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -252,6 +254,22 @@ fun Application.module() {
     routing {
         configureHealthEndpoint(mcpIntegrationService, logger)
 
+        // SPI-596 Phase 2: Prometheus metrics endpoint
+        get("/metrics") {
+            val metricsEnabled = System.getenv("METRICS_ENABLED")?.toBoolean() ?: true
+            if (!metricsEnabled) {
+                call.respond(HttpStatusCode.NotFound)
+                return@get
+            }
+
+            call.respond(
+                TextContent(
+                    MetricsConfiguration.registry.scrape(),
+                    ContentType.parse("text/plain; version=0.0.4")
+                )
+            )
+        }
+
         // OpenAPI specification and Swagger UI (Ktor 3.3.0 compatible)
         // Only serve documentation if enabled and specification file exists
         val openApiEnabled = System.getenv("OPENAPI_ENABLED")?.toBoolean() ?:
@@ -356,7 +374,7 @@ private fun Application.configureKtorFeatures(
     performanceMetrics: MutableMap<String, Long>
 ) {
     val featuresStartTime = System.currentTimeMillis()
-    
+
     install(ContentNegotiation) {
         json(Json {
             prettyPrint = true
@@ -371,6 +389,9 @@ private fun Application.configureKtorFeatures(
     }
 
     install(SSE)
+
+    // SPI-596 Phase 2: Configure Micrometer metrics with Prometheus
+    configureMetrics()
 
     val featuresEndTime = System.currentTimeMillis()
     val featuresTime = featuresEndTime - featuresStartTime
