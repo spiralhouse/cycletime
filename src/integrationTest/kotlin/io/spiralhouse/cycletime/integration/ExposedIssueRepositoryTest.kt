@@ -178,7 +178,7 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     retrievedIssue.title shouldBe "Test Issue"
                     retrievedIssue.description shouldBe "Test Description"
                     retrievedIssue.type shouldBe IssueType.SUBTASK
-                    retrievedIssue.status shouldBe IssueStatus.TODO
+                    retrievedIssue.status shouldBe IssueStatus.BACKLOG
                     retrievedIssue.parentId shouldBe issue.parentId
                     retrievedIssue.projectId shouldBe testProject.id
                     retrievedIssue.estimate shouldBe Estimate.of(3)
@@ -231,6 +231,8 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     mockTimeProvider.advance(1.hours)
                     issue.updateTitle("Updated Title")
                     issue.updateDescription("Updated Description")
+                    // Follow proper status transition: BACKLOG → TODO → IN_PROGRESS
+                    issue.updateStatus(IssueStatus.TODO)
                     issue.updateStatus(IssueStatus.IN_PROGRESS)
                     issue.setEstimate(Estimate.of(8))
 
@@ -481,10 +483,14 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     reviewIssue.setEstimate(Estimate.of(3))
                     doneIssue.setEstimate(Estimate.of(5))
 
-                    // Change statuses
+                    // Change statuses - follow proper transitions from BACKLOG
+                    todoIssue.updateStatus(IssueStatus.TODO)
+                    progressIssue.updateStatus(IssueStatus.TODO)
                     progressIssue.updateStatus(IssueStatus.IN_PROGRESS)
+                    reviewIssue.updateStatus(IssueStatus.TODO)
                     reviewIssue.updateStatus(IssueStatus.IN_PROGRESS)
                     reviewIssue.updateStatus(IssueStatus.IN_REVIEW)
+                    doneIssue.updateStatus(IssueStatus.TODO)
                     doneIssue.updateStatus(IssueStatus.IN_PROGRESS)
                     doneIssue.updateStatus(IssueStatus.IN_REVIEW)
                     doneIssue.updateStatus(IssueStatus.DONE)
@@ -588,6 +594,8 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     issue.addBlockedBy(dependency.id)
 
                     mockTimeProvider.advance(2.hours)
+                    // Follow proper status transition: BACKLOG → TODO → IN_PROGRESS
+                    issue.updateStatus(IssueStatus.TODO)
                     issue.updateStatus(IssueStatus.IN_PROGRESS)
 
                     // Save and retrieve
@@ -709,6 +717,8 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     issueRepository.save(issue)
 
                     mockTimeProvider.advance(1.minutes)
+                    // Follow proper status transition: BACKLOG → TODO → IN_PROGRESS
+                    issue.updateStatus(IssueStatus.TODO)
                     issue.updateStatus(IssueStatus.IN_PROGRESS)
                     issueRepository.save(issue)
 
@@ -805,9 +815,9 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     val issues = statuses.map { status ->
                         createTestIssue("Issue $status", "Testing status $status").apply {
                             setEstimate(Estimate.of(2))
-                            if (status != IssueStatus.TODO) {
-                                // Transition to target status
-                                val path = IssueStatus.TODO.getTransitionPath(status)
+                            if (status != IssueStatus.BACKLOG) {
+                                // Transition to target status from BACKLOG (default)
+                                val path = IssueStatus.BACKLOG.getTransitionPath(status)
                                 path.drop(1).forEach { targetStatus ->
                                     updateStatus(targetStatus)
                                 }
@@ -966,8 +976,8 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     allIssues shouldHaveSize 50
 
                     // Test queries are still performant
-                    val todoIssues = issueRepository.findByStatus(IssueStatus.TODO)
-                    todoIssues shouldHaveSize 50
+                    val backlogIssues = issueRepository.findByStatus(IssueStatus.BACKLOG)
+                    backlogIssues shouldHaveSize 50
 
                     val subtasks = issueRepository.findByType(IssueType.SUBTASK)
                     subtasks shouldHaveSize 50
@@ -1167,11 +1177,11 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     // Act: Soft-delete one issue
                     issueRepository.softDelete(deletedIssue.id)
 
-                    // Assert: findByStatus should exclude deleted issue
-                    val todoIssues = issueRepository.findByStatus(IssueStatus.TODO)
-                    todoIssues shouldHaveSize 1
-                    todoIssues.first().id shouldBe activeIssue.id
-                    todoIssues.map { it.id } shouldNotContain deletedIssue.id
+                    // Assert: findByStatus should exclude deleted issue (using BACKLOG since that's the default)
+                    val backlogIssues = issueRepository.findByStatus(IssueStatus.BACKLOG)
+                    backlogIssues shouldHaveSize 1
+                    backlogIssues.first().id shouldBe activeIssue.id
+                    backlogIssues.map { it.id } shouldNotContain deletedIssue.id
                 }
             }
 

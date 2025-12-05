@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
     alias(libs.plugins.dependency.check)
-    id("com.github.jmongard.git-semver-plugin") version "0.16.1"
+    id("com.github.jmongard.git-semver-plugin") version "0.17.0"
     application
 }
 
@@ -144,6 +144,11 @@ dependencies {
 
     // Logging
     implementation(libs.logback.classic)
+    implementation(libs.logstash.logback.encoder)
+
+    // Metrics
+    implementation(libs.micrometer.registry.prometheus)
+    implementation(libs.ktor.server.metrics.micrometer)
 
     // Testing
     testImplementation(libs.kotest.runner.junit5)

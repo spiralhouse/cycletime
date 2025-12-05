@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Production logging configuration with structured JSON output.
+
+This configuration is activated by setting the LOGBACK_CONFIGURATION_FILE environment variable:
+  LOGBACK_CONFIGURATION_FILE=logback-prod.xml
+
+Key features:
+- JSON-structured logs for machine parsing (Loki, Elasticsearch, etc.)
+- Correlation IDs for request tracing
+- Async appenders for performance
+- 30-day rolling file policy
+- Console and file outputs
+
+Usage:
+  docker run -e LOGBACK_CONFIGURATION_FILE=logback-prod.xml cycletime-ce
+-->
+<configuration>
+    <!-- JSON console appender for container logging -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- Include standard fields -->
+            <includeContext>true</includeContext>
+            <includeMdc>true</includeMdc>
+            <includeStructuredArguments>true</includeStructuredArguments>
+            <includeTags>true</includeTags>
+            <includeCallerData>false</includeCallerData>
+
+            <!-- Custom fields -->
+            <customFields>{"app":"cycletime-ce","version":"${cycletime.version:-unknown}"}</customFields>
+
+            <!-- MDC fields for correlation -->
+            <mdcKeyFieldName>mdc</mdcKeyFieldName>
+
+            <!-- Field names configuration -->
+            <fieldNames>
+                <timestamp>@timestamp</timestamp>
+                <message>message</message>
+                <logger>logger</logger>
+                <thread>thread</thread>
+                <level>level</level>
+                <levelValue>[ignore]</levelValue>
+            </fieldNames>
+
+            <!-- Exception formatting -->
+            <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                <maxLength>4096</maxLength>
+                <shortenedClassNameLength>30</shortenedClassNameLength>
+                <rootCauseFirst>true</rootCauseFirst>
+            </throwableConverter>
+        </encoder>
+    </appender>
+
+    <!-- JSON file appender with rolling policy -->
+    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/cycletime.json</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/cycletime.%d{yyyy-MM-dd}.json</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeContext>true</includeContext>
+            <includeMdc>true</includeMdc>
+            <includeStructuredArguments>true</includeStructuredArguments>
+            <includeTags>true</includeTags>
+            <includeCallerData>false</includeCallerData>
+
+            <customFields>{"app":"cycletime-ce","version":"${cycletime.version:-unknown}"}</customFields>
+
+            <mdcKeyFieldName>mdc</mdcKeyFieldName>
+
+            <fieldNames>
+                <timestamp>@timestamp</timestamp>
+                <message>message</message>
+                <logger>logger</logger>
+                <thread>thread</thread>
+                <level>level</level>
+                <levelValue>[ignore]</levelValue>
+            </fieldNames>
+
+            <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                <maxLength>4096</maxLength>
+                <shortenedClassNameLength>30</shortenedClassNameLength>
+                <rootCauseFirst>true</rootCauseFirst>
+            </throwableConverter>
+        </encoder>
+    </appender>
+
+    <!-- Async wrapper for file appender (performance) -->
+    <appender name="ASYNC_JSON_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="JSON_FILE"/>
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <neverBlock>false</neverBlock>
+    </appender>
+
+    <!-- Logger configurations -->
+    <logger name="io.spiralhouse.cycletime" level="INFO"/>
+    <logger name="io.spiralhouse.cycletime.mcp" level="DEBUG"/>
+    <logger name="io.ktor" level="INFO"/>
+    <logger name="Exposed" level="INFO"/>
+    <logger name="org.jetbrains.exposed.sql" level="INFO"/>
+
+    <!-- Suppress noisy loggers -->
+    <logger name="io.netty" level="WARN"/>
+    <logger name="io.ktor.routing.Routing" level="INFO"/>
+
+    <!-- Root logger -->
+    <root level="INFO">
+        <appender-ref ref="JSON_CONSOLE"/>
+        <appender-ref ref="ASYNC_JSON_FILE"/>
+    </root>
+</configuration>
