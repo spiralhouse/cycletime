@@ -245,8 +245,9 @@ class Workflow private constructor(
             return create(
                 name = "Default Workflow",
                 description = "Standard workflow for general issues with review step",
-                initialStatus = IssueStatus.TODO,
+                initialStatus = IssueStatus.BACKLOG,
                 allowedStatuses = setOf(
+                    IssueStatus.BACKLOG,
                     IssueStatus.TODO,
                     IssueStatus.IN_PROGRESS,
                     IssueStatus.IN_REVIEW,
@@ -267,8 +268,9 @@ class Workflow private constructor(
             return create(
                 name = "Bug Workflow",
                 description = "Optimized workflow for bug tracking and resolution",
-                initialStatus = IssueStatus.TODO,
+                initialStatus = IssueStatus.BACKLOG,
                 allowedStatuses = setOf(
+                    IssueStatus.BACKLOG,
                     IssueStatus.TODO,
                     IssueStatus.IN_PROGRESS,
                     IssueStatus.DONE,
@@ -288,8 +290,9 @@ class Workflow private constructor(
             return create(
                 name = "Feature Workflow",
                 description = "Workflow for feature development with mandatory review step",
-                initialStatus = IssueStatus.TODO,
+                initialStatus = IssueStatus.BACKLOG,
                 allowedStatuses = setOf(
+                    IssueStatus.BACKLOG,
                     IssueStatus.TODO,
                     IssueStatus.IN_PROGRESS,
                     IssueStatus.IN_REVIEW,

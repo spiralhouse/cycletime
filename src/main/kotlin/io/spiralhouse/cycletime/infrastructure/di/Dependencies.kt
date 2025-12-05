@@ -27,6 +27,8 @@ import io.spiralhouse.cycletime.mcp.providers.*
 import io.spiralhouse.cycletime.mcp.tools.*
 import io.spiralhouse.cycletime.mcp.sdk.MCPSdkServer
 import io.spiralhouse.cycletime.mcp.sdk.SDKSessionManager
+import io.spiralhouse.cycletime.infrastructure.health.HealthCheckService
+import io.spiralhouse.cycletime.infrastructure.alerting.AlertService
 
 /**
  * Dependency injection configuration using Ktor's native DI.
@@ -168,6 +170,25 @@ fun Application.configureDependencies(
                     unitOfWork = resolve<ExposedUnitOfWork>(),
                     dashboardCache = resolve(),
                     timeProvider = resolve()
+                )
+            }
+        }
+
+        // Health Check and Alerting Services
+        provide<HealthCheckService> {
+            safeCreate("HealthCheckService") {
+                HealthCheckService(
+                    databaseProvider = resolve<DatabaseProvider>(),
+                    projectService = resolve<ProjectApplicationService>(),
+                    sessionService = resolve<SessionApplicationService>()
+                )
+            }
+        }
+
+        provide<AlertService> {
+            safeCreate("AlertService") {
+                AlertService(
+                    logger = LoggerFactory.getLogger(AlertService::class.java)
                 )
             }
         }

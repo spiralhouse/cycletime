@@ -144,6 +144,11 @@ dependencies {
 
     // Logging
     implementation(libs.logback.classic)
+    implementation(libs.logstash.logback.encoder)
+
+    // Metrics
+    implementation(libs.micrometer.registry.prometheus)
+    implementation(libs.ktor.server.metrics.micrometer)
 
     // Testing
     testImplementation(libs.kotest.runner.junit5)

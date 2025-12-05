@@ -468,7 +468,8 @@ class WorkflowApplicationServiceUnitTest : StringSpec({
         result.shouldNotBeNull()
         result.name shouldBe "Default Workflow"
         result.description.shouldNotBeNull()
-        result.initialStatus shouldBe "TODO"
+        result.initialStatus shouldBe "BACKLOG"
+        result.allowedStatuses shouldContain "BACKLOG"
         result.allowedStatuses shouldContain "TODO"
         result.allowedStatuses shouldContain "IN_PROGRESS"
         result.allowedStatuses shouldContain "IN_REVIEW"
@@ -490,7 +491,8 @@ class WorkflowApplicationServiceUnitTest : StringSpec({
         result.name shouldBe "Bug Workflow"
         result.description.shouldNotBeNull()
         result.description shouldBe "Optimized workflow for bug tracking and resolution"
-        result.initialStatus shouldBe "TODO"
+        result.initialStatus shouldBe "BACKLOG"
+        result.allowedStatuses shouldContain "BACKLOG"
         result.allowedStatuses shouldContain "TODO"
         result.allowedStatuses shouldContain "IN_PROGRESS"
         result.allowedStatuses shouldContain "DONE"
@@ -511,7 +513,8 @@ class WorkflowApplicationServiceUnitTest : StringSpec({
         result.name shouldBe "Feature Workflow"
         result.description.shouldNotBeNull()
         result.description shouldBe "Workflow for feature development with mandatory review step"
-        result.initialStatus shouldBe "TODO"
+        result.initialStatus shouldBe "BACKLOG"
+        result.allowedStatuses shouldContain "BACKLOG"
         result.allowedStatuses shouldContain "TODO"
         result.allowedStatuses shouldContain "IN_PROGRESS"
         result.allowedStatuses shouldContain "IN_REVIEW"
