@@ -257,19 +257,43 @@ graalvmNative {
 
 **Command**:
 ```bash
-GRAALVM_HOME=$HOME/.sdkman/candidates/java/21.0.8-graal \
+JAVA_HOME=/Users/jburbridge/.sdkman/candidates/java/21.0.8-graal \
+GRAALVM_HOME=/Users/jburbridge/.sdkman/candidates/java/21.0.8-graal \
   ./gradlew clean nativeCompile --no-configuration-cache
 ```
 
-**Status**: Running (started 2025-12-05)
+**Status**: ❌ **FAILED** (2025-12-05)
 
-**Expected Outcomes**:
-- [ ] Compilation success/failure status
-- [ ] Catalog of compilation errors
-- [ ] Missing reflection/resource configurations
-- [ ] Build time measurement
-- [ ] Build memory usage measurement
-- [ ] Binary size (if successful)
+**Build Metrics**:
+- Build time: 43 seconds
+- Native image generation time: 25.8 seconds
+- Peak RSS: 4.96GB
+- Exit code: 1 (non-zero)
+
+**Result Analysis**:
+- ✅ GraalVM successfully detected and used
+- ✅ Build configuration working correctly
+- ❌ **Logback AsyncAppender threading issue** (CRITICAL BLOCKER)
+- ❌ Binary NOT produced
+
+**Root Cause**: Logback's `AsyncAppenderBase$Worker` creates threads during build-time class initialization. GraalVM native-image cannot serialize started threads into the native binary.
+
+**Error Details**:
+```
+Error: Detected a started Thread in the image heap.
+Thread name: AsyncAppender-Worker-ASYNC_FILE.
+
+Threads running in the image generator are no longer running at image runtime.
+
+Suggested fix:
+--initialize-at-run-time=ch.qos.logback.core.AsyncAppenderBase$Worker
+```
+
+**Impact Assessment**:
+- **Severity**: HIGH - Complete build failure
+- **Component**: Logback 1.5.20 AsyncAppender configuration
+- **Workaround Available**: Yes - initialize Logback at runtime instead of build-time
+- **Configuration Change Required**: Update `native-image.properties`
 
 ---
 
@@ -279,11 +303,12 @@ GRAALVM_HOME=$HOME/.sdkman/candidates/java/21.0.8-graal \
 
 | Issue | Severity | Impact | Fix Required |
 |-------|----------|--------|--------------|
+| Logback AsyncAppender threading issue | **CRITICAL** | **Build fails completely** | Initialize Logback at runtime |
 | Netty reference in reflect-config.json | Medium | Unnecessary reflection config | Remove Netty, add CIO engine |
 | Wrong package in serialization-config.json | High | Serialization may fail | Update `jcvd` → `cycletime` |
 | Missing Exposed table reflection | Critical | Database operations will fail | Add all 6 table objects |
 | Missing DTO serialization config | High | API responses may fail | Add @Serializable classes |
-| Missing javaLauncher in build config | Critical | Build cannot find GraalVM | Added (fixed) |
+| Missing javaLauncher in build config | ✅ Fixed | Build cannot find GraalVM | Added (completed) |
 
 ### Gradle Toolchain Issues
 
@@ -296,6 +321,43 @@ Cannot find a Java installation on your machine (Mac OS X 26.1 aarch64) matching
 ```
 
 **Solution**: Use `GRAALVM_HOME` environment variable instead of vendor-specific toolchain
+
+### Logback Threading Issue (CRITICAL BLOCKER)
+
+**Problem**: `native-image.properties` contains `--initialize-at-build-time=ch.qos.logback` which causes AsyncAppender worker threads to start during native-image build.
+
+**Current Configuration** (`src/main/resources/META-INF/native-image/native-image.properties`):
+```properties
+Args = --no-fallback \
+       --initialize-at-build-time=org.slf4j \
+       --initialize-at-build-time=ch.qos.logback \
+       --initialize-at-build-time=kotlin
+```
+
+**Root Cause**: When Logback initializes at build-time, the `AsyncAppenderBase$Worker` threads start and GraalVM cannot serialize running threads into the native binary.
+
+**Required Fix**:
+```properties
+Args = --no-fallback \
+       --initialize-at-build-time=org.slf4j \
+       --initialize-at-run-time=ch.qos.logback \
+       --initialize-at-build-time=kotlin
+```
+
+**Change**: `--initialize-at-build-time=ch.qos.logback` → `--initialize-at-run-time=ch.qos.logback`
+
+**Trade-offs**:
+- ✅ Fixes build failure (threading issue)
+- ✅ Logback still works correctly at runtime
+- ⚠️ Slight startup time increase (~10-50ms) as Logback initializes on first use
+- ⚠️ First log message may have slight delay
+
+**Alternative Solutions Considered**:
+1. **Remove AsyncAppender from logback.xml** - Would work but loses async logging benefits
+2. **Use synchronous appenders only** - Simpler config but potential performance impact
+3. **Runtime initialization** (chosen) - Minimal impact, preserves async logging
+
+**Priority**: **MUST FIX BEFORE RETRY** - This blocks all subsequent testing
 
 ---
 
