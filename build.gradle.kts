@@ -171,6 +171,8 @@ dependencies {
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(21))
+        // Don't require GraalVM for general compilation
+        // native-image binary will use GraalVM explicitly
     }
 }
 
@@ -704,6 +706,9 @@ graalvmNative {
         named("main") {
             imageName.set("cycletime-server")
             mainClass.set("io.spiralhouse.cycletime.ApplicationKt")
+
+            // Note: GraalVM installation location is specified via GRAALVM_HOME environment variable
+            // The plugin will look for native-image in $GRAALVM_HOME/bin/native-image
 
             buildArgs.add("--no-fallback")
             buildArgs.add("--enable-http")
