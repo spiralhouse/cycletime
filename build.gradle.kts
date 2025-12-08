@@ -704,18 +704,10 @@ ktor {
 graalvmNative {
     binaries {
         named("main") {
-            // Dynamic binary naming based on platform and version
-            // Example: cycletime-server-0.3.2-macos-aarch64
-            val platform = when {
-                org.gradle.internal.os.OperatingSystem.current().isMacOsX -> when (System.getProperty("os.arch")) {
-                    "aarch64", "arm64" -> "macos-aarch64"
-                    else -> "macos-x86_64"
-                }
-                org.gradle.internal.os.OperatingSystem.current().isLinux -> "linux-x86_64"
-                org.gradle.internal.os.OperatingSystem.current().isWindows -> "windows-x86_64"
-                else -> "unknown"
-            }
-            imageName.set("cycletime-server-$version-$platform")
+            // Simple binary name - CI workflow handles versioning and platform naming
+            // Gradle produces: cycletime-server
+            // CI renames to: cycletime-server-{version}-{platform}
+            imageName.set("cycletime-server")
             mainClass.set("io.spiralhouse.cycletime.ApplicationKt")
 
             // Production-ready GraalVM native-image configuration
