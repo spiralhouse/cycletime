@@ -747,9 +747,8 @@ graalvmNative {
             buildArgs.add("-H:IncludeResources=logback.xml") // Include logging config
             buildArgs.add("-H:IncludeResourceBundles=com.sun.org.apache.xerces.internal.impl.msg.XMLMessages")
 
-            // Reflection config (auto-generated via tracing agent in SPI-921)
-            // Located at: src/main/resources/META-INF/native-image/reflect-config.json
-            buildArgs.add("-H:ReflectionConfigurationFiles=src/main/resources/META-INF/native-image/reflect-config.json")
+            // Reflection config auto-discovered from META-INF/native-image/ (SPI-921)
+            // GraalVM automatically loads reflect-config.json from standard location
 
             // Debug and diagnostics (can be disabled for production)
             buildArgs.add("-H:+PrintClassInitialization") // Debug class initialization
