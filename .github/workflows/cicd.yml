@@ -69,6 +69,9 @@ env:
   # Docker BuildKit optimizations
   DOCKER_BUILDKIT: 1
   BUILDKIT_PROGRESS: plain
+  # GraalVM Configuration for Native Builds
+  GRAALVM_VERSION: '21'  # Use latest 21.x (NOT 21.0.8 - that version doesn't exist)
+  GRAALVM_DISTRIBUTION: 'graalvm-community'
 
 jobs:
   # ========================================
@@ -803,6 +806,210 @@ jobs:
           path: build/reports/
           retention-days: 7
 
+  # Native binary builds - runs on main branch only after tests pass
+  native-build:
+    name: Native Build - ${{ matrix.platform.name }}
+    needs: [version, unit-tests, integration-tests, system-tests]
+    if: |
+      github.ref == 'refs/heads/main' &&
+      needs.unit-tests.result == 'success' &&
+      needs.integration-tests.result == 'success' &&
+      needs.system-tests.result == 'success'
+    runs-on: ${{ matrix.platform.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: macOS ARM64
+            os: macos-14
+            artifact_name: macos-aarch64
+          - name: macOS x86_64
+            os: macos-13
+            artifact_name: macos-x86_64
+          - name: Linux x86_64
+            os: ubuntu-latest
+            artifact_name: linux-x86_64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '${{ env.GRAALVM_VERSION }}'
+          distribution: '${{ env.GRAALVM_DISTRIBUTION }}'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+
+      - name: Verify GraalVM Installation
+        run: |
+          echo "☕ Java version:"
+          java -version
+          echo ""
+          echo "🔧 Native-image version:"
+          native-image --version
+          echo ""
+          echo "📍 GRAALVM_HOME: $GRAALVM_HOME"
+          echo "📍 JAVA_HOME: $JAVA_HOME"
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/daemon
+            .gradle/
+          key: gradle-native-${{ runner.os }}-${{ matrix.platform.artifact_name }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-native-${{ runner.os }}-${{ matrix.platform.artifact_name }}-
+            gradle-native-${{ runner.os }}-
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Make gradlew executable
+        if: runner.os != 'Windows'
+        run: chmod +x gradlew
+
+      - name: Build Native Image
+        run: |
+          echo "🔨 Building native image for ${{ matrix.platform.name }}"
+          echo "📦 Version: ${{ needs.version.outputs.version }}"
+          echo "🏗️  Architecture: ${{ matrix.platform.artifact_name }}"
+
+          # Build native image with full optimizations
+          ./gradlew nativeCompile --no-configuration-cache --no-daemon -Pversion=${{ needs.version.outputs.version }}
+
+      - name: Verify Native Binary
+        shell: bash
+        run: |
+          echo "🔍 Verifying native binary..."
+
+          # Find the generated binary
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            BINARY="build/native/nativeCompile/cycletime-server.exe"
+          else
+            BINARY="build/native/nativeCompile/cycletime-server"
+          fi
+
+          if [[ ! -f "$BINARY" ]]; then
+            echo "❌ Binary not found at: $BINARY"
+            echo "📁 Contents of build/native/nativeCompile/:"
+            ls -la build/native/nativeCompile/ || echo "Directory does not exist"
+            exit 1
+          fi
+
+          echo "✅ Binary found: $BINARY"
+          echo "📊 Binary size: $(du -h "$BINARY" | cut -f1)"
+
+          # Make binary executable
+          chmod +x "$BINARY"
+
+          # Rename binary to include version and platform
+          mv "$BINARY" "${BINARY}-${{ needs.version.outputs.version }}-${{ matrix.platform.artifact_name }}"
+          BINARY="${BINARY}-${{ needs.version.outputs.version }}-${{ matrix.platform.artifact_name }}"
+
+          # Save binary path for next steps
+          echo "BINARY_PATH=$BINARY" >> $GITHUB_ENV
+
+      - name: Run Smoke Tests
+        shell: bash
+        run: |
+          echo "🧪 Running smoke tests on native binary..."
+
+          # Start server in background
+          $BINARY_PATH --server.port=38080 > smoke-test.log 2>&1 &
+          SERVER_PID=$!
+
+          echo "Server PID: $SERVER_PID"
+
+          # Wait for server to start (max 10 seconds)
+          for i in {1..10}; do
+            sleep 1
+            if ps -p $SERVER_PID > /dev/null 2>&1; then
+              echo "✅ Server process is running"
+              break
+            else
+              echo "❌ Server process died during startup"
+              cat smoke-test.log
+              exit 1
+            fi
+          done
+
+          # Poll health endpoint until ready (max 30 seconds)
+          echo "Waiting for server to be ready..."
+          for i in {1..30}; do
+            if curl -sf --max-time 5 http://localhost:38080/health > /dev/null 2>&1; then
+              echo "✅ Server is ready after ${i}s"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Server failed to start within 30 seconds"
+              cat smoke-test.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          # Test health endpoint
+          echo "Testing health endpoint..."
+          if curl -f -s http://localhost:38080/health > health-response.json; then
+            echo "✅ Health endpoint responded"
+            cat health-response.json
+          else
+            echo "❌ Health endpoint failed"
+            cat smoke-test.log
+            kill $SERVER_PID 2>/dev/null || true
+            exit 1
+          fi
+
+          # Test MCP endpoint with strict error handling
+          echo "Testing MCP endpoint..."
+          HTTP_CODE=$(curl -sf --max-time 5 -o /dev/null -w "%{http_code}" http://localhost:38080/mcp || echo "000")
+
+          if [[ "$HTTP_CODE" =~ ^(200|400|405)$ ]]; then
+            echo "✅ MCP endpoint exists (HTTP $HTTP_CODE)"
+          elif [[ "$HTTP_CODE" =~ ^(500|502|503|504|404|000)$ ]]; then
+            echo "❌ MCP endpoint error (HTTP $HTTP_CODE)"
+            cat smoke-test.log
+            kill $SERVER_PID 2>/dev/null || true
+            exit 1
+          else
+            echo "⚠️  MCP endpoint returned unexpected HTTP $HTTP_CODE (non-blocking)"
+          fi
+
+          # Cleanup
+          echo "Stopping server..."
+          kill $SERVER_PID 2>/dev/null || true
+          sleep 2
+
+          echo "✅ Smoke tests passed!"
+
+      - name: Upload Smoke Test Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-logs-${{ matrix.platform.artifact_name }}
+          path: |
+            smoke-test.log
+            health-response.json
+          retention-days: 7
+
+      - name: Upload Native Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-binary-${{ matrix.platform.artifact_name }}-${{ needs.version.outputs.version }}
+          path: ${{ env.BINARY_PATH }}
+          retention-days: 30
+
   # ========================================
   # CD STAGE - Only runs on main branch
   # ========================================
@@ -1010,7 +1217,7 @@ jobs:
   # Create GitHub Release - CD stage
   release:
     name: Create GitHub Release
-    needs: [version, build]
+    needs: [version, build, native-build]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # Only create release for production versions on main branch
@@ -1018,7 +1225,8 @@ jobs:
       github.ref == 'refs/heads/main' &&
       needs.version.outputs.is_release == 'true' &&
       github.event.inputs.skip_release != 'true' &&
-      needs.build.result == 'success'
+      needs.build.result == 'success' &&
+      needs.native-build.result == 'success'
 
     steps:
       - name: Checkout
@@ -1074,6 +1282,49 @@ jobs:
           name: build-artifacts-${{ needs.version.outputs.version }}
           path: build-artifacts/
 
+      - name: Download native binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: native-binary-*-${{ needs.version.outputs.version }}
+          path: native-binaries/
+
+      - name: Prepare release artifacts
+        run: |
+          echo "📦 Preparing release artifacts..."
+
+          # List downloaded artifacts
+          echo "Build artifacts:"
+          ls -la build-artifacts/ || true
+
+          echo ""
+          echo "Native binaries:"
+          ls -la native-binaries/ || true
+
+          # Flatten native binary directory structure
+          cd native-binaries
+          find . -type f -exec mv {} . \;
+          find . -type d -empty -delete
+
+          echo ""
+          echo "Flattened native binaries:"
+          ls -lh
+
+          # Generate checksums for native binaries
+          echo ""
+          echo "🔐 Generating checksums..."
+          if command -v sha256sum &> /dev/null; then
+            sha256sum cycletime-server-* > checksums-sha256.txt
+          elif command -v shasum &> /dev/null; then
+            shasum -a 256 cycletime-server-* > checksums-sha256.txt
+          fi
+
+          if [ -f checksums-sha256.txt ]; then
+            echo "Checksums:"
+            cat checksums-sha256.txt
+          fi
+
+          cd ..
+
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -1081,7 +1332,7 @@ jobs:
           version="${{ needs.version.outputs.version }}"
           echo "🚀 Creating release for version: $version"
 
-          # Create release with artifacts (preserves subdirectories from upload-artifact@v4)
+          # Create release with artifacts (JAR + native binaries + checksums)
           gh release create "v$version" \
             --draft \
             --title "Release $version" \
@@ -1089,7 +1340,11 @@ jobs:
             --target "${{ github.sha }}" \
             build-artifacts/libs/*.jar \
             build-artifacts/distributions/*.tar \
-            build-artifacts/distributions/*.zip
+            build-artifacts/distributions/*.zip \
+            native-binaries/cycletime-server-* \
+            native-binaries/checksums-sha256.txt
+
+          echo "✅ Release v$version created with JAR and native binaries"
 
   # ========================================
   # VALIDATION & REPORTING
