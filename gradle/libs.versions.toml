@@ -14,7 +14,7 @@ micrometer = "1.16.0"
 kotest = "6.0.7"
 mockk = "1.14.7"
 detekt = "1.23.8"
-kover = "0.9.3"
+kover = "0.9.4"
 dependency-check = "12.1.9"
 
 [libraries]
