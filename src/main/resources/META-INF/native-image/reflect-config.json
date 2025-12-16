@@ -59,6 +59,16 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"net.logstash.logback.encoder.LogstashEncoder",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.logstash.logback.stacktrace.ShortenedThrowableConverter",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"ch.qos.logback.classic.joran.SerializedModelConfigurator",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -94,6 +104,23 @@
 {
   "name":"com.fasterxml.jackson.databind.ext.Java7SupportImpl",
   "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"tools.jackson.databind.ObjectMapper",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"tools.jackson.core.JsonGenerator",
+  "allDeclaredMethods":true
+},
+{
+  "name":"tools.jackson.databind.JsonSerializer",
+  "allDeclaredMethods":true
+},
+{
+  "name":"tools.jackson.databind.ser.std.StdSerializer",
+  "allDeclaredMethods":true
 },
 {
   "name":"com.ibm.icu.text.Collator"
