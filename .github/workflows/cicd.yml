@@ -925,8 +925,8 @@ jobs:
         run: |
           echo "🧪 Running smoke tests on native binary..."
 
-          # Start server in background
-          $BINARY_PATH --server.port=38080 > smoke-test.log 2>&1 &
+          # Start server in background (using PORT env var, not CLI args)
+          PORT=38080 $BINARY_PATH > smoke-test.log 2>&1 &
           SERVER_PID=$!
 
           echo "Server PID: $SERVER_PID"
