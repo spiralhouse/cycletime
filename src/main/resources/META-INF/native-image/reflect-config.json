@@ -82,8 +82,59 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"ch.qos.logback.classic.AsyncAppender",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.AsyncAppenderBase",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.rolling.RollingFileAppender",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.FileAppender",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.rolling.TimeBasedRollingPolicy",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.rolling.RollingPolicyBase",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.rolling.helper.TimeBasedArchiveRemover",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.rolling.DefaultTimeBasedFileNamingAndTriggeringPolicy",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.rolling.TimeBasedFileNamingAndTriggeringPolicyBase",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
   "name":"ch.qos.logback.core.OutputStreamAppender",
-  "methods":[{"name":"setEncoder","parameterTypes":["ch.qos.logback.core.encoder.Encoder"] }]
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
 },
 {
   "name":"ch.qos.logback.core.encoder.Encoder",
