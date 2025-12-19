@@ -728,9 +728,10 @@ graalvmNative {
             // Performance optimizations
             buildArgs.add("-Ob") // Balanced optimization (size vs speed)
             buildArgs.add("-march=compatibility") // Cross-platform compatibility
-            buildArgs.add("--gc=G1") // G1 garbage collector for server workloads
+            // Serial GC is the default for GraalVM Community Edition
+            // G1 GC requires Oracle GraalVM (Enterprise) and is not available in CE
 
-            // Memory configuration
+            // Memory configuration (Serial GC tuning)
             buildArgs.add("-H:+UnlockExperimentalVMOptions")
             buildArgs.add("-H:InitialCollectionPolicy=com.oracle.svm.core.genscavenge.CollectionPolicy\$BySpaceAndTime")
 
