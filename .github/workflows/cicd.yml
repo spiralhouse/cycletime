@@ -1240,7 +1240,7 @@ jobs:
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
-          args: --verbose --latest --strip header
+          args: --verbose --tag v${{ needs.version.outputs.version }} --strip header
         env:
           OUTPUT: CHANGELOG.md
           GITHUB_REPO: ${{ github.repository }}
@@ -1330,21 +1330,39 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           version="${{ needs.version.outputs.version }}"
-          echo "🚀 Creating release for version: $version"
+          echo "🚀 Creating/updating release for version: $version"
 
-          # Create release with artifacts (JAR + native binaries + checksums)
-          gh release create "v$version" \
-            --draft \
-            --title "Release $version" \
-            --notes "${{ steps.capture.outputs.changelog }}" \
-            --target "${{ github.sha }}" \
-            build-artifacts/libs/*.jar \
-            build-artifacts/distributions/*.tar \
-            build-artifacts/distributions/*.zip \
-            native-binaries/cycletime-server-* \
-            native-binaries/checksums-sha256.txt
+          # Check if release already exists
+          if gh release view "v$version" &>/dev/null; then
+            echo "Release v$version exists, updating notes..."
+            gh release edit "v$version" \
+              --notes "${{ steps.capture.outputs.changelog }}"
 
-          echo "✅ Release v$version created with JAR and native binaries"
+            # Upload artifacts (will replace existing ones)
+            gh release upload "v$version" \
+              --clobber \
+              build-artifacts/libs/*.jar \
+              build-artifacts/distributions/*.tar \
+              build-artifacts/distributions/*.zip \
+              native-binaries/cycletime-server-* \
+              native-binaries/checksums-sha256.txt
+
+            echo "✅ Release v$version updated with new notes and artifacts"
+          else
+            echo "Creating new release v$version..."
+            gh release create "v$version" \
+              --draft \
+              --title "Release $version" \
+              --notes "${{ steps.capture.outputs.changelog }}" \
+              --target "${{ github.sha }}" \
+              build-artifacts/libs/*.jar \
+              build-artifacts/distributions/*.tar \
+              build-artifacts/distributions/*.zip \
+              native-binaries/cycletime-server-* \
+              native-binaries/checksums-sha256.txt
+
+            echo "✅ Release v$version created with JAR and native binaries"
+          fi
 
   # ========================================
   # VALIDATION & REPORTING
