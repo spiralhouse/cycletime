@@ -825,7 +825,7 @@ jobs:
             os: macos-14
             artifact_name: macos-aarch64
           - name: macOS x86_64
-            os: macos-13
+            os: macos-15-intel
             artifact_name: macos-x86_64
           - name: Linux x86_64
             os: ubuntu-latest
@@ -925,8 +925,8 @@ jobs:
         run: |
           echo "🧪 Running smoke tests on native binary..."
 
-          # Start server in background
-          $BINARY_PATH --server.port=38080 > smoke-test.log 2>&1 &
+          # Start server in background (using PORT env var, not CLI args)
+          PORT=38080 $BINARY_PATH > smoke-test.log 2>&1 &
           SERVER_PID=$!
 
           echo "Server PID: $SERVER_PID"
