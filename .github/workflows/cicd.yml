@@ -1332,11 +1332,14 @@ jobs:
           version="${{ needs.version.outputs.version }}"
           echo "🚀 Creating/updating release for version: $version"
 
+          # Write changelog to temp file to avoid bash injection
+          echo "${{ steps.capture.outputs.changelog }}" > /tmp/release-notes.md
+
           # Check if release already exists
           if gh release view "v$version" &>/dev/null; then
             echo "Release v$version exists, updating notes..."
             gh release edit "v$version" \
-              --notes "${{ steps.capture.outputs.changelog }}"
+              --notes-file /tmp/release-notes.md
 
             # Upload artifacts (will replace existing ones)
             gh release upload "v$version" \
@@ -1353,7 +1356,7 @@ jobs:
             gh release create "v$version" \
               --draft \
               --title "Release $version" \
-              --notes "${{ steps.capture.outputs.changelog }}" \
+              --notes-file /tmp/release-notes.md \
               --target "${{ github.sha }}" \
               build-artifacts/libs/*.jar \
               build-artifacts/distributions/*.tar \
