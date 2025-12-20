@@ -1254,6 +1254,12 @@ jobs:
 
           echo "📊 Changelog range: $(cat $GITHUB_OUTPUT | grep range= | cut -d= -f2)"
 
+      - name: Remove existing changelog to prevent merge
+        run: |
+          echo "🗑️ Removing any existing CHANGELOG.md..."
+          rm -f CHANGELOG.md
+          echo "✅ Clean slate for changelog generation"
+
       - name: Generate changelog with git-cliff
         id: git-cliff
         uses: orhun/git-cliff-action@v4
@@ -1273,9 +1279,9 @@ jobs:
           [ -f "CHANGELOG.md" ] || { echo "❌ ERROR: CHANGELOG.md not generated"; exit 1; }
 
           echo "✅ CHANGELOG.md found, capturing content..."
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "changelog<<__CHANGELOG_DELIMITER_7a8b9c__" >> $GITHUB_OUTPUT
           cat CHANGELOG.md >> $GITHUB_OUTPUT || { echo "❌ ERROR: Failed to read CHANGELOG.md"; exit 1; }
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "__CHANGELOG_DELIMITER_7a8b9c__" >> $GITHUB_OUTPUT
 
           echo "🗑️ Deleting CHANGELOG.md to prevent git commit..."
           rm CHANGELOG.md || { echo "❌ ERROR: Failed to delete CHANGELOG.md"; exit 1; }
