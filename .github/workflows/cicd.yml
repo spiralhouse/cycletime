@@ -1235,12 +1235,31 @@ jobs:
           fetch-depth: 0
           fetch-tags: true  # Explicitly fetch tags for changelog generation
 
+      - name: Compute changelog range
+        id: range
+        run: |
+          version="${{ needs.version.outputs.version }}"
+          echo "🔍 Computing changelog range for version $version..."
+
+          # Try to find previous tag
+          if previous_tag=$(git describe --tags --abbrev=0 "v${version}^" 2>/dev/null); then
+            echo "✅ Found previous tag: $previous_tag"
+            echo "range=${previous_tag}..v${version}" >> $GITHUB_OUTPUT
+          else
+            # First release: use range from initial commit
+            echo "⚠️  No previous tag found, using initial commit"
+            initial_commit=$(git rev-list --max-parents=0 HEAD)
+            echo "range=${initial_commit}..v${version}" >> $GITHUB_OUTPUT
+          fi
+
+          echo "📊 Changelog range: $(cat $GITHUB_OUTPUT | grep range= | cut -d= -f2)"
+
       - name: Generate changelog with git-cliff
         id: git-cliff
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
-          args: --verbose --tag v${{ needs.version.outputs.version }} --strip header
+          args: --verbose --strip header ${{ steps.range.outputs.range }}
         env:
           OUTPUT: CHANGELOG.md
           GITHUB_REPO: ${{ github.repository }}
