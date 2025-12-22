@@ -24,9 +24,8 @@ private const val TEST_TIMEOUT_MS = 10_000L
  *
  * **MIGRATION (SPI-710)**: Migrated from SDK Client pattern to Streamable HTTP pattern.
  *
- * **NOTE**: Tests avoid resources/read verification due to known limitation.
- * The StreamableHttpHandler does not implement resources/read for collection resources.
- * Tests focus on tool execution and state persistence workflows instead.
+ * **UPDATE (SPI-1276)**: resources/read endpoint now implemented in StreamableHttpHandler.
+ * Tests include full MCP resource reading via resources/read endpoint.
  *
  * These tests validate complete multi-step business processes that users would execute
  * through the MCP HTTP API. Unlike integration tests that focus on individual operations,
@@ -160,9 +159,29 @@ class WorkflowE2ETest : StringSpec({
             templateResource?.jsonObject?.get("name")?.jsonPrimitive?.content shouldBe "CycleTime Project"
             templateResource?.jsonObject?.get("mimeType")?.jsonPrimitive?.content shouldBe "application/json"
 
-            // NOTE: Step 4 (resources/read verification) removed due to StreamableHttpHandler limitation
-            // The handler does not implement resources/read for collection resources
-            // Test still validates: resource discovery, project creation, template verification
+            // Step 4: Read project resource via resources/read endpoint (SPI-1276)
+            val resourceReadResponse = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""{"jsonrpc":"2.0","id":1004,"method":"resources/read","params":{"uri":"cycletime://projects/$projectId"}}""")
+            }
+            resourceReadResponse.status shouldBe HttpStatusCode.OK
+            val resourceReadJson = Json.parseToJsonElement(resourceReadResponse.bodyAsText()).jsonObject
+            val resourceReadResult = resourceReadJson["result"]?.jsonObject
+            resourceReadResult.shouldNotBeNull()
+
+            // Verify MCP-compliant response format
+            val contents = resourceReadResult?.get("contents")?.jsonArray
+            contents.shouldNotBeNull()
+            contents!!.size shouldBe 1
+
+            val content = contents[0].jsonObject
+            content["uri"]?.jsonPrimitive?.content shouldBe "cycletime://projects/$projectId"
+            content["mimeType"]?.jsonPrimitive?.content shouldBe "application/json"
+
+            // Verify project data is in the response
+            val projectText = content["text"]?.jsonPrimitive?.content
+            projectText.shouldNotBeNull()
+            projectText shouldContain projectId
         }
     }
 
@@ -325,11 +344,26 @@ class WorkflowE2ETest : StringSpec({
             }
             issueListResponse.status shouldBe HttpStatusCode.OK
 
-            // NOTE: Step 4 (resources/read for sessions/active) removed due to StreamableHttpHandler limitation
-            // The handler does not implement resources/read for collection resources
-            // Test still validates: session creation, tool execution, session persistence
+            // Step 4: Read sessions/active resource via resources/read endpoint (SPI-1276)
+            val sessionsActiveResponse = client.post("/mcp") {
+                header("Content-Type", "application/json")
+                setBody("""{"jsonrpc":"2.0","id":3204,"method":"resources/read","params":{"uri":"cycletime://sessions/active"}}""")
+            }
+            sessionsActiveResponse.status shouldBe HttpStatusCode.OK
+            val sessionsActiveJson = Json.parseToJsonElement(sessionsActiveResponse.bodyAsText()).jsonObject
+            val sessionsActiveResult = sessionsActiveJson["result"]?.jsonObject
+            sessionsActiveResult.shouldNotBeNull()
 
-            // Step 4: Verify session persisted across all operations
+            // Verify MCP-compliant response format
+            val sessionContents = sessionsActiveResult?.get("contents")?.jsonArray
+            sessionContents.shouldNotBeNull()
+            sessionContents!!.size shouldBe 1
+
+            val activeSessionResourceContent = sessionContents[0].jsonObject
+            activeSessionResourceContent["uri"]?.jsonPrimitive?.content shouldBe "cycletime://sessions/active"
+            activeSessionResourceContent["mimeType"]?.jsonPrimitive?.content shouldBe "application/json"
+
+            // Step 5: Verify session persisted across all operations
             val getActiveSessionResponse = client.post("/mcp") {
                 header("Content-Type", "application/json")
                 setBody("""{"jsonrpc":"2.0","id":3205,"method":"tools/call","params":{"name":"session_get_active_session","arguments":{}}}""")
