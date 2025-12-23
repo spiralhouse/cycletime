@@ -13,7 +13,6 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.spiralhouse.cycletime.test.utils.testSDKApplication
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -298,20 +297,9 @@ class SessionLifecycleE2ETest : StringSpec({
             val sessionData = Json.parseToJsonElement(textContent)
 
             // Verify session data matches (get_session returns SessionDto serialized as JSON)
-            // Handle value class serialization (might be primitive or object with "value" field)
-            val sessionKeyElement = sessionData.jsonObject["sessionKey"]
-            val returnedSessionKey = if (sessionKeyElement is JsonPrimitive) {
-                sessionKeyElement.content
-            } else {
-                sessionKeyElement?.jsonObject?.get("value")?.jsonPrimitive?.content
-            }
-
-            val projectIdElement = sessionData.jsonObject["projectId"]
-            val returnedProjectId = if (projectIdElement is JsonPrimitive) {
-                projectIdElement.content
-            } else {
-                projectIdElement?.jsonObject?.get("value")?.jsonPrimitive?.content
-            }
+            // Value classes now consistently serialize as primitives (SPI-1277 fix)
+            val returnedSessionKey = sessionData.jsonObject["sessionKey"]?.jsonPrimitive?.content
+            val returnedProjectId = sessionData.jsonObject["projectId"]?.jsonPrimitive?.content
 
             // Verify session key matches
             returnedSessionKey shouldBe sessionKey
@@ -746,19 +734,9 @@ class SessionLifecycleE2ETest : StringSpec({
             val session2Data = Json.parseToJsonElement(session2Content)
 
             // Verify second session has correct project (not inherited from first)
-            val session2KeyElement = session2Data.jsonObject["sessionKey"]
-            val session2Key = if (session2KeyElement is JsonPrimitive) {
-                session2KeyElement.content
-            } else {
-                session2KeyElement?.jsonObject?.get("value")?.jsonPrimitive?.content
-            }
-
-            val session2ProjectIdElement = session2Data.jsonObject["projectId"]
-            val session2ProjectId = if (session2ProjectIdElement is JsonPrimitive) {
-                session2ProjectIdElement.content
-            } else {
-                session2ProjectIdElement?.jsonObject?.get("value")?.jsonPrimitive?.content
-            }
+            // Value classes now consistently serialize as primitives (SPI-1277 fix)
+            val session2Key = session2Data.jsonObject["sessionKey"]?.jsonPrimitive?.content
+            val session2ProjectId = session2Data.jsonObject["projectId"]?.jsonPrimitive?.content
 
             session2Key shouldBe sessionKey2
             // Note: ProjectId might be null if session data doesn't include it
@@ -791,12 +769,8 @@ class SessionLifecycleE2ETest : StringSpec({
             val verifySession1Data = Json.parseToJsonElement(verifySession1Content)
 
             // Verify first session unchanged
-            val verify1SessionKeyElement = verifySession1Data.jsonObject["sessionKey"]
-            val verify1SessionKey = if (verify1SessionKeyElement is JsonPrimitive) {
-                verify1SessionKeyElement.content
-            } else {
-                verify1SessionKeyElement?.jsonObject?.get("value")?.jsonPrimitive?.content
-            }
+            // Value classes now consistently serialize as primitives (SPI-1277 fix)
+            val verify1SessionKey = verifySession1Data.jsonObject["sessionKey"]?.jsonPrimitive?.content
 
             verify1SessionKey shouldBe sessionKey1
             // Both sessions exist independently

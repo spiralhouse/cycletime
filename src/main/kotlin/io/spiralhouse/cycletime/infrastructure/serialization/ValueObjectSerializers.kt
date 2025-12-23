@@ -2,6 +2,7 @@ package io.spiralhouse.cycletime.infrastructure.serialization
 
 import io.spiralhouse.cycletime.domain.valueobjects.IssueId
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.domain.valueobjects.SessionKey
 import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -65,5 +66,27 @@ object WorkflowIdSerializer : KSerializer<WorkflowId> {
 
     override fun deserialize(decoder: Decoder): WorkflowId {
         return WorkflowId.fromString(decoder.decodeString())
+    }
+}
+
+/**
+ * Custom serializer for SessionKey that ensures string serialization.
+ *
+ * Serializes SessionKey as a simple string (the UUID value) instead of a JSON object.
+ * This fixes the inconsistent serialization where value classes were sometimes being
+ * serialized as objects with "value" fields instead of primitive strings.
+ *
+ * Related issue: SPI-1277
+ */
+object SessionKeySerializer : KSerializer<SessionKey> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("io.spiralhouse.cycletime.domain.valueobjects.SessionKey", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: SessionKey) {
+        encoder.encodeString(value.value)
+    }
+
+    override fun deserialize(decoder: Decoder): SessionKey {
+        return SessionKey.fromString(decoder.decodeString())
     }
 }

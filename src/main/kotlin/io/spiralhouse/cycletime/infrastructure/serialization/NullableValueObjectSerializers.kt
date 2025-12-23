@@ -2,6 +2,7 @@ package io.spiralhouse.cycletime.infrastructure.serialization
 
 import io.spiralhouse.cycletime.domain.valueobjects.IssueId
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.domain.valueobjects.SessionKey
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -55,6 +56,34 @@ object NullableIssueIdSerializer : KSerializer<IssueId?> {
     override fun deserialize(decoder: Decoder): IssueId? {
         return if (decoder.decodeNotNullMark()) {
             IssueId.fromString(decoder.decodeString())
+        } else {
+            decoder.decodeNull()
+        }
+    }
+}
+
+/**
+ * Custom serializer for nullable SessionKey that ensures string serialization.
+ *
+ * Serializes nullable SessionKey as either a string (the UUID value) or null.
+ *
+ * Related issue: SPI-1277
+ */
+object NullableSessionKeySerializer : KSerializer<SessionKey?> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("io.spiralhouse.cycletime.domain.valueobjects.SessionKey?", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: SessionKey?) {
+        if (value == null) {
+            encoder.encodeNull()
+        } else {
+            encoder.encodeString(value.value)
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): SessionKey? {
+        return if (decoder.decodeNotNullMark()) {
+            SessionKey.fromString(decoder.decodeString())
         } else {
             decoder.decodeNull()
         }
