@@ -4,6 +4,10 @@ import io.spiralhouse.cycletime.domain.entities.Project
 import io.spiralhouse.cycletime.domain.valueobjects.IssueId
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectStatus
+import io.spiralhouse.cycletime.infrastructure.serialization.InstantSerializer
+import io.spiralhouse.cycletime.infrastructure.serialization.NullableInstantSerializer
+import io.spiralhouse.cycletime.infrastructure.serialization.ProjectIdSerializer
+import io.spiralhouse.cycletime.infrastructure.serialization.IssueIdSerializer
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
@@ -13,14 +17,19 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class ProjectDto(
+    @Serializable(with = ProjectIdSerializer::class)
     val id: ProjectId,
     val name: String,
     val description: String?,
     val status: ProjectStatus,
-    val issues: List<IssueId>,
+    val issues: List<@Serializable(with = IssueIdSerializer::class) IssueId>,
     val issueCount: Int,
+    @Serializable(with = InstantSerializer::class)
     val createdAt: Instant,
-    val updatedAt: Instant
+    @Serializable(with = InstantSerializer::class)
+    val updatedAt: Instant,
+    @Serializable(with = NullableInstantSerializer::class)
+    val deletedAt: Instant? = null
 ) {
     companion object {
         /**
@@ -35,7 +44,8 @@ data class ProjectDto(
                 issues = project.issues,
                 issueCount = project.issueCount,
                 createdAt = project.createdAt,
-                updatedAt = project.updatedAt
+                updatedAt = project.updatedAt,
+                deletedAt = project.deletedAt
             )
         }
     }

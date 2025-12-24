@@ -69,6 +69,9 @@ env:
   # Docker BuildKit optimizations
   DOCKER_BUILDKIT: 1
   BUILDKIT_PROGRESS: plain
+  # GraalVM Configuration for Native Builds
+  GRAALVM_VERSION: '21'  # Use latest 21.x (NOT 21.0.8 - that version doesn't exist)
+  GRAALVM_DISTRIBUTION: 'graalvm-community'
 
 jobs:
   # ========================================
@@ -111,7 +114,7 @@ jobs:
           if [[ "${{ github.actor }}" == "dependabot[bot]" ]]; then
             echo "🤖 Dependabot PR detected - running full security validation pipeline"
             echo "run_tests=true" >> $GITHUB_OUTPUT
-          elif git diff --name-only HEAD~1 HEAD | grep -E '\.(kt|kts|java|gradle)$|src/|build\.gradle|settings\.gradle|gradle\.properties|gradle/.*\.toml|gradle/'; then
+          elif git diff --name-only HEAD~1 HEAD | grep -E '\.(kt|kts|java|gradle)$|src/|build\.gradle|settings\.gradle|gradle\.properties|gradle/.*\.toml|gradle/|\.github/workflows/'; then
             echo "✅ Code changes detected - will run full pipeline"
             echo "run_tests=true" >> $GITHUB_OUTPUT
           else
@@ -149,11 +152,10 @@ jobs:
           fi
 
           if [ "$should_tag" = true ]; then
-            # Calculate next version using git-semver-plugin
-            next_version=$(./gradlew printSemVersion --quiet --no-configuration-cache --rerun-tasks | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' | tail -1)
-
-            # Remove -SNAPSHOT suffix if present (we're creating the actual release tag)
-            next_version="${next_version%-SNAPSHOT}"
+            # Calculate next version using printCleanVersion task
+            # This task strips SNAPSHOT and build metadata from git-semver-plugin output
+            # Use 'tail -1' to get only the last line (handles Gradle wrapper download output edge case)
+            next_version=$(./gradlew printCleanVersion --quiet --no-configuration-cache | tail -1)
 
             if [[ -n "$next_version" && "$next_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               echo "📦 Creating tag: v$next_version"
@@ -230,14 +232,14 @@ jobs:
             echo "📋 Latest tag after fetch: $latest_tag"
           fi
 
-          # Extract version using printSemVersion with forced execution
-          # Note: Even with --quiet, Gradle may output download progress on first run
-          # We need to filter for the actual version line (semantic version format)
-          version=$(./gradlew printSemVersion --quiet --no-configuration-cache --rerun-tasks | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' | tail -1)
+          # Extract clean semantic version using printCleanVersion task
+          # This task strips SNAPSHOT and build metadata suffixes (SPI-892)
+          # Use 'tail -1' to get only the last line (handles Gradle wrapper download output edge case)
+          version=$(./gradlew printCleanVersion --quiet --no-configuration-cache | tail -1)
 
-          # Fallback - use printVersion if printSemVersion fails
+          # Fallback - use printVersion if printCleanVersion fails
           if [[ -z "$version" ]]; then
-            echo "⚠️ printSemVersion failed, trying printVersion..."
+            echo "⚠️ printCleanVersion failed, trying printVersion..."
             version=$(./gradlew printVersion --quiet --no-configuration-cache --rerun-tasks | grep "^version:" | cut -d' ' -f2)
           fi
 
@@ -270,34 +272,29 @@ jobs:
               echo "is_release=true" >> $GITHUB_OUTPUT
               echo "should_tag=false" >> $GITHUB_OUTPUT  # Already tagged
             else
-              # Not tagged yet, but we're on main - might be a non-versioning commit
-              if [[ "$version" == *"-SNAPSHOT"* ]] || [[ "$version" == *"+"* ]]; then
-                echo "is_release=false" >> $GITHUB_OUTPUT
-                echo "should_tag=false" >> $GITHUB_OUTPUT
-              else
-                echo "is_release=true" >> $GITHUB_OUTPUT
-                echo "should_tag=true" >> $GITHUB_OUTPUT
-              fi
+              # Not tagged yet - printCleanVersion always returns clean X.Y.Z format
+              # Release determination is handled by commit message patterns (lines 136-149)
+              echo "is_release=true" >> $GITHUB_OUTPUT
+              echo "should_tag=true" >> $GITHUB_OUTPUT
             fi
           else
-            # For non-main branches, use original logic
-            if [[ "$version" == *"-SNAPSHOT"* ]] || [[ "$version" == *"+"* ]]; then
-              echo "is_release=false" >> $GITHUB_OUTPUT
-            else
-              echo "is_release=true" >> $GITHUB_OUTPUT
-            fi
+            # For non-main branches, always treat as release for artifact generation
+            # printCleanVersion ensures clean version format regardless of branch
+            echo "is_release=true" >> $GITHUB_OUTPUT
             echo "should_tag=false" >> $GITHUB_OUTPUT
           fi
 
-          # Validate version format (semantic versioning)
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
+          # Validate version format (clean semantic versioning only)
+          # printCleanVersion should only output X.Y.Z format (no suffixes)
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "❌ Invalid version format: $version"
-            echo "Expected semantic version format: MAJOR.MINOR.PATCH[-PRERELEASE][+BUILDMETADATA]"
+            echo "Expected clean semantic version format: MAJOR.MINOR.PATCH (no suffixes)"
+            echo "printCleanVersion task should have stripped SNAPSHOT and metadata"
             exit 1
           fi
 
           echo "📦 Version: $version"
-          echo "🚀 Is Release: $([ "$version" == *"-SNAPSHOT"* ] || [ "$version" == *"+"* ] && echo "No" || echo "Yes")"
+          echo "🚀 Is Release: Yes (printCleanVersion always produces clean versions)"
 
   # Compile job that runs first to build all code and test classes
   compile:
@@ -809,6 +806,210 @@ jobs:
           path: build/reports/
           retention-days: 7
 
+  # Native binary builds - runs on main branch only after tests pass
+  native-build:
+    name: Native Build - ${{ matrix.platform.name }}
+    needs: [version, unit-tests, integration-tests, system-tests]
+    if: |
+      github.ref == 'refs/heads/main' &&
+      needs.unit-tests.result == 'success' &&
+      needs.integration-tests.result == 'success' &&
+      needs.system-tests.result == 'success'
+    runs-on: ${{ matrix.platform.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: macOS ARM64
+            os: macos-14
+            artifact_name: macos-aarch64
+          - name: macOS x86_64
+            os: macos-15-intel
+            artifact_name: macos-x86_64
+          - name: Linux x86_64
+            os: ubuntu-latest
+            artifact_name: linux-x86_64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '${{ env.GRAALVM_VERSION }}'
+          distribution: '${{ env.GRAALVM_DISTRIBUTION }}'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+
+      - name: Verify GraalVM Installation
+        run: |
+          echo "☕ Java version:"
+          java -version
+          echo ""
+          echo "🔧 Native-image version:"
+          native-image --version
+          echo ""
+          echo "📍 GRAALVM_HOME: $GRAALVM_HOME"
+          echo "📍 JAVA_HOME: $JAVA_HOME"
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/daemon
+            .gradle/
+          key: gradle-native-${{ runner.os }}-${{ matrix.platform.artifact_name }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-native-${{ runner.os }}-${{ matrix.platform.artifact_name }}-
+            gradle-native-${{ runner.os }}-
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Make gradlew executable
+        if: runner.os != 'Windows'
+        run: chmod +x gradlew
+
+      - name: Build Native Image
+        run: |
+          echo "🔨 Building native image for ${{ matrix.platform.name }}"
+          echo "📦 Version: ${{ needs.version.outputs.version }}"
+          echo "🏗️  Architecture: ${{ matrix.platform.artifact_name }}"
+
+          # Build native image with full optimizations
+          ./gradlew nativeCompile --no-configuration-cache --no-daemon -Pversion=${{ needs.version.outputs.version }}
+
+      - name: Verify Native Binary
+        shell: bash
+        run: |
+          echo "🔍 Verifying native binary..."
+
+          # Find the generated binary
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            BINARY="build/native/nativeCompile/cycletime-server.exe"
+          else
+            BINARY="build/native/nativeCompile/cycletime-server"
+          fi
+
+          if [[ ! -f "$BINARY" ]]; then
+            echo "❌ Binary not found at: $BINARY"
+            echo "📁 Contents of build/native/nativeCompile/:"
+            ls -la build/native/nativeCompile/ || echo "Directory does not exist"
+            exit 1
+          fi
+
+          echo "✅ Binary found: $BINARY"
+          echo "📊 Binary size: $(du -h "$BINARY" | cut -f1)"
+
+          # Make binary executable
+          chmod +x "$BINARY"
+
+          # Rename binary to include version and platform
+          mv "$BINARY" "${BINARY}-${{ needs.version.outputs.version }}-${{ matrix.platform.artifact_name }}"
+          BINARY="${BINARY}-${{ needs.version.outputs.version }}-${{ matrix.platform.artifact_name }}"
+
+          # Save binary path for next steps
+          echo "BINARY_PATH=$BINARY" >> $GITHUB_ENV
+
+      - name: Run Smoke Tests
+        shell: bash
+        run: |
+          echo "🧪 Running smoke tests on native binary..."
+
+          # Start server in background (using PORT env var, not CLI args)
+          PORT=38080 $BINARY_PATH > smoke-test.log 2>&1 &
+          SERVER_PID=$!
+
+          echo "Server PID: $SERVER_PID"
+
+          # Wait for server to start (max 10 seconds)
+          for i in {1..10}; do
+            sleep 1
+            if ps -p $SERVER_PID > /dev/null 2>&1; then
+              echo "✅ Server process is running"
+              break
+            else
+              echo "❌ Server process died during startup"
+              cat smoke-test.log
+              exit 1
+            fi
+          done
+
+          # Poll health endpoint until ready (max 30 seconds)
+          echo "Waiting for server to be ready..."
+          for i in {1..30}; do
+            if curl -sf --max-time 5 http://localhost:38080/health > /dev/null 2>&1; then
+              echo "✅ Server is ready after ${i}s"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Server failed to start within 30 seconds"
+              cat smoke-test.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          # Test health endpoint
+          echo "Testing health endpoint..."
+          if curl -f -s http://localhost:38080/health > health-response.json; then
+            echo "✅ Health endpoint responded"
+            cat health-response.json
+          else
+            echo "❌ Health endpoint failed"
+            cat smoke-test.log
+            kill $SERVER_PID 2>/dev/null || true
+            exit 1
+          fi
+
+          # Test MCP endpoint with strict error handling
+          echo "Testing MCP endpoint..."
+          HTTP_CODE=$(curl -sf --max-time 5 -o /dev/null -w "%{http_code}" http://localhost:38080/mcp || echo "000")
+
+          if [[ "$HTTP_CODE" =~ ^(200|400|405)$ ]]; then
+            echo "✅ MCP endpoint exists (HTTP $HTTP_CODE)"
+          elif [[ "$HTTP_CODE" =~ ^(500|502|503|504|404|000)$ ]]; then
+            echo "❌ MCP endpoint error (HTTP $HTTP_CODE)"
+            cat smoke-test.log
+            kill $SERVER_PID 2>/dev/null || true
+            exit 1
+          else
+            echo "⚠️  MCP endpoint returned unexpected HTTP $HTTP_CODE (non-blocking)"
+          fi
+
+          # Cleanup
+          echo "Stopping server..."
+          kill $SERVER_PID 2>/dev/null || true
+          sleep 2
+
+          echo "✅ Smoke tests passed!"
+
+      - name: Upload Smoke Test Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-logs-${{ matrix.platform.artifact_name }}
+          path: |
+            smoke-test.log
+            health-response.json
+          retention-days: 7
+
+      - name: Upload Native Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-binary-${{ matrix.platform.artifact_name }}-${{ needs.version.outputs.version }}
+          path: ${{ env.BINARY_PATH }}
+          retention-days: 30
+
   # ========================================
   # CD STAGE - Only runs on main branch
   # ========================================
@@ -821,15 +1022,21 @@ jobs:
     needs: [version, unit-tests, integration-tests, system-tests, quality]
     # Only run CD build on main branch with successful tests
     if: |
-      github.ref == 'refs/heads/main' && 
-      needs.unit-tests.result == 'success' && 
-      needs.integration-tests.result == 'success' && 
-      needs.system-tests.result == 'success' && 
+      github.ref == 'refs/heads/main' &&
+      needs.unit-tests.result == 'success' &&
+      needs.integration-tests.result == 'success' &&
+      needs.system-tests.result == 'success' &&
       needs.quality.result == 'success'
 
     steps:
+      # Fetch full git history for git-semver plugin to calculate correct version
+      # Without fetch-depth: 0 and fetch-tags: true, git-semver falls back to 0.0.1-SNAPSHOT
+      # This caused release v0.3.2 to contain incorrectly versioned artifacts (SPI-911)
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # Fetch full git history for git-semver plugin
+          fetch-tags: true      # Fetch all version tags
 
       - name: Setup JDK 21
         uses: actions/setup-java@v4
@@ -866,10 +1073,10 @@ jobs:
           name: compiled-artifacts
           path: build/
 
-      - name: Build application JAR
+      - name: Build application JAR and distributions
         run: |
-          echo "🔨 Building application JAR for deployment (version: ${{ needs.version.outputs.version }})"
-          ./gradlew buildFatJar -x compileKotlin -x compileTestKotlin -x compileIntegrationTestKotlin -x compileSystemTestKotlin -x test --no-build-cache --configuration-cache --no-daemon
+          echo "🔨 Building application artifacts (version: ${{ needs.version.outputs.version }})"
+          ./gradlew buildFatJar assembleDist -x compileKotlin -x compileTestKotlin -x compileIntegrationTestKotlin -x compileSystemTestKotlin -x test --no-build-cache --configuration-cache --no-daemon
 
       - name: Verify JAR exists
         run: |
@@ -1010,7 +1217,7 @@ jobs:
   # Create GitHub Release - CD stage
   release:
     name: Create GitHub Release
-    needs: [version, build]
+    needs: [version, build, native-build]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # Only create release for production versions on main branch
@@ -1018,7 +1225,8 @@ jobs:
       github.ref == 'refs/heads/main' &&
       needs.version.outputs.is_release == 'true' &&
       github.event.inputs.skip_release != 'true' &&
-      needs.build.result == 'success'
+      needs.build.result == 'success' &&
+      needs.native-build.result == 'success'
 
     steps:
       - name: Checkout
@@ -1027,27 +1235,71 @@ jobs:
           fetch-depth: 0
           fetch-tags: true  # Explicitly fetch tags for changelog generation
 
-      - name: Generate changelog
-        id: changelog
+      - name: Compute changelog range
+        id: range
         run: |
-          # Get commits since last tag
-          last_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [ -z "$last_tag" ]; then
-            echo "📝 No previous tags found, using all commits"
-            commits=$(git log --pretty=format:"- %s (%h)" HEAD | head -20)
+          version="${{ needs.version.outputs.version }}"
+          echo "🔍 Computing changelog range for version $version..."
+
+          # Try to find previous tag
+          if previous_tag=$(git describe --tags --abbrev=0 HEAD 2>/dev/null); then
+            echo "✅ Found previous tag: $previous_tag"
+            echo "range=${previous_tag}..HEAD" >> $GITHUB_OUTPUT
           else
-            echo "📝 Generating changelog since $last_tag"
-            commits=$(git log --pretty=format:"- %s (%h)" ${last_tag}..HEAD)
+            # First release: use range from initial commit
+            echo "⚠️  No previous tag found, using initial commit"
+            initial_commit=$(git rev-list --max-parents=0 HEAD)
+            echo "range=${initial_commit}..HEAD" >> $GITHUB_OUTPUT
           fi
-          
-          # Format changelog with categories
-          changelog="## What's Changed"$'\n'
-          changelog+="$commits"$'\n'$'\n'
-          changelog+="**Full Changelog**: https://github.com/${{ github.repository }}/compare/${last_tag}...v${{ needs.version.outputs.version }}"
-          
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$changelog" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "📊 Changelog range: $(cat $GITHUB_OUTPUT | grep range= | cut -d= -f2)"
+
+      - name: Remove existing changelog to prevent merge
+        run: |
+          echo "🗑️ Removing any existing CHANGELOG.md..."
+          rm -f CHANGELOG.md
+          echo "✅ Clean slate for changelog generation"
+
+      - name: Generate changelog with git-cliff
+        id: git-cliff
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --verbose --strip header ${{ steps.range.outputs.range }}
+        env:
+          OUTPUT: CHANGELOG.md
+          GITHUB_REPO: ${{ github.repository }}
+
+      - name: Capture and cleanup changelog
+        id: capture
+        run: |
+          echo "📝 Capturing changelog from CHANGELOG.md..."
+
+          # Verify file exists before capture
+          [ -f "CHANGELOG.md" ] || { echo "❌ ERROR: CHANGELOG.md not generated"; exit 1; }
+
+          echo "✅ CHANGELOG.md found, capturing content..."
+          echo "changelog<<__CHANGELOG_DELIMITER_7a8b9c__" >> $GITHUB_OUTPUT
+          cat CHANGELOG.md >> $GITHUB_OUTPUT || { echo "❌ ERROR: Failed to read CHANGELOG.md"; exit 1; }
+          echo "__CHANGELOG_DELIMITER_7a8b9c__" >> $GITHUB_OUTPUT
+
+          echo "🗑️ Deleting CHANGELOG.md to prevent git commit..."
+          rm CHANGELOG.md || { echo "❌ ERROR: Failed to delete CHANGELOG.md"; exit 1; }
+
+          echo "✅ Changelog captured and file cleaned up successfully"
+
+      - name: Verify no changelog file remains
+        run: |
+          echo "🔍 Verifying CHANGELOG.md was properly deleted..."
+
+          if [ -f "CHANGELOG.md" ]; then
+            echo "❌ ERROR: CHANGELOG.md still exists after cleanup!"
+            echo "This file must NOT be committed to git history."
+            exit 1
+          fi
+
+          echo "✅ Confirmed: No CHANGELOG.md file in working directory"
+          echo "✅ Safe to proceed with release creation"
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -1055,20 +1307,90 @@ jobs:
           name: build-artifacts-${{ needs.version.outputs.version }}
           path: build-artifacts/
 
+      - name: Download native binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: native-binary-*-${{ needs.version.outputs.version }}
+          path: native-binaries/
+
+      - name: Prepare release artifacts
+        run: |
+          echo "📦 Preparing release artifacts..."
+
+          # List downloaded artifacts
+          echo "Build artifacts:"
+          ls -la build-artifacts/ || true
+
+          echo ""
+          echo "Native binaries:"
+          ls -la native-binaries/ || true
+
+          # Flatten native binary directory structure
+          cd native-binaries
+          find . -type f -exec mv {} . \;
+          find . -type d -empty -delete
+
+          echo ""
+          echo "Flattened native binaries:"
+          ls -lh
+
+          # Generate checksums for native binaries
+          echo ""
+          echo "🔐 Generating checksums..."
+          if command -v sha256sum &> /dev/null; then
+            sha256sum cycletime-server-* > checksums-sha256.txt
+          elif command -v shasum &> /dev/null; then
+            shasum -a 256 cycletime-server-* > checksums-sha256.txt
+          fi
+
+          if [ -f checksums-sha256.txt ]; then
+            echo "Checksums:"
+            cat checksums-sha256.txt
+          fi
+
+          cd ..
+
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           version="${{ needs.version.outputs.version }}"
-          echo "🚀 Creating release for version: $version"
-          
-          # Create release with artifacts
-          gh release create "v$version" \
-            --title "Release $version" \
-            --notes "${{ steps.changelog.outputs.changelog }}" \
-            --target "${{ github.sha }}" \
-            build-artifacts/distributions/* \
-            build-artifacts/libs/*
+          echo "🚀 Creating/updating release for version: $version"
+
+          # Write changelog to temp file to avoid bash injection
+          echo "${{ steps.capture.outputs.changelog }}" > /tmp/release-notes.md
+
+          # Check if release already exists
+          if gh release view "v$version" &>/dev/null; then
+            echo "Release v$version exists, updating notes..."
+            gh release edit "v$version" \
+              --notes-file /tmp/release-notes.md
+
+            # Upload artifacts (will replace existing ones)
+            gh release upload "v$version" \
+              --clobber \
+              build-artifacts/libs/*.jar \
+              build-artifacts/distributions/*.tar \
+              build-artifacts/distributions/*.zip \
+              native-binaries/cycletime-server-* \
+              native-binaries/checksums-sha256.txt
+
+            echo "✅ Release v$version updated with new notes and artifacts"
+          else
+            echo "Creating new release v$version..."
+            gh release create "v$version" \
+              --draft \
+              --title "Release $version" \
+              --notes-file /tmp/release-notes.md \
+              --target "${{ github.sha }}" \
+              build-artifacts/libs/*.jar \
+              build-artifacts/distributions/*.tar \
+              build-artifacts/distributions/*.zip \
+              native-binaries/cycletime-server-* \
+              native-binaries/checksums-sha256.txt
+
+            echo "✅ Release v$version created with JAR and native binaries"
+          fi
 
   # ========================================
   # VALIDATION & REPORTING

@@ -45,11 +45,13 @@ interface WorkflowRepository {
     suspend fun findById(id: WorkflowId): Workflow?
     
     /**
-     * Retrieves all workflows from the repository.
+     * Retrieves all workflows.
      *
-     * @return List of all workflows, ordered by creation date
+     * @param includeDeleted if true, includes soft-deleted workflows in results.
+     *                       Default: false (exclude deleted)
+     * @return list of workflows (empty if none found)
      */
-    suspend fun findAll(): List<Workflow>
+    suspend fun findAll(includeDeleted: Boolean = false): List<Workflow>
     
     /**
      * Updates an existing workflow in the repository.
@@ -74,4 +76,44 @@ interface WorkflowRepository {
      * @return true if the workflow exists, false otherwise
      */
     suspend fun existsById(id: WorkflowId): Boolean
+
+    /**
+     * Soft-deletes a workflow by setting deleted_at timestamp.
+     *
+     * Workflows have no child entities, so no cascade operations are performed.
+     * Future enhancement: Add validation to prevent deletion of workflows
+     * assigned to active issues when workflow-issue assignment is implemented.
+     *
+     * @param id The workflow ID to soft-delete
+     * @throws WorkflowNotFoundException if workflow does not exist
+     */
+    suspend fun softDelete(id: WorkflowId)
+
+    /**
+     * Restores a soft-deleted workflow by clearing deleted_at timestamp.
+     *
+     * This operation is idempotent - restoring an already active workflow
+     * will succeed without error.
+     *
+     * @param id The workflow ID to restore
+     */
+    suspend fun restore(id: WorkflowId)
+
+    /**
+     * Finds all soft-deleted workflows.
+     *
+     * @return List of deleted workflows ordered by deletion date
+     */
+    suspend fun findDeleted(): List<Workflow>
+
+    /**
+     * Finds a workflow by ID, including soft-deleted workflows.
+     *
+     * Unlike findById(), this method does not filter by deleted_at status,
+     * allowing retrieval of deleted workflows for restoration purposes.
+     *
+     * @param id The workflow ID to find
+     * @return The workflow if found (including deleted), null otherwise
+     */
+    suspend fun findIncludingDeleted(id: WorkflowId): Workflow?
 }

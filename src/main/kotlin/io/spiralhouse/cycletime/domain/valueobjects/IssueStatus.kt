@@ -15,6 +15,12 @@ enum class IssueStatus(
     private val _color: String,
     private val _priority: Int
 ) {
+    BACKLOG(
+        _displayName = "Backlog",
+        _description = "Issue is in the backlog awaiting refinement",
+        _color = "#9CA3AF",
+        _priority = 0
+    ),
     TODO(
         _displayName = "To Do",
         _description = "Work has not started on this issue",
@@ -43,18 +49,19 @@ enum class IssueStatus(
         _displayName = "Canceled",
         _description = "Work has been canceled and will not be completed",
         _color = "#EF4444",
-        _priority = 0
+        _priority = 5
     );
 
     /**
      * Returns the valid transitions from this status.
      */
     fun getValidTransitions(): List<IssueStatus> = when (this) {
+        BACKLOG -> listOf(TODO, CANCELED)
         TODO -> listOf(IN_PROGRESS, CANCELED)
         IN_PROGRESS -> listOf(IN_REVIEW, TODO, CANCELED)
         IN_REVIEW -> listOf(DONE, IN_PROGRESS, CANCELED)
         DONE -> emptyList()
-        CANCELED -> listOf(TODO)
+        CANCELED -> listOf(BACKLOG)
     }
 
     /**
@@ -111,7 +118,7 @@ enum class IssueStatus(
     /**
      * Checks if this status represents active work.
      */
-    fun isActive(): Boolean = this in listOf(TODO, IN_PROGRESS, IN_REVIEW)
+    fun isActive(): Boolean = this in listOf(BACKLOG, TODO, IN_PROGRESS, IN_REVIEW)
 
     /**
      * Checks if this status represents completed work.
@@ -168,7 +175,8 @@ enum class IssueStatus(
 
             // Handle alternative formats
             return when (trimmedValue.lowercase().replace(" ", "").replace("-", "")) {
-                "todo", "backlog" -> TODO
+                "backlog" -> BACKLOG
+                "todo" -> TODO
                 "inprogress", "working" -> IN_PROGRESS
                 "inreview", "review" -> IN_REVIEW
                 "done", "complete", "finished", "closed" -> DONE

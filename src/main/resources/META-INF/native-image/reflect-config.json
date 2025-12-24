@@ -1,46 +1,3762 @@
 [
-  {
-    "name": "kotlin.reflect.jvm.internal.KClassImpl",
-    "allDeclaredConstructors": true,
-    "allPublicConstructors": true,
-    "allDeclaredMethods": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "io.ktor.server.application.Application",
-    "allDeclaredConstructors": true,
-    "allPublicConstructors": true,
-    "allDeclaredMethods": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "io.ktor.server.netty.NettyApplicationEngine",
-    "allDeclaredConstructors": true,
-    "allPublicConstructors": true,
-    "allDeclaredMethods": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "com.zaxxer.hikari.HikariDataSource",
-    "allDeclaredConstructors": true,
-    "allPublicConstructors": true,
-    "allDeclaredMethods": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "com.zaxxer.hikari.HikariConfig",
-    "allDeclaredConstructors": true,
-    "allPublicConstructors": true,
-    "allDeclaredMethods": true,
-    "allPublicMethods": true,
-    "allDeclaredFields": true,
-    "allPublicFields": true
-  },
-  {
-    "name": "org.jetbrains.exposed.sql.Database",
-    "allDeclaredConstructors": true,
-    "allPublicConstructors": true,
-    "allDeclaredMethods": true,
-    "allPublicMethods": true
-  }
+{
+  "name":"[B"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.deser.BeanDeserializerModifier;"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.deser.Deserializers;"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.deser.KeyDeserializers;"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.deser.ValueInstantiators;"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.ser.BeanSerializerModifier;"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.ser.Serializers;"
+},
+{
+  "name":"[Lcom.zaxxer.hikari.util.ConcurrentBag$IConcurrentBagEntry;"
+},
+{
+  "name":"[Lio.ktor.network.selector.SelectInterest;"
+},
+{
+  "name":"[Ljava.lang.Comparable;"
+},
+{
+  "name":"[Ljava.lang.Object;"
+},
+{
+  "name":"[Ljava.lang.constant.ClassDesc;"
+},
+{
+  "name":"[Ljava.lang.constant.ConstantDesc;"
+},
+{
+  "name":"[Ljava.sql.Statement;"
+},
+{
+  "name":"[Ljava.util.HashMap$Node;"
+},
+{
+  "name":"[Lorg.HdrHistogram.DoubleRecorder;"
+},
+{
+  "name":"android.os.Build"
+},
+{
+  "name":"android.os.Build$VERSION"
+},
+{
+  "name":"ch.qos.logback.classic.encoder.PatternLayoutEncoder",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.logstash.logback.encoder.LogstashEncoder",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.logstash.logback.stacktrace.ShortenedThrowableConverter",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.joran.SerializedModelConfigurator",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.util.DefaultJoranConfigurator",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.core.ConsoleAppender",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.AsyncAppender",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.AsyncAppenderBase",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.rolling.RollingFileAppender",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.FileAppender",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.rolling.TimeBasedRollingPolicy",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.rolling.RollingPolicyBase",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.rolling.helper.TimeBasedArchiveRemover",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.rolling.DefaultTimeBasedFileNamingAndTriggeringPolicy",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.rolling.TimeBasedFileNamingAndTriggeringPolicyBase",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.OutputStreamAppender",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"ch.qos.logback.core.encoder.Encoder",
+  "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"ch.qos.logback.core.encoder.LayoutWrappingEncoder",
+  "methods":[{"name":"setParent","parameterTypes":["ch.qos.logback.core.spi.ContextAware"] }]
+},
+{
+  "name":"ch.qos.logback.core.pattern.PatternLayoutEncoderBase",
+  "methods":[{"name":"setPattern","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"ch.qos.logback.core.spi.ContextAware",
+  "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"com.fasterxml.jackson.databind.ext.Java7SupportImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"tools.jackson.databind.ObjectMapper",
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"tools.jackson.core.JsonGenerator",
+  "allDeclaredMethods":true
+},
+{
+  "name":"tools.jackson.databind.JsonSerializer",
+  "allDeclaredMethods":true
+},
+{
+  "name":"tools.jackson.databind.ser.std.StdSerializer",
+  "allDeclaredMethods":true
+},
+{
+  "name":"com.ibm.icu.text.Collator"
+},
+{
+  "name":"com.ibm.lang.management.OperatingSystemMXBean"
+},
+{
+  "name":"com.intellij.rt.coverage.instrumentation.Instrumentator",
+  "methods":[{"name":"premain","parameterTypes":["java.lang.String","java.lang.instrument.Instrumentation"] }]
+},
+{
+  "name":"com.sun.management.GarbageCollectionNotificationInfo"
+},
+{
+  "name":"com.sun.management.GcInfo",
+  "fields":[{"name":"builder"}, {"name":"extAttributes"}],
+  "methods":[{"name":"getMemoryUsageBeforeGc","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.management.OperatingSystemMXBean",
+  "methods":[{"name":"getCpuLoad","parameterTypes":[] }, {"name":"getProcessCpuLoad","parameterTypes":[] }, {"name":"getProcessCpuTime","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.tools.attach.VirtualMachine"
+},
+{
+  "name":"com.zaxxer.hikari.HikariConfig",
+  "allDeclaredFields":true
+},
+{
+  "name":"com.zaxxer.hikari.pool.PoolBase",
+  "fields":[{"name":"catalog"}]
+},
+{
+  "name":"com.zaxxer.hikari.pool.PoolEntry",
+  "fields":[{"name":"state"}]
+},
+{
+  "name":"io.PackageConfig"
+},
+{
+  "name":"io.kotest.core.TestConfiguration",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.kotest.core.spec.DslDrivenSpec",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.kotest.core.spec.Extendable",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.kotest.core.spec.Spec",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.kotest.core.spec.style.DescribeSpec",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.kotest.core.spec.style.FunSpec",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.kotest.core.spec.style.StringSpec",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.kotest.core.spec.style.scopes.DescribeSpecRootScope",
+  "allDeclaredClasses":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.kotest.core.spec.style.scopes.FunSpecRootScope",
+  "allDeclaredClasses":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.kotest.core.spec.style.scopes.RootScope",
+  "allDeclaredClasses":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.kotest.core.spec.style.scopes.StringSpecRootScope",
+  "allDeclaredClasses":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.kotest.provided.ProjectConfig"
+},
+{
+  "name":"io.ktor.client.HttpClient",
+  "fields":[{"name":"closed"}]
+},
+{
+  "name":"io.ktor.client.HttpClient$execute$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.HttpClientConfig"
+},
+{
+  "name":"io.ktor.client.call.HttpClientCall",
+  "fields":[{"name":"received"}]
+},
+{
+  "name":"io.ktor.client.content.ProgressListener"
+},
+{
+  "name":"io.ktor.client.engine.HttpClientEngine$executeWithinCallContext$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.engine.HttpClientEngine$executeWithinCallContext$2",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.engine.HttpClientEngine$install$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.engine.HttpClientEngineBase",
+  "fields":[{"name":"closed"}]
+},
+{
+  "name":"io.ktor.client.engine.HttpClientEngineCapability"
+},
+{
+  "name":"io.ktor.client.engine.HttpClientEngineConfig"
+},
+{
+  "name":"io.ktor.client.engine.cio.CIOEngine$execute$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.engine.cio.Endpoint",
+  "fields":[{"name":"connections"}]
+},
+{
+  "name":"io.ktor.client.engine.cio.Endpoint$connect$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.engine.cio.Endpoint$execute$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.engine.cio.Endpoint$makeDedicatedRequest$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.engine.cio.Endpoint$timeout$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.engine.cio.EndpointKt$setupTimeout$timeoutJob$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.plugins.HttpCallValidatorKt$HttpCallValidator$2$2",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.plugins.HttpRedirectKt$HttpRedirect$2$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.plugins.HttpRequestLifecycleKt$HttpRequestLifecycle$1$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.plugins.HttpRetryDelayContext"
+},
+{
+  "name":"io.ktor.client.plugins.HttpRetryModifyRequestContext"
+},
+{
+  "name":"io.ktor.client.plugins.HttpRetryShouldRetryContext"
+},
+{
+  "name":"io.ktor.client.plugins.HttpSend"
+},
+{
+  "name":"io.ktor.client.plugins.HttpSend$DefaultSender$execute$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.plugins.HttpSend$Plugin$install$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.plugins.HttpTimeoutConfig"
+},
+{
+  "name":"io.ktor.client.plugins.RequestError$install$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.plugins.SetupRequestContext$install$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.plugins.api.ClientPluginImpl"
+},
+{
+  "name":"io.ktor.client.plugins.api.ClientPluginInstance"
+},
+{
+  "name":"io.ktor.client.plugins.api.Send$install$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.plugins.sse.AfterRender$install$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.plugins.sse.BuildersKt$serverSentEventsSession-i8z2VEo$$inlined$processSession-rp2poPw$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.client.plugins.sse.ClientSSESession"
+},
+{
+  "name":"io.ktor.client.plugins.sse.SSEBufferPolicy"
+},
+{
+  "name":"io.ktor.client.plugins.sse.SSEClientException",
+  "allDeclaredFields":true
+},
+{
+  "name":"io.ktor.client.request.HttpRequest"
+},
+{
+  "name":"io.ktor.client.request.HttpRequestBuilder"
+},
+{
+  "name":"io.ktor.client.request.ResponseAdapter"
+},
+{
+  "name":"io.ktor.client.statement.HttpResponse"
+},
+{
+  "name":"io.ktor.client.statement.HttpStatement$fetchStreamingResponse$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.http.ContentType"
+},
+{
+  "name":"io.ktor.http.HttpStatusCode",
+  "fields":[{"name":"description"}, {"name":"value"}],
+  "methods":[{"name":"getDescription","parameterTypes":[] }, {"name":"getValue","parameterTypes":[] }]
+},
+{
+  "name":"io.ktor.http.HttpStatusCode$Companion"
+},
+{
+  "name":"io.ktor.http.content.OutputStreamContent"
+},
+{
+  "name":"io.ktor.http.content.TextContent"
+},
+{
+  "name":"io.ktor.network.selector.InterestSuspensionsMap",
+  "fields":[{"name":"acceptHandlerReference"}, {"name":"connectHandlerReference"}, {"name":"readHandlerReference"}, {"name":"writeHandlerReference"}]
+},
+{
+  "name":"io.ktor.network.selector.LockFreeMPSCQueue",
+  "fields":[{"name":"curRef"}]
+},
+{
+  "name":"io.ktor.network.selector.LockFreeMPSCQueueCore",
+  "fields":[{"name":"nextRef"}, {"name":"stateRef"}]
+},
+{
+  "name":"io.ktor.network.selector.SelectableBase",
+  "fields":[{"name":"_interestedOps"}]
+},
+{
+  "name":"io.ktor.network.sockets.CIOReaderKt$attachForReadingDirectImpl$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.network.sockets.CIOWriterKt$attachForWritingDirectImpl$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.network.sockets.SocketBase",
+  "fields":[{"name":"actualCloseFlag"}, {"name":"closeFlag"}, {"name":"readerJob"}, {"name":"writerJob"}]
+},
+{
+  "name":"io.ktor.server.application.PluginInstance"
+},
+{
+  "name":"io.ktor.server.engine.BaseApplicationEngineKt$installDefaultTransformationChecker$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.server.engine.BaseApplicationResponse"
+},
+{
+  "name":"io.ktor.server.engine.BaseApplicationResponse$Companion$setupFallbackResponse$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.server.metrics.micrometer.CallMeasure"
+},
+{
+  "name":"io.ktor.server.plugins.MutableOriginConnectionPoint"
+},
+{
+  "name":"io.ktor.server.plugins.calllogging.KtorMDCProvider"
+},
+{
+  "name":"io.ktor.server.plugins.di.DependencyInitializer$Explicit",
+  "fields":[{"name":"deferred"}]
+},
+{
+  "name":"io.ktor.server.plugins.di.DependencyRegistry"
+},
+{
+  "name":"io.ktor.server.request.DoubleReceivePreventionToken"
+},
+{
+  "name":"io.ktor.server.routing.RoutingCall"
+},
+{
+  "name":"io.ktor.server.routing.RoutingNode$buildPipeline$1$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.server.routing.RoutingRoot"
+},
+{
+  "name":"io.ktor.server.routing.RoutingRoot$Plugin$install$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.server.routing.RoutingRoot$executeResult$$inlined$execute$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.server.routing.RoutingRoot$executeResult$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.server.routing.RoutingRoot$interceptor$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.server.testing.TestApplication",
+  "fields":[{"name":"state"}]
+},
+{
+  "name":"io.ktor.server.testing.TestApplicationEngine$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.server.testing.TestApplicationEngine$2",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.server.testing.TestApplicationEngine$2$invokeSuspend$$inlined$execute$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.server.testing.TestApplicationEngine$handleRequest$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.server.testing.TestApplicationEngine$handleRequest$2",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.server.testing.TestApplicationEngine$handleRequest$2$invokeSuspend$$inlined$execute$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.server.testing.TestApplicationResponse",
+  "fields":[{"name":"writeContentChannel$internal"}]
+},
+{
+  "name":"io.ktor.server.testing.client.DelegatingTestClientEngine$execute$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.server.testing.client.TestHttpClientEngine$execute$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.util.Attributes"
+},
+{
+  "name":"io.ktor.util.collections.CopyOnWriteHashMap",
+  "fields":[{"name":"current"}]
+},
+{
+  "name":"io.ktor.util.internal.LockFreeLinkedListNode",
+  "fields":[{"name":"_next"}, {"name":"_prev"}, {"name":"removedRef"}]
+},
+{
+  "name":"io.ktor.util.pipeline.DebugPipelineContext$proceedLoop$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.util.reflect.TypeInfo"
+},
+{
+  "name":"io.ktor.utils.io.ByteChannel",
+  "fields":[{"name":"_closedCause"}, {"name":"suspensionSlot"}]
+},
+{
+  "name":"io.ktor.utils.io.ByteChannel$awaitContent$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.utils.io.ByteReadChannel"
+},
+{
+  "name":"io.ktor.utils.io.ByteReadChannelOperationsKt$reader$job$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.utils.io.ByteWriteChannelOperationsKt$writer$job$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.ktor.utils.io.jvm.javaio.PollersKt"
+},
+{
+  "name":"io.ktor.utils.io.pool.DefaultPool",
+  "fields":[{"name":"top"}]
+},
+{
+  "name":"io.micrometer.core.instrument.distribution.AbstractTimeWindowHistogram",
+  "fields":[{"name":"rotating"}]
+},
+{
+  "name":"io.micrometer.core.instrument.distribution.TimeWindowMax",
+  "fields":[{"name":"rotating"}]
+},
+{
+  "name":"io.mockk.JvmCoroutineCall",
+  "methods":[{"name":"callCoroutine","parameterTypes":["kotlin.coroutines.Continuation"] }]
+},
+{
+  "name":"io.mockk.proxy.jvm.JvmMockKAgentFactory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.mockk.proxy.jvm.advice.jvm.JvmMockKProxyAdvice",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.mockk.proxy.jvm.advice.jvm.JvmMockKProxyInterceptor",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.mockk.proxy.jvm.dispatcher.JvmMockKDispatcher"
+},
+{
+  "name":"io.mockk.proxy.jvm.dispatcher.JvmMockKWeakMap"
+},
+{
+  "name":"io.mockk.proxy.jvm.dispatcher.JvmMockKWeakMap$StrongKey"
+},
+{
+  "name":"io.mockk.proxy.jvm.dispatcher.JvmMockKWeakMap$WeakKey"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$4cscpe10"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$5j4bem00"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$61en0h10"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$6n8od330"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$7m9oaq00"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$9pqdof10"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$b0v96f10"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$bcfo1810"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$g7qoll10"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$ialm8210"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$meruac30"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$mf9m8g30"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$pjdfa310"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$plikpt30"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$q3087630"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$sgdndr30"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$snj05d20"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$t8gh0920"
+},
+{
+  "name":"io.mockk.renamed.java.util.List$Subclass2$auxiliary$u4tse900"
+},
+{
+  "name":"io.mockk.renamed.java.util.Set$Subclass0"
+},
+{
+  "name":"io.mockk.renamed.java.util.Set$Subclass0$auxiliary$4cscpe10"
+},
+{
+  "name":"io.mockk.renamed.java.util.Set$Subclass0$auxiliary$5j4bem00"
+},
+{
+  "name":"io.mockk.renamed.java.util.Set$Subclass0$auxiliary$7m9oaq00"
+},
+{
+  "name":"io.mockk.renamed.java.util.Set$Subclass0$auxiliary$9pqdof10"
+},
+{
+  "name":"io.mockk.renamed.java.util.Set$Subclass0$auxiliary$ekfldu10"
+},
+{
+  "name":"io.mockk.renamed.java.util.Set$Subclass0$auxiliary$mf9m8g30"
+},
+{
+  "name":"io.mockk.renamed.java.util.Set$Subclass0$auxiliary$q3087630"
+},
+{
+  "name":"io.mockk.renamed.java.util.Set$Subclass0$auxiliary$sgdndr30"
+},
+{
+  "name":"io.mockk.renamed.java.util.Set$Subclass0$auxiliary$snj05d20"
+},
+{
+  "name":"io.mockk.renamed.java.util.Set$Subclass0$auxiliary$t8gh0920"
+},
+{
+  "name":"io.modelcontextprotocol.kotlin.sdk.server.FeatureRegistry",
+  "fields":[{"name":"registry"}]
+},
+{
+  "name":"io.modelcontextprotocol.kotlin.sdk.server.Server",
+  "fields":[{"name":"sessions"}]
+},
+{
+  "name":"io.prometheus.metrics.expositionformats.internal.PrometheusProtobufWriterImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.EnhancedHealthResponse",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.EnhancedHealthResponse$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.ThreadSafetyQuickTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.HealthEndpointTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.AllTransitionsResponse",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.AllTransitionsResponse$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.ApiRootResponse",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.ApiRootResponse$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.CreateIssueRequest",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.CreateIssueRequest$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.CreateProjectRequest",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.CreateProjectRequest$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.CreateWorkflowRequest",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.CreateWorkflowRequest$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.ErrorResponse",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.ErrorResponse$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.IssueHierarchyExtendedResponse",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.IssueHierarchyExtendedResponse$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.IssueListResponse",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.IssueListResponse$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.IssueResponse",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.IssueResponse$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.ProjectListResponse",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.ProjectListResponse$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.ProjectResponse",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.ProjectResponse$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.StatusTransitionRequest",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.StatusTransitionRequest$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.UpdateIssueRequest",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.UpdateIssueRequest$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.UpdateProjectRequest",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.UpdateProjectRequest$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.UpdateWorkflowRequest",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.UpdateWorkflowRequest$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.ValidateTransitionRequest",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.ValidateTransitionRequest$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.ValidationResponse",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.ValidationResponse$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.WorkflowListResponse",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.WorkflowListResponse$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.WorkflowResponse",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.dto.WorkflowResponse$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.api.routes.common.RouteExtensionsKt$executeServiceCall$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.application.dto.WorkflowDto"
+},
+{
+  "name":"io.spiralhouse.cycletime.application.exceptions.ApplicationException",
+  "allDeclaredFields":true
+},
+{
+  "name":"io.spiralhouse.cycletime.application.exceptions.CircularDependencyException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"io.spiralhouse.cycletime.application.exceptions.HierarchyViolationException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.application.exceptions.InvalidStatusTransitionException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"io.spiralhouse.cycletime.application.exceptions.IssueNotFoundException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"io.spiralhouse.cycletime.application.exceptions.ProjectNotFoundException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"io.spiralhouse.cycletime.application.exceptions.SessionNotFoundException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"io.spiralhouse.cycletime.application.services.ApplicationServiceBase"
+},
+{
+  "name":"io.spiralhouse.cycletime.application.services.DashboardApplicationService"
+},
+{
+  "name":"io.spiralhouse.cycletime.application.services.DashboardApplicationService$getProjectHierarchy$2",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.application.services.DashboardApplicationService$getStorySubtasks$2",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.application.services.DashboardCache"
+},
+{
+  "name":"io.spiralhouse.cycletime.application.services.DashboardCache$getOrPut$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.application.services.IssueApplicationService"
+},
+{
+  "name":"io.spiralhouse.cycletime.application.services.ProjectApplicationService"
+},
+{
+  "name":"io.spiralhouse.cycletime.application.services.SessionApplicationService"
+},
+{
+  "name":"io.spiralhouse.cycletime.application.services.WorkflowApplicationService"
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.dto.IssueViewDTO",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.dto.IssueViewDTO$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.dto.ProjectHierarchyDTO",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.dto.ProjectHierarchyDTO$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.dto.ProjectStatistics"
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.dto.ProjectViewDTO",
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.dto.ProjectViewDTO$Companion",
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.routes.DashboardRoutesKt$getProjectHierarchyRoute$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.routes.DashboardRoutesKt$getProjectHierarchyRoute$1$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.routes.DashboardRoutesKt$getStorySubtasksRoute$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.routes.DashboardRoutesKt$getStorySubtasksRoute$1$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.routes.DashboardRoutesKt$htmlProjectHierarchyRoute$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.routes.DashboardRoutesKt$htmlProjectHierarchyRoute$1$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.routes.DashboardRoutesKt$htmlStorySubtasksFragmentRoute$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.dashboard.routes.DashboardRoutesKt$htmlStorySubtasksFragmentRoute$1$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.entities.SessionContext"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.entities.Workflow",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"canTransition","parameterTypes":["io.spiralhouse.cycletime.domain.valueobjects.IssueStatus","io.spiralhouse.cycletime.domain.valueobjects.IssueStatus"] }, {"name":"equals","parameterTypes":["java.lang.Object"] }, {"name":"getAllowedStatuses","parameterTypes":[] }, {"name":"getCreatedAt","parameterTypes":[] }, {"name":"getDeletedAt","parameterTypes":[] }, {"name":"getDescription","parameterTypes":[] }, {"name":"getId-qGu73ko","parameterTypes":[] }, {"name":"getInitialStatus","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"getTerminalStatuses","parameterTypes":[] }, {"name":"getUpdatedAt","parameterTypes":[] }, {"name":"getValidTransitions","parameterTypes":["io.spiralhouse.cycletime.domain.valueobjects.IssueStatus"] }, {"name":"hashCode","parameterTypes":[] }, {"name":"isTerminalStatus","parameterTypes":["io.spiralhouse.cycletime.domain.valueobjects.IssueStatus"] }, {"name":"toSnapshot","parameterTypes":[] }, {"name":"toString","parameterTypes":[] }, {"name":"updateDescription","parameterTypes":["java.lang.String"] }, {"name":"updateName","parameterTypes":["java.lang.String"] }, {"name":"updateTimestamp","parameterTypes":[] }, {"name":"validateTransition","parameterTypes":["io.spiralhouse.cycletime.domain.valueobjects.IssueStatus","io.spiralhouse.cycletime.domain.valueobjects.IssueStatus"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.entities.Workflow$Companion"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.entities.WorkflowSnapshot"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.exceptions.DomainException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","java.lang.Throwable"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.exceptions.IssueNotFoundException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.exceptions.ParentIssueDeletedException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.exceptions.ProjectNotFoundException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.exceptions.WorkflowNotFoundException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.repositories.IssueRepository"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.repositories.ProjectRepository"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.repositories.SessionRepository"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.repositories.UnitOfWork",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.repositories.WorkflowRepository",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.services.SystemTimeProvider"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.services.TimeProvider"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.valueobjects.Estimate"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.valueobjects.IssueId",
+  "fields":[{"name":"_value"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.valueobjects.IssueId$$serializer"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.valueobjects.IssueId$Companion"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.valueobjects.IssueStatus",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.valueobjects.IssueType"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.valueobjects.ProjectId",
+  "fields":[{"name":"_value"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.valueobjects.ProjectId$$serializer"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.valueobjects.ProjectId$Companion"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.valueobjects.ProjectStatus"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.valueobjects.SessionKey"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.valueobjects.WorkflowId",
+  "fields":[{"name":"value"}],
+  "methods":[{"name":"box-impl","parameterTypes":["java.lang.String"] }, {"name":"getValue","parameterTypes":[] }, {"name":"unbox-impl","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.valueobjects.WorkflowId$$serializer"
+},
+{
+  "name":"io.spiralhouse.cycletime.domain.valueobjects.WorkflowId$Companion"
+},
+{
+  "name":"io.spiralhouse.cycletime.infrastructure.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.infrastructure.alerting.AlertService"
+},
+{
+  "name":"io.spiralhouse.cycletime.infrastructure.database.DatabaseProvider"
+},
+{
+  "name":"io.spiralhouse.cycletime.infrastructure.health.HealthCheckService"
+},
+{
+  "name":"io.spiralhouse.cycletime.infrastructure.logging.ExceptionLoggerTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.infrastructure.logging.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.infrastructure.persistence.BaseExposedRepository",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository"
+},
+{
+  "name":"io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository"
+},
+{
+  "name":"io.spiralhouse.cycletime.infrastructure.persistence.ExposedSessionRepository"
+},
+{
+  "name":"io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"execute","parameterTypes":["kotlin.jvm.functions.Function1","kotlin.coroutines.Continuation"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.infrastructure.persistence.ExposedWorkflowRepository",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"delete-psOoQLs","parameterTypes":["java.lang.String","kotlin.coroutines.Continuation"] }, {"name":"deserializeAllowedStatuses","parameterTypes":["java.lang.String"] }, {"name":"existsById-psOoQLs","parameterTypes":["java.lang.String","kotlin.coroutines.Continuation"] }, {"name":"findAll","parameterTypes":["boolean","kotlin.coroutines.Continuation"] }, {"name":"findById-psOoQLs","parameterTypes":["java.lang.String","kotlin.coroutines.Continuation"] }, {"name":"findDeleted","parameterTypes":["kotlin.coroutines.Continuation"] }, {"name":"findIncludingDeleted-psOoQLs","parameterTypes":["java.lang.String","kotlin.coroutines.Continuation"] }, {"name":"restore-psOoQLs","parameterTypes":["java.lang.String","kotlin.coroutines.Continuation"] }, {"name":"save","parameterTypes":["io.spiralhouse.cycletime.domain.entities.Workflow","kotlin.coroutines.Continuation"] }, {"name":"serializeAllowedStatuses","parameterTypes":["java.util.Set"] }, {"name":"softDelete-psOoQLs","parameterTypes":["java.lang.String","kotlin.coroutines.Continuation"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.infrastructure.persistence.ExposedWorkflowRepository$Companion"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ConnectionPoolLoadTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.DependenciesErrorHandlingTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.DependenciesTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.DependencyInjectionIntegrationTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedIssueRepositoryTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedIssueRepositoryTest$1$4",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedIssueRepositoryTest$1$4$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedIssueRepositoryTest$1$4$10"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedIssueRepositoryTest$1$4$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedIssueRepositoryTest$1$4$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedIssueRepositoryTest$1$4$4"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedIssueRepositoryTest$1$4$5"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedIssueRepositoryTest$1$4$6"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedIssueRepositoryTest$1$4$7"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedIssueRepositoryTest$1$4$8"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedIssueRepositoryTest$1$4$9"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedProjectRepositoryTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedProjectRepositoryTest$1$4",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedProjectRepositoryTest$1$4$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedProjectRepositoryTest$1$4$10"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedProjectRepositoryTest$1$4$11"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedProjectRepositoryTest$1$4$12"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedProjectRepositoryTest$1$4$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedProjectRepositoryTest$1$4$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedProjectRepositoryTest$1$4$4"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedProjectRepositoryTest$1$4$5"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedProjectRepositoryTest$1$4$6"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedProjectRepositoryTest$1$4$7"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedProjectRepositoryTest$1$4$8"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedProjectRepositoryTest$1$4$9"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedSessionRepositoryTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedSessionRepositoryTest$1$4",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedSessionRepositoryTest$1$4$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedSessionRepositoryTest$1$4$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedSessionRepositoryTest$1$4$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedSessionRepositoryTest$1$4$4"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedSessionRepositoryTest$1$4$5"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedSessionRepositoryTest$1$4$6"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedSessionRepositoryTest$1$4$7"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedWorkflowRepositoryTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ExposedWorkflowRepositoryTest$1$10$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.H2CloseDelayTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.H2DatabaseConfigTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.H2DatabaseDriverTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.IssueApplicationServiceTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.IssueApplicationServiceTest$1$21$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.IssueApplicationServiceTest$1$29$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.IssueApplicationServiceTest$1$30$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.ProjectApplicationServiceTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.SessionApplicationServiceTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.SoftDeletionSchemaMigrationTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.TestTable",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.UnitOfWorkTransactionTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.UnitOfWorkTransactionTest$1$4"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.UnitOfWorkTransactionTest$1$4$2$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.UnitOfWorkTransactionTest$1$5"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.UnitOfWorkTransactionTest$1$5$2$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.UnitOfWorkTransactionTest$1$6"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.UnitOfWorkTransactionTest$1$6$1$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.UnitOfWorkTransactionTest$1$7"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$10$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$10$1$17"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$10$1$20"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$11$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$11$1$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$11$1$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$12$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$12$1$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$12$1$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$13$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$13$1$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$13$1$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$14$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$14$1$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$14$1$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$15$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$15$1$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$15$1$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$16$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$16$1$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$16$1$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$17$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$17$1$10"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$17$1$9"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$18$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$18$1$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$18$1$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$19$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$19$1$11"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$19$1$12"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$19$1$13"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$19$1$9"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$20$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$20$1$11"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$20$1$12"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$20$1$13"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$20$1$9"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$21$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$21$1$11"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$21$1$12"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$21$1$13"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$21$1$9"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$22$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$22$1$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$22$1$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$23$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$23$1$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$23$1$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$24$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$24$1$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$24$1$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$25$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$25$1$11"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$25$1$12"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$25$1$13"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$25$1$9"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$26$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$26$1$10"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$26$1$12"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$26$1$13"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$26$1$14"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$26$1$15"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$26$1$16"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$27$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$27$1$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$27$1$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$27$1$4"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$27$1$5"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$28$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$28$1$11"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$28$1$12"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$28$1$13"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$28$1$14"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$28$1$15"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$28$1$9"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$29$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$29$1$11"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$29$1$12"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$29$1$13"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$29$1$9"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$3$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$3$1$11"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$3$1$12"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$3$1$13"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$3$1$9"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$30$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$30$1$11"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$30$1$12"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$30$1$13"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$30$1$9"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$4$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$4$1$10"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$4$1$9"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$5$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$5$1$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$5$1$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$6$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$6$1$11"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$6$1$12"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$6$1$13"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$6$1$14"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$6$1$17"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$6$1$9"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$7$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$7$1$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$7$1$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$7$1$4"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$7$1$5"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$8$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$8$1$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$8$1$4"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$8$1$5"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$8$1$6"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$8$1$7"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$8$1$8"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$9$1",
+  "methods":[{"name":"invokeSuspend","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$9$1$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$9$1$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$9$1$4"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.WorkflowApplicationServiceTest$1$9$1$5"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.api.HealthEndpointIntegrationTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.api.LegacyEndpointRemovalTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.api.MetricsEndpointIntegrationTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.api.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.api.v1.AllTransitionsResponse",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "fields":[{"name":"Companion"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.api.v1.AllTransitionsResponse$$serializer",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.api.v1.AllTransitionsResponse$Companion",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"serializer","parameterTypes":[] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.api.v1.ApiVersioningTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.api.v1.NestedIssueRoutesTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.api.v1.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.api.v1.WorkflowTemplateTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.api.v1.WorkflowTransitionTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.concurrency.ConnectionPoolConcurrencyTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.concurrency.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.concurrency.RepositoryConcurrencyTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.concurrency.TransactionIsolationConcurrencyTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.dashboard.DashboardRoutesIntegrationTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.dashboard.DashboardRoutesIntegrationTestKt",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.dashboard.HtmlDashboardRoutesIntegrationTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.dashboard.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.edge.EdgeCaseTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.edge.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.IssueHierarchyMcpIntegrationTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.McpProtocolTestUtils",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.McpProtocolValidationException",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.SoftDeletionMCPIntegrationTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.StreamableHttpGetEndpointTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.StreamableHttpIntegrationTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.StreamableHttpSecurityTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.StreamableHttpSecurityTestKt",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.ValidationResult",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.sdk.LoggingSetLevelTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.sdk.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.sdk.SessionIdDiscoveryTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.IssueToolIntegrationTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.IssueToolIntegrationTest$1$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.IssueToolIntegrationTest$1$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.IssueToolIntegrationTest$1$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.IssueToolIntegrationTest$1$4"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.McpToolIntegrationTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.ProjectToolIntegrationTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.ProjectToolIntegrationTest$1$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.ProjectToolIntegrationTest$1$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.ProjectToolIntegrationTest$1$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.ProjectToolIntegrationTest$1$4"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.WorkflowToolIntegrationTest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.WorkflowToolIntegrationTest$1$1"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.WorkflowToolIntegrationTest$1$2"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.WorkflowToolIntegrationTest$1$3"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.tools.WorkflowToolIntegrationTest$1$4"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.workflows.PackageConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.workflows.WorkflowE2ETest",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["kotlin.jvm.internal.DefaultConstructorMarker"] }]
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.mcp.workflows.WorkflowE2ETestKt",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.spiralhouse.cycletime.integration.sse.SSETestBase",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.integration.MCPIntegrationService"
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.integration.MCPServerConfig"
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.providers.IssueResourceProvider"
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.providers.ProjectResourceProvider"
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.providers.ResourceProvider"
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.providers.SessionResourceProvider"
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.providers.WorkflowResourceProvider"
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.sdk.MCPSdkRoutingKt$configureMCPStreamableHttp$1$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.sdk.MCPSdkServer"
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.sdk.SDKSessionManager"
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.sdk.StreamableHttpHandler$buildToolsCallResponse$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.sdk.StreamableHttpHandler$handlePost$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.tools.AbstractToolProvider"
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.tools.DefaultIssueToolProvider"
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.tools.DefaultIssueToolProvider$getAsyncTools$10",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.tools.DefaultProjectToolProvider"
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.tools.DefaultSessionToolProvider"
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.tools.DefaultWorkflowToolProvider"
+},
+{
+  "name":"io.spiralhouse.cycletime.mcp.tools.ToolProvider"
+},
+{
+  "name":"io.spiralhouse.cycletime.test.utils.DashboardTestDataBuilder",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.spiralhouse.cycletime.test.utils.DashboardTestDataBuilder$TestProjectHierarchy",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.spiralhouse.cycletime.test.utils.DashboardTestDataBuilder$TestStorySubtasks",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.swagger.codegen.v3.CodegenContent",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"getContentType","parameterTypes":[] }, {"name":"getParameters","parameterTypes":[] }]
+},
+{
+  "name":"io.swagger.codegen.v3.CodegenModel",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getIsComposedModel","parameterTypes":[] }, {"name":"getModelJson","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }]
+},
+{
+  "name":"io.swagger.codegen.v3.CodegenObject",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"getHasHeaders","parameterTypes":[] }, {"name":"getHasMore","parameterTypes":[] }]
+},
+{
+  "name":"io.swagger.codegen.v3.CodegenOperation",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getAuthMethods","parameterTypes":[] }, {"name":"getBaseName","parameterTypes":[] }, {"name":"getBodyParams","parameterTypes":[] }, {"name":"getConsumes","parameterTypes":[] }, {"name":"getContents","parameterTypes":[] }, {"name":"getHasAuthMethods","parameterTypes":[] }, {"name":"getHasBodyParam","parameterTypes":[] }, {"name":"getHasConsumes","parameterTypes":[] }, {"name":"getHasFormParams","parameterTypes":[] }, {"name":"getHasHeaderParams","parameterTypes":[] }, {"name":"getHasOptionalParams","parameterTypes":[] }, {"name":"getHasParams","parameterTypes":[] }, {"name":"getHasPathParams","parameterTypes":[] }, {"name":"getHasProduces","parameterTypes":[] }, {"name":"getHasQueryParams","parameterTypes":[] }, {"name":"getHttpMethod","parameterTypes":[] }, {"name":"getNickname","parameterTypes":[] }, {"name":"getNotes","parameterTypes":[] }, {"name":"getOperationId","parameterTypes":[] }, {"name":"getOperationIdSnakeCase","parameterTypes":[] }, {"name":"getPath","parameterTypes":[] }, {"name":"getPathParams","parameterTypes":[] }, {"name":"getProduces","parameterTypes":[] }, {"name":"getQueryParams","parameterTypes":[] }, {"name":"getResponses","parameterTypes":[] }, {"name":"getReturnBaseType","parameterTypes":[] }, {"name":"getReturnType","parameterTypes":[] }, {"name":"getSummary","parameterTypes":[] }]
+},
+{
+  "name":"io.swagger.codegen.v3.CodegenParameter",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getBaseName","parameterTypes":[] }, {"name":"getDataFormat","parameterTypes":[] }, {"name":"getDataType","parameterTypes":[] }, {"name":"getDefaultValue","parameterTypes":[] }, {"name":"getDescription","parameterTypes":[] }, {"name":"getExample","parameterTypes":[] }, {"name":"getIsBodyParam","parameterTypes":[] }, {"name":"getJsonSchema","parameterTypes":[] }, {"name":"getParamName","parameterTypes":[] }, {"name":"getRequired","parameterTypes":[] }, {"name":"getSecondaryParam","parameterTypes":[] }, {"name":"getUnescapedDescription","parameterTypes":[] }]
+},
+{
+  "name":"io.swagger.codegen.v3.CodegenProperty",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.swagger.codegen.v3.CodegenResponse",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getCode","parameterTypes":[] }, {"name":"getJsonSchema","parameterTypes":[] }, {"name":"getMessage","parameterTypes":[] }, {"name":"getSchema","parameterTypes":[] }]
+},
+{
+  "name":"io.swagger.codegen.v3.VendorExtendable",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"getVendorExtensions","parameterTypes":[] }]
+},
+{
+  "name":"io.swagger.codegen.v3.generators.handlebars.StringUtilHelper",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"io.swagger.v3.core.jackson.mixin.ExtensionsMixin",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.swagger.v3.core.jackson.mixin.MediaTypeMixin",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.swagger.v3.core.jackson.mixin.SchemaMixin",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.swagger.v3.oas.models.media.ArraySchema",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.swagger.v3.oas.models.media.BooleanSchema",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.swagger.v3.oas.models.media.Content",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.swagger.v3.oas.models.media.DateTimeSchema",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.swagger.v3.oas.models.media.IntegerSchema",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.swagger.v3.oas.models.media.MapSchema",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.swagger.v3.oas.models.media.MediaType",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"getEncoding","parameterTypes":[] }, {"name":"getExample","parameterTypes":[] }, {"name":"getExamples","parameterTypes":[] }, {"name":"getExtensions","parameterTypes":[] }, {"name":"getSchema","parameterTypes":[] }]
+},
+{
+  "name":"io.swagger.v3.oas.models.media.ObjectSchema",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.swagger.v3.oas.models.media.Schema",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"get$dynamicAnchor","parameterTypes":[] }, {"name":"get$dynamicRef","parameterTypes":[] }, {"name":"get$ref","parameterTypes":[] }, {"name":"get$vocabulary","parameterTypes":[] }, {"name":"getAdditionalProperties","parameterTypes":[] }, {"name":"getAllOf","parameterTypes":[] }, {"name":"getAnyOf","parameterTypes":[] }, {"name":"getDefault","parameterTypes":[] }, {"name":"getDeprecated","parameterTypes":[] }, {"name":"getDescription","parameterTypes":[] }, {"name":"getDiscriminator","parameterTypes":[] }, {"name":"getEnum","parameterTypes":[] }, {"name":"getExample","parameterTypes":[] }, {"name":"getExamples","parameterTypes":[] }, {"name":"getExclusiveMaximum","parameterTypes":[] }, {"name":"getExclusiveMinimum","parameterTypes":[] }, {"name":"getExtensions","parameterTypes":[] }, {"name":"getExternalDocs","parameterTypes":[] }, {"name":"getFormat","parameterTypes":[] }, {"name":"getItems","parameterTypes":[] }, {"name":"getMaxItems","parameterTypes":[] }, {"name":"getMaxLength","parameterTypes":[] }, {"name":"getMaxProperties","parameterTypes":[] }, {"name":"getMaximum","parameterTypes":[] }, {"name":"getMinItems","parameterTypes":[] }, {"name":"getMinLength","parameterTypes":[] }, {"name":"getMinProperties","parameterTypes":[] }, {"name":"getMinimum","parameterTypes":[] }, {"name":"getMultipleOf","parameterTypes":[] }, {"name":"getNot","parameterTypes":[] }, {"name":"getNullable","parameterTypes":[] }, {"name":"getOneOf","parameterTypes":[] }, {"name":"getPattern","parameterTypes":[] }, {"name":"getProperties","parameterTypes":[] }, {"name":"getReadOnly","parameterTypes":[] }, {"name":"getRequired","parameterTypes":[] }, {"name":"getTitle","parameterTypes":[] }, {"name":"getType","parameterTypes":[] }, {"name":"getUniqueItems","parameterTypes":[] }, {"name":"getWriteOnly","parameterTypes":[] }, {"name":"getXml","parameterTypes":[] }]
+},
+{
+  "name":"io.swagger.v3.oas.models.media.StringSchema",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.swagger.v3.oas.models.media.UUIDSchema",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.swagger.v3.oas.models.parameters.Parameter",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"get$ref","parameterTypes":[] }, {"name":"getAllowEmptyValue","parameterTypes":[] }, {"name":"getAllowReserved","parameterTypes":[] }, {"name":"getContent","parameterTypes":[] }, {"name":"getDeprecated","parameterTypes":[] }, {"name":"getDescription","parameterTypes":[] }, {"name":"getExample","parameterTypes":[] }, {"name":"getExamples","parameterTypes":[] }, {"name":"getExplode","parameterTypes":[] }, {"name":"getExtensions","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"getRequired","parameterTypes":[] }, {"name":"getSchema","parameterTypes":[] }, {"name":"getStyle","parameterTypes":[] }]
+},
+{
+  "name":"io.swagger.v3.oas.models.parameters.Parameter$StyleEnum",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"io.swagger.v3.oas.models.parameters.PathParameter",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"getIn","parameterTypes":[] }, {"name":"getRequired","parameterTypes":[] }]
+},
+{
+  "name":"io.swagger.v3.oas.models.parameters.QueryParameter",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"getIn","parameterTypes":[] }]
+},
+{
+  "name":"io.swagger.v3.oas.models.parameters.RequestBody",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"get$ref","parameterTypes":[] }, {"name":"getContent","parameterTypes":[] }, {"name":"getDescription","parameterTypes":[] }, {"name":"getExtensions","parameterTypes":[] }, {"name":"getRequired","parameterTypes":[] }]
+},
+{
+  "name":"io.swagger.v3.oas.models.responses.ApiResponse",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"get$ref","parameterTypes":[] }, {"name":"getContent","parameterTypes":[] }, {"name":"getDescription","parameterTypes":[] }, {"name":"getExtensions","parameterTypes":[] }, {"name":"getHeaders","parameterTypes":[] }, {"name":"getLinks","parameterTypes":[] }]
+},
+{
+  "name":"java.beans.Introspector"
+},
+{
+  "name":"java.io.File"
+},
+{
+  "name":"java.io.IOException",
+  "allDeclaredFields":true
+},
+{
+  "name":"java.io.ObjectInputStream"
+},
+{
+  "name":"java.io.Serializable",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"java.lang.Boolean",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.Byte",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.CharSequence",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"isEmpty","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Character",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.Class",
+  "methods":[{"name":"getAnnotatedInterfaces","parameterTypes":[] }, {"name":"getAnnotatedSuperclass","parameterTypes":[] }, {"name":"getDeclaredMethod","parameterTypes":["java.lang.String","java.lang.Class[]"] }, {"name":"getMethod","parameterTypes":["java.lang.String","java.lang.Class[]"] }, {"name":"getModule","parameterTypes":[] }, {"name":"getNestHost","parameterTypes":[] }, {"name":"getNestMembers","parameterTypes":[] }, {"name":"getPermittedSubclasses","parameterTypes":[] }, {"name":"getRecordComponents","parameterTypes":[] }, {"name":"isNestmateOf","parameterTypes":["java.lang.Class"] }, {"name":"isRecord","parameterTypes":[] }, {"name":"isSealed","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.ClassLoader",
+  "methods":[{"name":"getDefinedPackage","parameterTypes":["java.lang.String"] }, {"name":"getUnnamedModule","parameterTypes":[] }, {"name":"registerAsParallelCapable","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.ClassValue"
+},
+{
+  "name":"java.lang.Cloneable",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"java.lang.Comparable",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"java.lang.Deprecated",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"forRemoval","parameterTypes":[] }, {"name":"since","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Double",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.Enum",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"clone","parameterTypes":[] }, {"name":"compareTo","parameterTypes":["java.lang.Enum"] }, {"name":"equals","parameterTypes":["java.lang.Object"] }, {"name":"hashCode","parameterTypes":[] }, {"name":"name","parameterTypes":[] }, {"name":"toString","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Enum$EnumDesc"
+},
+{
+  "name":"java.lang.Exception",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.Float",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.IllegalArgumentException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","java.lang.Throwable"] }]
+},
+{
+  "name":"java.lang.IllegalStateException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","java.lang.Throwable"] }]
+},
+{
+  "name":"java.lang.Integer",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.Iterable",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"forEach","parameterTypes":["java.util.function.Consumer"] }]
+},
+{
+  "name":"java.lang.Long",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.Module",
+  "methods":[{"name":"addExports","parameterTypes":["java.lang.String","java.lang.Module"] }, {"name":"canRead","parameterTypes":["java.lang.Module"] }, {"name":"getClassLoader","parameterTypes":[] }, {"name":"getDescriptor","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"getPackages","parameterTypes":[] }, {"name":"getResourceAsStream","parameterTypes":["java.lang.String"] }, {"name":"isExported","parameterTypes":["java.lang.String"] }, {"name":"isExported","parameterTypes":["java.lang.String","java.lang.Module"] }, {"name":"isNamed","parameterTypes":[] }, {"name":"isOpen","parameterTypes":["java.lang.String","java.lang.Module"] }]
+},
+{
+  "name":"java.lang.Object",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"clone","parameterTypes":[] }, {"name":"equals","parameterTypes":["java.lang.Object"] }, {"name":"hashCode","parameterTypes":[] }, {"name":"toString","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.ProcessHandle",
+  "methods":[{"name":"current","parameterTypes":[] }, {"name":"pid","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Runtime",
+  "methods":[{"name":"version","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Runtime$Version",
+  "methods":[{"name":"feature","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.RuntimeException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","java.lang.Throwable"] }]
+},
+{
+  "name":"java.lang.SecurityManager",
+  "methods":[{"name":"checkPermission","parameterTypes":["java.security.Permission"] }]
+},
+{
+  "name":"java.lang.Short",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.String",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "fields":[{"name":"Companion"}, {"name":"TYPE"}]
+},
+{
+  "name":"java.lang.System",
+  "methods":[{"name":"getSecurityManager","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Thread",
+  "fields":[{"name":"threadLocalRandomProbe"}]
+},
+{
+  "name":"java.lang.Throwable",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.Void",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.WeakPairMap"
+},
+{
+  "name":"java.lang.WeakPairMap$Pair"
+},
+{
+  "name":"java.lang.WeakPairMap$Pair$Lookup"
+},
+{
+  "name":"java.lang.WeakPairMap$Pair$Weak"
+},
+{
+  "name":"java.lang.WeakPairMap$Pair$Weak$1"
+},
+{
+  "name":"java.lang.WeakPairMap$WeakRefPeer"
+},
+{
+  "name":"java.lang.annotation.Retention",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.annotation.RetentionPolicy"
+},
+{
+  "name":"java.lang.annotation.Target",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.constant.ClassDesc",
+  "methods":[{"name":"descriptorString","parameterTypes":[] }, {"name":"ofDescriptor","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.lang.constant.Constable",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"java.lang.constant.ConstantDesc",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"java.lang.constant.DirectMethodHandleDesc",
+  "methods":[{"name":"lookupDescriptor","parameterTypes":[] }, {"name":"methodName","parameterTypes":[] }, {"name":"owner","parameterTypes":[] }, {"name":"refKind","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.constant.DirectMethodHandleDesc$Kind",
+  "methods":[{"name":"valueOf","parameterTypes":["int","boolean"] }]
+},
+{
+  "name":"java.lang.constant.DynamicConstantDesc",
+  "methods":[{"name":"bootstrapArgs","parameterTypes":[] }, {"name":"bootstrapMethod","parameterTypes":[] }, {"name":"constantName","parameterTypes":[] }, {"name":"constantType","parameterTypes":[] }, {"name":"ofCanonical","parameterTypes":["java.lang.constant.DirectMethodHandleDesc","java.lang.String","java.lang.constant.ClassDesc","java.lang.constant.ConstantDesc[]"] }]
+},
+{
+  "name":"java.lang.constant.MethodHandleDesc",
+  "methods":[{"name":"invocationType","parameterTypes":[] }, {"name":"of","parameterTypes":["java.lang.constant.DirectMethodHandleDesc$Kind","java.lang.constant.ClassDesc","java.lang.String","java.lang.String"] }]
+},
+{
+  "name":"java.lang.constant.MethodTypeDesc",
+  "methods":[{"name":"of","parameterTypes":["java.lang.constant.ClassDesc","java.lang.constant.ClassDesc[]"] }, {"name":"ofDescriptor","parameterTypes":["java.lang.String"] }, {"name":"parameterArray","parameterTypes":[] }, {"name":"returnType","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.instrument.Instrumentation",
+  "methods":[{"name":"addTransformer","parameterTypes":["java.lang.instrument.ClassFileTransformer","boolean"] }]
+},
+{
+  "name":"java.lang.invoke.MethodHandle",
+  "methods":[{"name":"bindTo","parameterTypes":["java.lang.Object"] }, {"name":"invokeWithArguments","parameterTypes":["java.lang.Object[]"] }]
+},
+{
+  "name":"java.lang.invoke.MethodHandles",
+  "methods":[{"name":"lookup","parameterTypes":[] }, {"name":"privateLookupIn","parameterTypes":["java.lang.Class","java.lang.invoke.MethodHandles$Lookup"] }]
+},
+{
+  "name":"java.lang.invoke.MethodHandles$Lookup",
+  "methods":[{"name":"findVirtual","parameterTypes":["java.lang.Class","java.lang.String","java.lang.invoke.MethodType"] }]
+},
+{
+  "name":"java.lang.invoke.MethodType",
+  "methods":[{"name":"methodType","parameterTypes":["java.lang.Class","java.lang.Class[]"] }]
+},
+{
+  "name":"java.lang.management.MemoryUsage",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"from","parameterTypes":["javax.management.openmbean.CompositeData"] }]
+},
+{
+  "name":"java.lang.module.ModuleDescriptor",
+  "methods":[{"name":"name","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.reflect.AnnotatedArrayType",
+  "methods":[{"name":"getAnnotatedGenericComponentType","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.reflect.AnnotatedParameterizedType",
+  "methods":[{"name":"getAnnotatedActualTypeArguments","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.reflect.AnnotatedType",
+  "methods":[{"name":"getAnnotatedOwnerType","parameterTypes":[] }, {"name":"getType","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.reflect.AnnotatedTypeVariable",
+  "methods":[{"name":"getAnnotatedBounds","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.reflect.AnnotatedWildcardType",
+  "methods":[{"name":"getAnnotatedLowerBounds","parameterTypes":[] }, {"name":"getAnnotatedUpperBounds","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.reflect.Executable",
+  "methods":[{"name":"getAnnotatedExceptionTypes","parameterTypes":[] }, {"name":"getAnnotatedParameterTypes","parameterTypes":[] }, {"name":"getAnnotatedReceiverType","parameterTypes":[] }, {"name":"getParameterCount","parameterTypes":[] }, {"name":"getParameters","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.reflect.Field",
+  "methods":[{"name":"getAnnotatedType","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.reflect.Method",
+  "methods":[{"name":"getAnnotatedReturnType","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.reflect.Parameter",
+  "methods":[{"name":"getModifiers","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"isNamePresent","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.reflect.TypeVariable",
+  "methods":[{"name":"getAnnotatedBounds","parameterTypes":[] }]
+},
+{
+  "name":"java.math.BigDecimal"
+},
+{
+  "name":"java.math.BigInteger"
+},
+{
+  "name":"java.net.ConnectException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.net.SocketException",
+  "allDeclaredFields":true
+},
+{
+  "name":"java.net.StandardSocketOptions"
+},
+{
+  "name":"java.nio.file.Path"
+},
+{
+  "name":"java.security.AccessController",
+  "methods":[{"name":"doPrivileged","parameterTypes":["java.security.PrivilegedAction"] }, {"name":"doPrivileged","parameterTypes":["java.security.PrivilegedExceptionAction"] }]
+},
+{
+  "name":"java.security.SecureRandomParameters"
+},
+{
+  "name":"java.sql.Date"
+},
+{
+  "name":"java.sql.SQLException",
+  "allDeclaredFields":true,
+  "fields":[{"name":"next"}]
+},
+{
+  "name":"java.sql.Timestamp"
+},
+{
+  "name":"java.time.Instant"
+},
+{
+  "name":"java.util.AbstractMap",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"java.util.Arrays",
+  "allDeclaredClasses":true
+},
+{
+  "name":"java.util.Arrays$ArrayList"
+},
+{
+  "name":"java.util.Collection",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"parallelStream","parameterTypes":[] }, {"name":"removeIf","parameterTypes":["java.util.function.Predicate"] }, {"name":"stream","parameterTypes":[] }, {"name":"toArray","parameterTypes":["java.util.function.IntFunction"] }]
+},
+{
+  "name":"java.util.Collections",
+  "allDeclaredClasses":true
+},
+{
+  "name":"java.util.Collections$EmptyMap",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"java.util.Collections$SingletonList"
+},
+{
+  "name":"java.util.Date"
+},
+{
+  "name":"java.util.HashMap",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"java.util.HashSet"
+},
+{
+  "name":"java.util.LinkedHashMap",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"java.util.LinkedHashSet"
+},
+{
+  "name":"java.util.List",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"add","parameterTypes":["int","java.lang.Object"] }, {"name":"add","parameterTypes":["java.lang.Object"] }, {"name":"addAll","parameterTypes":["int","java.util.Collection"] }, {"name":"addAll","parameterTypes":["java.util.Collection"] }, {"name":"addFirst","parameterTypes":["java.lang.Object"] }, {"name":"addLast","parameterTypes":["java.lang.Object"] }, {"name":"clear","parameterTypes":[] }, {"name":"contains","parameterTypes":["java.lang.Object"] }, {"name":"containsAll","parameterTypes":["java.util.Collection"] }, {"name":"get","parameterTypes":["int"] }, {"name":"getFirst","parameterTypes":[] }, {"name":"getLast","parameterTypes":[] }, {"name":"indexOf","parameterTypes":["java.lang.Object"] }, {"name":"isEmpty","parameterTypes":[] }, {"name":"iterator","parameterTypes":[] }, {"name":"lastIndexOf","parameterTypes":["java.lang.Object"] }, {"name":"listIterator","parameterTypes":[] }, {"name":"listIterator","parameterTypes":["int"] }, {"name":"remove","parameterTypes":["int"] }, {"name":"remove","parameterTypes":["java.lang.Object"] }, {"name":"removeAll","parameterTypes":["java.util.Collection"] }, {"name":"removeFirst","parameterTypes":[] }, {"name":"removeLast","parameterTypes":[] }, {"name":"replaceAll","parameterTypes":["java.util.function.UnaryOperator"] }, {"name":"retainAll","parameterTypes":["java.util.Collection"] }, {"name":"reversed","parameterTypes":[] }, {"name":"set","parameterTypes":["int","java.lang.Object"] }, {"name":"size","parameterTypes":[] }, {"name":"sort","parameterTypes":["java.util.Comparator"] }, {"name":"spliterator","parameterTypes":[] }, {"name":"subList","parameterTypes":["int","int"] }, {"name":"toArray","parameterTypes":[] }, {"name":"toArray","parameterTypes":["java.lang.Object[]"] }]
+},
+{
+  "name":"java.util.Map",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"isEmpty","parameterTypes":[] }, {"name":"size","parameterTypes":[] }]
+},
+{
+  "name":"java.util.Optional"
+},
+{
+  "name":"java.util.SequencedCollection",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"java.util.SequencedMap",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"java.util.Set",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"add","parameterTypes":["java.lang.Object"] }, {"name":"addAll","parameterTypes":["java.util.Collection"] }, {"name":"clear","parameterTypes":[] }, {"name":"contains","parameterTypes":["java.lang.Object"] }, {"name":"containsAll","parameterTypes":["java.util.Collection"] }, {"name":"isEmpty","parameterTypes":[] }, {"name":"iterator","parameterTypes":[] }, {"name":"remove","parameterTypes":["java.lang.Object"] }, {"name":"removeAll","parameterTypes":["java.util.Collection"] }, {"name":"retainAll","parameterTypes":["java.util.Collection"] }, {"name":"size","parameterTypes":[] }, {"name":"spliterator","parameterTypes":[] }, {"name":"toArray","parameterTypes":[] }, {"name":"toArray","parameterTypes":["java.lang.Object[]"] }]
+},
+{
+  "name":"java.util.UUID",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"java.util.concurrent.ArrayBlockingQueue"
+},
+{
+  "name":"java.util.concurrent.CancellationException",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.util.concurrent.ForkJoinPool",
+  "methods":[{"name":"<init>","parameterTypes":["int","java.util.concurrent.ForkJoinPool$ForkJoinWorkerThreadFactory","java.lang.Thread$UncaughtExceptionHandler","boolean","int","int","int","java.util.function.Predicate","long","java.util.concurrent.TimeUnit"] }]
+},
+{
+  "name":"java.util.concurrent.ForkJoinTask",
+  "fields":[{"name":"aux"}, {"name":"status"}]
+},
+{
+  "name":"java.util.concurrent.ScheduledThreadPoolExecutor",
+  "methods":[{"name":"setRemoveOnCancelPolicy","parameterTypes":["boolean"] }]
+},
+{
+  "name":"java.util.concurrent.atomic.AtomicBoolean",
+  "fields":[{"name":"value"}]
+},
+{
+  "name":"java.util.concurrent.atomic.AtomicReference",
+  "fields":[{"name":"value"}]
+},
+{
+  "name":"java.util.concurrent.atomic.Striped64",
+  "fields":[{"name":"base"}, {"name":"cellsBusy"}]
+},
+{
+  "name":"java.util.concurrent.locks.AbstractOwnableSynchronizer"
+},
+{
+  "name":"java.util.concurrent.locks.AbstractQueuedSynchronizer"
+},
+{
+  "name":"java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject"
+},
+{
+  "name":"java.util.concurrent.locks.ReentrantLock"
+},
+{
+  "name":"java.util.concurrent.locks.ReentrantLock$NonfairSync"
+},
+{
+  "name":"java.util.concurrent.locks.ReentrantLock$Sync"
+},
+{
+  "name":"javax.management.ObjectName"
+},
+{
+  "name":"jdk.internal.ValueBased"
+},
+{
+  "name":"jdk.internal.misc.Unsafe"
+},
+{
+  "name":"kotlin.Any"
+},
+{
+  "name":"kotlin.Array"
+},
+{
+  "name":"kotlin.Boolean"
+},
+{
+  "name":"kotlin.Comparable"
+},
+{
+  "name":"kotlin.Deprecated"
+},
+{
+  "name":"kotlin.Enum"
+},
+{
+  "name":"kotlin.ExtensionFunctionType"
+},
+{
+  "name":"kotlin.Function",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"kotlin.Function1"
+},
+{
+  "name":"kotlin.Function2"
+},
+{
+  "name":"kotlin.Function3"
+},
+{
+  "name":"kotlin.Int"
+},
+{
+  "name":"kotlin.Long"
+},
+{
+  "name":"kotlin.Metadata",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"bv","parameterTypes":[] }, {"name":"d1","parameterTypes":[] }, {"name":"d2","parameterTypes":[] }, {"name":"k","parameterTypes":[] }, {"name":"mv","parameterTypes":[] }, {"name":"pn","parameterTypes":[] }, {"name":"xi","parameterTypes":[] }, {"name":"xs","parameterTypes":[] }]
+},
+{
+  "name":"kotlin.Pair"
+},
+{
+  "name":"kotlin.SafePublicationLazyImpl",
+  "fields":[{"name":"_value"}]
+},
+{
+  "name":"kotlin.String"
+},
+{
+  "name":"kotlin.Throwable"
+},
+{
+  "name":"kotlin.Unit",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"kotlin.annotation.AnnotationTarget"
+},
+{
+  "name":"kotlin.annotation.MustBeDocumented",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"kotlin.annotation.Target",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"allowedTargets","parameterTypes":[] }]
+},
+{
+  "name":"kotlin.collections.EmptyList"
+},
+{
+  "name":"kotlin.collections.List"
+},
+{
+  "name":"kotlin.collections.Map"
+},
+{
+  "name":"kotlin.collections.MutableMap"
+},
+{
+  "name":"kotlin.collections.Set"
+},
+{
+  "name":"kotlin.coroutines.Continuation"
+},
+{
+  "name":"kotlin.coroutines.SuspendFunction0"
+},
+{
+  "name":"kotlin.coroutines.jvm.internal.BaseContinuationImpl"
+},
+{
+  "name":"kotlin.jvm.functions.Function1",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"kotlin.jvm.functions.Function1$Subclass1"
+},
+{
+  "name":"kotlin.jvm.internal.DefaultConstructorMarker"
+},
+{
+  "name":"kotlin.reflect.jvm.internal.ReflectionFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"kotlin.reflect.jvm.internal.impl.resolve.scopes.DescriptorKindFilter",
+  "allPublicFields":true
+},
+{
+  "name":"kotlin.time.Duration"
+},
+{
+  "name":"kotlinx.coroutines.AwaitAll",
+  "fields":[{"name":"notCompletedCount$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.AwaitAll$AwaitAllNode",
+  "fields":[{"name":"_disposer$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.CancellableContinuationImpl",
+  "fields":[{"name":"_decisionAndIndex$volatile"}, {"name":"_parentHandle$volatile"}, {"name":"_state$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.CancelledContinuation",
+  "fields":[{"name":"_resumed$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.CompletedExceptionally",
+  "fields":[{"name":"_handled$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.DispatchedCoroutine",
+  "fields":[{"name":"_decision$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.EventLoopImplBase",
+  "fields":[{"name":"_delayed$volatile"}, {"name":"_isCompleted$volatile"}, {"name":"_queue$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.InvokeOnCancelling",
+  "fields":[{"name":"_invoked$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.JobSupport",
+  "fields":[{"name":"_parentHandle$volatile"}, {"name":"_state$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.JobSupport$Finishing",
+  "fields":[{"name":"_exceptionsHolder$volatile"}, {"name":"_isCompleting$volatile"}, {"name":"_rootCause$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.TimeoutKt$withTimeoutOrNull$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"kotlinx.coroutines.channels.BufferedChannel",
+  "fields":[{"name":"_closeCause$volatile"}, {"name":"bufferEnd$volatile"}, {"name":"bufferEndSegment$volatile"}, {"name":"closeHandler$volatile"}, {"name":"completedExpandBuffersAndPauseFlag$volatile"}, {"name":"receiveSegment$volatile"}, {"name":"receivers$volatile"}, {"name":"sendSegment$volatile"}, {"name":"sendersAndCloseStatus$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.internal.ConcurrentLinkedListNode",
+  "fields":[{"name":"_next$volatile"}, {"name":"_prev$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.internal.DispatchedContinuation",
+  "fields":[{"name":"_reusableCancellableContinuation$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.internal.LimitedDispatcher",
+  "fields":[{"name":"runningWorkers$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.internal.LockFreeLinkedListNode",
+  "fields":[{"name":"_next$volatile"}, {"name":"_prev$volatile"}, {"name":"_removedRef$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.internal.LockFreeTaskQueue",
+  "fields":[{"name":"_cur$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.internal.LockFreeTaskQueueCore",
+  "fields":[{"name":"_next$volatile"}, {"name":"_state$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.internal.Segment",
+  "fields":[{"name":"cleanedAndPointers$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.internal.StackTraceRecoveryKt"
+},
+{
+  "name":"kotlinx.coroutines.internal.ThreadSafeHeap",
+  "fields":[{"name":"_size$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.scheduling.CoroutineScheduler",
+  "fields":[{"name":"_isTerminated$volatile"}, {"name":"controlState$volatile"}, {"name":"parkedWorkersStack$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.scheduling.CoroutineScheduler$Worker",
+  "fields":[{"name":"workerCtl$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.scheduling.WorkQueue",
+  "fields":[{"name":"blockingTasksInBuffer$volatile"}, {"name":"consumerIndex$volatile"}, {"name":"lastScheduledTask$volatile"}, {"name":"producerIndex$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.sync.MutexImpl",
+  "fields":[{"name":"owner$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.sync.SemaphoreAndMutexImpl",
+  "fields":[{"name":"_availablePermits$volatile"}, {"name":"deqIdx$volatile"}, {"name":"enqIdx$volatile"}, {"name":"head$volatile"}, {"name":"tail$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.test.AtomicBoolean",
+  "fields":[{"name":"container$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.test.TestBuildersKt__TestBuildersKt$runTest$2$1$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"kotlinx.coroutines.test.TestBuildersKt__TestBuildersKt$runTest$2$1$workRunner$1",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"kotlinx.coroutines.test.TestCoroutineScheduler",
+  "fields":[{"name":"count$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.test.internal.TestMainDispatcher$NonConcurrentlyModifiable",
+  "fields":[{"name":"_value$volatile"}, {"name":"exceptionWhenReading$volatile"}, {"name":"reader$volatile"}, {"name":"readers$volatile"}, {"name":"writer$volatile"}]
+},
+{
+  "name":"kotlinx.coroutines.test.internal.TestMainDispatcherFactory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"kotlinx.datetime.Instant",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"toString","parameterTypes":[] }]
+},
+{
+  "name":"kotlinx.datetime.Instant$Companion"
+},
+{
+  "name":"kotlinx.io.RefCountingCopyTracker",
+  "fields":[{"name":"copyCount"}]
+},
+{
+  "name":"kotlinx.io.Source"
+},
+{
+  "name":"kotlinx.kover.jvmagent.KoverJvmAgentPremain",
+  "methods":[{"name":"premain","parameterTypes":["java.lang.String","java.lang.instrument.Instrumentation"] }]
+},
+{
+  "name":"kotlinx.serialization.DeserializationStrategy",
+  "allDeclaredClasses":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"kotlinx.serialization.KSerializer",
+  "allDeclaredClasses":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"kotlinx.serialization.SerializationStrategy",
+  "allDeclaredClasses":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"kotlinx.serialization.descriptors.SerialDescriptor"
+},
+{
+  "name":"kotlinx.serialization.encoding.CompositeEncoder"
+},
+{
+  "name":"kotlinx.serialization.internal.GeneratedSerializer",
+  "allDeclaredClasses":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"kotlinx.serialization.internal.SerializationConstructorMarker"
+},
+{
+  "name":"kotlinx.serialization.json.Json"
+},
+{
+  "name":"net.bytebuddy.agent.Installer",
+  "methods":[{"name":"agentmain","parameterTypes":["java.lang.String","java.lang.instrument.Instrumentation"] }, {"name":"getInstrumentation","parameterTypes":[] }]
+},
+{
+  "name":"net.bytebuddy.asm.Advice$AllArguments",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"includeSelf","parameterTypes":[] }, {"name":"nullIfEmpty","parameterTypes":[] }, {"name":"readOnly","parameterTypes":[] }, {"name":"typing","parameterTypes":[] }]
+},
+{
+  "name":"net.bytebuddy.asm.Advice$Argument",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.asm.Advice$Enter",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"readOnly","parameterTypes":[] }, {"name":"typing","parameterTypes":[] }]
+},
+{
+  "name":"net.bytebuddy.asm.Advice$Exit",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.asm.Advice$FieldGetterHandle",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.asm.Advice$FieldSetterHandle",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.asm.Advice$Local",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.asm.Advice$OnMethodEnter",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"inline","parameterTypes":[] }, {"name":"prependLineNumber","parameterTypes":[] }, {"name":"skipOn","parameterTypes":[] }, {"name":"skipOnIndex","parameterTypes":[] }, {"name":"suppress","parameterTypes":[] }]
+},
+{
+  "name":"net.bytebuddy.asm.Advice$OnMethodExit",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"backupArguments","parameterTypes":[] }, {"name":"inline","parameterTypes":[] }, {"name":"onThrowable","parameterTypes":[] }, {"name":"repeatOn","parameterTypes":[] }, {"name":"repeatOnIndex","parameterTypes":[] }, {"name":"suppress","parameterTypes":[] }]
+},
+{
+  "name":"net.bytebuddy.asm.Advice$Origin",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.asm.Advice$Return",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"readOnly","parameterTypes":[] }, {"name":"typing","parameterTypes":[] }]
+},
+{
+  "name":"net.bytebuddy.asm.Advice$SelfCallHandle",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.asm.Advice$This",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"optional","parameterTypes":[] }, {"name":"readOnly","parameterTypes":[] }, {"name":"typing","parameterTypes":[] }]
+},
+{
+  "name":"net.bytebuddy.asm.Advice$Thrown",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.description.method.MethodDescription$InDefinedShape$AbstractBase$Executable",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.method.ParameterDescription$ForLoadedParameter$Parameter",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.method.ParameterList$ForLoadedExecutable$Executable",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.type.TypeDefinition$Sort$AnnotatedType",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.type.TypeDescription$ForLoadedType$Dispatcher",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$Delegator$ForLoadedExecutableExceptionType$Dispatcher",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$Delegator$ForLoadedExecutableParameterType$Dispatcher",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$Delegator$ForLoadedField$Dispatcher",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$Delegator$ForLoadedMethodReturnType$Dispatcher",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForComponentType$AnnotatedParameterizedType",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForOwnerType$AnnotatedType",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForTypeArgument$AnnotatedParameterizedType",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForTypeVariableBoundType$AnnotatedTypeVariable",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForTypeVariableBoundType$OfFormalTypeVariable$FormalTypeVariable",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForWildcardLowerBoundType$AnnotatedWildcardType",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForWildcardUpperBoundType$AnnotatedWildcardType",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.dynamic.loading.ClassInjector$UsingReflection$System",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.dynamic.loading.ClassInjector$UsingUnsafe$System",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.AllArguments",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"includeSelf","parameterTypes":[] }, {"name":"nullIfEmpty","parameterTypes":[] }]
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.Argument",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.BindingPriority",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.Default",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.DefaultCall",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.DefaultCallHandle",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.DefaultMethod",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.DefaultMethodHandle",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.FieldGetterHandle",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.FieldSetterHandle",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.FieldValue",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.Origin",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"cache","parameterTypes":[] }, {"name":"privileged","parameterTypes":[] }]
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.Super",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.SuperCall",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"fallbackToDefault","parameterTypes":[] }, {"name":"nullIfImpossible","parameterTypes":[] }, {"name":"serializableProxy","parameterTypes":[] }]
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.SuperCallHandle",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.SuperMethod",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.SuperMethodHandle",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.implementation.bind.annotation.This",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"net.bytebuddy.utility.Invoker",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.utility.Invoker$Dispatcher",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"net.bytebuddy.utility.JavaConstant$Simple$Dispatcher",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.utility.JavaConstant$Simple$Dispatcher$OfClassDesc",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.utility.JavaConstant$Simple$Dispatcher$OfDirectMethodHandleDesc",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.utility.JavaConstant$Simple$Dispatcher$OfDirectMethodHandleDesc$ForKind",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.utility.JavaConstant$Simple$Dispatcher$OfDynamicConstantDesc",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.utility.JavaConstant$Simple$Dispatcher$OfMethodHandleDesc",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.utility.JavaConstant$Simple$Dispatcher$OfMethodTypeDesc",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.utility.JavaModule$Module",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"net.bytebuddy.utility.JavaModule$Resolver",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.HdrHistogram.AbstractHistogram",
+  "fields":[{"name":"maxValue"}, {"name":"minNonZeroValue"}]
+},
+{
+  "name":"org.HdrHistogram.ConcurrentHistogram",
+  "fields":[{"name":"totalCount"}],
+  "methods":[{"name":"<init>","parameterTypes":["long","long","int"] }, {"name":"<init>","parameterTypes":["org.HdrHistogram.AbstractHistogram"] }]
+},
+{
+  "name":"org.HdrHistogram.Histogram",
+  "methods":[{"name":"<init>","parameterTypes":["long","long","int"] }]
+},
+{
+  "name":"org.HdrHistogram.WriterReaderPhaser",
+  "fields":[{"name":"evenEndEpoch"}, {"name":"oddEndEpoch"}, {"name":"startEpoch"}]
+},
+{
+  "name":"org.h2.Driver",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.mvstore.MVStore$TxCounter",
+  "fields":[{"name":"counter"}]
+},
+{
+  "name":"org.h2.mvstore.Page",
+  "fields":[{"name":"pos"}]
+},
+{
+  "name":"org.h2.mvstore.db.LobStorageMap$BlobMeta$Type",
+  "fields":[{"name":"INSTANCE"}]
+},
+{
+  "name":"org.h2.mvstore.db.LobStorageMap$BlobReference$Type",
+  "fields":[{"name":"INSTANCE"}]
+},
+{
+  "name":"org.h2.mvstore.db.NullValueDataType",
+  "fields":[{"name":"INSTANCE"}]
+},
+{
+  "name":"org.h2.mvstore.db.RowDataType$Factory",
+  "fields":[{"name":"INSTANCE"}],
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.mvstore.tx.VersionedValueType$Factory",
+  "fields":[{"name":"INSTANCE"}],
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.mvstore.type.ByteArrayDataType",
+  "fields":[{"name":"INSTANCE"}]
+},
+{
+  "name":"org.h2.mvstore.type.LongDataType",
+  "fields":[{"name":"INSTANCE"}]
+},
+{
+  "name":"org.h2.store.fs.async.FilePathAsync",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.mem.FilePathMem",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.mem.FilePathMemLZF",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.niomapped.FilePathNioMapped",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.niomem.FilePathNioMem",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.niomem.FilePathNioMemLZF",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.retry.FilePathRetryOnInterrupt",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.split.FilePathSplit",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.zip.FilePathZip",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.jetbrains.exposed.exceptions.ExposedSQLException",
+  "allDeclaredFields":true
+},
+{
+  "name":"org.jetbrains.exposed.sql.Column"
+},
+{
+  "name":"org.jetbrains.exposed.sql.ColumnSet",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.jetbrains.exposed.sql.Database"
+},
+{
+  "name":"org.jetbrains.exposed.sql.DdlAware",
+  "allDeclaredClasses":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.jetbrains.exposed.sql.Expression"
+},
+{
+  "name":"org.jetbrains.exposed.sql.FieldSet",
+  "allDeclaredClasses":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.jetbrains.exposed.sql.Op"
+},
+{
+  "name":"org.jetbrains.exposed.sql.ResultRow"
+},
+{
+  "name":"org.jetbrains.exposed.sql.SortOrder"
+},
+{
+  "name":"org.jetbrains.exposed.sql.SqlExpressionBuilder"
+},
+{
+  "name":"org.jetbrains.exposed.sql.Table",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.jetbrains.exposed.sql.Table$PrimaryKey",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.jetbrains.exposed.sql.Table$WhenMappings",
+  "allDeclaredClasses":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.jetbrains.exposed.sql.transactions.experimental.SuspendedKt$newSuspendedTransaction$2",
+  "fields":[{"name":"label"}]
+},
+{
+  "name":"org.locationtech.jts.geom.Geometry"
+},
+{
+  "name":"org.yaml.snakeyaml.LoaderOptions",
+  "methods":[{"name":"getMaxAliasesForCollections","parameterTypes":[] }, {"name":"setAllowDuplicateKeys","parameterTypes":["boolean"] }, {"name":"setAllowRecursiveKeys","parameterTypes":["boolean"] }, {"name":"setCodePointLimit","parameterTypes":["int"] }, {"name":"setMaxAliasesForCollections","parameterTypes":["int"] }]
+},
+{
+  "name":"sun.reflect.ReflectionFactory",
+  "methods":[{"name":"getReflectionFactory","parameterTypes":[] }, {"name":"newConstructorForSerialization","parameterTypes":["java.lang.Class","java.lang.reflect.Constructor"] }]
+},
+{
+  "name":"sun.security.provider.NativePRNG",
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["java.security.SecureRandomParameters"] }]
+},
+{
+  "name":"sun.security.provider.SHA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SecureRandom",
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["java.security.SecureRandomParameters"] }]
+}
 ]

@@ -4,12 +4,12 @@ type: guide
 domain: [development, mcp, protocol]
 description: "Comprehensive guide to developing MCP servers, tools, and resources for CycleTime"
 dependencies: [development-setup.md, ../../concepts/mcp/mcp-protocol-concepts.md]
-related: [../../patterns/mcp/json-rpc-pattern.md, ../../patterns/mcp/sse-transport-pattern.md]
+related: [../../patterns/mcp/json-rpc-pattern.md, ../../patterns/mcp/streamable-http-transport-pattern.md]
 keywords: [mcp, development, server, tools, resources, sdk, protocol]
 estimated_time: 30 minutes
 difficulty: advanced
 status: complete
-last_updated: 2025-10-20
+last_updated: 2025-11-20
 ---
 
 # MCP Development Guide
@@ -87,18 +87,18 @@ flowchart TD
 
 ## MCP Server Implementation Patterns
 
-CycleTime uses the official **MCP Kotlin SDK v0.7.2** maintained by Anthropic and JetBrains. The server integrates with Ktor for HTTP/SSE transport.
+CycleTime uses the official **MCP Kotlin SDK v0.7.6** maintained by Anthropic and JetBrains. The server integrates with Ktor using a custom Streamable HTTP transport handler.
 
 ### Server Architecture
 
 ```mermaid
 graph TB
     subgraph "Ktor HTTP Server"
-        SSE[SSE Endpoint<br/>/mcp/events]
-        POST[POST Endpoint<br/>/mcp]
+        Endpoint[Streamable HTTP Endpoint<br/>/mcp<br/>POST + GET]
     end
 
     subgraph "MCP Server Engine"
+        Handler[StreamableHttpHandler]
         Engine[MCPServerEngine]
         ToolProviders[Tool Providers]
         ResourceProviders[Resource Providers]
@@ -110,16 +110,18 @@ graph TB
         WorkflowService[Workflow Service]
     end
 
-    SSE --> Engine
-    POST --> Engine
+    Endpoint --> Handler
+    Handler --> Engine
     Engine --> ToolProviders
     Engine --> ResourceProviders
     ToolProviders --> ProjectService
     ToolProviders --> IssueService
     ResourceProviders --> ProjectService
 
-    style Engine fill:#e1f5ff
-    style ToolProviders fill:#fff4e1
+    style Endpoint fill:#e1f5ff
+    style Handler fill:#d29922
+    style Engine fill:#fff4e1
+    style ToolProviders fill:#e1ffe1
     style ResourceProviders fill:#e1ffe1
 ```
 
@@ -129,15 +131,14 @@ graph TB
 
 ```kotlin
 import io.ktor.server.application.*
-import io.ktor.server.sse.*
-import io.spiralhouse.cycletime.mcp.server.configureMCP
+import io.ktor.server.routing.*
+import io.spiralhouse.cycletime.mcp.server.configureMCPStreamableHttp
 
 fun Application.configureMCP() {
-    // Install SSE plugin for server-sent events
-    install(SSE)
-
-    // Configure MCP routing
-    configureMCPRouting()
+    // Configure MCP routing with Streamable HTTP transport
+    routing {
+        configureMCPStreamableHttp()
+    }
 }
 ```
 
@@ -210,44 +211,33 @@ fun Application.configureDependencies() {
 }
 ```
 
-### SSE Transport Implementation
+### Streamable HTTP Transport Implementation
 
-**SSE Endpoint** - Server-to-client event streaming:
+**Single Endpoint** - Unified POST and GET handling:
 
 ```kotlin
 import io.ktor.server.routing.*
-import io.ktor.server.sse.*
-import io.ktor.sse.*
+import io.ktor.server.application.*
 
-fun Application.configureMCPRouting() {
-    routing {
-        // SSE endpoint for server-to-client streaming
-        sse("/mcp/events") {
-            val sessionId = generateSessionId()
+fun Routing.configureMCPStreamableHttp() {
+    val mcpServer: MCPSdkServer by application.dependencies
+    val sessionManager: SDKSessionManager by application.dependencies
 
-            try {
-                // Register session for message delivery
-                sessionManager.registerSession(sessionId, this)
+    val handler = StreamableHttpHandler(
+        mcpServer = mcpServer.server,
+        sessionManager = sessionManager,
+        config = StreamableHttpConfig()
+    )
 
-                // Send session ID to client
-                send(ServerSentEvent(
-                    data = """{"sessionId":"$sessionId"}""",
-                    event = "connected"
-                ))
-
-                // Keep-alive loop
-                while (true) {
-                    send(ServerSentEvent(data = "ping", event = "ping"))
-                    delay(30_000) // 30 second heartbeat
-                }
-            } finally {
-                sessionManager.unregisterSession(sessionId)
-            }
+    route("/mcp") {
+        // POST endpoint for client requests
+        post {
+            handler.handlePost(call)
         }
 
-        // POST endpoint for client-to-server requests
-        post("/mcp") {
-            handleMCPRequest(call)
+        // GET endpoint for server-initiated messages (SSE stream)
+        get {
+            handler.handleGet(call)
         }
     }
 }
@@ -998,7 +988,7 @@ fun validateToolSchema(tool: Tool) {
 For specific issues, refer to these troubleshooting guides:
 
 - **[MCP Troubleshooting Overview](../troubleshooting/mcp/overview.md)** - General troubleshooting approach
-- **[Connection Issues](../troubleshooting/mcp/connection-issues.md)** - SSE connection problems
+- **[Connection Issues](../troubleshooting/mcp/connection-issues.md)** - Streamable HTTP connection problems
 - **[Protocol Validation Issues](../troubleshooting/mcp/protocol-validation-issues.md)** - JSON-RPC format errors
 - **[Error Codes Reference](../troubleshooting/mcp/error-codes.md)** - Complete error code catalog
 
@@ -1007,7 +997,7 @@ For specific issues, refer to these troubleshooting guides:
 ### Concept Documentation
 - [MCP Protocol Concepts](../../concepts/mcp/mcp-protocol-concepts.md) - Protocol fundamentals
 - [JSON-RPC Pattern](../../patterns/mcp/json-rpc-pattern.md) - Message handling
-- [SSE Transport Pattern](../../patterns/mcp/sse-transport-pattern.md) - Transport layer
+- [Streamable HTTP Transport Pattern](../../patterns/mcp/streamable-http-transport-pattern.md) - Transport layer
 
 ### Development Resources
 - [Testing Standards](.claude/shared/testing-standards.md) - Testing strategy

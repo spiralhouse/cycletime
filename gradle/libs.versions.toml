@@ -1,19 +1,21 @@
 [versions]
-kotlin = "2.2.20"
-ktor = "3.3.1"
+kotlin = "2.2.21"
+ktor = "3.3.2"
 exposed = "0.61.0"
 kotlinx-coroutines = "1.10.2"
-kotlinx-serialization = "1.7.3"
-logback = "1.5.18"
-h2 = "2.2.224"
+kotlinx-serialization = "1.9.0"
+logback = "1.5.22"
+logstash-encoder = "9.0"
+h2 = "2.4.240"
 hikaricp = "7.0.2"
-graalvm = "0.11.0"
-mcp-sdk = "0.7.2"
-kotest = "6.0.3"
-mockk = "1.14.6"
+graalvm = "0.11.2"
+mcp-sdk = "0.7.6"
+micrometer = "1.16.1"
+kotest = "6.0.7"
+mockk = "1.14.7"
 detekt = "1.23.8"
-kover = "0.9.2"
-dependency-check = "12.1.8"
+kover = "0.9.4"
+dependency-check = "12.1.9"
 
 [libraries]
 # Ktor
@@ -47,13 +49,18 @@ hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
 # Kotlin
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
-kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.6.1" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.7.1-0.6.x-compat" }
 
 # MCP SDK (placeholder - actual version TBD)
 mcp-kotlin-sdk = { module = "io.modelcontextprotocol:kotlin-sdk", version.ref = "mcp-sdk" }
 
 # Logging
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash-encoder" }
+
+# Metrics
+micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
+ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer", version.ref = "ktor" }
 
 # Testing
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5-jvm", version.ref = "kotest" }
@@ -66,7 +73,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-ktor = { id = "io.ktor.plugin", version = "3.3.1" }
+ktor = { id = "io.ktor.plugin", version = "3.3.3" }
 graalvm = { id = "org.graalvm.buildtools.native", version.ref = "graalvm" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

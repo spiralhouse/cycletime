@@ -7,6 +7,7 @@
 ### By Role
 - 🆕 **New Contributors**: Start with [Getting Started Guide](guides/getting-started/)
 - 👨‍💻 **Developers**: See [Development Guides](guides/development/) and [Testing Guides](guides/testing/)
+- 🎨 **UI Engineers**: Check [UI Mockup Catalog](reference/ui/mockup-catalog.md) and [Viewing Mockups Guide](guides/ui/viewing-mockups-guide.md)
 - 🏗️ **Architects**: Review [Architecture Concepts](concepts/architecture/) and [Design Patterns](patterns/)
 - 🚀 **DevOps**: Check [Operations Guides](guides/operations/) and [CI/CD Reference](reference/cicd/)
 
@@ -26,6 +27,7 @@
 - [Configuration](concepts/configuration/) - Config management
 - [CI/CD](reference/cicd/) - Continuous integration and deployment
 - [UI/Frontend](patterns/ui/) - HTMX, Tailwind CSS, and server-driven UI patterns
+- [UI Mockups](reference/ui/mockup-catalog.md) - Interactive HTML mockups and design system showcase
 
 ## Documentation Standards
 

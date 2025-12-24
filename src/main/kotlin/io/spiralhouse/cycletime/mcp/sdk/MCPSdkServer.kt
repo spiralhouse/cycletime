@@ -15,7 +15,7 @@ import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 
 /**
- * MCP SDK v0.7.2 Server initialization and configuration.
+ * MCP SDK v0.7.6 Server initialization and configuration.
  *
  * Provides official SDK-based transport layer replacing custom EventBus architecture.
  * The SDK handles:
@@ -47,8 +47,8 @@ class MCPSdkServer(
      * SDK Server instance with configured capabilities.
      *
      * Capabilities:
-     * - Resources: Full support with subscriptions and change notifications
-     * - Tools: Full support for tool execution
+     * - Resources: Read-only support (subscribe/listChanged disabled until SPI-579)
+     * - Tools: Full support for tool execution with change notifications
      */
     val server: Server = Server(
         serverInfo = Implementation(
@@ -58,9 +58,15 @@ class MCPSdkServer(
         options = ServerOptions(
             capabilities = ServerCapabilities(
                 resources = ServerCapabilities.Resources(
-                    subscribe = true,      // Support resource subscriptions
-                    listChanged = true     // Notify resource list changes
+                    subscribe = false,     // Not implemented - see SPI-579
+                    listChanged = false    // Not implemented - see SPI-579
                 ),
+                // KNOWN SDK LIMITATION (SPI-777):
+                // MCP Kotlin SDK v0.7.6 has hardcoded defaults: subscribe=true, listChanged=true
+                // Our explicit false values above are ignored by SDK serialization
+                // This is a known SDK issue - capabilities will advertise subscription support
+                // even though our ResourceRpcHandler throws UnsupportedOperationException
+                // Clients should gracefully handle this mismatch until SDK is fixed
                 tools = ServerCapabilities.Tools(
                     listChanged = true     // Notify tool list changes
                 )
@@ -69,10 +75,12 @@ class MCPSdkServer(
     )
 
     init {
-        logger.info("MCP SDK Server initializing (SDK v0.7.2, version: $version)")
+        logger.info("MCP SDK Server initializing (SDK v0.7.6, version: $version)")
 
-        // Register logging/setLevel handler (SPI-716)
-        registerLoggingHandler()
+        // TODO (SPI-716): Logging/setLevel handler registration pending SDK API support
+        // The logging capability requires request handler registration which is not yet
+        // available in the SDK. See registerLoggingHandler() implementation below.
+        // registerLoggingHandler()
 
         // Register all tool and resource providers via adapters (if provided)
         if (sessionManager != null && (toolProviders.isNotEmpty() || resourceProviders.isNotEmpty())) {
@@ -86,9 +94,11 @@ class MCPSdkServer(
             logger.info("MCP SDK Server initialized in test mode (no providers registered)")
         }
 
-        logger.debug("Server capabilities: resources (subscribe, listChanged), tools, logging")
+        logger.debug("Server capabilities: resources (read-only), tools (listChanged)")
     }
 
+    // TODO (SPI-716): Re-enable when SDK provides request handler registration API
+    /*
     /**
      * Register logging/setLevel request handler (SPI-716).
      *
@@ -106,9 +116,9 @@ class MCPSdkServer(
      * instantiated directly without going through the routing layer.
      */
     private fun registerLoggingHandler() {
-        server.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(
+        server.setRequestHandler(
             Method.Defined.LoggingSetLevel
-        ) { request, _ ->
+        ) { request: LoggingMessageNotification.SetLevelRequest, extra: RequestHandlerExtra ->
             // Log the level change for debugging purposes
             logger.debug("Client requested log level: ${request.level}")
 
@@ -117,6 +127,7 @@ class MCPSdkServer(
         }
         logger.debug("Registered logging/setLevel handler")
     }
+    */
 
     /**
      * Register all tool providers via adapters.

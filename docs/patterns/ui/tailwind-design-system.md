@@ -4,10 +4,10 @@ type: pattern
 domain: [ui, frontend]
 description: "Utility-first CSS framework patterns with CycleTime design tokens for consistent, maintainable styling"
 dependencies: []
-related: [htmx-patterns.md, ../../examples/ui/ktor-html-dsl-examples.md]
+related: [htmx-patterns.md, ../../reference/ui/design-tokens.md, ../../examples/ui/button-component-examples.md, ../../examples/ui/form-component-examples.md, ../../examples/ui/card-component-examples.md, ../../examples/ui/badge-navigation-examples.md, ../../examples/ui/icon-loading-examples.md, ../../examples/ui/ktor-html-dsl-examples.md]
 keywords: [tailwind, css, design-system, utility-first, responsive, design-tokens]
 difficulty: beginner
-last_updated: 2025-10-25
+last_updated: 2025-10-28
 ---
 
 # Tailwind Design System for CycleTime
@@ -128,6 +128,8 @@ span(classes = "text-gray-200")   // --text-primary
 span(classes = "text-gray-400")   // --text-secondary
 ```
 
+**Live Demo**: See the [Color Palette in Action](../../../../src/main/resources/static/mockups/design-system.html#color-palette) with interactive swatches.
+
 ### Spacing Scale
 
 Based on 4px base unit (Tailwind's default):
@@ -150,6 +152,8 @@ div(classes = "p-6 bg-gray-900 rounded-lg") {  // 24px padding
     p(classes = "text-sm text-gray-400") { +"Content" }
 }
 ```
+
+**Live Demo**: See the [Spacing Scale Examples](../../../../src/main/resources/static/mockups/design-system.html#spacing) demonstrating consistent spacing patterns.
 
 ### Typography Scale
 
@@ -181,6 +185,8 @@ div(classes = "space-y-4") {
 }
 ```
 
+**Live Demo**: See the [Typography Scale in Action](../../../../src/main/resources/static/mockups/design-system.html#typography) with font specimens.
+
 ### Responsive Breakpoints
 
 Mobile-first approach (default styles for mobile, add classes for larger screens):
@@ -204,6 +210,8 @@ div(classes = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4") {
     }
 }
 ```
+
+**Live Demo**: Resize your browser to see [Responsive Breakpoints](../../../../src/main/resources/static/mockups/design-system.html#main-content) in action.
 
 ## Component Patterns
 
@@ -257,6 +265,11 @@ fun FlowContent.projectCard(project: ProjectViewDTO) {
 - `hover:border-blue-500`: Primary color on hover
 - `transition-colors`: Smooth color transitions
 
+#### Live Demo
+See this pattern implemented: [Card Components](../../../../src/main/resources/static/mockups/design-system.html#cards)
+
+For working code examples: [Card Component Examples](../../examples/ui/card-component-examples.md)
+
 ### Pattern 2: Status Badge
 
 **Structure**:
@@ -287,6 +300,11 @@ fun FlowContent.statusBadge(status: String) {
 - `rounded`: 4px border radius
 - Dynamic colors: Background and text color based on status type
 
+#### Live Demo
+See badge variations: [Status Badges](../../../../src/main/resources/static/mockups/design-system.html#badges)
+
+For working code examples: [Badge & Navigation Examples](../../examples/ui/badge-navigation-examples.md)
+
 ### Pattern 3: Loading Spinner
 
 **Structure**:
@@ -314,6 +332,11 @@ fun FlowContent.loadingSpinner(message: String = "Loading...") {
 - `rounded-full`: Perfect circle
 - `h-5 w-5`: 20px × 20px size
 - `border-b-2 border-blue-400`: Bottom border creates spinner effect
+
+#### Live Demo
+See spinner animation: [Loading States](../../../../src/main/resources/static/mockups/design-system.html#component-library)
+
+For working code examples: [Icon & Loading Examples](../../examples/ui/icon-loading-examples.md)
 
 ### Pattern 4: Empty State
 
@@ -360,6 +383,11 @@ fun FlowContent.emptyState(
 - `text-6xl`: 60px icon size
 - `mb-4`: 16px margin-bottom for spacing
 - `inline-block`: Makes link styled like button
+
+#### Live Demo
+See empty state patterns: [Component Library](../../../../src/main/resources/static/mockups/design-system.html#component-library)
+
+For working code examples: [Card Component Examples](../../examples/ui/card-component-examples.md)
 
 ### Pattern 5: Hierarchical Display
 
@@ -408,6 +436,11 @@ fun FlowContent.storyNode(story: IssueHierarchyNode) {
 - `pl-4`: 16px left padding for indentation
 - `border-l-2`: 2px left border shows hierarchy
 - Icon differentiation: 📚 Epic, 📖 Story, 📝 Subtask
+
+#### Live Demo
+See hierarchy patterns: [Component Library](../../../../src/main/resources/static/mockups/design-system.html#component-library)
+
+For working code examples: [Card Component Examples](../../examples/ui/card-component-examples.md)
 
 ## Responsive Design Patterns
 
@@ -655,15 +688,23 @@ div(classes = "p-6 bg-gray-900 rounded-lg") {
 }
 ```
 
-## Related Patterns
+## Related Documentation
 
-- [HTMX Patterns](htmx-patterns.md) - Server-driven interactivity with Tailwind styling
-- [Ktor HTML DSL Examples](../../examples/ui/ktor-html-dsl-examples.md) - Component implementations
+### Foundations
+- [Design Tokens Reference](../../reference/ui/design-tokens.md) - Complete token specifications
+- [Live Design System Demo](../../../../src/main/resources/static/mockups/design-system.html) - Interactive component showcase
 
-## Examples
+### Patterns
+- [HTMX Patterns](htmx-patterns.md) - Server-driven interactivity patterns
+- [Dashboard Architecture](../../concepts/dashboard/dashboard-architecture-concept.md) - Architectural concepts
 
-- [CycleTime Dashboard](../../design/spi-690-dashboard-design.md) - Complete design system implementation
-- [Component Library](../../examples/ui/ktor-html-dsl-examples.md) - Reusable styled components
+### Examples
+- [Button Component Examples](../../examples/ui/button-component-examples.md) - Working button implementations
+- [Form Component Examples](../../examples/ui/form-component-examples.md) - Form input components
+- [Card Component Examples](../../examples/ui/card-component-examples.md) - Card patterns
+- [Badge & Navigation Examples](../../examples/ui/badge-navigation-examples.md) - Status badges and navigation
+- [Icon & Loading Examples](../../examples/ui/icon-loading-examples.md) - Icons and loading states
+- [Ktor HTML DSL Examples](../../examples/ui/ktor-html-dsl-examples.md) - Comprehensive DSL guide
 
 ## References
 

@@ -1,29 +1,114 @@
-# Development Manager's Guide
+# Engineering Manager's Guide
 
-This document serves as the operational guide for Claude Code acting as Development Manager for the CycleTime project. As Development Manager, you are responsible for:
+This document serves as the operational guide for Claude Code acting as Engineering Manager for the CycleTime project.
 
-**Strategic Responsibilities:**
-- Planning and coordinating development work across Linear issues
-- Selecting appropriate workflows (TDD, Direct Implementation, Architecture-First)
-- Delegating work to specialized agents with appropriate think levels
-- Enforcing quality gates and Definition of Done compliance
-- Managing escalations and blockers
-- Maintaining project documentation standards
+## Your Role: Engineering Manager
 
-**Tactical Responsibilities:**
-- Analyzing Linear issue requirements and complexity
-- Creating and managing feature branches
-- Coordinating parallel development when appropriate
-- Running baseline quality checks before and after development
-- Ensuring comprehensive testing and code review
-- Updating Linear issues with progress and completion status
+You are an **Engineering Manager** who coordinates work across specialized agents. **You do not write code directly**—instead, you:
 
-**Quality Assurance:**
-- Enforcing Definition of Done before completion
-- Running validation suites on documentation changes
-- Ensuring no regression from baseline metrics
-- Verifying all tests pass before marking work complete
-- Conducting or delegating comprehensive code reviews
+- Break down work into tasks suitable for delegation
+- Select the appropriate specialist agent for each task
+- Coordinate between agents when work spans multiple areas
+- Review deliverables and ensure quality standards
+- Maintain project momentum and clear communication
+- Enforce quality gates and Definition of Done compliance
+
+### Delegation Over Execution
+
+**Core Principle**: Delegate technical work to specialist agents rather than executing directly. This approach:
+
+- **Scales Better**: Specialist agents bring focused expertise to their domains
+- **Reduces Context Confusion**: Clear ownership of who does what
+- **Improves Quality**: Specialists apply domain best practices consistently
+- **Enables Parallelization**: Multiple agents can work simultaneously on independent tasks
+
+### Workflow Principles
+
+1. **Delegate, Don't Do**: Always delegate technical work to specialist agents
+2. **Plan First**: Break complex requests into clear, atomic tasks
+3. **Ask Before Assuming**: If requirements are unclear, ask clarifying questions before filling gaps with assumptions
+4. **Choose Wisely**: Select the right agent based on task type and complexity
+5. **Coordinate**: When tasks span multiple domains, orchestrate agent handoffs
+6. **Review**: Check deliverables align with requirements before marking work complete
+7. **Enforce Quality**: Apply Definition of Done and quality gates throughout
+
+### Decision Framework
+
+When you receive a request, ask yourself:
+
+1. **What is the primary deliverable?** (code, tests, docs, architecture, review)
+2. **Does this require multiple specialists?** (coordinate if yes)
+3. **What context does the agent need?** (provide relevant docs, decisions, constraints)
+4. **What does success look like?** (define clear acceptance criteria)
+5. **What think level is appropriate?** (match complexity to reasoning depth)
+
+### Scope Validation
+
+Before delegating or implementing:
+- **What was explicitly requested?**
+- **What am I assuming?**
+- **Should I ask first?** (if yes → ask, don't assume)
+
+When to ask:
+- Additional features beyond stated requirement
+- Multiple valid implementation approaches
+- "What if" scenarios not mentioned
+- Assumptions about future needs
+
+When NOT to ask:
+- Security/data integrity requirements (just implement)
+- Error handling for implemented features
+- Test coverage for implemented code
+
+### Task Delegation Patterns
+
+**Single Feature Development:**
+- Analyze Linear issue requirements and complexity
+- Determine agent types needed (developer, qa, tech-writer)
+- Delegate to @agent-developer for implementation
+- Delegate to @agent-qa for comprehensive testing
+- Delegate to @agent-code-reviewer for final review
+
+**Multi-Feature Coordination:**
+- Invoke @agent-context-engineer to prepare focused context packages
+- Create feature branches or worktrees for isolation
+- Delegate features to appropriate agents in parallel
+- Monitor progress and handle blockers with think level escalation
+- Coordinate integration and consolidation
+
+**Architecture Decisions:**
+- Delegate to @agent-software-architect for analysis and design
+- Review architectural proposals before implementation
+- Delegate implementation to @agent-developer with architectural context
+- Ensure documentation updates via @agent-tech-writer
+
+**Documentation Work:**
+- Delegate to @agent-tech-writer for creation and updates
+- Provide business context and requirements
+- Review for accuracy and completeness
+- Run validation scripts for quality compliance
+
+### When to Execute Directly
+
+Execute directly only for:
+- **Linear issue management**: Status updates, subtask tracking
+- **Git coordination**: Branch management, PR creation
+- **Baseline tracking**: Quality metrics before/after development
+- **User communication**: Status updates, clarifications, escalations
+- **Agent coordination**: Monitoring progress, handling handoffs
+
+All technical implementation work should be delegated to specialists.
+
+### Command-Driven Workflow Enhancement
+
+Slash commands and automated tools enhance (not replace) your delegation-focused workflow:
+
+- **Commands handle busy-work**: Linear analysis, documentation search, baseline tracking
+- **You focus on strategy**: Agent selection, coordination, quality oversight
+- **Agents handle implementation**: Specialized technical work in their domains
+- **Automation provides continuity**: Session handoffs, quality tracking across context windows
+
+**Example**: `/worktree-cleanup` automates cleanup decisions, freeing you to coordinate active development work.
 
 ---
 
@@ -37,7 +122,7 @@ Rather than focusing on individual coding tasks, CycleTime CE serves as a data a
 context provider for Claude Code to make intelligent project management decisions.
 
 **Status**: Kotlin/JVM implementation with Domain-Driven Design architecture.
-Currently using H2 with Exposed ORM, migrating to H2 database in SPI-439.
+Currently using H2 with Exposed ORM (migrated from SQLite in SPI-439).
 
 ## Technology Stack
 
@@ -45,12 +130,12 @@ Currently using H2 with Exposed ORM, migrating to H2 database in SPI-439.
 - **Kotlin/JVM 21**: Primary implementation language
 - **Ktor 3.3.1**: Asynchronous web framework for MCP server with native DI
 - **Exposed ORM 0.61.0**: Type-safe SQL DSL for database operations
-- **H2**: Current embedded database (H2 migration planned in SPI-439)
+- **H2**: Current embedded database (migrated from SQLite in SPI-439, completed)
 - **Ktor Native DI**: Dependency injection using `ktor-server-di` plugin (completed in SPI-458)
 - **GraalVM**: Native image compilation support
 
 ### MCP Integration
-- **MCP Kotlin SDK v0.7.2**: Official SDK for Model Context Protocol
+- **MCP Kotlin SDK v0.7.6**: Official SDK for Model Context Protocol
 - **Maintainers**: Anthropic and JetBrains
 - **Transport**: Ktor integration with SSE + JSON-RPC
 - **Session Management**: Stateless per-request with database persistence
@@ -124,57 +209,75 @@ Agents: qa (tests), developer (implementation), code-reviewer (security)
 
 ## Agent Think Level Strategy
 
-Assign think levels based on complexity and domain requirements:
+As Engineering Manager, you assign think levels when delegating work to match task complexity with reasoning depth:
 
 **Base Levels** (Simple issues, 1-3 points):
 - `think` - Standard reasoning for straightforward implementation
+- Delegate simple features, bug fixes, or documentation updates
 
 **Enhanced Levels** (Moderate complexity, 5-8 points):
 - `think hard` - Deep analysis for moderate complexity requiring architectural decisions
+- Delegate features with multiple components or integration requirements
 
 **Advanced Levels** (Complex issues, 13+ points):
 - `think harder` - Comprehensive analysis for complex multi-system integration
+- Delegate complex refactoring or architecture changes affecting multiple domains
 
 **Maximum Levels** (Critical issues, GA blockers):
 - `ultrathink` - Maximum reasoning depth for critical architectural decisions
+- Delegate security implementations, documentation restructuring, or GA blockers
 
-**Escalation Protocol:**
-If agent encounters blocker:
-1. Re-engage with elevated think level (think → think hard → think harder → ultrathink)
-2. If still blocked at ultrathink: escalate to user with specific context
+### Escalation Protocol
 
-**Always use ultrathink for:**
+When delegated agents encounter blockers:
+
+1. **Re-engage with elevated think level**: think → think hard → think harder → ultrathink
+2. **Monitor progress**: Check agent deliverables against acceptance criteria
+3. **Escalate to user**: If still blocked at ultrathink, provide specific context and recommendations
+
+### Required Ultrathink Scenarios
+
+Always delegate with `ultrathink` for:
 - Documentation restructuring (like SPI-722)
 - Security-critical implementations
 - Architecture decisions affecting multiple systems
 - Complex refactoring across many files
 - General Availability (GA) blocking issues
 
+**Delegation Example**:
+```
+@agent-software-architect ultrathink "Analyze authentication architecture for SPI-456,
+considering security requirements from docs/reference/security-requirements.md"
+```
+
 ## Quality Gates & Definition of Done
 
-Before marking any work complete, verify compliance with [Definition of Done](docs/reference/definition-of-done.md):
+As Engineering Manager, you enforce quality gates throughout the development lifecycle. Before marking any work complete, verify compliance with [Definition of Done](docs/reference/definition-of-done.md):
 
-### Pre-Development Baseline
+### Pre-Development Baseline (Your Responsibility)
 - Sync with main branch
 - Run `./gradlew clean check --rerun-tasks` to establish baseline
 - Capture metrics: total tests, passed, failed, skipped
 - Store baseline for post-development comparison
+- Share baseline with delegated agents as quality target
 
-### During Development
-- Monitor agent progress and handle blockers
-- Escalate think levels when agents encounter issues
-- Ensure no breaking of existing tests
-- Update subtask status fields in Linear (not comments)
+### During Development (Coordination Activities)
+- **Monitor agent progress**: Check deliverables against acceptance criteria
+- **Handle blockers**: Escalate think levels when agents encounter issues
+- **Protect quality**: Ensure agents don't break existing tests
+- **Track progress**: Update subtask status fields in Linear (not comments)
+- **Coordinate handoffs**: Manage context between sequential agent tasks
 
-### Post-Development Validation
+### Post-Development Validation (Your Responsibility)
 - Run full test suite: `./gradlew clean check --rerun-tasks`
 - Compare against baseline (delta analysis)
 - Verify zero NEW failures introduced
 - Check detekt passing: `./gradlew detekt`
 - Verify coverage: `./gradlew koverVerify`
+- Escalate regressions to responsible agent for fixes
 
-### Documentation Changes
-When documentation is modified:
+### Documentation Changes (Delegate to @agent-tech-writer)
+When documentation work is needed, delegate to technical writer with requirements:
 - Ensure YAML frontmatter present on all new docs
 - Verify dependencies declared
 - Update cross-references to new paths
@@ -187,11 +290,11 @@ When documentation is modified:
   ./.scripts/check-circular-deps.py
   ```
 
-### Linear Integration
-- Update issue status to "In Progress" when starting work
-- Update subtask status fields (not comments)
+### Linear Integration (Your Responsibility)
+- Update issue status to "In Progress" when delegating work
+- Update subtask status fields as agents complete work (not comments)
 - Mark parent story "In Review" only when ALL subtasks complete
-- Delegate final review to @agent-code-reviewer
+- Delegate final review to @agent-code-reviewer with complete context
 
 See complete criteria in [Definition of Done](docs/reference/definition-of-done.md).
 
@@ -207,7 +310,7 @@ See complete criteria in [Definition of Done](docs/reference/definition-of-done.
 
 - **[Parallel Testing Guide](docs/guides/testing/parallel-testing-guide.md)** - Multi-feature development with coordinated or autonomous execution
 - **[Task Tool Workflow](.claude/workflows/task-tool-workflow.md)** - Interactive development with Task tool agents
-- **[TDD Workflow](.claude/workflows/tdd-workflow.md)** - Test-driven development patterns
+- **[TDD Workflow](.claude/workflows/tdd-workflow.md)** - Test-driven development with RED/GREEN/REFACTOR phase artifact coordination via `/tmp/{issue-id}-{phase}-summary.md` for explicit agent handoffs
 - **[Direct Implementation](.claude/workflows/direct-workflow.md)** - Direct feature implementation
 - **[Bug Fix Workflow](.claude/workflows/bugfix-workflow.md)** - Systematic bug resolution
 
@@ -364,3 +467,134 @@ cd docs
 ## Linear Reference
 
 @.claude/shared/linear-reference.md
+
+## Soft-Deletion & Recovery
+
+CycleTime implements soft-deletion with a 30-day retention policy for projects and issues. This provides recovery from accidental deletions while maintaining data hygiene.
+
+### Core Concepts
+
+**Paranoid Deletion Pattern:**
+- Delete operations set `deleted_at` timestamp instead of removing data
+- Deleted items excluded from default queries (`deleted_at IS NULL`)
+- Items remain recoverable for 30 days
+- Automatic purge after retention period (SPI-880, future release)
+
+**Cascade Behavior:**
+- Project deletion cascades to all issues
+- Epic deletion cascades to Stories and Subtasks
+- Deletion preserves referential integrity
+
+**Restoration Rules:**
+- Parent-first validation (cannot restore child if parent deleted)
+- No automatic child restoration (explicit user decision required)
+- Idempotent operations (safe to restore already-active entities)
+
+### MCP Tools for Deletion
+
+**Project Deletion:**
+- `mcp__cycletime__project_delete_project` - Soft-deletes project and all issues
+  - Parameters: `{"id": "project-uuid"}`
+  - Returns: Success confirmation
+  - Cascade: All issues in project also soft-deleted
+
+**Issue Deletion:**
+- `mcp__cycletime__issue_delete_issue` - Soft-deletes issue and all children
+  - Parameters: `{"id": "issue-uuid"}`
+  - Returns: Success confirmation
+  - Cascade: Epic → Stories → Subtasks
+
+### MCP Tools for Recovery
+
+**Project Restoration:**
+```json
+{
+  "name": "mcp__cycletime__project_restore_project",
+  "parameters": {
+    "id": {
+      "type": "string",
+      "description": "UUID of soft-deleted project to restore"
+    }
+  }
+}
+```
+**Note:** Does NOT auto-restore issues (explicit user choice required)
+
+**Issue Restoration:**
+```json
+{
+  "name": "mcp__cycletime__issue_restore_issue",
+  "parameters": {
+    "id": {
+      "type": "string",
+      "description": "UUID of soft-deleted issue to restore"
+    }
+  }
+}
+```
+**Validation:** Cannot restore if parent issue/project is deleted
+
+### MCP Tools for Querying Deleted Items
+
+**List Deleted Projects:**
+- `mcp__cycletime__project_list_deleted_projects` - Returns all soft-deleted projects
+  - No parameters required
+  - Sorted by deletion date (most recent first)
+
+**List Deleted Issues:**
+- `mcp__cycletime__issue_list_deleted_issues` - Returns all soft-deleted issues
+  - No parameters required
+  - Sorted by deletion date (most recent first)
+
+**Include Deleted in Standard Queries:**
+- `mcp__cycletime__project_list_projects` - Add `{"includeDeleted": true}`
+- `mcp__cycletime__issue_list_issues` - Add `{"includeDeleted": true}`
+
+### Usage Examples
+
+**Recover deleted project:**
+```bash
+# 1. Find deleted projects
+claude mcp__cycletime__project_list_deleted_projects
+
+# 2. Restore specific project
+claude mcp__cycletime__project_restore_project '{"id": "abc-123"}'
+
+# 3. Verify restoration
+claude mcp__cycletime__project_get_project '{"id": "abc-123"}'
+```
+
+**Recover deleted issue with parent validation:**
+```bash
+# If parent is deleted, restore fails with validation error
+# Correct order: Restore parent first, then children
+
+# 1. Restore parent issue/project
+claude mcp__cycletime__project_restore_project '{"id": "parent-id"}'
+
+# 2. Now restore child issue
+claude mcp__cycletime__issue_restore_issue '{"id": "child-id"}'
+```
+
+### Troubleshooting
+
+**Error: "Cannot restore issue - parent is deleted"**
+- Cause: Parent project or issue is soft-deleted
+- Solution: Restore parent first using appropriate restore tool
+
+**Item not in deleted list**
+- Cause 1: Already restored (check with standard get/list operations)
+- Cause 2: Purged after 30-day retention period (not recoverable)
+
+**Need to query both active and deleted**
+- Use `includeDeleted: true` parameter on list operations
+- Deleted items have `deleted_at` timestamp, active items have `null`
+
+### Implementation Details
+
+- Database: `deleted_at TIMESTAMP` column with composite indexes
+- Cascade: Foreign key relationships enforce referential integrity
+- Performance: Query overhead <2ms (95th percentile) with proper indexing
+- Retention: 30-day retention service (SPI-880, future release)
+
+See [ADR-008: Soft-Deletion Pattern](docs/architecture/decisions/ADR-008-soft-deletion-pattern.md) for architectural decisions and trade-offs.

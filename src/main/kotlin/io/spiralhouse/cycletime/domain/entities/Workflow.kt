@@ -19,7 +19,8 @@ data class WorkflowSnapshot(
     val initialStatus: IssueStatus,
     val allowedStatuses: Set<IssueStatus>,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
+    val deletedAt: Instant? = null
 )
 
 /**
@@ -44,12 +45,14 @@ class Workflow private constructor(
     private val _allowedStatuses: Set<IssueStatus>,
     val createdAt: Instant,
     private var _updatedAt: Instant,
+    private val _deletedAt: Instant?,
     private val timeProvider: TimeProvider
 ) {
     val name: String get() = _name
     val description: String? get() = _description
     val allowedStatuses: Set<IssueStatus> get() = _allowedStatuses.toSet()
     val updatedAt: Instant get() = _updatedAt
+    val deletedAt: Instant? get() = _deletedAt
 
     /**
      * Gets the terminal statuses (statuses with no outgoing transitions).
@@ -155,7 +158,8 @@ class Workflow private constructor(
             initialStatus = initialStatus,
             allowedStatuses = _allowedStatuses,
             createdAt = createdAt,
-            updatedAt = _updatedAt
+            updatedAt = _updatedAt,
+            deletedAt = _deletedAt
         )
     }
 
@@ -199,6 +203,7 @@ class Workflow private constructor(
                 _allowedStatuses = allowedStatuses,
                 createdAt = now,
                 _updatedAt = now,
+                _deletedAt = null,
                 timeProvider = timeProvider
             )
         }
@@ -225,6 +230,7 @@ class Workflow private constructor(
                 _allowedStatuses = snapshot.allowedStatuses,
                 createdAt = snapshot.createdAt,
                 _updatedAt = snapshot.updatedAt,
+                _deletedAt = snapshot.deletedAt,
                 timeProvider = timeProvider
             )
         }
@@ -239,8 +245,9 @@ class Workflow private constructor(
             return create(
                 name = "Default Workflow",
                 description = "Standard workflow for general issues with review step",
-                initialStatus = IssueStatus.TODO,
+                initialStatus = IssueStatus.BACKLOG,
                 allowedStatuses = setOf(
+                    IssueStatus.BACKLOG,
                     IssueStatus.TODO,
                     IssueStatus.IN_PROGRESS,
                     IssueStatus.IN_REVIEW,
@@ -261,8 +268,9 @@ class Workflow private constructor(
             return create(
                 name = "Bug Workflow",
                 description = "Optimized workflow for bug tracking and resolution",
-                initialStatus = IssueStatus.TODO,
+                initialStatus = IssueStatus.BACKLOG,
                 allowedStatuses = setOf(
+                    IssueStatus.BACKLOG,
                     IssueStatus.TODO,
                     IssueStatus.IN_PROGRESS,
                     IssueStatus.DONE,
@@ -282,8 +290,9 @@ class Workflow private constructor(
             return create(
                 name = "Feature Workflow",
                 description = "Workflow for feature development with mandatory review step",
-                initialStatus = IssueStatus.TODO,
+                initialStatus = IssueStatus.BACKLOG,
                 allowedStatuses = setOf(
+                    IssueStatus.BACKLOG,
                     IssueStatus.TODO,
                     IssueStatus.IN_PROGRESS,
                     IssueStatus.IN_REVIEW,

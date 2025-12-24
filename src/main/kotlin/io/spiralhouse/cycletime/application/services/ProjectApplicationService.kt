@@ -145,27 +145,78 @@ class ProjectApplicationService(
     }
 
     /**
-     * Permanently deletes a project from the system.
+     * Soft-deletes a project by setting its deletedAt timestamp.
      *
-     * This is a destructive operation that cannot be undone. Consider using
-     * archiveProject() for soft deletion if recovery might be needed.
+     * This operation is idempotent - deleting an already-deleted project
+     * succeeds without error.
      *
      * ## Business Rules:
-     * - Project must exist or ProjectNotFoundException is thrown
-     * - Associated issues are cascade deleted (handled by repository)
-     * - No recovery possible after deletion
+     * - Project must exist (including deleted) or ProjectNotFoundException is thrown
+     * - Operation is idempotent - deleting an already-deleted project succeeds
+     * - Associated issues are cascade soft-deleted (handled by repository)
+     * - Deleted project can be recovered via restoreProject()
+     *
+     * ## Return Type Rationale:
+     * Returns `Unit` instead of `Boolean` to support idempotent operations.
+     * Success is indicated by the absence of an exception, eliminating the
+     * ambiguity of "false" meaning either "not found" or "already deleted".
+     * This design makes the intent clearer: if the method returns normally,
+     * the project is in the deleted state, regardless of whether it was
+     * previously deleted.
      *
      * ## Implementation Note:
      * Future enhancement could check for active issues and prevent deletion
      * if the project has unresolved work items.
      *
      * @param projectId The ID of the project to delete
-     * @throws ProjectNotFoundException if the project doesn't exist
+     * @throws ProjectNotFoundException if the project doesn't exist at all
      */
     suspend fun deleteProject(projectId: ProjectId) {
         unitOfWork.execute {
-            ensureProjectExists(projectId)
-            projectRepository.delete(projectId)
+            // Check if project exists (including deleted) for idempotent behavior
+            val existingProject = projectRepository.findIncludingDeleted(projectId)
+                ?: throw ProjectNotFoundException(projectId)
+
+            // Only soft-delete if not already deleted (idempotent)
+            if (existingProject.deletedAt == null) {
+                projectRepository.softDelete(projectId)
+            }
+        }
+    }
+
+    /**
+     * Restores a soft-deleted project by clearing its deletedAt timestamp.
+     *
+     * This operation is idempotent - restoring an already-active project
+     * succeeds without error.
+     *
+     * ## Business Rules:
+     * - Project must exist (including deleted projects) or ProjectNotFoundException is thrown
+     * - Operation is idempotent - restoring an already-active project succeeds
+     * - Child issues remain deleted (explicit restoration required)
+     *
+     * ## State Transitions:
+     * - DELETED → ACTIVE (clears deleted_at)
+     * - ACTIVE → ACTIVE (idempotent, no-op)
+     *
+     * @param id The ID of the project to restore
+     * @return ProjectDto representing the restored project
+     * @throws ProjectNotFoundException if the project doesn't exist at all
+     */
+    suspend fun restoreProject(id: ProjectId): ProjectDto {
+        return unitOfWork.execute {
+            // Check if project exists (including deleted) before attempting restore
+            val existingProject = projectRepository.findIncludingDeleted(id)
+                ?: throw ProjectNotFoundException(id)
+
+            // Restore project (does NOT auto-restore issues - explicit choice)
+            projectRepository.restore(id)
+
+            // Return restored project
+            val project = projectRepository.findById(id)
+                ?: throw ProjectNotFoundException(id)
+
+            ProjectDto.fromProject(project)
         }
     }
 
@@ -185,6 +236,26 @@ class ProjectApplicationService(
     suspend fun listProjects(): ProjectListDto {
         return unitOfWork.execute {
             val projects = projectRepository.findAll()
+            ProjectListDto.fromProjects(projects)
+        }
+    }
+
+    /**
+     * Retrieves all soft-deleted projects.
+     *
+     * Returns only projects that have been soft-deleted (deletedAt is not null).
+     * Projects are ordered by deletion date in descending order (most recently deleted first).
+     *
+     * ## Use Cases:
+     * - Recovery/restore operations
+     * - Audit trails
+     * - Data cleanup workflows
+     *
+     * @return ProjectListDto containing only deleted projects
+     */
+    suspend fun listDeletedProjects(): ProjectListDto {
+        return unitOfWork.execute {
+            val projects = projectRepository.findDeleted()
             ProjectListDto.fromProjects(projects)
         }
     }

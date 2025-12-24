@@ -69,12 +69,16 @@ class MockWorkflowRepository(
     
     override suspend fun findById(id: WorkflowId): Workflow? {
         findCallCount++
-        return workflows[id]
+        return workflows[id]?.takeIf { it.deletedAt == null }
     }
-    
-    override suspend fun findAll(): List<Workflow> {
+
+    override suspend fun findAll(includeDeleted: Boolean): List<Workflow> {
         findCallCount++
-        return workflows.values.toList()
+        return if (includeDeleted) {
+            workflows.values.toList()
+        } else {
+            workflows.values.filter { it.deletedAt == null }
+        }
     }
     
     override suspend fun update(workflow: Workflow): Workflow {
@@ -91,7 +95,56 @@ class MockWorkflowRepository(
     override suspend fun existsById(id: WorkflowId): Boolean {
         return workflows.containsKey(id)
     }
-    
+
+    /**
+     * Mock implementation of soft-delete.
+     * Sets deletedAt timestamp on the workflow to match real repository behavior.
+     */
+    override suspend fun softDelete(id: WorkflowId) {
+        deleteCallCount++
+        val workflow = workflows[id] ?: throw io.spiralhouse.cycletime.domain.exceptions.WorkflowNotFoundException(id.value)
+
+        // Create updated snapshot with deletedAt set
+        val snapshot = workflow.toSnapshot().copy(
+            deletedAt = (timeProvider ?: io.spiralhouse.cycletime.domain.services.SystemTimeProvider()).now()
+        )
+        workflows[id] = io.spiralhouse.cycletime.domain.entities.Workflow.fromSnapshot(
+            snapshot,
+            timeProvider ?: io.spiralhouse.cycletime.domain.services.SystemTimeProvider()
+        )
+    }
+
+    /**
+     * Mock implementation of restore.
+     * Clears deletedAt timestamp on the workflow.
+     */
+    override suspend fun restore(id: WorkflowId) {
+        val workflow = workflows[id] ?: return // Idempotent - no-op if not found
+
+        // Create updated snapshot with deletedAt cleared
+        val snapshot = workflow.toSnapshot().copy(deletedAt = null)
+        workflows[id] = io.spiralhouse.cycletime.domain.entities.Workflow.fromSnapshot(
+            snapshot,
+            timeProvider ?: io.spiralhouse.cycletime.domain.services.SystemTimeProvider()
+        )
+    }
+
+    /**
+     * Mock implementation of findDeleted.
+     * Returns workflows where deletedAt is not null.
+     */
+    override suspend fun findDeleted(): List<Workflow> {
+        return workflows.values.filter { it.deletedAt != null }
+    }
+
+    /**
+     * Mock implementation of findIncludingDeleted.
+     * Returns workflow regardless of deletion state.
+     */
+    override suspend fun findIncludingDeleted(id: WorkflowId): Workflow? {
+        return workflows[id]
+    }
+
     // ================================================================================
     // Test Utilities
     // ================================================================================

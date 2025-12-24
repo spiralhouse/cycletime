@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - CycleTime</title>
+
+    <!-- Google Fonts - Inter (Design System Typography) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Configuration (CycleTime Design System) -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f7ff',
+                            200: '#b3ecff',
+                            300: '#80d9ff',
+                            400: '#3ba3c9',
+                            500: '#2878a1',
+                            600: '#1a5178',
+                            700: '#154158',
+                            800: '#0f2e3f',
+                            900: '#0a1f2a',
+                        },
+                        neutral: {
+                            50: '#fafafa',
+                            100: '#f5f5f5',
+                            200: '#e5e5e5',
+                            300: '#d4d4d4',
+                            400: '#a3a3a3',
+                            500: '#737373',
+                            600: '#525252',
+                            700: '#404040',
+                            800: '#262626',
+                            850: '#1a1a1a',
+                            900: '#171717',
+                            950: '#0a0a0a',
+                        },
+                        success: {
+                            500: '#22c55e',
+                            600: '#16a34a',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- HTMX for Progressive Enhancement -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* Mobile menu transition (when HTMX is fully implemented) */
+        #mobile-menu {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        #mobile-menu.hidden {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        #mobile-menu:not(.hidden) {
+            max-height: 500px;
+            opacity: 1;
+        }
+
+        /* Line clamp utility for text truncation */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col">
+    <!-- ============================================
+         HEADER: Primary Navigation
+         ============================================ -->
+    <header class="border-b border-neutral-800 bg-neutral-900">
+        <nav class="container mx-auto max-w-7xl" aria-label="Primary navigation">
+            <div class="px-4 md:px-6 lg:px-8 py-4">
+                <div class="flex items-center justify-between">
+                    <!-- Brand and Desktop Navigation -->
+                    <div class="flex items-center gap-8">
+                        <!-- Brand/Logo -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-brand-400">CycleTime</span>
+                        </div>
+
+                        <!-- Desktop Navigation (hidden on mobile, visible md+) -->
+                        <div class="hidden md:flex items-center gap-6">
+                            <!-- Projects (Active Page) -->
+                            <a href="/projects"
+                               class="text-brand-400 border-b-2 border-brand-400 pb-1 px-1 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900 rounded-sm"
+                               aria-current="page">
+                                Projects
+                            </a>
+
+                            <!-- Issues -->
+                            <a href="/issues"
+                               class="text-neutral-400 hover:text-neutral-200 pb-1 px-1 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900 rounded-sm">
+                                Issues
+                            </a>
+
+                            <!-- Settings -->
+                            <a href="/settings"
+                               class="text-neutral-400 hover:text-neutral-200 pb-1 px-1 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900 rounded-sm">
+                                Settings
+                            </a>
+
+                            <!-- System Status -->
+                            <a href="/system-status"
+                               class="text-neutral-400 hover:text-neutral-200 pb-1 px-1 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900 rounded-sm">
+                                System Status
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Menu Button (visible on mobile, hidden md+) -->
+                    <button class="md:hidden p-2 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900"
+                            aria-label="Toggle menu"
+                            aria-expanded="false"
+                            aria-controls="mobile-menu"
+                            onclick="toggleMobileMenu()">
+                        <!-- Hamburger Icon -->
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Mobile Menu (hidden by default, toggled by JavaScript/HTMX) -->
+                <div id="mobile-menu" class="hidden md:hidden mt-4 pt-4 border-t border-neutral-700">
+                    <div class="flex flex-col gap-3">
+                        <!-- Projects (Active Page) -->
+                        <a href="/projects"
+                           class="text-brand-400 bg-neutral-800 px-4 py-3 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900"
+                           aria-current="page">
+                            Projects
+                        </a>
+
+                        <!-- Issues -->
+                        <a href="/issues"
+                           class="text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 px-4 py-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900">
+                            Issues
+                        </a>
+
+                        <!-- Settings -->
+                        <a href="/settings"
+                           class="text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 px-4 py-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900">
+                            Settings
+                        </a>
+
+                        <!-- System Status -->
+                        <a href="/system-status"
+                           class="text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 px-4 py-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900">
+                            System Status
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ============================================
+         MAIN: Project List Content
+         ============================================ -->
+    <main class="flex-1 container mx-auto max-w-7xl px-4 md:px-6 lg:px-8 py-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-neutral-100 mb-2">Projects</h1>
+            <p class="text-base text-neutral-400">Manage and track your project portfolio</p>
+        </div>
+
+        <!-- Project Grid (1 col mobile, 2 cols tablet, 3 cols desktop) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- Project Card 1: CycleTime CE (75% complete) -->
+            <article class="bg-neutral-900 border border-neutral-800 rounded-lg p-6
+                           hover:border-brand-400 hover:shadow-lg hover:-translate-y-0.5
+                           transition-all cursor-pointer"
+                     role="button"
+                     tabindex="0"
+                     aria-label="View CycleTime CE project details">
+                <header class="mb-4">
+                    <h3 class="text-xl font-semibold text-neutral-100 mb-2 truncate">
+                        CycleTime CE
+                    </h3>
+                    <p class="text-sm text-neutral-400 line-clamp-2">
+                        A project orchestration framework that extends Claude Code to manage complete software development lifecycles with minimal configuration overhead.
+                    </p>
+                </header>
+
+                <!-- Statistics -->
+                <div class="flex items-center gap-4 text-sm text-neutral-400 mb-3">
+                    <span class="flex items-center gap-1" aria-label="24 issues">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        <span>24 issues</span>
+                    </span>
+                    <span class="flex items-center gap-1" aria-label="89 points">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                        <span>89 points</span>
+                    </span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-neutral-800 rounded-full h-2 overflow-hidden" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" aria-label="75% complete">
+                    <div class="bg-brand-400 h-2 transition-all" style="width: 75%;"></div>
+                </div>
+                <p class="text-xs text-neutral-500 mt-1">75% complete</p>
+            </article>
+
+            <!-- Project Card 2: Documentation Overhaul (100% complete) -->
+            <article class="bg-neutral-900 border border-neutral-800 rounded-lg p-6
+                           hover:border-success-500 hover:shadow-lg hover:-translate-y-0.5
+                           transition-all cursor-pointer"
+                     role="button"
+                     tabindex="0"
+                     aria-label="View Documentation Overhaul project details">
+                <header class="mb-4">
+                    <h3 class="text-xl font-semibold text-neutral-100 mb-2 truncate">
+                        Documentation Overhaul
+                    </h3>
+                    <p class="text-sm text-neutral-400 line-clamp-2">
+                        Restructure documentation into DAG-based topic architecture optimized for RAG retrieval and AI agent consumption.
+                    </p>
+                </header>
+
+                <!-- Statistics -->
+                <div class="flex items-center gap-4 text-sm text-neutral-400 mb-3">
+                    <span class="flex items-center gap-1" aria-label="8 issues">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        <span>8 issues</span>
+                    </span>
+                    <span class="flex items-center gap-1" aria-label="21 points">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                        <span>21 points</span>
+                    </span>
+                </div>
+
+                <!-- Progress Bar (Complete - Green) -->
+                <div class="w-full bg-neutral-800 rounded-full h-2 overflow-hidden" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="100% complete">
+                    <div class="bg-success-500 h-2 transition-all" style="width: 100%;"></div>
+                </div>
+                <p class="text-xs text-success-500 mt-1 font-medium">Complete</p>
+            </article>
+
+            <!-- Project Card 3: Authentication System (25% complete, long description) -->
+            <article class="bg-neutral-900 border border-neutral-800 rounded-lg p-6
+                           hover:border-brand-400 hover:shadow-lg hover:-translate-y-0.5
+                           transition-all cursor-pointer"
+                     role="button"
+                     tabindex="0"
+                     aria-label="View Authentication System project details">
+                <header class="mb-4">
+                    <h3 class="text-xl font-semibold text-neutral-100 mb-2 truncate">
+                        Authentication System
+                    </h3>
+                    <p class="text-sm text-neutral-400 line-clamp-2">
+                        Implement comprehensive JWT-based authentication with refresh tokens, role-based access control, session management, and multi-factor authentication support. Includes OAuth2 integration for GitHub and Google providers.
+                    </p>
+                </header>
+
+                <!-- Statistics -->
+                <div class="flex items-center gap-4 text-sm text-neutral-400 mb-3">
+                    <span class="flex items-center gap-1" aria-label="32 issues">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        <span>32 issues</span>
+                    </span>
+                    <span class="flex items-center gap-1" aria-label="124 points">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                        <span>124 points</span>
+                    </span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-neutral-800 rounded-full h-2 overflow-hidden" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100" aria-label="25% complete">
+                    <div class="bg-brand-400 h-2 transition-all" style="width: 25%;"></div>
+                </div>
+                <p class="text-xs text-neutral-500 mt-1">25% complete</p>
+            </article>
+
+            <!-- Project Card 4: Mobile App (0% complete) -->
+            <article class="bg-neutral-900 border border-neutral-800 rounded-lg p-6
+                           hover:border-brand-400 hover:shadow-lg hover:-translate-y-0.5
+                           transition-all cursor-pointer"
+                     role="button"
+                     tabindex="0"
+                     aria-label="View Mobile App project details">
+                <header class="mb-4">
+                    <h3 class="text-xl font-semibold text-neutral-100 mb-2 truncate">
+                        Mobile App
+                    </h3>
+                    <p class="text-sm text-neutral-400 line-clamp-2">
+                        Native iOS and Android applications for on-the-go project management.
+                    </p>
+                </header>
+
+                <!-- Statistics -->
+                <div class="flex items-center gap-4 text-sm text-neutral-400 mb-3">
+                    <span class="flex items-center gap-1" aria-label="5 issues">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        <span>5 issues</span>
+                    </span>
+                    <span class="flex items-center gap-1" aria-label="13 points">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                        <span>13 points</span>
+                    </span>
+                </div>
+
+                <!-- Progress Bar (Empty - Not Started) -->
+                <div class="w-full bg-neutral-800 rounded-full h-2 overflow-hidden" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="0% complete - Not started">
+                    <div class="bg-brand-400 h-2 transition-all" style="width: 0%;"></div>
+                </div>
+                <p class="text-xs text-neutral-500 mt-1">Not started</p>
+            </article>
+
+            <!-- Project Card 5: API v2 Migration (50% complete, NO description) -->
+            <article class="bg-neutral-900 border border-neutral-800 rounded-lg p-6
+                           hover:border-brand-400 hover:shadow-lg hover:-translate-y-0.5
+                           transition-all cursor-pointer"
+                     role="button"
+                     tabindex="0"
+                     aria-label="View API v2 Migration project details">
+                <header class="mb-4">
+                    <h3 class="text-xl font-semibold text-neutral-100 mb-2 truncate">
+                        API v2 Migration
+                    </h3>
+                    <p class="text-sm text-neutral-500 italic line-clamp-2">
+                        No description provided
+                    </p>
+                </header>
+
+                <!-- Statistics -->
+                <div class="flex items-center gap-4 text-sm text-neutral-400 mb-3">
+                    <span class="flex items-center gap-1" aria-label="18 issues">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        <span>18 issues</span>
+                    </span>
+                    <span class="flex items-center gap-1" aria-label="67 points">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                        <span>67 points</span>
+                    </span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-neutral-800 rounded-full h-2 overflow-hidden" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" aria-label="50% complete">
+                    <div class="bg-brand-400 h-2 transition-all" style="width: 50%;"></div>
+                </div>
+                <p class="text-xs text-neutral-500 mt-1">50% complete</p>
+            </article>
+
+            <!-- Project Card 6: Performance Optimization (90% complete, long name) -->
+            <article class="bg-neutral-900 border border-neutral-800 rounded-lg p-6
+                           hover:border-brand-400 hover:shadow-lg hover:-translate-y-0.5
+                           transition-all cursor-pointer"
+                     role="button"
+                     tabindex="0"
+                     aria-label="View Performance Optimization and Database Scaling project details">
+                <header class="mb-4">
+                    <h3 class="text-xl font-semibold text-neutral-100 mb-2 truncate" title="Performance Optimization and Database Scaling">
+                        Performance Optimization and Database Scaling
+                    </h3>
+                    <p class="text-sm text-neutral-400 line-clamp-2">
+                        Optimize query performance, implement caching strategies, and scale database infrastructure to handle 10x traffic growth.
+                    </p>
+                </header>
+
+                <!-- Statistics -->
+                <div class="flex items-center gap-4 text-sm text-neutral-400 mb-3">
+                    <span class="flex items-center gap-1" aria-label="12 issues">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        <span>12 issues</span>
+                    </span>
+                    <span class="flex items-center gap-1" aria-label="38 points">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                        <span>38 points</span>
+                    </span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-neutral-800 rounded-full h-2 overflow-hidden" role="progressbar" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100" aria-label="90% complete">
+                    <div class="bg-brand-400 h-2 transition-all" style="width: 90%;"></div>
+                </div>
+                <p class="text-xs text-neutral-500 mt-1">90% complete</p>
+            </article>
+
+        </div>
+
+        <!-- ============================================
+             EMPTY STATE (for documentation reference)
+             ============================================
+
+             When no projects exist, replace the grid above with this empty state:
+
+        <div class="bg-neutral-900 border border-neutral-800 rounded-lg p-12 text-center">
+            <div class="text-6xl mb-4" aria-hidden="true">📂</div>
+            <h2 class="text-xl font-semibold text-neutral-100 mb-2">No projects yet</h2>
+            <p class="text-base text-neutral-400 mb-6">
+                Create your first project to get started with CycleTime.
+            </p>
+            <a href="/projects/new"
+               class="inline-block px-4 py-2 bg-brand-400 text-white font-medium rounded-lg
+                      hover:bg-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-400
+                      focus:ring-offset-2 focus:ring-offset-neutral-950 transition-colors">
+                Create Project
+            </a>
+        </div>
+
+        ============================================ -->
+    </main>
+
+    <!-- ============================================
+         FOOTER
+         ============================================ -->
+    <footer class="mt-auto border-t border-neutral-800 bg-neutral-900 py-6">
+        <div class="container mx-auto max-w-7xl px-4 md:px-6 lg:px-8">
+            <p class="text-neutral-500 text-sm text-center">
+                CycleTime Dashboard &bull; Localhost Development Environment
+            </p>
+        </div>
+    </footer>
+
+    <!-- ============================================
+         JAVASCRIPT: Mobile Menu Toggle
+         ============================================ -->
+    <script>
+        /**
+         * Toggle mobile menu visibility
+         * NOTE: This is a temporary implementation for the static mockup.
+         * In production, this will be replaced with HTMX server-side toggle
+         * using hx-get="/api/menu/toggle" with server-rendered menu state.
+         */
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const button = document.querySelector('button[aria-controls="mobile-menu"]');
+
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                button.setAttribute('aria-expanded', 'true');
+            } else {
+                menu.classList.add('hidden');
+                button.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        /**
+         * Close mobile menu when clicking outside
+         * This enhances UX but will be handled server-side in production
+         */
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('mobile-menu');
+            const button = document.querySelector('button[aria-controls="mobile-menu"]');
+
+            if (!menu.contains(event.target) && !button.contains(event.target)) {
+                if (!menu.classList.contains('hidden')) {
+                    menu.classList.add('hidden');
+                    button.setAttribute('aria-expanded', 'false');
+                }
+            }
+        });
+
+        /**
+         * Project Card Click Handlers (Future HTMX Integration)
+         * =======================================================
+         * For production, project cards will use HTMX navigation:
+         *
+         * <article hx-get="/projects/{id}"
+         *          hx-target="main"
+         *          hx-push-url="true"
+         *          class="...">
+         *
+         * This enables:
+         * - Server-rendered project detail pages
+         * - History management (back button works)
+         * - Progressive enhancement (works without JavaScript)
+         * - Better SEO (crawlable links)
+         *
+         * For now, cards are static with cursor-pointer for visual affordance.
+         */
+    </script>
+</body>
+</html>

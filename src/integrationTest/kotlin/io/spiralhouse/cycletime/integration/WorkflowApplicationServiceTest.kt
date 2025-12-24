@@ -127,6 +127,7 @@ class WorkflowApplicationServiceTest : StringSpec({
             )
             every { mockWorkflow.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
             every { mockWorkflow.updatedAt } returns Instant.parse("2025-01-15T10:00:00Z")
+            every { mockWorkflow.deletedAt } returns null
 
             coEvery { mockUnitOfWork.execute(any<suspend () -> WorkflowDto>()) } coAnswers {
                 val block = firstArg<suspend () -> WorkflowDto>()
@@ -153,7 +154,7 @@ class WorkflowApplicationServiceTest : StringSpec({
         runTest {
             val workflowId = WorkflowId.generate()
             val mockWorkflow = mockk<Workflow>()
-            
+
             every { mockWorkflow.id } returns workflowId
             every { mockWorkflow.name } returns "Existing Workflow"
             every { mockWorkflow.description } returns "Description"
@@ -161,6 +162,7 @@ class WorkflowApplicationServiceTest : StringSpec({
             every { mockWorkflow.allowedStatuses } returns setOf(IssueStatus.TODO, IssueStatus.DONE)
             every { mockWorkflow.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
             every { mockWorkflow.updatedAt } returns Instant.parse("2025-01-15T10:00:00Z")
+            every { mockWorkflow.deletedAt } returns null
 
             coEvery { mockWorkflowRepository.findById(workflowId) } returns mockWorkflow
 
@@ -201,6 +203,7 @@ class WorkflowApplicationServiceTest : StringSpec({
             every { existingWorkflow.allowedStatuses } returns setOf(IssueStatus.TODO, IssueStatus.DONE)
             every { existingWorkflow.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
             every { existingWorkflow.updatedAt } returns Instant.parse("2025-01-15T10:30:00Z")
+            every { existingWorkflow.deletedAt } returns null
 
             val command = UpdateWorkflowCommand(
                 id = workflowId,
@@ -259,28 +262,42 @@ class WorkflowApplicationServiceTest : StringSpec({
     "should delete existing workflow" {
         runTest {
             val workflowId = WorkflowId.generate()
+            val mockWorkflow = mockk<Workflow>()
+            every { mockWorkflow.deletedAt } returns null
 
-            coEvery { mockWorkflowRepository.delete(workflowId) } returns true
+            coEvery { mockUnitOfWork.execute(any<suspend () -> Unit>()) } coAnswers {
+                val block = firstArg<suspend () -> Unit>()
+                block()
+            }
+            coEvery { mockWorkflowRepository.findIncludingDeleted(workflowId) } returns mockWorkflow
+            coEvery { mockWorkflowRepository.softDelete(workflowId) } just Runs
 
-            val result = workflowApplicationService.deleteWorkflow(workflowId)
+            workflowApplicationService.deleteWorkflow(workflowId)
 
-            result shouldBe true
-
-            coVerify { mockWorkflowRepository.delete(workflowId) }
+            coVerify { mockUnitOfWork.execute(any<suspend () -> Unit>()) }
+            coVerify { mockWorkflowRepository.findIncludingDeleted(workflowId) }
+            coVerify { mockWorkflowRepository.softDelete(workflowId) }
         }
     }
 
-    "should return false when deleting non-existent workflow" {
+    "should throw WorkflowNotFoundException when deleting non-existent workflow" {
         runTest {
             val nonExistentId = WorkflowId.generate()
 
-            coEvery { mockWorkflowRepository.delete(nonExistentId) } returns false
+            coEvery { mockUnitOfWork.execute(any<suspend () -> Unit>()) } coAnswers {
+                val block = firstArg<suspend () -> Unit>()
+                block()
+            }
+            coEvery { mockWorkflowRepository.findIncludingDeleted(nonExistentId) } returns null
 
-            val result = workflowApplicationService.deleteWorkflow(nonExistentId)
+            val exception = shouldThrow<WorkflowNotFoundException> {
+                workflowApplicationService.deleteWorkflow(nonExistentId)
+            }
 
-            result shouldBe false
+            exception.message!! shouldContain nonExistentId.value.toString()
 
-            coVerify { mockWorkflowRepository.delete(nonExistentId) }
+            coVerify { mockUnitOfWork.execute(any<suspend () -> Unit>()) }
+            coVerify { mockWorkflowRepository.findIncludingDeleted(nonExistentId) }
         }
     }
 
@@ -296,6 +313,7 @@ class WorkflowApplicationServiceTest : StringSpec({
             every { workflow1.allowedStatuses } returns setOf(IssueStatus.TODO, IssueStatus.DONE)
             every { workflow1.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
             every { workflow1.updatedAt } returns Instant.parse("2025-01-15T10:00:00Z")
+            every { workflow1.deletedAt } returns null
 
             every { workflow2.id } returns WorkflowId.generate()
             every { workflow2.name } returns "Workflow 2"
@@ -304,6 +322,7 @@ class WorkflowApplicationServiceTest : StringSpec({
             every { workflow2.allowedStatuses } returns setOf(IssueStatus.TODO, IssueStatus.IN_PROGRESS, IssueStatus.DONE)
             every { workflow2.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
             every { workflow2.updatedAt } returns Instant.parse("2025-01-15T10:00:00Z")
+            every { workflow2.deletedAt } returns null
 
             coEvery { mockWorkflowRepository.findAll() } returns listOf(workflow1, workflow2)
 
@@ -443,7 +462,7 @@ class WorkflowApplicationServiceTest : StringSpec({
     "should find workflow by name when it exists" {
         runTest {
             val workflow = mockk<Workflow>()
-            
+
             every { workflow.id } returns WorkflowId.generate()
             every { workflow.name } returns "Bug Workflow"
             every { workflow.description } returns "For tracking bugs"
@@ -451,6 +470,7 @@ class WorkflowApplicationServiceTest : StringSpec({
             every { workflow.allowedStatuses } returns setOf(IssueStatus.TODO, IssueStatus.IN_PROGRESS, IssueStatus.DONE)
             every { workflow.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
             every { workflow.updatedAt } returns Instant.parse("2025-01-15T10:00:00Z")
+            every { workflow.deletedAt } returns null
 
             coEvery { mockWorkflowRepository.findAll() } returns listOf(workflow)
 
@@ -486,12 +506,13 @@ class WorkflowApplicationServiceTest : StringSpec({
     "should create default workflow with correct configuration" {
         runTest {
             val mockWorkflow = mockk<Workflow>()
-            
+
             every { mockWorkflow.id } returns WorkflowId.generate()
             every { mockWorkflow.name } returns "Default Workflow"
             every { mockWorkflow.description } returns "Standard workflow for general issues with review step"
-            every { mockWorkflow.initialStatus } returns IssueStatus.TODO
+            every { mockWorkflow.initialStatus } returns IssueStatus.BACKLOG
             every { mockWorkflow.allowedStatuses } returns setOf(
+                IssueStatus.BACKLOG,
                 IssueStatus.TODO,
                 IssueStatus.IN_PROGRESS,
                 IssueStatus.IN_REVIEW,
@@ -500,6 +521,7 @@ class WorkflowApplicationServiceTest : StringSpec({
             )
             every { mockWorkflow.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
             every { mockWorkflow.updatedAt } returns Instant.parse("2025-01-15T10:00:00Z")
+            every { mockWorkflow.deletedAt } returns null
 
             coEvery { mockUnitOfWork.execute(any<suspend () -> WorkflowDto>()) } coAnswers {
                 val block = firstArg<suspend () -> WorkflowDto>()
@@ -511,8 +533,8 @@ class WorkflowApplicationServiceTest : StringSpec({
 
             result.name shouldBe "Default Workflow"
             result.description shouldBe "Standard workflow for general issues with review step"
-            result.initialStatus shouldBe "TODO"
-            result.allowedStatuses shouldContain "TODO"
+            result.initialStatus shouldBe "BACKLOG"
+            result.allowedStatuses shouldContain "BACKLOG"
             result.allowedStatuses shouldContain "IN_PROGRESS"
             result.allowedStatuses shouldContain "IN_REVIEW"
             result.allowedStatuses shouldContain "DONE"
@@ -526,12 +548,13 @@ class WorkflowApplicationServiceTest : StringSpec({
     "should create bug workflow with correct configuration" {
         runTest {
             val mockWorkflow = mockk<Workflow>()
-            
+
             every { mockWorkflow.id } returns WorkflowId.generate()
             every { mockWorkflow.name } returns "Bug Workflow"
             every { mockWorkflow.description } returns "Optimized workflow for bug tracking and resolution"
-            every { mockWorkflow.initialStatus } returns IssueStatus.TODO
+            every { mockWorkflow.initialStatus } returns IssueStatus.BACKLOG
             every { mockWorkflow.allowedStatuses } returns setOf(
+                IssueStatus.BACKLOG,
                 IssueStatus.TODO,
                 IssueStatus.IN_PROGRESS,
                 IssueStatus.DONE,
@@ -539,6 +562,7 @@ class WorkflowApplicationServiceTest : StringSpec({
             )
             every { mockWorkflow.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
             every { mockWorkflow.updatedAt } returns Instant.parse("2025-01-15T10:00:00Z")
+            every { mockWorkflow.deletedAt } returns null
 
             coEvery { mockUnitOfWork.execute(any<suspend () -> WorkflowDto>()) } coAnswers {
                 val block = firstArg<suspend () -> WorkflowDto>()
@@ -550,8 +574,8 @@ class WorkflowApplicationServiceTest : StringSpec({
 
             result.name shouldBe "Bug Workflow"
             result.description shouldBe "Optimized workflow for bug tracking and resolution"
-            result.initialStatus shouldBe "TODO"
-            result.allowedStatuses shouldContain "TODO"
+            result.initialStatus shouldBe "BACKLOG"
+            result.allowedStatuses shouldContain "BACKLOG"
             result.allowedStatuses shouldContain "IN_PROGRESS"
             result.allowedStatuses shouldContain "DONE"
             result.allowedStatuses shouldContain "CANCELED"
@@ -565,12 +589,13 @@ class WorkflowApplicationServiceTest : StringSpec({
     "should create feature workflow with correct configuration" {
         runTest {
             val mockWorkflow = mockk<Workflow>()
-            
+
             every { mockWorkflow.id } returns WorkflowId.generate()
             every { mockWorkflow.name } returns "Feature Workflow"
             every { mockWorkflow.description } returns "Workflow for feature development with mandatory review step"
-            every { mockWorkflow.initialStatus } returns IssueStatus.TODO
+            every { mockWorkflow.initialStatus } returns IssueStatus.BACKLOG
             every { mockWorkflow.allowedStatuses } returns setOf(
+                IssueStatus.BACKLOG,
                 IssueStatus.TODO,
                 IssueStatus.IN_PROGRESS,
                 IssueStatus.IN_REVIEW,
@@ -579,6 +604,7 @@ class WorkflowApplicationServiceTest : StringSpec({
             )
             every { mockWorkflow.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
             every { mockWorkflow.updatedAt } returns Instant.parse("2025-01-15T10:00:00Z")
+            every { mockWorkflow.deletedAt } returns null
 
             coEvery { mockUnitOfWork.execute(any<suspend () -> WorkflowDto>()) } coAnswers {
                 val block = firstArg<suspend () -> WorkflowDto>()
@@ -590,8 +616,8 @@ class WorkflowApplicationServiceTest : StringSpec({
 
             result.name shouldBe "Feature Workflow"
             result.description shouldBe "Workflow for feature development with mandatory review step"
-            result.initialStatus shouldBe "TODO"
-            result.allowedStatuses shouldContain "TODO"
+            result.initialStatus shouldBe "BACKLOG"
+            result.allowedStatuses shouldContain "BACKLOG"
             result.allowedStatuses shouldContain "IN_PROGRESS"
             result.allowedStatuses shouldContain "IN_REVIEW" // Feature workflow requires review
             result.allowedStatuses shouldContain "DONE"
@@ -699,6 +725,7 @@ class WorkflowApplicationServiceTest : StringSpec({
             every { mockWorkflow.allowedStatuses } returns setOf(IssueStatus.TODO, IssueStatus.DONE)
             every { mockWorkflow.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
             every { mockWorkflow.updatedAt } returns Instant.parse("2025-01-15T10:00:00Z")
+            every { mockWorkflow.deletedAt } returns null
 
             coEvery { mockUnitOfWork.execute(any<suspend () -> WorkflowDto>()) } coAnswers {
                 val block = firstArg<suspend () -> WorkflowDto>()
@@ -730,6 +757,7 @@ class WorkflowApplicationServiceTest : StringSpec({
             every { updatedWorkflow.allowedStatuses } returns setOf(IssueStatus.TODO, IssueStatus.DONE)
             every { updatedWorkflow.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
             every { updatedWorkflow.updatedAt } returns Instant.parse("2025-01-15T10:00:00Z")
+            every { updatedWorkflow.deletedAt } returns null
 
             val command = UpdateWorkflowCommand(
                 id = workflowId,
@@ -800,6 +828,7 @@ class WorkflowApplicationServiceTest : StringSpec({
             every { workflow.allowedStatuses } returns setOf(IssueStatus.TODO, IssueStatus.DONE)
             every { workflow.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
             every { workflow.updatedAt } returns Instant.parse("2025-01-15T10:01:00Z")
+            every { workflow.deletedAt } returns null
 
             val command1 = UpdateWorkflowCommand(id = workflowId, name = "Update 1")
             val command2 = UpdateWorkflowCommand(id = workflowId, name = "Update 2")
@@ -843,6 +872,7 @@ class WorkflowApplicationServiceTest : StringSpec({
             every { mockWorkflow.allowedStatuses } returns allStatuses
             every { mockWorkflow.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
             every { mockWorkflow.updatedAt } returns Instant.parse("2025-01-15T10:00:00Z")
+            every { mockWorkflow.deletedAt } returns null
 
             coEvery { mockUnitOfWork.execute(any<suspend () -> WorkflowDto>()) } coAnswers {
                 val block = firstArg<suspend () -> WorkflowDto>()
@@ -878,6 +908,7 @@ class WorkflowApplicationServiceTest : StringSpec({
             every { mockWorkflow.allowedStatuses } returns singleStatus
             every { mockWorkflow.createdAt } returns Instant.parse("2025-01-15T10:00:00Z")
             every { mockWorkflow.updatedAt } returns Instant.parse("2025-01-15T10:00:00Z")
+            every { mockWorkflow.deletedAt } returns null
 
             coEvery { mockUnitOfWork.execute(any<suspend () -> WorkflowDto>()) } coAnswers {
                 val block = firstArg<suspend () -> WorkflowDto>()

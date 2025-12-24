@@ -1,19 +1,45 @@
 ---
-title: "SPI-690: CycleTime Dashboard Technical Design"
+title: "SPI-690: CycleTime Dashboard Technical Design [DEPRECATED]"
 type: guide
 domain: [ui, architecture, api]
-description: "Technical design for view-only web dashboard with hierarchical issue display"
+description: "[DEPRECATED] This document has been refactored into focused topics. See new documentation."
 dependencies: [../reference/project-fundamentals.md, ../architecture/overview.md]
-related: [../patterns/ui/htmx-patterns.md, ../patterns/ui/tailwind-design-system.md, ../examples/ui/ktor-html-dsl-examples.md]
-keywords: [dashboard, ui, htmx, tailwind, ktor, hierarchical-display]
-last_updated: 2025-10-25
+related: [../concepts/dashboard/dashboard-architecture-concept.md, ../patterns/dashboard/dashboard-dto-mapping-pattern.md, ../guides/dashboard/dashboard-implementation-guide.md]
+keywords: [dashboard, ui, htmx, tailwind, ktor, hierarchical-display, deprecated]
+last_updated: 2025-10-28
+status: deprecated
 ---
 
-# SPI-690: CycleTime Dashboard Technical Design
+# SPI-690: CycleTime Dashboard Technical Design [DEPRECATED]
+
+> **⚠️ DEPRECATION NOTICE**
+>
+> This monolithic design document (1455 lines) has been refactored into 6 focused topic documents following the DAG architecture (SPI-861). Please use the new documentation:
+>
+> **Core Concepts**:
+> - [Dashboard Architecture Concept](../concepts/dashboard/dashboard-architecture-concept.md) - Architectural decisions and design rationale
+>
+> **Patterns**:
+> - [Dashboard DTO Mapping Pattern](../patterns/dashboard/dashboard-dto-mapping-pattern.md) - DTO design and mapping strategies
+>
+> **Reference**:
+> - [Dashboard Technology Stack Reference](../reference/dashboard/dashboard-technology-stack-reference.md) - Complete technology specifications
+> - [Dashboard API Reference](../reference/dashboard/dashboard-api-reference.md) - HTTP API endpoints and routing
+>
+> **Implementation Guides**:
+> - [Dashboard Implementation Guide](../guides/dashboard/dashboard-implementation-guide.md) - Step-by-step implementation phases
+> - [Dashboard Testing Guide](../guides/dashboard/dashboard-testing-guide.md) - Comprehensive testing strategies
+>
+> **Refactored**: 2025-10-28 via SPI-861
+>
+> This document is preserved for historical reference but should not be used for new development.
+
+---
 
 **Version**: 1.0
 **Date**: October 25, 2025
 **Author**: Software Architect Agent
+**Status**: DEPRECATED - See links above
 
 ## Executive Summary
 

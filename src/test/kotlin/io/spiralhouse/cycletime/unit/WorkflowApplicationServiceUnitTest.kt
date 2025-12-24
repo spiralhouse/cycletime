@@ -300,7 +300,7 @@ class WorkflowApplicationServiceUnitTest : StringSpec({
         mockWorkflowRepository.saveCallCount shouldBe 0
     }
 
-    "should delete workflow and return true when workflow exists" {
+    "should delete workflow when workflow exists" {
         // Given
         val existingWorkflow = Workflow.create(
             name = "To Delete",
@@ -312,24 +312,20 @@ class WorkflowApplicationServiceUnitTest : StringSpec({
         mockWorkflowRepository.workflows[existingWorkflow.id] = existingWorkflow
 
         // When
-        val result = workflowService.deleteWorkflow(existingWorkflow.id)
+        workflowService.deleteWorkflow(existingWorkflow.id)
 
-        // Then
-        result shouldBe true
+        // Then - verify soft delete was called (tracked via deleteCallCount in mock)
         mockWorkflowRepository.deleteCallCount shouldBe 1
-        mockWorkflowRepository.workflows shouldNotContainKey existingWorkflow.id
     }
 
-    "should return false when deleting non-existent workflow" {
+    "should throw WorkflowNotFoundException when deleting non-existent workflow" {
         // Given
         val nonExistentId = WorkflowId.generate()
 
-        // When
-        val result = workflowService.deleteWorkflow(nonExistentId)
-
-        // Then
-        result shouldBe false
-        mockWorkflowRepository.deleteCallCount shouldBe 1
+        // When & Then
+        shouldThrow<WorkflowNotFoundException> {
+            workflowService.deleteWorkflow(nonExistentId)
+        }
     }
 
     "should list all workflows when workflows exist" {
@@ -472,7 +468,8 @@ class WorkflowApplicationServiceUnitTest : StringSpec({
         result.shouldNotBeNull()
         result.name shouldBe "Default Workflow"
         result.description.shouldNotBeNull()
-        result.initialStatus shouldBe "TODO"
+        result.initialStatus shouldBe "BACKLOG"
+        result.allowedStatuses shouldContain "BACKLOG"
         result.allowedStatuses shouldContain "TODO"
         result.allowedStatuses shouldContain "IN_PROGRESS"
         result.allowedStatuses shouldContain "IN_REVIEW"
@@ -494,7 +491,8 @@ class WorkflowApplicationServiceUnitTest : StringSpec({
         result.name shouldBe "Bug Workflow"
         result.description.shouldNotBeNull()
         result.description shouldBe "Optimized workflow for bug tracking and resolution"
-        result.initialStatus shouldBe "TODO"
+        result.initialStatus shouldBe "BACKLOG"
+        result.allowedStatuses shouldContain "BACKLOG"
         result.allowedStatuses shouldContain "TODO"
         result.allowedStatuses shouldContain "IN_PROGRESS"
         result.allowedStatuses shouldContain "DONE"
@@ -515,7 +513,8 @@ class WorkflowApplicationServiceUnitTest : StringSpec({
         result.name shouldBe "Feature Workflow"
         result.description.shouldNotBeNull()
         result.description shouldBe "Workflow for feature development with mandatory review step"
-        result.initialStatus shouldBe "TODO"
+        result.initialStatus shouldBe "BACKLOG"
+        result.allowedStatuses shouldContain "BACKLOG"
         result.allowedStatuses shouldContain "TODO"
         result.allowedStatuses shouldContain "IN_PROGRESS"
         result.allowedStatuses shouldContain "IN_REVIEW"
@@ -737,7 +736,7 @@ class WorkflowApplicationServiceUnitTest : StringSpec({
             timeProvider = mockTimeProvider
         )
         mockWorkflowRepository.workflows[workflowId] = existingWorkflow
-        
+
         val command = UpdateWorkflowCommand(
             id = workflowId,
             name = "Updated Name",
@@ -751,5 +750,153 @@ class WorkflowApplicationServiceUnitTest : StringSpec({
         result.name shouldBe "Updated Name"
         result.description shouldBe "Keep this description" // Should remain unchanged
         mockWorkflowRepository.saveCallCount shouldBe 1
+    }
+
+    // ================================================================================
+    // Category 7: Soft-Deletion Behavior
+    // ================================================================================
+
+    "should exclude soft-deleted workflow from findById" {
+        // Given
+        val workflow = Workflow.create(
+            name = "To Be Soft Deleted",
+            description = "This workflow will be soft-deleted",
+            initialStatus = IssueStatus.TODO,
+            allowedStatuses = setOf(IssueStatus.TODO, IssueStatus.DONE),
+            timeProvider = mockTimeProvider
+        )
+        mockWorkflowRepository.workflows[workflow.id] = workflow
+
+        // When
+        workflowService.deleteWorkflow(workflow.id) // Soft-delete
+        val findByIdResult = workflowService.getWorkflow(workflow.id)
+        val findIncludingDeletedResult = mockWorkflowRepository.findIncludingDeleted(workflow.id)
+
+        // Then
+        findByIdResult.shouldBeNull() // Should not find via standard findById
+        findIncludingDeletedResult.shouldNotBeNull() // Should find via findIncludingDeleted
+        findIncludingDeletedResult.deletedAt.shouldNotBeNull() // Should have deletedAt timestamp
+        mockWorkflowRepository.deleteCallCount shouldBe 1
+    }
+
+    "should exclude soft-deleted workflows from findAll by default" {
+        // Given
+        val workflow1 = Workflow.create(
+            name = "Active Workflow",
+            description = "This workflow is active",
+            initialStatus = IssueStatus.TODO,
+            allowedStatuses = setOf(IssueStatus.TODO, IssueStatus.DONE),
+            timeProvider = mockTimeProvider
+        )
+        val workflow2 = Workflow.create(
+            name = "Deleted Workflow",
+            description = "This workflow will be deleted",
+            initialStatus = IssueStatus.TODO,
+            allowedStatuses = setOf(IssueStatus.TODO, IssueStatus.DONE),
+            timeProvider = mockTimeProvider
+        )
+        mockWorkflowRepository.addTestWorkflows(workflow1, workflow2)
+
+        // When
+        workflowService.deleteWorkflow(workflow2.id) // Soft-delete workflow2
+        val allWorkflows = workflowService.listWorkflows()
+        val includingDeleted = mockWorkflowRepository.findAll(includeDeleted = true)
+
+        // Then
+        allWorkflows shouldHaveSize 1 // Should only return active workflow
+        allWorkflows.map { it.name } shouldContain "Active Workflow"
+
+        includingDeleted shouldHaveSize 2 // Should return both when includeDeleted=true
+        includingDeleted.map { it.name } shouldContain "Active Workflow"
+        includingDeleted.map { it.name } shouldContain "Deleted Workflow"
+        mockWorkflowRepository.deleteCallCount shouldBe 1
+    }
+
+    "should restore soft-deleted workflow successfully" {
+        // Given
+        val workflow = Workflow.create(
+            name = "Restorable Workflow",
+            description = "This workflow will be restored",
+            initialStatus = IssueStatus.TODO,
+            allowedStatuses = setOf(IssueStatus.TODO, IssueStatus.DONE),
+            timeProvider = mockTimeProvider
+        )
+        mockWorkflowRepository.workflows[workflow.id] = workflow
+
+        // When
+        workflowService.deleteWorkflow(workflow.id) // Soft-delete
+        val beforeRestore = workflowService.getWorkflow(workflow.id)
+
+        mockWorkflowRepository.restore(workflow.id) // Restore
+        val afterRestore = workflowService.getWorkflow(workflow.id)
+
+        // Then
+        beforeRestore.shouldBeNull() // Should not find before restore
+        afterRestore.shouldNotBeNull() // Should find after restore
+        afterRestore.name shouldBe "Restorable Workflow"
+
+        // Verify deletedAt is cleared in underlying entity
+        val restoredEntity = mockWorkflowRepository.findIncludingDeleted(workflow.id)
+        restoredEntity.shouldNotBeNull()
+        restoredEntity.deletedAt.shouldBeNull() // deletedAt should be cleared
+        mockWorkflowRepository.deleteCallCount shouldBe 1
+    }
+
+    "should handle idempotent soft-deletion" {
+        // Given
+        val workflow = Workflow.create(
+            name = "Idempotent Delete Test",
+            description = "Testing idempotent soft-deletion",
+            initialStatus = IssueStatus.TODO,
+            allowedStatuses = setOf(IssueStatus.TODO, IssueStatus.DONE),
+            timeProvider = mockTimeProvider
+        )
+        mockWorkflowRepository.workflows[workflow.id] = workflow
+
+        // When - delete twice (both calls should succeed without error)
+        workflowService.deleteWorkflow(workflow.id) // First soft-delete
+        val afterFirstDelete = mockWorkflowRepository.findIncludingDeleted(workflow.id)
+
+        workflowService.deleteWorkflow(workflow.id) // Second soft-delete (should not throw, no-op)
+        val afterSecondDelete = mockWorkflowRepository.findIncludingDeleted(workflow.id)
+
+        // Then - both deletes succeed and workflow remains soft-deleted
+        afterFirstDelete.shouldNotBeNull()
+        afterFirstDelete.deletedAt.shouldNotBeNull() // First delete sets deletedAt
+        afterSecondDelete.shouldNotBeNull()
+        afterSecondDelete.deletedAt.shouldNotBeNull() // Second delete maintains deletedAt
+        // Workflow remains soft-deleted and not accessible via standard findById
+        workflowService.getWorkflow(workflow.id).shouldBeNull()
+        // Idempotent behavior: second call is a no-op, so deleteCallCount is 1 not 2
+        mockWorkflowRepository.deleteCallCount shouldBe 1
+    }
+
+    "should only return soft-deleted workflows from findDeleted" {
+        // Given
+        val activeWorkflow = Workflow.create(
+            name = "Active Workflow",
+            description = "This remains active",
+            initialStatus = IssueStatus.TODO,
+            allowedStatuses = setOf(IssueStatus.TODO, IssueStatus.DONE),
+            timeProvider = mockTimeProvider
+        )
+        val deletedWorkflow = Workflow.create(
+            name = "Deleted Workflow",
+            description = "This will be deleted",
+            initialStatus = IssueStatus.TODO,
+            allowedStatuses = setOf(IssueStatus.TODO, IssueStatus.DONE),
+            timeProvider = mockTimeProvider
+        )
+        mockWorkflowRepository.addTestWorkflows(activeWorkflow, deletedWorkflow)
+
+        // When
+        workflowService.deleteWorkflow(deletedWorkflow.id) // Soft-delete only one
+        val deletedWorkflows = mockWorkflowRepository.findDeleted()
+
+        // Then
+        deletedWorkflows shouldHaveSize 1
+        deletedWorkflows.map { it.name } shouldContain "Deleted Workflow"
+        deletedWorkflows.first().deletedAt.shouldNotBeNull()
+        mockWorkflowRepository.deleteCallCount shouldBe 1
     }
 })

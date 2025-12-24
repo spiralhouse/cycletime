@@ -77,18 +77,22 @@ class ResourceRpcHandler(
     
     private suspend fun handleResourcesSubscribe(params: JsonObject): JsonObject {
         val uri = params["uri"]?.jsonPrimitive?.content ?: throw IllegalArgumentException("uri parameter required")
-        
+
         // Resource subscription is not supported in this implementation
-        // Future versions may add real-time resource change notifications
+        // Subscription infrastructure was removed in commit fb6c430 (Sep 2025) for MVP simplification
+        // See SPI-579 for future subscription implementation
+        // See SPI-777 for capability declaration alignment
         throw UnsupportedOperationException("Resource subscription is not supported")
     }
     
     private suspend fun handleResourcesUnsubscribe(params: JsonObject): JsonObject {
-        val subscriptionId = params["subscriptionId"]?.jsonPrimitive?.content 
+        val subscriptionId = params["subscriptionId"]?.jsonPrimitive?.content
             ?: throw IllegalArgumentException("subscriptionId parameter required")
-        
+
         // Resource subscription is not supported in this implementation
-        // Future versions may add real-time resource change notifications
+        // Subscription infrastructure was removed in commit fb6c430 (Sep 2025) for MVP simplification
+        // See SPI-579 for future subscription implementation
+        // See SPI-777 for capability declaration alignment
         throw UnsupportedOperationException("Resource subscription is not supported")
     }
     

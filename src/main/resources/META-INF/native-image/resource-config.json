@@ -1,25 +1,3837 @@
 {
-  "resources": {
-    "includes": [
-      {
-        "pattern": ".*\\.properties$"
-      },
-      {
-        "pattern": ".*\\.xml$"
-      },
-      {
-        "pattern": ".*\\.conf$"
-      },
-      {
-        "pattern": "META-INF/services/.*"
-      },
-      {
-        "pattern": "logback\\.xml"
-      },
-      {
-        "pattern": "application\\.conf"
-      }
-    ]
-  },
-  "bundles": []
+  "resources":{
+  "includes":[{
+    "pattern":"\\QMETA-INF/services/ch.qos.logback.classic.spi.Configurator\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.ktor.serialization.kotlinx.KotlinxSerializationExtensionProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.ktor.server.plugins.di.DependencyMapExtension\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.swagger.v3.parser.core.extensions.SwaggerParserExtension\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.swagger.v3.parser.extensions.JsonSchemaParserExtension\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.lang.System$LoggerFinder\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.net.spi.InetAddressResolverProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.net.spi.URLStreamHandlerProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.nio.channels.spi.SelectorProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.sql.Driver\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.time.zone.ZoneRulesProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/javax.xml.parsers.SAXParserFactory\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/kotlin.reflect.jvm.internal.impl.builtins.BuiltInsLoader\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/kotlin.reflect.jvm.internal.impl.km.internal.extensions.MetadataExtensions\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/kotlin.reflect.jvm.internal.impl.resolve.ExternalOverridabilityCondition\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/kotlin.reflect.jvm.internal.impl.util.ModuleVisibilityHelper\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/kotlinx.coroutines.CoroutineExceptionHandler\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/kotlinx.coroutines.internal.MainDispatcherFactory\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.jetbrains.exposed.dao.id.EntityIDFactory\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.jetbrains.exposed.sql.DatabaseConnectionAutoRegistration\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.jetbrains.exposed.sql.statements.GlobalStatementInterceptor\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.junit.platform.commons.support.scanning.ClasspathScanner\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.junit.platform.engine.TestEngine\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.junit.platform.launcher.LauncherDiscoveryListener\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.junit.platform.launcher.LauncherSessionListener\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.junit.platform.launcher.PostDiscoveryFilter\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.junit.platform.launcher.TestExecutionListener\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.slf4j.spi.SLF4JServiceProvider\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/classic/pattern/ClassicConverter.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/classic/pattern/ExtendedThrowableProxyConverter.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/classic/pattern/MDCConverter.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/classic/pattern/PropertyConverter.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/classic/pattern/ThrowableHandlingConverter.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/classic/pattern/ThrowableProxyConverter.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/model/AppenderRefModel.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/model/Model.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/model/processor/ModelHandlerBase.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/model/processor/ModelHandlerException.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/pattern/Converter.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/pattern/DynamicConverter.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/pattern/FormattingConverter.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/pattern/color/ConverterSupplierByClassName.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/pattern/parser/Node.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/pattern/parser/Parser.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/spi/ContextAwareBase.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/spi/ScanException.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/status/OnConsoleStatusListener.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/status/OnPrintStreamStatusListenerBase.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/status/StatusListener.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/status/StatusManager.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/util/DynamicClassLoadingException.class\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/util/IncompatibleClassException.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/annotation/JacksonAnnotationValue.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/annotation/JsonFormat$Value.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/annotation/JsonSetter$Value.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/annotation/ObjectIdGenerator.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/annotation/ObjectIdGenerators$Base.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/annotation/ObjectIdGenerators$PropertyGenerator.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/core/JacksonException.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/core/JsonParser.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/core/JsonProcessingException.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/core/JsonStreamContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/core/JsonToken.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/core/SerializableString.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/core/TreeNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/core/filter/FilteringParserDelegate.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/core/io/SerializedString.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/core/type/ResolvedType.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/core/util/DefaultPrettyPrinter$Indenter.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/core/util/DefaultPrettyPrinter$NopIndenter.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/core/util/JsonParserDelegate.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/DatabindContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/DatabindException.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/DeserializationContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/DeserializationFeature.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/JavaType.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/JsonDeserializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/JsonMappingException.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/JsonNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/JsonSerializable$Base.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/JsonSerializable.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/JsonSerializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/MapperFeature.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/Module.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/PropertyName.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/SerializerProvider.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/cfg/ConfigOverride.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/AbstractDeserializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/BeanDeserializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/BeanDeserializerBase.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/CreatorProperty.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/DefaultDeserializationContext$Impl.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/DefaultDeserializationContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/NullValueProvider.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/SettableBeanProperty$Delegating.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/SettableBeanProperty.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/impl/FieldProperty.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/impl/MergingSettableBeanProperty.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/impl/MethodProperty.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/impl/PropertyBasedObjectIdGenerator.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/impl/SetterlessProperty.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/std/CollectionDeserializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/std/ContainerDeserializerBase.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/std/EnumDeserializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/std/EnumMapDeserializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/std/EnumSetDeserializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/std/MapDeserializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/std/ObjectArrayDeserializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/std/StdDeserializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/std/StdScalarDeserializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/std/StringArrayDeserializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/std/StringCollectionDeserializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/deser/std/ThrowableDeserializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/introspect/Annotated.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/introspect/AnnotatedField.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/introspect/AnnotatedMember.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/introspect/AnnotatedMethod.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/introspect/AnnotatedParameter.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/introspect/AnnotatedWithParams.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/introspect/AnnotationCollector.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/introspect/ConcreteBeanPropertyBase.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/introspect/TypeResolutionContext$Basic.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/introspect/TypeResolutionContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/introspect/VisibilityChecker$Std.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/introspect/VisibilityChecker.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/jsonFormatVisitors/JsonIntegerFormatVisitor.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/jsonFormatVisitors/JsonNumberFormatVisitor.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/jsonFormatVisitors/JsonValueFormatVisitor.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/jsontype/DefaultBaseTypeLimitingValidator.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/jsontype/PolymorphicTypeValidator.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/jsontype/TypeSerializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/module/SimpleModule.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/ArrayNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/BaseJsonNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/BinaryNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/BooleanNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/ContainerNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/DoubleNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/FloatNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/IntNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/JsonNodeCreator.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/NullNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/NumericNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/ObjectNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/ShortNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/TextNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/node/ValueNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/ContainerSerializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/DefaultSerializerProvider$Impl.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/DefaultSerializerProvider.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/PropertyFilter.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/impl/IndexedStringListSerializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/impl/PropertySerializerMap.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/impl/StringArraySerializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/impl/StringCollectionSerializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/impl/TypeWrappedSerializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/std/ArraySerializerBase.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/std/EnumSerializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/std/JsonValueSerializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/std/MapSerializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/std/ObjectArraySerializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/std/StaticListSerializerBase.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/std/StdScalarSerializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/ser/std/StdSerializer.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/type/ArrayType.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/type/ClassStack.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/type/CollectionLikeType.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/type/CollectionType.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/type/MapLikeType.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/type/MapType.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/type/ReferenceType.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/type/SimpleType.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/type/TypeBase.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/util/LRUMap.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/util/LookupCache.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/util/TokenBufferReadContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/util/internal/PrivateMaxEntriesMap$EntrySet.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/util/internal/PrivateMaxEntriesMap$KeySet.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/databind/util/internal/PrivateMaxEntriesMap$Values.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/dataformat/yaml/util/StringQuotingChecker$Default.class\\E"
+  }, {
+    "pattern":"\\Qcom/fasterxml/jackson/dataformat/yaml/util/StringQuotingChecker.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/Decorator.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/Helper.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/Options$InMemoryBuffer.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/Options$NativeBuffer.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/Options.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/Template.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/helper/DefI18nSource.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/helper/I18nSource.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/BaseTemplate.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/Block.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/BlockDecorator.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/HbsParser$BoolParamContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/HbsParser$CharParamContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/HbsParser$DynamicPathContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/HbsParser$ElseStmtChainContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/HbsParser$LiteralPathContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/HbsParser$NumberParamContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/HbsParser$ParamContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/HbsParser$PexprContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/HbsParser$RefParamContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/HbsParser$StaticPathContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/HbsParser$StringParamContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/HbsParser$SubParamExprContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/HelperResolver.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/VarDecorator.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/Variable.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/CharStream.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/IntStream.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/ParserRuleContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/RuleContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/Vocabulary.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/VocabularyImpl.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/ATNState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/ArrayPredictionContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/BasicBlockStartState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/BasicState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/BlockEndState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/BlockStartState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/DecisionState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/EmptyPredictionContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/LoopEndState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/PlusBlockStartState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/PlusLoopbackState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/PredictionContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/RuleStartState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/RuleStopState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/SingletonPredictionContext.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/StarBlockStartState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/StarLoopEntryState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/StarLoopbackState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/TokensStartState.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/atn/Transition.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/misc/AbstractEqualityComparator.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/misc/Array2DHashSet.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/misc/IntSet.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/misc/IntervalSet.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/misc/ObjectEqualityComparator.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/tree/ErrorNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/tree/ParseTree.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/tree/RuleNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/tree/SyntaxTree.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/tree/TerminalNode.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/internal/antlr/tree/Tree.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/io/CompositeTemplateLoader.class\\E"
+  }, {
+    "pattern":"\\Qcom/github/jknack/handlebars/io/TemplateLoader.class\\E"
+  }, {
+    "pattern":"\\Qcom/zaxxer/hikari/pool/PoolBase$ConnectionSetupException.class\\E"
+  }, {
+    "pattern":"\\Qcom/zaxxer/hikari/util/ConcurrentBag$IConcurrentBagEntry.class\\E"
+  }, {
+    "pattern":"\\Qcom/zaxxer/hikari/util/DriverDataSource.class\\E"
+  }, {
+    "pattern":"\\Qcom/zaxxer/hikari/util/FastList.class\\E"
+  }, {
+    "pattern":"\\Qcom/zaxxer/hikari/util/UtilityElf$DefaultThreadFactory.class\\E"
+  }, {
+    "pattern":"\\Qcss_bootstrap.mustache\\E"
+  }, {
+    "pattern":"\\Qcss_prettify.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/css_bootstrap.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/css_prettify.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/index.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/js_bootstrap.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/js_jquery.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/js_json_schema_ref_parser.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/js_json_stringify_safe.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/js_jsonformatter.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/js_jsonschemaview.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/js_prettify.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/js_webfontloader.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/marked.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/param.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/paramB.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/sample_android.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/sample_csharp.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/sample_java.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/sample_js.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/sample_objc.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/sample_perl.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/sample_php.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/sample_python.mustache\\E"
+  }, {
+    "pattern":"\\Qhandlebars/htmlDocs2/styles.mustache\\E"
+  }, {
+    "pattern":"\\Qhelpers.nashorn.js\\E"
+  }, {
+    "pattern":"\\Qio/github/oshai/kotlinlogging/Marker.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/assertions/Actual.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/assertions/Expected.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/assertions/eq/DataClassDifference.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/assertions/eq/PropertyDifference.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/assertions/equals/Equality.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/assertions/equals/EqualityResult.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/assertions/equals/SimpleEqualityResult.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/assertions/print/Printed.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/core/TestConfiguration.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/core/annotation/DisplayName.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/core/config/AbstractProjectConfig.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/core/config/LogLevel.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/core/extensions/Extension.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/core/listeners/AfterProjectListener.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/core/names/TestNameCase.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/core/spec/Extendable.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/core/spec/Spec.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/core/spec/SpecExecutionOrder.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/core/test/Enabled.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/core/test/TestCase.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/core/test/TestCaseSeverityLevel.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/core/test/config/DefaultTestConfig.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/engine/EngineResult.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/engine/concurrency/SpecExecutionMode.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/engine/config/IncludeTestScopeAffixes.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/engine/config/PackageConfigLoader$CachedConfig.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/engine/extensions/DescriptorFilterResult$Exclude.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/engine/extensions/DescriptorFilterResult.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/engine/names/DisplayNameFormatter.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/engine/spec/interceptor/ref/enabled/IgnoredSpecInterceptor.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/engine/spec/interceptor/ref/enabled/RequiresPlatformInterceptor.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/engine/spec/interceptor/ref/enabled/RequiresTagInterceptor.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/engine/tags/TagExpression.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/engine/test/TestResult.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/engine/test/interceptors/BlockedThreadTestTimeoutException.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/engine/test/interceptors/TestTimeoutException.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/matchers/ErrorCollector.class\\E"
+  }, {
+    "pattern":"\\Qio/kotest/matchers/collections/CollectionMatchersKt$matchInOrder$1$MatchInOrderSubsetResult.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/client/HttpClient.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/client/plugins/sse/ClientSSESession.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/client/request/HttpRequestBuilder.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/client/statement/HttpResponse.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/http/ContentType.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/http/HeaderValueWithParameters.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/http/Headers$Companion.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/http/Headers.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/http/HttpMessage.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/http/HttpMessageBuilder.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/http/HttpStatusCode.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/http/Parameters.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/http/URLBuilder.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/http/URLParserException.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/http/content/MultiPartData.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/http/content/NullBody.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/http/content/OutgoingContent.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/network/selector/LockFreeMPSCQueueCore$Placeholder.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/network/sockets/SocketAddress.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/serialization/kotlinx/json/JsonArraySymbols.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/application/Application.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/application/ApplicationCall.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/application/ApplicationCallPipeline.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/application/PipelineCall.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/config/ApplicationConfigValue.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/engine/BaseApplicationResponse$ResponseAlreadySentException.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/plugins/BadRequestException.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/plugins/di/DependencyConflictResult.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/plugins/di/DependencyInitializer.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/plugins/di/DependencyKey.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/plugins/di/DependencyRegistry.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/plugins/di/annotations/Named.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/plugins/di/annotations/Property.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/request/DoubleReceivePreventionToken.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/response/ApplicationSendPipeline.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/response/PipelineResponse.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/routing/Route.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/routing/RouteSelectorEvaluation$Failure.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/routing/RouteSelectorEvaluation.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/server/routing/RoutingCall.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/util/CaseInsensitiveString.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/util/internal/LockFreeLinkedListNode.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/util/internal/Removed.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/util/pipeline/PhaseContent.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/util/pipeline/Pipeline.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/util/pipeline/PipelineContext.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/util/pipeline/PipelinePhase.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/util/pipeline/PipelinePhaseRelation$After.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/util/pipeline/PipelinePhaseRelation.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/util/reflect/TypeInfo.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/utils/io/BufferedByteWriteChannel.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/utils/io/ByteChannel$Slot.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/utils/io/ByteChannel.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/utils/io/ByteReadChannel.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/utils/io/ByteWriteChannel.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/utils/io/ChannelJob.class\\E"
+  }, {
+    "pattern":"\\Qio/ktor/utils/io/ReaderJob.class\\E"
+  }, {
+    "pattern":"\\Qio/micrometer/common/util/internal/logging/AbstractInternalLogger.class\\E"
+  }, {
+    "pattern":"\\Qio/micrometer/common/util/internal/logging/LocationAwareSlf4JLogger.class\\E"
+  }, {
+    "pattern":"\\Qio/micrometer/common/util/internal/logging/Slf4JLogger.class\\E"
+  }, {
+    "pattern":"\\Qio/micrometer/core/instrument/StrongReferenceGaugeFunction.class\\E"
+  }, {
+    "pattern":"\\Qio/micrometer/core/instrument/binder/MeterBinder.class\\E"
+  }, {
+    "pattern":"\\Qio/micrometer/core/instrument/config/validate/Validated$Invalid.class\\E"
+  }, {
+    "pattern":"\\Qio/micrometer/core/instrument/config/validate/Validated$Valid.class\\E"
+  }, {
+    "pattern":"\\Qio/micrometer/core/instrument/config/validate/Validated.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/Deregisterable.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/Matcher.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/MockKDsl$internalWithInstanceFactory$$inlined$internalRegisterInstanceFactory$1.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/MockKGateway$InstanceFactory.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/MockKKt$withInstanceFactory$lambda$22$$inlined$internalWithInstanceFactory$1.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/RecordedCall.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/impl/Ref.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/impl/instantiation/JvmConstructorMockFactory$ConstructorInvocationHandler.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/impl/instantiation/JvmConstructorMockFactory$ConstructorMockVariant.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/impl/recording/CallRoundBuilder.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/impl/recording/SignedCall.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/impl/recording/VerificationCallSorter.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/impl/stub/MockKStub$InvocationAnswer.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/impl/stub/Stub.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/proxy/MockKAgentException.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/proxy/jvm/advice/jvm/JvmMockKProxyAdvice.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/proxy/jvm/dispatcher/JvmMockKDispatcher.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/proxy/jvm/dispatcher/JvmMockKDispatcher.clazz\\E"
+  }, {
+    "pattern":"\\Qio/mockk/proxy/jvm/dispatcher/JvmMockKWeakMap$StrongKey.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/proxy/jvm/dispatcher/JvmMockKWeakMap$StrongKey.clazz\\E"
+  }, {
+    "pattern":"\\Qio/mockk/proxy/jvm/dispatcher/JvmMockKWeakMap$WeakKey.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/proxy/jvm/dispatcher/JvmMockKWeakMap$WeakKey.clazz\\E"
+  }, {
+    "pattern":"\\Qio/mockk/proxy/jvm/dispatcher/JvmMockKWeakMap.class\\E"
+  }, {
+    "pattern":"\\Qio/mockk/proxy/jvm/dispatcher/JvmMockKWeakMap.clazz\\E"
+  }, {
+    "pattern":"\\Qio/mockk/settings.properties\\E"
+  }, {
+    "pattern":"\\Qio/prometheus/metrics/model/snapshots/Exemplars.class\\E"
+  }, {
+    "pattern":"\\Qio/prometheus/metrics/model/snapshots/MetricSnapshots.class\\E"
+  }, {
+    "pattern":"\\Qio/prometheus/metrics/model/snapshots/Quantiles.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/ErrorResponse.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/HealthResponse.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/api/dto/ApiRootResponse.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/api/dto/CreateIssueRequest.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/api/dto/CreateWorkflowRequest.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/api/dto/TransitionsResponse.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/api/middleware/UnsupportedMediaTypeException.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/application/dto/IssueDto.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/application/dto/IssueListDto.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/application/dto/ProjectDto.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/application/dto/ProjectListDto.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/application/dto/SessionDto.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/application/dto/SessionListDto.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/application/dto/WorkflowDto.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/application/services/DashboardCache$CacheEntry.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/dashboard/dto/IssueViewDTO.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/dashboard/dto/ProjectHierarchyDTO.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/dashboard/dto/ProjectViewDTO.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/domain/entities/Issue.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/domain/entities/Project.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/domain/entities/SessionContext.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/domain/entities/Workflow.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/domain/valueobjects/Estimate.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/domain/valueobjects/IssueId.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/domain/valueobjects/IssueType.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/domain/valueobjects/ProjectId.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/infrastructure/database/IssuesTable.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/infrastructure/database/WorkflowsTable.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/infrastructure/health/ComponentHealth.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/infrastructure/health/HealthStatus.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/infrastructure/health/SystemHealth.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/infrastructure/persistence/BaseExposedRepository.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/infrastructure/persistence/ExposedWorkflowRepository.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/integration/mcp/StreamableHttpSecurityTest$1$12$1.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/mcp/integration/MCPIntegrationException.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/mcp/integration/MCPIntegrationService.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/mcp/integration/MCPServerStatus.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/mcp/resources/ResourceMetadata.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/mcp/sdk/InvalidOriginException.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/mcp/sdk/ResponseStrategy.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/mcp/sdk/UnsupportedContentTypeException.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/mcp/sdk/UnsupportedProtocolVersionException.class\\E"
+  }, {
+    "pattern":"\\Qio/spiralhouse/cycletime/mcp/tools/ToolHandler.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/codegen/v3/CodegenObject.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/codegen/v3/CodegenParameter.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/codegen/v3/VendorExtendable.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/codegen/v3/ignore/rules/DirectoryRule.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/codegen/v3/ignore/rules/FileRule.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/codegen/v3/ignore/rules/IgnoreLineParser$Token.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/codegen/v3/ignore/rules/Part.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/codegen/v3/ignore/rules/RootedFileRule.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/codegen/v3/ignore/rules/Rule.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/models/AbstractModel.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/models/ComposedModel.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/models/RefResponse.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/models/Response.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/models/parameters/AbstractParameter.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/models/parameters/AbstractSerializableParameter.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/core/util/DeserializationModule.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/core/util/DeserializationModule31.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/core/util/PrimitiveType.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/oas/models/ExternalDocumentation.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/oas/models/media/ArraySchema.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/oas/models/media/ComposedSchema.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/oas/models/media/FileSchema.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/oas/models/media/JsonSchema.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/oas/models/media/MapSchema.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/oas/models/media/ObjectSchema.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/oas/models/media/Schema.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/oas/models/parameters/CookieParameter.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/oas/models/parameters/HeaderParameter.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/oas/models/parameters/Parameter.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/oas/models/parameters/PathParameter.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/oas/models/parameters/QueryParameter.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/oas/models/servers/Server.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/parser/OpenAPIResolver.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/parser/reference/DereferencerContext.class\\E"
+  }, {
+    "pattern":"\\Qio/swagger/v3/parser/util/OpenAPIDeserializer$ParseResult.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/BufferedReader.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/Closeable.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/File.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/FileInputStream.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/FileNotFoundException.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/FileOutputStream.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/FilterInputStream.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/FilterOutputStream.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/IOException.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/InputStream.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/InterruptedIOException.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/ObjectInputStream.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/OutputStream.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/PrintStream.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/Reader.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/SequenceInputStream.class\\E"
+  }, {
+    "pattern":"\\Qjava/io/Serializable.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/AbstractMethodError.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/AbstractStringBuilder.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Appendable.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/AssertionError.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/AutoCloseable.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Boolean.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/BootstrapMethodError.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Byte.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/CharSequence.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Character.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Class.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/ClassCastException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/ClassLoader.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/ClassNotFoundException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Cloneable.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Comparable.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Double.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Enum.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Error.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Exception.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Float.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/IllegalAccessError.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/IllegalAccessException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/IllegalArgumentException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/IllegalStateException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/IncompatibleClassChangeError.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/InstantiationException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Integer.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Iterable.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/LinkageError.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Long.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/NoClassDefFoundError.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/NoSuchFieldException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/NoSuchMethodError.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/NoSuchMethodException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/NullPointerException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Number.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/NumberFormatException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Object.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/OutOfMemoryError.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/ReflectiveOperationException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Runnable.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/RuntimeException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/SecurityException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Short.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/StackTraceElement.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/String.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/StringBuilder.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Thread.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/ThreadLocal.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Throwable.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/UnsupportedOperationException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/VirtualMachineError.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/Void.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/annotation/Annotation.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/constant/Constable.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/constant/ConstantDesc.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/invoke/TypeDescriptor$OfField.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/invoke/TypeDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/ref/Reference.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/ref/WeakReference.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/reflect/AccessibleObject.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/reflect/AnnotatedElement.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/reflect/Constructor.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/reflect/Executable.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/reflect/Field.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/reflect/GenericDeclaration.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/reflect/InvocationTargetException.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/reflect/Member.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/reflect/Method.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/reflect/Type.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/reflect/TypeVariable.class\\E"
+  }, {
+    "pattern":"\\Qjava/lang/reflect/WildcardType.class\\E"
+  }, {
+    "pattern":"\\Qjava/math/BigDecimal.class\\E"
+  }, {
+    "pattern":"\\Qjava/math/BigInteger.class\\E"
+  }, {
+    "pattern":"\\Qjava/net/InetAddress.class\\E"
+  }, {
+    "pattern":"\\Qjava/net/InetSocketAddress.class\\E"
+  }, {
+    "pattern":"\\Qjava/net/MalformedURLException.class\\E"
+  }, {
+    "pattern":"\\Qjava/net/SocketAddress.class\\E"
+  }, {
+    "pattern":"\\Qjava/net/SocketException.class\\E"
+  }, {
+    "pattern":"\\Qjava/net/SocketTimeoutException.class\\E"
+  }, {
+    "pattern":"\\Qjava/net/URL.class\\E"
+  }, {
+    "pattern":"\\Qjava/net/URLClassLoader.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/Buffer.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/BufferUnderflowException.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/ByteBuffer.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/channels/FileChannel.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/channels/SelectableChannel.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/channels/ServerSocketChannel.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/channels/SocketChannel.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/channels/spi/AbstractInterruptibleChannel.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/channels/spi/AbstractSelectableChannel.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/channels/spi/SelectorProvider.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/charset/Charset.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/file/AccessDeniedException.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/file/FileStore.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/file/FileSystemException.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/file/Path.class\\E"
+  }, {
+    "pattern":"\\Qjava/nio/file/WatchEvent.class\\E"
+  }, {
+    "pattern":"\\Qjava/security/CodeSource.class\\E"
+  }, {
+    "pattern":"\\Qjava/security/SecureClassLoader.class\\E"
+  }, {
+    "pattern":"\\Qjava/security/SecureRandom.class\\E"
+  }, {
+    "pattern":"\\Qjava/sql/Blob.class\\E"
+  }, {
+    "pattern":"\\Qjava/sql/Connection.class\\E"
+  }, {
+    "pattern":"\\Qjava/sql/Date.class\\E"
+  }, {
+    "pattern":"\\Qjava/sql/SQLException.class\\E"
+  }, {
+    "pattern":"\\Qjava/sql/Statement.class\\E"
+  }, {
+    "pattern":"\\Qjava/sql/Time.class\\E"
+  }, {
+    "pattern":"\\Qjava/sql/Timestamp.class\\E"
+  }, {
+    "pattern":"\\Qjava/text/DateFormat.class\\E"
+  }, {
+    "pattern":"\\Qjava/text/DecimalFormat.class\\E"
+  }, {
+    "pattern":"\\Qjava/text/Format.class\\E"
+  }, {
+    "pattern":"\\Qjava/text/NumberFormat.class\\E"
+  }, {
+    "pattern":"\\Qjava/text/SimpleDateFormat.class\\E"
+  }, {
+    "pattern":"\\Qjava/time/DateTimeException.class\\E"
+  }, {
+    "pattern":"\\Qjava/time/Instant.class\\E"
+  }, {
+    "pattern":"\\Qjava/time/LocalDate.class\\E"
+  }, {
+    "pattern":"\\Qjava/time/LocalDateTime.class\\E"
+  }, {
+    "pattern":"\\Qjava/time/LocalTime.class\\E"
+  }, {
+    "pattern":"\\Qjava/time/OffsetDateTime.class\\E"
+  }, {
+    "pattern":"\\Qjava/time/OffsetTime.class\\E"
+  }, {
+    "pattern":"\\Qjava/time/ZonedDateTime.class\\E"
+  }, {
+    "pattern":"\\Qjava/time/temporal/TemporalAccessor.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/AbstractCollection.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/AbstractList.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/AbstractMap$SimpleImmutableEntry.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/AbstractMap.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/AbstractQueue.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/AbstractSet.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/ArrayDeque.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/ArrayList.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/BitSet.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/Collection.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/Comparator.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/Date.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/Deque.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/Dictionary.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/EnumMap.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/HashMap.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/HashSet.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/Hashtable.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/IdentityHashMap.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/Iterator.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/LinkedHashMap.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/List.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/Map$Entry.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/Map.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/NavigableMap.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/NavigableSet.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/Optional.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/PriorityQueue.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/Properties.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/Random.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/RandomAccess.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/SequencedCollection.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/SequencedMap.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/SequencedSet.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/ServiceConfigurationError.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/Set.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/SortedMap.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/SortedSet.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/TreeMap.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/TreeSet.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/concurrent/CancellationException.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/concurrent/ConcurrentHashMap.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/concurrent/ConcurrentMap.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/concurrent/Executor.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/concurrent/ThreadFactory.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/concurrent/locks/ReadWriteLock.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/concurrent/locks/ReentrantReadWriteLock.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/function/ToDoubleFunction.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/jar/JarEntry.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/zip/InflaterInputStream.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/zip/ZipConstants.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/zip/ZipEntry.class\\E"
+  }, {
+    "pattern":"\\Qjava/util/zip/ZipInputStream.class\\E"
+  }, {
+    "pattern":"\\Qjavax/management/MBeanServer.class\\E"
+  }, {
+    "pattern":"\\Qjavax/naming/Context.class\\E"
+  }, {
+    "pattern":"\\Qjavax/naming/NamingException.class\\E"
+  }, {
+    "pattern":"\\Qjavax/sql/DataSource.class\\E"
+  }, {
+    "pattern":"\\Qjs_bootstrap.mustache\\E"
+  }, {
+    "pattern":"\\Qjs_jquery.mustache\\E"
+  }, {
+    "pattern":"\\Qjs_json_schema_ref_parser.mustache\\E"
+  }, {
+    "pattern":"\\Qjs_json_stringify_safe.mustache\\E"
+  }, {
+    "pattern":"\\Qjs_jsonformatter.mustache\\E"
+  }, {
+    "pattern":"\\Qjs_jsonschemaview.mustache\\E"
+  }, {
+    "pattern":"\\Qjs_prettify.mustache\\E"
+  }, {
+    "pattern":"\\Qjs_webfontloader.mustache\\E"
+  }, {
+    "pattern":"\\Qjunit-platform.properties\\E"
+  }, {
+    "pattern":"\\Qkotest.properties\\E"
+  }, {
+    "pattern":"\\Qkotlin/Function.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/Lazy.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/Pair.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/Result.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/SynchronizedLazyImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/Unit.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/annotation/annotation.kotlin_builtins\\E"
+  }, {
+    "pattern":"\\Qkotlin/collections/Grouping.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/collections/collections.kotlin_builtins\\E"
+  }, {
+    "pattern":"\\Qkotlin/concurrent/atomics/atomics.kotlin_builtins\\E"
+  }, {
+    "pattern":"\\Qkotlin/coroutines/AbstractCoroutineContextElement.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/coroutines/Continuation.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/coroutines/ContinuationInterceptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/coroutines/CoroutineContext$Element.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/coroutines/CoroutineContext.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/coroutines/coroutines.kotlin_builtins\\E"
+  }, {
+    "pattern":"\\Qkotlin/coroutines/jvm/internal/BaseContinuationImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/coroutines/jvm/internal/ContinuationImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/coroutines/jvm/internal/SuspendLambda.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/internal/internal.kotlin_builtins\\E"
+  }, {
+    "pattern":"\\Qkotlin/jvm/functions/Function0.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/jvm/functions/Function1.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/jvm/functions/Function2.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/jvm/functions/functions.kotlin_builtins\\E"
+  }, {
+    "pattern":"\\Qkotlin/jvm/internal/KTypeBase.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/jvm/internal/PropertyReference.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/jvm/internal/Ref$BooleanRef.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/jvm/internal/Ref$IntRef.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/jvm/internal/markers/KMappedMarker.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/kotlin.kotlin_builtins\\E"
+  }, {
+    "pattern":"\\Qkotlin/properties/ReadOnlyProperty.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/ranges/ranges.kotlin_builtins\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/KAnnotatedElement.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/KCallable.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/KClass.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/KClassifier.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/KDeclarationContainer.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/KFunction.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/KParameter.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/KProperty.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/KProperty1.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/KType.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/AbstractKType.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/EmptyContainerForLocal.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/KCallableImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/KClassImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/KClassifierImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/KDeclarationContainerImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/KTypeImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/KTypeParameterOwnerImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/KTypeSubstitutor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/KotlinReflectionInternalError.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/calls/Caller.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/builtins/KotlinBuiltIns.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/builtins/jvm/JavaToKotlinClassMap$PlatformMutabilityMapping.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/builtins/jvm/JavaToKotlinClassMap.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/builtins/jvm/JvmBuiltInClassDescriptorFactory$$Lambda$1.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/builtins/jvm/JvmBuiltIns.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/builtins/jvm/JvmBuiltInsCustomizer.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/CallableDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/CallableMemberDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/ClassConstructorDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/ClassDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/ClassOrPackageFragmentDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/ClassifierDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/ClassifierDescriptorWithTypeParameters.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/DeclarationDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/DeclarationDescriptorNonRoot.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/DeclarationDescriptorWithSource.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/DeclarationDescriptorWithVisibility.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/DeserializedDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/FunctionDescriptor$CopyBuilder.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/FunctionDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/InlineClassRepresentation.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/MemberDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/Named.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/NotFoundClasses$MockClassDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/PackageFragmentProvider.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/PossiblyInnerType.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/PropertyAccessorDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/PropertyDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/PropertyGetterDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/PropertySetterDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/ReceiverParameterDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/SimpleFunctionDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/SourceElement.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/Substitutable.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/ValueClassRepresentation.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/ValueParameterDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/VariableAccessorDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/annotations/Annotated.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/annotations/AnnotatedImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/annotations/AnnotationDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/annotations/Annotations.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/impl/AbstractClassDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/impl/ClassDescriptorBase.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/impl/DeclarationDescriptorImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/impl/DeclarationDescriptorNonRootImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/impl/FunctionDescriptorImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/impl/ModuleAwareClassDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/impl/PropertyAccessorDescriptorImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/impl/PropertyDescriptorImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/impl/PropertyGetterDescriptorImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/impl/PropertySetterDescriptorImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/runtime/components/ReflectKotlinClass.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/runtime/structure/ReflectJavaElement.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/runtime/structure/ReflectJavaMember.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/descriptors/runtime/structure/ReflectJavaMethod.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/km/ClassKind.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/km/KmClass.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/km/KmPropertyAccessorAttributes.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/km/KmType.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/km/Modality.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/km/jvm/JvmMemberSignature.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/km/jvm/JvmMethodSignature.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/AnnotationQualifierApplicabilityType.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/JavaDefaultQualifiers.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/JavaTypeQualifiersByElementType.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/SpecialGenericSignatures$Companion$NameAndSignature.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/lazy/LazyJavaResolverContext.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/lazy/descriptors/LazyJavaClassDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/lazy/descriptors/LazyJavaClassMemberScope.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/lazy/descriptors/LazyJavaScope.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/sources/JavaSourceElement.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/structure/JavaAnnotation.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/structure/JavaAnnotationOwner.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/structure/JavaClass.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/structure/JavaElement.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/structure/JavaField.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/structure/JavaMember.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/structure/JavaModifierListOwner.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/structure/JavaNamedElement.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/structure/JavaType.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/typeEnhancement/AbstractSignatureParts$TypeAndDefaultQualifiers.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/typeEnhancement/JavaTypeQualifiers.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/typeEnhancement/MutabilityQualifier.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/typeEnhancement/NullabilityQualifier.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/typeEnhancement/NullabilityQualifierWithMigrationStatus.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/typeEnhancement/PredefinedFunctionEnhancementInfo.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/java/typeEnhancement/TypeEnhancementInfo.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/kotlin/DescriptorBasedTypeSignatureMappingKt$mapType$typeSystemContext$1.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/kotlin/KotlinJvmBinaryClass$AnnotationArgumentVisitor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/kotlin/KotlinJvmBinaryClass$AnnotationArrayArgumentVisitor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/load/kotlin/header/KotlinClassHeader.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/metadata/ProtoBuf$EnumEntry.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/metadata/ProtoBuf$EnumEntryOrBuilder.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/metadata/ProtoBuf$Property$Builder.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/metadata/ProtoBuf$PropertyOrBuilder.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/metadata/ProtoBuf$Type.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/metadata/ProtoBuf$TypeOrBuilder.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/metadata/deserialization/NameResolver.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/metadata/deserialization/VersionRequirement$Version.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/metadata/deserialization/VersionRequirement.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/metadata/jvm/JvmProtoBuf$JvmFieldSignature$Builder.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/metadata/jvm/JvmProtoBuf$JvmFieldSignatureOrBuilder.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/metadata/jvm/JvmProtoBuf$JvmPropertySignature$Builder.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/name/ClassId.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/name/FqName.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/name/Name.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/AbstractMessageLite$Builder.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/AbstractMessageLite.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/BoundedByteString.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/ByteString.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/GeneratedMessageLite$Builder.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/GeneratedMessageLite$ExtendableBuilder.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/GeneratedMessageLite$ExtendableMessage.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/GeneratedMessageLite$ExtendableMessageOrBuilder.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/GeneratedMessageLite.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/Internal$EnumLite.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/LiteralByteString.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/MessageLite$Builder.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/MessageLite.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/MessageLiteOrBuilder.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/protobuf/RopeByteString.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/renderer/RenderingUtilsKt$$Lambda$0.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/AnnotationValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/ArrayValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/ByteValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/ConstantValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/IntValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/IntegerValueConstant.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/LongValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/ShortValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/StringValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/TypedArrayValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/UByteValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/UIntValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/ULongValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/UShortValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/constants/UnsignedValueConstant.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/jvm/JvmPrimitiveType.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/scopes/MemberScope.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/scopes/MemberScopeImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/scopes/ResolutionScope.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/scopes/receivers/AbstractReceiverValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/resolve/scopes/receivers/ReceiverValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/serialization/deserialization/descriptors/DeserializedClassDescriptor$EnumEntryClassDescriptors.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/serialization/deserialization/descriptors/DeserializedClassDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/serialization/deserialization/descriptors/DeserializedContainerSource.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/storage/LockBasedStorageManager$NotValue.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/storage/MemoizedFunctionToNullable.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/AbstractTypeConstructor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/AbstractTypeRefiner.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/AnnotationsTypeAttribute.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/ClassifierBasedTypeConstructor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/DefinitelyNotNullType.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/DelegatingSimpleType.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/IntersectionTypeConstructor$$Lambda$1.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/KotlinType.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/SimpleType.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/TypeAttribute.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/TypeAttributes.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/TypeConstructor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/TypeProjection.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/TypeProjectionBase.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/TypeProjectionImpl.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/UnwrappedType.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/checker/KotlinTypeRefiner.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/checker/NewCapturedTypeConstructor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/checker/NewTypeVariableConstructor.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/checker/Ref.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/checker/SimpleClassicTypeSystemContext.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/checker/TypeRefinementSupport.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/model/DefinitelyNotNullTypeMarker.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/model/FlexibleTypeMarker.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/model/KotlinTypeMarker.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/model/RigidTypeMarker.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/model/SimpleTypeMarker.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/model/TypeArgumentListMarker.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/model/TypeArgumentMarker.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/model/TypeConstructorMarker.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/model/TypeParameterMarker.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/model/TypeSystemContext.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/types/model/TypeSystemOptimizationContext.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/util/AbstractArrayMapOwner.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/util/AttributeArrayOwner.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/util/ModuleVisibilityHelper$EMPTY.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/jvm/internal/impl/util/ModuleVisibilityHelper.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/reflect/reflect.kotlin_builtins\\E"
+  }, {
+    "pattern":"\\Qkotlin/sequences/Sequence.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/text/MatchGroup.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/text/MatchGroupCollection.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/text/MatchResult.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/text/Regex.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/time/Duration.class\\E"
+  }, {
+    "pattern":"\\Qkotlin/time/time.kotlin_builtins\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/AbstractCoroutine.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/AbstractTimeSource.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/ChildHandleNode.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/CompletableDeferred.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/CompletableJob.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/CompletedContinuation.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/CompletedExceptionally.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/CoroutineDispatcher.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/CoroutineName.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/CoroutineScope.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/DelayWithTimeoutDiagnostics.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/DispatchException.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/DispatchedCoroutine.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/DispatchedTask.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/DispatcherExecutor.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/EventLoopImplBase$DelayedTask.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/EventLoopImplBase$DelayedTaskQueue.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/ExecutorCoroutineDispatcher.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/Incomplete.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/IncompleteStateBox.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/Job.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/JobNode.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/JobSupport$Finishing.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/JobSupport.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/MainCoroutineDispatcher.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/UndispatchedCoroutine.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/Waiter.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/channels/ChannelSegment.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/flow/Flow.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/internal/ConcurrentLinkedListNode.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/internal/DispatchedContinuation.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/internal/FastServiceLoader.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/internal/LockFreeLinkedListNode.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/internal/LockFreeTaskQueueCore$Placeholder.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/internal/MainDispatcherFactory.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/internal/Removed.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/internal/ResizableAtomicArray.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/internal/ScopeCoroutine.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/internal/Segment.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/internal/Symbol.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/internal/ThreadSafeHeap.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/internal/UndeliveredElementException.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/scheduling/CoroutineScheduler$Worker.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/scheduling/CoroutineScheduler$WorkerState.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/scheduling/CoroutineScheduler.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/scheduling/Task.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/sync/Mutex.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/sync/SemaphoreSegment.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/test/TestDispatchEvent.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/test/internal/TestMainDispatcher$NonConcurrentlyModifiable.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/coroutines/test/internal/TestMainDispatcher.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/datetime/Instant.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/datetime/internal/format/parser/ParserOperation.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/datetime/internal/format/parser/ParserStructure.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/datetime/internal/format/parser/StringSetParserOperation$TrieNode.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/CommonAttributeGroupFacade.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/CommonAttributeGroupFacadeFlowHeadingPhrasingContent.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/CommonEventsGroupFacade.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/CoreAttributeGroupFacade.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/CoreServerAttributeGroupFacade.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/DIV.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/FlowContent.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/FlowOrHeadingContent.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/FlowOrInteractiveContent.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/FlowOrInteractiveOrPhrasingContent.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/FlowOrMetaDataContent.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/FlowOrMetaDataOrPhrasingContent.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/FlowOrPhrasingContent.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/H1.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/H2.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/H3.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/H4.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/HTMLTag.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/HtmlBlockInlineTag.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/HtmlBlockTag.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/P.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/SPAN.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/SectioningOrFlowContent.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/Tag.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/html/TagConsumer.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/KSerializer.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/SerialFormat.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/SerializationException.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/SerializationStrategy.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/StringFormat.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/descriptors/SerialDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/encoding/CompositeEncoder.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/encoding/Encoder.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/internal/NamedValueEncoder.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/internal/TaggedEncoder.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/json/Json$Default.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/json/Json.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/json/JsonArray.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/json/JsonArrayBuilder.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/json/JsonElement.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/json/JsonEncoder.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/json/JsonObject.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/json/JsonObjectBuilder.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/json/JsonPrimitive.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/json/internal/AbstractJsonTreeEncoder.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/json/internal/JsonPrimitiveEncoder.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/json/internal/JsonTreeEncoder.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/json/internal/JsonTreeListEncoder.class\\E"
+  }, {
+    "pattern":"\\Qkotlinx/serialization/json/internal/JsonTreeMapEncoder.class\\E"
+  }, {
+    "pattern":"\\Qlogback-test.scmo\\E"
+  }, {
+    "pattern":"\\Qlogback-test.xml\\E"
+  }, {
+    "pattern":"\\Qlogback.scmo\\E"
+  }, {
+    "pattern":"\\Qlogback.xml\\E"
+  }, {
+    "pattern":"\\Qmarked.mustache\\E"
+  }, {
+    "pattern":"\\Qmockk.properties\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/NamingStrategy$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/NamingStrategy$Suffixing.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/NamingStrategy$SuffixingRandom.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/NamingStrategy.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/agent/ByteBuddyAgent$AttachmentProvider$Accessor$Unavailable.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/agent/ByteBuddyAgent$AttachmentProvider$Accessor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$Delegating.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$Inactive.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$Inlining$Resolved$AdviceMethodInliner$ExceptionTableCollector.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$Inlining$Resolved$AdviceMethodInliner$ExceptionTableSubstitutor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$Inlining$Resolved$ForMethodEnter$WithDiscardedEnterType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$Inlining$Resolved$ForMethodEnter$WithRetainedEnterType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$Inlining$Resolved$ForMethodEnter.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$Inlining$Resolved$ForMethodExit$WithExceptionHandler.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$Inlining$Resolved$ForMethodExit$WithoutExceptionHandler.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$Inlining$Resolved$ForMethodExit.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$Inlining$Resolved.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$Inlining.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$RelocationHandler$ForValue$OfDefault.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$RelocationHandler$ForValue$OfNonDefault.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$Resolved$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$SuppressionHandler$NoOp.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$SuppressionHandler$Suppressing.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$Dispatcher$Unresolved.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$Factory$Illegal.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForArgument$Unresolved.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForArgument.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForEnterValue$Factory.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForExitValue$Factory.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForField$Unresolved$WithExplicitType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForField$Unresolved$WithImplicitType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForField$Unresolved.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForField.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForFieldHandle$Unresolved$WithExplicitType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForFieldHandle$Unresolved$WithImplicitType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForFieldHandle$Unresolved.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForFieldHandle.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForStackManipulation$Factory.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForStackManipulation$OfDefaultValue.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$ForThrowable$Factory.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$Target$ForDefaultValue$ReadOnly.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$Target$ForDefaultValue$ReadWrite.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$Target$ForDefaultValue.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$Target$ForStackManipulation$Writable.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$Target$ForStackManipulation.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$Target$ForVariable$ReadOnly.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$Target$ForVariable$ReadWrite.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping$Target$ForVariable.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/asm/Advice$OffsetMapping.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/ByteCodeElement$Member.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/ByteCodeElement$TypeDependant.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/ByteCodeElement.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/DeclaredByType$WithMandatoryDeclaration.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/DeclaredByType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/ModifierReviewable$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/ModifierReviewable$ForMethodDescription.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/ModifierReviewable$OfAbstraction.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/ModifierReviewable$OfByteCodeElement.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/ModifierReviewable.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/NamedElement$WithDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/NamedElement$WithGenericName.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/NamedElement$WithRuntimeName.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/NamedElement.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/TypeVariableSource$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/TypeVariableSource.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/annotation/AnnotationList$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/annotation/AnnotationList$Empty.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/annotation/AnnotationList$ForLoadedAnnotations.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/annotation/AnnotationSource.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/annotation/AnnotationValue$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/annotation/AnnotationValue$ForEnumerationDescription.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/annotation/AnnotationValue$ForMismatchedType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/annotation/AnnotationValue$ForTypeDescription.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/field/FieldDescription$InDefinedShape$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/field/FieldDescription$InDefinedShape.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/MethodDescription$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/MethodDescription$ForLoadedConstructor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/MethodDescription$ForLoadedMethod.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/MethodDescription$InDefinedShape$AbstractBase$ForLoadedExecutable.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/MethodDescription$InDefinedShape$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/MethodDescription$InDefinedShape.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/MethodDescription.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/MethodList$Empty.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/MethodList.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/ParameterList$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/ParameterList$ForLoadedExecutable$OfConstructor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/ParameterList$ForLoadedExecutable$OfLegacyVmConstructor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/ParameterList$ForLoadedExecutable$OfLegacyVmMethod.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/ParameterList$ForLoadedExecutable$OfMethod.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/method/ParameterList$ForLoadedExecutable.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/PackageDescription$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/PackageDescription$Simple.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/PackageDescription.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/RecordComponentList$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/RecordComponentList$Empty.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/RecordComponentList$ForLoadedRecordComponents.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDefinition.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$ArrayProjection.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$ForLoadedType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$AnnotationReader$NoOp.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$AnnotationReader.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$LazyProjection$ForLoadedSuperClass.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$LazyProjection$WithEagerNavigation.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$LazyProjection$WithLazyNavigation$OfAnnotatedElement.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$LazyProjection$WithLazyNavigation.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$LazyProjection$WithResolvedErasure.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$LazyProjection.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$OfGenericArray$Latent.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$OfGenericArray.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$OfNonGenericType$ForErasure.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$OfNonGenericType$ForLoadedType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$OfNonGenericType$ForReifiedErasure.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$OfNonGenericType$Latent.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$OfNonGenericType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$OfParameterizedType$ForGenerifiedErasure.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$OfParameterizedType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$Visitor$ForRawType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic$Visitor$NoOp.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription$Generic.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeDescription.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeList$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeList$Empty.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeList$Explicit.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeList$ForLoadedTypes.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeList$Generic$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeList$Generic$Empty.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeList$Generic$Explicit.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeList$Generic$ForLoadedTypes.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeList$Generic$OfLoadedInterfaceTypes.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeList$Generic.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/description/type/TypeList.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/ClassFileLocator$Compound.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/ClassFileLocator$Resolution$Explicit.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/ClassFileLocator$Resolution$Illegal.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/ClassFileLocator.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$AbstractBase$Adapter$InnerTypeDefinitionForMethodAdapter.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$AbstractBase$Adapter$InnerTypeDefinitionForTypeAdapter.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$AbstractBase$Delegator.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$FieldDefinition$Optional$Valuable.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$ExceptionDefinition$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$ExceptionDefinition.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$ImplementationDefinition$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$ImplementationDefinition.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$ParameterDefinition$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$ParameterDefinition$Annotatable.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$ParameterDefinition$Initial$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$ParameterDefinition$Initial.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$ParameterDefinition$Simple$Annotatable.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$ParameterDefinition$Simple.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$ParameterDefinition.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$ReceiverTypeDefinition.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$TypeVariableDefinition$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$TypeVariableDefinition$Annotatable.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition$TypeVariableDefinition.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder$MethodDefinition.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/DynamicType$Builder.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/loading/ByteArrayClassLoader$EmptyEnumeration.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/loading/ByteArrayClassLoader$SingletonEnumeration.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/loading/ByteArrayClassLoader$SynchronizationStrategy$ForJava7CapableVm.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/loading/ByteArrayClassLoader$SynchronizationStrategy$ForLegacyVm.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/loading/ClassLoadingStrategy$Configurable.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/loading/ClassLoadingStrategy.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/FieldLocator$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/FieldLocator$ForClassHierarchy.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/FieldLocator$ForExactType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/FieldLocator$Resolution$Illegal.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/FieldLocator$Resolution$Simple.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/InstrumentedType$Default.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/InstrumentedType$WithFlexibleName.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/InstrumentedType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/MethodGraph$Compiler$Default$Key$Store$Entry$Ambiguous.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/MethodGraph$Compiler$Default$Key$Store$Entry$Initial.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/MethodGraph$Compiler$Default$Key$Store$Entry$Resolved.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/MethodGraph$Compiler$Default$Key$Store$Entry.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/MethodGraph$Empty.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/MethodGraph$Linked.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/MethodGraph$Node$Unresolved.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/MethodGraph$Node.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/MethodGraph.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ClassDumpAction$Dispatcher$Disabled.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ClassDumpAction$Dispatcher$Enabled.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ForInlining$WithFullProcessing$InitializationHandler$Appending$WithDrain$WithActiveRecord.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ForInlining$WithFullProcessing$InitializationHandler$Appending$WithDrain$WithoutActiveRecord.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ForInlining$WithFullProcessing$InitializationHandler$Appending$WithDrain.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ForInlining$WithFullProcessing$InitializationHandler$Appending$WithoutDrain$WithActiveRecord.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ForInlining$WithFullProcessing$InitializationHandler$Appending$WithoutDrain$WithoutActiveRecord.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ForInlining$WithFullProcessing$InitializationHandler$Appending$WithoutDrain.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ForInlining$WithFullProcessing$InitializationHandler$Appending.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ForInlining$WithFullProcessing$OpenedClassRemapper.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ForInlining$WithFullProcessing$RedefinitionClassVisitor$AttributeObtainingFieldVisitor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ForInlining$WithFullProcessing$RedefinitionClassVisitor$AttributeObtainingRecordComponentVisitor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ForInlining$WithFullProcessing$RedefinitionClassVisitor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ValidatingClassVisitor$ValidatingFieldVisitor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ValidatingClassVisitor$ValidatingMethodVisitor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$Default$ValidatingClassVisitor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$MethodPool$Record$AccessBridgeWrapper.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$MethodPool$Record$ForDefinedMethod.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$MethodPool$Record$ForNonImplementedMethod.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/dynamic/scaffold/TypeWriter$MethodPool$Record.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/Implementation$Context$Default$AccessorMethodDelegation.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/Implementation$Context$Default$CacheValueField.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/Implementation$Context$Default$DelegationRecord.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/Implementation$Context$Default$Factory.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/Implementation$Context$Default$FieldGetterDelegation.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/Implementation$Context$Default$FieldSetterDelegation.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/Implementation$Context$Factory.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/Implementation$SpecialMethodInvocation$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/Implementation$SpecialMethodInvocation$Illegal.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/Implementation$SpecialMethodInvocation$Simple.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/Implementation$SpecialMethodInvocation.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/attribute/AnnotationAppender$Default.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/attribute/AnnotationAppender.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/attribute/TypeAttributeAppender$ForInstrumentedType$Differentiating.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/attribute/TypeAttributeAppender$ForInstrumentedType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/auxiliary/AuxiliaryType$NamingStrategy$SuffixingRandom.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/auxiliary/AuxiliaryType$NamingStrategy.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/auxiliary/MethodCallProxy$AssignableSignatureCall.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bind/MethodDelegationBinder$ParameterBinding$Anonymous.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bind/MethodDelegationBinder$ParameterBinding$Illegal.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bind/MethodDelegationBinder$ParameterBinding.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bind/annotation/DefaultCall$Binder$DefaultMethodLocator$Explicit.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bind/annotation/DefaultCall$Binder$DefaultMethodLocator$Implicit.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bind/annotation/DefaultCallHandle$Binder$DefaultMethodLocator$Explicit.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bind/annotation/DefaultCallHandle$Binder$DefaultMethodLocator$Implicit.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bind/annotation/DefaultMethod$Binder$MethodLocator$ForExplicitType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bind/annotation/DefaultMethod$Binder$MethodLocator$ForImplicitType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bind/annotation/DefaultMethodHandle$Binder$MethodLocator$ForExplicitType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bind/annotation/DefaultMethodHandle$Binder$MethodLocator$ForImplicitType.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bind/annotation/TargetMethodAnnotationDrivenBinder$DelegationProcessor$Handler$Unbound.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bind/annotation/TargetMethodAnnotationDrivenBinder$DelegationProcessor$Handler.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bytecode/StackManipulation$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bytecode/StackManipulation$Compound.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bytecode/StackManipulation$Illegal.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bytecode/StackManipulation$Trivial.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bytecode/StackManipulation.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bytecode/constant/MethodConstant$CanCache.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bytecode/constant/NullConstant.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bytecode/member/MethodInvocation$DynamicInvocation.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bytecode/member/MethodInvocation$Invocation.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/implementation/bytecode/member/MethodVariableAccess$MethodLoading.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/jar/asm/ClassVisitor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/jar/asm/FieldVisitor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/jar/asm/MethodVisitor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/jar/asm/RecordComponentVisitor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/jar/asm/commons/ClassRemapper.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/matcher/ClassLoaderParentMatcher.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/matcher/ElementMatcher$Junction$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/matcher/ElementMatcher$Junction.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/matcher/EqualityMatcher.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/matcher/FilterableList$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/matcher/FilterableList$Empty.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/matcher/FilterableList.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/pool/TypePool$Default$AnnotationRegistrant$AbstractBase$ForTypeVariable$WithIndex$DoubleIndexed.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/pool/TypePool$Default$AnnotationRegistrant$AbstractBase$ForTypeVariable$WithIndex.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/pool/TypePool$Default$AnnotationRegistrant$AbstractBase$ForTypeVariable.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/pool/TypePool$Default$AnnotationRegistrant$AbstractBase.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/pool/TypePool$Default$AnnotationRegistrant$ForTypeVariable$WithIndex$DoubleIndexed.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/pool/TypePool$Default$AnnotationRegistrant$ForTypeVariable$WithIndex.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/pool/TypePool$Default$TypeExtractor$MethodExtractor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/pool/TypePool$Resolution$Illegal.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/pool/TypePool$Resolution$Simple.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/pool/TypePool$Resolution.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/utility/AsmClassReader.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/utility/ConstantValue$Simple.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/utility/ConstantValue.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/utility/JavaConstant.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/utility/dispatcher/JavaDispatcher$Dispatcher$ForUnresolvedMethod.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/utility/dispatcher/JavaDispatcher$Dispatcher.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/utility/dispatcher/JavaDispatcher$Proxied.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/utility/visitor/ExceptionTableSensitiveMethodVisitor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/utility/visitor/LineNumberPrependingMethodVisitor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/utility/visitor/MetadataAwareClassVisitor.class\\E"
+  }, {
+    "pattern":"\\Qnet/bytebuddy/utility/visitor/StackAwareMethodVisitor.class\\E"
+  }, {
+    "pattern":"\\Qnet/rubygrapefruit/platform/NativeException.class\\E"
+  }, {
+    "pattern":"\\Qnet/rubygrapefruit/platform/NativeIntegrationUnavailableException.class\\E"
+  }, {
+    "pattern":"\\Qopenapi/documentation.yaml\\E"
+  }, {
+    "pattern":"\\Qorg/HdrHistogram/ConcurrentDoubleHistogram.class\\E"
+  }, {
+    "pattern":"\\Qorg/HdrHistogram/DoubleHistogram.class\\E"
+  }, {
+    "pattern":"\\Qorg/HdrHistogram/DoubleRecorder$InternalConcurrentDoubleHistogram.class\\E"
+  }, {
+    "pattern":"\\Qorg/HdrHistogram/DoubleRecorder$PackedInternalConcurrentDoubleHistogram.class\\E"
+  }, {
+    "pattern":"\\Qorg/HdrHistogram/EncodableHistogram.class\\E"
+  }, {
+    "pattern":"\\Qorg/HdrHistogram/PackedConcurrentDoubleHistogram.class\\E"
+  }, {
+    "pattern":"\\Qorg/commonmark/node/Emphasis.class\\E"
+  }, {
+    "pattern":"\\Qorg/commonmark/node/Image.class\\E"
+  }, {
+    "pattern":"\\Qorg/commonmark/node/Link.class\\E"
+  }, {
+    "pattern":"\\Qorg/commonmark/node/Node.class\\E"
+  }, {
+    "pattern":"\\Qorg/commonmark/node/StrongEmphasis.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/api/GradleException.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/api/internal/tasks/testing/AssertionFailureDetails.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/api/internal/tasks/testing/AssumptionFailureDetails.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/api/internal/tasks/testing/DefaultTestFailureDetails.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/api/internal/tasks/testing/FileComparisonFailureDetails.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/api/internal/tasks/testing/TestFailureSerializationException.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/classloader/CachingClassLoader.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/dispatch/BoundedDispatch.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/dispatch/Dispatch.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/exceptions/DefaultMultiCauseException.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/nativeintegration/console/ConsoleMetaData.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/nativeintegration/console/FallbackConsoleMetaData.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/remote/internal/hub/MessageHub$Discard.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/remote/internal/hub/RejectedMessageListener.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/remote/internal/hub/StreamFailureHandler.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/remote/internal/hub/protocol/ChannelMessage.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/remote/internal/hub/protocol/InterHubMessage.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/remote/internal/hub/protocol/RejectedMessage.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/remote/internal/hub/protocol/Routable.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/remote/internal/hub/protocol/StreamFailureMessage.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/service/DefaultServiceRegistry$CompositeServiceProvider.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/service/DefaultServiceRegistry.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/service/ScopedServiceRegistry.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/internal/service/ServiceProvider.class\\E"
+  }, {
+    "pattern":"\\Qorg/gradle/process/internal/worker/child/ActionExecutionWorker.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/api/Aggregate.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/api/Trigger.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/Command.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/Prepared.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/Token$BigintToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/Token$CharacterStringToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/Token$IdentifierToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/Token$IntegerToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/Token$KeywordOrIdentifierToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/Token$KeywordToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/Token$LiteralToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/Token$ParameterToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/Token$ValueToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/Token.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/ddl/DeallocateProcedure.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/ddl/DefineCommand.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/ddl/GrantRevoke.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/ddl/RefreshMaterializedView.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/ddl/SchemaCommand.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/ddl/SchemaOwnerCommand.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/Call.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/CommandWithValues.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/DataChangeStatement.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/Delete.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/ExecuteImmediate.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/Explain.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/FilteredDataChangeStatement.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/Insert.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/Merge.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/MergeUsing$When.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/MergeUsing$WhenMatchedThenDelete.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/MergeUsing$WhenMatchedThenUpdate.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/NoOperation.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/RunScriptCommand.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/ScriptBase.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/ScriptCommand.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/dml/TransactionCommand.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/query/Query.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/query/Select.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/query/SelectGroups$Grouped.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/query/SelectGroups$Plain.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/query/SelectGroups.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/command/query/SelectUnion.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/compress/CompressDeflate.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/compress/CompressLZF.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/constraint/Constraint.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/constraint/ConstraintCheck.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/constraint/ConstraintReferential.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/constraint/ConstraintUnique.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/engine/CastDataProvider.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/engine/Database.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/engine/DbObject.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/engine/Engine$DatabaseHolder.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/engine/RightOwner.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/engine/Role.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/engine/Session.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/engine/SessionLocal.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/engine/Setting.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/engine/User.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/Alias.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/ArrayConstructorByQuery.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/ArrayElementReference.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/BinaryOperation.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/ConcatenationOperation.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/DomainValueExpression.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/Expression.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/ExpressionColumn.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/ExpressionList.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/ExpressionVisitor.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/FieldReference.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/Format.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/Operation0.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/Operation1.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/Operation1_2.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/Operation2.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/OperationN.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/Parameter.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/Rownum.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/SearchedCase.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/SimpleCase$SimpleWhen.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/SimpleCase.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/Subquery.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/TimeZoneOperation.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/TypedValueExpression.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/UnaryOperation.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/ValueExpression.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/Variable.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/aggregate/AggregateData.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/aggregate/AggregateDataCollecting.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/condition/BetweenPredicate.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/condition/BooleanTest.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/condition/CompareLike.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/condition/Comparison.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/condition/Condition.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/condition/ConditionAndOr.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/condition/ConditionInArray.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/condition/ConditionInQuery.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/condition/ConditionNot.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/condition/IsJsonPredicate.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/condition/NullPredicate.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/condition/PredicateWithSubquery.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/condition/SimplePredicate.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/condition/TypePredicate.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/function/CastSpecification.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/function/Function1_2.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/function/Function2.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/function/MathFunction.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/function/SetFunction.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/expression/function/StringFunction2.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/index/Index.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/index/QueryExpressionIndex.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/index/RecursiveIndex.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/index/RegularQueryExpressionIndex.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/jdbc/JdbcResultSet.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/jdbc/meta/DatabaseMeta.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/jdbc/meta/DatabaseMetaLegacy.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/jdbc/meta/DatabaseMetaLocalBase.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/jdbc/meta/DatabaseMetaRemote.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/message/DbException.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/message/TraceObject.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/Chunk.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/FileStore.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/MVMap$DecisionMaker.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/MVStoreException.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/Page$IncompleteNonLeaf.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/Page$Leaf.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/Page$NonLeaf.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/Page.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/RandomAccessStore.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/SFChunk.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/SingleFileStore.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/db/MVDelegateIndex.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/db/MVIndex.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/db/MVSecondaryIndex$Source.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/db/MVSecondaryIndex.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/db/MVSpatialIndex.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/rtree/Spatial.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/tx/TxDecisionMaker$LockDecisionMaker.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/tx/TxDecisionMaker$RepeatableReadLockDecisionMaker.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/tx/TxDecisionMaker.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/tx/VersionedBitSet.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/mvstore/tx/VersionedValueCommitted.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/result/LocalResult.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/result/ResultTarget.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/result/ResultWithGeneratedKeys$WithKeys.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/result/ResultWithGeneratedKeys.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/result/Row.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/result/SearchRow.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/schema/Constant.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/schema/Domain.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/schema/FunctionAlias.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/schema/Schema.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/schema/SchemaObject.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/schema/Sequence.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/schema/TriggerObject.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/schema/UserDefinedFunction.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/security/auth/Authenticator.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/store/DataHandler.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/store/FileStoreInputStream.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/store/RangeInputStream.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/store/RangeReader.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/store/fs/FilePath.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/store/fs/disk/FilePathDisk.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/table/Column.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/table/DualTable.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/table/FunctionTable.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/table/RangeTable.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/table/ShadowTable.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/table/Table.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/table/TableSynonym.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/table/VirtualConstructedTable.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/table/VirtualTable.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/util/HasSQL.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/util/JdbcUtils$1.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/util/TimeZoneProvider.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/util/data.zip\\E"
+  }, {
+    "pattern":"\\Qorg/h2/util/json/JSONTarget.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/util/json/JSONValidationTarget.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/util/json/JSONValidationTargetWithUniqueKeys.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/util/json/JSONValidationTargetWithoutUniqueKeys.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/CaseInsensitiveConcurrentMap.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/CaseInsensitiveMap.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/CompareMode.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/CompareModeDefault.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/CompareModeIcu4J.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ExtTypeInfo.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/Transfer.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/TypeInfo.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/Typed.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/Value.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueArray.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueBigDecimalBase.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueBigint.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueBinary.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueBlob.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueBoolean.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueBytesBase.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueChar.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueClob.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueCollectionBase.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueDate.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueDecfloat.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueDouble.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueGeometry.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueInteger.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueInterval.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueJson.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueLob.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueNull.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueNumeric.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueReal.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueRow.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueSmallint.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueStringBase.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueTime.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueTimeTimeZone.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueTimestamp.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueTimestampTimeZone.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueTinyint.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueUuid.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueVarbinary.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueVarchar.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/ValueVarcharIgnoreCase.class\\E"
+  }, {
+    "pattern":"\\Qorg/h2/value/VersionedValue.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/dao/BackReference.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/dao/Entity.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/dao/EntityCache.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/dao/EntityClass.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/dao/OptionalBackReference.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/dao/OptionalReference.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/dao/Reference.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/dao/Referrers.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/dao/id/CompositeID.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/dao/id/EntityID.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/dao/id/IdTable.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/exceptions/ExposedSQLException.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/AbstractQuery.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/Alias.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/AutoIncColumnType.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/Column.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/ColumnDiff.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/ColumnSet.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/ColumnType.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/Database.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/DatabaseConfig.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/DdlAware.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/EntityIDColumnType.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/Expression.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/ExpressionAlias.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/ExpressionWithColumnType.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/ExpressionWithColumnTypeAlias.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/FieldSet.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/ForeignKeyConstraint.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/Function.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/IColumnType.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/IExpressionAlias.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/ISqlExpressionBuilder.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/NextVal.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/Op.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/Query.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/QueryAlias.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/QueryBuilder.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/ReferenceOption.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/ResultRow$NotInitializedValue.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/ResultRow.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/Sequence.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/SizedIterable.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/SqlExpressionBuilder.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/Table$PrimaryKey.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/Table.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/Transaction.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/UserDataHolder.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/statements/DefaultValueMarker.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/statements/InsertStatement.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/statements/MergeStatement.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/statements/MergeTableStatement.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/statements/Statement.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/statements/StatementContext.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/statements/UpdateBuilder.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/statements/UpdateStatement.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/statements/api/ExposedBlob.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/statements/api/ExposedConnection.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/statements/api/IdentifierManagerApi.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/statements/api/PreparedStatementApi.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/statements/jdbc/JdbcIdentifierManager.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/transactions/TransactionInterface.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/transactions/TransactionManager.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/vendors/DataTypeProvider.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/vendors/DatabaseDialect.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/vendors/FunctionProvider.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/vendors/H2Dialect.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/vendors/SchemaMetadata.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/vendors/VendorDialect$DialectNameProvider.class\\E"
+  }, {
+    "pattern":"\\Qorg/jetbrains/exposed/sql/vendors/VendorDialect.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/jupiter/api/DynamicContainer.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/jupiter/api/DynamicNode.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/jupiter/api/DynamicTest.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/jupiter/engine/descriptor/ClassBasedTestDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/jupiter/engine/descriptor/ClassTemplateTestDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/jupiter/engine/descriptor/ClassTestDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/jupiter/engine/descriptor/JupiterTestDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/jupiter/engine/descriptor/NestedClassTestDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/platform/commons/util/CloseablePath.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/platform/engine/CompositeTestDescriptorVisitor.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/platform/engine/TestDescriptor$Visitor.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/platform/engine/support/descriptor/AbstractTestDescriptor.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/platform/launcher/Launcher.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/platform/launcher/core/DelegatingLauncher.class\\E"
+  }, {
+    "pattern":"\\Qorg/junit/platform/launcher/core/InterceptingLauncher.class\\E"
+  }, {
+    "pattern":"\\Qorg/locationtech/jts/geom/Geometry.class\\E"
+  }, {
+    "pattern":"\\Qorg/slf4j/Marker.class\\E"
+  }, {
+    "pattern":"\\Qorg/slf4j/helpers/BasicMarker.class\\E"
+  }, {
+    "pattern":"\\Qorg/slf4j/spi/SLF4JServiceProvider.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/events/AliasEvent.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/events/CollectionStartEvent.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/events/Event.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/events/MappingStartEvent.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/events/NodeEvent.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/events/ScalarEvent.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/events/SequenceStartEvent.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/introspector/MissingProperty.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/introspector/Property.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/nodes/CollectionNode.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/nodes/MappingNode.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/nodes/Node.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/nodes/SequenceNode.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/tokens/AliasToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/tokens/AnchorToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/tokens/DirectiveToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/tokens/DocumentEndToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/tokens/DocumentStartToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/tokens/FlowMappingEndToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/tokens/FlowMappingStartToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/tokens/FlowSequenceEndToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/tokens/FlowSequenceStartToken.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/tokens/Token.class\\E"
+  }, {
+    "pattern":"\\Qorg/yaml/snakeyaml/util/Tuple.class\\E"
+  }, {
+    "pattern":"\\Qparam.mustache\\E"
+  }, {
+    "pattern":"\\QparamB.mustache\\E"
+  }, {
+    "pattern":"\\Qprometheus.properties\\E"
+  }, {
+    "pattern":"\\Qsample_android.mustache\\E"
+  }, {
+    "pattern":"\\Qsample_csharp.mustache\\E"
+  }, {
+    "pattern":"\\Qsample_java.mustache\\E"
+  }, {
+    "pattern":"\\Qsample_js.mustache\\E"
+  }, {
+    "pattern":"\\Qsample_objc.mustache\\E"
+  }, {
+    "pattern":"\\Qsample_perl.mustache\\E"
+  }, {
+    "pattern":"\\Qsample_php.mustache\\E"
+  }, {
+    "pattern":"\\Qsample_python.mustache\\E"
+  }, {
+    "pattern":"\\Qstyles.mustache\\E"
+  }, {
+    "pattern":"\\Qworker/org/gradle/internal/classloader/ClassLoaderUtils$AbstractClassLoaderLookuper.class\\E"
+  }, {
+    "pattern":"\\Qworker/org/gradle/internal/classloader/ClassLoaderUtils$Java9PackagesFetcher.class\\E"
+  }, {
+    "pattern":"\\Qworker/org/gradle/internal/classloader/ClassLoaderUtils$LookupClassDefiner.class\\E"
+  }, {
+    "pattern":"\\Qworker/org/gradle/internal/classloader/ClassLoaderUtils$ReflectionClassDefiner.class\\E"
+  }, {
+    "pattern":"\\Qworker/org/gradle/internal/classloader/ClassLoaderUtils$ReflectionPackagesFetcher.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/BufferedReader.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/Closeable.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/File.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/FileInputStream.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/FileNotFoundException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/FileOutputStream.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/FilterInputStream.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/FilterOutputStream.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/IOException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/InputStream.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/InterruptedIOException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/ObjectInputStream.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/OutputStream.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/PrintStream.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/Reader.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/SequenceInputStream.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/io/Serializable.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/AbstractMethodError.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/AbstractStringBuilder.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Appendable.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/AssertionError.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/AutoCloseable.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Boolean.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/BootstrapMethodError.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Byte.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/CharSequence.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Character.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Class.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/ClassCastException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/ClassLoader.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/ClassNotFoundException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Cloneable.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Comparable.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Double.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Enum.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Error.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Exception.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Float.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/IllegalAccessError.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/IllegalAccessException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/IllegalArgumentException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/IllegalStateException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/IncompatibleClassChangeError.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/InstantiationException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Integer.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Iterable.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/LinkageError.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Long.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/NoClassDefFoundError.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/NoSuchFieldException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/NoSuchMethodError.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/NoSuchMethodException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/NullPointerException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Number.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/NumberFormatException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Object.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/OutOfMemoryError.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/ReflectiveOperationException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Runnable.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/RuntimeException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/SecurityException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Short.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/StackTraceElement.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/String.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/StringBuilder.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Thread.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/ThreadLocal.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Throwable.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/UnsupportedOperationException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/VirtualMachineError.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/Void.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/annotation/Annotation.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/constant/Constable.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/constant/ConstantDesc.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/invoke/TypeDescriptor$OfField.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/invoke/TypeDescriptor.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/ref/Reference.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/ref/WeakReference.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/reflect/AccessibleObject.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/reflect/AnnotatedElement.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/reflect/Constructor.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/reflect/Executable.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/reflect/Field.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/reflect/GenericDeclaration.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/reflect/InvocationTargetException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/reflect/Member.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/reflect/Method.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/reflect/Type.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/reflect/TypeVariable.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/lang/reflect/WildcardType.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/math/BigDecimal.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/math/BigInteger.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/net/InetAddress.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/net/InetSocketAddress.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/net/MalformedURLException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/net/SocketAddress.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/net/SocketException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/net/SocketTimeoutException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/net/URL.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/net/URLClassLoader.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/Buffer.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/BufferUnderflowException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/ByteBuffer.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/channels/FileChannel.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/channels/SelectableChannel.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/channels/ServerSocketChannel.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/channels/SocketChannel.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/channels/spi/AbstractInterruptibleChannel.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/channels/spi/AbstractSelectableChannel.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/channels/spi/SelectorProvider.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/charset/Charset.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/file/AccessDeniedException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/file/FileStore.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/file/FileSystemException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/file/Path.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/nio/file/WatchEvent.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/security/CodeSource.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/security/SecureClassLoader.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/security/SecureRandom.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/text/DateFormat.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/text/DecimalFormat.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/text/Format.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/text/NumberFormat.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/text/SimpleDateFormat.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/time/DateTimeException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/time/Instant.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/time/LocalDate.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/time/LocalDateTime.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/time/LocalTime.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/time/OffsetDateTime.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/time/OffsetTime.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/time/ZonedDateTime.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/time/temporal/TemporalAccessor.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/AbstractCollection.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/AbstractList.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/AbstractMap$SimpleImmutableEntry.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/AbstractMap.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/AbstractQueue.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/AbstractSet.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/ArrayDeque.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/ArrayList.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/BitSet.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/Collection.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/Comparator.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/Date.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/Deque.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/Dictionary.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/EnumMap.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/HashMap.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/HashSet.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/Hashtable.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/IdentityHashMap.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/Iterator.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/LinkedHashMap.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/List.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/Map$Entry.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/Map.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/NavigableMap.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/NavigableSet.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/Optional.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/PriorityQueue.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/Properties.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/Random.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/RandomAccess.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/SequencedCollection.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/SequencedMap.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/SequencedSet.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/ServiceConfigurationError.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/Set.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/SortedMap.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/SortedSet.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/TreeMap.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/TreeSet.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/concurrent/CancellationException.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/concurrent/ConcurrentHashMap.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/concurrent/ConcurrentMap.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/concurrent/Executor.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/concurrent/ThreadFactory.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/concurrent/locks/ReadWriteLock.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/concurrent/locks/ReentrantReadWriteLock.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/function/ToDoubleFunction.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/jar/JarEntry.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/zip/InflaterInputStream.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/zip/ZipConstants.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/zip/ZipEntry.class\\E"
+  }, {
+    "pattern":"java.base:\\Qjava/util/zip/ZipInputStream.class\\E"
+  }, {
+    "pattern":"java.management:\\Qjavax/management/MBeanServer.class\\E"
+  }, {
+    "pattern":"java.naming:\\Qjavax/naming/Context.class\\E"
+  }, {
+    "pattern":"java.naming:\\Qjavax/naming/NamingException.class\\E"
+  }, {
+    "pattern":"java.sql:\\Qjava/sql/Blob.class\\E"
+  }, {
+    "pattern":"java.sql:\\Qjava/sql/Connection.class\\E"
+  }, {
+    "pattern":"java.sql:\\Qjava/sql/Date.class\\E"
+  }, {
+    "pattern":"java.sql:\\Qjava/sql/SQLException.class\\E"
+  }, {
+    "pattern":"java.sql:\\Qjava/sql/Statement.class\\E"
+  }, {
+    "pattern":"java.sql:\\Qjava/sql/Time.class\\E"
+  }, {
+    "pattern":"java.sql:\\Qjava/sql/Timestamp.class\\E"
+  }, {
+    "pattern":"java.sql:\\Qjavax/sql/DataSource.class\\E"
+  }]},
+  "bundles":[]
 }

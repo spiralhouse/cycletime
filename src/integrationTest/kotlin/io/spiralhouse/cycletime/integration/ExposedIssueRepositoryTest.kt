@@ -6,8 +6,10 @@ import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
+import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain as shouldContainString
 import io.spiralhouse.cycletime.domain.entities.Issue
 import io.spiralhouse.cycletime.domain.entities.Project
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
@@ -21,9 +23,9 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepositor
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectRepository
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.deleteAll
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import kotlin.time.Duration.Companion.hours
@@ -92,6 +94,18 @@ class ExposedIssueRepositoryTest : DescribeSpec({
         projectId: ProjectId? = testProject.id
     ): Issue {
         return Issue.create(title, description, IssueType.STORY, parentEpic.id, projectId, mockTimeProvider)
+    }
+
+    /**
+     * Helper to create a Subtask (child of Story)
+     */
+    fun createTestSubtask(
+        title: String = "Test Subtask",
+        description: String? = "Subtask Description",
+        parentStory: Issue,
+        projectId: ProjectId? = testProject.id
+    ): Issue {
+        return Issue.create(title, description, IssueType.SUBTASK, parentStory.id, projectId, mockTimeProvider)
     }
 
     beforeSpec {
@@ -164,7 +178,7 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     retrievedIssue.title shouldBe "Test Issue"
                     retrievedIssue.description shouldBe "Test Description"
                     retrievedIssue.type shouldBe IssueType.SUBTASK
-                    retrievedIssue.status shouldBe IssueStatus.TODO
+                    retrievedIssue.status shouldBe IssueStatus.BACKLOG
                     retrievedIssue.parentId shouldBe issue.parentId
                     retrievedIssue.projectId shouldBe testProject.id
                     retrievedIssue.estimate shouldBe Estimate.of(3)
@@ -217,6 +231,8 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     mockTimeProvider.advance(1.hours)
                     issue.updateTitle("Updated Title")
                     issue.updateDescription("Updated Description")
+                    // Follow proper status transition: BACKLOG → TODO → IN_PROGRESS
+                    issue.updateStatus(IssueStatus.TODO)
                     issue.updateStatus(IssueStatus.IN_PROGRESS)
                     issue.setEstimate(Estimate.of(8))
 
@@ -467,10 +483,14 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     reviewIssue.setEstimate(Estimate.of(3))
                     doneIssue.setEstimate(Estimate.of(5))
 
-                    // Change statuses
+                    // Change statuses - follow proper transitions from BACKLOG
+                    todoIssue.updateStatus(IssueStatus.TODO)
+                    progressIssue.updateStatus(IssueStatus.TODO)
                     progressIssue.updateStatus(IssueStatus.IN_PROGRESS)
+                    reviewIssue.updateStatus(IssueStatus.TODO)
                     reviewIssue.updateStatus(IssueStatus.IN_PROGRESS)
                     reviewIssue.updateStatus(IssueStatus.IN_REVIEW)
+                    doneIssue.updateStatus(IssueStatus.TODO)
                     doneIssue.updateStatus(IssueStatus.IN_PROGRESS)
                     doneIssue.updateStatus(IssueStatus.IN_REVIEW)
                     doneIssue.updateStatus(IssueStatus.DONE)
@@ -574,6 +594,8 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     issue.addBlockedBy(dependency.id)
 
                     mockTimeProvider.advance(2.hours)
+                    // Follow proper status transition: BACKLOG → TODO → IN_PROGRESS
+                    issue.updateStatus(IssueStatus.TODO)
                     issue.updateStatus(IssueStatus.IN_PROGRESS)
 
                     // Save and retrieve
@@ -695,6 +717,8 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     issueRepository.save(issue)
 
                     mockTimeProvider.advance(1.minutes)
+                    // Follow proper status transition: BACKLOG → TODO → IN_PROGRESS
+                    issue.updateStatus(IssueStatus.TODO)
                     issue.updateStatus(IssueStatus.IN_PROGRESS)
                     issueRepository.save(issue)
 
@@ -791,9 +815,9 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     val issues = statuses.map { status ->
                         createTestIssue("Issue $status", "Testing status $status").apply {
                             setEstimate(Estimate.of(2))
-                            if (status != IssueStatus.TODO) {
-                                // Transition to target status
-                                val path = IssueStatus.TODO.getTransitionPath(status)
+                            if (status != IssueStatus.BACKLOG) {
+                                // Transition to target status from BACKLOG (default)
+                                val path = IssueStatus.BACKLOG.getTransitionPath(status)
                                 path.drop(1).forEach { targetStatus ->
                                     updateStatus(targetStatus)
                                 }
@@ -952,8 +976,8 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     allIssues shouldHaveSize 50
 
                     // Test queries are still performant
-                    val todoIssues = issueRepository.findByStatus(IssueStatus.TODO)
-                    todoIssues shouldHaveSize 50
+                    val backlogIssues = issueRepository.findByStatus(IssueStatus.BACKLOG)
+                    backlogIssues shouldHaveSize 50
 
                     val subtasks = issueRepository.findByType(IssueType.SUBTASK)
                     subtasks shouldHaveSize 50
@@ -1014,6 +1038,659 @@ class ExposedIssueRepositoryTest : DescribeSpec({
                     allEpics shouldHaveSize 1
                     allStories shouldHaveSize 10
                     allSubtasks shouldHaveSize 50
+                }
+            }
+        }
+
+        describe("Soft-Deletion Operations (SPI-876)") {
+
+            it("should mark issue as deleted with timestamp when soft-deleting") {
+                runTest {
+                    // RED: This will fail until softDelete() is implemented
+                    // Arrange: Create and save a subtask
+                    val epic = createTestEpic("Test Epic")
+                    issueRepository.save(epic)
+
+                    val story = createTestStory("Test Story", parentEpic = epic)
+                    issueRepository.save(story)
+
+                    val subtask = createTestSubtask("Subtask to Soft Delete", parentStory = story)
+                    subtask.setEstimate(Estimate.of(3))
+                    issueRepository.save(subtask)
+
+                    // Act: Soft-delete the subtask
+                    val deleteTime = mockTimeProvider.now()
+                    issueRepository.softDelete(subtask.id)
+
+                    // Assert: Verify issue exists in database with deleted_at set
+                    transaction(database) {
+                        val row = IssuesTable.selectAll()
+                            .where { IssuesTable.id eq subtask.id.value }
+                            .singleOrNull()
+
+                        row shouldNotBe null
+                        row?.get(IssuesTable.deletedAt) shouldNotBe null
+                        row?.get(IssuesTable.deletedAt) shouldBe deleteTime
+                    }
+                }
+            }
+
+            it("should exclude soft-deleted issues from findById results") {
+                runTest {
+                    // RED: This will fail until findById filtering is implemented
+                    // Arrange: Create and save an issue
+                    val epic = createTestEpic("Epic to Soft Delete")
+                    issueRepository.save(epic)
+
+                    // Act: Soft-delete the epic
+                    issueRepository.softDelete(epic.id)
+
+                    // Assert: findById should return null
+                    val retrievedIssue = issueRepository.findById(epic.id)
+                    retrievedIssue shouldBe null
+                }
+            }
+
+            it("should exclude soft-deleted issues from findByProject results") {
+                runTest {
+                    // RED: This will fail until findByProject filtering is implemented
+                    // Arrange: Create multiple issues
+                    val activeEpic = createTestEpic("Active Epic")
+                    val deletedEpic = createTestEpic("Epic to Delete")
+                    issueRepository.save(activeEpic)
+                    issueRepository.save(deletedEpic)
+
+                    // Act: Soft-delete one epic
+                    issueRepository.softDelete(deletedEpic.id)
+
+                    // Assert: findByProject should exclude deleted issue
+                    val projectIssues = issueRepository.findByProject(testProject.id)
+                    projectIssues shouldHaveSize 1
+                    projectIssues.first().id shouldBe activeEpic.id
+                    projectIssues.map { it.id } shouldNotContain deletedEpic.id
+                }
+            }
+
+            it("should exclude soft-deleted issues from findByParent results") {
+                runTest {
+                    // RED: This will fail until findByParent filtering is implemented
+                    // Arrange: Create hierarchy
+                    val epic = createTestEpic("Parent Epic")
+                    issueRepository.save(epic)
+
+                    val activeStory = createTestStory("Active Story", parentEpic = epic)
+                    val deletedStory = createTestStory("Story to Delete", parentEpic = epic)
+                    issueRepository.save(activeStory)
+                    issueRepository.save(deletedStory)
+
+                    // Act: Soft-delete one story
+                    issueRepository.softDelete(deletedStory.id)
+
+                    // Assert: findByParent should exclude deleted story
+                    val children = issueRepository.findByParent(epic.id)
+                    children shouldHaveSize 1
+                    children.first().id shouldBe activeStory.id
+                    children.map { it.id } shouldNotContain deletedStory.id
+                }
+            }
+
+            it("should exclude soft-deleted issues from findByAssignee results") {
+                runTest {
+                    // RED: This will fail until findByAssignee filtering is implemented
+                    val assignee = "user123"
+
+                    val activeIssue = createTestIssue("Active Issue")
+                    val deletedIssue = createTestIssue("Issue to Delete")
+
+                    activeIssue.setEstimate(Estimate.of(3))
+                    deletedIssue.setEstimate(Estimate.of(5))
+
+                    activeIssue.updateAssignee(assignee)
+                    deletedIssue.updateAssignee(assignee)
+
+                    issueRepository.save(activeIssue)
+                    issueRepository.save(deletedIssue)
+
+                    // Act: Soft-delete one issue
+                    issueRepository.softDelete(deletedIssue.id)
+
+                    // Assert: findByAssignee should exclude deleted issue
+                    val assigneeIssues = issueRepository.findByAssignee(assignee)
+                    assigneeIssues shouldHaveSize 1
+                    assigneeIssues.first().id shouldBe activeIssue.id
+                    assigneeIssues.map { it.id } shouldNotContain deletedIssue.id
+                }
+            }
+
+            it("should exclude soft-deleted issues from findByStatus results") {
+                runTest {
+                    // RED: This will fail until findByStatus filtering is implemented
+                    val activeIssue = createTestIssue("Active Issue")
+                    val deletedIssue = createTestIssue("Issue to Delete")
+
+                    activeIssue.setEstimate(Estimate.of(2))
+                    deletedIssue.setEstimate(Estimate.of(3))
+
+                    issueRepository.save(activeIssue)
+                    issueRepository.save(deletedIssue)
+
+                    // Act: Soft-delete one issue
+                    issueRepository.softDelete(deletedIssue.id)
+
+                    // Assert: findByStatus should exclude deleted issue (using BACKLOG since that's the default)
+                    val backlogIssues = issueRepository.findByStatus(IssueStatus.BACKLOG)
+                    backlogIssues shouldHaveSize 1
+                    backlogIssues.first().id shouldBe activeIssue.id
+                    backlogIssues.map { it.id } shouldNotContain deletedIssue.id
+                }
+            }
+
+            it("should exclude soft-deleted issues from findByType results") {
+                runTest {
+                    // RED: This will fail until findByType filtering is implemented
+                    val activeEpic = createTestEpic("Active Epic")
+                    val deletedEpic = createTestEpic("Epic to Delete")
+
+                    issueRepository.save(activeEpic)
+                    issueRepository.save(deletedEpic)
+
+                    // Act: Soft-delete one epic
+                    issueRepository.softDelete(deletedEpic.id)
+
+                    // Assert: findByType should exclude deleted epic
+                    val epics = issueRepository.findByType(IssueType.EPIC)
+                    epics shouldHaveSize 1
+                    epics.first().id shouldBe activeEpic.id
+                    epics.map { it.id } shouldNotContain deletedEpic.id
+                }
+            }
+
+            it("should return false for exists check on soft-deleted issue") {
+                runTest {
+                    // RED: This will fail until exists filtering is implemented
+                    val epic = createTestEpic("Epic to Check")
+                    issueRepository.save(epic)
+
+                    // Verify initially exists
+                    issueRepository.exists(epic.id) shouldBe true
+
+                    // Act: Soft-delete the epic
+                    issueRepository.softDelete(epic.id)
+
+                    // Assert: exists should return false
+                    issueRepository.exists(epic.id) shouldBe false
+                }
+            }
+
+            it("should be idempotent when soft-deleting already deleted issue") {
+                runTest {
+                    // RED: This will fail until softDelete idempotency is implemented
+                    val epic = createTestEpic("Epic to Delete Twice")
+                    issueRepository.save(epic)
+
+                    val firstDeleteTime = mockTimeProvider.now()
+                    issueRepository.softDelete(epic.id)
+
+                    // Act: Soft-delete again with different timestamp
+                    mockTimeProvider.advance(2.hours)
+                    val secondDeleteTime = mockTimeProvider.now()
+                    issueRepository.softDelete(epic.id)
+
+                    // Assert: Should update the deleted_at timestamp
+                    transaction(database) {
+                        val row = IssuesTable.selectAll()
+                            .where { IssuesTable.id eq epic.id.value }
+                            .singleOrNull()
+
+                        row shouldNotBe null
+                        row?.get(IssuesTable.deletedAt) shouldBe secondDeleteTime
+                    }
+                }
+            }
+
+            it("should throw IssueNotFoundException when soft-deleting non-existent issue") {
+                runTest {
+                    // RED: This will fail until exception handling is implemented
+                    val nonExistentId = IssueId.generate()
+
+                    // Act & Assert: Should throw exception
+                    var exceptionThrown = false
+                    try {
+                        issueRepository.softDelete(nonExistentId)
+                    } catch (e: io.spiralhouse.cycletime.domain.exceptions.IssueNotFoundException) {
+                        exceptionThrown = true
+                    }
+
+                    exceptionThrown shouldBe true
+                }
+            }
+        }
+
+        describe("Hierarchical Soft-Deletion Cascade (SPI-876)") {
+
+            it("should cascade soft-delete from Epic to all Stories and Subtasks (3 levels)") {
+                runTest {
+                    // RED: This is the MOST CRITICAL test - complex hierarchical cascade
+                    // Arrange: Create Epic → Story → Subtask hierarchy
+                    val epic = createTestEpic("Epic 1", "Epic description")
+                    issueRepository.save(epic)
+
+                    val story1 = createTestStory("Story 1", "Story 1 desc", epic)
+                    val story2 = createTestStory("Story 2", "Story 2 desc", epic)
+                    issueRepository.save(story1)
+                    issueRepository.save(story2)
+
+                    val subtask1_1 = createTestSubtask("Subtask 1.1", "Subtask desc", story1)
+                    val subtask1_2 = createTestSubtask("Subtask 1.2", "Subtask desc", story1)
+                    val subtask2_1 = createTestSubtask("Subtask 2.1", "Subtask desc", story2)
+
+                    subtask1_1.setEstimate(Estimate.of(2))
+                    subtask1_2.setEstimate(Estimate.of(3))
+                    subtask2_1.setEstimate(Estimate.of(5))
+
+                    issueRepository.save(subtask1_1)
+                    issueRepository.save(subtask1_2)
+                    issueRepository.save(subtask2_1)
+
+                    val deleteTime = mockTimeProvider.now()
+
+                    // Act: Soft-delete Epic (should cascade to all descendants)
+                    issueRepository.softDelete(epic.id)
+
+                    // Assert: Verify ALL issues in hierarchy are soft-deleted
+                    transaction(database) {
+                        val deletedCount = IssuesTable.selectAll()
+                            .where { IssuesTable.deletedAt.isNotNull() }
+                            .count()
+                        deletedCount shouldBe 6 // Epic + 2 stories + 3 subtasks
+
+                        // Verify epic has correct deletedAt timestamp
+                        val epicRow = IssuesTable.selectAll()
+                            .where { IssuesTable.id eq epic.id.value }
+                            .single()
+                        epicRow[IssuesTable.deletedAt] shouldBe deleteTime
+
+                        // Verify all stories have deletedAt set
+                        listOf(story1, story2).forEach { story ->
+                            val storyRow = IssuesTable.selectAll()
+                                .where { IssuesTable.id eq story.id.value }
+                                .single()
+                            storyRow[IssuesTable.deletedAt] shouldNotBe null
+                        }
+
+                        // Verify all subtasks have deletedAt set
+                        listOf(subtask1_1, subtask1_2, subtask2_1).forEach { subtask ->
+                            val subtaskRow = IssuesTable.selectAll()
+                                .where { IssuesTable.id eq subtask.id.value }
+                                .single()
+                            subtaskRow[IssuesTable.deletedAt] shouldNotBe null
+                        }
+                    }
+                }
+            }
+
+            it("should cascade soft-delete from Story to all Subtasks (2 levels)") {
+                runTest {
+                    // RED: This will fail until cascade logic is implemented
+                    val epic = createTestEpic("Parent Epic")
+                    issueRepository.save(epic)
+
+                    val story = createTestStory("Story with Subtasks", parentEpic = epic)
+                    issueRepository.save(story)
+
+                    val subtask1 = createTestSubtask("Subtask 1", parentStory = story)
+                    val subtask2 = createTestSubtask("Subtask 2", parentStory = story)
+                    val subtask3 = createTestSubtask("Subtask 3", parentStory = story)
+
+                    subtask1.setEstimate(Estimate.of(2))
+                    subtask2.setEstimate(Estimate.of(3))
+                    subtask3.setEstimate(Estimate.of(5))
+
+                    issueRepository.save(subtask1)
+                    issueRepository.save(subtask2)
+                    issueRepository.save(subtask3)
+
+                    // Act: Soft-delete Story (should cascade to subtasks)
+                    issueRepository.softDelete(story.id)
+
+                    // Assert: All subtasks should be soft-deleted
+                    transaction(database) {
+                        val deletedCount = IssuesTable.selectAll()
+                            .where {
+                                (IssuesTable.parentId eq story.id.value) and
+                                (IssuesTable.deletedAt.isNotNull())
+                            }
+                            .count()
+                        deletedCount shouldBe 3
+                    }
+                }
+            }
+
+            it("should preserve parent-child relationships in deleted state") {
+                runTest {
+                    // RED: This will fail until cascade preserves relationships
+                    val epic = createTestEpic("Parent Epic")
+                    issueRepository.save(epic)
+
+                    val story = createTestStory("Child Story", parentEpic = epic)
+                    issueRepository.save(story)
+
+                    // Act: Soft-delete Epic
+                    issueRepository.softDelete(epic.id)
+
+                    // Assert: Verify parentId is unchanged
+                    transaction(database) {
+                        val storyRow = IssuesTable.selectAll()
+                            .where { IssuesTable.id eq story.id.value }
+                            .single()
+
+                        storyRow[IssuesTable.parentId] shouldBe epic.id.value
+                        storyRow[IssuesTable.deletedAt] shouldNotBe null
+                    }
+                }
+            }
+
+            it("should handle large hierarchies efficiently (Epic with 10+ stories, each with 5+ subtasks)") {
+                runTest {
+                    // RED: This is a STRESS TEST for performance
+                    val epic = createTestEpic("Large Epic")
+                    issueRepository.save(epic)
+
+                    val stories = (1..10).map { storyIndex ->
+                        createTestStory("Story $storyIndex", parentEpic = epic).also {
+                            issueRepository.save(it)
+                        }
+                    }
+
+                    val allSubtasks = stories.flatMap { story ->
+                        (1..5).map { subtaskIndex ->
+                            createTestSubtask("Subtask ${story.title}-$subtaskIndex", parentStory = story).apply {
+                                setEstimate(Estimate.of(2))
+                            }
+                        }
+                    }
+
+                    allSubtasks.forEach { issueRepository.save(it) }
+
+                    // Act: Soft-delete Epic (should cascade to 10 stories + 50 subtasks)
+                    val startTime = System.currentTimeMillis()
+                    issueRepository.softDelete(epic.id)
+                    val elapsed = System.currentTimeMillis() - startTime
+
+                    // Assert: All 61 issues should be soft-deleted
+                    transaction(database) {
+                        val deletedCount = IssuesTable.selectAll()
+                            .where { IssuesTable.deletedAt.isNotNull() }
+                            .count()
+                        deletedCount shouldBe 61 // Epic + 10 stories + 50 subtasks
+                    }
+
+                    // Performance assertion: should complete reasonably fast
+                    // Generous threshold for CI environments (3s) - typical execution is < 100ms
+                    elapsed shouldBeLessThan 3000
+                }
+            }
+
+            it("should handle soft-deleting Epic with no children") {
+                runTest {
+                    // RED: Edge case - empty hierarchy
+                    val epicWithoutChildren = createTestEpic("Childless Epic")
+                    issueRepository.save(epicWithoutChildren)
+
+                    // Act: Soft-delete
+                    issueRepository.softDelete(epicWithoutChildren.id)
+
+                    // Assert: Only epic should be deleted
+                    transaction(database) {
+                        val deletedCount = IssuesTable.selectAll()
+                            .where { IssuesTable.deletedAt.isNotNull() }
+                            .count()
+                        deletedCount shouldBe 1
+                    }
+                }
+            }
+
+            it("should handle soft-deleting Story with some children already deleted") {
+                runTest {
+                    // RED: Edge case - mixed deletion state
+                    val epic = createTestEpic("Parent Epic")
+                    issueRepository.save(epic)
+
+                    val story = createTestStory("Story", parentEpic = epic)
+                    issueRepository.save(story)
+
+                    val subtask1 = createTestSubtask("Subtask 1", parentStory = story)
+                    val subtask2 = createTestSubtask("Subtask 2", parentStory = story)
+
+                    subtask1.setEstimate(Estimate.of(3))
+                    subtask2.setEstimate(Estimate.of(5))
+
+                    issueRepository.save(subtask1)
+                    issueRepository.save(subtask2)
+
+                    // Pre-delete one subtask
+                    issueRepository.softDelete(subtask1.id)
+
+                    // Act: Soft-delete Story
+                    issueRepository.softDelete(story.id)
+
+                    // Assert: Both subtasks + story should be deleted
+                    transaction(database) {
+                        val deletedCount = IssuesTable.selectAll()
+                            .where { IssuesTable.deletedAt.isNotNull() }
+                            .count()
+                        deletedCount shouldBe 3 // Story + 2 subtasks
+                    }
+                }
+            }
+
+            it("should complete cascade in single transaction (atomicity)") {
+                runTest {
+                    // RED: This will fail until transaction atomicity is ensured
+                    val epic = createTestEpic("Atomic Delete Epic")
+                    issueRepository.save(epic)
+
+                    val story = createTestStory("Story", parentEpic = epic)
+                    issueRepository.save(story)
+
+                    val subtask = createTestSubtask("Subtask", parentStory = story)
+                    subtask.setEstimate(Estimate.of(3))
+                    issueRepository.save(subtask)
+
+                    // Act: Soft-delete (should be atomic)
+                    issueRepository.softDelete(epic.id)
+
+                    // Assert: Either all are deleted or none (atomicity check)
+                    transaction(database) {
+                        val deletedCount = IssuesTable.selectAll()
+                            .where { IssuesTable.deletedAt.isNotNull() }
+                            .count()
+
+                        // Should be exactly 3 (all or nothing)
+                        deletedCount shouldBe 3
+                    }
+                }
+            }
+        }
+
+        describe("Restore Operations (SPI-876)") {
+
+            it("should restore soft-deleted issue and clear deletedAt timestamp") {
+                runTest {
+                    // RED: This will fail until restore() is implemented
+                    val epic = createTestEpic("Epic to Restore")
+                    issueRepository.save(epic)
+                    issueRepository.softDelete(epic.id)
+
+                    // Act: Restore the epic
+                    issueRepository.restore(epic.id)
+
+                    // Assert: Issue should be retrievable and deletedAt cleared
+                    val restored = issueRepository.findById(epic.id)
+                    restored shouldNotBe null
+                    restored?.id shouldBe epic.id
+
+                    transaction(database) {
+                        val row = IssuesTable.selectAll()
+                            .where { IssuesTable.id eq epic.id.value }
+                            .single()
+                        row[IssuesTable.deletedAt] shouldBe null
+                    }
+                }
+            }
+
+            it("should throw ParentIssueDeletedException when attempting to restore child with deleted parent") {
+                runTest {
+                    // RED: This is CRITICAL validation - parent deletion check
+                    val epic = createTestEpic("Epic")
+                    val story = createTestStory("Story", parentEpic = epic)
+                    issueRepository.save(epic)
+                    issueRepository.save(story)
+
+                    // Soft-delete Epic (cascades to Story)
+                    issueRepository.softDelete(epic.id)
+
+                    // Act & Assert: Attempting to restore Story should fail (parent deleted)
+                    var exceptionThrown = false
+                    var exceptionMessage = ""
+                    try {
+                        issueRepository.restore(story.id)
+                    } catch (e: Exception) {
+                        exceptionThrown = true
+                        exceptionMessage = e.message ?: ""
+                    }
+
+                    exceptionThrown shouldBe true
+                    exceptionMessage shouldContainString "parent"
+                }
+            }
+
+            it("should allow restoring parent without auto-restoring children") {
+                runTest {
+                    // RED: This will fail until selective restore is implemented
+                    val epic = createTestEpic("Epic")
+                    val story = createTestStory("Story", parentEpic = epic)
+                    issueRepository.save(epic)
+                    issueRepository.save(story)
+
+                    // Soft-delete Epic (cascades to Story)
+                    issueRepository.softDelete(epic.id)
+
+                    // Act: Restore only the Epic
+                    issueRepository.restore(epic.id)
+
+                    // Assert: Epic is restored, Story remains deleted
+                    val restoredEpic = issueRepository.findById(epic.id)
+                    val stillDeletedStory = issueRepository.findById(story.id)
+
+                    restoredEpic shouldNotBe null
+                    stillDeletedStory shouldBe null
+
+                    transaction(database) {
+                        val storyRow = IssuesTable.selectAll()
+                            .where { IssuesTable.id eq story.id.value }
+                            .single()
+                        storyRow[IssuesTable.deletedAt] shouldNotBe null
+                    }
+                }
+            }
+
+            it("should be idempotent when restoring already-active issue") {
+                runTest {
+                    // RED: Edge case - restore idempotency
+                    val epic = createTestEpic("Active Epic")
+                    issueRepository.save(epic)
+
+                    // Act: Restore already-active epic (should not fail)
+                    issueRepository.restore(epic.id)
+
+                    // Assert: Epic remains active
+                    val retrieved = issueRepository.findById(epic.id)
+                    retrieved shouldNotBe null
+
+                    transaction(database) {
+                        val row = IssuesTable.selectAll()
+                            .where { IssuesTable.id eq epic.id.value }
+                            .single()
+                        row[IssuesTable.deletedAt] shouldBe null
+                    }
+                }
+            }
+
+            it("should throw IssueNotFoundException when restoring non-existent issue") {
+                runTest {
+                    // RED: This will fail until exception handling is implemented
+                    val nonExistentId = IssueId.generate()
+
+                    // Act & Assert: Should throw exception
+                    var exceptionThrown = false
+                    try {
+                        issueRepository.restore(nonExistentId)
+                    } catch (e: io.spiralhouse.cycletime.domain.exceptions.IssueNotFoundException) {
+                        exceptionThrown = true
+                    }
+
+                    exceptionThrown shouldBe true
+                }
+            }
+        }
+
+        describe("Deleted Issue Queries (SPI-876)") {
+
+            it("should return only soft-deleted issues from findDeleted") {
+                runTest {
+                    // RED: This will fail until findDeleted() is implemented
+                    val activeEpic = createTestEpic("Active Epic")
+                    val deletedEpic = createTestEpic("Deleted Epic")
+
+                    issueRepository.save(activeEpic)
+                    issueRepository.save(deletedEpic)
+                    issueRepository.softDelete(deletedEpic.id)
+
+                    // Act: Query deleted issues
+                    val deletedIssues = issueRepository.findDeleted()
+
+                    // Assert: Should only return deleted epic
+                    deletedIssues shouldHaveSize 1
+                    deletedIssues.first().id shouldBe deletedEpic.id
+                    deletedIssues.map { it.id } shouldNotContain activeEpic.id
+                }
+            }
+
+            it("should return issue regardless of deletion status from findIncludingDeleted") {
+                runTest {
+                    // RED: This will fail until findIncludingDeleted() is implemented
+                    val activeEpic = createTestEpic("Active Epic")
+                    val deletedEpic = createTestEpic("Deleted Epic")
+
+                    issueRepository.save(activeEpic)
+                    issueRepository.save(deletedEpic)
+                    issueRepository.softDelete(deletedEpic.id)
+
+                    // Act: Query including deleted
+                    val activeRetrieved = issueRepository.findIncludingDeleted(activeEpic.id)
+                    val deletedRetrieved = issueRepository.findIncludingDeleted(deletedEpic.id)
+
+                    // Assert: Both should be returned
+                    activeRetrieved shouldNotBe null
+                    activeRetrieved?.id shouldBe activeEpic.id
+
+                    deletedRetrieved shouldNotBe null
+                    deletedRetrieved?.id shouldBe deletedEpic.id
+                }
+            }
+
+            it("should return empty list from findDeleted when no issues are deleted") {
+                runTest {
+                    // RED: Edge case - no deleted issues
+                    val activeEpic = createTestEpic("Active Epic")
+                    issueRepository.save(activeEpic)
+
+                    // Act: Query deleted issues
+                    val deletedIssues = issueRepository.findDeleted()
+
+                    // Assert: Should return empty list
+                    deletedIssues.shouldBeEmpty()
                 }
             }
         }

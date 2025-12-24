@@ -10,6 +10,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.assertions.throwables.shouldThrow
 import io.spiralhouse.cycletime.application.commands.*
 import io.spiralhouse.cycletime.application.exceptions.*
@@ -169,7 +170,7 @@ class IssueApplicationServiceUnitTest : StringSpec({
         result.title shouldBe "New Issue"
         result.type shouldBe IssueType.STORY
         result.projectId.shouldBeNull()
-        result.status shouldBe IssueStatus.TODO
+        result.status shouldBe IssueStatus.BACKLOG
         result.createdAt shouldBe baseTime
         result.updatedAt shouldBe baseTime
         mockIssueRepository.saveCallCount shouldBe 1
@@ -194,7 +195,7 @@ class IssueApplicationServiceUnitTest : StringSpec({
         result.title shouldBe "Project Issue"
         result.type shouldBe IssueType.STORY
         result.projectId shouldBe testProjectId
-        result.status shouldBe IssueStatus.TODO
+        result.status shouldBe IssueStatus.BACKLOG
         mockIssueRepository.saveCallCount shouldBe 1
         mockUnitOfWork.executeCallCount shouldBe 1
     }
@@ -463,7 +464,8 @@ class IssueApplicationServiceUnitTest : StringSpec({
         issueService.deleteIssue(testIssueId)
 
         // Then
-        mockIssueRepository.deleteCallCount shouldBe 1
+        mockIssueRepository.softDeleteCallCount shouldBe 1
+        mockIssueRepository.deleteCallCount shouldBe 0
         mockUnitOfWork.executeCallCount shouldBe 1
     }
 
@@ -1428,6 +1430,201 @@ class IssueApplicationServiceUnitTest : StringSpec({
         retrievedSubtask2?.dependencies?.shouldContain(subtask1Id)
         retrievedSubtask2?.parentId shouldBe storyId
         retrievedSubtask2?.projectId shouldBe testProjectId // Inherited
+    }
+
+    // ================================================================================
+    // Soft-Deletion Operations Tests (SPI-878)
+    // ================================================================================
+
+    "should use soft-delete instead of hard-delete when deleting issue" {
+        // Given
+        val testIssue = createTestIssue(id = testIssueId, title = "Issue to Soft Delete")
+        mockIssueRepository.addTestIssues(testIssue)
+
+        // When
+        issueService.deleteIssue(testIssueId)
+
+        // Then - should call softDelete, not delete
+        mockIssueRepository.softDeleteCallCount shouldBe 1
+        mockIssueRepository.deleteCallCount shouldBe 0
+        mockUnitOfWork.executeCallCount shouldBe 1
+    }
+
+    "should cascade soft-delete to children when deleting Epic with hierarchy" {
+        // Given - Epic → Story → Subtask hierarchy
+        val epicId = testIssueId
+        val storyId = IssueId.generate()
+        val subtaskId = IssueId.generate()
+
+        val epic = createTestIssue(id = epicId, type = IssueType.EPIC)
+        val story = createTestIssue(id = storyId, type = IssueType.STORY, parentId = epicId)
+        val subtask = createTestIssue(id = subtaskId, type = IssueType.SUBTASK, parentId = storyId)
+
+        mockIssueRepository.addTestIssues(epic, story, subtask)
+
+        // When - delete the Epic
+        issueService.deleteIssue(epicId)
+
+        // Then - service calls softDelete (cascade handled by repository layer SPI-876)
+        mockIssueRepository.softDeleteCallCount shouldBe 1
+        mockUnitOfWork.executeCallCount shouldBe 1
+    }
+
+    "should complete soft-delete in single transaction" {
+        // Given
+        val testIssue = createTestIssue(id = testIssueId)
+        mockIssueRepository.addTestIssues(testIssue)
+
+        // When
+        issueService.deleteIssue(testIssueId)
+
+        // Then - verify single transaction wraps the operation
+        mockUnitOfWork.executeCallCount shouldBe 1
+        mockIssueRepository.softDeleteCallCount shouldBe 1
+    }
+
+    "should restore issue when parent is active" {
+        // Given - deleted child issue with active parent
+        val parentIssue = createTestIssue(
+            id = testParentId,
+            type = IssueType.STORY,
+            title = "Active Parent"
+        )
+        val childIssue = createTestIssue(
+            id = testIssueId,
+            type = IssueType.SUBTASK,
+            parentId = testParentId,
+            title = "Deleted Child"
+        )
+
+        mockIssueRepository.addTestIssues(parentIssue, childIssue)
+        // Mock findIncludingDeleted for both parent and child
+        mockIssueRepository.deletedIssues[testIssueId] = childIssue
+        mockIssueRepository.deletedIssues[testParentId] = parentIssue
+
+        // When
+        val result = issueService.restoreIssue(testIssueId)
+
+        // Then
+        result.shouldNotBeNull()
+        result.id shouldBe testIssueId
+        mockIssueRepository.restoreCallCount shouldBe 1
+        mockUnitOfWork.executeCallCount shouldBe 1
+    }
+
+    "should throw IllegalStateException when restoring child issue with deleted parent" {
+        // Given - deleted child with deleted parent (parent has deletedAt set)
+        val deletedParent = createTestIssue(
+            id = testParentId,
+            type = IssueType.STORY,
+            title = "Deleted Parent"
+        )
+        val deletedChild = createTestIssue(
+            id = testIssueId,
+            type = IssueType.SUBTASK,
+            parentId = testParentId,
+            title = "Deleted Child"
+        )
+
+        mockIssueRepository.addTestIssues(deletedParent, deletedChild)
+        // Mock both as deleted (findIncludingDeleted returns with deletedAt)
+        mockIssueRepository.deletedIssues[testParentId] = deletedParent
+        mockIssueRepository.deletedIssues[testIssueId] = deletedChild
+        // Remove from active issues to properly simulate soft-deletion
+        mockIssueRepository.issues.remove(testParentId)
+        mockIssueRepository.issues.remove(testIssueId)
+
+        // When & Then
+        val exception = shouldThrow<IllegalStateException> {
+            issueService.restoreIssue(testIssueId)
+        }
+
+        // Verify error message contains key phrases
+        exception.message.shouldNotBeNull()
+        exception.message!!.shouldContain("Cannot restore issue")
+        exception.message!!.shouldContain("is still deleted")
+        exception.message!!.shouldContain("Restore parent issue first")
+
+        mockIssueRepository.restoreCallCount shouldBe 0
+    }
+
+    "should restore parent issue without auto-restoring children" {
+        // Given - deleted parent with deleted children
+        val parentIssue = createTestIssue(
+            id = testParentId,
+            type = IssueType.STORY,
+            title = "Deleted Parent",
+            parentId = null // root issue
+        )
+        val child1Id = IssueId.generate()
+        val child2Id = IssueId.generate()
+        val child1 = createTestIssue(id = child1Id, type = IssueType.SUBTASK, parentId = testParentId)
+        val child2 = createTestIssue(id = child2Id, type = IssueType.SUBTASK, parentId = testParentId)
+
+        mockIssueRepository.addTestIssues(parentIssue, child1, child2)
+        mockIssueRepository.deletedIssues[testParentId] = parentIssue
+
+        // When
+        issueService.restoreIssue(testParentId)
+
+        // Then - only parent restored, children remain deleted
+        mockIssueRepository.restoreCallCount shouldBe 1
+        // Verify no additional restore calls for children
+        mockUnitOfWork.executeCallCount shouldBe 1
+    }
+
+    "should restore root issue without parent validation" {
+        // Given - deleted root issue (no parent)
+        val rootIssue = createTestIssue(
+            id = testIssueId,
+            type = IssueType.EPIC,
+            parentId = null,
+            title = "Deleted Root Epic"
+        )
+
+        mockIssueRepository.addTestIssues(rootIssue)
+        mockIssueRepository.deletedIssues[testIssueId] = rootIssue
+
+        // When
+        val result = issueService.restoreIssue(testIssueId)
+
+        // Then - restores without parent validation
+        result.shouldNotBeNull()
+        result.id shouldBe testIssueId
+        mockIssueRepository.restoreCallCount shouldBe 1
+        mockUnitOfWork.executeCallCount shouldBe 1
+    }
+
+    "should be idempotent when restoring already-active issue" {
+        // Given - active issue (not deleted, deletedAt = null)
+        val activeIssue = createTestIssue(
+            id = testIssueId,
+            title = "Active Issue",
+            status = IssueStatus.TODO
+        )
+
+        mockIssueRepository.addTestIssues(activeIssue)
+        // Not in deletedIssues map = active
+
+        // When - restore called on active issue
+        val result = issueService.restoreIssue(testIssueId)
+
+        // Then - operation completes without error (idempotent)
+        result.shouldNotBeNull()
+        mockIssueRepository.restoreCallCount shouldBe 1
+        mockUnitOfWork.executeCallCount shouldBe 1
+    }
+
+    "should throw IssueNotFoundException when restoring non-existent issue" {
+        // Given - issue does not exist at all
+        val nonExistentId = IssueId.generate()
+        // Do not add to repository
+
+        // When & Then
+        shouldThrow<IssueNotFoundException> {
+            issueService.restoreIssue(nonExistentId)
+        }
+        mockIssueRepository.restoreCallCount shouldBe 0
     }
 
 })

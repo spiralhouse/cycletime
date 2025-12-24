@@ -112,4 +112,46 @@ interface IssueRepository {
      * @return true if the issue exists, false otherwise
      */
     suspend fun exists(id: IssueId): Boolean
+
+    /**
+     * Soft-deletes an issue by setting deleted_at timestamp.
+     *
+     * Cascades the deletion to all descendant issues (children, grandchildren, etc.)
+     * in a single atomic transaction. Preserves all relationships and data for
+     * potential restoration.
+     *
+     * @param id The issue ID to soft-delete
+     * @throws IssueNotFoundException if issue does not exist
+     */
+    suspend fun softDelete(id: IssueId)
+
+    /**
+     * Restores a soft-deleted issue by clearing deleted_at timestamp.
+     *
+     * Does NOT automatically restore child issues - they must be restored explicitly.
+     * Validates that the parent issue (if any) is not deleted before allowing restoration.
+     *
+     * @param id The issue ID to restore
+     * @throws IssueNotFoundException if issue does not exist
+     * @throws ParentIssueDeletedException if parent issue is still deleted
+     */
+    suspend fun restore(id: IssueId)
+
+    /**
+     * Finds all soft-deleted issues.
+     *
+     * @return List of deleted issues (where deleted_at IS NOT NULL)
+     */
+    suspend fun findDeleted(): List<Issue>
+
+    /**
+     * Finds an issue by ID, including soft-deleted issues.
+     *
+     * Useful for admin operations and restoration workflows where deleted
+     * issues need to be queried.
+     *
+     * @param id The issue ID to find
+     * @return The issue if found (including deleted), null otherwise
+     */
+    suspend fun findIncludingDeleted(id: IssueId): Issue?
 }

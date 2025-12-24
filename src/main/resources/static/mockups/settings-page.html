@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - CycleTime</title>
+
+    <!-- Google Fonts - Inter (Design System Typography) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Configuration (CycleTime Design System) -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f7ff',
+                            200: '#b3ecff',
+                            300: '#80d9ff',
+                            400: '#3ba3c9',
+                            500: '#2878a1',
+                            600: '#1a5178',
+                            700: '#154158',
+                            800: '#0f2e3f',
+                            900: '#0a1f2a',
+                        },
+                        neutral: {
+                            50: '#fafafa',
+                            100: '#f5f5f5',
+                            200: '#e5e5e5',
+                            300: '#d4d4d4',
+                            400: '#a3a3a3',
+                            500: '#737373',
+                            600: '#525252',
+                            700: '#404040',
+                            800: '#262626',
+                            850: '#1a1a1a',
+                            900: '#171717',
+                            950: '#0a0a0a',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- HTMX for Progressive Enhancement -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* Mobile menu transition (when HTMX is fully implemented) */
+        #mobile-menu {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        #mobile-menu.hidden {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        #mobile-menu:not(.hidden) {
+            max-height: 500px;
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col">
+    <!-- ============================================
+         HEADER: Primary Navigation
+         ============================================ -->
+    <header class="border-b border-neutral-800 bg-neutral-900">
+        <nav class="container mx-auto max-w-7xl" aria-label="Primary navigation">
+            <div class="px-4 md:px-6 lg:px-8 py-4">
+                <div class="flex items-center justify-between">
+                    <!-- Brand and Desktop Navigation -->
+                    <div class="flex items-center gap-8">
+                        <!-- Brand/Logo -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-bold text-brand-400">CycleTime</span>
+                        </div>
+
+                        <!-- Desktop Navigation (hidden on mobile, visible md+) -->
+                        <div class="hidden md:flex items-center gap-6">
+                            <!-- Projects -->
+                            <a href="/projects"
+                               class="text-neutral-400 hover:text-neutral-200 pb-1 px-1 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900 rounded-sm">
+                                Projects
+                            </a>
+
+                            <!-- Issues -->
+                            <a href="/issues"
+                               class="text-neutral-400 hover:text-neutral-200 pb-1 px-1 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900 rounded-sm">
+                                Issues
+                            </a>
+
+                            <!-- Settings (Active Page) -->
+                            <a href="/settings"
+                               class="text-brand-400 border-b-2 border-brand-400 pb-1 px-1 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900 rounded-sm"
+                               aria-current="page">
+                                Settings
+                            </a>
+
+                            <!-- System Status -->
+                            <a href="/system-status"
+                               class="text-neutral-400 hover:text-neutral-200 pb-1 px-1 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900 rounded-sm">
+                                System Status
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Menu Button (visible on mobile, hidden md+) -->
+                    <button class="md:hidden p-2 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900"
+                            aria-label="Toggle menu"
+                            aria-expanded="false"
+                            aria-controls="mobile-menu"
+                            onclick="toggleMobileMenu()">
+                        <!-- Hamburger Icon -->
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Mobile Menu (hidden by default, toggled by JavaScript/HTMX) -->
+                <div id="mobile-menu" class="hidden md:hidden mt-4 pt-4 border-t border-neutral-700">
+                    <div class="flex flex-col gap-3">
+                        <!-- Projects -->
+                        <a href="/projects"
+                           class="text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 px-4 py-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900">
+                            Projects
+                        </a>
+
+                        <!-- Issues -->
+                        <a href="/issues"
+                           class="text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 px-4 py-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900">
+                            Issues
+                        </a>
+
+                        <!-- Settings (Active Page) -->
+                        <a href="/settings"
+                           class="text-brand-400 bg-neutral-800 px-4 py-3 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900"
+                           aria-current="page">
+                            Settings
+                        </a>
+
+                        <!-- System Status -->
+                        <a href="/system-status"
+                           class="text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 px-4 py-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-neutral-900">
+                            System Status
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ============================================
+         MAIN: Settings Content
+         ============================================ -->
+    <main class="flex-1 container mx-auto max-w-7xl px-4 md:px-6 lg:px-8 py-8">
+        <!-- Page Header -->
+        <h1 class="text-3xl font-bold text-neutral-100 mb-6">Settings</h1>
+
+        <!-- Settings Categories -->
+        <div class="space-y-6">
+            <!-- User Preferences Card -->
+            <div class="bg-neutral-900 border border-neutral-700 rounded-lg p-6 hover:border-neutral-600 transition-colors">
+                <h2 class="text-xl font-semibold text-neutral-200 mb-2 flex items-center gap-2">
+                    <span>👤</span>
+                    User Preferences
+                </h2>
+                <p class="text-sm text-neutral-400 mb-2">
+                    Customize your personal settings, notifications, and display preferences.
+                </p>
+                <p class="text-xs text-neutral-500 italic">Coming in future release</p>
+            </div>
+
+            <!-- Project Defaults Card -->
+            <div class="bg-neutral-900 border border-neutral-700 rounded-lg p-6 hover:border-neutral-600 transition-colors">
+                <h2 class="text-xl font-semibold text-neutral-200 mb-2 flex items-center gap-2">
+                    <span>📋</span>
+                    Project Defaults
+                </h2>
+                <p class="text-sm text-neutral-400 mb-2">
+                    Configure default workflows, estimation scales, and project templates.
+                </p>
+                <p class="text-xs text-neutral-500 italic">Coming in future release</p>
+            </div>
+
+            <!-- MCP Configuration Card -->
+            <div class="bg-neutral-900 border border-neutral-700 rounded-lg p-6 hover:border-neutral-600 transition-colors">
+                <h2 class="text-xl font-semibold text-neutral-200 mb-2 flex items-center gap-2">
+                    <span>🔌</span>
+                    MCP Configuration
+                </h2>
+                <p class="text-sm text-neutral-400 mb-2">
+                    Manage Model Context Protocol server settings and integrations.
+                </p>
+                <p class="text-xs text-neutral-500 italic">Coming in future release</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- ============================================
+         FOOTER
+         ============================================ -->
+    <footer class="mt-auto border-t border-neutral-800 bg-neutral-900 py-6">
+        <div class="container mx-auto max-w-7xl px-4 md:px-6 lg:px-8">
+            <p class="text-neutral-500 text-sm text-center">
+                CycleTime Dashboard &bull; Localhost Development Environment
+            </p>
+        </div>
+    </footer>
+
+    <!-- ============================================
+         JAVASCRIPT: Mobile Menu Toggle
+         ============================================ -->
+    <script>
+        /**
+         * Toggle mobile menu visibility
+         * NOTE: This is a temporary implementation for the static mockup.
+         * In production, this will be replaced with HTMX server-side toggle
+         * using hx-get="/api/menu/toggle" with server-rendered menu state.
+         */
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const button = menu.previousElementSibling.querySelector('button[aria-controls="mobile-menu"]');
+
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                button.setAttribute('aria-expanded', 'true');
+            } else {
+                menu.classList.add('hidden');
+                button.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        /**
+         * Close mobile menu when clicking outside
+         * This enhances UX but will be handled server-side in production
+         */
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('mobile-menu');
+            const button = document.querySelector('button[aria-controls="mobile-menu"]');
+
+            if (!menu.contains(event.target) && !button.contains(event.target)) {
+                if (!menu.classList.contains('hidden')) {
+                    menu.classList.add('hidden');
+                    button.setAttribute('aria-expanded', 'false');
+                }
+            }
+        });
+
+        /**
+         * HTMX Integration Notes:
+         * ========================
+         * For production implementation, replace the onclick handler with:
+         *
+         * <button hx-get="/api/menu/toggle"
+         *         hx-target="#mobile-menu"
+         *         hx-swap="outerHTML"
+         *         hx-indicator="#menu-spinner">
+         *
+         * Server endpoint should return:
+         * - Open state: <div id="mobile-menu" class="md:hidden mt-4 pt-4...">...</div>
+         * - Closed state: <div id="mobile-menu" class="hidden md:hidden mt-4...">...</div>
+         *
+         * Benefits of server-side toggle:
+         * - Progressive enhancement (works without JavaScript)
+         * - Server controls menu state
+         * - Better for accessibility and SEO
+         * - Consistent with HTMX philosophy
+         */
+    </script>
+</body>
+</html>

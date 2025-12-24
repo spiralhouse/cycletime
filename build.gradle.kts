@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
     alias(libs.plugins.dependency.check)
-    id("com.github.jmongard.git-semver-plugin") version "0.16.1"
+    id("com.github.jmongard.git-semver-plugin") version "0.17.0"
     application
 }
 
@@ -33,6 +33,60 @@ semver {
 
     // Group multiple commits into single increment
     groupVersionIncrements = true
+}
+
+// Fix for version print tasks being marked as UP-TO-DATE (SPI-849)
+// These tasks have no declared outputs, causing Gradle to skip them incorrectly
+// This fix ensures version tasks always execute and produce output for CI/CD pipelines
+tasks.matching { it.name in listOf("printSemVersion", "printVersion", "printInfoVersion") }.configureEach {
+    // Always run these tasks - version calculation should never be cached
+    outputs.upToDateWhen { false }
+
+    // Disable configuration cache for version tasks (incompatible with git state access)
+    notCompatibleWithConfigurationCache("Version calculation requires runtime git repository access")
+}
+
+/**
+ * Prints clean semantic version (X.Y.Z) without SNAPSHOT or build metadata.
+ *
+ * This task sanitizes the version from git-semver-plugin to produce clean
+ * semantic versions suitable for:
+ * - Git tags (vX.Y.Z)
+ * - GitHub releases
+ * - Docker image tags
+ * - Documentation references
+ *
+ * Input examples:
+ *   0.3.0-SNAPSHOT+022.sha.5fdd0c1  → 0.3.0
+ *   0.3.0+sha.5fdd0c1               → 0.3.0
+ *   1.0.0                           → 1.0.0
+ *
+ * Related: SPI-849 (version task caching fix)
+ * Solution for: SPI-892 (automated release tagging)
+ */
+tasks.register("printCleanVersion") {
+    group = "versioning"
+    description = "Prints clean semantic version (X.Y.Z) without SNAPSHOT or build metadata"
+
+    // Always run this task - version calculation should never be cached
+    outputs.upToDateWhen { false }
+
+    // Disable configuration cache for version tasks (incompatible with git state access)
+    notCompatibleWithConfigurationCache("Version calculation requires runtime git repository access")
+
+    doLast {
+        val rawVersion = semver.version
+        val cleanVersion = Regex("^(\\d+\\.\\d+\\.\\d+)").find(rawVersion)?.value
+
+        if (cleanVersion == null) {
+            throw GradleException(
+                "Failed to extract clean version from: $rawVersion\n" +
+                "Expected format: X.Y.Z with optional suffixes (-SNAPSHOT, +metadata)"
+            )
+        }
+
+        println(cleanVersion)
+    }
 }
 
 application {
@@ -90,6 +144,11 @@ dependencies {
 
     // Logging
     implementation(libs.logback.classic)
+    implementation(libs.logstash.logback.encoder)
+
+    // Metrics
+    implementation(libs.micrometer.registry.prometheus)
+    implementation(libs.ktor.server.metrics.micrometer)
 
     // Testing
     testImplementation(libs.kotest.runner.junit5)
@@ -112,6 +171,8 @@ dependencies {
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(21))
+        // Don't require GraalVM for general compilation
+        // native-image binary will use GraalVM explicitly
     }
 }
 
@@ -342,8 +403,8 @@ val unitTest by tasks.registering(Test::class) {
             else -> (availableProcessors / 2).coerceIn(2, 4)  // Balanced parallelism on multi-core
         }
 
-        println("🔧 CI environment detected - applying TestPlan registration coordination")
-        println("   CPU cores: ${availableProcessors}, optimal test parallelism: ${optimalParallelism}")
+        logger.lifecycle("🔧 CI environment detected - applying TestPlan registration coordination")
+        logger.lifecycle("   CPU cores: ${availableProcessors}, optimal test parallelism: ${optimalParallelism}")
 
         // Coordinate discovery phase to prevent TestPlan registration race conditions
         systemProperty("kotest.framework.discovery.parallel", "false") // Sequential discovery
@@ -643,20 +704,52 @@ ktor {
 graalvmNative {
     binaries {
         named("main") {
+            // Simple binary name - CI workflow handles versioning and platform naming
+            // Gradle produces: cycletime-server
+            // CI renames to: cycletime-server-{version}-{platform}
             imageName.set("cycletime-server")
             mainClass.set("io.spiralhouse.cycletime.ApplicationKt")
 
-            buildArgs.add("--no-fallback")
-            buildArgs.add("--enable-http")
-            buildArgs.add("--enable-https")
-            buildArgs.add("-H:+ReportExceptionStackTraces")
+            // Production-ready GraalVM native-image configuration
+            // Validated with SPI-921 (GraalVM Compatibility Research)
 
-            // Fix Kotlin UUID SecureRandom issue
-            buildArgs.add("--initialize-at-run-time=kotlin.uuid.SecureRandomHolder")
+            // Core settings
+            buildArgs.add("--no-fallback") // Pure native, no JVM fallback
+            buildArgs.add("--enable-http") // Required for Ktor server
+            buildArgs.add("--enable-https") // Required for secure connections
+            buildArgs.add("-H:+ReportExceptionStackTraces") // Better error reporting
+            buildArgs.add("--enable-url-protocols=http,https") // Explicit protocol support
 
-            // Optimize for balanced size/speed
-            buildArgs.add("-Ob")
-            buildArgs.add("-march=compatibility")
+            // Runtime initialization (validated in SPI-921)
+            buildArgs.add("--initialize-at-run-time=kotlin.uuid.SecureRandomHolder") // Fix Kotlin UUID SecureRandom
+            buildArgs.add("--initialize-at-run-time=ch.qos.logback") // Logback threading fix
+            buildArgs.add("--initialize-at-run-time=org.slf4j.LoggerFactory") // SLF4J runtime init
+
+            // Performance optimizations
+            buildArgs.add("-Ob") // Balanced optimization (size vs speed)
+            buildArgs.add("-march=compatibility") // Cross-platform compatibility
+            // Serial GC is the default for GraalVM Community Edition
+            // G1 GC requires Oracle GraalVM (Enterprise) and is not available in CE
+
+            // Memory configuration (Serial GC tuning)
+            buildArgs.add("-H:+UnlockExperimentalVMOptions")
+            buildArgs.add("-H:InitialCollectionPolicy=com.oracle.svm.core.genscavenge.CollectionPolicy\$BySpaceAndTime")
+
+            // Resource handling
+            buildArgs.add("-H:IncludeResources=application.conf") // Include Ktor config
+            buildArgs.add("-H:IncludeResources=logback.xml") // Include logging config
+            buildArgs.add("-H:IncludeResourceBundles=com.sun.org.apache.xerces.internal.impl.msg.XMLMessages")
+
+            // Reflection config auto-discovered from META-INF/native-image/ (SPI-921)
+            // GraalVM automatically loads reflect-config.json from standard location
+
+            // Debug and diagnostics (can be disabled for production)
+            buildArgs.add("-H:+PrintClassInitialization") // Debug class initialization
+            buildArgs.add("--verbose") // Detailed build output
+
+            // Note: GraalVM installation location is specified via GRAALVM_HOME environment variable
+            // The plugin will look for native-image in $GRAALVM_HOME/bin/native-image
+            // Minimum GraalVM version: 21.0.8 (validated in SPI-921)
         }
     }
 
@@ -664,14 +757,21 @@ graalvmNative {
         defaultMode.set("standard")
         modes {
             standard {
+                // Standard mode collects metadata during test execution
+                // Generates reflection-config.json, jni-config.json, etc.
             }
         }
         metadataCopy {
             mergeWithExisting.set(true)
-            inputTaskNames.add("test")
+            inputTaskNames.add("test") // Collect metadata from unit tests
+            inputTaskNames.add("integrationTest") // Collect metadata from integration tests
             outputDirectories.add("src/main/resources/META-INF/native-image")
         }
     }
+
+    // Toolchain configuration for native-image
+    // Note: This requires JAVA_HOME to point to GraalVM distribution
+    toolchainDetection.set(false) // Use explicit GRAALVM_HOME instead
 }
 
 // Detekt configuration

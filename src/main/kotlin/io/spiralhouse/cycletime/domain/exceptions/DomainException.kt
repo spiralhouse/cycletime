@@ -8,6 +8,8 @@ class ProjectNotFoundException(id: String) : DomainException("Project not found:
 
 class IssueNotFoundException(id: String) : DomainException("Issue not found: $id")
 
+class WorkflowNotFoundException(id: String) : DomainException("Workflow not found: $id")
+
 class SessionNotFoundException(key: String) : DomainException("Session not found: $key")
 
 class InvalidStateTransitionException(from: String, to: String) :
@@ -16,3 +18,5 @@ class InvalidStateTransitionException(from: String, to: String) :
 class DependencyCycleException(message: String) : DomainException(message)
 
 class ValidationException(message: String) : DomainException(message)
+
+class ParentIssueDeletedException(message: String) : DomainException(message)

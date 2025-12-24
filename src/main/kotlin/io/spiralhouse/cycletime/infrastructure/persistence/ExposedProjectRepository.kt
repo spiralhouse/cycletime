@@ -8,6 +8,7 @@ import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectStatus
 import io.spiralhouse.cycletime.domain.valueobjects.IssueId
+import io.spiralhouse.cycletime.domain.exceptions.ProjectNotFoundException
 import io.spiralhouse.cycletime.infrastructure.database.ProjectsTable
 import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +18,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.slf4j.LoggerFactory
 
 /**
  * Repository implementation for Project entities using Exposed ORM.
@@ -49,31 +51,43 @@ class ExposedProjectRepository(
     database: Database? = null
 ) : BaseExposedRepository(timeProvider, database), ProjectRepository {
 
+    companion object {
+        private val logger = LoggerFactory.getLogger(ExposedProjectRepository::class.java)
+    }
+
     /**
      * Finds a project by its unique identifier.
+     * Excludes soft-deleted projects.
      *
      * @param id The project ID to search for
-     * @return The project if found, null otherwise
+     * @return The project if found and not deleted, null otherwise
      */
     override suspend fun findById(id: ProjectId): Project? = dbQuery {
         ProjectsTable
             .selectAll()
-            .where { ProjectsTable.id eq id.value }
+            .where {
+                (ProjectsTable.id eq id.value) and
+                (ProjectsTable.deletedAt.isNull())
+            }
             .singleOrNull()
             ?.toProject()
     }
 
     /**
      * Finds all projects with the specified status.
+     * Excludes soft-deleted projects.
      * Uses batch loading to avoid N+1 query issues.
      *
      * @param status The project status to filter by
-     * @return List of projects matching the status
+     * @return List of projects matching the status (excluding deleted)
      */
     override suspend fun findByStatus(status: ProjectStatus): List<Project> = dbQuery {
         val projectRows = ProjectsTable
             .selectAll()
-            .where { ProjectsTable.status eq status.value }
+            .where {
+                (ProjectsTable.status eq status.value) and
+                (ProjectsTable.deletedAt.isNull())
+            }
             .toList()
         
         // Batch load all issues for these projects
@@ -90,13 +104,15 @@ class ExposedProjectRepository(
 
     /**
      * Retrieves all projects from the repository.
+     * Excludes soft-deleted projects.
      * Uses batch loading to avoid N+1 query issues.
      *
-     * @return List of all projects
+     * @return List of all active projects (excluding deleted)
      */
     override suspend fun findAll(): List<Project> = dbQuery {
         val projectRows = ProjectsTable
             .selectAll()
+            .where { ProjectsTable.deletedAt.isNull() }
             .toList()
         
         // Batch load all issues for these projects
@@ -181,12 +197,118 @@ class ExposedProjectRepository(
 
     /**
      * Checks if a project exists in the repository.
+     * Excludes soft-deleted projects.
      *
      * @param id The project ID to check
-     * @return true if the project exists, false otherwise
+     * @return true if the project exists and is not deleted, false otherwise
      */
     override suspend fun exists(id: ProjectId): Boolean = dbQuery {
-        checkProjectExists(id)
+        ProjectsTable
+            .select(ProjectsTable.id)
+            .where {
+                (ProjectsTable.id eq id.value) and
+                (ProjectsTable.deletedAt.isNull())
+            }
+            .limit(1)
+            .count() > 0
+    }
+
+    /**
+     * Soft-deletes a project by setting deleted_at timestamp.
+     * Cascades deletion to all contained issues in a single transaction.
+     *
+     * @param id The project ID to soft-delete
+     * @throws ProjectNotFoundException if project does not exist
+     */
+    override suspend fun softDelete(id: ProjectId) {
+        dbQuery {
+            // 1. Verify project exists (throw exception if not)
+            val exists = ProjectsTable
+                .selectAll()
+                .where { ProjectsTable.id eq id.value }
+                .count() > 0
+
+            if (!exists) {
+                throw ProjectNotFoundException(id.value)
+            }
+
+            // 2. Set deleted_at timestamp on project
+            val now = timeProvider.now()
+            ProjectsTable.update({ ProjectsTable.id eq id.value }) {
+                it[deletedAt] = now
+            }
+
+            // 3. CASCADE: Batch update all contained issues
+            val cascadeCount = IssuesTable.update({
+                IssuesTable.projectId eq id.value
+            }) {
+                it[deletedAt] = now
+            }
+
+            // 4. Audit logging
+            logger.info("Soft-deleted project ${id.value} with $cascadeCount issues")
+        }
+    }
+
+    /**
+     * Restores a soft-deleted project by clearing deleted_at timestamp.
+     * Does NOT cascade to issues - they must be restored individually.
+     *
+     * @param id The project ID to restore
+     */
+    override suspend fun restore(id: ProjectId) {
+        dbQuery {
+            // Restore project ONLY (NOT issues - explicit user choice)
+            val updateCount = ProjectsTable.update({
+                ProjectsTable.id eq id.value
+            }) {
+                it[deletedAt] = null
+            }
+
+            // Idempotent: If project doesn't exist or already active, updateCount will be 0 or 1
+            if (updateCount > 0) {
+                logger.info("Restored project ${id.value} (issues not auto-restored)")
+            }
+        }
+    }
+
+    /**
+     * Finds all soft-deleted projects.
+     * Uses batch loading to avoid N+1 query issues.
+     *
+     * @return List of deleted projects
+     */
+    override suspend fun findDeleted(): List<Project> = dbQuery {
+        val projectRows = ProjectsTable
+            .selectAll()
+            .where { ProjectsTable.deletedAt.isNotNull() }
+            .orderBy(ProjectsTable.deletedAt to SortOrder.DESC)
+            .toList()
+
+        // Batch load all issues for these projects
+        val projectIds = projectRows.map { it[ProjectsTable.id].value }
+        val issueMap = loadProjectIssueIdsBatch(projectIds)
+
+        // Convert rows to projects with their issues
+        projectRows.map { row ->
+            val projectId = row[ProjectsTable.id].value
+            val issues = issueMap[projectId] ?: emptyList()
+            row.toProjectWithIssues(issues)
+        }
+    }
+
+    /**
+     * Finds a project by ID, including soft-deleted projects.
+     *
+     * @param id The project ID to find
+     * @return The project if found (including deleted), null otherwise
+     */
+    override suspend fun findIncludingDeleted(id: ProjectId): Project? = dbQuery {
+        ProjectsTable
+            .selectAll()
+            .where { ProjectsTable.id eq id.value }
+            .singleOrNull()
+            ?.toProject()
     }
 
     /**
@@ -203,7 +325,8 @@ class ExposedProjectRepository(
             status = ProjectStatus.fromString(this[ProjectsTable.status]),
             issues = loadProjectIssueIds(this[ProjectsTable.id].value),
             createdAt = this[ProjectsTable.createdAt],
-            updatedAt = this[ProjectsTable.updatedAt]
+            updatedAt = this[ProjectsTable.updatedAt],
+            deletedAt = this[ProjectsTable.deletedAt]
         )
         return Project.fromSnapshot(snapshot, timeProvider)
     }
@@ -223,7 +346,8 @@ class ExposedProjectRepository(
             status = ProjectStatus.fromString(this[ProjectsTable.status]),
             issues = issues,
             createdAt = this[ProjectsTable.createdAt],
-            updatedAt = this[ProjectsTable.updatedAt]
+            updatedAt = this[ProjectsTable.updatedAt],
+            deletedAt = this[ProjectsTable.deletedAt]
         )
         return Project.fromSnapshot(snapshot, timeProvider)
     }

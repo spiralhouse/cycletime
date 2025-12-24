@@ -6,7 +6,7 @@ description: "Essential project knowledge shared across all agents and contribut
 keywords: [technology-stack, architecture, linear, package-structure, conventions]
 dependencies: []
 related: [../architecture/overview.md, ./PRD.md, ./user-experience.md]
-last_updated: 2025-10-21
+last_updated: 2025-11-20
 ---
 
 # Project Fundamentals
@@ -32,7 +32,7 @@ CycleTime CE (Community Edition) is a project orchestration framework that exten
 
 ### MCP Integration
 
-- **MCP Kotlin SDK v0.7.2**: Official SDK for Model Context Protocol
+- **MCP Kotlin SDK v0.7.6**: Official SDK for Model Context Protocol
 - **Maintainers**: Anthropic and JetBrains
 - **Transport**: Ktor integration with SSE + JSON-RPC
 - **Session Management**: Stateless per-request with database persistence

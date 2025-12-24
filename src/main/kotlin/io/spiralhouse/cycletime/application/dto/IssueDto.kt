@@ -2,6 +2,12 @@ package io.spiralhouse.cycletime.application.dto
 
 import io.spiralhouse.cycletime.domain.entities.Issue
 import io.spiralhouse.cycletime.domain.valueobjects.*
+import io.spiralhouse.cycletime.infrastructure.serialization.InstantSerializer
+import io.spiralhouse.cycletime.infrastructure.serialization.NullableInstantSerializer
+import io.spiralhouse.cycletime.infrastructure.serialization.IssueIdSerializer
+import io.spiralhouse.cycletime.infrastructure.serialization.ProjectIdSerializer
+import io.spiralhouse.cycletime.infrastructure.serialization.NullableIssueIdSerializer
+import io.spiralhouse.cycletime.infrastructure.serialization.NullableProjectIdSerializer
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
@@ -11,19 +17,26 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class IssueDto(
+    @Serializable(with = IssueIdSerializer::class)
     val id: IssueId,
     val title: String,
     val description: String?,
     val type: IssueType,
     val status: IssueStatus,
+    @Serializable(with = NullableIssueIdSerializer::class)
     val parentId: IssueId?,
+    @Serializable(with = NullableProjectIdSerializer::class)
     val projectId: ProjectId?,
     val estimate: Estimate,
     val assigneeId: String?,
-    val dependencies: List<IssueId>,
-    val blockedBy: List<IssueId>,
+    val dependencies: List<@Serializable(with = IssueIdSerializer::class) IssueId>,
+    val blockedBy: List<@Serializable(with = IssueIdSerializer::class) IssueId>,
+    @Serializable(with = InstantSerializer::class)
     val createdAt: Instant,
-    val updatedAt: Instant
+    @Serializable(with = InstantSerializer::class)
+    val updatedAt: Instant,
+    @Serializable(with = NullableInstantSerializer::class)
+    val deletedAt: Instant? = null
 ) {
     companion object {
         /**
@@ -43,7 +56,8 @@ data class IssueDto(
                 dependencies = issue.dependencies,
                 blockedBy = issue.blockedBy,
                 createdAt = issue.createdAt,
-                updatedAt = issue.updatedAt
+                updatedAt = issue.updatedAt,
+                deletedAt = issue.deletedAt
             )
         }
     }

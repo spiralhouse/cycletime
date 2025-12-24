@@ -8,6 +8,9 @@ import io.spiralhouse.cycletime.application.services.SessionApplicationService
 import io.spiralhouse.cycletime.application.services.WorkflowApplicationService
 import io.spiralhouse.cycletime.application.services.DashboardCache
 import io.spiralhouse.cycletime.application.services.DashboardApplicationService
+import io.spiralhouse.cycletime.domain.repositories.IssueRepository
+import io.spiralhouse.cycletime.domain.repositories.ProjectRepository
+import io.spiralhouse.cycletime.domain.repositories.WorkflowRepository
 import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.services.TimeProvider
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
@@ -24,6 +27,8 @@ import io.spiralhouse.cycletime.mcp.providers.*
 import io.spiralhouse.cycletime.mcp.tools.*
 import io.spiralhouse.cycletime.mcp.sdk.MCPSdkServer
 import io.spiralhouse.cycletime.mcp.sdk.SDKSessionManager
+import io.spiralhouse.cycletime.infrastructure.health.HealthCheckService
+import io.spiralhouse.cycletime.infrastructure.alerting.AlertService
 
 /**
  * Dependency injection configuration using Ktor's native DI.
@@ -169,6 +174,25 @@ fun Application.configureDependencies(
             }
         }
 
+        // Health Check and Alerting Services
+        provide<HealthCheckService> {
+            safeCreate("HealthCheckService") {
+                HealthCheckService(
+                    databaseProvider = resolve<DatabaseProvider>(),
+                    projectService = resolve<ProjectApplicationService>(),
+                    sessionService = resolve<SessionApplicationService>()
+                )
+            }
+        }
+
+        provide<AlertService> {
+            safeCreate("AlertService") {
+                AlertService(
+                    logger = LoggerFactory.getLogger(AlertService::class.java)
+                )
+            }
+        }
+
         // MCP layer
         if (includeMCP) {
             val mcpStartTime = System.currentTimeMillis()
@@ -260,15 +284,17 @@ private fun DependencyRegistry.configureMCPDependencies() {
     provide<WorkflowResourceProvider> { DefaultWorkflowResourceProvider() }
     
     // Tool Providers
-    provide<DefaultProjectToolProvider> { 
+    provide<DefaultProjectToolProvider> {
         DefaultProjectToolProvider(
-            projectService = resolve<ProjectApplicationService>()
+            projectService = resolve<ProjectApplicationService>(),
+            projectRepository = resolve<ProjectRepository>()
         )
     }
-    
-    provide<DefaultIssueToolProvider> { 
+
+    provide<DefaultIssueToolProvider> {
         DefaultIssueToolProvider(
-            issueService = resolve<IssueApplicationService>()
+            issueService = resolve<IssueApplicationService>(),
+            issueRepository = resolve<IssueRepository>()
         )
     }
     
@@ -278,7 +304,11 @@ private fun DependencyRegistry.configureMCPDependencies() {
         )
     }
     
-    provide<DefaultWorkflowToolProvider> { 
-        DefaultWorkflowToolProvider()
+    provide<DefaultWorkflowToolProvider> {
+        DefaultWorkflowToolProvider(
+            workflowService = resolve<WorkflowApplicationService>(),
+            workflowRepository = resolve<WorkflowRepository>(),
+            timeProvider = resolve<TimeProvider>()
+        )
     }
 }
