@@ -51,11 +51,12 @@ fun Application.configureDependencies(
     database: Database,
     databaseProvider: DatabaseProvider? = null,
     timeProvider: TimeProvider? = null,
+    retentionConfig: io.spiralhouse.cycletime.application.services.RetentionConfig? = null,
     includeMCP: Boolean = true
 ) {
     val logger = LoggerFactory.getLogger("DependencyInjection")
     val configStartTime = System.currentTimeMillis()
-    
+
     dependencies {
         // Core dependencies
         provide<TimeProvider> {
@@ -98,7 +99,7 @@ fun Application.configureDependencies(
             }
         }
         
-        provide<ExposedWorkflowRepository> { 
+        provide<ExposedWorkflowRepository> {
             safeCreate("ExposedWorkflowRepository") {
                 ExposedWorkflowRepository(
                     timeProvider = resolve(),
@@ -106,7 +107,16 @@ fun Application.configureDependencies(
                 )
             }
         }
-        
+
+        provide<io.spiralhouse.cycletime.infrastructure.persistence.ExposedAuditLogRepository> {
+            safeCreate("ExposedAuditLogRepository") {
+                io.spiralhouse.cycletime.infrastructure.persistence.ExposedAuditLogRepository(
+                    timeProvider = resolve(),
+                    database = resolve()
+                )
+            }
+        }
+
         // Application Services
         provide<ProjectApplicationService> {
             safeCreate("ProjectApplicationService") {
@@ -147,6 +157,27 @@ fun Application.configureDependencies(
                     workflowRepository = resolve<ExposedWorkflowRepository>(),
                     unitOfWork = resolve<ExposedUnitOfWork>(),
                     timeProvider = resolve()
+                )
+            }
+        }
+
+        // Data Retention Services
+        provide<io.spiralhouse.cycletime.application.services.RetentionConfig> {
+            safeCreate("RetentionConfig") {
+                retentionConfig ?: io.spiralhouse.cycletime.application.services.RetentionConfig()
+            }
+        }
+
+        provide<io.spiralhouse.cycletime.application.services.DataRetentionService> {
+            safeCreate("DataRetentionService") {
+                io.spiralhouse.cycletime.application.services.DataRetentionService(
+                    projectRepository = resolve<ExposedProjectRepository>(),
+                    issueRepository = resolve<ExposedIssueRepository>(),
+                    workflowRepository = resolve<ExposedWorkflowRepository>(),
+                    auditLogRepository = resolve<io.spiralhouse.cycletime.infrastructure.persistence.ExposedAuditLogRepository>(),
+                    timeProvider = resolve(),
+                    unitOfWork = resolve<ExposedUnitOfWork>(),
+                    config = resolve()
                 )
             }
         }

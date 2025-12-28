@@ -114,6 +114,24 @@ object WorkflowsTable : IdTable<String>("workflows") {
     }
 }
 
+object AuditLogsTable : IdTable<String>("audit_logs") {
+    override val id: Column<EntityID<String>> = varchar("id", 100).entityId()
+    val entityType = varchar("entity_type", 50)
+    val entityId = varchar("entity_id", 100)
+    val operation = varchar("operation", 50)
+    val purgedBy = varchar("purged_by", 100)
+    val timestamp = timestamp("timestamp")
+    val metadata = text("metadata").nullable() // JSON metadata
+
+    override val primaryKey = PrimaryKey(id)
+
+    init {
+        index(false, entityId)
+        index(false, entityType)
+        index(false, timestamp)
+    }
+}
+
 /**
  * Central registry for all database tables.
  *
@@ -138,6 +156,7 @@ object TableRegistry {
         // Independent tables (no foreign keys)
         ProjectsTable,
         WorkflowsTable,
+        AuditLogsTable,
 
         // Tables with dependencies on ProjectsTable
         IssuesTable,        // References ProjectsTable
