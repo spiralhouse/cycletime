@@ -5,7 +5,7 @@ import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.spiralhouse.cycletime.application.services.DataRetentionService
-import io.spiralhouse.cycletime.application.services.RetentionConfig
+import io.spiralhouse.cycletime.application.config.RetentionConfig
 import io.spiralhouse.cycletime.domain.entities.Project
 import io.spiralhouse.cycletime.domain.services.MockTimeProvider
 import io.spiralhouse.cycletime.infrastructure.database.TableRegistry

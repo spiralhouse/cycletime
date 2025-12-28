@@ -1,4 +1,4 @@
-package io.spiralhouse.cycletime.application.services
+package io.spiralhouse.cycletime.application.config
 
 import kotlin.time.Duration.Companion.days
 
@@ -7,6 +7,10 @@ import kotlin.time.Duration.Companion.days
  *
  * This configuration determines how long soft-deleted entities are retained before
  * permanent deletion, whether automatic purging is enabled, and when scheduled purges run.
+ *
+ * ⚠️ **Configuration Changes**: Loaded at application startup. Changes to environment
+ * variables (RETENTION_PERIOD, RETENTION_ENABLE_AUTO_PURGE, RETENTION_PURGE_SCHEDULE_CRON)
+ * or application.conf require application restart to take effect.
  *
  * @property retentionPeriod ISO-8601 duration string (e.g., "P30D" for 30 days)
  * @property enableAutoPurge Whether automatic scheduled purging is enabled

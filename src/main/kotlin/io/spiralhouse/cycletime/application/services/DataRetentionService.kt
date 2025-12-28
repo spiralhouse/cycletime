@@ -1,5 +1,6 @@
 package io.spiralhouse.cycletime.application.services
 
+import io.spiralhouse.cycletime.application.config.RetentionConfig
 import io.spiralhouse.cycletime.application.exceptions.InvalidConfirmationException
 import io.spiralhouse.cycletime.application.exceptions.ProjectNotFoundException
 import io.spiralhouse.cycletime.application.exceptions.IssueNotFoundException
@@ -113,11 +114,12 @@ class DataRetentionService(
      *
      * @param projectId The project ID to permanently delete
      * @param confirmation Must be exactly "CONFIRM_PERMANENT_DELETE"
+     * @param userId The ID of the user performing the purge operation (for audit logging)
      * @throws InvalidConfirmationException if confirmation string doesn't match
      * @throws ProjectNotFoundException if project doesn't exist
      * @throws IllegalArgumentException if project is not deleted (still active)
      */
-    suspend fun purgeProject(projectId: ProjectId, confirmation: String) {
+    suspend fun purgeProject(projectId: ProjectId, confirmation: String, userId: String) {
         if (confirmation != REQUIRED_CONFIRMATION) {
             throw InvalidConfirmationException(
                 "Invalid confirmation string. Manual purge requires exact match: $REQUIRED_CONFIRMATION"
@@ -142,13 +144,13 @@ class DataRetentionService(
             // Project exists and is deleted - safe to purge
             projectRepository.purge(projectId)
 
-            logger.info("Manual purge: permanently deleted project ${projectId.value}")
+            logger.info("Manual purge: permanently deleted project ${projectId.value} by user $userId")
 
             // CRITICAL: Audit logging MUST succeed for purge to commit.
             // If auditLogRepository.create() fails, the entire transaction rolls back,
             // preventing data purge without audit trail (compliance requirement).
             // This is INTENTIONAL behavior - we never purge without logging.
-            logManualPurge("project", projectId.value, "userId")
+            logManualPurge("project", projectId.value, userId)
         }
     }
 
@@ -160,11 +162,12 @@ class DataRetentionService(
      *
      * @param issueId The issue ID to permanently delete
      * @param confirmation Must be exactly "CONFIRM_PERMANENT_DELETE"
+     * @param userId The ID of the user performing the purge operation (for audit logging)
      * @throws InvalidConfirmationException if confirmation string doesn't match
      * @throws IssueNotFoundException if issue doesn't exist
      * @throws IllegalArgumentException if issue is not deleted (still active)
      */
-    suspend fun purgeIssue(issueId: IssueId, confirmation: String) {
+    suspend fun purgeIssue(issueId: IssueId, confirmation: String, userId: String) {
         if (confirmation != REQUIRED_CONFIRMATION) {
             throw InvalidConfirmationException(
                 "Invalid confirmation string. Manual purge requires exact match: $REQUIRED_CONFIRMATION"
@@ -189,13 +192,13 @@ class DataRetentionService(
             // Issue exists and is deleted - safe to purge
             issueRepository.purge(issueId)
 
-            logger.info("Manual purge: permanently deleted issue ${issueId.value}")
+            logger.info("Manual purge: permanently deleted issue ${issueId.value} by user $userId")
 
             // CRITICAL: Audit logging MUST succeed for purge to commit.
             // If auditLogRepository.create() fails, the entire transaction rolls back,
             // preventing data purge without audit trail (compliance requirement).
             // This is INTENTIONAL behavior - we never purge without logging.
-            logManualPurge("issue", issueId.value, "userId")
+            logManualPurge("issue", issueId.value, userId)
         }
     }
 

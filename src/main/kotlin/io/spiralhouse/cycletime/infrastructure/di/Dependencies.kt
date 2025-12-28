@@ -51,7 +51,7 @@ fun Application.configureDependencies(
     database: Database,
     databaseProvider: DatabaseProvider? = null,
     timeProvider: TimeProvider? = null,
-    retentionConfig: io.spiralhouse.cycletime.application.services.RetentionConfig? = null,
+    retentionConfig: io.spiralhouse.cycletime.application.config.RetentionConfig? = null,
     includeMCP: Boolean = true
 ) {
     val logger = LoggerFactory.getLogger("DependencyInjection")
@@ -162,9 +162,9 @@ fun Application.configureDependencies(
         }
 
         // Data Retention Services
-        provide<io.spiralhouse.cycletime.application.services.RetentionConfig> {
+        provide<io.spiralhouse.cycletime.application.config.RetentionConfig> {
             safeCreate("RetentionConfig") {
-                retentionConfig ?: io.spiralhouse.cycletime.application.services.RetentionConfig()
+                retentionConfig ?: io.spiralhouse.cycletime.application.config.RetentionConfig()
             }
         }
 

@@ -195,7 +195,7 @@ private fun Application.buildDatabaseConfig(): DbConfig {
  * Follows same pattern as database config loading.
  * Single responsibility: configuration building only.
  */
-private fun Application.buildRetentionConfig(): io.spiralhouse.cycletime.application.services.RetentionConfig {
+private fun Application.buildRetentionConfig(): io.spiralhouse.cycletime.application.config.RetentionConfig {
     val retentionPeriod = environment.config.propertyOrNull("retention.period")?.getString()
         ?: System.getProperty("RETENTION_PERIOD")
         ?: System.getenv("RETENTION_PERIOD")
@@ -211,7 +211,7 @@ private fun Application.buildRetentionConfig(): io.spiralhouse.cycletime.applica
         ?: System.getenv("RETENTION_PURGE_SCHEDULE_CRON")
         ?: "0 0 2 * * ?"  // Default: 2 AM daily
 
-    return io.spiralhouse.cycletime.application.services.RetentionConfig(
+    return io.spiralhouse.cycletime.application.config.RetentionConfig(
         retentionPeriod = retentionPeriod,
         enableAutoPurge = enableAutoPurge,
         purgeScheduleCron = purgeScheduleCron

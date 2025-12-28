@@ -4,7 +4,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import io.spiralhouse.cycletime.application.services.RetentionConfig
+import io.spiralhouse.cycletime.application.config.RetentionConfig
 
 /**
  * Unit tests for RetentionConfig validation.

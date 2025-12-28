@@ -9,7 +9,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.spiralhouse.cycletime.application.services.DataRetentionService
 import io.spiralhouse.cycletime.application.services.PurgeResult
-import io.spiralhouse.cycletime.application.services.RetentionConfig
+import io.spiralhouse.cycletime.application.config.RetentionConfig
 import io.spiralhouse.cycletime.application.exceptions.InvalidConfirmationException
 import io.spiralhouse.cycletime.application.exceptions.ProjectNotFoundException
 import io.spiralhouse.cycletime.application.exceptions.IssueNotFoundException
@@ -302,7 +302,7 @@ class DataRetentionServiceTest : StringSpec({
 
         // When: Attempt to purge with correct confirmation
         // Then: Should succeed without throwing
-        dataRetentionService.purgeProject(projectId, "CONFIRM_PERMANENT_DELETE")
+        dataRetentionService.purgeProject(projectId, "CONFIRM_PERMANENT_DELETE", "test-user-id")
         mockProjectRepository.purgeCallCount shouldBe 1
     }
 
@@ -313,7 +313,7 @@ class DataRetentionServiceTest : StringSpec({
 
         // When & Then: Attempt with wrong confirmation should fail
         shouldThrow<InvalidConfirmationException> {
-            dataRetentionService.purgeProject(projectId, "wrong confirmation")
+            dataRetentionService.purgeProject(projectId, "wrong confirmation", "test-user-id")
         }
         mockProjectRepository.purgeCallCount shouldBe 0
     }
@@ -325,7 +325,7 @@ class DataRetentionServiceTest : StringSpec({
 
         // When & Then: Empty confirmation should fail
         shouldThrow<InvalidConfirmationException> {
-            dataRetentionService.purgeProject(projectId, "")
+            dataRetentionService.purgeProject(projectId, "", "test-user-id")
         }
         mockProjectRepository.purgeCallCount shouldBe 0
     }
@@ -338,7 +338,8 @@ class DataRetentionServiceTest : StringSpec({
         shouldThrow<ProjectNotFoundException> {
             dataRetentionService.purgeProject(
                 nonExistentId,
-                "CONFIRM_PERMANENT_DELETE"
+                "CONFIRM_PERMANENT_DELETE",
+                "test-user-id"
             )
         }
     }
@@ -350,7 +351,7 @@ class DataRetentionServiceTest : StringSpec({
 
         // When: Attempt to purge with correct confirmation
         // Then: Should succeed without throwing
-        dataRetentionService.purgeIssue(issueId, "CONFIRM_PERMANENT_DELETE")
+        dataRetentionService.purgeIssue(issueId, "CONFIRM_PERMANENT_DELETE", "test-user-id")
         mockIssueRepository.purgeCallCount shouldBe 1
     }
 
@@ -361,7 +362,7 @@ class DataRetentionServiceTest : StringSpec({
 
         // When & Then: Attempt with wrong confirmation should fail
         shouldThrow<InvalidConfirmationException> {
-            dataRetentionService.purgeIssue(issueId, "wrong confirmation")
+            dataRetentionService.purgeIssue(issueId, "wrong confirmation", "test-user-id")
         }
         mockIssueRepository.purgeCallCount shouldBe 0
     }
@@ -374,7 +375,8 @@ class DataRetentionServiceTest : StringSpec({
         shouldThrow<IssueNotFoundException> {
             dataRetentionService.purgeIssue(
                 nonExistentId,
-                "CONFIRM_PERMANENT_DELETE"
+                "CONFIRM_PERMANENT_DELETE",
+                "test-user-id"
             )
         }
     }
@@ -506,7 +508,8 @@ class DataRetentionServiceTest : StringSpec({
         shouldThrow<ProjectNotFoundException> {
             dataRetentionService.purgeProject(
                 activeProject.id,
-                "CONFIRM_PERMANENT_DELETE"
+                "CONFIRM_PERMANENT_DELETE",
+                "test-user-id"
             )
         }
     }
@@ -564,7 +567,8 @@ class DataRetentionServiceTest : StringSpec({
         // When: Manual purge
         dataRetentionService.purgeProject(
             projectId,
-            "CONFIRM_PERMANENT_DELETE"
+            "CONFIRM_PERMANENT_DELETE",
+            "test-user-id"
         )
 
         // Then: Audit log should identify manual purge
