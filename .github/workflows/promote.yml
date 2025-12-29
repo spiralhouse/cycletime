@@ -335,22 +335,27 @@ jobs:
         run: |
           version="${{ github.event.inputs.version }}"
           previous_staging="${{ needs.validate.outputs.current_staging }}"
-          
+
           echo "🏷️ Tagging for staging environment..."
-          
+
           # Tag with staging environment
           docker tag ghcr.io/spiralhouse/cycletime:$version \
                      ghcr.io/spiralhouse/cycletime:staging
-          
+
+          # Tag with pre-release (for staging versions)
+          docker tag ghcr.io/spiralhouse/cycletime:$version \
+                     ghcr.io/spiralhouse/cycletime:pre-release
+
           # Create staging-specific tag with metadata
           staging_tag="$version-staging-$(date +%Y%m%d-%H%M%S)"
           docker tag ghcr.io/spiralhouse/cycletime:$version \
                      ghcr.io/spiralhouse/cycletime:$staging_tag
-          
+
           echo "📤 Pushing staging tags..."
           docker push ghcr.io/spiralhouse/cycletime:staging
+          docker push ghcr.io/spiralhouse/cycletime:pre-release
           docker push ghcr.io/spiralhouse/cycletime:$staging_tag
-          
+
           echo "staging_tag=$staging_tag" >> $GITHUB_ENV
           echo "previous_staging=$previous_staging" >> $GITHUB_ENV
 
@@ -373,6 +378,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Container Tags" >> $GITHUB_STEP_SUMMARY
           echo "- **Staging Tag**: \`ghcr.io/spiralhouse/cycletime:staging\` (mutable)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Pre-Release Tag**: \`ghcr.io/spiralhouse/cycletime:pre-release\` (mutable)" >> $GITHUB_STEP_SUMMARY
           echo "- **Timestamped Tag**: \`ghcr.io/spiralhouse/cycletime:$staging_tag\` (immutable)" >> $GITHUB_STEP_SUMMARY
           echo "- **Version Tag**: \`ghcr.io/spiralhouse/cycletime:$version\` (immutable)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -509,22 +515,27 @@ jobs:
         run: |
           version="${{ github.event.inputs.version }}"
           previous_production="${{ steps.safety_check.outputs.previous_production }}"
-          
+
           echo "🏷️ Tagging for production environment..."
-          
+
           # Tag with production environment
           docker tag ghcr.io/spiralhouse/cycletime:$version \
                      ghcr.io/spiralhouse/cycletime:production
-          
+
+          # Tag with latest (for production versions)
+          docker tag ghcr.io/spiralhouse/cycletime:$version \
+                     ghcr.io/spiralhouse/cycletime:latest
+
           # Create production-specific tag with metadata
           production_tag="$version-production-$(date +%Y%m%d-%H%M%S)"
           docker tag ghcr.io/spiralhouse/cycletime:$version \
                      ghcr.io/spiralhouse/cycletime:$production_tag
-          
+
           echo "📤 Pushing production tags..."
           docker push ghcr.io/spiralhouse/cycletime:production
+          docker push ghcr.io/spiralhouse/cycletime:latest
           docker push ghcr.io/spiralhouse/cycletime:$production_tag
-          
+
           echo "production_tag=$production_tag" >> $GITHUB_ENV
           echo "previous_production=$previous_production" >> $GITHUB_ENV
 
@@ -552,6 +563,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Container Tags" >> $GITHUB_STEP_SUMMARY
           echo "- **Production Tag**: \`ghcr.io/spiralhouse/cycletime:production\` (mutable)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Latest Tag**: \`ghcr.io/spiralhouse/cycletime:latest\` (mutable)" >> $GITHUB_STEP_SUMMARY
           echo "- **Timestamped Tag**: \`ghcr.io/spiralhouse/cycletime:$production_tag\` (immutable)" >> $GITHUB_STEP_SUMMARY
           echo "- **Version Tag**: \`ghcr.io/spiralhouse/cycletime:$version\` (immutable)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

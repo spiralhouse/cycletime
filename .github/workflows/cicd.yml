@@ -1151,8 +1151,6 @@ jobs:
           tags: |
             # Version tags (for all builds)
             type=raw,value=${{ needs.version.outputs.version }}
-            # Latest tag (only for releases)
-            type=raw,value=latest,enable=${{ needs.version.outputs.is_release == 'true' }}
             # Dev environment tag (for main branch builds)
             type=raw,value=dev,enable=true
             # SHA tags for tracking
