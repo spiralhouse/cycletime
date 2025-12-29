@@ -191,6 +191,34 @@ private fun Application.buildDatabaseConfig(): DbConfig {
 }
 
 /**
+ * Build retention configuration from environment variables and application config.
+ * Follows same pattern as database config loading.
+ * Single responsibility: configuration building only.
+ */
+private fun Application.buildRetentionConfig(): io.spiralhouse.cycletime.application.config.RetentionConfig {
+    val retentionPeriod = environment.config.propertyOrNull("retention.period")?.getString()
+        ?: System.getProperty("RETENTION_PERIOD")
+        ?: System.getenv("RETENTION_PERIOD")
+        ?: "P30D"  // Default: 30 days
+
+    val enableAutoPurge = environment.config.propertyOrNull("retention.enableAutoPurge")?.getString()?.toBoolean()
+        ?: System.getProperty("RETENTION_ENABLE_AUTO_PURGE")?.toBoolean()
+        ?: System.getenv("RETENTION_ENABLE_AUTO_PURGE")?.toBoolean()
+        ?: true  // Default: enabled
+
+    val purgeScheduleCron = environment.config.propertyOrNull("retention.purgeScheduleCron")?.getString()
+        ?: System.getProperty("RETENTION_PURGE_SCHEDULE_CRON")
+        ?: System.getenv("RETENTION_PURGE_SCHEDULE_CRON")
+        ?: "0 0 2 * * ?"  // Default: 2 AM daily
+
+    return io.spiralhouse.cycletime.application.config.RetentionConfig(
+        retentionPeriod = retentionPeriod,
+        enableAutoPurge = enableAutoPurge,
+        purgeScheduleCron = purgeScheduleCron
+    )
+}
+
+/**
  * Initialize database connection with timing metrics.
  * Single responsibility: database initialization only.
  */
@@ -480,11 +508,13 @@ private fun Application.configureMCPIntegration(
     // Configure DI with explicit database and provider - clean DI pattern
     val diStartTime = System.currentTimeMillis()
     val mcpEnabled = System.getenv("MCP_ENABLED")?.toBoolean() ?: true
+    val retentionConfig = buildRetentionConfig()
     val diEndTime = try {
         configureDependencies(
             database = database,
             databaseProvider = databaseProvider,
             timeProvider = null, // Use default SystemTimeProvider
+            retentionConfig = retentionConfig,
             includeMCP = mcpEnabled
         )
         val endTime = System.currentTimeMillis()

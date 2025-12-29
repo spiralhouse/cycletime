@@ -8,6 +8,7 @@ import io.spiralhouse.cycletime.domain.services.SystemTimeProvider
 import io.spiralhouse.cycletime.domain.valueobjects.*
 import io.spiralhouse.cycletime.infrastructure.database.IssuesTable
 import io.spiralhouse.cycletime.infrastructure.database.IssueDependenciesTable
+import io.spiralhouse.cycletime.infrastructure.database.IssueLabelsTable
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.*
@@ -649,6 +650,115 @@ class ExposedIssueRepository(
             }
             .orderBy(IssuesTable.createdAt to SortOrder.ASC)
             .map { it.toIssue() }
+    }
+
+    /**
+     * Finds all soft-deleted issues that were deleted before the specified cutoff date.
+     * Used by the data retention service to identify issues eligible for permanent deletion.
+     *
+     * @param cutoffDate Only issues deleted before this timestamp are returned
+     * @return List of issues eligible for permanent deletion
+     */
+    override suspend fun findDeletedBefore(cutoffDate: kotlinx.datetime.Instant): List<Issue> = dbQuery {
+        IssuesTable
+            .selectAll()
+            .where {
+                IssuesTable.deletedAt.isNotNull() and
+                (IssuesTable.deletedAt less cutoffDate)
+            }
+            .map { it.toIssue() }
+    }
+
+    /**
+     * Permanently deletes an issue from the database (hard delete).
+     *
+     * This operation is IRREVERSIBLE. Uses SQL DELETE, not UPDATE.
+     * Caller must ensure child entities are purged first.
+     *
+     * @param id The issue ID to permanently delete
+     */
+    override suspend fun purge(id: IssueId) {
+        dbQuery {
+            // Delete dependencies first (both where this issue blocks others and is blocked by others)
+            IssueDependenciesTable.deleteWhere {
+                (IssueDependenciesTable.blockerId eq id.value) or
+                (IssueDependenciesTable.blockedId eq id.value)
+            }
+
+            // Then hard delete the issue itself
+            IssuesTable.deleteWhere { IssuesTable.id eq id.value }
+        }
+    }
+
+    /**
+     * Permanently deletes all soft-deleted issues that were deleted before the cutoff date.
+     *
+     * Implements cascade logic: deletes all child issues (subtasks) FIRST, then parent issues.
+     * This maintains referential integrity and prevents orphaned records.
+     *
+     * @param cutoffDate Only issues deleted before this timestamp are purged
+     * @return Number of issues permanently deleted
+     */
+    override suspend fun purgeDeletedBefore(cutoffDate: kotlinx.datetime.Instant): Int {
+        return dbQuery {
+            val issues = findDeletedBefore(cutoffDate)
+
+            // Sort by hierarchy depth descending: deepest children first (Subtask depth=2, Story depth=1, Epic depth=0)
+            val sortedIssues = sortByHierarchyDepthDescending(issues)
+
+            sortedIssues.forEach { issue ->
+                purgeIssueAndRelations(issue)
+            }
+
+            logger.info("Purged ${sortedIssues.size} issues deleted before $cutoffDate")
+            sortedIssues.size
+        }
+    }
+
+    /**
+     * Permanently deletes an issue and all its related data (dependencies, labels).
+     *
+     * This is a low-level operation that does NOT check hierarchy constraints.
+     * Caller must ensure children are deleted before parents.
+     *
+     * @param issue The issue to permanently delete
+     */
+    private fun purgeIssueAndRelations(issue: Issue) {
+        // Delete dependencies (both where this issue blocks others and is blocked by others)
+        IssueDependenciesTable.deleteWhere {
+            (IssueDependenciesTable.blockerId eq issue.id.value) or
+            (IssueDependenciesTable.blockedId eq issue.id.value)
+        }
+
+        // Delete labels associated with this issue
+        IssueLabelsTable.deleteWhere { IssueLabelsTable.issueId eq issue.id.value }
+
+        // Delete the issue itself (children already deleted due to sort order)
+        IssuesTable.deleteWhere { IssuesTable.id eq issue.id.value }
+    }
+
+    /**
+     * Sorts issues by hierarchy depth in descending order (deepest children first).
+     *
+     * This ensures children are processed before parents, maintaining referential integrity
+     * during cascade delete operations.
+     *
+     * @param issues List of issues to sort
+     * @return Issues sorted by depth descending (deepest first)
+     */
+    private fun sortByHierarchyDepthDescending(issues: List<Issue>): List<Issue> {
+        val issueMap = issues.associateBy { it.id }
+
+        fun calculateDepth(issue: Issue): Int {
+            return if (issue.parentId == null) 0
+            else {
+                val parent = issueMap[issue.parentId]
+                if (parent != null) 1 + calculateDepth(parent)
+                else 0 // Parent not in deletion set, treat as root
+            }
+        }
+
+        return issues.sortedByDescending { calculateDepth(it) }
     }
 
     // ================== Data Classes ==================

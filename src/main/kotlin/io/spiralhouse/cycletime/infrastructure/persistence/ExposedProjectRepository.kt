@@ -447,4 +447,75 @@ class ExposedProjectRepository(
         return checkExists(ProjectsTable) { ProjectsTable.id eq id.value }
     }
 
+    /**
+     * Finds all soft-deleted projects that were deleted before the specified cutoff date.
+     * Used by the data retention service to identify projects eligible for permanent deletion.
+     *
+     * @param cutoffDate Only projects deleted before this timestamp are returned
+     * @return List of projects eligible for permanent deletion
+     */
+    override suspend fun findDeletedBefore(cutoffDate: kotlinx.datetime.Instant): List<Project> = dbQuery {
+        val projectRows = ProjectsTable
+            .selectAll()
+            .where {
+                ProjectsTable.deletedAt.isNotNull() and
+                (ProjectsTable.deletedAt less cutoffDate)
+            }
+            .toList()
+
+        // Batch load all issues for these projects
+        val projectIds = projectRows.map { it[ProjectsTable.id].value }
+        val issueMap = loadProjectIssueIdsBatch(projectIds)
+
+        // Convert rows to projects with their issues
+        projectRows.map { row ->
+            val projectId = row[ProjectsTable.id].value
+            val issues = issueMap[projectId] ?: emptyList()
+            row.toProjectWithIssues(issues)
+        }
+    }
+
+    /**
+     * Permanently deletes a project from the database (hard delete).
+     *
+     * This operation is IRREVERSIBLE. Uses SQL DELETE, not UPDATE.
+     * Caller must ensure child entities are purged first.
+     *
+     * @param id The project ID to permanently delete
+     */
+    override suspend fun purge(id: ProjectId) {
+        dbQuery {
+            // Hard delete: SQL DELETE (not UPDATE)
+            ProjectsTable.deleteWhere { ProjectsTable.id eq id.value }
+        }
+    }
+
+    /**
+     * Permanently deletes all soft-deleted projects that were deleted before the cutoff date.
+     *
+     * Implements cascade logic: deletes all child issues FIRST, then deletes projects.
+     * This maintains referential integrity and prevents orphaned records.
+     *
+     * @param cutoffDate Only projects deleted before this timestamp are purged
+     * @return Number of projects permanently deleted
+     */
+    override suspend fun purgeDeletedBefore(cutoffDate: kotlinx.datetime.Instant): Int {
+        return dbQuery {
+            val projects = findDeletedBefore(cutoffDate)
+
+            var totalIssuesDeleted = 0
+            projects.forEach { project ->
+                // CASCADE: Delete all issues in this project FIRST (children before parents)
+                val issueCount = IssuesTable.deleteWhere { IssuesTable.projectId eq project.id.value }
+                totalIssuesDeleted += issueCount
+
+                // Then delete the project itself
+                ProjectsTable.deleteWhere { ProjectsTable.id eq project.id.value }
+            }
+
+            logger.info("Purged ${projects.size} projects ($totalIssuesDeleted cascaded issues) deleted before $cutoffDate")
+            projects.size
+        }
+    }
+
 }

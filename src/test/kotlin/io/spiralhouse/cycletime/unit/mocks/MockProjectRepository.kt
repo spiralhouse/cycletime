@@ -68,6 +68,7 @@ class MockProjectRepository(
     var findCallCount: Int = 0
     var softDeleteCallCount: Int = 0
     var restoreCallCount: Int = 0
+    var purgeCallCount: Int = 0
     
     // ================================================================================
     // Repository Interface Implementation
@@ -147,6 +148,37 @@ class MockProjectRepository(
         return projects[id] ?: deletedProjects[id]
     }
 
+    override suspend fun findDeletedBefore(cutoffDate: kotlinx.datetime.Instant): List<Project> {
+        findCallCount++
+        findException?.let { throw it }
+        // Filter by deletedAt < cutoffDate to match real repository behavior
+        return deletedProjects.values
+            .filter { project ->
+                project.deletedAt != null && project.deletedAt!! < cutoffDate
+            }
+            .toList()
+    }
+
+    override suspend fun purge(id: ProjectId) {
+        purgeCallCount++
+        // Hard delete: remove from both active and deleted maps
+        projects.remove(id)
+        deletedProjects.remove(id)
+    }
+
+    override suspend fun purgeDeletedBefore(cutoffDate: kotlinx.datetime.Instant): Int {
+        purgeCallCount++
+        // Get list of deleted projects to purge (calls findDeletedBefore for exception propagation)
+        val toPurge = findDeletedBefore(cutoffDate)
+
+        // Remove them from the deleted map
+        toPurge.forEach { project ->
+            deletedProjects.remove(project.id)
+        }
+
+        return toPurge.size
+    }
+
     // ================================================================================
     // Test Utilities
     // ================================================================================
@@ -164,6 +196,7 @@ class MockProjectRepository(
         findCallCount = 0
         softDeleteCallCount = 0
         restoreCallCount = 0
+        purgeCallCount = 0
     }
     
     /**

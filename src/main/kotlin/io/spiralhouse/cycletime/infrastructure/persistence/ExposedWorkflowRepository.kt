@@ -348,4 +348,58 @@ class ExposedWorkflowRepository(
         }
     }
 
+    /**
+     * Finds all soft-deleted workflows that were deleted before the specified cutoff date.
+     * Used by the data retention service to identify workflows eligible for permanent deletion.
+     *
+     * @param cutoffDate Only workflows deleted before this timestamp are returned
+     * @return List of workflows eligible for permanent deletion
+     */
+    override suspend fun findDeletedBefore(cutoffDate: kotlinx.datetime.Instant): List<Workflow> = dbQuery {
+        WorkflowsTable
+            .selectAll()
+            .where {
+                WorkflowsTable.deletedAt.isNotNull() and
+                (WorkflowsTable.deletedAt less cutoffDate)
+            }
+            .map { it.toWorkflow() }
+    }
+
+    /**
+     * Permanently deletes a workflow from the database (hard delete).
+     *
+     * This operation is IRREVERSIBLE. Uses SQL DELETE, not UPDATE.
+     * Workflows have no child entities, so no cascade considerations are needed.
+     *
+     * @param id The workflow ID to permanently delete
+     */
+    override suspend fun purge(id: WorkflowId) {
+        dbQuery {
+            // Hard delete: SQL DELETE (not UPDATE)
+            // No cascade needed - workflows have no child entities
+            WorkflowsTable.deleteWhere { WorkflowsTable.id eq id.value }
+        }
+    }
+
+    /**
+     * Permanently deletes all soft-deleted workflows that were deleted before the cutoff date.
+     *
+     * Workflows have no child entities, so no cascade logic is needed.
+     *
+     * @param cutoffDate Only workflows deleted before this timestamp are purged
+     * @return Number of workflows permanently deleted
+     */
+    override suspend fun purgeDeletedBefore(cutoffDate: kotlinx.datetime.Instant): Int {
+        return dbQuery {
+            val workflows = findDeletedBefore(cutoffDate)
+
+            workflows.forEach { workflow ->
+                // No cascade needed - workflows have no child entities
+                WorkflowsTable.deleteWhere { WorkflowsTable.id eq workflow.id.value }
+            }
+
+            workflows.size
+        }
+    }
+
 }
