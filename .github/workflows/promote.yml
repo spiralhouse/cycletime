@@ -93,33 +93,59 @@ jobs:
           # Get current staging and production tags
           echo "🏷️ Checking current environment tags..."
           
-          # Current staging version
-          if staging_manifest=$(docker manifest inspect ghcr.io/spiralhouse/cycletime:staging 2>/dev/null); then
-            staging_digest=$(echo "$staging_manifest" | jq -r '.config.digest // .mediaType')
-            # Try to find version tag with same digest
-            current_staging=$(docker manifest inspect ghcr.io/spiralhouse/cycletime:$version 2>/dev/null | jq -r '.config.digest // .mediaType' | head -1)
-            if [[ "$staging_digest" == "$current_staging" ]]; then
+          # Current staging version - compare manifest digests using buildx
+          # The previous code extracted .config.digest which is the config blob digest,
+          # not the manifest digest that Docker uses to identify images
+          if docker manifest inspect ghcr.io/spiralhouse/cycletime:staging >/dev/null 2>&1; then
+            # Use buildx imagetools to get the raw manifest and compute its SHA256 digest
+            # This matches the manifest digest shown during docker push (sha256:...)
+            staging_digest=$(docker buildx imagetools inspect ghcr.io/spiralhouse/cycletime:staging --raw 2>/dev/null | sha256sum | cut -d' ' -f1)
+            version_digest=$(docker buildx imagetools inspect ghcr.io/spiralhouse/cycletime:$version --raw 2>/dev/null | sha256sum | cut -d' ' -f1)
+
+            # Empty hash indicates failed retrieval
+            empty_hash="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+            if [[ -n "$staging_digest" && "$staging_digest" != "$empty_hash" && \
+                  -n "$version_digest" && "$version_digest" != "$empty_hash" && \
+                  "$staging_digest" == "$version_digest" ]]; then
               current_staging="$version"
+              echo "✅ Staging tag points to version $version (digest: sha256:${staging_digest:0:12}...)"
             else
               current_staging="unknown"
+              echo "⚠️ Staging points to different version or digest retrieval failed"
+              echo "  staging digest: ${staging_digest:-<empty>}"
+              echo "  version digest: ${version_digest:-<empty>}"
             fi
           else
             current_staging="none"
+            echo "📋 No staging tag found"
           fi
           echo "current_staging=$current_staging" >> $GITHUB_OUTPUT
           echo "📋 Current staging: $current_staging"
-          
-          # Current production version
-          if production_manifest=$(docker manifest inspect ghcr.io/spiralhouse/cycletime:production 2>/dev/null); then
-            production_digest=$(echo "$production_manifest" | jq -r '.config.digest // .mediaType')
-            current_production=$(docker manifest inspect ghcr.io/spiralhouse/cycletime:$version 2>/dev/null | jq -r '.config.digest // .mediaType' | head -1)
-            if [[ "$production_digest" == "$current_production" ]]; then
+
+          # Current production version - compare manifest digests using buildx
+          if docker manifest inspect ghcr.io/spiralhouse/cycletime:production >/dev/null 2>&1; then
+            # Use buildx imagetools to get the raw manifest and compute its SHA256 digest
+            production_digest=$(docker buildx imagetools inspect ghcr.io/spiralhouse/cycletime:production --raw 2>/dev/null | sha256sum | cut -d' ' -f1)
+            version_digest_prod=$(docker buildx imagetools inspect ghcr.io/spiralhouse/cycletime:$version --raw 2>/dev/null | sha256sum | cut -d' ' -f1)
+
+            # Empty hash indicates failed retrieval
+            empty_hash="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+            if [[ -n "$production_digest" && "$production_digest" != "$empty_hash" && \
+                  -n "$version_digest_prod" && "$version_digest_prod" != "$empty_hash" && \
+                  "$production_digest" == "$version_digest_prod" ]]; then
               current_production="$version"
+              echo "✅ Production tag points to version $version (digest: sha256:${production_digest:0:12}...)"
             else
               current_production="unknown"
+              echo "⚠️ Production points to different version or digest retrieval failed"
+              echo "  production digest: ${production_digest:-<empty>}"
+              echo "  version digest: ${version_digest_prod:-<empty>}"
             fi
           else
             current_production="none"
+            echo "📋 No production tag found"
           fi
           echo "current_production=$current_production" >> $GITHUB_OUTPUT
           echo "📋 Current production: $current_production"
