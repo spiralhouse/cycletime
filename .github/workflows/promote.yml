@@ -346,42 +346,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull and verify version image
+      - name: Verify version image exists
         run: |
           version="${{ github.event.inputs.version }}"
-          echo "📦 Pulling version image: ghcr.io/spiralhouse/cycletime:$version"
-          docker pull ghcr.io/spiralhouse/cycletime:$version
-          
-          # Verify image integrity
-          echo "🔍 Verifying image integrity..."
-          docker inspect ghcr.io/spiralhouse/cycletime:$version > /dev/null
+          echo "🔍 Verifying version image exists: ghcr.io/spiralhouse/cycletime:$version"
+          docker manifest inspect ghcr.io/spiralhouse/cycletime:$version > /dev/null
           echo "✅ Image verification successful"
 
-      - name: Add staging-specific metadata and tag
+      - name: Promote to staging with registry-side tagging
         run: |
           version="${{ github.event.inputs.version }}"
           previous_staging="${{ needs.validate.outputs.current_staging }}"
 
-          echo "🏷️ Tagging for staging environment..."
-
-          # Tag with staging environment
-          docker tag ghcr.io/spiralhouse/cycletime:$version \
-                     ghcr.io/spiralhouse/cycletime:staging
-
-          # Tag with pre-release (for staging versions)
-          docker tag ghcr.io/spiralhouse/cycletime:$version \
-                     ghcr.io/spiralhouse/cycletime:pre-release
+          echo "🏷️ Promoting version $version to staging environment..."
 
           # Create staging-specific tag with metadata
           staging_tag="$version-staging-$(date +%Y%m%d-%H%M%S)"
-          docker tag ghcr.io/spiralhouse/cycletime:$version \
-                     ghcr.io/spiralhouse/cycletime:$staging_tag
 
-          echo "📤 Pushing staging tags..."
-          docker push ghcr.io/spiralhouse/cycletime:staging
-          docker push ghcr.io/spiralhouse/cycletime:pre-release
-          docker push ghcr.io/spiralhouse/cycletime:$staging_tag
+          echo "📤 Creating staging tags using buildx imagetools..."
+          # Use buildx imagetools to preserve manifest digest
+          docker buildx imagetools create \
+            --tag ghcr.io/spiralhouse/cycletime:staging \
+            --tag ghcr.io/spiralhouse/cycletime:pre-release \
+            --tag ghcr.io/spiralhouse/cycletime:$staging_tag \
+            ghcr.io/spiralhouse/cycletime:$version
 
+          echo "✅ Staging promotion complete"
           echo "staging_tag=$staging_tag" >> $GITHUB_ENV
           echo "previous_staging=$previous_staging" >> $GITHUB_ENV
 
@@ -492,27 +482,26 @@ jobs:
           echo "- Authorization time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-      - name: Pull and verify version image
+      - name: Verify version and staging consistency
         run: |
           version="${{ github.event.inputs.version }}"
-          echo "📦 Pulling version image: ghcr.io/spiralhouse/cycletime:$version"
-          docker pull ghcr.io/spiralhouse/cycletime:$version
-          
-          # Enhanced integrity verification for production
-          echo "🔍 Enhanced production image verification..."
-          docker inspect ghcr.io/spiralhouse/cycletime:$version > /dev/null
-          
-          # Verify image digest matches staging
+          echo "🔍 Verifying version image exists: ghcr.io/spiralhouse/cycletime:$version"
+          docker manifest inspect ghcr.io/spiralhouse/cycletime:$version > /dev/null
+
+          # Verify image digest matches staging using buildx
           echo "🔍 Verifying image digest consistency with staging..."
-          version_digest=$(docker inspect ghcr.io/spiralhouse/cycletime:$version --format='{{.Id}}')
-          staging_digest=$(docker inspect ghcr.io/spiralhouse/cycletime:staging --format='{{.Id}}')
-          
+          version_digest=$(docker buildx imagetools inspect ghcr.io/spiralhouse/cycletime:$version --raw 2>/dev/null | sha256sum | cut -d' ' -f1)
+          staging_digest=$(docker buildx imagetools inspect ghcr.io/spiralhouse/cycletime:staging --raw 2>/dev/null | sha256sum | cut -d' ' -f1)
+
           if [[ "$version_digest" != "$staging_digest" ]]; then
             echo "❌ Version digest mismatch with staging - potential tampering detected"
+            echo "  version digest: $version_digest"
+            echo "  staging digest: $staging_digest"
             exit 1
           fi
-          
+
           echo "✅ Image verification and digest validation successful"
+          echo "  Manifest digest: sha256:${version_digest:0:12}..."
 
       - name: Create production audit log
         id: audit_log
@@ -537,31 +526,25 @@ jobs:
           
           echo "✅ Production audit log created"
 
-      - name: Tag for production environment
+      - name: Promote to production with registry-side tagging
         run: |
           version="${{ github.event.inputs.version }}"
           previous_production="${{ steps.safety_check.outputs.previous_production }}"
 
-          echo "🏷️ Tagging for production environment..."
-
-          # Tag with production environment
-          docker tag ghcr.io/spiralhouse/cycletime:$version \
-                     ghcr.io/spiralhouse/cycletime:production
-
-          # Tag with latest (for production versions)
-          docker tag ghcr.io/spiralhouse/cycletime:$version \
-                     ghcr.io/spiralhouse/cycletime:latest
+          echo "🏷️ Promoting version $version to production environment..."
 
           # Create production-specific tag with metadata
           production_tag="$version-production-$(date +%Y%m%d-%H%M%S)"
-          docker tag ghcr.io/spiralhouse/cycletime:$version \
-                     ghcr.io/spiralhouse/cycletime:$production_tag
 
-          echo "📤 Pushing production tags..."
-          docker push ghcr.io/spiralhouse/cycletime:production
-          docker push ghcr.io/spiralhouse/cycletime:latest
-          docker push ghcr.io/spiralhouse/cycletime:$production_tag
+          echo "📤 Creating production tags using buildx imagetools..."
+          # Use buildx imagetools to preserve manifest digest
+          docker buildx imagetools create \
+            --tag ghcr.io/spiralhouse/cycletime:production \
+            --tag ghcr.io/spiralhouse/cycletime:latest \
+            --tag ghcr.io/spiralhouse/cycletime:$production_tag \
+            ghcr.io/spiralhouse/cycletime:$version
 
+          echo "✅ Production promotion complete"
           echo "production_tag=$production_tag" >> $GITHUB_ENV
           echo "previous_production=$previous_production" >> $GITHUB_ENV
 
