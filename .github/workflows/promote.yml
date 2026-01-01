@@ -557,8 +557,13 @@ jobs:
           promotion_time="${{ steps.safety_check.outputs.promotion_timestamp }}"
           approver="${{ steps.safety_check.outputs.approver }}"
           justification="${{ github.event.inputs.promotion_justification }}"
-          audit_record="${{ steps.audit_log.outputs.audit_record }}"
-          
+
+          # Use heredoc for audit_record to avoid shell quoting issues
+          audit_record=$(cat <<'AUDIT_EOF'
+          ${{ steps.audit_log.outputs.audit_record }}
+          AUDIT_EOF
+          )
+
           echo "## 🎉 Production Promotion Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Promotion Details" >> $GITHUB_STEP_SUMMARY
