@@ -7,6 +7,7 @@ import io.ktor.server.response.*
 import io.ktor.server.sse.*
 import io.ktor.sse.*
 import io.modelcontextprotocol.kotlin.sdk.server.Server
+import io.spiralhouse.cycletime.mcp.resources.exceptions.ResourceNotFoundException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.*
@@ -54,6 +55,7 @@ class StreamableHttpHandler(
         private const val JSONRPC_VERSION = "2.0"
         private const val METHOD_TOOLS_LIST = "tools/list"
         private const val METHOD_RESOURCES_LIST = "resources/list"
+        private const val METHOD_RESOURCES_READ = "resources/read"
         private const val METHOD_INITIALIZE = "initialize"
         private const val METHOD_TOOLS_CALL = "tools/call"
         private const val PROTOCOL_VERSION_CURRENT = "2025-06-18"
@@ -189,6 +191,73 @@ class StreamableHttpHandler(
         return buildSuccessResponse(id, buildJsonObject {
             put("resources", JsonArray(cachedResources))
         })
+    }
+
+    /**
+     * Build resources/read response by reading resource content from providers.
+     *
+     * Implements MCP resources/read endpoint following the pattern from SDKResourceAdapter.
+     * Extracts URI parameter, finds matching provider, and returns content in MCP format.
+     *
+     * @param id JSON-RPC request ID
+     * @param request Full JSON-RPC request object
+     * @return JSON-RPC response with resource contents or error
+     */
+    private suspend fun buildResourcesReadResponse(id: JsonElement?, request: JsonObject): JsonObject {
+        val params = request["params"]?.jsonObject
+        val uri = params?.get("uri")?.jsonPrimitive?.content
+
+        if (uri == null) {
+            logger.warn("resources/read request missing 'uri' parameter")
+            return buildErrorResponse(id, ERROR_CODE_INVALID_PARAMS, "Invalid params: uri is required")
+        }
+
+        logger.debug("Reading resource: $uri")
+
+        return try {
+            val content = readResourceFromProviders(uri)
+            buildSuccessResponse(id, buildJsonObject {
+                put("contents", buildJsonArray {
+                    add(buildJsonObject {
+                        put("uri", uri)
+                        put("mimeType", "application/json")
+                        put("text", content)
+                    })
+                })
+            })
+        } catch (e: ResourceNotFoundException) {
+            logger.warn("Resource not found: $uri")
+            buildErrorResponse(id, ERROR_CODE_SERVER_ERROR, "Resource not found: $uri")
+        } catch (e: Exception) {
+            logger.error("Failed to read resource: $uri", e)
+            buildErrorResponse(id, ERROR_CODE_SERVER_ERROR, "Failed to read resource: ${e.message}")
+        }
+    }
+
+    /**
+     * Read resource content from matching provider.
+     *
+     * Iterates through registered resource providers to find one that can handle the URI.
+     * Providers determine URI matching via their getResource() method.
+     *
+     * @param uri Resource URI to read (e.g., "cycletime://projects", "cycletime://projects/{id}")
+     * @return Resource content as JSON string
+     * @throws ResourceNotFoundException if no provider handles the URI
+     */
+    private suspend fun readResourceFromProviders(uri: String): String {
+        resourceProviders.forEach { provider ->
+            try {
+                val resource = provider.getResource(uri)
+                if (resource != null) {
+                    logger.debug("Reading resource $uri from provider: ${provider.name}")
+                    return provider.readResource(uri)
+                }
+            } catch (e: IllegalArgumentException) {
+                // Provider doesn't support this URI pattern, try next
+                logger.trace("Provider ${provider.name} cannot read $uri: ${e.message}")
+            }
+        }
+        throw ResourceNotFoundException(uri)
     }
 
     /**
@@ -649,6 +718,7 @@ class StreamableHttpHandler(
         return when (method) {
             METHOD_TOOLS_LIST -> buildToolsListResponse(id)
             METHOD_RESOURCES_LIST -> buildResourcesListResponse(id)
+            METHOD_RESOURCES_READ -> buildResourcesReadResponse(id, requestObj)
             METHOD_INITIALIZE -> buildInitializeResponse(id)
             METHOD_TOOLS_CALL -> buildToolsCallResponse(id, requestObj)
             else -> buildErrorResponse(id, ERROR_CODE_METHOD_NOT_FOUND, "Method not found: $method")

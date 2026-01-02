@@ -94,13 +94,13 @@ fun clearTestSession() {
  * Reference: https://github.com/modelcontextprotocol/kotlin-sdk
  *
  * @param request JSON-RPC request as string (sessionId in _meta field)
- * @param endpoint MCP endpoint path (default: "/" - SDK may register at root)
+ * @param endpoint MCP endpoint path (default: "/mcp" - Streamable HTTP transport path)
  * @param sessionId Optional explicit session ID for query parameter
  * @return HTTP response
  */
 suspend fun HttpClient.sendMCPRequest(
     request: String,
-    endpoint: String = "/",  // Testing with root path
+    endpoint: String = "/mcp",  // Streamable HTTP transport at /mcp (SPI-763)
     sessionId: String? = getCurrentSessionId()
 ): HttpResponse {
     return post(endpoint) {
