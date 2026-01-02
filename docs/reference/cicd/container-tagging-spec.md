@@ -2,11 +2,11 @@
 title: "Container Tagging Specification"
 type: reference
 domain: [cicd, containers, docker]
-description: "Container tagging strategy, tag types, and registry specifications"
+description: "Container tagging strategy, tag types, manifest preservation, and registry specifications"
 dependencies: []
-related: [../../../concepts/cicd/cicd-pipeline-concept.md, environment-specifications.md]
-keywords: [containers, docker, tagging, registry, reference]
-last_updated: 2025-10-19
+related: [../../../concepts/cicd/cicd-pipeline-concept.md, environment-specifications.md, ../../../guides/cicd/troubleshooting-pipeline-failures.md]
+keywords: [containers, docker, tagging, registry, reference, manifest, digest, buildx, imagetools]
+last_updated: 2026-01-02
 ---
 
 
@@ -189,6 +189,114 @@ docker pull ghcr.io/spiralhouse/cycletime:0.2.0-production-20241018-120000
 # Track specific commit (immutable)
 docker pull ghcr.io/spiralhouse/cycletime:sha-abc123d
 ```
+
+## Manifest Digest Preservation
+
+### Why Registry-Side Tagging?
+
+Container manifest digests (SHA256 hashes) are critical for:
+- **Security validation**: Ensuring promoted images are identical to verified versions
+- **Integrity verification**: Detecting tampering or corruption during promotion
+- **Audit compliance**: Providing cryptographic proof of image provenance
+- **Rollback safety**: Guaranteeing rollback images match original deployments
+
+The promotion workflow validates that staging/production tags point to the exact same manifest as the version tag before allowing deployment.
+
+### The Problem: Digest Reconstruction
+
+The traditional `docker pull/tag/push` workflow **reconstructs manifests locally**, creating different digests even with identical image layers:
+
+```bash
+# BROKEN: This approach creates different digests
+docker pull ghcr.io/spiralhouse/cycletime:0.6.2
+docker tag ghcr.io/spiralhouse/cycletime:0.6.2 ghcr.io/spiralhouse/cycletime:staging
+docker push ghcr.io/spiralhouse/cycletime:staging
+```
+
+**Why this fails**:
+1. Docker downloads the manifest and layers from the registry
+2. Tagging creates a new manifest locally with potentially different metadata ordering
+3. Pushing uploads the new manifest with a new SHA256 digest
+4. Validation fails because `staging` digest differs from `0.6.2` digest
+
+**Real-world impact**: v0.6.1 and v0.6.2 production promotions were blocked until this was discovered and fixed.
+
+### The Solution: buildx imagetools
+
+`docker buildx imagetools create` performs **registry-side tag operations** without pulling image data:
+
+```bash
+# CORRECT: Preserves manifest digest
+docker buildx imagetools create \
+  --tag ghcr.io/spiralhouse/cycletime:staging \
+  --tag ghcr.io/spiralhouse/cycletime:pre-release \
+  --tag ghcr.io/spiralhouse/cycletime:0.6.2-staging-$(date +%Y%m%d-%H%M%S) \
+  ghcr.io/spiralhouse/cycletime:0.6.2
+```
+
+**Benefits**:
+- Original manifest digest preserved (all tags point to same SHA256)
+- No image data transfer (faster promotions)
+- Registry-side operation (no local storage required)
+- Multiple tags created atomically
+
+### Implementation in Promotion Workflow
+
+The promotion workflow (`.github/workflows/promote.yml`) uses buildx imagetools for both staging and production promotions:
+
+**Staging Promotion** (lines 356-376):
+```yaml
+- name: Promote to staging with registry-side tagging
+  run: |
+    docker buildx imagetools create \
+      --tag ghcr.io/spiralhouse/cycletime:staging \
+      --tag ghcr.io/spiralhouse/cycletime:pre-release \
+      --tag ghcr.io/spiralhouse/cycletime:$staging_tag \
+      ghcr.io/spiralhouse/cycletime:$version
+```
+
+**Production Promotion** (lines 529-545):
+```yaml
+- name: Promote to production with registry-side tagging
+  run: |
+    docker buildx imagetools create \
+      --tag ghcr.io/spiralhouse/cycletime:production \
+      --tag ghcr.io/spiralhouse/cycletime:latest \
+      --tag ghcr.io/spiralhouse/cycletime:$production_tag \
+      ghcr.io/spiralhouse/cycletime:$version
+```
+
+**Validation Logic** (lines 96-151):
+```bash
+# Get manifest digest using buildx imagetools
+version_digest=$(docker buildx imagetools inspect ghcr.io/spiralhouse/cycletime:$version --raw \
+  | sha256sum | cut -d' ' -f1)
+staging_digest=$(docker buildx imagetools inspect ghcr.io/spiralhouse/cycletime:staging --raw \
+  | sha256sum | cut -d' ' -f1)
+
+# Verify digests match before promotion
+if [[ "$version_digest" != "$staging_digest" ]]; then
+  echo "Version digest mismatch with staging - potential tampering detected"
+  exit 1
+fi
+```
+
+### Design Guidelines
+
+**Do**:
+- Use `docker buildx imagetools create` for all registry retagging
+- Validate manifest digests before and after promotion
+- Document the requirement in workflow comments
+- Use `--raw` flag with `sha256sum` for digest comparison
+
+**Do Not**:
+- Use `docker pull/tag/push` for promotion workflows requiring digest validation
+- Assume image identity based on tag names alone
+- Skip digest validation in production promotion paths
+
+### Troubleshooting
+
+For digest mismatch issues during promotion, see [Troubleshooting: Promotion Digest Mismatch](../../guides/cicd/troubleshooting-pipeline-failures.md#issue-5-promotion-digest-mismatch-spi-1297).
 
 ## Caching Strategy
 
