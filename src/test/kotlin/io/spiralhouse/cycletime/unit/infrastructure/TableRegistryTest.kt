@@ -17,8 +17,8 @@ import io.spiralhouse.cycletime.infrastructure.database.*
 class TableRegistryTest : StringSpec({
 
     "should contain all defined tables" {
-        // Verify all expected tables are registered
-        TableRegistry.ALL_TABLES shouldHaveSize 6
+        // Verify all expected tables are registered (added AuditLogsTable in SPI-880)
+        TableRegistry.ALL_TABLES shouldHaveSize 7
 
         // Verify each table is present
         TableRegistry.ALL_TABLES shouldContain ProjectsTable
@@ -27,6 +27,7 @@ class TableRegistryTest : StringSpec({
         TableRegistry.ALL_TABLES shouldContain IssueLabelsTable
         TableRegistry.ALL_TABLES shouldContain SessionStatesTable
         TableRegistry.ALL_TABLES shouldContain WorkflowsTable
+        TableRegistry.ALL_TABLES shouldContain AuditLogsTable
     }
 
     "should maintain correct dependency order" {

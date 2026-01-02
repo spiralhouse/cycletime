@@ -2,6 +2,7 @@ package io.spiralhouse.cycletime.domain.repositories
 
 import io.spiralhouse.cycletime.domain.entities.Workflow
 import io.spiralhouse.cycletime.domain.valueobjects.WorkflowId
+import kotlinx.datetime.Instant
 
 /**
  * Repository interface for Workflow aggregate persistence.
@@ -116,4 +117,36 @@ interface WorkflowRepository {
      * @return The workflow if found (including deleted), null otherwise
      */
     suspend fun findIncludingDeleted(id: WorkflowId): Workflow?
+
+    /**
+     * Finds all soft-deleted workflows that were deleted before the specified cutoff date.
+     *
+     * Used by the data retention service to identify workflows eligible for permanent deletion
+     * after the retention period expires.
+     *
+     * @param cutoffDate Only workflows deleted before this timestamp are returned
+     * @return List of workflows eligible for permanent deletion
+     */
+    suspend fun findDeletedBefore(cutoffDate: Instant): List<Workflow>
+
+    /**
+     * Permanently deletes a workflow from the database (hard delete).
+     *
+     * This operation is IRREVERSIBLE and should only be called by the data retention service
+     * after the retention period has expired. Workflows have no child entities, so no
+     * cascade considerations are needed.
+     *
+     * @param id The workflow ID to permanently delete
+     */
+    suspend fun purge(id: WorkflowId)
+
+    /**
+     * Permanently deletes all soft-deleted workflows that were deleted before the cutoff date.
+     *
+     * This is an atomic batch operation used by the data retention service.
+     *
+     * @param cutoffDate Only workflows deleted before this timestamp are purged
+     * @return Number of workflows permanently deleted
+     */
+    suspend fun purgeDeletedBefore(cutoffDate: Instant): Int
 }

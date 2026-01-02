@@ -3,6 +3,7 @@ package io.spiralhouse.cycletime.domain.repositories
 import io.spiralhouse.cycletime.domain.entities.Project
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectStatus
+import kotlinx.datetime.Instant
 
 /**
  * Repository interface for Project aggregate persistence.
@@ -120,4 +121,37 @@ interface ProjectRepository {
     suspend fun findIncludingDeleted(id: ProjectId): Project? {
         return findById(id)  // Stub: Delegate to existing findById
     }
+
+    /**
+     * Finds all soft-deleted projects that were deleted before the specified cutoff date.
+     *
+     * Used by the data retention service to identify projects eligible for permanent deletion
+     * after the retention period expires.
+     *
+     * @param cutoffDate Only projects deleted before this timestamp are returned
+     * @return List of projects eligible for permanent deletion
+     */
+    suspend fun findDeletedBefore(cutoffDate: Instant): List<Project>
+
+    /**
+     * Permanently deletes a project from the database (hard delete).
+     *
+     * This operation is IRREVERSIBLE and should only be called by the data retention service
+     * after the retention period has expired. No cascade is performed - caller must ensure
+     * child entities are purged first.
+     *
+     * @param id The project ID to permanently delete
+     */
+    suspend fun purge(id: ProjectId)
+
+    /**
+     * Permanently deletes all soft-deleted projects that were deleted before the cutoff date.
+     *
+     * This is an atomic batch operation used by the data retention service. All child issues
+     * must be purged first to maintain referential integrity.
+     *
+     * @param cutoffDate Only projects deleted before this timestamp are purged
+     * @return Number of projects permanently deleted
+     */
+    suspend fun purgeDeletedBefore(cutoffDate: Instant): Int
 }
