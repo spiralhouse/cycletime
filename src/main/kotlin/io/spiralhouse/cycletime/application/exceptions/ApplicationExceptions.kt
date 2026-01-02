@@ -66,10 +66,16 @@ class CircularDependencyException(issueId: IssueId, dependencyId: IssueId) : App
  * Exception thrown when an invalid status transition is attempted.
  */
 class InvalidStatusTransitionException(
-    fromStatus: IssueStatus, 
-    toStatus: IssueStatus, 
+    fromStatus: IssueStatus,
+    toStatus: IssueStatus,
     cause: Throwable? = null
 ) : ApplicationException(
     "Cannot transition from ${fromStatus.name} to ${toStatus.name}",
     cause
 )
+
+/**
+ * Exception thrown when an invalid confirmation string is provided for a manual purge operation.
+ * Manual purge operations require explicit confirmation to prevent accidental permanent deletion.
+ */
+class InvalidConfirmationException(message: String) : ApplicationException(message)

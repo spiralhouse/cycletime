@@ -32,14 +32,19 @@ All pushes to the main branch create the following tags:
 
 1. **Version Tag**: `X.Y.Z` (semantic version from Git.SemVersioning)
 2. **Dev Tag**: `dev` (mutable tag for development environment)
-3. **Latest Tag**: `latest` (only for release versions without metadata)
-4. **SHA Tag**: `sha-<commit-hash>` (immutable for tracking)
+3. **SHA Tag**: `sha-<commit-hash>` (immutable for tracking)
+
+Additional tags are created during environment promotion:
+
+4. **Pre-Release Tag**: `pre-release` (added during staging promotion)
+5. **Latest Tag**: `latest` (added during production promotion only)
 
 ### Tag Types
 
 #### Development Tag (`dev`)
 - **Purpose**: Continuous deployment to development environment
 - **Mutability**: Overwrites on each main branch build
+- **Created**: Automatically on every main branch build
 - **Usage**: External CD system watches for changes
 
 ```bash
@@ -49,15 +54,27 @@ docker pull ghcr.io/spiralhouse/cycletime:dev
 #### Version Tags
 - **Purpose**: Specific version tracking
 - **Format**: Semantic versioning (e.g., `1.2.3`, `0.3.0+sha.abc123`)
+- **Created**: Automatically on every main branch build
 - **Usage**: Staging deployments, rollbacks
 
 ```bash
 docker pull ghcr.io/spiralhouse/cycletime:0.3.0
 ```
 
-#### Latest Tag
-- **Purpose**: Most recent stable release
-- **Condition**: Only applied to release versions (no build metadata)
+#### Pre-Release Tag (`pre-release`)
+- **Purpose**: Most recent staging-validated release
+- **Mutability**: Overwrites on each staging promotion
+- **Created**: Only during staging promotion workflow
+- **Usage**: Staging environment deployments
+
+```bash
+docker pull ghcr.io/spiralhouse/cycletime:pre-release
+```
+
+#### Latest Tag (`latest`)
+- **Purpose**: Most recent production-validated release
+- **Mutability**: Overwrites on each production promotion
+- **Created**: Only during production promotion workflow
 - **Usage**: Production deployments
 
 ```bash
@@ -67,6 +84,7 @@ docker pull ghcr.io/spiralhouse/cycletime:latest
 #### SHA Tags
 - **Purpose**: Immutable reference to specific commits
 - **Format**: `sha-<7-char-hash>`
+- **Created**: Automatically on every main branch build
 - **Usage**: Debugging, audit trail
 
 ```bash
@@ -76,19 +94,22 @@ docker pull ghcr.io/spiralhouse/cycletime:sha-abc123d
 ## Environment Mapping
 
 ### Development Environment
-- **Tag**: `dev` (mutable)
+- **Tags**: `dev` (mutable), `X.Y.Z` (immutable)
 - **Updates**: Every push to main
 - **Deployment**: Automatic via external CD
+- **Promotion**: Automatic on successful CI/CD
 
-### Staging Environment  
-- **Tag**: Specific version (e.g., `0.3.0`)
-- **Updates**: Manual promotion
+### Staging Environment
+- **Tags**: `staging` (mutable), `pre-release` (mutable), `X.Y.Z-staging-TIMESTAMP` (immutable)
+- **Updates**: Manual promotion workflow
 - **Deployment**: After dev validation
+- **Promotion**: Manual approval required
 
 ### Production Environment
-- **Tag**: `latest` or pinned version
-- **Updates**: Manual approval required
+- **Tags**: `production` (mutable), `latest` (mutable), `X.Y.Z-production-TIMESTAMP` (immutable)
+- **Updates**: Manual promotion workflow
 - **Deployment**: Blue-green with rollback
+- **Promotion**: Manual approval with justification required
 
 ## Build Arguments
 
@@ -129,28 +150,43 @@ LABEL deployment.build-timestamp="$GITHUB_RUN_ID"
 
 ### Development Environment
 ```bash
-# Latest development build
+# Latest development build (mutable)
 docker pull ghcr.io/spiralhouse/cycletime:dev
+
+# Specific version (immutable)
+docker pull ghcr.io/spiralhouse/cycletime:0.3.0
 ```
 
 ### Staging Environment
 ```bash
-# Specific version for staging
-docker pull ghcr.io/spiralhouse/cycletime:0.3.0
+# Latest staging-validated release (mutable)
+docker pull ghcr.io/spiralhouse/cycletime:pre-release
+
+# Current staging deployment (mutable)
+docker pull ghcr.io/spiralhouse/cycletime:staging
+
+# Specific staging deployment (immutable)
+docker pull ghcr.io/spiralhouse/cycletime:0.3.0-staging-20241019-143052
 ```
 
 ### Production Environment
 ```bash
-# Latest stable release
+# Latest production release (mutable)
 docker pull ghcr.io/spiralhouse/cycletime:latest
 
-# Or pin to specific version
+# Current production deployment (mutable)
+docker pull ghcr.io/spiralhouse/cycletime:production
+
+# Pin to specific version (immutable)
 docker pull ghcr.io/spiralhouse/cycletime:0.2.0
+
+# Specific production deployment (immutable)
+docker pull ghcr.io/spiralhouse/cycletime:0.2.0-production-20241018-120000
 ```
 
 ### Debugging/Rollback
 ```bash
-# Track specific commit
+# Track specific commit (immutable)
 docker pull ghcr.io/spiralhouse/cycletime:sha-abc123d
 ```
 
