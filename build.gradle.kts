@@ -14,7 +14,12 @@ plugins {
 }
 
 group = "io.spiralhouse.cycletime"
-version = semver.version
+val explicitVersion = project.findProperty("version")?.toString()
+version = if (explicitVersion != null && explicitVersion != "unspecified") {
+    explicitVersion
+} else {
+    semver.version
+}
 
 // Git SemVersioning configuration (SPI-570: trigger CI for test result validation)
 // SPI-747: Removed defaultPreRelease = "SNAPSHOT" to enable automated releases
