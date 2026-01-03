@@ -4,11 +4,11 @@ type: guide
 domain: [cicd, troubleshooting, debugging]
 description: "Step-by-step guide to diagnosing and resolving common CI/CD pipeline failures with real examples from production issues"
 dependencies: [pipeline-architecture.md]
-related: [../../reference/cicd/checkout-configuration.md, ../../reference/cicd/artifact-build-commands.md]
-keywords: [cicd, troubleshooting, debugging, github-actions, pipeline-failures]
+related: [../../reference/cicd/checkout-configuration.md, ../../reference/cicd/artifact-build-commands.md, ../../reference/cicd/container-tagging-spec.md]
+keywords: [cicd, troubleshooting, debugging, github-actions, pipeline-failures, container-digest, manifest, buildx]
 estimated_time: 30 minutes
 difficulty: intermediate
-last_updated: 2025-11-02
+last_updated: 2026-01-02
 ---
 
 # Troubleshooting CI/CD Pipeline Failures
@@ -35,12 +35,14 @@ flowchart TD
     test[Test Failures]
     artifact[Artifact Problems]
     release[Release Failures]
+    promotion[Promotion Problems]
 
     failure --> category
     category --> version
     category --> test
     category --> artifact
     category --> release
+    category --> promotion
 
     version --> v1[No tags created]
     version --> v2[Wrong version calculated]
@@ -58,10 +60,15 @@ flowchart TD
     release --> r2[Release creation fails]
     release --> r3[Changelog issues]
 
+    promotion --> p1[Digest mismatch]
+    promotion --> p2[Version not in staging]
+    promotion --> p3[Time requirements not met]
+
     style version fill:#fff4e6
     style test fill:#e6ffe6
     style artifact fill:#e6f7ff
     style release fill:#ffe6e6
+    style promotion fill:#f0e6ff
 ```
 
 ## Diagnostic Decision Tree
@@ -76,6 +83,7 @@ flowchart TD
     test_job[Test Job]
     build_job[Build Job]
     release_job[Release Job]
+    promotion_job[Promotion Job]
 
     start --> job
 
@@ -83,6 +91,7 @@ flowchart TD
     job --> test_job
     job --> build_job
     job --> release_job
+    job --> promotion_job
 
     version_job --> v_check{Tags created?}
     v_check -->|No| v_no_tag[Troubleshoot: Tag Creation]
@@ -100,6 +109,10 @@ flowchart TD
     r_check -->|No| r_no_artifacts[Troubleshoot: Artifact Paths]
     r_check -->|Wrong files| r_wrong_files[Troubleshoot: Glob Patterns]
 
+    promotion_job --> p_check{Digests match?}
+    p_check -->|No| p_mismatch[Troubleshoot: Manifest Digest]
+    p_check -->|Version missing| p_missing[Troubleshoot: Version Not in Staging]
+
     style start fill:#e1f5ff
     style v_no_tag fill:#ffe6e6
     style v_wrong fill:#fff4e6
@@ -109,6 +122,8 @@ flowchart TD
     style b_version fill:#fff4e6
     style r_no_artifacts fill:#ffe6e6
     style r_wrong_files fill:#fff4e6
+    style p_mismatch fill:#ffe6e6
+    style p_missing fill:#fff4e6
 ```
 
 ## Issue 1: No Version Tags Created (SPI-908)
@@ -714,6 +729,240 @@ ls -lh cycletime-server-*.jar cycletime-server-*.tar cycletime-server-*.zip
 unzip -p cycletime-server-0.3.3.jar META-INF/MANIFEST.MF | grep Implementation-Version
 # Expected: Implementation-Version: 0.3.3
 ```
+
+## Issue 5: Promotion Digest Mismatch (SPI-1297)
+
+### Symptoms
+
+- Promotion workflow validation fails with "digest mismatch"
+- Staging or production promotion blocked
+- Error message: "Version digest mismatch with staging - potential tampering detected"
+- Workflow logs show different SHA256 digests for version tag vs environment tag
+- Re-running promotion does not resolve the issue
+
+### Root Cause
+
+`docker pull/tag/push` reconstructs container manifests locally before pushing, creating different digests even when the image layers are identical.
+
+**Why This Happens**:
+
+When you pull an image, tag it, and push it back, Docker:
+1. Downloads the manifest and layers from the registry
+2. Creates a new manifest locally when tagging
+3. Pushes the new manifest (with potentially different metadata order or timestamps)
+4. Registry stores the pushed manifest with a new SHA256 digest
+
+**Real Example from v0.6.1/v0.6.2 Production Promotion**:
+
+```
+Version 0.6.2 digest:  sha256:7468442f...
+Staging tag digest:    sha256:821132e9... (DIFFERENT!)
+```
+
+The validation logic correctly detected the mismatch and blocked promotion to prevent potentially tampered images from reaching production.
+
+```mermaid
+sequenceDiagram
+    participant CI as CI Runner
+    participant Registry as GHCR Registry
+
+    Note over CI,Registry: Broken: docker pull/tag/push
+    CI->>Registry: docker pull :version (sha256:aaa)
+    Registry-->>CI: Download manifest + layers
+    CI->>CI: docker tag :version :staging
+    CI->>Registry: docker push :staging
+    Note over CI: Manifest reconstructed locally
+    Registry-->>Registry: Store as sha256:bbb (different!)
+
+    Note over CI,Registry: Fixed: buildx imagetools
+    CI->>Registry: buildx imagetools create
+    Note over Registry: Registry-side alias creation
+    Registry-->>Registry: :staging points to sha256:aaa (same!)
+```
+
+### Diagnosis Steps
+
+**Step 1: Compare manifest digests**
+
+```bash
+# Get manifest digest for version tag
+version_digest=$(docker buildx imagetools inspect ghcr.io/spiralhouse/cycletime:$VERSION --raw \
+  | sha256sum | cut -d' ' -f1)
+echo "Version digest: sha256:$version_digest"
+
+# Get manifest digest for staging tag
+staging_digest=$(docker buildx imagetools inspect ghcr.io/spiralhouse/cycletime:staging --raw \
+  | sha256sum | cut -d' ' -f1)
+echo "Staging digest: sha256:$staging_digest"
+
+# Compare
+if [[ "$version_digest" == "$staging_digest" ]]; then
+  echo "Digests match - OK"
+else
+  echo "MISMATCH - This is the root cause"
+fi
+```
+
+**Step 2: Check promotion workflow method**
+
+In `.github/workflows/promote.yml`, verify the tagging method:
+
+```bash
+# Search for the tagging approach
+grep -A5 "docker tag\|docker push\|buildx imagetools" .github/workflows/promote.yml
+```
+
+**Broken pattern** (uses pull/tag/push):
+```bash
+docker pull ghcr.io/spiralhouse/cycletime:$version
+docker tag ghcr.io/spiralhouse/cycletime:$version ghcr.io/spiralhouse/cycletime:staging
+docker push ghcr.io/spiralhouse/cycletime:staging
+```
+
+**Correct pattern** (uses buildx imagetools):
+```bash
+docker buildx imagetools create \
+  --tag ghcr.io/spiralhouse/cycletime:staging \
+  ghcr.io/spiralhouse/cycletime:$version
+```
+
+**Step 3: Verify validation logic**
+
+Check the promotion workflow validation step uses manifest digest comparison:
+
+```bash
+# Look for digest validation in promote.yml
+grep -B5 -A10 "sha256sum\|digest" .github/workflows/promote.yml
+```
+
+### Solution
+
+Replace `docker pull/tag/push` with `docker buildx imagetools create` for all registry retagging operations.
+
+**Before (broken)**:
+```bash
+# Pull image to CI runner
+docker pull ghcr.io/spiralhouse/cycletime:$version
+
+# Tag locally
+docker tag ghcr.io/spiralhouse/cycletime:$version ghcr.io/spiralhouse/cycletime:staging
+
+# Push (reconstructs manifest!)
+docker push ghcr.io/spiralhouse/cycletime:staging
+```
+
+**After (fixed)**:
+```bash
+# Create registry-side tag alias (no image data transfer)
+docker buildx imagetools create \
+  --tag ghcr.io/spiralhouse/cycletime:staging \
+  --tag ghcr.io/spiralhouse/cycletime:pre-release \
+  --tag ghcr.io/spiralhouse/cycletime:$version-staging-$(date +%Y%m%d-%H%M%S) \
+  ghcr.io/spiralhouse/cycletime:$version
+```
+
+**Benefits of buildx imagetools**:
+- Preserves original manifest digest during retagging
+- Creates registry-side aliases without pulling/pushing image data
+- Ensures validation compares identical digests
+- Faster promotion (no image data transfer required)
+
+### Local Reproduction
+
+```bash
+# Set up variables
+VERSION="0.6.2"
+REGISTRY="ghcr.io/spiralhouse/cycletime"
+
+# Test 1: Reproduce the broken behavior
+docker pull $REGISTRY:$VERSION
+docker tag $REGISTRY:$VERSION $REGISTRY:test-broken
+docker push $REGISTRY:test-broken
+
+# Compare digests (will be different)
+original=$(docker buildx imagetools inspect $REGISTRY:$VERSION --raw | sha256sum | cut -d' ' -f1)
+broken=$(docker buildx imagetools inspect $REGISTRY:test-broken --raw | sha256sum | cut -d' ' -f1)
+echo "Original: sha256:$original"
+echo "Broken:   sha256:$broken"
+echo "Match: $([[ "$original" == "$broken" ]] && echo "YES" || echo "NO - MISMATCH")"
+
+# Test 2: Verify the fix works
+docker buildx imagetools create \
+  --tag $REGISTRY:test-fixed \
+  $REGISTRY:$VERSION
+
+# Compare digests (will match)
+fixed=$(docker buildx imagetools inspect $REGISTRY:test-fixed --raw | sha256sum | cut -d' ' -f1)
+echo "Original: sha256:$original"
+echo "Fixed:    sha256:$fixed"
+echo "Match: $([[ "$original" == "$fixed" ]] && echo "YES - SUCCESS" || echo "NO")"
+
+# Cleanup
+docker buildx imagetools rm $REGISTRY:test-broken $REGISTRY:test-fixed 2>/dev/null || true
+```
+
+### Prevention
+
+**Design guidelines for container workflows**:
+
+1. **Never use `docker pull/tag/push` for promotion workflows** that require digest validation
+2. **Always use `docker buildx imagetools create`** for registry-side tag operations
+3. **Validate digests match** before and after any tagging operation in promotion workflows
+4. **Document the restriction** in workflow comments to prevent regression
+
+**Workflow template for promotion**:
+```yaml
+- name: Promote to staging with registry-side tagging
+  run: |
+    version="${{ github.event.inputs.version }}"
+
+    echo "Creating staging tags using buildx imagetools..."
+    # Use buildx imagetools to preserve manifest digest
+    docker buildx imagetools create \
+      --tag ghcr.io/spiralhouse/cycletime:staging \
+      --tag ghcr.io/spiralhouse/cycletime:pre-release \
+      --tag ghcr.io/spiralhouse/cycletime:$version-staging-$(date +%Y%m%d-%H%M%S) \
+      ghcr.io/spiralhouse/cycletime:$version
+
+    echo "Staging promotion complete"
+```
+
+### Verification
+
+After implementing the fix, verify digest preservation:
+
+```bash
+# Promote a version to staging
+gh workflow run promote.yml \
+  -f version=0.6.2 \
+  -f source_env=dev \
+  -f target_env=staging
+
+# Wait for workflow completion, then verify
+version_digest=$(docker buildx imagetools inspect ghcr.io/spiralhouse/cycletime:0.6.2 --raw \
+  | sha256sum | cut -d' ' -f1)
+staging_digest=$(docker buildx imagetools inspect ghcr.io/spiralhouse/cycletime:staging --raw \
+  | sha256sum | cut -d' ' -f1)
+
+echo "Version: sha256:$version_digest"
+echo "Staging: sha256:$staging_digest"
+
+# Should output identical digests
+[[ "$version_digest" == "$staging_digest" ]] && echo "SUCCESS: Digests match" || echo "FAILURE: Digest mismatch"
+```
+
+**Implementation references**:
+- Primary fix: `.github/workflows/promote.yml` (commit 4112e51)
+  - Staging promotion: lines 356-376
+  - Production promotion: lines 485-549
+- Summary fix: `.github/workflows/promote.yml` (commit fd518dd)
+  - Fixed audit record quoting with heredoc
+- Validation logic: `.github/workflows/promote.yml` (lines 96-151)
+
+### Related Documentation
+
+- [Container Tagging Specification](../../reference/cicd/container-tagging-spec.md#manifest-digest-preservation) - Architectural rationale for registry-side tagging
+- [Pipeline Architecture Guide](./pipeline-architecture.md) - Complete pipeline overview
 
 ## General Debugging Techniques
 

@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
     alias(libs.plugins.dependency.check)
-    id("com.github.jmongard.git-semver-plugin") version "0.17.0"
+    id("com.github.jmongard.git-semver-plugin") version "0.17.1"
     application
 }
 

@@ -56,6 +56,7 @@ class MockWorkflowRepository(
     var updateCallCount: Int = 0
     var deleteCallCount: Int = 0
     var findCallCount: Int = 0
+    var purgeCallCount: Int = 0
     
     // ================================================================================
     // Repository Interface Implementation
@@ -145,6 +146,36 @@ class MockWorkflowRepository(
         return workflows[id]
     }
 
+    override suspend fun findDeletedBefore(cutoffDate: kotlinx.datetime.Instant): List<Workflow> {
+        findCallCount++
+        findException?.let { throw it }
+        // Filter by deletedAt < cutoffDate to match real repository behavior
+        return workflows.values
+            .filter { workflow ->
+                workflow.deletedAt != null && workflow.deletedAt!! < cutoffDate
+            }
+            .toList()
+    }
+
+    override suspend fun purge(id: WorkflowId) {
+        purgeCallCount++
+        // Hard delete: remove from workflows map
+        workflows.remove(id)
+    }
+
+    override suspend fun purgeDeletedBefore(cutoffDate: kotlinx.datetime.Instant): Int {
+        purgeCallCount++
+        // Get list of deleted workflows to purge (calls findDeletedBefore for exception propagation)
+        val toPurge = findDeletedBefore(cutoffDate)
+
+        // Remove them from the map
+        toPurge.forEach { workflow ->
+            workflows.remove(workflow.id)
+        }
+
+        return toPurge.size
+    }
+
     // ================================================================================
     // Test Utilities
     // ================================================================================
@@ -159,6 +190,7 @@ class MockWorkflowRepository(
         updateCallCount = 0
         deleteCallCount = 0
         findCallCount = 0
+        purgeCallCount = 0
     }
     
     /**
