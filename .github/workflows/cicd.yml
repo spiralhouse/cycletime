@@ -1076,7 +1076,7 @@ jobs:
       - name: Build application JAR and distributions
         run: |
           echo "🔨 Building application artifacts (version: ${{ needs.version.outputs.version }})"
-          ./gradlew buildFatJar assembleDist -x compileKotlin -x compileTestKotlin -x compileIntegrationTestKotlin -x compileSystemTestKotlin -x test --no-build-cache --configuration-cache --no-daemon
+          ./gradlew buildFatJar assembleDist -x compileKotlin -x compileTestKotlin -x compileIntegrationTestKotlin -x compileSystemTestKotlin -x test --no-build-cache --configuration-cache --no-daemon -Pversion=${{ needs.version.outputs.version }}
 
       - name: Verify JAR exists
         run: |
