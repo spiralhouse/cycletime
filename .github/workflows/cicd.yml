@@ -1233,25 +1233,6 @@ jobs:
           fetch-depth: 0
           fetch-tags: true  # Explicitly fetch tags for changelog generation
 
-      - name: Compute changelog range
-        id: range
-        run: |
-          version="${{ needs.version.outputs.version }}"
-          echo "🔍 Computing changelog range for version $version..."
-
-          # Try to find previous tag
-          if previous_tag=$(git describe --tags --abbrev=0 HEAD 2>/dev/null); then
-            echo "✅ Found previous tag: $previous_tag"
-            echo "range=${previous_tag}..HEAD" >> $GITHUB_OUTPUT
-          else
-            # First release: use range from initial commit
-            echo "⚠️  No previous tag found, using initial commit"
-            initial_commit=$(git rev-list --max-parents=0 HEAD)
-            echo "range=${initial_commit}..HEAD" >> $GITHUB_OUTPUT
-          fi
-
-          echo "📊 Changelog range: $(cat $GITHUB_OUTPUT | grep range= | cut -d= -f2)"
-
       - name: Remove existing changelog to prevent merge
         run: |
           echo "🗑️ Removing any existing CHANGELOG.md..."
@@ -1263,7 +1244,9 @@ jobs:
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
-          args: --verbose --strip header ${{ steps.range.outputs.range }}
+          # --tag: Explicitly set version header (fixes "[unreleased]" bug from SPI-1295)
+          # --latest: Include commits since previous tag (handles edge cases correctly)
+          args: --verbose --strip header --tag ${{ needs.version.outputs.version }} --latest
         env:
           OUTPUT: CHANGELOG.md
           GITHUB_REPO: ${{ github.repository }}
