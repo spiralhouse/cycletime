@@ -6,6 +6,7 @@ import io.spiralhouse.cycletime.dashboard.dto.ProjectHierarchyDTO
 import io.spiralhouse.cycletime.dashboard.dto.IssueHierarchyNode
 import io.spiralhouse.cycletime.dashboard.dto.IssueViewDTO
 import io.spiralhouse.cycletime.dashboard.dto.ProjectStatistics
+import io.spiralhouse.cycletime.infrastructure.auth.UserSession
 
 // ============================================================================
 // SHARED LAYOUT COMPONENTS (DRY Principle)
@@ -32,6 +33,7 @@ import io.spiralhouse.cycletime.dashboard.dto.ProjectStatistics
  */
 fun HTML.dashboardLayout(
     pageTitle: String,
+    userSession: UserSession? = null,
     content: FlowContent.() -> Unit
 ) {
     head {
@@ -59,8 +61,8 @@ fun HTML.dashboardLayout(
             +"Skip to main content"
         }
 
-        // Service health header
-        serviceHealthHeader()
+        // Service health header with user profile
+        serviceHealthHeader(userSession)
 
         // Main content area (semantic landmark)
         main(classes = "container mx-auto px-4 py-8") {
@@ -237,9 +239,9 @@ private fun HEAD.cycleTimeStyles() {
  *
  * @since 1.0.0 (SPI-799, enhanced in SPI-800)
  */
-private fun FlowContent.serviceHealthHeader() {
+private fun FlowContent.serviceHealthHeader(userSession: UserSession?) {
     header(classes = "bg-surface border-b border-border py-4 sticky top-0 z-10 backdrop-blur") {
-        div(classes = "container mx-auto px-4 flex items-center gap-4") {
+        div(classes = "container mx-auto px-4 flex items-center justify-between") {
             // Status indicator with pulse animation
             div(classes = "flex items-center gap-3") {
                 span(classes = "relative flex h-3 w-3") {
@@ -248,6 +250,28 @@ private fun FlowContent.serviceHealthHeader() {
                 }
                 span(classes = "text-sm font-semibold text-text") {
                     +"Service: Healthy"
+                }
+            }
+
+            // User profile section (SPI-1314)
+            if (userSession != null) {
+                div(classes = "flex items-center gap-3") {
+                    // User avatar
+                    if (userSession.avatarUrl != null) {
+                        img(
+                            src = userSession.avatarUrl,
+                            alt = userSession.username,
+                            classes = "w-8 h-8 rounded-full"
+                        )
+                    }
+                    // Username
+                    span(classes = "text-sm text-text") {
+                        +(userSession.displayName ?: userSession.username)
+                    }
+                    // Logout link
+                    a(href = "/auth/logout", classes = "text-sm text-muted hover:text-text") {
+                        +"Logout"
+                    }
                 }
             }
         }
@@ -273,8 +297,8 @@ private fun FlowContent.serviceHealthHeader() {
  * @param projects List of projects to display
  * @since 1.0.0 (SPI-798, refactored in SPI-800)
  */
-fun HTML.projectsIndex(projects: List<ProjectViewDTO>) {
-    dashboardLayout("CycleTime Dashboard") {
+fun HTML.projectsIndex(projects: List<ProjectViewDTO>, userSession: UserSession? = null) {
+    dashboardLayout("CycleTime Dashboard", userSession) {
         // Page heading
         h1(classes = "text-3xl font-bold text-text mb-8") {
             +"CycleTime Dashboard"
@@ -395,8 +419,8 @@ private fun FlowContent.projectCard(project: ProjectViewDTO) {
  * @param hierarchy Complete project hierarchy with statistics
  * @since 1.0.0 (SPI-799, refactored in SPI-800)
  */
-fun HTML.projectHierarchy(hierarchy: ProjectHierarchyDTO) {
-    dashboardLayout("${hierarchy.project.name} - CycleTime Dashboard") {
+fun HTML.projectHierarchy(hierarchy: ProjectHierarchyDTO, userSession: UserSession? = null) {
+    dashboardLayout("${hierarchy.project.name} - CycleTime Dashboard", userSession) {
         // Breadcrumb navigation
         nav(classes = "mb-6") {
             attributes["aria-label"] = "Breadcrumb"

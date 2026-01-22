@@ -118,6 +118,15 @@ dependencies {
     implementation("io.ktor:ktor-server-call-id:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-html-builder:${libs.versions.ktor.get()}")
 
+    // Authentication - OAuth support (SPI-1310)
+    implementation("io.ktor:ktor-server-auth:${libs.versions.ktor.get()}")
+    implementation("io.ktor:ktor-server-sessions:${libs.versions.ktor.get()}")
+
+    // HTTP Client - For OAuth user profile fetching (SPI-1311)
+    implementation("io.ktor:ktor-client-core:${libs.versions.ktor.get()}")
+    implementation("io.ktor:ktor-client-cio:${libs.versions.ktor.get()}")
+    implementation("io.ktor:ktor-client-content-negotiation:${libs.versions.ktor.get()}")
+
     // OpenAPI and Swagger UI - API documentation generation
     implementation("io.ktor:ktor-server-openapi:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-swagger:${libs.versions.ktor.get()}")

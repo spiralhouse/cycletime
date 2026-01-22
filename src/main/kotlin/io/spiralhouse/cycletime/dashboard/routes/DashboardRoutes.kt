@@ -14,6 +14,8 @@ import io.spiralhouse.cycletime.dashboard.views.projectHierarchy
 import io.spiralhouse.cycletime.dashboard.views.subtaskListFragment
 import io.spiralhouse.cycletime.domain.valueobjects.IssueId
 import io.spiralhouse.cycletime.domain.valueobjects.ProjectId
+import io.spiralhouse.cycletime.infrastructure.auth.UserSession
+import io.ktor.server.sessions.*
 
 /**
  * Configures dashboard REST API routes.
@@ -267,9 +269,12 @@ private fun Route.htmlProjectsListRoute() {
             // Fetch projects (uses caching, same as JSON API)
             val projects = service.listProjects()
 
+            // Get user session for header
+            val userSession = call.sessions.get<UserSession>()
+
             // Render HTML response
             call.respondHtml(HttpStatusCode.OK) {
-                projectsIndex(projects)
+                projectsIndex(projects, userSession)
             }
         }
     }
@@ -330,9 +335,12 @@ private fun Route.htmlProjectHierarchyRoute() {
                 // Fetch hierarchy (uses caching)
                 val hierarchy = service.getProjectHierarchy(projectId)
 
+                // Get user session for header
+                val userSession = call.sessions.get<UserSession>()
+
                 // Render HTML
                 call.respondHtml(HttpStatusCode.OK) {
-                    projectHierarchy(hierarchy)
+                    projectHierarchy(hierarchy, userSession)
                 }
             } catch (e: IllegalArgumentException) {
                 // Project not found
