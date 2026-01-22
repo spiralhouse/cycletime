@@ -1,5 +1,7 @@
 package io.spiralhouse.cycletime.infrastructure.auth
 
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -32,9 +34,16 @@ import io.spiralhouse.cycletime.infrastructure.config.OAuthConfig
  * These dependencies should be added in build.gradle.kts.
  */
 fun Application.configureOAuth() {
-    // Determine if running in development mode (check FIRST before loading config)
+    // Determine if running in development/test mode (check FIRST before loading config)
+    // Check config file, then environment variable, then system property (for tests)
+    // Also detect test mode via H2 in-memory database URL
+    val databaseUrl = System.getProperty("DATABASE_URL") ?: ""
+    val isTestDatabase = databaseUrl.contains("jdbc:h2:mem:test")
+
     val isDevelopment = environment.config.propertyOrNull("ktor.development")?.getString()?.toBoolean()
-        ?: (System.getenv("KTOR_DEVELOPMENT")?.toBoolean() ?: false)
+        ?: System.getenv("KTOR_DEVELOPMENT")?.toBoolean()
+        ?: System.getProperty("KTOR_DEVELOPMENT")?.toBoolean()
+        ?: isTestDatabase // Treat test database as development mode
 
     val config = loadOAuthConfig(isDevelopment)
 
@@ -71,9 +80,10 @@ fun Application.configureOAuth() {
         }
     }
 
+    // Create HTTP client for OAuth token exchange
+    val httpClient = HttpClient(CIO)
+
     // Install OAuth authentication
-    // Note: The OAuth plugin will create its own HttpClient internally
-    // We'll configure the HTTP client in the authRoutes when we fetch user profile
     install(Authentication) {
         oauth("github") {
             urlProvider = { config.callbackUrl }
@@ -88,8 +98,8 @@ fun Application.configureOAuth() {
                     defaultScopes = listOf("read:user", "user:email")
                 )
             }
-            // Ktor OAuth plugin creates its own HTTP client for token exchange
-            // We don't need to provide one explicitly
+            // Provide HTTP client for OAuth token exchange
+            client = httpClient
         }
     }
 }

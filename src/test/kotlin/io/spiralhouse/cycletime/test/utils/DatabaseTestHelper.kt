@@ -95,6 +95,8 @@ object DatabaseTestHelper {
         System.setProperty("DATABASE_URL", testDbUrl)
         System.setProperty("DATABASE_DRIVER", "org.h2.Driver")
         System.setProperty("DATABASE_LOGGING", enableLogging.toString())
+        // Enable development mode for OAuth to use test defaults
+        System.setProperty("KTOR_DEVELOPMENT", "true")
 
         application {
             // Call the standard module which will use our test database URL
@@ -121,6 +123,8 @@ object DatabaseTestHelper {
         System.setProperty("DATABASE_URL", testDbUrl)
         System.setProperty("DATABASE_DRIVER", "org.h2.Driver")
         System.setProperty("DATABASE_LOGGING", enableLogging.toString())
+        // Enable development mode for OAuth to use test defaults
+        System.setProperty("KTOR_DEVELOPMENT", "true")
 
         application {
             // Call the standard module which will use our test database URL
