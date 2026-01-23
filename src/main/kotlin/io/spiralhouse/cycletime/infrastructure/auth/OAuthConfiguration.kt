@@ -36,14 +36,14 @@ import io.spiralhouse.cycletime.infrastructure.config.OAuthConfig
 fun Application.configureOAuth() {
     // Determine if running in development/test mode (check FIRST before loading config)
     // Check config file, then environment variable, then system property (for tests)
-    // Also detect test mode via H2 in-memory database URL
-    val databaseUrl = System.getProperty("DATABASE_URL") ?: ""
-    val isTestDatabase = databaseUrl.contains("jdbc:h2:mem:test")
+    // Also detect test mode via H2 in-memory database URL or missing DATABASE_URL
+    val databaseUrl = System.getProperty("DATABASE_URL") ?: System.getenv("DATABASE_URL") ?: ""
+    val isTestDatabase = databaseUrl.contains("jdbc:h2:mem") || databaseUrl.isEmpty()
 
     val isDevelopment = environment.config.propertyOrNull("ktor.development")?.getString()?.toBoolean()
         ?: System.getenv("KTOR_DEVELOPMENT")?.toBoolean()
         ?: System.getProperty("KTOR_DEVELOPMENT")?.toBoolean()
-        ?: isTestDatabase // Treat test database as development mode
+        ?: isTestDatabase // Treat test/H2 database as development mode
 
     val config = loadOAuthConfig(isDevelopment)
 

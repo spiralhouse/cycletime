@@ -4,8 +4,11 @@ import io.spiralhouse.cycletime.infrastructure.database.DatabaseProvider
 import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseProvider
 import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseNamingStrategy
 import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
+import io.spiralhouse.cycletime.infrastructure.auth.UserSession
 import io.spiralhouse.cycletime.module
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.sessions.*
 import io.ktor.server.testing.*
 import io.ktor.server.plugins.di.*
 import io.spiralhouse.cycletime.domain.services.TimeProvider
@@ -64,6 +67,25 @@ object DatabaseTestHelper {
                 timeProvider = timeProvider,
                 includeMCP = false // Usually disabled for unit tests
             )
+
+            // Install test-friendly authentication that allows all requests
+            // This enables tests to call ApiConfiguration.configure() which uses
+            // authenticate("session-auth") and authRoutes() (which uses "github")
+            install(Sessions) {
+                cookie<UserSession>("user_session") {
+                    cookie.path = "/"
+                }
+            }
+            install(Authentication) {
+                session<UserSession>("session-auth") {
+                    validate { session -> session } // Accept all valid sessions
+                    challenge { /* No challenge in tests - allows unauthenticated access */ }
+                }
+                // Mock GitHub OAuth provider for authRoutes() - tests don't use real OAuth
+                basic("github") {
+                    validate { null } // Never validates - auth routes won't work but won't crash
+                }
+            }
 
             // Now configure the rest of the application
             // Note: We're not calling module() to avoid duplicate DI configuration
