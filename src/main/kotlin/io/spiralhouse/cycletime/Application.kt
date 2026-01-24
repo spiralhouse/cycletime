@@ -26,6 +26,8 @@ import kotlinx.coroutines.launch
 import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 import io.spiralhouse.cycletime.infrastructure.metrics.MetricsConfiguration
 import io.spiralhouse.cycletime.infrastructure.metrics.MetricsConfiguration.configureMetrics
+import io.spiralhouse.cycletime.infrastructure.auth.configureOAuth
+import io.spiralhouse.cycletime.infrastructure.auth.configureSessionAuth
 import io.spiralhouse.cycletime.api.configuration.ApiConfiguration
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -290,6 +292,12 @@ fun Application.module() {
 
     // Install Ktor features
     configureKtorFeatures(logger, performanceMetrics)
+
+    // Configure OAuth authentication and sessions
+    configureOAuth()
+
+    // Configure session-based authentication for protected routes
+    configureSessionAuth()
 
     // Configure OpenAPI documentation generation and Swagger UI
     configureOpenAPI(logger, performanceMetrics)
