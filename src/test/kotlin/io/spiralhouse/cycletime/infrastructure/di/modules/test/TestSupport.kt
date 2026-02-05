@@ -2,11 +2,14 @@ package io.spiralhouse.cycletime.infrastructure.di.modules.test
 
 import io.ktor.server.application.*
 import io.ktor.server.application.install
+import io.ktor.server.auth.*
 import io.ktor.server.plugins.di.DI
 import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.sessions.*
 import io.ktor.serialization.kotlinx.json.*
 import io.spiralhouse.cycletime.domain.services.TimeProvider
+import io.spiralhouse.cycletime.infrastructure.auth.UserSession
 import io.spiralhouse.cycletime.infrastructure.di.configureDependencies
 import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseProvider
 import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseNamingStrategy
@@ -124,6 +127,23 @@ fun Application.configureForTesting(
         timeProvider = timeProvider,
         includeMCP = false // Tests don't need MCP
     )
+
+    // Install test-friendly authentication for ApiConfiguration.configure()
+    install(Sessions) {
+        cookie<UserSession>("user_session") {
+            cookie.path = "/"
+        }
+    }
+    install(Authentication) {
+        session<UserSession>("session-auth") {
+            validate { session -> session }
+            challenge { /* No challenge in tests */ }
+        }
+        // Mock GitHub OAuth provider for authRoutes()
+        basic("github") {
+            validate { null }
+        }
+    }
 
     // Schema is already initialized by TestDatabaseProvider
     // No need to create tables again

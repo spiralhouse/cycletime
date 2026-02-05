@@ -28,6 +28,9 @@ import io.spiralhouse.cycletime.infrastructure.persistence.ExposedProjectReposit
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedIssueRepository
 import io.spiralhouse.cycletime.infrastructure.persistence.ExposedUnitOfWork
 import io.spiralhouse.cycletime.test.utils.DatabaseTestHelper
+import io.spiralhouse.cycletime.infrastructure.auth.UserSession
+import io.ktor.server.auth.*
+import io.ktor.server.sessions.*
 import io.spiralhouse.cycletime.test.utils.DashboardTestDataBuilder
 import io.spiralhouse.cycletime.infrastructure.database.TestDatabaseNamingStrategy
 import io.ktor.serialization.kotlinx.json.*
@@ -83,6 +86,19 @@ fun testDashboardApplication(
             timeProvider = null, // Use SystemTimeProvider by default
             includeMCP = false
         )
+
+        // Install test-friendly authentication for dashboard routes
+        install(Sessions) {
+            cookie<UserSession>("user_session") {
+                cookie.path = "/"
+            }
+        }
+        install(Authentication) {
+            session<UserSession>("session-auth") {
+                validate { session -> session }
+                challenge { /* No challenge in tests */ }
+            }
+        }
 
         // Configure server-side content negotiation
         install(ServerContentNegotiation) {
